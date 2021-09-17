@@ -32,22 +32,43 @@ from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.models import ReportConfiguration
 
 
-def get_apps(domain):
-    master_list = {}
-    linked_list = {}
+def build_domain_link_view_model(link, timezone):
+    return {
+        'downstream_domain': link.linked_domain,
+        'upstream_domain': link.master_domain,
+        'upstream_url': link.upstream_url,
+        'downstream_url': link.downstream_url,
+        'is_remote': link.is_remote,
+        'last_update': server_to_user_time(link.last_pull, timezone) if link.last_pull else _('Never'),
+    }
+
+
+def get_upstream_and_downstream_apps(domain):
+    """
+    Return 2 lists of app_briefs
+    The upstream_list contains apps that originated in the specified domain
+    The downstream_list contains apps that have been pulled from a domain upstream of the specified domain
+    """
+    upstream_list = {}
+    downstream_list = {}
     briefs = get_brief_apps_in_domain(domain, include_remote=False)
     for brief in briefs:
         if is_linked_app(brief):
-            linked_list[brief._id] = brief
+            downstream_list[brief._id] = brief
         else:
-            master_list[brief._id] = brief
-    return master_list, linked_list
+            upstream_list[brief._id] = brief
+    return upstream_list, downstream_list
 
 
-def get_fixtures(domain, master_link):
-    master_list = get_fixtures_for_domain(domain)
-    linked_list = get_fixtures_for_domain(master_link.master_domain) if master_link else {}
-    return master_list, linked_list
+def get_upstream_and_downstream_fixtures(domain, upstream_link):
+    """
+    Return 2 lists of fixtures
+    The upstream_list contains fixtures that originated in the specified domain
+    The downstream_list contains fixtures that have been pulled from a domain upstream of the specified domain
+    """
+    upstream_list = get_fixtures_for_domain(domain)
+    downstream_list = get_fixtures_for_domain(upstream_link.master_domain) if upstream_link else {}
+    return upstream_list, downstream_list
 
 
 def get_fixtures_for_domain(domain):
@@ -55,28 +76,38 @@ def get_fixtures_for_domain(domain):
     return {f.tag: f for f in fixtures if f.is_global}
 
 
-def get_reports(domain):
-    master_list = {}
-    linked_list = {}
+def get_upstream_and_downstream_reports(domain):
+    """
+    Return 2 lists of reports
+    The upstream_list contains reports that originated in the specified domain
+    The downstream_list contains reports that have been pulled from a domain upstream of the specified domain
+    """
+    upstream_list = {}
+    downstream_list = {}
     reports = get_report_configs_for_domain(domain)
     for report in reports:
         if report.report_meta.master_id:
-            linked_list[report.get_id] = report
+            downstream_list[report.get_id] = report
         else:
-            master_list[report.get_id] = report
-    return master_list, linked_list
+            upstream_list[report.get_id] = report
+    return upstream_list, downstream_list
 
 
-def get_keywords(domain):
-    master_list = {}
-    linked_list = {}
+def get_upstream_and_downstream_keywords(domain):
+    """
+    Return 2 lists of keywords
+    The upstream_list contains keywords that originated in the specified domain
+    The downstream_list contains keywords that have been pulled from a domain upstream of the specified domain
+    """
+    upstream_list = {}
+    downstream_list = {}
     keywords = Keyword.objects.filter(domain=domain)
     for keyword in keywords:
         if keyword.upstream_id:
-            linked_list[str(keyword.id)] = keyword
+            downstream_list[str(keyword.id)] = keyword
         else:
-            master_list[str(keyword.id)] = keyword
-    return master_list, linked_list
+            upstream_list[str(keyword.id)] = keyword
+    return upstream_list, downstream_list
 
 
 def build_app_view_model(app, last_update=None):

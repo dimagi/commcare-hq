@@ -21,6 +21,8 @@ from corehq.apps.userreports.views import (
 from .dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
+    ReleaseManagementReportDispatcher,
+    UserManagementReportDispatcher,
 )
 from .filters import urls as filter_urls
 from .util import get_installed_custom_modules
@@ -61,6 +63,14 @@ from .views import (
 
 custom_report_urls = [
     CustomProjectReportDispatcher.url_pattern(),
+]
+
+user_management_urls = [
+    UserManagementReportDispatcher.url_pattern(),
+]
+
+release_management_urls = [
+    ReleaseManagementReportDispatcher.url_pattern()
 ]
 
 urlpatterns = [
@@ -150,6 +160,8 @@ urlpatterns = [
     url(r'^custom/', include(custom_report_urls)),
     url(r'^filters/', include(filter_urls)),
     ProjectReportDispatcher.url_pattern(),
+    url(r'^user_management/', include(user_management_urls)),
+    url(r'^release_management/', include(release_management_urls)),
 ]
 
 for module in get_installed_custom_modules():

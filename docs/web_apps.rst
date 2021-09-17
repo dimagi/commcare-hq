@@ -85,11 +85,9 @@ This is written in knockout, and it's probably the oldest code in this area.
 
 Major files to be aware of:
 
-* `form_ui.js
-* <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js>`_ defines ``Question`` and ``Container``, the major abstractions used by form definitions. ``Container`` is the base abstraction for groups and for forms themselves.
+* `form_ui.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js>`_ defines ``Question`` and ``Container``, the major abstractions used by form definitions. ``Container`` is the base abstraction for groups and for forms themselves.
 * `entries.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js>`_ defines ``Entry`` and its many subclasses, the widgets for entering data. The class hierarchy of entries has a few levels. There's generally a class for each question type: ``SingleSelectEntry``, ``TimeEntry``, etc. Appearance attributes can also have their own classes, such as ``ComboboxEntry`` and ``GeoPointEntry``.
-* `web_form_session.js
-* <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js>`_ defines the interaction for filling out a form. Web apps sends a request to formplayer every time a question is answered, so the session manages a lot of asynchronous requests, using a task queue. The session also handles loading forms, loading incomplete forms, and within-form actions like changing the form's language.
+* `web_form_session.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js>`_ defines the interaction for filling out a form. Web apps sends a request to formplayer every time a question is answered, so the session manages a lot of asynchronous requests, using a task queue. The session also handles loading forms, loading incomplete forms, and within-form actions like changing the form's language.
 
 Form entry has a fair amount of test coverage. There are entry-specific tests and also tests for web_form_session.
 
@@ -171,7 +169,7 @@ Marionette's `regions <https://marionettejs.com/docs/master/marionette.region.ht
 
 We rarely touch the region-handling code, which defines the high-level structure of the page: the "main" region, the progress bar, breadcrumbs, and the restore as banner. The persistent case tile also has a region. Most web apps development happens within the ``main`` region.
 
-It is sometimes useful to know how the breadcrumbs work. The breadcrumbs are tightly tied to formplayer's selections-based navigation. See `Navigation and replaying of sessions <https://github.com/dimagi/commcare-hq/blob/master/docs/formplayer.rst#navigation-and-replaying-of-sessions>`_ for an overview and examples. The breadcrumbs use this same selections array, which corresponds to the "steps" attribute of ``CloudcareURL``, with one breadcrumb for each selection.
+It is sometimes useful to know how the breadcrumbs work. The breadcrumbs are tightly tied to formplayer's selections-based navigation. See `Navigation and replaying of sessions <https://github.com/dimagi/commcare-hq/blob/master/docs/formplayer.rst#navigation-and-replaying-of-sessions>`_ for an overview and examples. The breadcrumbs use this same selections array, which is also an attribute of ``CloudcareURL``, with one breadcrumb for each selection.
 
 Backbone.Radio and Events
 -------------------------
@@ -180,9 +178,7 @@ Marionette `integrates with Backbone.Radio <https://marionettejs.com/docs/master
 
 Although you can namespace channels, web apps uses a single ``formplayer`` channel for all messages, which is accessed using ``FormplayerFrontend.getChannel()``. You'll see calls to get the channel and then call ``request`` to get at a variety of global-esque data, especially the current user. All of these requests are handled by ``reply`` callbacks defined in ``FormplayerFrontend``.
 
-``FormplayerFrontend`` also supports events, which behave similarly. Events are triggered directly on the ``FormplayerFrontend`` object, which defines ``on`` handlers. We tend to use events for navigation and do namespace some of them with ``:``, leading to events like ``menu:select``, ``menu:query``, and ``menu:show:detail``.
-
-Counterintuitively, ``showError`` and ``showSuccess`` are implemented differently: ``showError`` is an event and ``showSuccess`` is a channel request.
+``FormplayerFrontend`` also supports events, which behave similarly. Events are triggered directly on the ``FormplayerFrontend`` object, which defines ``on`` handlers. We tend to use events for navigation and do namespace some of them with ``:``, leading to events like ``menu:select``, ``menu:query``, and ``menu:show:detail``. Some helper events are not namespaced, such as ``showError`` and ``showSuccess``.
 
 Routing, URLs, and Middleware
 -----------------------------

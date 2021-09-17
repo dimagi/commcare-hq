@@ -311,8 +311,8 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
             'case_block': case_blocks,
             'time': json_format_datetime(datetime.utcnow()),
             'uid': uuid4().hex,
-            'username': self.repeater.connection_settings.username,
-            'user_id': CouchUser.get_by_username(self.repeater.connection_settings.username).user_id,
+            'username': self.submission_username(),
+            'user_id': self.submission_user_id(),
             'device_id': "ReferCaseRepeater",
         })
 
@@ -330,12 +330,13 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
                 else:
                     raise ReferralError(f'case {original_id} included without referenced case {index.referenced_id}')
             config = case_type_configs[case.type]
+            original_case_json = case.case_json.copy()
             if config.use_blacklist:
                 self._update_case_properties_with_blacklist(case, config)
             else:
                 self._update_case_properties_with_whitelist(case, config)
             self._set_constant_properties(case, config)
-            self._set_referral_properties(case, original_id)
+            self._set_referral_properties(case, original_id, original_case_json)
             case_blocks.append(case.to_xml(V2).decode('utf-8'))
         case_blocks = ''.join(case_blocks)
         return case_blocks
@@ -364,11 +365,31 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
         for name, value in config.constant_properties:
             case.case_json[name] = value
 
-    def _set_referral_properties(self, case, original_case_id):
+    def _set_referral_properties(self, case, original_case_id, original_case_json):
         # make sure new case is open
         case.closed = False
         case.case_json['cchq_referral_source_domain'] = self.repeater.domain
         case.case_json['cchq_referral_source_case_id'] = original_case_id
+
+        domain_history = original_case_json.get('cchq_referral_domain_history', '').split()
+        id_history = original_case_json.get('cchq_referral_case_id_history', '').split()
+
+        if 'cchq_referral_source_domain' in original_case_json and not domain_history:
+            # bootstrap for cases that have already been transferred at least once prior to
+            # addition of the history properties
+            previous_source_domain = original_case_json.get('cchq_referral_source_domain')
+            previous_source_case_id = original_case_json.get('cchq_referral_source_case_id')
+            domain_history = ["_unknown_", previous_source_domain]
+            id_history = ["_unknown_", previous_source_case_id]
+
+        case.case_json['cchq_referral_domain_history'] = ' '.join(domain_history + [self.repeater.domain])
+        case.case_json['cchq_referral_case_id_history'] = ' '.join(id_history + [original_case_id])
+
+    def submission_username(self):
+        return self.repeater.connection_settings.username
+
+    def submission_user_id(self):
+        return CouchUser.get_by_username(self.submission_username()).user_id
 
 
 class AppStructureGenerator(BasePayloadGenerator):

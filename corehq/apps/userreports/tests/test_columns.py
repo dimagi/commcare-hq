@@ -5,7 +5,6 @@ from django.test import SimpleTestCase, TestCase
 from sqlagg import SumWhen
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.userreports import tasks
@@ -28,6 +27,7 @@ from corehq.apps.userreports.reports.specs import (
 )
 from corehq.apps.userreports.sql.columns import expand_column
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
 
 
@@ -175,9 +175,7 @@ class TestExpandedColumn(TestCase):
             update=properties,
         ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
-        case = CommCareCase.get(id)
-        self.addCleanup(case.delete)
-        return case
+        return CaseAccessors(self.domain).get_case(id)
 
     def _build_report(self, vals, field='my_field', build_data_source=True):
         """

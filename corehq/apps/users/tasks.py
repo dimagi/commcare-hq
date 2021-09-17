@@ -26,7 +26,7 @@ from soil import DownloadBase
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -89,7 +89,6 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
-    NotAllowed.check(domain)
     CaseAccessors(domain).soft_delete_cases(list(case_ids), deletion_date, deletion_id)
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
@@ -150,11 +149,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
         # all cases touched by this form are deleted
         return True
 
-    if is_deletion or Domain.get_by_name(domain).use_sql_backend:
-        all_forms = FormAccessors(domain).iter_forms(form_ids_to_modify)
-    else:
-        # accessor.iter_forms doesn't include deleted forms on the couch backend
-        all_forms = list(map(FormAccessors(domain).get_form, form_ids_to_modify))
+    all_forms = FormAccessors(domain).iter_forms(form_ids_to_modify)
     return [form.form_id for form in all_forms if _is_safe_to_modify(form)]
 
 

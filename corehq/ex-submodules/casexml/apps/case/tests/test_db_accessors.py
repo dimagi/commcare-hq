@@ -6,10 +6,11 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from django.test import TestCase
 
 
+@sharded
 class TestExtensionCaseIds(TestCase):
 
     def setUp(self):
@@ -152,11 +153,7 @@ class TestExtensionCaseIds(TestCase):
         self.assertItemsEqual(returned_cases, [extension_id, extension_2_id])
 
 
-@use_sql_backend
-class TestExtensionCaseIdsSQL(TestExtensionCaseIds):
-    pass
-
-
+@sharded
 class TestIndexedCaseIds(TestCase):
 
     def setUp(self):
@@ -186,11 +183,6 @@ class TestIndexedCaseIds(TestCase):
         )
         returned_cases = CaseAccessors(self.domain).get_indexed_case_ids([extension_id])
         self.assertItemsEqual(returned_cases, [host_id])
-
-
-@use_sql_backend
-class TestIndexedCaseIdsSQL(TestIndexedCaseIds):
-    pass
 
 
 class TestReverseIndexedCases(TestCase):

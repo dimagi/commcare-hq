@@ -28,7 +28,7 @@ from corehq.form_processor.models import (
 from corehq.form_processor.tests.test_basics import _submit_case_block
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    sharded,
 )
 from corehq.sql_db.routers import HINT_PLPROXY
 
@@ -36,7 +36,7 @@ DOMAIN = 'test-case-accessor'
 CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
 
 
-@use_sql_backend
+@sharded
 class CaseAccessorTestsSQL(TestCase):
 
     def setUp(self):
@@ -683,6 +683,7 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual({'user1', 'user2'}, owners)
 
 
+@sharded
 class CaseAccessorsTests(TestCase):
 
     def tearDown(self):
@@ -707,11 +708,6 @@ class CaseAccessorsTests(TestCase):
 
         case = accessors.get_case('c3')
         self.assertFalse(case.is_deleted)
-
-
-@use_sql_backend
-class CaseAccessorsTestsSQL(CaseAccessorsTests):
-    pass
 
 
 def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed=False, case_id=None):

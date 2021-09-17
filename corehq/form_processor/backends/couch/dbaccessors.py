@@ -5,45 +5,19 @@ from casexml.apps.case.dbaccessors import (
     get_extension_case_ids,
     get_indexed_case_ids,
     get_all_reverse_indices_info,
-    get_open_case_ids_in_domain,
     get_reverse_indexed_cases,
     get_related_indices,
 )
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids, iter_cases
-from casexml.apps.stock.models import StockTransaction
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.apps.commtrack.models import StockState
-from corehq.apps.hqcase.dbaccessors import (
-    get_case_ids_in_domain,
-    get_open_case_ids,
-    get_closed_case_ids,
-    get_case_ids_in_domain_by_owner,
-    get_case_ids_that_exist,
-    get_cases_in_domain_by_external_id,
-    get_deleted_case_ids_by_owner,
-    get_all_case_owner_ids)
-from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
     get_last_modified_dates
-from corehq.form_processor.exceptions import (
-    AttachmentNotFound,
-    LedgerValueNotFound,
-    NotAllowed,
-)
+from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
-    AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent,
-    AbstractLedgerAccessor)
-from couchforms.dbaccessors import (
-    get_forms_by_type,
-    get_deleted_form_ids_for_user,
-    get_form_ids_for_user,
-    get_forms_by_id,
-    get_form_ids_by_type,
-    iter_form_ids_by_xmlns,
-)
+    AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent)
 from couchforms.models import XFormInstance, doc_types, XFormOperation
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
@@ -69,15 +43,15 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def get_forms(form_ids, ordered=False):
-        return get_forms_by_id(form_ids)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_form_ids_in_domain_by_type(domain, type_):
-        return get_form_ids_by_type(domain, type_)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
-        return get_forms_by_type(domain, type_, recent_first, limit)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_with_attachments(form_id):
@@ -111,11 +85,11 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def get_deleted_form_ids_for_user(domain, user_id):
-        return get_deleted_form_ids_for_user(user_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_form_ids_for_user(domain, user_id):
-        return get_form_ids_for_user(domain, user_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def set_archived_state(form, archive, user_id):
@@ -129,14 +103,12 @@ class FormAccessorCouch(AbstractFormAccessor):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         def _form_delete(doc):
             doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
-        NotAllowed.check(domain)
         return _soft_delete(XFormInstance.get_db(), form_ids, deletion_date, deletion_id, _form_delete)
 
     @staticmethod
     def soft_undelete_forms(domain, form_ids):
         def _form_undelete(doc):
             doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
-        NotAllowed.check(domain)
         return _soft_undelete(XFormInstance.get_db(), form_ids, _form_undelete)
 
     @staticmethod
@@ -152,7 +124,7 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):
-        return iter_form_ids_by_xmlns(domain, xmlns)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):
@@ -202,7 +174,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_that_exist(domain, case_ids):
-        return get_case_ids_that_exist(domain, case_ids)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_case_xform_ids(case_id):
@@ -210,28 +182,23 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_in_domain(domain, type=None):
-        return get_case_ids_in_domain(domain, type=type)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
-        return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids, closed=closed)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):
-        return get_open_case_ids(domain, owner_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_closed_case_ids_for_owner(domain, owner_id):
-        return get_closed_case_ids(domain, owner_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
-        owner_ids = owner_ids if owner_ids else [None]
-        return [
-            case_id
-            for owner_id in owner_ids
-            for case_id in get_open_case_ids_in_domain(domain, type=case_type, owner_id=owner_id)
-        ]
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
@@ -266,14 +233,11 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-        return get_case_by_domain_hq_user_id(domain, user_id, case_type)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
-        cases = get_cases_in_domain_by_external_id(domain, external_id)
-        if case_type:
-            return [case for case in cases if case.type == case_type]
-        return cases
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
@@ -281,96 +245,15 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):
-        NotAllowed.check(domain)
         return _soft_undelete(CommCareCase.get_db(), case_ids)
 
     @staticmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
-        return get_deleted_case_ids_by_owner(owner_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_case_owner_ids(domain):
-        return get_all_case_owner_ids(domain)
-
-
-class LedgerAccessorCouch(AbstractLedgerAccessor):
-
-    @staticmethod
-    def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
-        from casexml.apps.stock.models import StockTransaction
-        db_transactions = StockTransaction.objects.filter(
-            case_id=case_id, product_id=product_id,
-            report__date__gt=window_start,
-            report__date__lte=window_end,
-            section_id=section_id,
-        ).order_by('report__date', 'pk')
-
-        first = True
-        for db_tx in db_transactions:
-            # for the very first transaction, include the previous one if there as well
-            # to capture the data on the edge of the window
-            if first:
-                previous = db_tx.get_previous_transaction()
-                if previous:
-                    yield previous
-                first = False
-
-            yield db_tx
-
-    @staticmethod
-    def get_ledger_value(case_id, section_id, entry_id):
-        try:
-            return StockState.objects.get(case_id=case_id, section_id=section_id, product_id=entry_id)
-        except StockState.DoesNotExist:
-            raise LedgerValueNotFound
-
-    @staticmethod
-    def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
-        query = StockTransaction.objects.filter(case_id=case_id)
-        if entry_id:
-            query = query.filter(product_id=entry_id)
-
-        if section_id:
-            query.filter(section_id=section_id)
-
-        return query.order_by('report__date', 'pk')
-
-    @staticmethod
-    def get_latest_transaction(case_id, section_id, entry_id):
-        return StockTransaction.latest(case_id, section_id, entry_id)
-
-    @staticmethod
-    def get_ledger_values_for_case(case_id):
-        from corehq.apps.commtrack.models import StockState
-
-        return StockState.objects.filter(case_id=case_id)
-
-    @staticmethod
-    def get_current_ledger_state(case_ids, ensure_form_id=False):
-        from casexml.apps.stock.utils import get_current_ledger_state
-        return get_current_ledger_state(case_ids, ensure_form_id=ensure_form_id)
-
-    @staticmethod
-    def get_ledger_values_for_cases(case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
-        from corehq.apps.commtrack.models import StockState
-
-        assert isinstance(case_ids, list)
-        if not case_ids:
-            return []
-
-        filters = {'case_id__in': case_ids}
-        if section_ids:
-            assert isinstance(section_ids, list)
-            filters['section_id__in'] = section_ids
-        if entry_ids:
-            assert isinstance(entry_ids, list)
-            filters['product_id__in'] = entry_ids
-        if date_start:
-            filters['last_modifed__gte'] = date_start
-        if date_end:
-            filters['last_modified__lte'] = date_end
-
-        return list(StockState.objects.filter(**filters))
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):

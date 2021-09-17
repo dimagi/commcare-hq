@@ -2,7 +2,6 @@ import os
 import mock
 from datetime import datetime, timedelta
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from corehq.form_processor.tasks import reprocess_archive_stubs
 from corehq.apps.change_feed import topics
@@ -11,12 +10,13 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from corehq.util.context_managers import drop_connected_signals
 from couchforms.signals import xform_archived, xform_unarchived
 
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import TestFileMixin
 from couchforms.models import UnfinishedArchiveStub
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
 
+@sharded
 class TestFormArchiving(TestCase, TestFileMixin):
     file_path = ('data', 'sample_xforms')
     root = os.path.dirname(__file__)
@@ -427,11 +427,6 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(1, archive_counter)
         self.assertEqual(1, restore_counter)
 
-
-@use_sql_backend
-class TestFormArchivingSQL(TestFormArchiving):
-
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def testPublishChanges(self):
         xml_data = self.get_xml('basic')
         result = submit_form_locally(

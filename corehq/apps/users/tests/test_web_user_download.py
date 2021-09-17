@@ -5,7 +5,7 @@ from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.users.bulk_download import parse_web_users
-from corehq.apps.users.models import Invitation, SQLUserRole, WebUser
+from corehq.apps.users.models import Invitation, UserRole, WebUser
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.elastic import ensure_index_deleted
 
@@ -20,7 +20,7 @@ class TestDownloadWebUsers(TestCase):
         cls.domain = 'old_shelf'
         cls.domain_obj = create_domain(cls.domain)
 
-        cls.role = SQLUserRole.create(domain=cls.domain, name='App Editor')
+        cls.role = UserRole.create(domain=cls.domain, name='App Editor')
         cls.qualified_role_id = cls.role.get_qualified_id()
 
         cls.user1 = WebUser.create(
@@ -58,7 +58,7 @@ class TestDownloadWebUsers(TestCase):
         cls.other_domain = 'new_shelf'
         cls.other_domain_obj = create_domain(cls.other_domain)
 
-        cls.other_role = SQLUserRole.create(domain=cls.domain, name='User Admin')
+        cls.other_role = UserRole.create(domain=cls.domain, name='User Admin')
 
         cls.user10 = WebUser.create(
             cls.other_domain_obj.name,
@@ -92,12 +92,7 @@ class TestDownloadWebUsers(TestCase):
             role=cls.other_role.get_qualified_id()
         )
 
-        populate_user_index([
-            cls.user1.to_json(),
-            cls.user2.to_json(),
-            cls.user10.to_json(),
-            cls.user11.to_json(),
-        ])
+        populate_user_index([cls.user1, cls.user2, cls.user10, cls.user11])
 
     @classmethod
     def tearDownClass(cls):

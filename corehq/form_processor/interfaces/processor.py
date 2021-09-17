@@ -4,7 +4,6 @@ from collections import namedtuple
 
 from couchdbkit.exceptions import BulkSaveError
 from django.conf import settings
-from lxml import etree
 from redis.exceptions import RedisError
 
 from casexml.apps.case import const
@@ -85,22 +84,14 @@ class FormProcessorInterface(object):
     @property
     @memoized
     def ledger_processor(self):
-        from corehq.form_processor.backends.couch.ledger import LedgerProcessorCouch
         from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
-        if self.use_sql_domain:
-            return LedgerProcessorSQL(domain=self.domain)
-        else:
-            return LedgerProcessorCouch(domain=self.domain)
+        return LedgerProcessorSQL(domain=self.domain)
 
     @property
     @memoized
     def ledger_db(self):
-        from corehq.form_processor.backends.couch.ledger import LedgerDBCouch
         from corehq.form_processor.backends.sql.ledger import LedgerDBSQL
-        if self.use_sql_domain:
-            return LedgerDBSQL()
-        else:
-            return LedgerDBCouch()
+        return LedgerDBSQL()
 
     def acquire_lock_for_xform(self, xform_id):
         lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=15 * 60)
@@ -256,18 +247,12 @@ class FormProcessorInterface(object):
         :return: tuple(case, lock). Either could be None
         :raises: IllegalCaseId
         """
-        # check across Couch & SQL to ensure global uniqueness
-        # check this domains DB first to support existing bad data
-        from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
-
         case, lock = self.processor.get_case_with_lock(case_id, lock, wrap)
         if case:
             return case, lock
 
-        if not couch_sql_migration_in_progress(self.domain) and not settings.ENTERPRISE_MODE:
-            # during migration we're copying from one DB to the other so this check will always fail
-            if self.other_db_processor().case_exists(case_id):
-                raise IllegalCaseId("Bad case id")
+        if self.other_db_processor().case_exists(case_id):
+            raise IllegalCaseId("Bad case id")
 
         return case, lock
 

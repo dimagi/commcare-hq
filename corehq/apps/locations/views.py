@@ -751,6 +751,7 @@ class EditLocationView(BaseEditLocationView):
         if not (self.can_edit_commcare_users or self.can_access_all_locations):
             return None
         form = UsersAtLocationForm(
+            request=self.request,
             domain_object=self.domain_object,
             location=self.location,
             data=self.request.POST if self.request.method == "POST" else None,

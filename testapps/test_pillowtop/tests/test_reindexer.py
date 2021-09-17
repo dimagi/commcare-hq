@@ -1,6 +1,5 @@
 import uuid
 
-from django.conf import settings
 from django.test import TestCase
 from corehq.util.es.elasticsearch import ConnectionError
 import mock
@@ -17,8 +16,7 @@ from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import get_es_new
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
-    run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import domains_needing_search_index
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
@@ -64,17 +62,15 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual('Domain', domain_doc['doc_type'])
         delete_es_index(DOMAIN_INDEX)
 
-    @run_with_all_backends
     def test_case_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 
-        index_id = 'sql-case' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'case'
+        index_id = 'sql-case'
         reindex_and_clean(index_id, reset=True)
 
         self._assert_case_is_in_es(case)
 
-    @run_with_all_backends
     def test_case_search_reindexer(self):
         es = get_es_new()
         FormProcessorTestUtils.delete_all_cases()
@@ -97,12 +93,11 @@ class PillowtopReindexerTest(TestCase):
         es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_case_is_in_es(case, esquery=CaseSearchES())
 
-    @run_with_all_backends
     def test_xform_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_xforms()
         form = create_and_save_a_form(DOMAIN)
 
-        index_id = 'sql-form' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'form'
+        index_id = 'sql-form'
         reindex_and_clean(index_id, reset=True)
 
         self._assert_form_is_in_es(form)

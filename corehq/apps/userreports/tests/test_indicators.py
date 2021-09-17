@@ -23,9 +23,7 @@ from corehq.form_processor.parsers.ledgers.helpers import (
     StockReportHelper,
     StockTransactionHelper,
 )
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import get_simple_wrapped_form
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import TestFormMetadata
 
 
@@ -616,11 +614,8 @@ class TestGetValuesByProduct(TestCase):
     def _create_models_for_stock_report_helper(self, form, stock_report_helper):
         processing_result = StockProcessingResult(form, stock_report_helpers=[stock_report_helper])
         processing_result.populate_models()
-        if should_use_sql_backend(self.domain_name):
-            from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-            LedgerAccessorSQL.save_ledger_values(processing_result.models_to_save)
-        else:
-            processing_result.commit()
+        from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
+        LedgerAccessorSQL.save_ledger_values(processing_result.models_to_save)
 
     @classmethod
     def setUpClass(cls):
@@ -676,7 +671,6 @@ class TestGetValuesByProduct(TestCase):
         StockTransaction.objects.all().delete()
         super(TestGetValuesByProduct, self).tearDown()
 
-    @run_with_all_backends
     def test_get_soh_values_by_product(self):
         values = get_values_by_product(
             self.domain_name, self.case_id, 'soh', ['coke', 'surge', 'new_coke']
@@ -685,7 +679,6 @@ class TestGetValuesByProduct(TestCase):
         self.assertEqual(values.get('surge'), 85)
         self.assertEqual(values.get('new_coke'), None)
 
-    @run_with_all_backends
     def test_get_consumption_by_product(self):
         values = get_values_by_product(
             self.domain_name, self.case_id, 'consumption', ['coke', 'surge', 'new_coke']

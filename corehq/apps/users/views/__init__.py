@@ -9,6 +9,7 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
+from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from django.contrib import messages
@@ -76,6 +77,7 @@ from corehq.apps.sms.verify import (
 )
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import (
     can_use_filtered_user_download,
     require_can_edit_or_view_web_users,
@@ -87,7 +89,6 @@ from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
     SetUserPasswordForm,
-    UpdateUserPermissionForm,
     UpdateUserRoleForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
@@ -101,7 +102,7 @@ from corehq.apps.users.models import (
     StaticRole,
     WebUser,
     Permissions,
-    SQLUserRole,
+    UserRole,
 )
 from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
@@ -307,11 +308,12 @@ class BaseEditUserView(BaseUserSettingsView):
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
-            return CommtrackUserForm(self.request.POST, domain=self.domain)
+            return CommtrackUserForm(self.request.POST, request=self.request, domain=self.domain)
 
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         return CommtrackUserForm(
             domain=self.domain,
+            request=self.request,
             initial={
                 'primary_location': user_domain_membership.location_id,
                 'program_id': user_domain_membership.program_id,
@@ -379,16 +381,6 @@ class EditWebUserView(BaseEditUserView):
         return get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
 
     @property
-    def form_user_update_permissions(self):
-        return UpdateUserPermissionForm(auto_id=False, initial={'superuser': self.editable_user.is_superuser})
-
-    @property
-    def main_context(self):
-        ctx = super(EditWebUserView, self).main_context
-        ctx.update({'form_user_update_permissions': self.form_user_update_permissions})
-        return ctx
-
-    @property
     @memoized
     def can_grant_superuser_access(self):
         return self.request.couch_user.is_superuser and toggles.SUPPORT.enabled(self.request.couch_user.username)
@@ -454,18 +446,6 @@ class EditWebUserView(BaseEditUserView):
                     )
                 )
 
-        if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
-            is_superuser = 'superuser' in self.request.POST and self.request.POST['superuser'] == 'on'
-            current_superuser_status = self.editable_user.is_superuser
-            if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
-                                                                        editable_user=self.editable_user,
-                                                                        is_superuser=is_superuser):
-                if current_superuser_status != is_superuser:
-                    log_user_change(self.domain, self.editable_user, changed_by_user=self.couch_user,
-                                    changed_via=USER_CHANGE_VIA_WEB,
-                                    fields_changed={'is_superuser': is_superuser})
-                messages.success(self.request,
-                                 _('Changed system permissions for user "%s"') % self.editable_user.username)
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
@@ -502,7 +482,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
     @memoized
     def non_admin_roles(self):
         return list(sorted(
-            SQLUserRole.objects.get_by_domain(self.domain),
+            UserRole.objects.get_by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
@@ -691,9 +671,9 @@ class ListRolesView(BaseRoleAccessView):
             'web_apps_privilege': self.web_apps_privilege,
             'has_report_builder_access': has_report_builder_access(self.request),
             'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
-            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain)
+            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
+            'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
-
 
 @always_allow_project_access
 @require_can_edit_or_view_web_users
@@ -706,7 +686,7 @@ def paginate_enterprise_users(request, domain):
     # Get linked mobile users
     web_user_usernames = [u.username for u in web_users]
     mobile_result = (
-        UserES().domains(domains).mobile_users().sort('username.exact')
+        UserES().show_inactive().domains(domains).mobile_users().sort('username.exact')
         .filter(
             queries.nested(
                 'user_data_es',
@@ -719,15 +699,16 @@ def paginate_enterprise_users(request, domain):
     for hit in mobile_result.hits:
         login_as_user = {data['key']: data['value'] for data in hit['user_data_es']}.get('login_as_user')
         mobile_users[login_as_user].append(CommCareUser.wrap(hit))
-
     users = []
     allowed_domains = set(domains) - {domain}
     for web_user in web_users:
+        loginAsUserCount = len(list(filter(lambda m: m['is_active'], mobile_users[web_user.username])))
         other_domains = [m.domain for m in web_user.domain_memberships if m.domain in allowed_domains]
         users.append({
             **_format_enterprise_user(domain, web_user),
             'otherDomains': other_domains,
-            'loginAsUserCount': len(mobile_users[web_user.username]),
+            'loginAsUserCount': loginAsUserCount,
+            'inactiveMobileCount': len(mobile_users[web_user.username]) - loginAsUserCount,
         })
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
             profile = mobile_user.get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
@@ -736,6 +717,7 @@ def paginate_enterprise_users(request, domain):
                 'profile': profile.name if profile else None,
                 'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
                 'loginAsUser': web_user.username,
+                'is_active': mobile_user.is_active,
             })
 
     return JsonResponse({
@@ -816,9 +798,10 @@ def remove_web_user(request, domain, couch_user_id):
     if user:
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
-        log_user_change(request.domain, couch_user=user,
+        # web user's membership is bound to the domain, so log as a change for that domain
+        log_user_change(by_domain=request.domain, for_domain=domain, couch_user=user,
                         changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                        message=f"Removed from domain '{domain}'")
+                        change_messages=UserChangeMessage.domain_removal(domain))
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -885,17 +868,22 @@ def _update_role_from_view(domain, role_data):
 
     if "_id" in role_data:
         try:
-            role = SQLUserRole.objects.by_couch_id(role_data["_id"])
-        except SQLUserRole.DoesNotExist:
-            role = SQLUserRole()
+            role = UserRole.objects.by_couch_id(role_data["_id"])
+        except UserRole.DoesNotExist:
+            role = UserRole()
         else:
             if role.domain != domain:
                 raise Http404()
     else:
-        role = SQLUserRole()
+        role = UserRole()
+
+    name = role_data["name"]
+    if not role.id:
+        if name.lower() == 'admin' or UserRole.objects.filter(domain=domain, name__iexact=name).exists():
+            raise ValueError(_("A role with the same name already exists"))
 
     role.domain = domain
-    role.name = role_data["name"]
+    role.name = name
     role.default_landing_page = landing_page
     role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
@@ -927,8 +915,8 @@ def delete_user_role(request, domain):
             ).format(role=role_data["name"], user_count=user_count)
         }, status=400)
     try:
-        role = SQLUserRole.objects.by_couch_id(role_data["_id"], domain=domain)
-    except SQLUserRole.DoesNotExist:
+        role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
+    except UserRole.DoesNotExist:
         return JsonResponse({})
     copy_id = role.couch_id
     role.delete()
@@ -1250,6 +1238,14 @@ def delete_phone_number(request, domain, couch_user_id):
         raise Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
+    log_user_change(
+        by_domain=request.domain,
+        for_domain=user.domain,
+        couch_user=user,
+        changed_by_user=request.couch_user,
+        changed_via=USER_CHANGE_VIA_WEB,
+        change_messages=UserChangeMessage.phone_numbers_removed([phone_number])
+    )
     from corehq.apps.users.views.mobile import EditCommCareUserView
     redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
@@ -1328,6 +1324,14 @@ def change_password(request, domain, login_id):
         form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
+            log_user_change(
+                by_domain=domain,
+                for_domain=commcare_user.domain,
+                couch_user=commcare_user,
+                changed_by_user=request.couch_user,
+                changed_via=USER_CHANGE_VIA_WEB,
+                change_messages=UserChangeMessage.password_reset()
+            )
             json_dump['status'] = 'OK'
             form = SetUserPasswordForm(request.project, login_id, user='')
     else:

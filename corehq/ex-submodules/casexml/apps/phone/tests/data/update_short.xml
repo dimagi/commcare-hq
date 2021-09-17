@@ -7,10 +7,12 @@
     <username>admin</username>
     <uid>somenewuid</uid>
 </meta>
-<case>
-    <case_id>asdf</case_id>
-    <user_id>{user_id}</user_id>
-    <date_modified>2010-06-30T13:42:50</date_modified>
+<case
+    case_id="asdf"
+    user_id="{user_id}"
+    date_modified="2010-06-30T13:42:50"
+    xmlns="http://commcarehq.org/case/transaction/v2"
+>
     <update>
         <somenewthing>update!</somenewthing>
     </update>

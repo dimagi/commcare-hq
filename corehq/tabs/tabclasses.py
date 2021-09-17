@@ -1,3 +1,4 @@
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
@@ -13,7 +14,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
 )
-from corehq.apps.accounting.models import Invoice, Subscription
+from corehq.apps.accounting.models import Invoice, Subscription, BillingAccount
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
     domain_is_on_trial,
@@ -48,6 +49,7 @@ from corehq.apps.integration.views import (
     GaenOtpServerSettingsView,
     HmacCalloutSettingsView,
 )
+from corehq.apps.linked_domain.util import can_access_release_management_feature
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -97,7 +99,7 @@ from corehq.messaging.scheduling.views import (
 from corehq.motech.dhis2.views import DataSetMapListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, RELEASE_MANAGEMENT
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
     dropdown_dict,
@@ -1624,6 +1626,10 @@ class EnterpriseSettingsTab(UITab):
 
         items.append((_('Manage Enterprise'), enterprise_views))
 
+        if BillingAccount.should_show_sms_billable_report(self.domain):
+            items.extend(EnterpriseReportDispatcher.navigation_sections(
+                request=self._request, domain=self.domain))
+
         return items
 
 
@@ -1680,6 +1686,7 @@ class ProjectSettingsTab(UITab):
         '/a/{domain}/motech/',
         '/a/{domain}/dhis2/',
         '/a/{domain}/openmrs/',
+        '/a/{domain}/registries/',
     )
 
     _is_viewable = False
@@ -1730,9 +1737,13 @@ class ProjectSettingsTab(UITab):
             if integration_nav:
                 items.append((_('Integration'), integration_nav))
 
-        feature_flag_items = _get_feature_flag_items(self.domain)
-        if feature_flag_items and user_is_admin and has_project_access:
+        feature_flag_items = _get_feature_flag_items(self.domain, self.couch_user)
+        if feature_flag_items and has_project_access:
             items.append((_('Pre-release Features'), feature_flag_items))
+
+        release_management_items = _get_release_management_items(self.couch_user, self.domain)
+        if release_management_items:
+            items.append((_('Enterprise Release Management'), release_management_items))
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
@@ -1963,30 +1974,67 @@ def _get_integration_section(domain):
     return integration
 
 
-def _get_feature_flag_items(domain):
+def _get_feature_flag_items(domain, couch_user):
+    user_is_admin = couch_user.is_domain_admin(domain)
+
     from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
     feature_flag_items = []
-    if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
+    if user_is_admin and toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({
             'title': _('Case Search'),
             'url': reverse('case_search_config', args=[domain])
         })
-    if toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
+    if user_is_admin and toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
         feature_flag_items.append({
             'title': _('Location Fixture'),
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
         })
 
-    if toggles.LINKED_DOMAINS.enabled(domain):
+    # show ERM version of linked projects if domain has privilege
+    can_access_linked_domains = (
+        user_is_admin and toggles.LINKED_DOMAINS.enabled(domain)
+        and not domain_has_privilege(domain, RELEASE_MANAGEMENT)
+    )
+    if can_access_linked_domains:
         feature_flag_items.append({
-            'title': _('Linked Projects'),
+            'title': _('Linked Project Spaces'),
             'url': reverse('domain_links', args=[domain])
         })
         feature_flag_items.append({
-            'title': _('Linked Project History'),
+            'title': _('Linked Project Space History'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
+
+    from corehq.apps.registry.utils import RegistryPermissionCheck
+    permission_check = RegistryPermissionCheck(domain, couch_user)
+    if toggles.DATA_REGISTRY.enabled(domain) and permission_check.can_manage_some:
+        feature_flag_items.append({
+            'title': _('Data Registries'),
+            'url': reverse('data_registries', args=[domain]),
+            'subpages': [
+                {
+                    'title': _("Manage Registry"),
+                    'urlname': "manage_registry",
+                },
+            ],
+        })
     return feature_flag_items
+
+
+def _get_release_management_items(user, domain):
+    release_management_items = []
+
+    if can_access_release_management_feature(user, domain):
+        release_management_items.append({
+            'title': _('Linked Project Spaces'),
+            'url': reverse('domain_links', args=[domain])
+        })
+        release_management_items.append({
+            'title': _('Linked Project Space History'),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
+        })
+
+    return release_management_items
 
 
 class MySettingsTab(UITab):

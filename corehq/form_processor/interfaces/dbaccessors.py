@@ -311,11 +311,6 @@ class AbstractCaseAccessor(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def get_open_case_ids(case_ids):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
     def get_related_indices(case_ids, exclude_indices):
         raise NotImplementedError
 
@@ -612,11 +607,7 @@ class LedgerAccessors(object):
     @memoized
     def db_accessor(self):
         from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-        from corehq.form_processor.backends.couch.dbaccessors import LedgerAccessorCouch
-        if should_use_sql_backend(self.domain):
-            return LedgerAccessorSQL
-        else:
-            return LedgerAccessorCouch
+        return LedgerAccessorSQL
 
     def get_transactions_for_consumption(self, case_id, product_id, section_id, window_start, window_end):
         return self.db_accessor.get_transactions_for_consumption(

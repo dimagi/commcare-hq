@@ -1,6 +1,6 @@
 import uuid
 
-from django.test import override_settings, TestCase
+from django.test import TestCase
 from mock import MagicMock, patch
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
@@ -10,12 +10,10 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (
     change_meta_from_kafka_message,
 )
-from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case import get_case_pillow
@@ -52,27 +50,6 @@ class CaseSearchPillowTest(TestCase):
         ensure_index_deleted(CASE_SEARCH_INDEX)
         CaseSearchConfig.objects.all().delete()
         super(CaseSearchPillowTest, self).tearDown()
-
-    def test_case_search_pillow(self):
-        consumer = get_test_kafka_consumer(topics.CASE)
-        kafka_seq = self._get_kafka_seq()
-
-        case = self._make_case(case_properties={'foo': 'bar'})
-        producer.send_change(topics.CASE, doc_to_change(case.to_json()).metadata)
-        # confirm change made it to kafka
-        message = next(consumer)
-        change_meta = change_meta_from_kafka_message(message.value)
-        self.assertEqual(case.case_id, change_meta.document_id)
-        self.assertEqual(self.domain, change_meta.domain)
-
-        # enable case search for domain
-        with patch('corehq.pillows.case_search.domain_needs_search_index',
-                   new=MagicMock(return_value=True)) as fake_case_search_enabled_for_domain:
-            # send to elasticsearch
-            self.pillow.process_changes(since=kafka_seq, forever=False)
-            fake_case_search_enabled_for_domain.assert_called_with(self.domain)
-
-        self._assert_case_in_es(self.domain, case)
 
     def test_case_search_reindex_by_domain(self):
         """
@@ -116,7 +93,6 @@ class CaseSearchPillowTest(TestCase):
         # make sure nothing is left
         self._assert_index_empty()
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_sql_case_search_pillow(self):
         consumer = get_test_kafka_consumer(topics.CASE_SQL)
         # have to get the seq id before the change is processed
