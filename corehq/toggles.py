@@ -395,6 +395,15 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
 
 
 class FeatureRelease(DynamicallyPredictablyRandomToggle):
+    """This class is designed to allow release of features in a controlled manner.
+    The primary purpose is to decouple code deploys from feature releases.
+
+    Only the 'domain' namespace is applicable for feature release toggles.
+
+    In addition the normal arguments, feature release toggles must also provide
+    an 'owner' to indicate the member of the team responsible for releasing this feature.
+    This will be displayed on the UI when editing the toggle.
+    """
     def __init__(
         self,
         slug,
