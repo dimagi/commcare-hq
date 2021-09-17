@@ -111,87 +111,52 @@ def get_upstream_and_downstream_keywords(domain):
 
 
 def build_app_view_model(app, last_update=None):
-    can_update = False
-    name = _('Unknown App')
-    detail = None
+    if not app:
+        return None
 
-    if app:
-        can_update = True
-        name = app.name
-        detail = AppLinkDetail(app_id=app._id).to_json()
-
-    view_model = build_linked_data_view_model(
+    return build_linked_data_view_model(
         model_type=MODEL_APP,
-        name=f"{LINKED_MODELS_MAP[MODEL_APP]} ({name})",
-        detail=detail,
+        name=f"{LINKED_MODELS_MAP[MODEL_APP]} ({app.name})",
+        detail=AppLinkDetail(app_id=app._id).to_json(),
         last_update=last_update,
-        can_update=can_update
     )
-
-    return view_model
 
 
 def build_fixture_view_model(fixture, last_update=None):
-    can_update = False
-    name = _('Unknown Table')
-    detail = None
+    if not fixture:
+        return None
 
-    if fixture:
-        can_update = fixture.is_global
-        name = fixture.tag
-        detail = FixtureLinkDetail(tag=fixture.tag).to_json()
-
-    view_model = build_linked_data_view_model(
+    return build_linked_data_view_model(
         model_type=MODEL_FIXTURE,
-        name=f"{LINKED_MODELS_MAP[MODEL_FIXTURE]} ({name})",
-        detail=detail,
+        name=f"{LINKED_MODELS_MAP[MODEL_FIXTURE]} ({fixture.tag})",
+        detail=FixtureLinkDetail(tag=fixture.tag).to_json(),
         last_update=last_update,
-        can_update=can_update
+        can_update=fixture.is_global,
     )
-
-    return view_model
 
 
 def build_report_view_model(report, last_update=None):
-    can_update = False
-    name = _("Unknown Report")
-    detail = None
+    if not report:
+        return None
 
-    if report:
-        can_update = True
-        name = report.title
-        detail = ReportLinkDetail(report_id=report.get_id).to_json()
-
-    view_model = build_linked_data_view_model(
+    return build_linked_data_view_model(
         model_type=MODEL_REPORT,
-        name=f"{LINKED_MODELS_MAP[MODEL_REPORT]} ({name})",
-        detail=detail,
+        name=f"{LINKED_MODELS_MAP[MODEL_REPORT]} ({report.title})",
+        detail=ReportLinkDetail(report_id=report.get_id).to_json(),
         last_update=last_update,
-        can_update=can_update
     )
-
-    return view_model
 
 
 def build_keyword_view_model(keyword, last_update=None):
-    can_update = False
-    name = _("Deleted Keyword")
-    detail = None
+    if not keyword:
+        return None
 
-    if keyword:
-        can_update = True
-        name = keyword.keyword
-        detail = KeywordLinkDetail(keyword_id=str(keyword.id)).to_json()
-
-    view_model = build_linked_data_view_model(
+    return build_linked_data_view_model(
         model_type=MODEL_KEYWORD,
-        name=f"{LINKED_MODELS_MAP[MODEL_KEYWORD]} ({name})",
-        detail=detail,
+        name=f"{LINKED_MODELS_MAP[MODEL_KEYWORD]} ({keyword.keyword})",
+        detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json(),
         last_update=last_update,
-        can_update=can_update
     )
-
-    return view_model
 
 
 def build_feature_flag_view_models(domain, ignore_models=None):
@@ -384,9 +349,9 @@ def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fix
                 detail=action.model_detail,
                 last_update=last_update,
             )
-
-        if view_model['type'] not in dict(SUPERUSER_DATA_MODELS).keys() or is_superuser:
-            linked_data_view_models.append(view_model)
+        if view_model:
+            if view_model['type'] not in dict(SUPERUSER_DATA_MODELS).keys() or is_superuser:
+                linked_data_view_models.append(view_model)
 
     # Add data models that have never been pulled into the downstream domain before
     # ignoring any models we have already added via domain history
