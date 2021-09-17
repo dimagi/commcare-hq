@@ -22,27 +22,16 @@ hqDefine("reports/js/saved_reports_main", [
             }));
         };
 
-        $("#js-scheduled-reports-table").koApplyBindings(scheduledReports.scheduledReportListModel({
+        $("#js-scheduled_reports").koApplyBindings(scheduledReports.scheduledReportListModel({
             scheduled_reports: initialPageData.get('scheduled_reports'),
+            other_scheduled_reports: initialPageData.get('others_scheduled_reports'),
             is_admin: initialPageData.get('is_admin'),
             user_email: initialPageData.get('user_email'),
-            is_owner: true,
+            couch_user: initialPageData.get('couch_user'),
             urls: {
                 getPage: initialPageData.reverse("page_context"),
                 getPagePage: initialPageData.reverse("reports_home"),
-            }
+            },
         }));
-
-        $("#js-other-scheduled-reports-table").koApplyBindings(scheduledReports.scheduledReportListModel({
-            scheduled_reports: initialPageData.get('others_scheduled_reports'),
-            is_admin: initialPageData.get('is_admin'),
-            user_email: initialPageData.get('user_email'),
-            is_owner: false,
-            urls: {
-                getPage: initialPageData.reverse("page_context"),
-                getPagePage: initialPageData.reverse("reports_home"),
-            }
-        }));
-
     });
 });

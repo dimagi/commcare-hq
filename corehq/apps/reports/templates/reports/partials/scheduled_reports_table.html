@@ -12,12 +12,12 @@
           {% trans "Bulk Actions" %}
           <button type="button"
                   class="btn btn-xs btn-default"
-                  data-bind="click: $root.selectAll">
+                  data-bind="click: selectAll">
             {% trans 'All' %}
           </button>
           <button type="button"
                   class="btn btn-xs btn-default"
-                  data-bind="click: $root.selectNone">
+                  data-bind="click: selectNone">
             {% trans 'None' %}
           </button>
         </th>
@@ -27,7 +27,7 @@
       {% endif %}
       <th class="{% if is_owner %}col-sm-4{% else %}col-sm-2{% endif %}">{% trans "Reports" %}</th>
       <th class="col-sm-2">{% trans "Day and Time" %}</th>
-      <th class="col-sm-2">{% trans "Recipients" %}</th> <!-- buttons too crowded? change to col-sm-1? -->
+      <th class="col-sm-2">{% trans "Recipients" %}</th>
       <th class="col-sm-4">{% trans "Actions" %}</th>
     </tr>
   </thead>

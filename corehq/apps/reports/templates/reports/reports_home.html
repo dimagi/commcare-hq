@@ -91,32 +91,56 @@
     {% if report.show and request.couch_user.can_download_reports %}
       <div class="tab-pane" id="scheduled-reports">
         <p><a class="btn btn-primary track-usage-link"
-              href="{% url "edit_scheduled_report" domain %}"
+              href="{% url 'edit_scheduled_report' domain %}"
               data-category="Scheduled Reports"
               data-action="Configure a scheduled report">
           <i class="fa fa-plus"></i>
           {% trans "Create a New Scheduled Report" %}
         </a></p>
-        <div>
-          {% if scheduled_reports or others_scheduled_reports %} <!-- convert this to a similar panel system as exports? -->
-            <div id="js-scheduled-reports-table">
-              <h3>{% trans "My Scheduled Reports" %}</h3>
-              <div class="row" style="display: none" data-bind="visible:selectedReportsCount()"> <!-- DISPLAY: NONE IS A TEMPORARY FIX -->
-                <a class="btn btn-primary" style="margin-bottom: 13px; margin-left: 10px; float: left" data-bind="click: bulkSend">
-                  {% trans "Send Selected Reports" %}
-                </a>
-                <a class="btn btn-danger" style="margin-bottom: 13px; margin-left: 8px; float: left" data-bind="click: bulkDelete">
-                  {% trans "Delete Selected Reports" %}
-                </a>
+        <div id="js-scheduled_reports">
+          <div data-bind="if: reports().length">
+            <div class="row" style="display: none" data-bind="visible:selectedReportsCount()">
+              <a class="btn btn-primary" style="margin-right: 10px; float: right" data-bind="click: bulkSend">
+                {% trans "Send Selected Reports" %}
+              </a>
+              <div style="margin-right: 8px; float: right">
+                <input name="delete_list" type="hidden"/>
+                <p>
+                  <a class="btn btn-danger"
+                     data-toggle="modal"
+                     data-bind="attr: {
+                                  href: '#bulk-delete-modal'
+                                }">
+                    {% trans "Delete Selected Reports" %}
+                  </a>
+                  {% include "reports/partials/bulk_delete_modal.html" %}
+                </p>
+
               </div>
-              <div class="alert alert-info" data-bind="visible: !pageLoaded()">
+            </div>
+            <div data-bind="foreach: panels()">
+              <h3 data-bind="text: header"></h3> <!-- how to get the translator tag thing -->
+              <div class="alert alert-info" data-bind="visible: isLoadingPanel">
                 <i class="fa fa-spin fa-spinner"></i>
                 {% trans "Loading reports..." %}
               </div>
-              <div style="display: none" data-bind="visible: pageLoaded">
-                {% include 'reports/partials/scheduled_reports_table.html' with is_owner=True %}
+              <div style="display: none" class="alert alert-info" data-bind="visible: $root.isBulkDeleting">
+                <i class="fa fa-refresh fa-spin"></i>
+                {% trans "Deleting reports..." %}
               </div>
-              <pagination data-bind="visible: scheduledReports().length && pageLoaded"
+              <div style="display: none" class="alert alert-info" data-bind="visible: $root.isBulkSending">
+                <i class="fa fa-refresh fa-spin"></i>
+                {% trans "Sending reports..." %}
+              </div>
+              <div style="display: none" data-bind="visible: !isLoadingPanel() && !$root.bulkAction()">
+                <div data-bind="if: is_owner">
+                  {% include 'reports/partials/scheduled_reports_table.html' with is_owner=True %}
+                </div>
+                <div data-bind="if: !is_owner">
+                  {% include 'reports/partials/scheduled_reports_table.html' with is_owner=False %}
+                </div>
+              </div>
+              <pagination data-bind="visible: scheduledReports().length && !isLoadingPanel() && !$root.bulkAction()"
                       data-apply-bindings="false"
                       params="goToPage: goToPage,
                               slug: 'scheduled-reports',
@@ -124,32 +148,8 @@
                               totalItems: totalItems,
                               onLoad: onPaginationLoad"></pagination>
             </div>
-            <div id="js-other-scheduled-reports-table">
-              <h3>{% trans "Other Scheduled Reports" %}</h3>
-              <div class="row" style="display: none" data-bind="visible:selectedReportsCount()"> <!-- DISPLAY: NONE IS A TEMPORARY FIX -->
-                <a class="btn btn-primary" style="margin-bottom: 13px; margin-left: 10px; float: left" data-bind="click: bulkSend">
-                  {% trans "Send Selected Reports" %}
-                </a>
-                <a class="btn btn-danger" style="margin-bottom: 13px; margin-left: 8px; float: left" data-bind="click: bulkDelete">
-                  {% trans "Delete Selected Reports" %}
-                </a>
-              </div>
-              <div class="alert alert-info" data-bind="visible: !pageLoaded()">
-                <i class="fa fa-spin fa-spinner"></i>
-                {% trans "Loading reports..." %}
-              </div>
-              <div style="display: none" data-bind="visible: pageLoaded">
-                {% include 'reports/partials/scheduled_reports_table.html' with is_owner=False %}
-              </div>
-              <pagination data-bind="visible: scheduledReports().length && pageLoaded"
-                      data-apply-bindings="false"
-                      params="goToPage: goToPage,
-                              slug: 'scheduled-reports',
-                              perPage: perPage,
-                              totalItems: totalItems,
-                              onLoad: onPaginationLoad"></pagination>
-            </div>
-          {% else %}
+          </div>
+          <div style="display: none" data-bind="if: !reports().length">
             <div class="alert alert-info">
               {% blocktrans %}
                 You don't have any scheduled reports.  You can create a scheduled
@@ -157,7 +157,7 @@
                 on a regular basis.
               {% endblocktrans %}
             </div>
-          {% endif %}
+          </div>
         </div>
       </div>
     {% endif %}

@@ -1,6 +1,7 @@
 /*
 
     ScheduledReportModel - model representing a single row on the list / a single report filter file
+    ScheduleReportPanelModel - model representing a whole table ('My Scheduled Reports' and 'Other Scheduled Reports')
     ScheduledReportListModel - model representing the whole page (list of reports, actions)
 
 */
@@ -23,90 +24,146 @@ hqDefine("reports/js/scheduled_reports_list", [
 
         self.configMany = ko.computed(function() {
             if (data.configs.length === 1){
-                return false
+                return false;
             };
-            return true
-        })
+            return true;
+        });
 
         self.recipient_email_count = ko.computed(function() {
             return self.recipient_emails().length;
-        })
+        });
 
         self.deleteScheduledReport = function(observable, event){
             $(event.currentTarget).closest('form').submit();
-        }
+        };
+
         self.is_owner = isOwner;
         self.is_admin = isAdmin
+        self.firstConfig = ko.observable(data.configs[0]);
 
         return self;
     };
 
-    var scheduledReportListModel = function (options) {
-
+    var scheduledReportsPanelModel = function (options) {
         var self = {};
 
-        self.urls = options.urls;
+        self.urls = options.urls
 
-        self.pageLoaded = ko.observable(false); //temp(?) solution to hide unloaded page view
-
-        self.scheduledReports = ko.observableArray([]);
-        self.items = ko.observableArray(); //the sliced list
+        self.scheduledReports = ko.observableArray();
+        self.items = ko.observableArray();
+        self.isLoadingPanel = ko.observable(true);
         self.perPage = ko.observable();
+        self.header = options.header;
         self.is_owner = options.is_owner;
         self.is_admin = options.is_admin;
-        //self.totalItems = ko.observable();
 
-        self.scheduledReports(ko.utils.arrayMap(options.scheduled_reports, function (report) {
-            return scheduledReportModel(report, options.is_owner, options.is_admin);
+        self.scheduledReports(ko.utils.arrayMap(options.reports, function (report) {
+            return scheduledReportModel(report, self.is_owner, self.is_admin);
         }));
 
         self.goToPage = function(page) {
-            self.pageLoaded(false);
+            self.isLoadingPanel(true);
             self.items(self.scheduledReports.slice(self.perPage() * (page - 1), self.perPage() * page));
-            self.pageLoaded(true);
+            self.isLoadingPanel(false);
             //self.getScheduledReportsPage(page);
         }
 
+        /*
         //eventually should slice list on server side - does it matter performance-wise?
         self.getScheduledReportsPage = function (page) {
             //self.pageLoaded(false);
             $.ajax({
                 method: 'GET',
-                url: self.urls.getPagePage,
+                url: self.urls.getPage,
                 data: {
+                    'limit_request': true,
+                    'couch_user': options.couch_user,
                     'page': page,
                     'limit': self.perPage(),
-                    //'myReports': is owner or not,
+                    'myReports': self.is_owner,
                 },
                 success: function (data) {
                     //self.pageLoaded(true);
                     console.log("it's working?");
-                    console.log(data.reports);
+                    console.log(data.total);
+                    //console.log(data.reports());
                 },
                 error: function () {
                     console.log("failed");
                 },
             });
         }
-
-        self.totalItems = ko.observable(self.scheduledReports().length);
+        */
 
         self.selectAll = function () {
-            _.each(self.scheduledReports(), function (e) { e.addedToBulk(true); });
+            _.each(self.items(), function (e) { e.addedToBulk(true); });
         };
 
         self.selectNone = function () {
-            _.each(self.scheduledReports(), function (e) { e.addedToBulk(false); });
+            _.each(self.items(), function (e) { e.addedToBulk(false); });
         }
 
+        self.totalItems = ko.observable(self.scheduledReports().length);
+
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
+
+        return self;
+    }
+
+    var scheduledReportListModel = function (options) {
+
+        var self = {};
+        window.scrollTo(0, 0);
+
+        self.urls = options.urls;
+
+        self.bulkAction = ko.observable(false);
+        self.isBulkDeleting = ko.observable(false);
+        self.isBulkSending = ko.observable(false);
+
+        self.panels = ko.observableArray([]);
+        self.panels.push(scheduledReportsPanelModel({
+            reports: options.scheduled_reports,
+            is_owner: true,
+            is_admin: options.is_admin,
+            header: "My Scheduled Reports",
+            urls: options.urls,
+            couch_user: options.couch_user,
+        }));
+        self.panels.push(scheduledReportsPanelModel({
+            reports: options.other_scheduled_reports,
+            is_owner: false,
+            is_admin: options.is_admin,
+            header: "Other Scheduled Reports",
+            urls: options.urls,
+            couch_user: options.couch_user,
+        }));
+
+        self.reports = ko.computed(function () {
+            return _.flatten(_.map(self.panels(), function (panel) { return panel.scheduledReports(); }));
+        });
+
+        self.selectedReports = ko.computed(function () {
+            return _.filter(self.reports(), function (e) { return e.addedToBulk(); });
+        });
+
         self.selectedReportsCount = ko.computed(function () {
-            return _.filter(self.scheduledReports(), function (e) { return e.addedToBulk(); }).length;
+            return self.selectedReports().length;
+        });
+
+        self.multiple = ko.computed(function () {
+            if (self.selectedReportsCount() > 1) {
+                return true;
+            }
+            return false;
         });
 
         self.bulkSend = function(){
-            self.pageLoaded(false);
-            console.log(self.pageLoaded);
-            sendList = _.filter(self.scheduledReports(), function (e) {return e.addedToBulk()});
+            self.bulkAction(true);
+            self.isBulkSending(true);
+            sendList = _.filter(self.reports(), function (e) {return e.addedToBulk()});
             ids = []
             for (let i = 0; i < sendList.length; i++) {
                 ids.push(sendList[i].id())
@@ -117,15 +174,16 @@ hqDefine("reports/js/scheduled_reports_list", [
                 url: sendList[0].sendUrl(),
                 data: {"sendList": ids,
                        "bulk_send_count": sendList.length},
-                success: function () {
+                success: function (url) {
                     location.reload()
                 }
             });
         }
 
         self.bulkDelete = function(){
-            self.pageLoaded(false);
-            deleteList = _.filter(self.scheduledReports(), function (e) {return e.addedToBulk()});
+            self.bulkAction(true);
+            self.isBulkDeleting(true);
+            deleteList = _.filter(self.reports(), function (e) {return e.addedToBulk()});
             ids = []
             for (let i = 0; i < deleteList.length; i++) {
                 ids.push(deleteList[i].id())
@@ -141,10 +199,6 @@ hqDefine("reports/js/scheduled_reports_list", [
                 }
             });
         }
-
-        self.onPaginationLoad = function () {
-            self.goToPage(1);
-        };
 
         return self;
     };

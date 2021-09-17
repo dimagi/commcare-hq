@@ -231,6 +231,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
+        print(args)
         return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -340,13 +341,20 @@ class MySavedReportsView(BaseProjectReportSectionView):
             self.report_details(r) for r in self.scheduled_reports
         ]
 
-        if self.request.GET.get('page'):
-            print("request is coming through")
-            return json_response({
-                'something': 4,
+        total = 0
+        if self.request.GET.get('limit_request') == 'true':
+            page = int(self.request.GET.get('page', 1))
+            limit = int(self.request.GET.get('limit', 5))
+            if self.request.GET.get('myReports') == 'true':
+                total = len(scheduled_reports)
+                scheduled_reports = scheduled_reports[limit * (page - 1):limit * page]
+            else:
+                total = len(others_scheduled_reports)
+                scheduled_reports = others_scheduled_reports[limit * (page - 1):limit * page]
+            return JsonResponse({
+                'reports': scheduled_reports,
+                'total': total,
             })
-        else:
-            print("pageload request")
 
         return {
             'couch_user': user,
@@ -364,12 +372,8 @@ class MySavedReportsView(BaseProjectReportSectionView):
             }
         }
 
-    def get_page(self, page=1, limit=5):
-        scheduled_reports = [
-            self.report_details(r) for r in self.scheduled_reports[limit * (page - 1):limit * page]
-        ]
-
-        return scheduled_reports, len(self.schedulred_reports)
+    def get_page(self, page, limit):
+        return len(self.scheduled_reports), self.scheduled_reports[limit * (page - 1):limit * page]
 
     @staticmethod
     def report_details(report, user_email=None, context_secret=None):
@@ -388,8 +392,9 @@ class MySavedReportsView(BaseProjectReportSectionView):
             'start_date': report.start_date,
 
             #property methods
-            'configs': report.configs,
-            'owner': report.owner,
+            'configs': [{'url': r.url,
+                         'name': r.name,
+                         'report_name': r.report_name} for r in report.configs],
             'is_editable': report.is_editable,
             'owner_email': report.owner_email,
             'day_name': report.day_name,
@@ -411,24 +416,24 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
 @login_and_domain_required
 @require_GET
-@location_safe
 def page_context(request, domain):
 
-    #currently cant instantiate MySavedReportsView - need to pass in domain as an arg(?) how?
-    #print("made it to page_context")
-    #view = MySavedReportsView()
+    #reports = ReportNotification.by_domain_and_owner(domain, request.couch_user._id)
+    #for r in reports:
+    #    print(r)
 
-    nothing = MySavedReportsView(domain)
-    print(nothing)
+    visa = MySavedReportsView()
+    print(type(visa))
+    #print(visa.others_scheduled_reports)
 
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 5))
 
-    (reports, total) = nothing.get_page(page, limit)
+    #(total, reports) = visa.get_page(page, limit)
 
     return JsonResponse({
-        'reports': reports,
-        'total': total,
+        #'reports': reports,
+        #'total': total,
     })
 
 
@@ -921,7 +926,7 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
             request,
             format_html(_("<strong>{}</strong> Scheduled report{} deleted!"), delete_count, plural)
         )
-        #not necessary since I refresh from the js
+        #not necessary since it just refreshes from the js
         return HttpResponse(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
     else:
         scheduled_report.delete()
