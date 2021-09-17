@@ -2,7 +2,6 @@ import uuid
 
 from django.test import SimpleTestCase, TestCase
 from mock import Mock, patch
-from six.moves import range
 
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
@@ -26,7 +25,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change, ChangeMeta
 from pillowtop.pillow.interface import PillowBase
 from pillowtop.processors.elastic import BulkElasticProcessor
-from pillowtop.tests.utils import TEST_INDEX_INFO
+from pillowtop.tests.utils import TEST_INDEX_INFO, deregister_pt_test_meta, register_pt_test_meta
 from pillowtop.utils import bulk_fetch_changes_docs, get_errors_with_ids
 
 
@@ -73,6 +72,7 @@ class TestBulkDocOperations(TestCase):
         cls.es_interface = ElasticsearchInterface(cls.es)
         cls.index = TEST_INDEX_INFO.index
         cls.es_alias = TEST_INDEX_INFO.alias
+        register_pt_test_meta()
 
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(cls.index)
@@ -82,6 +82,7 @@ class TestBulkDocOperations(TestCase):
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         ensure_index_deleted(cls.index)
+        deregister_pt_test_meta()
         super().tearDownClass()
 
     def _changes_from_ids(self, case_ids):
@@ -153,6 +154,7 @@ class TestBulkOperationsCaseToSQL(TestCase):
         cls.es_interface = ElasticsearchInterface(cls.es)
         cls.index = TEST_INDEX_INFO.index
         cls.es_alias = TEST_INDEX_INFO.alias
+        register_pt_test_meta()
 
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(cls.index)
@@ -170,6 +172,7 @@ class TestBulkOperationsCaseToSQL(TestCase):
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         ensure_index_deleted(cls.index)
+        deregister_pt_test_meta()
         super().tearDownClass()
 
     def _changes_from_ids(self, case_ids):

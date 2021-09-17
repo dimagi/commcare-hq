@@ -20,12 +20,8 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return self.es.indices.put_mapping(doc_type, {doc_type: mapping}, index=index)
 
     def _verify_is_alias(self, index_or_alias):
-        from corehq.elastic import ES_META, ESError
-        from pillowtop.tests.utils import TEST_ES_ALIAS
-        all_es_aliases = [index_info.alias for index_info in ES_META.values()] + [TEST_ES_ALIAS]
-        if index_or_alias not in all_es_aliases:
-            raise ESError(
-                f"{index_or_alias} is an unknown alias, query target must be one of {all_es_aliases}")
+        from corehq.elastic import verify_registered_alias
+        verify_registered_alias(index_or_alias)
 
     def update_index_settings(self, index, settings_dict):
         assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()

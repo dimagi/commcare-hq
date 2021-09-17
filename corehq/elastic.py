@@ -1,6 +1,4 @@
 import json
-import logging
-import time
 
 from django.conf import settings
 
@@ -9,16 +7,6 @@ from memoized import memoized
 from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
-from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
-from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.es.elasticsearch import (
     Elasticsearch,
     ElasticsearchException,
@@ -145,22 +133,50 @@ def refresh_elasticsearch_index(index_name):
     es.indices.refresh(index=es_meta.alias)
 
 
-# Todo; These names can be migrated to use hq_index_name attribute constants in future
-ES_META = {
-    "forms": XFORM_INDEX_INFO,
-    "cases": CASE_INDEX_INFO,
-    "users": USER_INDEX_INFO,
-    "domains": DOMAIN_INDEX_INFO,
-    "apps": APP_INDEX_INFO,
-    "groups": GROUP_INDEX_INFO,
-    "sms": SMS_INDEX_INFO,
-    "report_cases": REPORT_CASE_INDEX_INFO,
-    "report_xforms": REPORT_XFORM_INDEX_INFO,
-    "case_search": CASE_SEARCH_INDEX_INFO,
-}
+def register_alias(alias, info):
+    """Register an Elasticsearch index or alias name (add it to this module's
+    `ES_META` dict).
 
-ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,
-                            #  can change this config value if we want to support querying over more domains
+    :param alias: Elasticsearch index or alias name
+    :param info: index metadata
+    :raises: ESRegistryError
+    """
+    if alias in ES_META:
+        raise ESRegistryError(f"alias is already registered: {alias}")
+    ES_META[alias] = info
+
+
+def deregister_alias(alias):
+    """Deregister a previously registered alias (remove it from this module's
+    `ES_META` dict).
+
+    :param alias: existing (registered) Elasticsearch index or alias name
+    :raises: ESRegistryError
+    """
+    try:
+        del ES_META[alias]
+    except KeyError:
+        raise ESRegistryError(f"alias is not registered: {alias}")
+
+
+def verify_registered_alias(alias):
+    """Check if provided alias is valid (registered).
+
+    :param alias: Elasticsearch index or alias name
+    :raises: ESRegistryError
+    """
+    all_aliases = set(m.alias for m in ES_META.values())
+    if alias not in all_aliases:
+        raise ESRegistryError(f"invalid alias {alias!r}, expected one of "
+                              f"{sorted(all_aliases)}")
+
+
+# global ES alias metadata registry
+ES_META = {}
+
+# this is what ES's maxClauseCount is currently set to, can change this config
+# value if we want to support querying over more domains
+ES_MAX_CLAUSE_COUNT = 1024
 
 
 class ESError(Exception):
@@ -168,6 +184,10 @@ class ESError(Exception):
 
 
 class ESShardFailure(ESError):
+    pass
+
+
+class ESRegistryError(ESError):
     pass
 
 
@@ -242,6 +262,7 @@ def count_query(index_name, q):
     es_meta = ES_META[index_name]
     es_interface = ElasticsearchInterface(get_es_new())
     return es_interface.count(es_meta.alias, es_meta.type, q)
+
 
 class ScanResult(object):
 

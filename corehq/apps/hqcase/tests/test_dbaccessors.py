@@ -22,7 +22,7 @@ from corehq.apps.hqcase.dbaccessors import (
     get_case_ids_that_exist,
     get_cases_in_domain,
 )
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, register_alias, deregister_alias
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
@@ -180,6 +180,7 @@ class ESAccessorsTest(TestCase):
 
     def setUp(self):
         super(ESAccessorsTest, self).setUp()
+        register_alias(CASE_INDEX_INFO.index, CASE_INDEX_INFO)
         with trap_extra_setup(ConnectionError):
             self.elasticsearch = get_es_new()
             initialize_index_and_mapping(self.elasticsearch, CASE_INDEX_INFO)
@@ -189,11 +190,10 @@ class ESAccessorsTest(TestCase):
         ensure_index_deleted(CASE_INDEX_INFO.index)
         ensure_index_deleted(DOMAIN_INDEX_INFO.index)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
+        deregister_alias(CASE_INDEX_INFO.index)
         super(ESAccessorsTest, self).tearDown()
 
     @patch('corehq.apps.hqcase.analytics.CaseES.index', CASE_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_get_number_of_cases_in_domain(self):
         cases = [self._create_case_and_sync_to_es() for _ in range(4)]
         self.assertEqual(

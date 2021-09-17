@@ -21,7 +21,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 from corehq.apps.es.tests.utils import es_test
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_new, send_to_elasticsearch, deregister_alias, register_alias
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
@@ -119,21 +119,15 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         }])
 
 
-TEST_ES_META = {
-    XFORM_INDEX_INFO.index: XFORM_INDEX_INFO
-}
-
-
 class CouchformsESAnalyticsTest(TestCase):
     domain = 'hqadmin-es-accessor'
 
     @classmethod
     def setUpClass(cls):
         super(CouchformsESAnalyticsTest, cls).setUpClass()
+        register_alias(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO)
 
         @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-        @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-        @patch('corehq.elastic.ES_META', TEST_ES_META)
         def create_form_and_sync_to_es(received_on):
             with process_pillow_changes('xform-pillow', {'skip_ucr': True}):
                 with process_pillow_changes('DefaultChangeFeedPillow'):
@@ -162,11 +156,10 @@ class CouchformsESAnalyticsTest(TestCase):
     def tearDownClass(cls):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
+        deregister_alias(XFORM_INDEX_INFO.index)
         super(CouchformsESAnalyticsTest, cls).tearDownClass()
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_get_number_of_cases_in_domain(self):
         self.assertEqual(
             get_number_of_forms_in_domain(self.domain),
@@ -174,38 +167,28 @@ class CouchformsESAnalyticsTest(TestCase):
         )
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_domain_has_submission_in_last_30_days(self):
         self.assertEqual(
             domain_has_submission_in_last_30_days(self.domain), True)
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_get_first_form_submission_received(self):
         self.assertEqual(
             get_first_form_submission_received(self.domain),
             self.now - self._60_days)
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_get_last_form_submission_received(self):
         self.assertEqual(
             get_last_form_submission_received(self.domain), self.now)
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_app_has_been_submitted_to_in_last_30_days(self):
         self.assertEqual(
             app_has_been_submitted_to_in_last_30_days(self.domain, self.app_id),
             True)
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_get_all_xmlns_app_id_pairs_submitted_to_in_domain(self):
         self.assertEqual(
             get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain),
