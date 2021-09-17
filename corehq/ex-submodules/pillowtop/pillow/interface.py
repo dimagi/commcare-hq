@@ -184,6 +184,10 @@ class PillowBase(metaclass=ABCMeta):
                 else:
                     self._update_checkpoint(None, None)
             process_offset_chunk(changes_chunk, context)
+            if forever:
+                if change:
+                    self._update_checkpoint(change, context)
+                self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
         except PillowtopCheckpointReset:
             process_offset_chunk(changes_chunk, context)
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)

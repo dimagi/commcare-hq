@@ -131,7 +131,7 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         frequency_hit = context.changes_seen >= self.checkpoint_frequency
         time_hit = False
         if self.max_checkpoint_delay:
-            if self.last_update is None:
+            if self.last_update is not None:
                 seconds_since_last_update = (datetime.utcnow() - self.last_update).total_seconds()
                 time_hit = seconds_since_last_update >= self.max_checkpoint_delay
             else:
