@@ -11,6 +11,7 @@ from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
 from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
@@ -181,6 +182,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
       - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
       - :py:class:`corehq.pillows.user.UnknownUsersProcessor` (disabled when RUN_UNKNOWN_USER_PILLOW=False)
       - :py:class:`pillowtop.form.FormSubmissionMetadataTrackerProcessor` (disabled when RUN_FORM_META_PILLOW=False)
+      - :py:class:`corehq.apps.data_interfaces.pillow.CaseDeduplicationPillow``
     """
     # avoid circular dependency
     from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
@@ -227,6 +229,9 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         processors.append(unknown_user_form_processor)
     if settings.RUN_FORM_META_PILLOW:
         processors.append(form_meta_processor)
+    if settings.RUN_DEDUPLICATION_PILLOW:
+        processors.append(CaseDeduplicationProcessor())
+
     if not settings.ENTERPRISE_MODE:
         xform_to_report_es_processor = BulkElasticProcessor(
             elasticsearch=get_es_new(),
@@ -238,6 +243,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         processors.append(xform_to_report_es_processor)
     if not skip_ucr:
         processors.append(ucr_processor)
+
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,
