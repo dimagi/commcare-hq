@@ -18,7 +18,7 @@ from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import validate_offsets
 
 MIN_TIMEOUT = 500
-MAX_TIMEOUT = 1000 * 60 * 60 * 24 # 1 day in ms
+MAX_TIMEOUT = 1000 * 60 * 60 * 24  # 1 day in ms
 
 
 class KafkaChangeFeed(ChangeFeed):
