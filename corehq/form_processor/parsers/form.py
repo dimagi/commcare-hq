@@ -205,8 +205,6 @@ def _handle_duplicate(new_doc):
             return new, existing
 
         def _replace_old_form():
-            if not interface.use_sql_domain:
-                new_doc._rev, existing_doc._rev = existing_doc._rev, new_doc._rev
             interface.assign_new_id(existing_doc)
             existing_doc.orig_id = new_doc.form_id
             existing_doc.save()
@@ -238,7 +236,7 @@ def _handle_duplicate(new_doc):
                     # since we have a new form and the old one was not successfully processed
                     # we can effectively ignore this form and process the new one as normal
                     return _replace_old_form()
-                elif interface.use_sql_domain and not interface.form_has_case_transactions(existing_doc.form_id):
+                elif not interface.form_has_case_transactions(existing_doc.form_id):
                     # likely an error during saving
                     return _replace_old_form()
                 else:

@@ -3,8 +3,8 @@ from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import cases_received
 from casexml.apps.case.xform import process_cases_with_casedb
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from couchforms.models import XFormInstance
 
 
 class TestCasesReceivedSignal(TestCase):
@@ -13,7 +13,7 @@ class TestCasesReceivedSignal(TestCase):
         casedb_cache = FormProcessorInterface().casedb_cache
         case = CaseFactory().create_case()
         case_db = casedb_cache(initial=[CommCareCase(_id='fake1'), CommCareCase(_id='fake2')])
-        form = XFormInstance.get(case.xform_ids[0])
+        form = FormAccessorSQL.get_form(case.xform_ids[0])
 
         def assert_exactly_one_case(sender, xform, cases, **kwargs):
             global case_count

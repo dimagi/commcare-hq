@@ -1,9 +1,8 @@
 from decimal import Decimal
 
-from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -20,9 +19,7 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
-from corehq.form_processor.change_publishers import publish_ledger_v1_saved
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.util.quickcache import quickcache
 
 from . import const
 from .const import StockActions
@@ -452,16 +449,6 @@ def update_domain_mapping(sender, instance, *args, **kwargs):
             domain_name=domain_name,
         )
         mapping.save()
-
-
-@receiver(post_save, sender=StockState)
-def publish_stock_state_to_kafka_on_save(sender, instance, *args, **kwargs):
-    publish_ledger_v1_saved(instance)
-
-
-@receiver(post_delete, sender=StockState)
-def publish_stock_state_to_kafka_on_delete(sender, instance, *args, **kwargs):
-    publish_ledger_v1_saved(instance, deleted=True)
 
 
 @receiver(xform_archived)

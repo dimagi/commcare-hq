@@ -189,10 +189,12 @@ class SMSBase(UUIDGeneratorMixin, Log):
     STATUS_QUEUED = "queued"
     STATUS_RECEIVED = "received"
     STATUS_FORWARDED = "forwarded"
+    STATUS_DELIVERED = "delivered"  # the specific gateway need to tell us this
     STATUS_UNKNOWN = "unknown"
 
     STATUS_DISPLAY = {
         STATUS_SENT: _('Sent'),
+        STATUS_DELIVERED: _('Delivered'),
         STATUS_ERROR: _('Error'),
         STATUS_QUEUED: _('Queued'),
         STATUS_RECEIVED: _('Received'),

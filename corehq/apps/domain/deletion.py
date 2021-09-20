@@ -146,9 +146,9 @@ def _delete_web_user_membership(domain_name):
 
 
 def _log_web_user_membership_removed(user, domain, via):
-    log_user_change(None, couch_user=user,
+    log_user_change(by_domain=None, for_domain=domain, couch_user=user,
                     changed_by_user=SYSTEM_USER_ID, changed_via=via,
-                    message=UserChangeMessage.domain_removal(domain))
+                    change_messages=UserChangeMessage.domain_removal(domain))
 
 
 def _terminate_subscriptions(domain_name):
@@ -404,12 +404,12 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('dhis2', 'SQLDataValueMap', 'dataset_map__domain'),
     ModelDeletion('dhis2', 'SQLDataSetMap', 'domain'),
     ModelDeletion('motech', 'RequestLog', 'domain'),
-    ModelDeletion('motech', 'ConnectionSettings', 'domain'),
     ModelDeletion('fhir', 'FHIRImportConfig', 'domain', [
         'FHIRImportResourceType', 'ResourceTypeRelationship',
         'FHIRImportResourceProperty',
     ]),
-    ModelDeletion('repeaters', 'RepeaterStub', 'domain'),
+    ModelDeletion('repeaters', 'SQLRepeater', 'domain'),
+    ModelDeletion('motech', 'ConnectionSettings', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecord', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecordAttempt', 'repeat_record__domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),

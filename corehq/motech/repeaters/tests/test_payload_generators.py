@@ -1,18 +1,8 @@
 """
 These tests were written to check that FormDictPayloadGenerator behaved
-like FormRepeaterJsonPayloadGenerator, but they also show automatic type
-casting by `jsonobject`_ when using the Couch backend.
-
-The takeaway here is that when configuring integrations for domains on
-Couch, it's important to remember that not all case properties are
-strings when serializing to JSON, or casting to a remote data type.
-
-_jsonobject: https://github.com/dimagi/commcare-hq/blob/9634efa3905/corehq/ex-submodules/dimagi/ext/jsonobject.py#L94-L99
-
+like FormRepeaterJsonPayloadGenerator.
 """
 import json
-from datetime import date, datetime, time
-from decimal import Decimal
 from typing import Tuple
 from uuid import uuid4
 
@@ -39,11 +29,28 @@ from corehq.motech.value_source import (
     get_form_question_values,
 )
 
-COUCH_DOMAIN = 'test-couch-domain'
 SQL_DOMAIN = 'test-sql-domain'
 
 
-class DataTypesBase:
+class TestSqlDataTypes(TestCase):
+    """
+    Test that data types returned by FormDictPayloadGenerator match
+    those returned by FormRepeaterJsonPayloadGenerator when using a SQL
+    backend.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = SQL_DOMAIN
+        cls.domain_obj = create_sql_domain(SQL_DOMAIN)
+        cls.set_up_form()
+
+    @classmethod
+    def tearDownClass(cls):
+        FormAccessorSQL.hard_delete_forms(SQL_DOMAIN, [cls.form_id])
+        cls.domain_obj.delete()
+        super().tearDownClass()
 
     @classmethod
     def set_up_form(cls):
@@ -119,57 +126,6 @@ class DataTypesBase:
         self.assertIsInstance(info.updates[question], str)
         self.assertIsInstance(info.extra_fields[question], expected_type)
 
-
-class TestCouchDataTypes(TestCase, DataTypesBase):
-    """
-    Test that data types returned by FormDictPayloadGenerator match
-    those returned by FormRepeaterJsonPayloadGenerator when using a
-    Couch backend.
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain = COUCH_DOMAIN
-        cls.domain_obj = create_couch_domain(COUCH_DOMAIN)
-        cls.set_up_form()
-
-    def test_nonstring_values_in_couch(self):
-        for (payload, info), question, expected_type in [
-            (self.form_json_payload_info, 'price', Decimal),
-            (self.form_dict_payload_info, 'price', Decimal),
-
-            (self.form_json_payload_info, 'album_release', date),
-            (self.form_dict_payload_info, 'album_release', date),
-
-            (self.form_json_payload_info, 'breakfast_oclock', time),
-            (self.form_dict_payload_info, 'breakfast_oclock', time),
-
-            (self.form_json_payload_info, 'breakfast_exactly', datetime),
-            (self.form_dict_payload_info, 'breakfast_exactly', datetime),
-        ]:
-            self.check_payload_info_type(payload, info, question, expected_type)
-
-
-class TestSqlDataTypes(TestCase, DataTypesBase):
-    """
-    Test that data types returned by FormDictPayloadGenerator match
-    those returned by FormRepeaterJsonPayloadGenerator when using a SQL
-    backend.
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain = SQL_DOMAIN
-        cls.domain_obj = create_sql_domain(SQL_DOMAIN)
-        cls.set_up_form()
-
-    @classmethod
-    def tearDownClass(cls):
-        FormAccessorSQL.hard_delete_forms(SQL_DOMAIN, [cls.form_id])
-        super().tearDownClass()
-
     def test_string_values_in_sql(self):
         for (payload, info), question, expected_type in [
             (self.form_json_payload_info, 'price', str),
@@ -187,19 +143,9 @@ class TestSqlDataTypes(TestCase, DataTypesBase):
             self.check_payload_info_type(payload, info, question, expected_type)
 
 
-def create_couch_domain(name):
-    return Domain.get_or_create_with_name(
-        name,
-        is_active=True,
-        secure_submissions=False,
-        use_sql_backend=False,
-    )
-
-
 def create_sql_domain(name):
     return Domain.get_or_create_with_name(
         name,
         is_active=True,
         secure_submissions=False,
-        use_sql_backend=True,
     )

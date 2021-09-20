@@ -1210,13 +1210,6 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
-    'not_tf_sql_backend',
-    'Domains that do not use a SQLite backend for Touchforms',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-)
-
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
     'Allow specifying a custom base URL for an application. Main use case is '
@@ -2062,6 +2055,7 @@ USER_HISTORY_REPORT = StaticToggle(
     'View user history report under user management',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_USER],
+    help_link="https://confluence.dimagi.com/display/saas/User+History+Report",
 )
 
 
@@ -2085,8 +2079,9 @@ FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
     'followup_forms_as_case_list_form',
     'Option to configure follow up forms on parent case for Case List Form menu setting of '
     'child modules that use Parent Child Selection',
-    TAG_INTERNAL,
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/pages/viewpage.action?spaceKey=USH&title=Add+Form+to+Bottom+of++Case+List",
 )
 
 
@@ -2104,4 +2099,11 @@ CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Validate+data+per+data+dictionary+definitions+during+case+import",
+)
+
+DO_NOT_REPUBLISH_DOCS = StaticToggle(
+    'do_not_republish_docs',
+    'Prevents automatic attempts to repair stale ES docs in this domain',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )

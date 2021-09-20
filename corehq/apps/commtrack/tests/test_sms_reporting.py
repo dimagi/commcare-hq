@@ -1,22 +1,20 @@
-from decimal import Decimal
-
 from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_xforms
-from casexml.apps.stock.models import StockReport, StockTransaction
-from couchforms.dbaccessors import get_commtrack_forms
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 
-from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.sms import handle
 from corehq.apps.commtrack.tests import util
 from corehq.apps.products.models import Product
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.form_processor.exceptions import LedgerValueNotFound
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, LedgerAccessorSQL
 
 
 class SMSTests(TestCase):
-    user_definitions = []
+    user_definitions = [util.ROAMING_USER, util.FIXED_USER]
 
     @classmethod
     def setUpClass(cls):
@@ -49,25 +47,15 @@ class SMSTests(TestCase):
         [product] = [p for p in self.products if p.code_ == code]
 
         try:
-            state = StockState.objects.get(
-                product_id=product._id,
-                case_id=case_id,
-                section_id=section_id
-            )
+            state = LedgerAccessorSQL.get_ledger_value(case_id, section_id, product._id)
             self.assertEqual(amount, state.stock_on_hand)
-        except StockState.DoesNotExist:
+        except LedgerValueNotFound:
             if amount != 0:
                 # only error if we weren't checking for no stock
-                raise Exception(
-                    'StockState for "%s" section does not exist' % section_id
-                )
-
-
-class StockReportTest(SMSTests):
-    user_definitions = [util.ROAMING_USER, util.FIXED_USER]
+                raise Exception(f'Ledger value for "{section_id}" section does not exist')
 
     def testStockReportRoaming(self):
-        self.assertEqual(0, len(get_commtrack_forms(self.domain.name)))
+        self.assertEqual([], list(iter_commtrack_forms(self.domain.name)))
         amounts = {
             'pp': 10,
             'pq': 20,
@@ -79,26 +67,19 @@ class StockReportTest(SMSTests):
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ), None)
         self.assertTrue(handled)
-        forms = list(get_commtrack_forms(self.domain.name))
+        forms = list(iter_commtrack_forms(self.domain.name))
         self.assertEqual(1, len(forms))
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
-        self.assertEqual(1, StockReport.objects.count())
-        report = StockReport.objects.all()[0]
-        self.assertEqual(forms[0]._id, report.form_id)
-        self.assertEqual('balance', report.type)
-        self.assertEqual(3, report.stocktransaction_set.count())
+        ledger_transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(self.sp.case_id)
+        self.assertEqual({forms[0].form_id}, set(t.form_id for t in ledger_transactions))
+        self.assertEqual({'balance'}, set(t.readable_type for t in ledger_transactions))
+        self.assertEqual(3, len(ledger_transactions))
 
-        for code, amt in amounts.items():
-            [product] = [p for p in self.products if p.code_ == code]
-            trans = StockTransaction.objects.get(product_id=product._id)
-            self.assertEqual(self.sp.case_id, trans.case_id)
-            self.assertEqual(0, trans.quantity)
-            self.assertEqual(amt, trans.stock_on_hand)
+        self.check_transaction_amounts(ledger_transactions, amounts)
 
     def testStockReportFixed(self):
-        self.assertEqual(0, len(get_commtrack_forms(self.domain.name)))
-
+        self.assertEqual([], list(iter_commtrack_forms(self.domain.name)))
         amounts = {
             'pp': 10,
             'pq': 20,
@@ -109,31 +90,33 @@ class StockReportTest(SMSTests):
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ), None)
         self.assertTrue(handled)
-        forms = list(get_commtrack_forms(self.domain.name))
+        forms = list(iter_commtrack_forms(self.domain.name))
         self.assertEqual(1, len(forms))
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
+        ledger_transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(self.sp.case_id)
+        self.check_transaction_amounts(ledger_transactions, amounts)
+
+    def check_transaction_amounts(self, ledger_transactions, amounts):
+        transactions_by_product_id = {t.entry_id: t for t in ledger_transactions}
         for code, amt in amounts.items():
             [product] = [p for p in self.products if p.code_ == code]
-            trans = StockTransaction.objects.get(product_id=product._id)
+            trans = transactions_by_product_id[product._id]
             self.assertEqual(self.sp.case_id, trans.case_id)
-            self.assertEqual(0, trans.quantity)
-            self.assertEqual(amt, trans.stock_on_hand)
+            self.assertEqual(amt, trans.delta)
+            self.assertEqual(amt, trans.updated_balance)
 
-    def check_form_type(self, expected_type, subtype=None):
-        [report] = StockReport.objects.filter(type='transfer')
-        transaction = report.stocktransaction_set.all()[0]
-        self.assertEqual(
-            transaction.type,
-            expected_type
-        )
-        if subtype:
-            self.assertEqual(
-                transaction.subtype,
-                subtype
-            )
+    def check_form_type(self, is_consumption):
+        transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(self.sp.case_id)
+        transactions = [t for t in transactions if t.readable_type != 'balance']
+        self.assertEqual(3, len(transactions))
+        for transaction in transactions:
+            if is_consumption:
+                self.assertLess(transaction.delta, 0)
+            else:
+                self.assertGreater(transaction.delta, 0)
 
-    def testStockReceipt(self):
+    def testReceipt(self):
         original_amounts = {
             'pp': 10,
             'pq': 20,
@@ -160,13 +143,13 @@ class StockReportTest(SMSTests):
 
         self.assertTrue(handled)
 
-        self.check_form_type('receipts')
+        self.check_form_type(is_consumption=False)
 
         for code in original_amounts.keys():
             expected_amount = original_amounts[code] + received_amounts[code]
             self.check_stock(code, expected_amount)
 
-    def testStockLosses(self):
+    def testLosses(self):
         original_amounts = {
             'pp': 10,
             'pq': 20,
@@ -185,6 +168,7 @@ class StockReportTest(SMSTests):
             'pr': 3,
         }
 
+        # First character in text indicates "loss"
         handled = handle(get_two_way_number_for_recipient(self.users[0]), 'l {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in lost_amounts.items())
@@ -192,13 +176,13 @@ class StockReportTest(SMSTests):
 
         self.assertTrue(handled)
 
-        self.check_form_type('consumption', 'loss')
+        self.check_form_type(is_consumption=True)
 
         for code in original_amounts.keys():
             expected_amount = original_amounts[code] - lost_amounts[code]
             self.check_stock(code, expected_amount)
 
-    def testStockConsumption(self):
+    def testConsumption(self):
         original_amounts = {
             'pp': 10,
             'pq': 20,
@@ -217,6 +201,7 @@ class StockReportTest(SMSTests):
             'pr': 3,
         }
 
+        # First character in text indicates "consumption"
         handled = handle(get_two_way_number_for_recipient(self.users[0]), 'c {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in lost_amounts.items())
@@ -224,16 +209,20 @@ class StockReportTest(SMSTests):
 
         self.assertTrue(handled)
 
-        # this is the only difference from losses..
-        self.check_form_type('consumption')
+        self.check_form_type(is_consumption=True)
 
         for code in original_amounts.keys():
             expected_amount = original_amounts[code] - lost_amounts[code]
             self.check_stock(code, expected_amount)
 
 
+def iter_commtrack_forms(domain_name):
+    for form_id in FormAccessorSQL.iter_form_ids_by_xmlns(domain_name, COMMTRACK_REPORT_XMLNS):
+        yield FormAccessorSQL.get_form(form_id)
+
+
 def _get_location_from_form(form):
-    return form.form['location']
+    return form.form_data['location']
 
 
 def _get_location_from_sp(sp):

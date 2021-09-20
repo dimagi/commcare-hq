@@ -4,7 +4,6 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import get_case_history
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class TestCaseHistory(TestCase):
@@ -18,7 +17,6 @@ class TestCaseHistory(TestCase):
         delete_all_xforms()
         delete_all_cases()
 
-    @run_with_all_backends
     def test_case_history(self):
         self.factory.create_or_update_case(
             CaseStructure(

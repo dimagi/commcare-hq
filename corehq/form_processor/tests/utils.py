@@ -1,4 +1,3 @@
-import functools
 import logging
 from datetime import datetime
 from unittest.mock import patch
@@ -7,7 +6,6 @@ from uuid import uuid4
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.test import TestCase, TransactionTestCase
-from django.test.utils import override_settings
 from django.utils.decorators import classproperty
 from nose.plugins.attrib import attr
 from nose.tools import nottest
@@ -23,9 +21,8 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.models import PartitionedModel
-from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
+from corehq.util.test_utils import unit_testing_only
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.couch.database import safe_delete
 
@@ -157,34 +154,17 @@ class FormProcessorTestUtils(object):
                     pass
 
 
-run_with_all_backends = functools.partial(
-    run_with_multiple_configs,
-    run_configs=[
-        # run with default setting
-        RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
-            },
-            post_run=lambda *args, **kwargs: args[0].tearDown()
-        ),
-        # run with inverse of default setting
-        RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
-            },
-            pre_run=lambda *args, **kwargs: args[0].setUp(),
-        ),
-    ],
-    nose_tags={'all_backends': True}
-)
+def sharded(cls):
+    """Tag tests to run with the sharded SQL backend
 
+    This adds a "sharded" attribute to decorated tests indicating that
+    the tests should be run with a sharded database setup. Note that the
+    presence of that attribute does not prevent tests from  also running
+    in the default not-sharded database setup.
 
-def partitioned(cls):
+    Was previously named @use_sql_backend
     """
-    Marks a test to be run with the partitioned database settings in
-    addition to the non-partitioned database settings.
-    """
-    return patch_shard_db_transactions(attr(sql_backend=True)(cls))
+    return patch_shard_db_transactions(attr(sharded=True)(cls))
 
 
 def only_run_with_non_partitioned_database(cls):
@@ -204,11 +184,7 @@ def only_run_with_partitioned_database(cls):
     skip_unless = skipUnless(
         settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup'
     )
-    return skip_unless(partitioned(cls))
-
-
-def use_sql_backend(cls):
-    return partitioned(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
+    return skip_unless(sharded(cls))
 
 
 def patch_testcase_databases():
@@ -335,7 +311,10 @@ def create_form_for_test(
     )
 
     attachments = attachments or {}
-    attachment_tuples = [Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type) for a in attachments.items()]
+    attachment_tuples = [
+        Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type)
+        for a in attachments.items()
+    ]
     attachment_tuples.append(Attachment('form.xml', form_xml, 'text/xml'))
 
     FormProcessorSQL.store_attachments(form, attachment_tuples)
@@ -360,14 +339,6 @@ def create_form_for_test(
         form = FormAccessorSQL.get_form(form.form_id)
 
     return form
-
-
-@unit_testing_only
-def set_case_property_directly(case, property_name, value):
-    if should_use_sql_backend(case.domain):
-        case.case_json[property_name] = value
-    else:
-        setattr(case, property_name, value)
 
 
 def create_case(case) -> CommCareCaseSQL:

@@ -23,6 +23,7 @@ hqDefine("users/js/enterprise_users", [
             profile: null,
             loginAsUser: null,
             loginAsUserCount: 0,
+            inactiveMobileCount: 0,
         });
 
         // Only varies for mobile users
@@ -31,19 +32,47 @@ hqDefine("users/js/enterprise_users", [
         // Only relevant for web users
         self.expanded = ko.observable(false);
 
+
         return self;
     };
 
     var enterpriseUsersList = function (options) {
+
         var self = webUsersList(options);
+
         self.toggleLoginAsUsers = function (webUser) {
             webUser.expanded(!webUser.expanded());
             _.each(self.users(), function (user) {
                 if (user.loginAsUser === webUser.username) {
-                    user.visible(webUser.expanded());
+                    user.visible(webUser.expanded() && user.is_active !== self.showDeactivated());
                 }
             });
         };
+
+        self.showDeactivated = ko.observable(false);
+
+        self.toggleDeactivatedText = ko.computed(function () {
+            return self.showDeactivated() ? gettext("Hide Deactivated Mobile Workers") : gettext("Show Deactivated Mobile Workers");
+        });
+
+        self.toggleDeactivated = function () {
+            _.each(self.users(), function (user) {
+                if (!user.loginAsUser) {
+                    user.expanded(false);
+                    if (self.showDeactivated()) {
+                        user.visible(user.inactiveMobileCount > 0);
+                    } else {
+                        user.visible(true);
+                    }
+                } else {
+                    user.visible(false);
+                }
+            });
+        };
+
+        self.showDeactivated.subscribe(function () {
+            self.toggleDeactivated();
+        });
 
         return self;
     };

@@ -14,7 +14,6 @@ from corehq.apps.change_feed.consumer.feed import (
 )
 from corehq.apps.export.models.new import LedgerSectionEntry
 from corehq.apps.locations.models import SQLLocation
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.quickcache import quickcache
 
 
@@ -29,17 +28,12 @@ def _location_id_for_case(case_id):
 def _get_daily_consumption_for_ledger(ledger):
     from corehq.apps.commtrack.consumption import get_consumption_for_ledger_json
     daily_consumption = get_consumption_for_ledger_json(ledger)
-    if should_use_sql_backend(ledger['domain']):
-        from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-        ledger_value = LedgerAccessorSQL.get_ledger_value(
-            ledger['case_id'], ledger['section_id'], ledger['entry_id']
-        )
-        ledger_value.daily_consumption = daily_consumption
-        LedgerAccessorSQL.save_ledger_values([ledger_value])
-    else:
-        from corehq.apps.commtrack.models import StockState
-        StockState.objects.filter(pk=ledger['_id']).update(daily_consumption=daily_consumption)
-
+    from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
+    ledger_value = LedgerAccessorSQL.get_ledger_value(
+        ledger['case_id'], ledger['section_id'], ledger['entry_id']
+    )
+    ledger_value.daily_consumption = daily_consumption
+    LedgerAccessorSQL.save_ledger_values([ledger_value])
     return daily_consumption
 
 
@@ -77,6 +71,9 @@ class LedgerProcessor(PillowProcessor):
     """
 
     def process_change(self, change):
+        if change.deleted:
+            return
+
         ledger = change.get_document()
         from corehq.apps.commtrack.models import CommtrackConfig
         commtrack_config = CommtrackConfig.for_domain(ledger['domain'])

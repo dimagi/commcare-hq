@@ -79,6 +79,7 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
     get_app_languages,
+    get_apps_in_domain,
     get_build_by_version,
     get_build_ids,
     get_latest_build_doc,
@@ -786,11 +787,22 @@ class FormDatum(DocumentSchema):
 
 class FormLink(DocumentSchema):
     """
-    xpath:      xpath condition that must be true in order to open next form
-    form_id:    id of next form to open
+    FormLinks are advanced end of form navigation configuration, used when a module's
+    post_form_workflow is WORKFLOW_FORM.
+
+    They allow the user to specify one or more XPath expressions, each with either
+    a module id or form id. The user will be sent to the first module/form whose
+    expression evaluates to true. If none of the conditions is met, the workflow specified
+    in the module's post_form_workflow_fallback is executed.
+
+    xpath: XPath condition that must be true in order to execute link
+    form_id: ID of next form to open, mutually exclusive with module_unique_id
+    module_unique_id: ID of next module to open, mutually exclusive with form_id
+    datums: Any user-provided datums, necessary when HQ can't figure them out automatically
     """
     xpath = StringProperty()
     form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
+    module_unique_id = StringProperty()
     datums = SchemaListProperty(FormDatum)
 
 
@@ -2090,6 +2102,7 @@ class CaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
     hint = DictProperty()
     hidden = BooleanProperty(default=False)
+    allow_blank_value = BooleanProperty(default=False)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty()
@@ -2115,6 +2128,12 @@ class CaseSearchAgainLabel(BaseCaseSearchLabel):
     label = DictProperty(default={'en': 'Search Again'})
 
 
+class AdditionalRegistryQuery(DocumentSchema):
+    instance_name = StringProperty()
+    case_type_xpath = StringProperty()
+    case_id_xpath = StringProperty()
+
+
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
@@ -2133,6 +2152,8 @@ class CaseSearch(DocumentSchema):
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
     additional_case_types = ListProperty(str)
+    data_registry = StringProperty()
+    additional_registry_queries = SchemaListProperty(AdditionalRegistryQuery)
 
     @property
     def case_session_var(self):
@@ -3632,7 +3653,7 @@ class ReportModule(ModuleBase):
     @memoized
     def get_details(self):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
-        return ReportModuleSuiteHelper(self).get_details()
+        return list(ReportModuleSuiteHelper(self).get_details())
 
     def get_custom_entries(self):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
@@ -4573,6 +4594,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     def delete_app(self):
         domain_has_apps.clear(self.domain)
         get_app_languages.clear(self.domain)
+        get_apps_in_domain.clear(self.domain, True)
+        get_apps_in_domain.clear(self.domain, False)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
@@ -4593,6 +4616,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_all_case_properties.clear(self)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
+        get_apps_in_domain.clear(self.domain, True)
+        get_apps_in_domain.clear(self.domain, False)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
@@ -5890,6 +5915,8 @@ class ExchangeApplication(models.Model):
     app_id = models.CharField(max_length=255, null=False)
     help_link = models.CharField(max_length=255, null=True)
     changelog_link = models.CharField(max_length=255, null=True)
+    required_privileges = models.TextField(null=True, blank=True, help_text=_("Space-separated list of privilege"
+                                                                 " strings from corehq.privileges"))
 
     class Meta(object):
         unique_together = ('domain', 'app_id')

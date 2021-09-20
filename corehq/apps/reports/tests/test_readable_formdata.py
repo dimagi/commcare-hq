@@ -23,7 +23,7 @@ from corehq.apps.reports.formdetails.readable import (
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    sharded,
 )
 from corehq.form_processor.utils.xform import FormSubmissionBuilder
 
@@ -343,6 +343,7 @@ class ReadableFormdataTest(SimpleTestCase):
         self._test_corpus('top_level_refless_group')
 
 
+@sharded
 class ReadableFormTest(TestCase):
 
     def setUp(self):
@@ -454,8 +455,3 @@ class ReadableFormTest(TestCase):
             '/data/cups_of_tea[3]/details_of_cup/secret': 'mg',
         }
         self.assertDictEqual({k: v['value'] for k, v in question_response_map.items()}, expected_response_map)
-
-
-@use_sql_backend
-class ReadableFormSQLTest(ReadableFormTest):
-    pass
