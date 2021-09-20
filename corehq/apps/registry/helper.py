@@ -23,7 +23,8 @@ class DataRegistryHelper:
 
     def check_user_has_access(self, couch_user):
         checker = RegistryPermissionCheck(self.current_domain, couch_user)
-        return checker.can_view_registry_data(self.registry_slug)
+        if not checker.can_view_registry_data(self.registry_slug):
+            raise RegistryAccessException()
 
     @property
     def registry(self):

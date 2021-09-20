@@ -110,7 +110,7 @@ def app_aware_search(request, domain, app_id):
     """
     criteria = {k: v[0] if len(v) == 1 else v for k, v in request.GET.lists()}
     try:
-        cases = get_case_search_results(domain, criteria, app_id)
+        cases = get_case_search_results(domain, criteria, app_id, request.couch_user)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
@@ -425,7 +425,9 @@ def registry_case(request, domain, app_id):
         ).format(params="', '".join(missing)))
 
     helper = DataRegistryHelper(domain, registry_slug=registry)
-    if not helper.check_user_has_access(request.couch_user):
+    try:
+        helper.check_user_has_access(request.couch_user)
+    except RegistryAccessException:
         return HttpResponseForbidden()
 
     app = get_app_cached(domain, app_id)

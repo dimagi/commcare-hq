@@ -1,11 +1,9 @@
 import uuid
 
+import mock
 from django.test import TestCase
 
-import mock
-
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
-
 from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchProperty,
@@ -16,18 +14,20 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_REGISTRY_ID_KEY,
     CaseSearchConfig,
 )
-from corehq.apps.case_search.utils import get_case_search_results
+from corehq.apps.case_search.utils import get_case_search_results, _get_registry_visible_domains
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
     case_search_es_teardown,
     es_test,
 )
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.tests.utils import (
     Grant,
     Invitation,
     create_registry_for_test,
 )
+from corehq.apps.users.models import Permissions
 
 
 def case(name, type_, properties):
@@ -81,6 +81,7 @@ patch_get_app_cached = mock.patch('corehq.apps.case_search.utils.get_app_cached'
 
 
 @es_test
+@mock.patch.object(DataRegistryHelper, 'check_user_has_access', new=mock.Mock())
 class TestCaseSearchRegistry(TestCase):
 
     @classmethod
@@ -278,3 +279,43 @@ class TestCaseSearchRegistry(TestCase):
             (case.name, case.type, case.domain)
             for case in results
         ])
+
+
+class TestCaseSearchRegistryPermissions(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'registry-permissions'
+        cls.user = create_user('admin', '123')
+
+        cls.registry_slug = create_registry_for_test(
+            cls.user,
+            cls.domain,
+            invitations=[Invitation("A"), Invitation("B")],
+            grants=[
+                Grant("A", [cls.domain]),
+                Grant("B", [cls.domain]),
+            ],
+            name="reg1",
+            case_types=["herb"]
+        ).slug
+
+    def test_user_does_without_permission_cannot_access_all_domains(self):
+        domains = self._get_registry_visible_domains(Permissions(view_data_registry_contents=False))
+        self.assertEqual(domains, {self.domain})
+
+    def test_user_does_with_permission_can_access_all_domains(self):
+        domains = self._get_registry_visible_domains(Permissions(view_data_registry_contents=True))
+        self.assertEqual(domains, {self.domain, "A", "B"})
+
+    def _get_registry_visible_domains(self, permissions):
+        mock_role = mock.Mock(permissions=permissions)
+        mock_user = mock.Mock(get_role=mock.Mock(return_value=mock_role))
+        return set(
+            _get_registry_visible_domains(
+                mock_user,
+                self.domain,
+                ["herb"],
+                self.registry_slug,
+            )
+        )
