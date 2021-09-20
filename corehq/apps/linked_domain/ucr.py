@@ -35,6 +35,13 @@ def create_linked_ucr(domain_link, report_config_id):
     return LinkedUCRInfo(datasource=new_datasource, report=new_report)
 
 
+def get_downstream_report(downstream_domain, upstream_report_id):
+    for linked_report in get_report_configs_for_domain(downstream_domain):
+        if linked_report.report_meta.master_id == upstream_report_id:
+            return linked_report
+    return None
+
+
 def _get_or_create_datasource_link(domain_link, datasource, app_id):
     domain_datsources = get_datasources_for_domain(domain_link.linked_domain)
     existing_linked_datasources = [d for d in domain_datsources if d.meta.master_id == datasource.get_id]
