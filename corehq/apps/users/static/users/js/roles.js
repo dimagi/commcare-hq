@@ -347,7 +347,7 @@ hqDefine('users/js/roles',[
                         self.viewRegistryContentsPermission,
                         {
                             permissionText: gettext("View Registry Data"),
-                            listHeading: gettext("Select which registries the role can view:"),
+                            listHeading: gettext("Select which registry data the role can view:"),
                         }
                     ),
                 ];
