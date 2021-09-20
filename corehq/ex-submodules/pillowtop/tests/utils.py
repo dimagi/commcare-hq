@@ -1,3 +1,5 @@
+from nose.tools import nottest
+
 from corehq.elastic import deregister_alias, register_alias
 from corehq.util.es.elasticsearch import TransportError
 
@@ -30,10 +32,12 @@ TEST_INDEX_INFO = ElasticsearchIndexInfo(
 )
 
 
+@nottest
 def register_pt_test_meta():
     register_alias(TEST_INDEX_INFO.alias, TEST_INDEX_INFO)
 
 
+@nottest
 def deregister_pt_test_meta():
     deregister_alias(TEST_INDEX_INFO.alias)
 

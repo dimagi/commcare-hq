@@ -1,4 +1,5 @@
 from datetime import datetime
+from nose.tools import nottest
 
 from corehq.elastic import deregister_alias, register_alias
 
@@ -22,10 +23,12 @@ class TEST_ES_INFO:
     type = TEST_ES_TYPE
 
 
+@nottest
 def register_test_meta():
     register_alias(TEST_ES_INFO.alias, TEST_ES_INFO)
 
 
+@nottest
 def deregister_test_meta():
     deregister_alias(TEST_ES_INFO.alias)
 
