@@ -45,12 +45,14 @@ def celery_record_time_to_start(task_id=None, task=None, **kwargs):
 
 
 @task_postrun.connect
-def celery_record_time_to_run(task_id=None, task=None, state=None, **kwargs):
+def celery_record_time_to_run(task_id=None, task=None, state=None, args=None, kwargs=None, **kw):
     from corehq.util.metrics import (
         DAY_SCALE_TIME_BUCKETS,
         metrics_counter,
         metrics_histogram,
     )
+
+    domain = get_domain_from_task(task, args, kwargs)
 
     get_task_time_to_start.clear(task_id)
 
@@ -58,6 +60,7 @@ def celery_record_time_to_run(task_id=None, task=None, state=None, **kwargs):
         'celery_task_name': task.name,
         'celery_queue': task.queue,
         'state': state,
+        'domain': domain or 'N/A',
     }
     timer = TimeToRunTimer(task_id)
     try:
