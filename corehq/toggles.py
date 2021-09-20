@@ -398,8 +398,6 @@ class FeatureRelease(DynamicallyPredictablyRandomToggle):
     """This class is designed to allow release of features in a controlled manner.
     The primary purpose is to decouple code deploys from feature releases.
 
-    Only the 'domain' namespace is applicable for feature release toggles.
-
     In addition the normal arguments, feature release toggles must also provide
     an 'owner' to indicate the member of the team responsible for releasing this feature.
     This will be displayed on the UI when editing the toggle.
@@ -409,6 +407,7 @@ class FeatureRelease(DynamicallyPredictablyRandomToggle):
         slug,
         label,
         tag,
+        namespaces,
         owner,
         default_randomness=0.0,
         help_link=None,
@@ -416,7 +415,7 @@ class FeatureRelease(DynamicallyPredictablyRandomToggle):
         relevant_environments=None
     ):
         super().__init__(
-            slug, label, tag, [NAMESPACE_DOMAIN],
+            slug, label, tag, namespaces,
             default_randomness=default_randomness,
             help_link=help_link,
             description=description,
