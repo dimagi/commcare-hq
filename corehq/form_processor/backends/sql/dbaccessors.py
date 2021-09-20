@@ -839,16 +839,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_reverse_indices(domain, case_id):
-        indices = list(CommCareCaseIndexSQL.objects.plproxy_raw(
+        return list(CommCareCaseIndexSQL.objects.plproxy_raw(
             'SELECT * FROM get_case_indices_reverse(%s, %s)', [domain, case_id]
         ))
-
-        def _set_referenced_id(index):
-            # see corehq/couchapps/case_indices/views/related/map.js
-            index.referenced_id = index.case_id
-            return index
-
-        return [_set_referenced_id(index) for index in indices]
 
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
