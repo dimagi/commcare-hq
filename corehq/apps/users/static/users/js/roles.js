@@ -126,11 +126,16 @@ hqDefine('users/js/roles',[
                 };
 
                 self = ko.mapping.fromJS(data);
-                self.reportPermissions.filteredSpecific = ko.computed(function () {
-                    return ko.utils.arrayFilter(self.reportPermissions.specific(), function (report) {
-                        return report.value();
+                let filterSpecific = (permissions) => {
+                    return ko.computed(function () {
+                        return ko.utils.arrayFilter(permissions.specific(), function (item) {
+                            return item.value();
+                        });
                     });
-                });
+                };
+                self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
+                self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
+                self.viewRegistryContentsPermission.filteredSpecific = filterSpecific(self.viewRegistryContentsPermission);
                 self.unwrap = function () {
                     return cls.unwrap(self);
                 };
