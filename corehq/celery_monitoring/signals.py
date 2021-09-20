@@ -1,11 +1,13 @@
 import datetime
 
-from celery.signals import before_task_publish, task_prerun, task_postrun
 from django.core.cache import cache
+
+from celery.signals import before_task_publish, task_postrun, task_prerun
+
+from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.util.metrics import push_metrics
 from corehq.util.quickcache import quickcache
-from dimagi.utils.parsing import string_to_utc_datetime
 
 
 @before_task_publish.connect
@@ -43,7 +45,11 @@ def celery_record_time_to_start(task_id=None, task=None, **kwargs):
 
 @task_postrun.connect
 def celery_record_time_to_run(task_id=None, task=None, state=None, **kwargs):
-    from corehq.util.metrics import metrics_counter, metrics_histogram, DAY_SCALE_TIME_BUCKETS
+    from corehq.util.metrics import (
+        DAY_SCALE_TIME_BUCKETS,
+        metrics_counter,
+        metrics_histogram,
+    )
 
     get_task_time_to_start.clear(task_id)
 
