@@ -8,59 +8,6 @@ from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_utc_datetime
 
 
-@quickcache(['task_id'])
-def get_task_time_to_start(task_id):
-    pass  # Actual values are set by the celery event hooks below
-
-
-class TimingNotAvailable(Exception):
-    pass
-
-
-class CeleryTimer(object):
-    def __init__(self, task_id, timing_type):
-        self.task_id = task_id
-        self.timing_type = timing_type
-
-    @property
-    def _cache_key(self):
-        return 'task.{}.{}'.format(self.task_id, self.timing_type)
-
-    def start_timing(self, eta=None):
-        cache.set(self._cache_key, eta or datetime.datetime.utcnow(), timeout=3 * 24 * 60 * 60)
-
-    def stop_and_pop_timing(self):
-        """
-        Return timedelta since running start_timing
-
-        Only the first call to stop_and_pop_timing will return a timedelta;
-        subsequent calls will return None until the next time start_timing is called.
-
-        This helps avoid double-recording timings (for example when a task is retried).
-        """
-        time_sent = cache.get(self._cache_key)
-        if time_sent is None:
-            raise TimingNotAvailable()
-
-        cache.delete(self._cache_key)
-
-        return datetime.datetime.utcnow() - time_sent
-
-    @staticmethod
-    def parse_iso8601(datetime_string):
-        return string_to_utc_datetime(datetime_string)
-
-
-class TimeToStartTimer(CeleryTimer):
-    def __init__(self, task_id):
-        super(TimeToStartTimer, self).__init__(task_id, timing_type='time_sent')
-
-
-class TimeToRunTimer(CeleryTimer):
-    def __init__(self, task_id):
-        super(TimeToRunTimer, self).__init__(task_id, timing_type='time_started')
-
-
 @before_task_publish.connect
 def celery_add_time_sent(headers=None, body=None, **kwargs):
     info = headers if 'task' in headers else body
@@ -121,3 +68,56 @@ def celery_record_time_to_run(task_id=None, task=None, state=None, **kwargs):
 @task_postrun.connect
 def celery_push_metrics(**kwargs):
     push_metrics()
+
+
+@quickcache(['task_id'])
+def get_task_time_to_start(task_id):
+    pass  # Actual values are set by the celery event hooks below
+
+
+class TimingNotAvailable(Exception):
+    pass
+
+
+class CeleryTimer(object):
+    def __init__(self, task_id, timing_type):
+        self.task_id = task_id
+        self.timing_type = timing_type
+
+    @property
+    def _cache_key(self):
+        return 'task.{}.{}'.format(self.task_id, self.timing_type)
+
+    def start_timing(self, eta=None):
+        cache.set(self._cache_key, eta or datetime.datetime.utcnow(), timeout=3 * 24 * 60 * 60)
+
+    def stop_and_pop_timing(self):
+        """
+        Return timedelta since running start_timing
+
+        Only the first call to stop_and_pop_timing will return a timedelta;
+        subsequent calls will return None until the next time start_timing is called.
+
+        This helps avoid double-recording timings (for example when a task is retried).
+        """
+        time_sent = cache.get(self._cache_key)
+        if time_sent is None:
+            raise TimingNotAvailable()
+
+        cache.delete(self._cache_key)
+
+        return datetime.datetime.utcnow() - time_sent
+
+    @staticmethod
+    def parse_iso8601(datetime_string):
+        return string_to_utc_datetime(datetime_string)
+
+
+class TimeToStartTimer(CeleryTimer):
+    def __init__(self, task_id):
+        super(TimeToStartTimer, self).__init__(task_id, timing_type='time_sent')
+
+
+class TimeToRunTimer(CeleryTimer):
+    def __init__(self, task_id):
+        super(TimeToRunTimer, self).__init__(task_id, timing_type='time_started')
