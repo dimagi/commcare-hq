@@ -71,14 +71,13 @@ def _perfom_post_save_actions(form, save=True):
         case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
         case_models = case_stock_result.case_models
 
-        if interface.use_sql_domain:
-            forms = ProcessedForms(form, None)
-            stock_result = case_stock_result.stock_result
-            try:
-                FormProcessorSQL.publish_changes_to_kafka(forms, case_models, stock_result)
-            except Exception:
-                error_message = "Error publishing to kafka"
-                return ReprocessingResult(form, None, None, error_message)
+        forms = ProcessedForms(form, None)
+        stock_result = case_stock_result.stock_result
+        try:
+            FormProcessorSQL.publish_changes_to_kafka(forms, case_models, stock_result)
+        except Exception:
+            error_message = "Error publishing to kafka"
+            return ReprocessingResult(form, None, None, error_message)
 
         try:
             save and SubmissionPost.do_post_save_actions(casedb, [form], case_stock_result)
