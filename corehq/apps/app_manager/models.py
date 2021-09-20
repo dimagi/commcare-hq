@@ -787,11 +787,22 @@ class FormDatum(DocumentSchema):
 
 class FormLink(DocumentSchema):
     """
-    xpath:      xpath condition that must be true in order to open next form
-    form_id:    id of next form to open
+    FormLinks are advanced end of form navigation configuration, used when a module's
+    post_form_workflow is WORKFLOW_FORM.
+
+    They allow the user to specify one or more XPath expressions, each with either
+    a module id or form id. The user will be sent to the first module/form whose
+    expression evaluates to true. If none of the conditions is met, the workflow specified
+    in the module's post_form_workflow_fallback is executed.
+
+    xpath: XPath condition that must be true in order to execute link
+    form_id: ID of next form to open, mutually exclusive with module_unique_id
+    module_unique_id: ID of next module to open, mutually exclusive with form_id
+    datums: Any user-provided datums, necessary when HQ can't figure them out automatically
     """
     xpath = StringProperty()
     form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
+    module_unique_id = StringProperty()
     datums = SchemaListProperty(FormDatum)
 
 
@@ -5904,6 +5915,8 @@ class ExchangeApplication(models.Model):
     app_id = models.CharField(max_length=255, null=False)
     help_link = models.CharField(max_length=255, null=True)
     changelog_link = models.CharField(max_length=255, null=True)
+    required_privileges = models.TextField(null=True, blank=True, help_text=_("Space-separated list of privilege"
+                                                                 " strings from corehq.privileges"))
 
     class Meta(object):
         unique_together = ('domain', 'app_id')

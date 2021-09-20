@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-09-08 19:05+0000\n"
+"POT-Creation-Date: 2021-09-15 20:22+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -637,15 +637,15 @@ msgid "Previous Screen"
 msgstr "Tela Anterior"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:96
-msgid "Link to other form"
+msgid "Link to other form or menu"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js:61
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js:66
 msgid "This form either no longer exists or has a different case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js:75
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js:93
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js:80
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js:98
 msgid "Unrecognized value"
 msgstr ""
 
@@ -750,8 +750,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js:49
 #: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js:14
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:134
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:287
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:302
 msgid "There was an error saving"
 msgstr ""
 
@@ -850,7 +849,7 @@ msgid "Module"
 msgstr "Módulo"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:113
-#: corehq/apps/userreports/static/userreports/js/data_source_select.js:10
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js:8
 msgid "Form"
 msgstr "Formulário"
 
@@ -1036,7 +1035,7 @@ msgid "Change Question Type To"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:291
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:306
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:42
 msgid "Delete"
 msgstr ""
@@ -1558,7 +1557,7 @@ msgstr ""
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:754
 #: corehq/apps/export/static/export/js/models.js:357
 #: corehq/apps/export/static/export/js/models.js:359
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:283
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:298
 msgid "Save"
 msgstr "Salvar"
 
@@ -1878,7 +1877,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: corehq/apps/userreports/static/userreports/js/data_source_select.js:11
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js:9
 msgid "Data Source"
 msgstr ""
 
@@ -2256,7 +2255,7 @@ msgid "A reference to an integer question in this form."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: corehq/apps/userreports/static/userreports/js/data_source_select.js:9
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js:7
 msgid "Case"
 msgstr "Caso"
 
@@ -2912,7 +2911,7 @@ msgstr ""
 msgid "You have unsaved changes to your data dictionary."
 msgstr ""
 
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:181
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:179
 msgid ""
 "You have unsaved changes to this case type. Are you sure you would like to "
 "continue?"
@@ -3224,28 +3223,28 @@ msgstr ""
 msgid "Done"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:284
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:299
 msgid "Saving..."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:285
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:300
 msgid "Saved"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:286
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:294
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:301
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:309
 msgid "Try Again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:292
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:307
 msgid "Deleting..."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:293
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:308
 msgid "Deleted"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:295
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:310
 msgid "There was an error deleting"
 msgstr ""
 
@@ -3993,6 +3992,14 @@ msgstr ""
 msgid "Group membership has changed."
 msgstr ""
 
+#: corehq/apps/users/static/users/js/enterprise_users.js:55
+msgid "Hide Deactivated Mobile Workers"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/enterprise_users.js:55
+msgid "Show Deactivated Mobile Workers"
+msgstr "Mostrar os Trabalhadores Móveis Desativados"
+
 #: corehq/apps/users/static/users/js/filtered_download.js:34
 msgid "Download <%- count %> user"
 msgstr ""
@@ -4021,177 +4028,209 @@ msgstr ""
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:59
+#: corehq/apps/users/static/users/js/roles.js:25
+msgid "No Access"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:26
+msgid "Access All"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:27
+msgid "Access Selected"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:28
+msgid "Select which items the role can access:"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:147
 msgid ""
 "<strong>Web Users</strong> &mdash; invite new web users, manage account "
 "settings, remove membership"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:64
+#: corehq/apps/users/static/users/js/roles.js:152
 msgid "Edit & View Mobile Workers"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:65
+#: corehq/apps/users/static/users/js/roles.js:153
 msgid "View-Only Mobile Workers"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:75
+#: corehq/apps/users/static/users/js/roles.js:163
 msgid ""
 "<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
 "settings,deactivate or delete mobile workers."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:80
+#: corehq/apps/users/static/users/js/roles.js:168
 msgid "Edit & View Web Users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:81
+#: corehq/apps/users/static/users/js/roles.js:169
 msgid "View-Only Web Users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:91
+#: corehq/apps/users/static/users/js/roles.js:179
 msgid "<strong>Groups</strong> &mdash; manage groups of mobile workers"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:96
+#: corehq/apps/users/static/users/js/roles.js:184
 msgid "Edit & View Groups"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:97
+#: corehq/apps/users/static/users/js/roles.js:185
 msgid "View-Only Web Groups"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:99
+#: corehq/apps/users/static/users/js/roles.js:187
 msgid "Allow changing group membership (requires edit groups)."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:107
+#: corehq/apps/users/static/users/js/roles.js:195
 msgid ""
 "<strong>Locations</strong> &mdash; manage locations in the Organization's "
 "Hierarchy"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:112
+#: corehq/apps/users/static/users/js/roles.js:200
 msgid "Edit & View Locations"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:113
+#: corehq/apps/users/static/users/js/roles.js:201
 msgid "View-Only Web Locations"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:115
+#: corehq/apps/users/static/users/js/roles.js:203
 msgid "Allow changing workers at a location."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:123
+#: corehq/apps/users/static/users/js/roles.js:211
 msgid ""
 "<strong>Data</strong> &mdash; view, export, and edit form and case data, "
 "reassign cases"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:128
+#: corehq/apps/users/static/users/js/roles.js:216
 msgid "Edit & View Data"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:139
+#: corehq/apps/users/static/users/js/roles.js:227
 msgid "<strong>Web Apps</strong> &mdash; use Web Apps for online data entry"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:144
+#: corehq/apps/users/static/users/js/roles.js:232
 msgid "Access Web Apps"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:155
+#: corehq/apps/users/static/users/js/roles.js:243
 msgid ""
 "<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update "
 "data. Specific APIs may require additional permissions."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:160
+#: corehq/apps/users/static/users/js/roles.js:248
 msgid "Access APIs"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:171
+#: corehq/apps/users/static/users/js/roles.js:259
 msgid ""
 "<strong>Applications</strong> &mdash; modify or view the structure and "
 "configuration of all applications."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:176
+#: corehq/apps/users/static/users/js/roles.js:264
 msgid "Edit & View Apps"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:177
+#: corehq/apps/users/static/users/js/roles.js:265
 msgid "View-Only Applications"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:187
+#: corehq/apps/users/static/users/js/roles.js:275
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:193
+#: corehq/apps/users/static/users/js/roles.js:281
 msgid "View Roles and Permissions"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:203
+#: corehq/apps/users/static/users/js/roles.js:291
 msgid ""
 "<strong>Dropzone</strong> &mdash; Upload and download files from the file "
 "Dropzone"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:208
+#: corehq/apps/users/static/users/js/roles.js:296
 msgid "Edit & Download files from the Dropzone "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:209
+#: corehq/apps/users/static/users/js/roles.js:297
 msgid "View-Only Dropzone"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:219
+#: corehq/apps/users/static/users/js/roles.js:307
 msgid ""
 "<strong>Shared Exports</strong> &mdash; access and edit the content and "
 "structure of shared exports"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:235
+#: corehq/apps/users/static/users/js/roles.js:323
 msgid "Create and Edit Reports"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:238
+#: corehq/apps/users/static/users/js/roles.js:326
 msgid "Allow role to create and edit reports in report builder."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:242
+#: corehq/apps/users/static/users/js/roles.js:330
 msgid "Access All Reports"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:245
+#: corehq/apps/users/static/users/js/roles.js:333
 msgid "Allow role to access all reports."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:320
+#: corehq/apps/users/static/users/js/roles.js:341
+msgid "Manage Registries"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:342
+msgid "Select which registries the role can manage:"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:349
+msgid "View Registry Data"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:350
+msgid "Select which registries the role can view:"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:436
 msgid "Edit Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:320
+#: corehq/apps/users/static/users/js/roles.js:436
 msgid "View Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:321
+#: corehq/apps/users/static/users/js/roles.js:437
 msgid "New Role"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:331
+#: corehq/apps/users/static/users/js/roles.js:447
 msgid "Delete Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:334
+#: corehq/apps/users/static/users/js/roles.js:450
 msgid "Are you sure you want to delete the role <%- role %>?"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:386
+#: corehq/apps/users/static/users/js/roles.js:502
 msgid "An error occurred, please try again."
 msgstr ""
 

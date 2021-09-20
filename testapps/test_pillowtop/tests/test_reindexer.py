@@ -16,8 +16,7 @@ from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import get_es_new
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
-    run_with_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import domains_needing_search_index
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
@@ -35,7 +34,6 @@ DOMAIN = 'reindex-test-domain'
 
 
 @es_test
-@run_with_sql_backend
 class PillowtopReindexerTest(TestCase):
     domain = DOMAIN
 
@@ -130,7 +128,6 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual(0, results.total)
 
 
-@run_with_sql_backend
 class CheckpointCreationTest(CallCenterDomainMockTest):
     # this class is only here so you can run these explicitly
     pass
@@ -217,7 +214,6 @@ def test_no_checkpoint_creation(self, reindex_id, pillow_name):
         )
 
 
-@run_with_sql_backend
 class UserReindexerTest(TestCase):
 
     def setUp(self):
@@ -259,7 +255,6 @@ class UserReindexerTest(TestCase):
             self.assertEqual('WebUser', user_doc['doc_type'])
 
 
-@run_with_sql_backend
 class GroupReindexerTest(TestCase):
 
     def setUp(self):

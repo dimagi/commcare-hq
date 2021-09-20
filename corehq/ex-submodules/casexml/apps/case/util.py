@@ -17,7 +17,6 @@ from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
 from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import iter_docs
@@ -143,11 +142,6 @@ def property_changed_in_action(domain, case_transaction, case_id, case_property_
     from casexml.apps.case.xform import get_case_updates
     PropertyChangedInfo = namedtuple("PropertyChangedInfo", 'transaction new_value modified_on')
     include_create_fields = case_property_name in ['owner_id', 'name', 'external_id']
-
-    if not should_use_sql_backend(domain):
-        # couch domains return 2 transactions for case properties created in a create form
-        if case_transaction.is_case_create and not include_create_fields:
-            return False
 
     case_updates = get_case_updates(case_transaction.form)
 

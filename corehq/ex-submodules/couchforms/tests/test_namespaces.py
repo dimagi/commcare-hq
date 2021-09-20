@@ -7,6 +7,7 @@ from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import TestFileMixin
 
 
+@sharded
 class TestNamespaces(TestCase, TestFileMixin):
     file_path = ('data', 'posts')
     root = os.path.dirname(__file__)
@@ -29,8 +30,3 @@ class TestNamespaces(TestCase, TestFileMixin):
         self._assert_xmlns('gc', xform, 'form/parent/childwithelement/grandchild')
         self._assert_xmlns('lcwo', xform, 'form/parent/lastchildwithout')
         self._assert_xmlns('nothing here either', xform, 'form/lastempty')
-
-
-@sharded
-class TestNamespacesSQL(TestNamespaces):
-    pass

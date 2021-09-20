@@ -5,10 +5,8 @@ from casexml.apps.case.signals import cases_received
 from casexml.apps.case.xform import process_cases_with_casedb
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 
-@run_with_sql_backend
 class TestCasesReceivedSignal(TestCase):
 
     def test_casedb_already_has_cases(self):

@@ -24,6 +24,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.case_search.utils import (
     CaseSearchCriteria,
+    _QueryHelper,
     get_related_case_relationships,
     get_related_case_results,
     get_related_cases,
@@ -38,10 +39,7 @@ from corehq.apps.es.case_search import (
 )
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT, get_es_new
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    run_with_sql_backend,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -267,7 +265,6 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
 
 @es_test
-@run_with_sql_backend
 class TestCaseSearchLookups(TestCase):
 
     def setUp(self):
@@ -566,14 +563,14 @@ class TestCaseSearchLookups(TestCase):
                    return_value={"parent", "parent/parent"}), \
              patch("corehq.apps.case_search.utils.get_child_case_types", return_value={"c", "d"}), \
              patch("corehq.apps.case_search.utils.get_app_cached"):
-            cases = get_related_cases(self.domain, None, {"c"}, cases)
+            cases = get_related_cases(_QueryHelper(self.domain), None, {"c"}, cases)
 
         case_ids = Counter([case.case_id for case in cases])
         self.assertEqual(set(case_ids), {"a1", "d1"})  # c1, c2 excluded since they are in the initial list
         self.assertEqual(max(case_ids.values()), 1, case_ids)  # no duplicates
 
     def _assert_related_case_ids(self, cases, paths, ids):
-        results = get_related_case_results(self.domain, cases, paths)
+        results = get_related_case_results(_QueryHelper(self.domain), cases, paths)
         result_ids = Counter([result['_id'] for result in results])
         self.assertEqual(ids, set(result_ids))
         if result_ids:

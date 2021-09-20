@@ -432,6 +432,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
 
+        self.focusNewRepeat = function () {
+            var repeat = $('.repetition');
+            if (repeat) {
+                repeat.trigger('focus');
+            }
+        };
+
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
         self.collapsible = _.contains(styles, Const.COLLAPSIBLE);
         self.showChildren = ko.observable(!self.collapsible || _.contains(styles, Const.COLLAPSIBLE_OPEN));
@@ -512,6 +519,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.newRepeat = function () {
             $.publish('formplayer.' + Const.NEW_REPEAT, self);
             $.publish('formplayer.dirty');
+            $('.add').trigger('blur');
         };
 
         self.getTranslation = function (translationKey, defaultTranslation) {

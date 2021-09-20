@@ -12,7 +12,6 @@ from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_TEXT,
@@ -31,7 +30,6 @@ from ..repeater_helpers import get_info_resource_list, send_resources
 DOMAIN = ''.join([random.choice(string.ascii_lowercase) for __ in range(20)])
 
 
-@run_with_sql_backend
 class TestGetInfoResourcesListOneCase(TestCase, DomainSubscriptionMixin):
 
     @classmethod
@@ -93,7 +91,6 @@ class TestGetInfoResourcesListOneCase(TestCase, DomainSubscriptionMixin):
         })
 
 
-@run_with_sql_backend
 class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
 
     @classmethod
@@ -219,7 +216,6 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
         self.assertIn({'given': ['Unabomber']}, resource['name'])
 
 
-@run_with_sql_backend
 class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
     """
     Demonstrates building multiple resources using subcases.
@@ -411,7 +407,6 @@ class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
         }])
 
 
-@run_with_sql_backend
 class TestWhenToBundle(TestCase):
 
     def setUp(self):
