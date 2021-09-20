@@ -90,7 +90,7 @@ class Command(BaseCommand):
             dest='exclude_ucrs',
             default="",
             type=str,
-            help="comma-separated UCR tables IDS to exclude. Applicable for form/case/ucr pillows",
+            help="comma-separated UCR tables IDs to exclude. Applicable for form/case/ucr pillows",
         )
 
     def handle(self, **options):
