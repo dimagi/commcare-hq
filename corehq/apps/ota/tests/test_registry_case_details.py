@@ -97,7 +97,7 @@ class RegistryCaseDetailsTests(TestCase):
         }, 404)
 
     def _make_request(self, params, expected_response_code):
-        with patch.object(DataRegistryHelper, 'check_access', return_value=True):
+        with patch.object(DataRegistryHelper, 'check_user_has_access', return_value=True):
             response = self.client.get(reverse('registry_case', args=[self.domain, self.app.get_id]), data=params)
         content = response.content
         self.assertEqual(response.status_code, expected_response_code, content)
