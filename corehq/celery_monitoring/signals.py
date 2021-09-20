@@ -1,5 +1,6 @@
 import datetime
 import inspect
+import logging
 
 from django.core.cache import cache
 
@@ -52,7 +53,12 @@ def celery_record_time_to_run(task_id=None, task=None, state=None, args=None, kw
         metrics_histogram,
     )
 
-    domain = get_domain_from_task(task, args, kwargs)
+    try:
+        domain = get_domain_from_task(task, args, kwargs)
+    except Exception:
+        domain = None
+        logging.exception("Error while attempting to get the domain for a celery task")
+        metrics_counter('commcare.celery.task.time_to_run_domain_unavailable')
 
     get_task_time_to_start.clear(task_id)
 
