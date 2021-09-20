@@ -5,6 +5,7 @@ from django.test import SimpleTestCase, TestCase
 
 import pytz
 from corehq.util.es.elasticsearch import ConnectionError
+from corehq.util.es.tests.util import register_alias, deregister_alias
 from mock import MagicMock, patch
 
 from casexml.apps.case.models import CommCareCase
@@ -76,35 +77,33 @@ from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 @es_test
 class BaseESAccessorsTest(TestCase):
-    es_index_info = None
+
+    es_index_infos = []
 
     def setUp(self):
         super(BaseESAccessorsTest, self).setUp()
         with trap_extra_setup(ConnectionError):
             self.es = get_es_new()
-            self._delete_es_index()
+            self._delete_es_index(False)
             self.domain = uuid.uuid4().hex
-            if isinstance(self.es_index_info, (list, tuple)):
-                for index_info in self.es_index_info:
-                    initialize_index_and_mapping(self.es, index_info)
-            else:
-                initialize_index_and_mapping(self.es, self.es_index_info)
+            for index_info in self.es_index_infos:
+                register_alias(index_info.alias, index_info)
+                initialize_index_and_mapping(self.es, index_info)
 
     def tearDown(self):
         self._delete_es_index()
         super(BaseESAccessorsTest, self).tearDown()
 
-    def _delete_es_index(self):
-        if isinstance(self.es_index_info, (list, tuple)):
-            for index_info in self.es_index_info:
-                ensure_index_deleted(index_info.index)
-        else:
-            ensure_index_deleted(self.es_index_info.index)
+    def _delete_es_index(self, deregister=True):
+        for index_info in self.es_index_infos:
+            ensure_index_deleted(index_info.index)
+            if deregister:
+                deregister_alias(index_info.alias)
 
 
 class TestFormESAccessors(BaseESAccessorsTest):
 
-    es_index_info = [XFORM_INDEX_INFO, GROUP_INDEX_INFO]
+    es_index_infos = [XFORM_INDEX_INFO, GROUP_INDEX_INFO]
 
     def _send_form_to_es(
             self,
@@ -902,7 +901,11 @@ class TestUserESAccessors(TestCase):
         super(TestUserESAccessors, self).setUp()
         self.es = get_es_new()
         ensure_index_deleted(USER_INDEX)
+        register_alias(USER_INDEX_INFO.alias, USER_INDEX_INFO)
         initialize_index_and_mapping(self.es, USER_INDEX_INFO)
+
+    def tearDown(self):
+        deregister_alias(USER_INDEX_INFO.alias)
 
     @classmethod
     def tearDownClass(cls):
@@ -1022,7 +1025,7 @@ class TestGroupESAccessors(SimpleTestCase):
 
 class TestCaseESAccessors(BaseESAccessorsTest):
 
-    es_index_info = CASE_INDEX_INFO
+    es_index_infos = [CASE_INDEX_INFO, USER_INDEX_INFO]
 
     def setUp(self):
         super(TestCaseESAccessors, self).setUp()
