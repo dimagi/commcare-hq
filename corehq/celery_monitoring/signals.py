@@ -1,4 +1,5 @@
 import datetime
+import inspect
 
 from django.core.cache import cache
 
@@ -127,3 +128,14 @@ class TimeToStartTimer(CeleryTimer):
 class TimeToRunTimer(CeleryTimer):
     def __init__(self, task_id):
         super(TimeToRunTimer, self).__init__(task_id, timing_type='time_started')
+
+
+def get_domain_from_task(task, args, kwargs):
+    undecorated_task_function = inspect.unwrap(task)
+    call_args = inspect.getcallargs(undecorated_task_function, *args, **kwargs)
+    if 'domain' in call_args:
+        return call_args['domain']
+    elif 'domain_name' in call_args:
+        return call_args['domain_name']
+    else:
+        return None
