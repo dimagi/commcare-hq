@@ -2771,6 +2771,9 @@ class AnonymousCouchUser(object):
     def can_edit_data(self):
         return False
 
+    def can_edit_messgaing(self):
+        return False
+
     def can_edit_apps(self):
         return False
 
