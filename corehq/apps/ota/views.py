@@ -425,7 +425,7 @@ def registry_case(request, domain, app_id):
         ).format(params="', '".join(missing)))
 
     helper = DataRegistryHelper(domain, registry_slug=registry)
-    if not helper.check_access(request.couch_user):
+    if not helper.check_user_has_access(request.couch_user):
         return HttpResponseForbidden()
 
     app = get_app_cached(domain, app_id)

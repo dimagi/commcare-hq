@@ -88,7 +88,7 @@ def _get_registry_visible_domains(domain, case_types, registry_slug):
     try:
         helper = DataRegistryHelper(domain, registry_slug=registry_slug)
         for case_type in case_types:
-            helper.pre_access_check(case_type)
+            helper.check_case_type_in_registry(case_type)
     except (RegistryNotFound, RegistryAccessException):
         return [domain]
     else:
