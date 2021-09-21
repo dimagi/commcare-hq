@@ -300,11 +300,11 @@ class TestCaseSearchRegistryPermissions(TestCase):
             case_types=["herb"]
         ).slug
 
-    def test_user_does_without_permission_cannot_access_all_domains(self):
+    def test_user_without_permission_cannot_access_all_domains(self):
         domains = self._get_registry_visible_domains(Permissions(view_data_registry_contents=False))
         self.assertEqual(domains, {self.domain})
 
-    def test_user_does_with_permission_can_access_all_domains(self):
+    def test_user_with_permission_can_access_all_domains(self):
         domains = self._get_registry_visible_domains(Permissions(view_data_registry_contents=True))
         self.assertEqual(domains, {self.domain, "A", "B"})
 
