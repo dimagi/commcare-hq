@@ -1212,11 +1212,11 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
 
     def __eq__(self, other):
         return isinstance(other, CommCareCaseIndexSQL) and (
-            self.case_id == other.case_id and
-            self.identifier == other.identifier,
-            self.referenced_id == other.referenced_id,
-            self.referenced_type == other.referenced_type,
-            self.relationship_id == other.relationship_id,
+            self.case_id == other.case_id
+            and self.identifier == other.identifier
+            and self.referenced_id == other.referenced_id
+            and self.referenced_type == other.referenced_type
+            and self.relationship_id == other.relationship_id
         )
 
     def __hash__(self):
