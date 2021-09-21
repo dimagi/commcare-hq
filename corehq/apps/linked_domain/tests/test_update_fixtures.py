@@ -14,11 +14,11 @@ from corehq.apps.fixtures.models import (
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
+from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_fixture
 
 
-class TestUpdateFixtures(BaseLinkedAppsTest):
+class TestUpdateFixtures(BaseLinkedDomainTest):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
