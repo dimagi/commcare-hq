@@ -13,7 +13,6 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import map_reduce
 
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from corehq.apps.reports.analytics.dbaccessors import (
