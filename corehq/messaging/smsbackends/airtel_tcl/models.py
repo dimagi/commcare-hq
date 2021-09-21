@@ -1,15 +1,21 @@
 import json
-import pytz
 import re
-import requests
-from corehq.apps.sms.models import SQLSMSBackend
-from corehq.messaging.smsbackends.airtel_tcl.exceptions import AirtelTCLError, InvalidDestinationNumber
-from corehq.messaging.smsbackends.airtel_tcl.forms import AirtelTCLBackendForm
-from corehq.apps.sms.models import SMS
-from corehq.apps.sms.util import strip_plus
-from corehq.util.timezones.conversions import ServerTime
 from datetime import datetime
+
 from django.conf import settings
+
+import pytz
+import requests
+
+from corehq.apps.sms.models import SMS, SQLSMSBackend
+from corehq.apps.sms.util import strip_plus
+from corehq.messaging.smsbackends.airtel_tcl.exceptions import (
+    AirtelTCLError,
+    InvalidDestinationNumber,
+)
+from corehq.messaging.smsbackends.airtel_tcl.forms import AirtelTCLBackendForm
+from corehq.messaging.smsbackends.http.sms_sending import verify_sms_url
+from corehq.util.timezones.conversions import ServerTime
 
 
 class AirtelTCLBackend(SQLSMSBackend):
@@ -117,8 +123,11 @@ class AirtelTCLBackend(SQLSMSBackend):
             msg_obj.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
             return
 
+        url = self.get_url()
+        verify_sms_url(url, msg_obj, backend=self)
+
         response = requests.post(
-            self.get_url(),
+            url,
             data=json.dumps(payload),
             timeout=settings.SMS_GATEWAY_TIMEOUT,
             verify=False,
