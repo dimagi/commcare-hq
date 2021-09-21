@@ -683,6 +683,7 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual({'user1', 'user2'}, owners)
 
 
+@sharded
 class CaseAccessorsTests(TestCase):
 
     def tearDown(self):
@@ -707,11 +708,6 @@ class CaseAccessorsTests(TestCase):
 
         case = accessors.get_case('c3')
         self.assertFalse(case.is_deleted)
-
-
-@sharded
-class CaseAccessorsTestsSQL(CaseAccessorsTests):
-    pass
 
 
 def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed=False, case_id=None):

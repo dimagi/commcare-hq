@@ -1,11 +1,14 @@
+from unittest.mock import patch
+
 from defusedxml import ElementTree
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import RegistryAuditLog
 from corehq.apps.registry.tests.utils import create_registry_for_test
 from corehq.apps.users.models import CommCareUser
@@ -13,7 +16,6 @@ from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, Form
 from corehq.util.test_utils import generate_cases
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class RegistryCaseDetailsTests(TestCase):
     domain = 'registry-case-details'
 
@@ -95,7 +97,8 @@ class RegistryCaseDetailsTests(TestCase):
         }, 404)
 
     def _make_request(self, params, expected_response_code):
-        response = self.client.get(reverse('registry_case', args=[self.domain, self.app.get_id]), data=params)
+        with patch.object(DataRegistryHelper, 'check_access', return_value=True):
+            response = self.client.get(reverse('registry_case', args=[self.domain, self.app.get_id]), data=params)
         content = response.content
         self.assertEqual(response.status_code, expected_response_code, content)
         return content.decode('utf8')

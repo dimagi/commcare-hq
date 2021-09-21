@@ -47,6 +47,7 @@ class TestLiveQuery(TestCase):
             device.sync(case_sync=CLEAN_OWNERS)
 
 
+@sharded
 class TestNewSyncSpecifics(TestCase):
 
     @classmethod
@@ -110,8 +111,3 @@ class TestNewSyncSpecifics(TestCase):
             CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
             CaseStructure(case_id=parent_id, attrs={'owner_id': 'different'}),
         ], form_extras={'last_sync_token': sync_log._id})
-
-
-@sharded
-class TestNewSyncSpecificsSQL(TestNewSyncSpecifics):
-    pass

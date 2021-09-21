@@ -86,10 +86,10 @@ from corehq.apps.linked_domain.view_helpers import (
     build_domain_link_view_model,
     build_pullable_view_models_from_data_models,
     build_view_models_from_data_models,
-    get_apps,
-    get_fixtures,
-    get_keywords,
-    get_reports,
+    get_upstream_and_downstream_apps,
+    get_upstream_and_downstream_fixtures,
+    get_upstream_and_downstream_keywords,
+    get_upstream_and_downstream_reports,
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import ReleaseManagementReportDispatcher
@@ -268,20 +268,21 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         timezone = get_timezone_for_request()
         upstream_link = get_upstream_domain_link(self.domain)
         linked_domains = [build_domain_link_view_model(link, timezone) for link in get_linked_domains(self.domain)]
-        master_apps, linked_apps = get_apps(self.domain)
-        master_fixtures, linked_fixtures = get_fixtures(self.domain, upstream_link)
-        master_reports, linked_reports = get_reports(self.domain)
-        master_keywords, linked_keywords = get_keywords(self.domain)
+        upstream_apps, downstream_apps = get_upstream_and_downstream_apps(self.domain)
+        upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.domain, upstream_link)
+        upstream_reports, downstream_reports = get_upstream_and_downstream_reports(self.domain)
+        upstream_keywords, downstream_keywords = get_upstream_and_downstream_keywords(self.domain)
 
         is_superuser = self.request.couch_user.is_superuser
         timezone = get_timezone_for_request()
         view_models_to_pull = build_pullable_view_models_from_data_models(
-            self.domain, upstream_link, linked_apps, linked_fixtures, linked_reports, linked_keywords, timezone,
-            is_superuser=is_superuser
+            self.domain, upstream_link, downstream_apps, downstream_fixtures, downstream_reports,
+            downstream_keywords, timezone, is_superuser=is_superuser
         )
 
         view_models_to_push = build_view_models_from_data_models(
-            self.domain, master_apps, master_fixtures, master_reports, master_keywords, is_superuser=is_superuser
+            self.domain, upstream_apps, upstream_fixtures, upstream_reports, upstream_keywords,
+            is_superuser=is_superuser
         )
 
         account = BillingAccount.get_account_by_domain(self.request.domain)
@@ -312,7 +313,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'upstream_link': build_domain_link_view_model(upstream_link, timezone) if upstream_link else None,
                 'view_models_to_pull': sorted(view_models_to_pull, key=lambda m: m['name']),
                 'view_models_to_push': sorted(view_models_to_push, key=lambda m: m['name']),
-                'linked_domains': sorted(linked_domains, key=lambda d: d['linked_domain']),
+                'linked_domains': sorted(linked_domains, key=lambda d: d['downstream_domain']),
                 'linkable_ucr': remote_linkable_ucr,
             },
         }

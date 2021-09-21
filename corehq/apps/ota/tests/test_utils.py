@@ -3,7 +3,6 @@ from django.test import TestCase
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.ota.utils import get_restore_user, is_permitted_to_restore
 from corehq.apps.users.dbaccessors import delete_all_users
@@ -11,7 +10,6 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 
 
-@run_with_sql_backend
 class RestorePermissionsTest(LocationHierarchyTestCase):
     domain = 'goats'
     other_domain = 'sheep'
@@ -217,7 +215,6 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
         self.assertRegex(message, 'not in allowed locations')
 
 
-@run_with_sql_backend
 class GetRestoreUserTest(TestCase):
 
     domain = 'goats'

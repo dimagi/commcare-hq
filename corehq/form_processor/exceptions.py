@@ -32,10 +32,6 @@ class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist):
         return "Attachment not found '{}:{}'".format(self.form_id, self.attachment_name)
 
 
-class CouchSaveAborted(Exception):
-    pass
-
-
 class CaseSaveError(Exception):
     pass
 

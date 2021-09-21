@@ -3,7 +3,6 @@ from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.motech.dhis2.models import SQLDataSetMap, SQLDataValueMap
 from corehq.motech.models import ConnectionSettings
 from corehq.util.test_utils import flag_enabled
@@ -15,12 +14,11 @@ USERNAME = 'test@testy.com'
 PASSWORD = 'password'
 
 
-@run_with_sql_backend
 class BaseViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain = create_domain(DOMAIN, use_sql_backend=True)
+        cls.domain = create_domain(DOMAIN)
         cls.user = WebUser.create(DOMAIN, USERNAME, PASSWORD,
                                   created_by=None, created_via=None)
         cls.user.is_superuser = True
@@ -83,7 +81,7 @@ class TestDataSetMapUpdateView(BaseViewTest):
 
     def test_user_from_other_domain_404(self):
         other_domain = 'other-domain'
-        create_domain(other_domain, use_sql_backend=True)
+        create_domain(other_domain)
         user = WebUser.create(other_domain, 'other@user.com', PASSWORD,
                               created_by=None, created_via=None)
         self.addCleanup(user.delete, other_domain, None)

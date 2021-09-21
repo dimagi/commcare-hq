@@ -813,10 +813,22 @@ You can run all tests with a certain tag as follows:
 
 Available tags:
 
-- all_backends: all tests decorated with `run_with_all_backeds`
+- slow: especially slow tests
+- sharded: tests that should get run on the sharded test runner
+- es_test: Elasticsearch tests
 
 See http://nose.readthedocs.io/en/latest/plugins/attrib.html for more details.
 
+
+### Running on DB tests or Non-DB tests
+
+```sh
+# only run tests that extend TestCase
+./manage.py test --db=only
+
+# skip all tests that extend TestCase but run everything else
+./manage.py test --db=skip
+```
 
 ### Running only failed tests
 

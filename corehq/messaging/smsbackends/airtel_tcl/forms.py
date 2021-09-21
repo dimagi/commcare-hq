@@ -1,7 +1,13 @@
-from corehq.apps.sms.forms import BackendForm
-from dimagi.utils.django.fields import TrimmedCharField
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
 from crispy_forms import layout as crispy
-from django.utils.translation import ugettext_lazy, ugettext as _
+
+from dimagi.utils.django.fields import TrimmedCharField
+
+from corehq.apps.sms.forms import BackendForm
+
+from ..http.form_handling import form_clean_url
 
 
 class AirtelTCLBackendForm(BackendForm):
@@ -41,3 +47,7 @@ class AirtelTCLBackendForm(BackendForm):
             'circle_name',
             'campaign_name',
         )
+
+    def clean_host_and_port(self):
+        host_and_port = self.cleaned_data.get('host_and_port')
+        return form_clean_url(host_and_port)

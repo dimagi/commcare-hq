@@ -86,18 +86,3 @@ def change_meta_from_ledger_v2(ledger_ref, domain, deleted=False):
         domain=domain,
         is_deletion=deleted,
     )
-
-
-def publish_ledger_v1_saved(stock_state, deleted=False):
-    producer.send_change(topics.LEDGER, change_meta_from_ledger_v1(stock_state, deleted))
-
-
-def change_meta_from_ledger_v1(stock_state, deleted=False):
-    return ChangeMeta(
-        document_id=stock_state.pk,
-        data_source_type=data_sources.SOURCE_SQL,
-        data_source_name=data_sources.LEDGER_V1,
-        document_type=topics.LEDGER,
-        domain=stock_state.domain,
-        is_deletion=deleted,
-    )

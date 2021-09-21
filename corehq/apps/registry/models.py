@@ -359,7 +359,7 @@ class RegistryAuditHelper:
         if related_object.doc_type == "ReportConfiguration":
             related_object_id = related_object.get_id
             related_object_type = RegistryAuditLog.RELATED_OBJECT_UCR
-        elif related_object.doc_type == "Application":
+        elif related_object.doc_type in ["Application", "LinkedApplication"]:
             related_object_id = related_object.get_id
             related_object_type = RegistryAuditLog.RELATED_OBJECT_APPLICATION
         else:
