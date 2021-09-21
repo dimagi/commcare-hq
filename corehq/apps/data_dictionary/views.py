@@ -451,7 +451,7 @@ def _process_bulk_upload(bulk_file, domain):
     for case_type in missing_valid_values:
         errors.append(_('Missing valid values sheet for case type {}').format(case_type))
 
-    for case_type in allowed_value_info.keys():
+    for case_type in allowed_value_info:
         for prop_name in allowed_value_info[case_type]:
             if prop_name not in seen_props[case_type]:
                 msg_format = _(

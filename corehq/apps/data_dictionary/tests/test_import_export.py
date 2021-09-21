@@ -12,12 +12,14 @@ from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowed
 from corehq.apps.data_dictionary.views import ExportDataDictionaryView, UploadDataDictionaryView
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, TestFileMixin
 
 
 @flag_enabled('DATA_DICTIONARY')
-class DataDictionaryImportTest(TestCase):
+class DataDictionaryImportTest(TestCase, TestFileMixin):
     domain_name = uuid.uuid4().hex
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
 
     @classmethod
     def setUpClass(cls):
@@ -38,7 +40,7 @@ class DataDictionaryImportTest(TestCase):
         self.client.login(username='test', password='foobar')
 
     def test_clean_import(self):
-        fname = os.path.join(os.path.dirname(__file__), 'data', 'clean_data_dictionary.xlsx')
+        fname = self.get_path('clean_data_dictionary', 'xlsx')
         with open(fname, 'rb') as dd_file:
             response = self.client.post(self.url, {'bulk_upload_file': dd_file})
         self.assertEqual(response.status_code, 200)
@@ -63,7 +65,7 @@ class DataDictionaryImportTest(TestCase):
                                 allowed_value=val, description=f'{val} description').count())
 
     def test_broken_import(self):
-        fname = os.path.join(os.path.dirname(__file__), 'data', 'broken_data_dictionary.xlsx')
+        fname = self.get_path('broken_data_dictionary', 'xlsx')
         with open(fname, 'rb') as dd_file:
             response = self.client.post(self.url, {'bulk_upload_file': dd_file})
         self.assertEqual(response.status_code, 200)
