@@ -151,10 +151,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             urlObject.addSelection(index);
             urlObject.setForceManualAction(false);
         }
-        if (smartLinkParams !== undefined && smartLinkParams.length) {
+        if (smartLinkParams && smartLinkParams.length) {
             var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain;
             if (smartLinkParams[0] !== userDomain) {
-                urlObject.setSmartLink(smartLinkParams[0]);
+                urlObject.setSmartLinkParams(smartLinkParams);
             }
         }
         Util.setUrlToObject(urlObject);
