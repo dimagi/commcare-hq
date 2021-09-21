@@ -90,7 +90,7 @@ class DataRegistryHelper:
 
         checker = RegistryPermissionCheck(self.current_domain, couch_user)
         if not checker.can_view_registry_data(self.registry_slug):
-            raise RegistryAccessException()
+            raise RegistryAccessException("User not permitted to access registry data")
 
     def _check_case_type_in_registry(self, case_type):
         if case_type not in self.registry.wrapped_schema.case_types:
