@@ -1,0 +1,44 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<div data-bind="attr: {id: 'bulk-delete-modal'}" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" style="color:black;">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">
+          Delete <span data-bind="text: selectedReportsCount()"></span> Scheduled Report<span data-bind="if: multiple()">s</span>
+        </h4>
+      </div>
+      <div class="modal-body" style="color:black;">
+        <p>
+          Are you sure you want to permanently delete <span data-bind="if: !multiple()">this</span>
+          <span data-bind="if: multiple()">these</span> scheduled report<span data-bind="if: multiple()">s</span>?
+          <br>
+          <ul data-bind="foreach: selectedReports()">
+            <div data-bind="if: !configMany()">
+              <li data-bind="with: firstConfig()">
+                <span data-bind="text: name"></span> (<span data-bind="text: report_name"></span>)
+              </li>
+            </div>
+            <div data-bind="if: configMany()">
+              <li data-bind="with: firstConfig()">
+                <span data-bind="text: name"></span> (<span data-bind="text: report_name"></span>)
+                <ul>
+                  <div data-bind="foreach: $parent.configs().slice(1, $parent.configs().length)">
+                    <li><span data-bind="text: name"></span> (<span data-bind="text: report_name"></span>)</li>
+                  </div>
+                </ul>
+              </li>
+            </div>
+          </ul>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" data-bind="click: bulkDelete" data-dismiss="modal">
+          Delete <span data-bind="text: selectedReportsCount()"></span> Scheduled Report<span data-bind="if: multiple()">s</span>
+        </button>
+        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+      </div>
+    </div>
+  </div>
+</div>
