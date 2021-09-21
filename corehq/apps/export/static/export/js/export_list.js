@@ -44,9 +44,11 @@ hqDefine("export/js/export_list", [
         options.formname = options.formname || '';
         assertProperties.assert(options, [
             'addedToBulk',
+            'additionalODataUrls',
             'can_edit',
             'deleteUrl',
             'description',
+            'domain',
             'downloadUrl',
             'showDetDownload',
             'detSchemaUrl',
@@ -59,10 +61,10 @@ hqDefine("export/js/export_list", [
             'isDeid',
             'lastBuildDuration',
             'name',
+            'odataUrl',
             'owner_username',
             'sharing',
-            'odataUrl',
-            'additionalODataUrls',
+            'type',
         ], [
             'case_type',
             'isAutoRebuildEnabled',
@@ -185,6 +187,31 @@ hqDefine("export/js/export_list", [
             });
         };
 
+        //button hover text
+        function tooltipStyle(color, margin) {
+            $('.tooltip-inner').css({'background-color': color, 'color': 'black', 'margin-right': margin})
+            $('.tooltip.top .tooltip-arrow').css({'border-top-color': color});
+        }
+
+        var popoverText = "";
+        if (self.isOData() || self.isFeed()) {
+            popoverText = "All of the selected feeds will be deleted.";
+        }
+        else {
+            popoverText = "All of the selected exports will be deleted.";
+        }
+
+        $('#bulk-delete-text').tooltip({
+            trigger: 'hover',
+            placement: 'top',
+            title: gettext(popoverText),
+        }).mouseover(function() {tooltipStyle('#f2dede', '0px')});
+
+        $('#bulk-export-text').tooltip({
+            placement: 'top',
+            title: gettext("All of the selected exports will be collected for download to a single Excel file, with each export as a separate sheet."),
+        }).mouseover(function() {tooltipStyle('#d9edf7', '10px')});
+
         return self;
     };
 
@@ -296,6 +323,7 @@ hqDefine("export/js/export_list", [
 
         // Loading/error handling UI
         self.loadingErrorMessage = ko.observable('');
+        self.isBulkDeleting = ko.observable(false);
         self.isLoadingPanel = ko.observable(true);
         self.isLoadingPage = ko.observable(false);
         self.hasError = ko.observable(false);
@@ -308,6 +336,14 @@ hqDefine("export/js/export_list", [
         self.hasData = ko.computed(function () {
             return !self.isLoadingPanel() && !self.hasError() && self.exports().length;
         });
+
+        //Bulk Action selection
+        self.selectAll = function () {
+            _.each(self.exports(), function (e) { e.addedToBulk(true); });
+        };
+        self.selectNone = function () {
+            _.each(self.exports(), function (e) { e.addedToBulk(false); });
+        };
 
         self.totalItems = ko.observable(0);
         self.itemsPerPage = ko.observable();
@@ -412,15 +448,12 @@ hqDefine("export/js/export_list", [
             return true;
         };
 
-        // Bulk export handling
-        self.selectAll = function () {
-            _.each(self.exports(), function (e) { e.addedToBulk(true); });
-        };
-        self.selectNone = function () {
-            _.each(self.exports(), function (e) { e.addedToBulk(false); });
-        };
+        // Bulk action handling
+        self.bulkDeleteList = ko.computed(function () {
+            return _.filter(self.exports(), function (e) {return e.addedToBulk();});
+        });
         self.bulkExportDownloadCount = ko.computed(function () {
-            return _.filter(self.exports(), function (e) { return e.addedToBulk(); }).length;
+            return self.bulkDeleteList().length;
         });
         self.bulkExportList = ko.observable('');
         self.submitBulkExportDownload = function () {
@@ -432,6 +465,56 @@ hqDefine("export/js/export_list", [
             })));
 
             return true;
+        };
+
+        self.multiple = ko.computed(function () {
+            if (self.bulkDeleteList().length > 1) { return "s"; }
+            return "";
+        });
+        self.plural = ko.computed(function () {
+            if (self.bulkDeleteList().length > 1) { return "these"; }
+            return "this";
+        });
+
+        self.BulkExportDelete = function (observable, event) {
+            var count = self.bulkExportDownloadCount;
+            self.panels().forEach(panel => panel.isBulkDeleting(true));
+            var bulkDelete = function () {
+                var selected = _.filter(self.exports(), function (e) { return e.addedToBulk(); });
+                var deleteArray = [];
+                selected.forEach(function (item, i) {
+                    var attr = {};
+                    attr["domain"] = item.domain();
+                    attr["type"] = item.type();
+                    attr["id"] = item.id();
+                    if (attr["id"] !== selected[0].id()) {
+                        deleteArray.push(attr);
+                    }
+                });
+                var deleteList = JSON.stringify(deleteArray);
+                $.ajax({
+                    method: 'POST',
+                    url: selected[0].deleteUrl(),
+                    data: {
+                        "count": count,
+                        "deleteList": deleteList,
+                    },
+                    success: function (url) {
+                        window.location.href = url;
+                    },
+                    error: function () {
+                        location.reload();
+                    },
+                });
+            };
+            if (options.isOData) {
+                kissmetricsAnalytics.track.event("[BI Integration] Deleted Feed");
+                setTimeout(function () {
+                    bulkDelete();
+                }, 250);
+            } else {
+                bulkDelete();
+            }
         };
 
         // HTML elements from filter form - admittedly it's not very knockout-y to manipulate these directly
