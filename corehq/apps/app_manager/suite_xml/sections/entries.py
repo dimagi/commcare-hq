@@ -1,6 +1,7 @@
 from collections import defaultdict, namedtuple
 from itertools import zip_longest
 
+import attr
 from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager import id_strings
@@ -38,18 +39,22 @@ from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
 
-class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent module_id')):
-    def __new__(cls, datum, case_type, requires_selection, action, from_parent=False, module_id=None):
-        """
-        :param datum: The actual SessionDatum object
-        :param case_type: The case type this datum represents
-        :param requires_selection: True if this datum requires the user to make a selection
-        :param action: The action that produced this datum
-        :param from_parent: True if this datum is a placeholder necessary to match the parent module's session.
-        :param module_id: The ID of the module where this datum comes from.
-        """
-        return super(FormDatumMeta, cls).__new__(
-            cls, datum, case_type, requires_selection, action, from_parent, module_id)
+@attr.s(repr=False)
+class FormDatumMeta:
+    """
+    :param datum: The actual SessionDatum object
+    :param case_type: The case type this datum represents
+    :param requires_selection: True if this datum requires the user to make a selection
+    :param action: The action that produced this datum
+    :param from_parent: True if this datum is a placeholder necessary to match the parent module's session.
+    :param module_id: The ID of the module where this datum comes from.
+    """
+    datum = attr.ib()
+    case_type = attr.ib()
+    requires_selection = attr.ib()
+    action = attr.ib()
+    from_parent = attr.ib(default=False)
+    module_id = attr.ib(default=None)
 
     @property
     def is_new_case_id(self):
@@ -936,7 +941,7 @@ class EntriesHelper(object):
                 if not this_datum_meta or this_datum_meta.datum.id != parent_datum_meta.datum.id:
                     if not parent_datum_meta.requires_selection:
                         # Add parent datums of opened subcases and automatically-selected cases
-                        datums.insert(index, parent_datum_meta._replace(from_parent=True))
+                        datums.insert(index, attr.evolve(parent_datum_meta, from_parent=True))
                     elif this_datum_meta and this_datum_meta.case_type == parent_datum_meta.case_type:
                         append_update(changed_ids_by_case_tag,
                                       rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))
