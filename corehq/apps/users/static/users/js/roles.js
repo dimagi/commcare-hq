@@ -67,6 +67,10 @@ hqDefine('users/js/roles',[
                 self.specific().forEach(item => item.value(false));
             }
         });
+
+        self.hasError = ko.pureComputed(() => {
+            return self.selection() === selected && permissionModel.filteredSpecific().length == 0;
+        });
         return self;
     };
 
@@ -357,6 +361,17 @@ hqDefine('users/js/roles',[
                     ),
                 ];
 
+                self.validate = function () {
+                    self.registryPermissions.forEach((perm) => {
+                        if (perm.hasError()) {
+                            throw interpolate(
+                                gettext('Select at least one item from the list for "%s"'),
+                                [perm.text]
+                            );
+                        }
+                    })
+                };
+
                 return self;
             },
             unwrap: function (self) {
@@ -483,7 +498,9 @@ hqDefine('users/js/roles',[
         self.roleError = ko.observable("");
         self.setRoleError = function (form, error) {
             self.roleError(error);
-            $(form).find('[type="submit"]').enableButton();
+            setTimeout(() => {
+                $(form).find('[type="submit"]').enableButton();
+            }, 100);
         };
         self.clearRoleError = function () {
             self.roleError("");
@@ -494,6 +511,12 @@ hqDefine('users/js/roles',[
         };
         self.submitNewRole = function (form) {
             self.clearRoleError();
+            try {
+                self.roleBeingEdited().validate();
+            } catch (e) {
+                self.setRoleError(form, e);
+                return;
+            }
             $.ajax({
                 method: 'POST',
                 url: o.saveUrl,
