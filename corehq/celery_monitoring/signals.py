@@ -58,7 +58,9 @@ def celery_record_time_to_run(task_id=None, task=None, state=None, args=None, kw
     except Exception:
         domain = None
         logging.exception("Error while attempting to get the domain for a celery task")
-        metrics_counter('commcare.celery.task.time_to_run_domain_unavailable')
+        metrics_counter('commcare.celery.task.time_to_run_domain_unavailable', tags={
+            'celery_task_name': task.name,
+        })
 
     get_task_time_to_start.clear(task_id)
 
