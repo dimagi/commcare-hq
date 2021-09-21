@@ -199,6 +199,7 @@
                   <span class="label label-default" data-bind="text: name"></span><br />
               </span>
             </div>
+            <br/>
             <div data-bind="visible: viewRegistryContentsPermission.all()">{% trans "View All Data" %}</div>
             <div data-bind="visible: !viewRegistryContentsPermission.all() && viewRegistryContentsPermission.filteredSpecific().length">
               <strong>{% trans "View Data From" %}</strong><br/>
