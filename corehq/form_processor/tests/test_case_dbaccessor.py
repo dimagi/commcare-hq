@@ -126,6 +126,7 @@ class CaseAccessorTestsSQL(TestCase):
     def test_get_reverse_indices(self):
         referenced_case_id = uuid.uuid4().hex
         case, index = _create_case_with_index(referenced_case_id)
+        index.referenced_id = index.case_id  # see CaseAccessorSQL.get_reverse_indices
         _create_case_with_index(referenced_case_id, case_is_deleted=True)
         indices = CaseAccessorSQL.get_reverse_indices(DOMAIN, referenced_case_id)
         self.assertEqual([index], indices)
