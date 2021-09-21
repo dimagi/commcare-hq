@@ -1,65 +1,5 @@
-from decimal import Decimal
 import logging
-from django.db.models.signals import pre_save, post_save, post_delete
-from django.dispatch import receiver
-from casexml.apps.stock import const
-from casexml.apps.stock.consumption import compute_daily_consumption
 from casexml.apps.stock.models import StockTransaction
-from corehq.apps.domain.models import Domain
-
-
-@receiver(pre_save, sender=StockTransaction)
-def stock_transaction_pre_save_signal_receiver(sender, instance, *args, **kwargs):
-    create_reconciliation_transaction(instance)
-    populate_sql_product(instance)
-
-
-@receiver(post_save, sender=StockTransaction)
-def stock_transaction_post_save_signal_receiver(sender, instance, *args, **kwargs):
-    update_stock_state_for_transaction(instance)
-
-
-@receiver(post_delete, sender=StockTransaction)
-def stock_transaction_post_delete_signal_receiver(sender, instance, *args,
-                                                  **kwargs):
-    stock_state_deleted(instance)
-
-
-def create_reconciliation_transaction(instance):
-    from corehq.apps.commtrack.consumption import should_exclude_invalid_periods
-
-    creating = instance.pk is None
-    if creating and instance.type == const.TRANSACTION_TYPE_STOCKONHAND:
-        previous_transaction = instance.get_previous_transaction()
-        # only soh reports that have changed the stock create inferred transactions
-        if previous_transaction and previous_transaction.stock_on_hand != instance.stock_on_hand:
-            amt = instance.stock_on_hand - Decimal(previous_transaction.stock_on_hand)
-            if not should_exclude_invalid_periods(instance.report.domain) or amt < 0:
-                StockTransaction.objects.create(
-                    report=instance.report,
-                    case_id=instance.case_id,
-                    section_id=instance.section_id,
-                    product_id=instance.product_id,
-                    type=const.TRANSACTION_TYPE_CONSUMPTION if amt < 0 else const.TRANSACTION_TYPE_RECEIPTS,
-                    quantity=amt,
-                    stock_on_hand=instance.stock_on_hand,
-                    subtype=const.TRANSACTION_SUBTYPE_INFERRED,
-                )
-
-
-def populate_sql_product(instance):
-    from corehq.apps.products.models import SQLProduct
-
-    # some day StockTransaction.sql_product should be the canonical source of
-    # the couch product_id, but until then lets not force people to
-    # look up the SQLProduct every time..
-    if not instance.sql_product_id and instance.product_id:
-        instance.sql_product = SQLProduct.objects.get(product_id=instance.product_id)
-
-
-def update_stock_state_for_transaction(transaction):
-    state = get_stock_state_for_transaction(transaction)
-    state.save()
 
 
 def get_stock_state_for_transaction(transaction):
@@ -118,21 +58,3 @@ def get_stock_state_for_transaction(transaction):
     if domain_name:
         state.__domain = domain_name
     return state
-
-
-def stock_state_deleted(instance):
-    from corehq.apps.commtrack.models import StockState
-
-    qs = StockTransaction.objects.filter(
-        section_id=instance.section_id,
-        case_id=instance.case_id,
-        product_id=instance.product_id,
-    ).order_by('-report__date')
-    if qs:
-        update_stock_state_for_transaction(qs[0])
-    else:
-        StockState.objects.filter(
-            section_id=instance.section_id,
-            case_id=instance.case_id,
-            product_id=instance.product_id,
-        ).delete()
