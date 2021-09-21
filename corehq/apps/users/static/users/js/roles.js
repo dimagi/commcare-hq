@@ -369,7 +369,7 @@ hqDefine('users/js/roles',[
                                 [perm.text]
                             );
                         }
-                    })
+                    });
                 };
 
                 return self;
