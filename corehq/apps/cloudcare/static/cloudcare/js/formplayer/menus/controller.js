@@ -142,8 +142,15 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
 
         $('#select-case').off('click').click(function () {
-            // TODO: only pass smartLink when case is in a different domain
-            FormplayerFrontend.trigger("menu:select", caseId, "bosco");
+            var caseDomain;
+            if (model.smartLinkParams && model.smartLinkParams.length) {
+                var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain,
+                    caseDomain = model.smartLinkParams[0];
+                if (caseDomain === userDomain) {
+                    caseDomain = undefined;
+                }
+            }
+            FormplayerFrontend.trigger("menu:select", caseId, caseDomain);
         });
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
         $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
