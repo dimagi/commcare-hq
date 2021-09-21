@@ -10,7 +10,7 @@
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
 #     $ scripts/rebuildstaging
-#     $ commcare-cloud staging deploy
+#     $ commcare-cloud --control staging deploy
 # Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
