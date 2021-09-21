@@ -38,16 +38,18 @@ from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
 
-class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent')):
-    def __new__(cls, datum, case_type, requires_selection, action, from_parent=False):
+class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent module_id')):
+    def __new__(cls, datum, case_type, requires_selection, action, from_parent=False, module_id=None):
         """
         :param datum: The actual SessionDatum object
         :param case_type: The case type this datum represents
         :param requires_selection: True if this datum requires the user to make a selection
         :param action: The action that produced this datum
         :param from_parent: True if this datum is a placeholder necessary to match the parent module's session.
+        :param module_id: The ID of the module where this datum comes from.
         """
-        return super(FormDatumMeta, cls).__new__(cls, datum, case_type, requires_selection, action, from_parent)
+        return super(FormDatumMeta, cls).__new__(
+            cls, datum, case_type, requires_selection, action, from_parent, module_id)
 
     @property
     def is_new_case_id(self):
@@ -388,12 +390,26 @@ class EntriesHelper(object):
                         return True
             return False
 
-        datums = self.get_case_datums_basic_module(module, form)
-        for datum in datums:
+        case_datums = self.get_case_datums_basic_module(module, form)
+        all_datums = self.add_remote_query_datums(case_datums)
+        for datum in all_datums:
             e.datums.append(datum.datum)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             EntriesHelper.add_case_sharing_assertion(e)
+
+    def add_remote_query_datums(self, datums):
+        """Add in any `query` datums that are necessary.
+        This only applies to datums that are loaded from a data registry.
+        """
+        result = []
+        for datum in datums:
+            result.append(datum)
+            if datum.module_id and datum.case_type:
+                module = self.app.get_module_by_unique_id(datum.module_id)
+                if module_offers_search(module) and module.search_config.data_registry:
+                    result.extend(self.get_data_registry_query_datums(datum, module))
+        return result
 
     def get_datum_meta_module(self, module, use_filter=False):
         datums = []
@@ -473,11 +489,10 @@ class EntriesHelper(object):
                 ),
                 case_type=datum['case_type'],
                 requires_selection=True,
-                action='update_case'
+                action='update_case',
+                module_id=detail_module.get_or_create_unique_id()
             ))
 
-            if module_offers_search(detail_module) and detail_module.search_config.data_registry:
-                datums.extend(self.get_data_registry_query_datums(datum, detail_module))
         return datums
 
     def get_data_registry_query_datums(self, datum, module):
@@ -507,8 +522,8 @@ class EntriesHelper(object):
 
         datums = [_registry_query(
             instance_name=REGISTRY_INSTANCE,
-            case_type_xpath=f"'{datum['case_type']}'",
-            case_id_xpath=session_var(datum['session_var'])
+            case_type_xpath=f"'{datum.case_type}'",
+            case_id_xpath=session_var(datum.datum.id)
         )]
 
         for query in module.search_config.additional_registry_queries:
