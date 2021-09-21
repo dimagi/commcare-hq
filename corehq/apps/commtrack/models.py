@@ -258,25 +258,6 @@ class StockRestoreConfig(models.Model):
         }
 
 
-class SupplyPointCase(CommCareCase):
-    """
-    A wrapper around CommCareCases to get more built in functionality
-    specific to supply points.
-    """
-    location_id = StringProperty()
-
-    class Meta(object):
-        # This is necessary otherwise couchdbkit will confuse this app with casexml
-        app_label = "commtrack"
-
-    @property
-    @memoized
-    def sql_location(self):
-        return SQLLocation.objects.get(location_id=self.location_id)
-
-    location = sql_location
-
-
 UNDERSTOCK_THRESHOLD = 0.5  # months
 OVERSTOCK_THRESHOLD = 2.  # months
 DEFAULT_CONSUMPTION = 10.  # per month

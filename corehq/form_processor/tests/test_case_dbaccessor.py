@@ -5,6 +5,7 @@ from datetime import datetime
 from django.db import router
 from django.test import TestCase
 
+from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import (
@@ -22,7 +23,6 @@ from corehq.form_processor.models import (
     CaseTransaction,
     CommCareCaseIndexSQL,
     CommCareCaseSQL,
-    SupplyPointCaseMixin,
     XFormInstanceSQL,
 )
 from corehq.form_processor.tests.test_basics import _submit_case_block
@@ -285,7 +285,7 @@ class CaseAccessorTestsSQL(TestCase):
         )
 
     def test_get_case_by_location(self):
-        case = _create_case(case_type=SupplyPointCaseMixin.CASE_TYPE)
+        case = _create_case(case_type=SUPPLY_POINT_CASE_TYPE)
         location_id = uuid.uuid4().hex
         case.location_id = location_id
         CaseAccessorSQL.save_case(case)

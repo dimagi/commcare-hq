@@ -1,19 +1,13 @@
-import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from couchdbkit.exceptions import ResourceNotFound
 from dateutil import parser
 from memoized import memoized
 
-from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS, SECTION_TYPE_STOCK
-from casexml.apps.stock.models import StockReport
+from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import map_reduce
 
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from corehq.apps.reports.analytics.dbaccessors import (
@@ -28,7 +22,6 @@ from corehq.apps.reports.commtrack.util import (
     get_product_ids_for_program,
     get_relevant_supply_point_ids,
 )
-from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 
 
 def format_decimal(d):
