@@ -2,7 +2,6 @@ from decimal import Decimal
 
 from django.contrib.postgres.fields import JSONField
 from django.db import models
-from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -412,24 +411,6 @@ def sync_supply_point(location, is_deletion=False):
     else:
         updated_supply_point = _reopen_or_create_supply_point(location)
         location.supply_point_id = updated_supply_point.case_id
-
-
-@receiver(post_save, sender=StockState)
-def update_domain_mapping(sender, instance, *args, **kwargs):
-    case_id = str(instance.case_id)
-    try:
-        domain_name = instance.__domain
-        if not domain_name:
-            raise ValueError()
-    except (AttributeError, ValueError):
-        domain_name = CommCareCase.get(case_id).domain
-    if not DocDomainMapping.objects.filter(doc_id=case_id).exists():
-        mapping = DocDomainMapping(
-            doc_id=case_id,
-            doc_type='CommCareCase',
-            domain_name=domain_name,
-        )
-        mapping.save()
 
 
 @receiver(xform_archived)
