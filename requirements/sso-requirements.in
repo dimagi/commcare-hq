@@ -1,2 +1,2 @@
 pyOpenSSL==20.0.1
-python3-saml==1.9.0
+python3-saml==1.12.0
