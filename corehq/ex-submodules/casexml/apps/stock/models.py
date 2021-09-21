@@ -137,6 +137,3 @@ class DocDomainMapping(models.Model):
 
     class Meta(object):
         app_label = 'stock'
-
-
-from .signals import *

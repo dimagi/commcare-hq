@@ -1,4 +1,3 @@
-import copy
 import decimal
 import json
 
@@ -15,7 +14,6 @@ from memoized import memoized
 
 from casexml.apps.stock.models import StockTransaction
 
-from corehq import toggles
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.apps.commtrack.processing import (
     plan_rebuild_stock_state,
@@ -32,7 +30,6 @@ from corehq.util.timezones.conversions import ServerTime
 
 from .forms import CommTrackSettingsForm, ConsumptionForm
 from .models import ActionConfig, StockRestoreConfig
-from .tasks import recalculate_domain_consumption_task
 from .util import all_sms_codes
 
 
@@ -122,7 +119,6 @@ class CommTrackSettingsView(BaseCommTrackManageView):
     def post(self, request, *args, **kwargs):
         if self.commtrack_settings_form.is_valid():
             data = self.commtrack_settings_form.cleaned_data
-            previous_json = copy.copy(self.commtrack_settings.to_json())
             for attr in ('use_auto_consumption', 'sync_consumption_fixtures', 'individual_consumption_defaults'):
                 setattr(self.commtrack_settings, attr, bool(data.get(attr)))
 
@@ -160,17 +156,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                 # This will update stock levels based on commtrack config
                 loc_type.save()
 
-            same_flag = previous_json['use_auto_consumption'] == self.commtrack_settings.use_auto_consumption
-            same_config = (
-                previous_json['consumption_config'] == self.commtrack_settings.consumptionconfig.to_json()
-            )
-            if (not same_flag or not same_config):
-                # kick off delayed consumption rebuild
-                recalculate_domain_consumption_task.delay(self.domain)
-                messages.success(request, _("Settings updated! Your updated consumption settings may take a "
-                                            "few minutes to show up in reports and on phones."))
-            else:
-                messages.success(request, _("Settings updated!"))
+            messages.success(request, _("Settings updated!"))
             return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
