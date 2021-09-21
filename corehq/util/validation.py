@@ -1,5 +1,6 @@
 import re
 
+from corehq.util.urlvalidate.urlvalidate import validate_user_input_url, InvalidURL, PossibleSSRFAttempt
 import jsonschema
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
@@ -21,8 +22,21 @@ def is_url_or_host_banned(url_or_host):
     # all urls should always be configured only by site admins. However, we can
     # use this check to help site admins ensure they're not making any obvious
     # mistakes.
-    return any([re.search(regex, url_or_host) for regex in BANNED_HOST_REGEX])
+    black_list_result = any([re.search(regex, url_or_host) for regex in BANNED_HOST_REGEX])
+    if black_list_result:
+        return True
 
+    url = url_or_host if has_scheme(url_or_host) else f'http://{url_or_host}'
+    try:
+        validate_user_input_url(url)
+        return False
+    except (InvalidURL, PossibleSSRFAttempt):
+        return True
+
+
+def has_scheme(url):
+    scheme_regex = r'(?:.+:)?//'  # Should match 'http://', 'file://', '//' etc
+    return bool(re.match(scheme_regex, url))
 
 @deconstructible
 class JSONSchemaValidator:
