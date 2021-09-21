@@ -87,9 +87,7 @@ def get_case_search_results(domain, criteria, app_id=None, couch_user=None):
 def _get_registry_visible_domains(couch_user, domain, case_types, registry_slug):
     try:
         helper = DataRegistryHelper(domain, registry_slug=registry_slug)
-        helper.check_user_has_access(couch_user)
-        for case_type in case_types:
-            helper.check_case_type_in_registry(case_type)
+        helper.check_data_access(couch_user, case_types)
     except (RegistryNotFound, RegistryAccessException):
         return [domain]
     else:
