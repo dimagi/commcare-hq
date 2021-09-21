@@ -85,4 +85,5 @@ branches:
     - dmr/add-domain-to-celery-metrics  # Danny Sep 20
     - sk/registry-app-bugs # Simon/Jenny Sept 21
     - ap/add-permission-to-edit-ucrs # Amit Sept 21
+    - smh/extract-messaging-permission # Steph Sept 21
 submodules: { }
