@@ -6,7 +6,7 @@ from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchProperty,
     Module,
-    AdditionalRegistryQuery, DetailColumn, FormLink,
+    AdditionalRegistryQuery, DetailColumn, FormLink, DetailTab,
 )
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -31,6 +31,15 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.form = self.app.new_form(0, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
         self.form.requires = 'case'
         self.module.case_type = 'case'
+
+        self.module.case_details.long.columns.append(
+            DetailColumn.wrap(dict(
+                header={"en": "name"},
+                model="case",
+                format="plain",
+                field="whatever",
+            ))
+        )
 
         self.module.search_config = CaseSearch(
             properties=[
@@ -112,3 +121,13 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             self.app.create_suite(),
             "./entry[1]"
         )
+
+    def test_case_detail_tabs_with_registry_module(self, *args):
+        self.app.get_module(0).case_details.long.tabs = [
+            DetailTab(starting_index=1)
+        ]
+
+        self.assertXmlPartialEqual(
+            self.get_xml("detail_tabs"),
+            self.app.create_suite(),
+            './detail[@id="m0_case_long"]')
