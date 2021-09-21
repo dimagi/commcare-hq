@@ -21,15 +21,6 @@ class DataRegistryHelper:
             self.registry_slug = registry_slug
             self._registry = None
 
-    def check_user_has_access(self, couch_user, case_domain=None):
-        if case_domain and self.current_domain == case_domain:
-            # always allow to access data in the current domain
-            return
-
-        checker = RegistryPermissionCheck(self.current_domain, couch_user)
-        if not checker.can_view_registry_data(self.registry_slug):
-            raise RegistryAccessException()
-
     @property
     def registry(self):
         if not self._registry:
@@ -52,24 +43,6 @@ class DataRegistryHelper:
 
     def log_data_access(self, user, domain, related_object, filters=None):
         self.registry.logger.data_accessed(user, domain, related_object, filters)
-
-    def check_case_type_in_registry(self, case_type):
-        if case_type not in self.registry.wrapped_schema.case_types:
-            raise RegistryAccessException(f"'{case_type}' not available in registry")
-
-    def check_domain_is_visible(self, domain):
-        if domain not in self.visible_domains:
-            raise RegistryAccessException("Data not available in registry")
-
-    def check_data_access(self, couch_user, case_types, case_domain=None):
-        """Perform all checks for data access.
-        Will raise a RegistryAccessException if access should be denied.
-        """
-        for case_type in case_types:
-            self.check_case_type_in_registry(case_type)
-        self.check_user_has_access(couch_user, case_domain)
-        if case_domain is not None:
-            self.check_domain_is_visible(case_domain)
 
     def get_case(self, case_id, case_type, couch_user, application):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -99,3 +72,30 @@ class DataRegistryHelper:
         cases = accessor.get_cases(list(case_ids))
 
         return [case] + cases
+
+    def check_data_access(self, couch_user, case_types, case_domain=None):
+        """Perform all checks for data access.
+        Will raise a RegistryAccessException if access should be denied.
+        """
+        for case_type in case_types:
+            self._check_case_type_in_registry(case_type)
+        self._check_user_has_access(couch_user, case_domain)
+        if case_domain is not None:
+            self._check_domain_is_visible(case_domain)
+
+    def _check_user_has_access(self, couch_user, case_domain=None):
+        if case_domain and self.current_domain == case_domain:
+            # always allow to access data in the current domain
+            return
+
+        checker = RegistryPermissionCheck(self.current_domain, couch_user)
+        if not checker.can_view_registry_data(self.registry_slug):
+            raise RegistryAccessException()
+
+    def _check_case_type_in_registry(self, case_type):
+        if case_type not in self.registry.wrapped_schema.case_types:
+            raise RegistryAccessException(f"'{case_type}' not available in registry")
+
+    def _check_domain_is_visible(self, domain):
+        if domain not in self.visible_domains:
+            raise RegistryAccessException("Data not available in registry")

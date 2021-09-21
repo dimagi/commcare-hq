@@ -81,7 +81,7 @@ patch_get_app_cached = mock.patch('corehq.apps.case_search.utils.get_app_cached'
 
 
 @es_test
-@mock.patch.object(DataRegistryHelper, 'check_user_has_access', new=mock.Mock())
+@mock.patch.object(DataRegistryHelper, '_check_user_has_access', new=mock.Mock())
 class TestCaseSearchRegistry(TestCase):
 
     @classmethod

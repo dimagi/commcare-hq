@@ -63,7 +63,7 @@ class TestDataRegistryHelper(SimpleTestCase):
         mock_case = _mock_case("a", "other-domain")
         with self.assertRaisesMessage(RegistryAccessException, "Data not available in registry"), \
              patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case), \
-             patch.object(DataRegistryHelper, "check_user_has_access", new=Mock()):
+             patch.object(DataRegistryHelper, "_check_user_has_access", new=Mock()):
             self.helper.get_case("case1", "a", "user", "app")
         self.log_data_access.not_called()
 
@@ -139,7 +139,7 @@ class TestGetCaseHierarchy(TestCase):
         FormProcessorTestUtils.delete_all_sql_cases(cls.domain)
         super().tearDownClass()
 
-    @patch.object(DataRegistryHelper, 'check_user_has_access', new=Mock())
+    @patch.object(DataRegistryHelper, '_check_user_has_access', new=Mock())
     def test_get_case_hierarchy(self):
         cases = self.helper.get_case_hierarchy(None, CaseAccessorSQL.get_case(self.parent_case_id))
         self.assertEqual({case.case_id for case in cases}, {
