@@ -3,7 +3,6 @@ from mock import patch
 from corehq.apps.app_manager.models import (
     Application,
     LinkedApplication,
-    Module,
 )
 from corehq.apps.app_manager.tests.util import patch_validate_xform
 from corehq.apps.app_manager.views.utils import get_blank_form_xml
