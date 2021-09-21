@@ -144,7 +144,7 @@ from corehq.apps.userreports.util import (
     has_report_builder_add_on_privilege,
     number_of_report_builder_reports,
 )
-from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.decorators import get_permission_name, require_permission
 from corehq.apps.users.models import Permissions
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
@@ -212,6 +212,17 @@ class BaseUserConfigReportsView(BaseDomainView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=(self.domain,))
+
+    def dispatch(self, *args, **kwargs):
+        allow_access_to_ucrs = (
+            self.request.couch_user.has_permission(
+                self.domain,
+                get_permission_name(Permissions.edit_ucrs)
+            )
+        )
+        if allow_access_to_ucrs or not settings.IS_SAAS_ENVIRONMENT:
+            return super().dispatch(*args, **kwargs)
+        raise Http404()
 
 
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
