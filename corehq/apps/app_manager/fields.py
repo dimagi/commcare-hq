@@ -80,6 +80,7 @@ class ApplicationDataSourceUIHelper(object):
 
     def __init__(self, enable_raw=False, enable_registry=False):
         self.all_sources = {}
+        self.registry_sources = {}
         self.enable_raw = enable_raw
         source_choices = [
             (DATA_SOURCE_TYPE_CASE, _("Case")),
@@ -103,6 +104,7 @@ class ApplicationDataSourceUIHelper(object):
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
+        self.registry_sources = get_registry_sources(self.all_sources.values(), domain)
         self.application_field.choices = sort_tuple_field_choices_by_name(
             [(app_id, source['name']) for app_id, source in self.all_sources.items()]
         )
@@ -134,9 +136,6 @@ class ApplicationDataSourceUIHelper(object):
             for app_data in self.all_sources.values():
                 app_data['data_source'] = [{"text": ds.display_name, "value": ds.data_source_id}
                                            for ds in available_data_sources]
-        self.registry_slug_field.choices = sort_tuple_field_choices_by_name(
-            [(registry["slug"], registry["name"]) for registry in get_data_registry_dropdown_options(domain)],
-        )
         # NOTE: This corresponds to a view-model that must be initialized in your template.
         # See the doc string of this class for more information.
         self.application_field.widget.attrs = {'data-bind': 'value: application'}
@@ -144,10 +143,14 @@ class ApplicationDataSourceUIHelper(object):
         self.source_field.widget.attrs = {'data-bind': '''
             options: sourcesMap[application()][sourceType()],
             optionsText: function(item){return item.text},
-            optionsValue: function(item){return item.value}
+            optionsValue: function(item){return item.value},
+            value: sourceId
         '''}
         self.registry_slug_field.widget.attrs = {'data-bind': '''
             disable: sourceType() != 'case',
+            options: registriesMap[sourceId()],
+            optionsText: function(item){return item.text},
+            optionsValue: function(item){return item.value},
             value: registrySlug
         '''}
 
@@ -193,6 +196,16 @@ def get_app_sources(domain):
             ]
         }
         for app in apps
+    }
+
+
+def get_registry_sources(values, domain):  # TODO: refactor
+    case_types = [ct['value'] for app in values for ct in app['case']]
+    return {
+        case_type:
+            [{"text": registry["name"], "value": registry["slug"]} for registry in
+             get_data_registry_dropdown_options(domain, required_case_types=set(case_type))]
+        for case_type in case_types
     }
 
 
