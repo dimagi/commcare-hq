@@ -950,13 +950,12 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             duplicate_cases.append(case)
             new_duplicate_case_ids.add(case.case_id)
 
-        if self._handle_existing_duplicates(case.case_id, new_duplicate_case_ids):
-            return CaseRuleActionResult(num_updates=0)
+        with transaction.atomic():
+            if self._handle_existing_duplicates(case.case_id, new_duplicate_case_ids):
+                return CaseRuleActionResult(num_updates=0)
+            CaseDuplicate.bulk_create_duplicate_relationships(self, case, duplicate_cases)
 
         num_updates = self._update_cases(domain, rule, duplicate_cases)
-
-        CaseDuplicate.bulk_create_duplicate_relationships(self, case, duplicate_cases)
-
         return CaseRuleActionResult(num_updates=num_updates)
 
     def _handle_existing_duplicates(self, case_id, new_duplicate_case_ids):
