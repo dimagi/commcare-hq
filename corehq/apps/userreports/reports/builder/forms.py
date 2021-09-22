@@ -1018,6 +1018,7 @@ class ConfigureNewReportBase(forms.Form):
             self.report_source_id = existing_report.config.meta.build.source_id
             app_id = existing_report.config.meta.build.app_id
             self.registry_slug = existing_report.config.meta.build.registry_slug
+            self.app = None
             if app_id:
                 self.app = Application.get(app_id)
             elif not self.registry_slug:
