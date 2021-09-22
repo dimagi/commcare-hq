@@ -16,7 +16,6 @@ from casexml.apps.phone.models import OwnershipCleanlinessFlag, SyncLogSQL
 from casexml.apps.stock.models import (
     DocDomainMapping,
     StockReport,
-    StockTransaction,
 )
 from couchforms.models import UnfinishedSubmissionStub
 
@@ -151,22 +150,12 @@ class TestDeleteDomain(TestCase):
             location_type='facility'
         )
         location.save()
-        report = StockReport.objects.create(
+        StockReport.objects.create(
             type='balance',
             domain=domain_name,
             form_id='fake',
             date=datetime.utcnow(),
             server_date=datetime.utcnow(),
-        )
-
-        StockTransaction.objects.create(
-            report=report,
-            product_id=product.get_id,
-            sql_product=SQLProduct.objects.get(product_id=product.get_id),
-            section_id='stock',
-            type='stockonhand',
-            case_id=location.linked_supply_point().get_id,
-            stock_on_hand=100
         )
 
         SMS.objects.create(domain=domain_name)
@@ -233,7 +222,6 @@ class TestDeleteDomain(TestCase):
         )
 
     def _assert_sql_counts(self, domain, number):
-        self.assertEqual(StockTransaction.objects.filter(report__domain=domain).count(), number)
         self.assertEqual(StockReport.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLLocation.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLProduct.objects.filter(domain=domain).count(), number)
