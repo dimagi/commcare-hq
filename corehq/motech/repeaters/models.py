@@ -202,9 +202,8 @@ class RepeaterManager(models.Manager):
 
 
 class SQLRepeater(models.Model):
-    domain = models.CharField(max_length=126)
-    # We will be removing repeater_id as we will be using couch_id
-    repeater_id = models.CharField(max_length=36)
+    domain = models.CharField(max_length=126, db_index=True)
+    repeater_id = models.CharField(max_length=36, unique=True, db_index=True)
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
@@ -216,14 +215,7 @@ class SQLRepeater(models.Model):
         on_delete=models.PROTECT
     )
 
-    couch_id = models.CharField(max_length=126, null=True)
-
     class Meta:
-        indexes = [
-            models.Index(fields=['domain']),
-            models.Index(fields=['repeater_id']),
-            models.Index(fields=['couch_id']),
-        ]
         db_table = 'repeaters_repeater'
 
     @property
