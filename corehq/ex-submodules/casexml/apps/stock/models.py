@@ -140,3 +140,6 @@ class DocDomainMapping(models.Model):
 
     class Meta(object):
         app_label = 'stock'
+
+
+from . import signals  # noqa: F401, E402
