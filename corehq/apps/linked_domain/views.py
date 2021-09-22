@@ -25,6 +25,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.domain.dbaccessors import domain_exists
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_or_api_key,
@@ -306,6 +307,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
             'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
+            'is_superuser': is_superuser,
             'view_data': {
                 'is_downstream_domain': bool(upstream_link),
                 'upstream_domains': upstream_domain_urls,
@@ -388,6 +390,13 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     @allow_remote_invocation
     def create_domain_link(self, in_data):
         domain_to_link = in_data['downstream_domain']
+        if not domain_exists(domain_to_link):
+            return {
+                'success': False,
+                'message': ugettext(f"The domain {domain_to_link} does not exist. Make sure the name is correct "
+                                    "and this domain hasn't been deleted.")
+            }
+
         try:
             domain_link = DomainLink.link_domains(domain_to_link, self.domain)
         except DomainLinkError as e:
