@@ -237,7 +237,7 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(StockReport.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLLocation.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLProduct.objects.filter(domain=domain).count(), number)
-        self.assertEqual(DocDomainMapping.objects.filter(domain_name=domain).count(), number)
+        self.assertEqual(DocDomainMapping.objects.filter(domain_name=domain).count(), 0)
         self.assertEqual(LocationType.objects.filter(domain=domain).count(), number)
 
         self.assertEqual(SMS.objects.filter(domain=domain).count(), number)
