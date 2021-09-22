@@ -38,8 +38,7 @@ from corehq.util.test_utils import (
 class CaseRuleCriteriaTest(TestCase):
 
     @classmethod
-    def setUpClass(cls, *args, **kwargs):
-        super().setUpClass(*args, **kwargs)
+    def setUpTestData(cls, *args, **kwargs):
 
         cls.domain = 'case-dedupe-test'
         cls.case_type = 'adult'
@@ -54,11 +53,6 @@ class CaseRuleCriteriaTest(TestCase):
             server_modified_boundary=None,
             workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
         )
-
-    @classmethod
-    def tearDownClass(cls, *args, **kwargs):
-        cls.rule.delete()
-        super().tearDownClass()
 
     def test_new_cases_only(self):
         now = datetime.utcnow()
@@ -197,7 +191,6 @@ class FindingDuplicatesTest(TestCase):
         ])
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class CaseDeduplicationActionTest(TestCase):
 
     @classmethod
@@ -410,7 +403,6 @@ class CaseDeduplicationActionTest(TestCase):
 
 @override_settings(RUN_UNKNOWN_USER_PILLOW=False)
 @override_settings(RUN_FORM_META_PILLOW=False)
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 @flag_enabled('CASE_DEDUPE')
 class DeduplicationPillowTest(TestCase):
 
