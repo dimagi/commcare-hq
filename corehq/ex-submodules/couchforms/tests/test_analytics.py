@@ -133,7 +133,7 @@ class CouchformsESAnalyticsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(CouchformsESAnalyticsTest, cls).setUpClass()
-        register(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO)
+        register(XFORM_INDEX_INFO)
 
         @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
         def create_form_and_sync_to_es(received_on):
@@ -164,7 +164,7 @@ class CouchformsESAnalyticsTest(TestCase):
     def tearDownClass(cls):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
-        deregister(XFORM_INDEX_INFO.index)
+        deregister(XFORM_INDEX_INFO)
         super(CouchformsESAnalyticsTest, cls).tearDownClass()
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)

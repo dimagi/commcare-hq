@@ -105,7 +105,6 @@ from memoized import memoized
 
 from corehq.elastic import (
     ES_DEFAULT_INSTANCE,
-    ES_META,
     SIZE_LIMIT,
     ESError,
     run_query,
@@ -114,6 +113,7 @@ from corehq.elastic import (
 )
 
 from . import aggregations, filters, queries
+from .registry import verify_registered
 from .utils import flatten_field_dict, values_list
 
 
@@ -136,6 +136,7 @@ class ESQuery(object):
         }
 
     """
+    # `index` is actually a canonical name (which may be the same as the alias)
     index = None
     _exclude_source = None
     _legacy_fields = False
@@ -148,13 +149,10 @@ class ESQuery(object):
     }
 
     def __init__(self, index=None, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
-        from corehq.apps.userreports.util import is_ucr_table
-
-        self.index = index if index is not None else self.index
-        if self.index not in ES_META and not is_ucr_table(self.index):
-            msg = "%s is not a valid ES index.  Available options are: %s" % (
-                self.index, ', '.join(ES_META))
-            raise IndexError(msg)
+        if index is not None:
+            self.index = index
+        # verify index canonical name
+        verify_registered(self.index)  # raises ESRegistryError on failure
 
         self.debug_host = debug_host
         self._default_filters = deepcopy(self.default_filters)

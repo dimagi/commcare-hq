@@ -7,8 +7,8 @@ from memoized import memoized
 from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
-from corehq.apps.es.registry import ES_META
 from corehq.apps.es.exceptions import ESError
+from corehq.apps.es.registry import registry_entry
 from corehq.util.es.elasticsearch import (
     Elasticsearch,
     ElasticsearchException,
@@ -107,7 +107,7 @@ def doc_exists_in_es(index_info, doc_id):
     return ElasticsearchInterface(get_es_new()).doc_exists(index_info.alias, doc_id, index_info.type)
 
 
-def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
+def send_to_elasticsearch(index_cname, doc, delete=False, es_merge_update=False):
     """
     Utility method to update the doc in elasticsearch.
     Duplicates the functionality of pillowtop but can be called directly.
@@ -115,24 +115,25 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
     doc_id = doc['_id']
     if isinstance(doc_id, bytes):
         doc_id = doc_id.decode('utf-8')
-    index_info = ES_META[index_name]
+    index_info = registry_entry(index_cname)
     return send_to_es(
         index_info=index_info,
         doc_type=index_info.type,
         doc_id=doc_id,
         es_getter=get_es_new,
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
-                                  send_to_elasticsearch.__name__, index_name),
+                                  send_to_elasticsearch.__name__, index_cname),
         data=doc,
         delete=delete,
         es_merge_update=es_merge_update,
     )
 
 
-def refresh_elasticsearch_index(index_name):
-    es_meta = ES_META[index_name]
+def refresh_elasticsearch_index(index_cname):
+    index_info = registry_entry(index_cname)
     es = get_es_new()
-    es.indices.refresh(index=es_meta.alias)
+    es.indices.refresh(index=index_info.alias)
+
 
 # this is what ES's maxClauseCount is currently set to, can change this config
 # value if we want to support querying over more domains
@@ -143,7 +144,7 @@ class ESShardFailure(ESError):
     pass
 
 
-def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
+def run_query(index_cname, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
     # the debug_host parameter allows you to query another env for testing purposes
     if debug_host:
         if not settings.DEBUG:
@@ -157,31 +158,31 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
 
     es_interface = ElasticsearchInterface(es_instance)
 
-    es_meta = ES_META[index_name]
+    index_info = registry_entry(index_cname)
     try:
-        results = es_interface.search(es_meta.alias, es_meta.type, body=q)
+        results = es_interface.search(index_info.alias, index_info.type, body=q)
         report_and_fail_on_shard_failures(results)
         return results
     except ElasticsearchException as e:
         raise ESError(e)
 
 
-def mget_query(index_name, ids):
+def mget_query(index_cname, ids):
     if not ids:
         return []
 
     es_interface = ElasticsearchInterface(get_es_new())
-    es_meta = ES_META[index_name]
+    index_info = registry_entry(index_cname)
     try:
-        return es_interface.get_bulk_docs(es_meta.alias, es_meta.type, ids)
+        return es_interface.get_bulk_docs(index_info.alias, index_info.type, ids)
     except ElasticsearchException as e:
         raise ESError(e)
 
 
-def iter_es_docs(index_name, ids):
+def iter_es_docs(index_cname, ids):
     """Returns a generator which pulls documents from elasticsearch in chunks"""
     for ids_chunk in chunked(ids, 100):
-        yield from mget_query(index_name, ids_chunk)
+        yield from mget_query(index_cname, ids_chunk)
 
 
 def iter_es_docs_from_query(query):
@@ -204,11 +205,11 @@ def iter_es_docs_from_query(query):
     return ScanResult(query.count(), iter_export_docs())
 
 
-def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
-    es_meta = ES_META[index_name]
+def scroll_query(index_cname, q, es_instance_alias=ES_DEFAULT_INSTANCE):
+    index_info = registry_entry(index_cname)
     es_interface = ElasticsearchInterface(get_es_instance(es_instance_alias))
     try:
-        for results in es_interface.iter_scroll(es_meta.alias, es_meta.type, body=q):
+        for results in es_interface.iter_scroll(index_info.alias, index_info.type, body=q):
             report_and_fail_on_shard_failures(results)
             for hit in results["hits"]["hits"]:
                 yield hit
@@ -216,10 +217,10 @@ def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
         raise ESError(e)
 
 
-def count_query(index_name, q):
-    es_meta = ES_META[index_name]
+def count_query(index_cname, q):
+    index_info = registry_entry(index_cname)
     es_interface = ElasticsearchInterface(get_es_new())
-    return es_interface.count(es_meta.alias, es_meta.type, q)
+    return es_interface.count(index_info.alias, index_info.type, q)
 
 
 class ScanResult(object):

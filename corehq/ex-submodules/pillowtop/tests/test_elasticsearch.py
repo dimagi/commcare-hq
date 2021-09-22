@@ -100,9 +100,13 @@ class ElasticPillowTest(SimpleTestCase):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        ElasticsearchInterface(get_es_new()).index_doc(
-            self.index, TEST_INDEX_INFO.type, doc_id, {'doc_type': 'CommCareCase', 'type': 'mother'},
-            verify_alias=False)
+        with mock.patch.object(ElasticsearchInterface, "_verify_is_alias", return_value=None):
+            ElasticsearchInterface(get_es_new()).index_doc(
+                self.index,
+                TEST_INDEX_INFO.type,
+                doc_id,
+                {'doc_type': 'CommCareCase', 'type': 'mother'},
+            )
         self.assertEqual(1, get_doc_count(self.es, self.index))
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
         es_doc = self.es_interface.get_doc(TEST_INDEX_INFO.alias, TEST_INDEX_INFO.type, doc_id)
@@ -177,8 +181,7 @@ class TestSendToElasticsearch(SimpleTestCase):
         self.es_interface = ElasticsearchInterface(self.es)
         self.index = TEST_INDEX_INFO.index
         self.es_alias = TEST_INDEX_INFO.alias
-        # unsure why we're using '.index' instead of '.alias' here
-        register(TEST_INDEX_INFO.index, TEST_INDEX_INFO)
+        register(TEST_INDEX_INFO)
 
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(self.index)
@@ -186,12 +189,12 @@ class TestSendToElasticsearch(SimpleTestCase):
 
     def tearDown(self):
         ensure_index_deleted(self.index)
-        deregister(TEST_INDEX_INFO.index)
+        deregister(TEST_INDEX_INFO)
 
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         self._send_to_es_and_check(doc)
-        res = lookup_doc_in_es(doc['_id'], self.index)
+        res = lookup_doc_in_es(doc['_id'], self.es_alias)
         self.assertEqual(res, doc)
 
     def _send_to_es_and_check(self, doc, update=False, es_merge_update=False,

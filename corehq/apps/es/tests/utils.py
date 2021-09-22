@@ -7,13 +7,18 @@ from nose.tools import nottest
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.tests.utils import TEST_INDEX_INFO
 
-from corehq.apps.es.registry import deregister, register
-from corehq.elastic import ES_META, get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
+
+from ..registry import (
+    register,
+    deregister,
+    registry_entry,
+)
 
 
 TEST_ES_MAPPING = {
@@ -38,12 +43,12 @@ class TEST_ES_INFO:
 
 @nottest
 def register_test_meta():
-    register(TEST_ES_INFO.alias, TEST_ES_INFO)
+    register(TEST_ES_INFO)
 
 
 @nottest
 def deregister_test_meta():
-    deregister(TEST_ES_INFO.alias)
+    deregister(TEST_ES_INFO)
 
 
 class ElasticTestMixin(object):
@@ -96,14 +101,14 @@ def es_test(test):
     return attr(es_test=True)(test)
 
 
-def populate_es_index(models, index_name, doc_prep_fn=lambda doc: doc):
-    index_info = ES_META[index_name]
+def populate_es_index(models, index_cname, doc_prep_fn=lambda doc: doc):
+    index_info = registry_entry(index_cname)
     es = get_es_new()
     with trap_extra_setup(ConnectionError):
         initialize_index_and_mapping(es, index_info)
     for model in models:
         send_to_elasticsearch(
-            index_name,
+            index_cname,
             doc_prep_fn(model.to_json() if hasattr(model, 'to_json') else model)
         )
     es.indices.refresh(index_info.index)

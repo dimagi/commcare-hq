@@ -34,12 +34,12 @@ TEST_INDEX_INFO = ElasticsearchIndexInfo(
 
 @nottest
 def register_pt_test_meta():
-    register(TEST_INDEX_INFO.alias, TEST_INDEX_INFO)
+    register(TEST_INDEX_INFO)
 
 
 @nottest
 def deregister_pt_test_meta():
-    deregister(TEST_INDEX_INFO.alias)
+    deregister(TEST_INDEX_INFO)
 
 
 def get_doc_count(es, index, refresh_first=True):

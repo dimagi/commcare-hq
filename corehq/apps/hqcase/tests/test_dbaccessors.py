@@ -25,7 +25,7 @@ class ESAccessorsTest(TestCase):
 
     def setUp(self):
         super(ESAccessorsTest, self).setUp()
-        register(CASE_INDEX_INFO.index, CASE_INDEX_INFO)
+        register(CASE_INDEX_INFO)
         with trap_extra_setup(ConnectionError):
             self.elasticsearch = get_es_new()
             initialize_index_and_mapping(self.elasticsearch, CASE_INDEX_INFO)
@@ -35,7 +35,7 @@ class ESAccessorsTest(TestCase):
         ensure_index_deleted(CASE_INDEX_INFO.index)
         ensure_index_deleted(DOMAIN_INDEX_INFO.index)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
-        deregister(CASE_INDEX_INFO.index)
+        deregister(CASE_INDEX_INFO)
         super(ESAccessorsTest, self).tearDown()
 
     @patch('corehq.apps.hqcase.analytics.CaseES.index', CASE_INDEX_INFO.index)

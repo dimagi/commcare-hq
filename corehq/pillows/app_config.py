@@ -17,13 +17,13 @@ class PillowsAppConfig(AppConfig):
         from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
         from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 
-        register("forms", XFORM_INDEX_INFO)
-        register("cases", CASE_INDEX_INFO)
-        register("users", USER_INDEX_INFO)
-        register("domains", DOMAIN_INDEX_INFO)
-        register("apps", APP_INDEX_INFO)
-        register("groups", GROUP_INDEX_INFO)
-        register("sms", SMS_INDEX_INFO)
-        register("report_cases", REPORT_CASE_INDEX_INFO)
-        register("report_xforms", REPORT_XFORM_INDEX_INFO)
-        register("case_search", CASE_SEARCH_INDEX_INFO)
+        register(XFORM_INDEX_INFO, "forms")
+        register(CASE_INDEX_INFO, "cases")
+        register(USER_INDEX_INFO, "users")
+        register(DOMAIN_INDEX_INFO, "domains")
+        register(APP_INDEX_INFO, "apps")
+        register(GROUP_INDEX_INFO, "groups")
+        register(SMS_INDEX_INFO, "sms")
+        register(REPORT_CASE_INDEX_INFO, "report_cases")
+        register(REPORT_XFORM_INDEX_INFO, "report_xforms")
+        register(CASE_SEARCH_INDEX_INFO, "case_search")

@@ -87,7 +87,7 @@ class BaseESAccessorsTest(TestCase):
             self._delete_es_index(False)
             self.domain = uuid.uuid4().hex
             for index_info in self.es_index_infos:
-                register(index_info.alias, index_info)
+                register(index_info)
                 initialize_index_and_mapping(self.es, index_info)
 
     def tearDown(self):
@@ -98,7 +98,7 @@ class BaseESAccessorsTest(TestCase):
         for index_info in self.es_index_infos:
             ensure_index_deleted(index_info.index)
             if teardown:
-                deregister(index_info.alias)
+                deregister(index_info)
 
 
 class TestFormESAccessors(BaseESAccessorsTest):
@@ -901,11 +901,11 @@ class TestUserESAccessors(TestCase):
         super(TestUserESAccessors, self).setUp()
         self.es = get_es_new()
         ensure_index_deleted(USER_INDEX)
-        register(USER_INDEX_INFO.alias, USER_INDEX_INFO)
+        register(USER_INDEX_INFO)
         initialize_index_and_mapping(self.es, USER_INDEX_INFO)
 
     def tearDown(self):
-        deregister(USER_INDEX_INFO.alias)
+        deregister(USER_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):

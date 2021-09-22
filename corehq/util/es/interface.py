@@ -1,7 +1,7 @@
 import abc
 import logging
 
-from corehq.util.es.elasticsearch import bulk, scan
+from corehq.util.es.elasticsearch import bulk
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +22,10 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
     def put_mapping(self, doc_type, mapping, index):
         return self.es.indices.put_mapping(doc_type, {doc_type: mapping}, index=index)
 
-    def _verify_is_alias(self, index_or_alias):
-        from corehq.apps.es.registry import verify_registered_alias
-        verify_registered_alias(index_or_alias)
+    def _verify_is_alias(self, alias):
+        """Verify that an alias is one of a registered index"""
+        from corehq.apps.es.registry import verify_alias
+        verify_alias(alias)
 
     def update_index_settings(self, index, settings_dict):
         assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()
@@ -41,17 +42,15 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return self.es.mget(
             index=index_alias, doc_type=doc_type, body=body, _source=True)
 
-    def get_doc(self, index_alias, doc_type, doc_id, source_includes=None, verify_alias=True):
-        if verify_alias:
-            self._verify_is_alias(index_alias)
+    def get_doc(self, index_alias, doc_type, doc_id, source_includes=None):
+        self._verify_is_alias(index_alias)
         doc = self._get_source(index_alias, doc_type, doc_id, source_includes=source_includes)
         doc['_id'] = doc_id
         return doc
 
-    def get_bulk_docs(self, index_alias, doc_type, doc_ids, verify_alias=True):
+    def get_bulk_docs(self, index_alias, doc_type, doc_ids):
         from corehq.elastic import ESError
-        if verify_alias:
-            self._verify_is_alias(index_alias)
+        self._verify_is_alias(index_alias)
         docs = []
         results = self._mget(index_alias=index_alias, doc_type=doc_type, body={'ids': doc_ids})
         for doc_result in results['docs']:
@@ -62,15 +61,13 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
                 docs.append(doc_result['_source'])
         return docs
 
-    def index_doc(self, index_alias, doc_type, doc_id, doc, params=None, verify_alias=True):
-        if verify_alias:
-            self._verify_is_alias(index_alias)
+    def index_doc(self, index_alias, doc_type, doc_id, doc, params=None):
+        self._verify_is_alias(index_alias)
         self.es.index(index_alias, doc_type, body=self._without_id_field(doc), id=doc_id,
                       params=params or {})
 
-    def update_doc_fields(self, index_alias, doc_type, doc_id, fields, params=None, verify_alias=True):
-        if verify_alias:
-            self._verify_is_alias(index_alias)
+    def update_doc_fields(self, index_alias, doc_type, doc_id, fields, params=None):
+        self._verify_is_alias(index_alias)
         self.es.update(index_alias, doc_type, doc_id, body={"doc": self._without_id_field(fields)},
                        params=params or {})
 
@@ -101,9 +98,8 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         ret = bulk(self.es, actions, stats_only=stats_only, **kwargs)
         return ret
 
-    def search(self, index_alias=None, doc_type=None, body=None, params=None, verify_alias=True, **kwargs):
-        if verify_alias:
-            self._verify_is_alias(index_alias)
+    def search(self, index_alias=None, doc_type=None, body=None, params=None, **kwargs):
+        self._verify_is_alias(index_alias)
         results = self.es.search(index=index_alias, doc_type=doc_type, body=body, params=params or {}, **kwargs)
         self._fix_hits_in_results(results)
         return results
