@@ -1,6 +1,7 @@
 {% load i18n %}
 <div data-bind="visible: bulkExportDownloadCount()">
-  <div style="float:right;" id="bulk-delete-text">
+  <div style="float:right;" class="tooltip-bulkDelete" data-container=".tooltip-bulkDelete"
+       data-toggle="tooltip-bulkDelete" data-placement="top">
     <input name="delete_list" type="hidden"/>
     <p style="float:right">
       <a class="btn btn-danger btn-primary"
@@ -8,10 +9,37 @@
          data-bind="attr: {
                       href: '#bulk-delete-export-modal'
                     }">
-        <span data-bind="if: !isOData && !isFeed">{% trans 'Delete Selected Exports' %}</span>
-        <span data-bind="if: isOData || isFeed">{% trans 'Delete Selected Feeds' %}</span>
+        <!-- ko if: isOData || isFeed -->
+          <!-- ko if: isMultiple -->
+            {% trans "Delete Selected Feeds" %}
+          <!-- /ko -->
+          <!-- ko if: !isMultiple() -->
+            {% trans "Delete Selected Feed" %}
+          <!-- /ko -->
+        <!-- /ko -->
+        <!-- ko if: !isOData && !isFeed -->
+          <!-- ko if: isMultiple -->
+            {% trans "Delete Selected Exports" %}
+          <!-- /ko -->
+          <!-- ko if: !isMultiple() -->
+            {% trans "Delete Selected Export" %}
+          <!-- /ko -->
+        <!-- /ko -->
       </a>
       {% include "export/dialogs/bulk_delete_custom_export_dialog.html" %}
     </p>
   </div>
 </div>
+
+<style>
+.tooltip-bulkDelete .tooltip .tooltip-inner {
+  background-color: #f2dede;
+  position: relative;
+  color: black;
+  min-width: 235px
+}
+
+.tooltip-bulkDelete .tooltip.top .tooltip-arrow {
+  border-top-color: #f2dede;
+}
+</style>

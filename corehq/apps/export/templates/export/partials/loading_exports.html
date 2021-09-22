@@ -16,7 +16,22 @@
 
 <div class="alert alert-info" data-bind="visible: isBulkDeleting">
   <i class="fa fa-refresh fa-spin"></i>
-  {% trans "Deleting exports..." %}
+  <!-- ko if: $parent.isOData || $parent.isFeed -->
+    <!-- ko if: $parent.isMultiple -->
+      {% trans "Deleting feeds..." %}
+    <!-- /ko -->
+    <!-- ko if: !$parent.isMultiple() -->
+      {% trans "Deleting feed..." %}
+    <!-- /ko -->
+  <!-- /ko -->
+  <!-- ko if: !$parent.isOData && !$parent.isFeed -->
+    <!-- ko if: $parent.isMultiple() -->
+      {% trans "Deleting exports..." %}
+    <!-- /ko -->
+    <!-- ko if: !$parent.isMultiple() -->
+      {% trans "Deleting export..." %}
+    <!-- /ko -->
+  <!-- /ko -->
 </div>
 
 <div class="help-block" data-bind="visible: showEmpty">

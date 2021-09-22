@@ -5,14 +5,28 @@
         data-bind="submit: submitBulkExportDownload"
         action="{{ bulk_download_url }}">
     {% csrf_token %}
-    <div style="min-width:110px;" id="bulk-export-text">
+    <div style="min-width:110px;" data-toggle="tooltip-bulkExport" data-container=".tooltip-bulkExport" data-placement="top">
       <input name="export_list" type="hidden" data-bind="value: bulkExportList" />
       <button type="submit"
-              class="btn btn-primary"
+              class="btn btn-primary tooltip-bulkExport"
               style="width: 100%;">
         {% trans 'Bulk Export' %}
-        (<span data-bind="text: bulkExportDownloadCount()"></span>)
+        (<!-- ko text: bulkExportDownloadCount() --><!-- /ko -->)
       </button>
     </div>
   </form>
 </div>
+
+<style>
+.tooltip-bulkExport .tooltip .tooltip-inner {
+  background-color: #d9edf7;
+  margin-right: 10px;
+  position: relative;
+  color: black;
+  min-width: 325px
+}
+
+.tooltip-bulkExport .tooltip.top .tooltip-arrow {
+  border-top-color: #d9edf7;
+}
+</style>

@@ -187,30 +187,21 @@ hqDefine("export/js/export_list", [
             });
         };
 
-        //button hover text
-        function tooltipStyle(color, margin) {
-            $('.tooltip-inner').css({'background-color': color, 'color': 'black', 'margin-right': margin})
-            $('.tooltip.top .tooltip-arrow').css({'border-top-color': color});
-        }
-
-        var popoverText = "";
+        var tooltipText = "";
         if (self.isOData() || self.isFeed()) {
-            popoverText = "All of the selected feeds will be deleted.";
-        }
-        else {
-            popoverText = "All of the selected exports will be deleted.";
+            tooltipText = "All of the selected feeds will be deleted.";
+        } else {
+            tooltipText = "All of the selected exports will be deleted.";
         }
 
-        $('#bulk-delete-text').tooltip({
-            trigger: 'hover',
-            placement: 'top',
-            title: gettext(popoverText),
-        }).mouseover(function() {tooltipStyle('#f2dede', '0px')});
+        $(function () {
+            $('[data-toggle="tooltip-bulkExport"]').attr('title',
+                "All of the selected exports will be collected for download to a single Excel file, with each export as a separate sheet.").tooltip();
+        });
 
-        $('#bulk-export-text').tooltip({
-            placement: 'top',
-            title: gettext("All of the selected exports will be collected for download to a single Excel file, with each export as a separate sheet."),
-        }).mouseover(function() {tooltipStyle('#d9edf7', '10px')});
+        $(function () {
+            $('[data-toggle="tooltip-bulkDelete"]').attr('title', tooltipText).tooltip({trigger: 'hover'});
+        });
 
         return self;
     };
@@ -467,13 +458,9 @@ hqDefine("export/js/export_list", [
             return true;
         };
 
-        self.multiple = ko.computed(function () {
-            if (self.bulkDeleteList().length > 1) { return "s"; }
-            return "";
-        });
-        self.plural = ko.computed(function () {
-            if (self.bulkDeleteList().length > 1) { return "these"; }
-            return "this";
+        self.isMultiple = ko.computed(function () {
+            if (self.bulkDeleteList().length > 1) { return true; }
+            return false;
         });
 
         self.BulkExportDelete = function (observable, event) {
@@ -482,7 +469,7 @@ hqDefine("export/js/export_list", [
             var bulkDelete = function () {
                 var selected = _.filter(self.exports(), function (e) { return e.addedToBulk(); });
                 var deleteArray = [];
-                selected.forEach(function (item, i) {
+                selected.forEach(function (item) {
                     var attr = {};
                     attr["domain"] = item.domain();
                     attr["type"] = item.type();
