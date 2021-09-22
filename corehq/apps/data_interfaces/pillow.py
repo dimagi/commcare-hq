@@ -39,10 +39,6 @@ class CaseDeduplicationProcessor(PillowProcessor):
         for case_update in get_case_updates(change.get_document()):
             self._process_case_update(domain, case_update)
 
-    def _get_rules(self, domain):
-        # TODO: memoize like in CaseMessagingSyncProcessor
-        return AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
-
     def _process_case_update(self, domain, case_update):
         changed_properties = set()
         if case_update.get_create_action() is not None:
@@ -50,7 +46,7 @@ class CaseDeduplicationProcessor(PillowProcessor):
         if case_update.get_update_action() is not None:
             changed_properties.update(set(case_update.get_update_action().raw_block.keys()))
 
-        for rule in self._get_rules(domain):
+        for rule in AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE):
             for action in rule.memoized_actions:
                 self._process_action(domain, rule, action, changed_properties, case_update.id)
 
