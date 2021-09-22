@@ -21,7 +21,7 @@ from corehq.apps.domain.calculations import cases_in_last, inactive_cases_in_las
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
-from corehq.apps.es.registry import register_alias, deregister_alias
+from corehq.apps.es.registry import register, deregister
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, get_case_by_identifier
@@ -87,18 +87,18 @@ class BaseESAccessorsTest(TestCase):
             self._delete_es_index(False)
             self.domain = uuid.uuid4().hex
             for index_info in self.es_index_infos:
-                register_alias(index_info.alias, index_info)
+                register(index_info.alias, index_info)
                 initialize_index_and_mapping(self.es, index_info)
 
     def tearDown(self):
         self._delete_es_index()
         super(BaseESAccessorsTest, self).tearDown()
 
-    def _delete_es_index(self, deregister=True):
+    def _delete_es_index(self, teardown=True):
         for index_info in self.es_index_infos:
             ensure_index_deleted(index_info.index)
-            if deregister:
-                deregister_alias(index_info.alias)
+            if teardown:
+                deregister(index_info.alias)
 
 
 class TestFormESAccessors(BaseESAccessorsTest):
@@ -901,11 +901,11 @@ class TestUserESAccessors(TestCase):
         super(TestUserESAccessors, self).setUp()
         self.es = get_es_new()
         ensure_index_deleted(USER_INDEX)
-        register_alias(USER_INDEX_INFO.alias, USER_INDEX_INFO)
+        register(USER_INDEX_INFO.alias, USER_INDEX_INFO)
         initialize_index_and_mapping(self.es, USER_INDEX_INFO)
 
     def tearDown(self):
-        deregister_alias(USER_INDEX_INFO.alias)
+        deregister(USER_INDEX_INFO.alias)
 
     @classmethod
     def tearDownClass(cls):

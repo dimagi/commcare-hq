@@ -7,7 +7,7 @@ from memoized import memoized
 from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
-from corehq.apps.es.registry import ES_META, register_alias, deregister_alias, verify_registered_alias  # noqa
+from corehq.apps.es.registry import ES_META
 from corehq.apps.es.exceptions import ESError
 from corehq.util.es.elasticsearch import (
     Elasticsearch,

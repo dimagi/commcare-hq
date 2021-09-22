@@ -1,7 +1,7 @@
 from .exceptions import ESRegistryError
 
 
-def register_alias(alias, info):
+def register(alias, info):
     """Register an Elasticsearch index or alias name (add it to this module's
     `ES_META` dict).
 
@@ -14,7 +14,7 @@ def register_alias(alias, info):
     ES_META[alias] = info
 
 
-def deregister_alias(alias):
+def deregister(alias):
     """Deregister a previously registered alias (remove it from this module's
     `ES_META` dict).
 

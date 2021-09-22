@@ -23,7 +23,7 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return self.es.indices.put_mapping(doc_type, {doc_type: mapping}, index=index)
 
     def _verify_is_alias(self, index_or_alias):
-        from corehq.elastic import verify_registered_alias
+        from corehq.apps.es.registry import verify_registered_alias
         verify_registered_alias(index_or_alias)
 
     def update_index_settings(self, index, settings_dict):

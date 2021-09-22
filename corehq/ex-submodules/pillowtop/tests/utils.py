@@ -1,6 +1,6 @@
 from nose.tools import nottest
 
-from corehq.elastic import deregister_alias, register_alias
+from corehq.apps.es.registry import register, deregister
 from corehq.util.es.elasticsearch import TransportError
 
 from pillowtop.checkpoints.manager import PillowCheckpoint
@@ -34,12 +34,12 @@ TEST_INDEX_INFO = ElasticsearchIndexInfo(
 
 @nottest
 def register_pt_test_meta():
-    register_alias(TEST_INDEX_INFO.alias, TEST_INDEX_INFO)
+    register(TEST_INDEX_INFO.alias, TEST_INDEX_INFO)
 
 
 @nottest
 def deregister_pt_test_meta():
-    deregister_alias(TEST_INDEX_INFO.alias)
+    deregister(TEST_INDEX_INFO.alias)
 
 
 def get_doc_count(es, index, refresh_first=True):

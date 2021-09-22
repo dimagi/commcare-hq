@@ -20,8 +20,9 @@ from couchforms.models import XFormInstance, XFormError
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
+from corehq.apps.es.registry import register, deregister
 from corehq.apps.es.tests.utils import es_test
-from corehq.elastic import get_es_new, send_to_elasticsearch, deregister_alias, register_alias
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
@@ -132,7 +133,7 @@ class CouchformsESAnalyticsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(CouchformsESAnalyticsTest, cls).setUpClass()
-        register_alias(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO)
+        register(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO)
 
         @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
         def create_form_and_sync_to_es(received_on):
@@ -163,7 +164,7 @@ class CouchformsESAnalyticsTest(TestCase):
     def tearDownClass(cls):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
-        deregister_alias(XFORM_INDEX_INFO.index)
+        deregister(XFORM_INDEX_INFO.index)
         super(CouchformsESAnalyticsTest, cls).tearDownClass()
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)

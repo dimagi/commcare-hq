@@ -8,9 +8,10 @@ from django.test import SimpleTestCase
 
 from corehq.util.es.elasticsearch import ConnectionError, RequestError
 
+from corehq.apps.es.registry import register, deregister
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.views.data import lookup_doc_in_es
-from corehq.elastic import get_es_new, register_alias, deregister_alias
+from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, capture_log_output
 from pillowtop.es_utils import (
@@ -177,7 +178,7 @@ class TestSendToElasticsearch(SimpleTestCase):
         self.index = TEST_INDEX_INFO.index
         self.es_alias = TEST_INDEX_INFO.alias
         # unsure why we're using '.index' instead of '.alias' here
-        register_alias(TEST_INDEX_INFO.index, TEST_INDEX_INFO)
+        register(TEST_INDEX_INFO.index, TEST_INDEX_INFO)
 
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(self.index)
@@ -185,7 +186,7 @@ class TestSendToElasticsearch(SimpleTestCase):
 
     def tearDown(self):
         ensure_index_deleted(self.index)
-        deregister_alias(TEST_INDEX_INFO.index)
+        deregister(TEST_INDEX_INFO.index)
 
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}

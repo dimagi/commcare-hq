@@ -7,7 +7,7 @@ from nose.tools import nottest
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.tests.utils import TEST_INDEX_INFO
 
-from corehq.apps.es.registry import deregister_alias, register_alias
+from corehq.apps.es.registry import deregister, register
 from corehq.elastic import ES_META, get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
@@ -38,12 +38,12 @@ class TEST_ES_INFO:
 
 @nottest
 def register_test_meta():
-    register_alias(TEST_ES_INFO.alias, TEST_ES_INFO)
+    register(TEST_ES_INFO.alias, TEST_ES_INFO)
 
 
 @nottest
 def deregister_test_meta():
-    deregister_alias(TEST_ES_INFO.alias)
+    deregister(TEST_ES_INFO.alias)
 
 
 class ElasticTestMixin(object):
