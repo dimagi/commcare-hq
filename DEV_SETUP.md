@@ -44,13 +44,28 @@ Save those backups to somewhere you'll be able to access from the new environmen
     ```sh
     sudo apt install git
     ```
-
+- If you have a Mac with the M1 chip and thus the new ARM64 archinatecure, install Rosetta: 
+    ```sh
+    softwareupdate --install-rosetta
+    ```
+    This allows you to install and run Brew services in x86 fashion. 
+    "Rosetta 2 is an emulator designed to bridge the transition between Intel and Apple processors. In short, it translates apps built for Intel so they will run on Apple Silicon." [Link](https://www.computerworld.com/article/3597949/everything-you-need-to-know-about-rosetta-2-on-apple-silicon-macs.html).
+    While reading through this document, be careful to watch out for specific reccomendations regarding your architecture.
+    
 - [Python 3.6](https://www.python.org/downloads/) and `python-dev`. In Ubuntu
   you will also need to install the modules for pip and venv explicitly.
 
     ```sh
     sudo apt install python3.6-dev python3-pip python3-venv
     ```
+    
+    - If you have a Mac with an M1 chip, you can try installing Python 3.8.12 instead using the Rosetta-enabled homebrew (see MacOS notes below):
+    
+        ```sh
+        ibrew install python@3.8
+        ```
+        
+        Then make sure you are using this version of python when setting up your python environment.
 
 - [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
@@ -71,6 +86,8 @@ Save those backups to somewhere you'll be able to access from the new environmen
     ```sh
     brew install libmagic libxmlsec1 libxml2 libxslt
     ```
+    
+    If you're using the Rosetta-enabled Homebrew (for Mac M1 chip users), remember to use the command "ibrew" instead.
 
 - Java (JDK 8)
 
@@ -90,6 +107,12 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
           ```sh
           brew install jenv
+          ```
+          
+          For M1 users:
+          
+          ```sh
+          ibrew install jenv
           ```
 
       3. Configure your shell (Bash folks use `~/.bashrc` instead of `~/.zshrc` below):
@@ -134,6 +157,11 @@ Save those backups to somewhere you'll be able to access from the new environmen
     ```sh
     brew install postgresql
     ```
+    
+    If you're using Rosetta-enabled Homebrew:
+    ```sh
+    ibrew install postgresql
+    ```
 
     Possible alternative to installing postgres (from [this SO answer](https://stackoverflow.com/a/39800677)).
     Prior to `pip install` commands (outlined later in this doc):
@@ -147,6 +175,15 @@ Save those backups to somewhere you'll be able to access from the new environmen
 ##### macOS Notes
 
 - [Homebrew](https://brew.sh) (this doc depends heavily on it).
+    
+    - If you have the M1 chip, install Homebrew using Rosetta: 
+        ```sh
+        arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+        ```
+        And let's call this Rosetta-enabled Homebrew "ibrew" for short by adding this to your .zshrc:
+        ```sh
+        alias ibrew="arch -x86_64 /usr/local/bin/brew"
+        ```
 
 - Install pip:
 
@@ -264,6 +301,8 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     # customize requirements/local.in as desired
     pip install -r requirements/local.in
     ```
+    
+    If you have problems installing pip dependencies related to a missing wheel package, try installing wheel and upgrade pip before attempting to install dependencies.
 
   - For production environments
 
@@ -424,7 +463,39 @@ that to the new install.
     directory into the HQ root, otherwise do so into the `SHARED_DRIVE_ROOT`
     directory referenced in `localsettings.py`
 
+### Getting all your services running properly (ARM64 arch users)
 
+Devs using computers with the ARM64 architecture (often Apple computers with the M1 chip) have run into trouble setting up all their services on Docker. See these reccomendations for the following services if they are not working properly on your computer:
+
+- Postgres
+
+    In your hq-compose.yml, try updating the following:
+        ```sh
+        image: dimagi/docker-postgresql
+        ```
+        to
+        ```sh
+        image: arm64v8/postgres
+        ```
+        So that you are using a Postgres image built for ARM64 archtecture. Now your Docker servcie may run properly.
+        
+- Elasticsearch
+    
+    Download the TAR for ES 2.4.2 from [here](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-2![image](https://user-images.githubusercontent.com/6729291/134395887-66c3a63a-0d6c-41fd-afc0-527993810126.png). Open it, and move it somewhere you can reliably remember, maybe your root directory. In a new tab/window:
+    ```sh
+    cd ~/Downloads
+    mv elasticsearch-2.4.2 ~/
+    ```
+    Then go into that folder:
+    ```sh
+    cd ~/elasticsearch-2.4.2
+    ```
+    And start Elastic search:
+    ```sh
+    ./bin/elasticsearch
+    ```
+- Formplayer
+    If you are having trouble with Formplayer, try starting it outside of Docker (instructions farther down).
 
 ### Initial Database Population
 
