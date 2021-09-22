@@ -97,7 +97,7 @@ class InvalidDate(CaseRowError):
 
 
 class InvalidSelectValue(CaseRowError):
-    title = ugettext_noop('Unexpected muliple choice value')
+    title = ugettext_noop('Unexpected multiple choice value')
     message = ugettext_lazy(
         "Multiple choice values were specified that are not listed "
         "in the valid values defined in the property's data dictionary."
