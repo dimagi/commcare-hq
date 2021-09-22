@@ -40,7 +40,6 @@ class CaseDeduplicationProcessor(PillowProcessor):
             self._process_case_update(domain, case_update)
 
     def _get_rules(self, domain):
-        # TODO: memoize like in CaseMessagingSyncProcessor
         return AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
 
     def _process_case_update(self, domain, case_update):
