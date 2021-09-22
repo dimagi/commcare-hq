@@ -212,7 +212,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
 
         this.setSmartLinkParams = function (smartLinkParams) {
             this.smartLinkParams = smartLinkParams;
-        }
+        };
 
         this.setQueryData = function (queryDict, execute) {
             if (!this.queryData) {
