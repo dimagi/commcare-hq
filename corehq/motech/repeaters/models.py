@@ -180,6 +180,12 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
     })
 
 
+REPEATER_FORMAT_OPTIONS = (
+    ('case_json', 'JSON'),
+    ('case_xml', 'XML')
+)
+
+
 class RepeaterManager(models.Manager):
 
     def all_ready(self):
@@ -268,8 +274,10 @@ class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater):
     black_listed_users = ArrayField(
         models.CharField(max_length=255, default=list)
     )
-
-    format = models.CharField(max_length=16)
+    format = models.CharField(
+        max_length=16,
+        choices=REPEATER_FORMAT_OPTIONS,
+    )
 
     class Meta:
         db_table = 'repeaters_caserepeater'
