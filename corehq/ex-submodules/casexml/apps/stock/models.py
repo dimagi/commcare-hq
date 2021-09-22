@@ -1,5 +1,8 @@
 import math
+
 from django.db import models
+
+from casexml.apps.stock import const
 from corehq.apps.products.models import SQLProduct
 from corehq.util.models import TruncatingCharField
 
