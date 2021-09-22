@@ -201,10 +201,12 @@ def get_app_sources(domain):
 
 def get_registry_sources(values, domain):  # TODO: refactor
     case_types = [ct['value'] for app in values for ct in app['case']]
+    blank_value = [{"text": '', "value": ''}]
     return {
         case_type:
-            [{"text": registry["name"], "value": registry["slug"]} for registry in
-             get_data_registry_dropdown_options(domain, required_case_types=set(case_type))]
+            blank_value + [{"text": registry["name"], "value": registry["slug"]}
+                           for registry in get_data_registry_dropdown_options(domain,
+                                                                              required_case_types=set([case_type]))]
         for case_type in case_types
     }
 
