@@ -226,7 +226,7 @@ class HqdbContext(DatabaseContext):
             # that already exist
             self.runner.keepdb = True
         super(HqdbContext, self).setup()
-        temporary_db_setup_for_tests()
+        temporary_db_setup()
 
     def reset_databases(self):
         self.delete_couch_databases()
@@ -294,7 +294,11 @@ class HqdbContext(DatabaseContext):
         super(HqdbContext, self).teardown()
 
 
-def temporary_db_setup_for_tests():
+def temporary_db_setup():
+    """Temporary setup while V1 ledger models are being removed
+
+    Can be removed when migrations are added to delete the tables.
+    """
     from django.db import connection
     with connection.cursor() as cursor:
         cursor.execute("""
