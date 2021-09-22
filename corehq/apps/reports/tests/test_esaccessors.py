@@ -4,8 +4,6 @@ from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase
 
 import pytz
-from corehq.util.es.elasticsearch import ConnectionError
-from corehq.util.es.tests.util import register_alias, deregister_alias
 from mock import MagicMock, patch
 
 from casexml.apps.case.models import CommCareCase
@@ -23,6 +21,7 @@ from corehq.apps.domain.calculations import cases_in_last, inactive_cases_in_las
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
+from corehq.apps.es.registry import register_alias, deregister_alias
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, get_case_by_identifier
@@ -72,6 +71,7 @@ from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted, reset_es_index
+from corehq.util.es.elasticsearch import ConnectionError
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 

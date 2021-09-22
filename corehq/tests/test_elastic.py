@@ -3,16 +3,16 @@ import uuid
 from contextlib import contextmanager
 from django.test import SimpleTestCase
 
-from corehq.apps.es.tests.utils import es_test
-from corehq.elastic import get_es_new, scroll_query
-from corehq.util.es.interface import ElasticsearchInterface
-from corehq.util.es.tests.util import (
+from corehq.apps.es.tests.utils import (
     TEST_ES_ALIAS,
     TEST_ES_MAPPING,
     TEST_ES_TYPE,
+    es_test,
     deregister_test_meta,
     register_test_meta,
 )
+from corehq.elastic import get_es_new, scroll_query
+from corehq.util.es.interface import ElasticsearchInterface
 
 
 @es_test

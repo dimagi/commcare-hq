@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from nose.plugins.attrib import attr
 from nose.tools import nottest
@@ -6,12 +7,43 @@ from nose.tools import nottest
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.tests.utils import TEST_INDEX_INFO
 
+from corehq.apps.es.registry import deregister_alias, register_alias
 from corehq.elastic import ES_META, get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
+
+
+TEST_ES_MAPPING = {
+    '_meta': {
+        'comment': 'Bare bones index for ES testing',
+        'created': datetime.isoformat(datetime.utcnow()),
+    },
+    "properties": {
+        "doc_type": {
+            "index": "not_analyzed", "type": "string"
+        },
+    }
+}
+TEST_ES_TYPE = 'test_es_doc'
+TEST_ES_ALIAS = "test_es"
+
+
+class TEST_ES_INFO:
+    alias = TEST_ES_ALIAS
+    type = TEST_ES_TYPE
+
+
+@nottest
+def register_test_meta():
+    register_alias(TEST_ES_INFO.alias, TEST_ES_INFO)
+
+
+@nottest
+def deregister_test_meta():
+    deregister_alias(TEST_ES_INFO.alias)
 
 
 class ElasticTestMixin(object):
