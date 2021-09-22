@@ -929,7 +929,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
 
         any_match = (
             self.match_type == CaseDeduplicationMatchTypeChoices.ANY
-            and len(case_properties - definition_properties) < len(case_properties)
+            and case_properties.intersection(definition_properties)
         )
 
         return all_match or any_match
