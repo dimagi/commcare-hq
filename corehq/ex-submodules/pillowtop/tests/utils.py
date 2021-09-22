@@ -1,4 +1,6 @@
-from django.conf import settings
+from nose.tools import nottest
+
+from corehq.elastic import deregister_alias, register_alias
 from corehq.util.es.elasticsearch import TransportError
 
 from pillowtop.checkpoints.manager import PillowCheckpoint
@@ -28,6 +30,16 @@ TEST_INDEX_INFO = ElasticsearchIndexInfo(
     mapping=TEST_ES_MAPPING,
     hq_index_name=TEST_HQ_INDEX_NAME
 )
+
+
+@nottest
+def register_pt_test_meta():
+    register_alias(TEST_INDEX_INFO.alias, TEST_INDEX_INFO)
+
+
+@nottest
+def deregister_pt_test_meta():
+    deregister_alias(TEST_INDEX_INFO.alias)
 
 
 def get_doc_count(es, index, refresh_first=True):
