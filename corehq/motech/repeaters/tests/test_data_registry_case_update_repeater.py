@@ -21,21 +21,21 @@ SOURCE_DOMAIN = "source_domain"
 
 
 def test_generator_empty_update():
-    _test_payload_generator(PropertyBuilder().include_props([]).props, {})
+    _test_payload_generator(intent_case=IntentCaseBuilder().include_props([]).get_case(), expected_updates={})
 
 
 def test_generator_include_list():
-    builder = PropertyBuilder().properties(new_prop="new_prop_val").include_props(["new_prop"])
-    _test_payload_generator(builder.props, {"new_prop": "new_prop_val"})
+    builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").include_props(["new_prop"])
+    _test_payload_generator(intent_case=builder.get_case(), expected_updates={"new_prop": "new_prop_val"})
 
 
 def test_generator_exclude_list():
     builder = (
-        PropertyBuilder()
-        .properties(new_prop="new_prop_val", target_something="1", other_prop="other_prop_val")
+        IntentCaseBuilder()
+        .case_properties(new_prop="new_prop_val", target_something="1", other_prop="other_prop_val")
         .exclude_props(["other_prop"])
     )
-    _test_payload_generator(builder.props, {
+    _test_payload_generator(intent_case=builder.get_case(), expected_updates={
         "new_prop": "new_prop_val",
         "target_something": "1"
     })
@@ -43,51 +43,51 @@ def test_generator_exclude_list():
 
 def test_generator_dont_override_existing():
     builder = (
-        PropertyBuilder(override_properties=False)
-        .properties(new_prop="new_prop_val", existing_prop="try override")
+        IntentCaseBuilder(override_properties=False)
+        .case_properties(new_prop="new_prop_val", existing_prop="try override")
         .exclude_props([])
     )
-    _test_payload_generator(builder.props, {
+    _test_payload_generator(intent_case=builder.get_case(), expected_updates={
         "new_prop": "new_prop_val",
     })
 
 
 def test_generator_update_create_index_to_parent():
-    builder = PropertyBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
 
     def _get_case(case_id):
         assert case_id == "case2"
         return Mock(domain=TARGET_DOMAIN, case_type="parent_type")
 
     with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
-        _test_payload_generator(builder.props, {}, {
+        _test_payload_generator(intent_case=builder.get_case(), expected_indices={
             "parent": IndexAttrs("parent_type", "case2", "child")
         })
 
 
 def test_generator_update_create_index_to_host():
-    builder = PropertyBuilder().create_index("case2", "parent_type", "extension").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "extension").exclude_props([])
 
     def _get_case(case_id):
         assert case_id == "case2"
         return Mock(domain=TARGET_DOMAIN, case_type="parent_type")
 
     with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
-        _test_payload_generator(builder.props, {}, {
+        _test_payload_generator(intent_case=builder.get_case(), expected_indices={
             "host": IndexAttrs("parent_type", "case2", "extension")
         })
 
 
 def test_generator_update_create_index_not_found():
-    builder = PropertyBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
 
     with assert_raises(DataRegistryCaseUpdateError, msg="Index case not found: case2"):
         with patch.object(CaseAccessorSQL, 'get_case', side_effect=CaseNotFound):
-            _test_payload_generator(builder.props, {})
+            _test_payload_generator(intent_case=builder.get_case())
 
 
 def test_generator_update_create_index_domain_mismatch():
-    builder = PropertyBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
 
     def _get_case(case_id):
         assert case_id == "case2"
@@ -95,11 +95,11 @@ def test_generator_update_create_index_domain_mismatch():
 
     with assert_raises(DataRegistryCaseUpdateError, msg="Index case not found: case2"):
         with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
-            _test_payload_generator(builder.props, {})
+            _test_payload_generator(intent_case=builder.get_case())
 
 
 def test_generator_update_create_index_case_type_mismatch():
-    builder = PropertyBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
 
     def _get_case(case_id):
         assert case_id == "case2"
@@ -107,28 +107,21 @@ def test_generator_update_create_index_case_type_mismatch():
 
     with assert_raises(DataRegistryCaseUpdateError, msg="Index case type does not match"):
         with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
-            _test_payload_generator(builder.props, {})
+            _test_payload_generator(intent_case=builder.get_case())
 
 
 def test_generator_update_multiple_cases():
     raise Exception
 
 
-def _test_payload_generator(intent_properties, expected_updates, expected_indices=None):
+def _test_payload_generator(intent_case, expected_updates=None, expected_indices=None):
+    # intent case is the case created in the source domain which is used to trigger the repeater
+    # and which contains the config for updating the case in the target domain
+
     repeater = DataRegistryCaseUpdateRepeater(domain=SOURCE_DOMAIN)
     generator = DataRegistryCaseUpdatePayloadGenerator(repeater)
     generator.submission_user_id = Mock(return_value='user1')
     generator.submission_username = Mock(return_value='user1')
-    # intent case is the case created in the source domain which is used to trigger the repeater
-    # and which contains the config for updating the case in the target domain
-    intent_case = CommCareCaseSQL(
-        domain=SOURCE_DOMAIN,
-        type="registry_case_update",
-        case_json=intent_properties,
-        case_id=uuid.uuid4().hex,
-        user_id="local_user1"
-    )
-    intent_case.track_create(CaseTransaction(form_id="form123", type=CaseTransaction.TYPE_FORM))
 
     # target_case is the case in the target domain which is being updated
     target_case = CommCareCaseSQL(
@@ -149,7 +142,7 @@ def _test_payload_generator(intent_properties, expected_updates, expected_indice
             "source_case_id": intent_case.case_id,
             "source_username": "local_user",
         })
-        form.assert_case_updates(expected_updates)
+        form.assert_case_updates(expected_updates or {})
         if expected_indices:
             form.assert_case_index(expected_indices)
 
@@ -178,7 +171,7 @@ class UpdateForm:
         eq(actual, expected)
 
 
-class PropertyBuilder:
+class IntentCaseBuilder:
     def __init__(self, registry="registry1", override_properties=True):
         self.props: dict = {
             "target_data_registry": registry,
@@ -210,6 +203,17 @@ class PropertyBuilder:
         self.props["target_property_excludelist"] = " ".join(exclude)
         return self
 
-    def properties(self, **kwargs):
+    def case_properties(self, **kwargs):
         self.props.update(kwargs)
         return self
+
+    def get_case(self):
+        intent_case = CommCareCaseSQL(
+            domain=SOURCE_DOMAIN,
+            type="registry_case_update",
+            case_json=self.props,
+            case_id=uuid.uuid4().hex,
+            user_id="local_user1"
+        )
+        intent_case.track_create(CaseTransaction(form_id="form123", type=CaseTransaction.TYPE_FORM))
+        return intent_case
