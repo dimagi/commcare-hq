@@ -4,7 +4,10 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.linked_domain.applications import get_downstream_app_id
 from corehq.apps.linked_domain.const import MODEL_KEYWORD
-from corehq.apps.linked_domain.exceptions import DomainLinkError, MultipleDownstreamAppsError
+from corehq.apps.linked_domain.exceptions import (
+    DomainLinkError,
+    MultipleDownstreamAppsError,
+)
 from corehq.apps.linked_domain.models import KeywordLinkDetail
 from corehq.apps.sms.models import Keyword
 
