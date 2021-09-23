@@ -52,7 +52,7 @@ class TestLinkedKeywords(BaseLinkedAppsTest):
         keyword_action.message_content = "bar"
         keyword_action.save()
 
-        update_keyword(self.domain_link, new_keyword_id)
+        update_keyword(self.domain_link, new_keyword_id, 'test-user-id')
 
         linked_keyword = Keyword.objects.get(id=new_keyword_id)
         self.assertEqual(linked_keyword.keyword, "foo")

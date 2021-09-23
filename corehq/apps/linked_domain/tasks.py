@@ -177,7 +177,7 @@ The following linked project spaces received content:
 
         return self._release_model(domain_link, model, user)
 
-    def _release_keyword(self, domain_link, model):
+    def _release_keyword(self, domain_link, model, user_id):
         upstream_id = model['detail']['keyword_id']
         try:
             linked_keyword_id = (Keyword.objects.values_list('id', flat=True)
@@ -196,7 +196,7 @@ The following linked project spaces received content:
                 _('Could not find linked keyword. Please check the keyword has been linked.'),
             )
 
-        update_keyword(domain_link, linked_keyword_id)
+        update_keyword(domain_link, linked_keyword_id, user_id)
 
     def _release_model(self, domain_link, model, user):
         update_model_type(domain_link, model['type'], model_detail=model['detail'])
@@ -228,7 +228,7 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
                 errors = manager._release_flag_dependent_model(domain_link, model, manager.user,
                                                                FEATURE_FLAG_DATA_MODEL_TOGGLES[model['type']])
             elif model['type'] == MODEL_KEYWORD:
-                errors = manager._release_keyword(domain_link, model)
+                errors = manager._release_keyword(domain_link, model, manager.user._id)
             else:
                 errors = manager._release_model(domain_link, model, manager.user)
         except Exception as e:   # intentionally broad
