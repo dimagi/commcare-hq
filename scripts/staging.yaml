@@ -54,7 +54,6 @@ branches:
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
     #- fr/user-data-jit            # Farid September 2
-    - gh/erm/disable-grouped-keywords # Graham Sept 22
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
     - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
@@ -77,7 +76,6 @@ branches:
     - gh/erm/allow-text-input-for-new-domain # Graham Sept 13
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
-    - gh/erm/hide-deleted-content # Graham Sept 14
     - rp/improve-deleted-odata-feed-error-message # Rynhard Sept 15
     - gh/erm/link-reports-and-keywords-on-push # Graham Sept 15
     - fr/dedupe  # Farid Sept 17
@@ -85,4 +83,5 @@ branches:
     - ap/add-permission-to-edit-ucrs # Amit Sept 21
     - smh/extract-messaging-permission # Steph Sept 21
     #- jls/smart-linking-in-web-apps # Jenny Sept 22
+    - gh/erm/disable-grouped-keywords # Graham Sept 22
 submodules: { }
