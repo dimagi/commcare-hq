@@ -13,6 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.case.xml import V2
+from corehq.apps.registry.exceptions import RegistryAccessException
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.const import OPENROSA_VERSION_3
 from corehq.form_processor.exceptions import CaseNotFound
@@ -518,7 +519,17 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
     def _get_target_case(self, repeat_record, config, couch_user):
         registry_slug = config.registry_slug
         helper = DataRegistryHelper(config.intent_case.domain, registry_slug=registry_slug)
-        return helper.get_case(config.case_id, config.case_type, couch_user, repeat_record.repeater)
+        try:
+            case = helper.get_case(config.case_id, config.case_type, couch_user, repeat_record.repeater)
+        except RegistryAccessException:
+            raise DataRegistryCaseUpdateError("User does not have permission to access the registry")
+        except CaseNotFound:
+            raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
+
+        if case.domain != config.domain:
+            raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
+
+        return case
 
     def _get_case_block(self, target_case, config):
         return CaseBlock(
