@@ -169,7 +169,6 @@ def _test_payload_generator(intent_case, expected_updates=None, expected_indices
         form.assert_form_props({
             "source_domain": SOURCE_DOMAIN,
             "source_form_id": "form123",
-            "source_case_id": intent_case.case_id,
             "source_username": "local_user",
         })
         form.assert_case_updates(expected_updates or {})

@@ -510,7 +510,6 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
             'device_id': "DataRegistryCaseUpdateRepeater",
             'form_data': {
                 "source_domain": payload_doc.domain,
-                "source_case_id": payload_doc.case_id,
                 "source_form_id": payload_doc.get_form_transactions()[-1].form_id,
                 "source_username": submitting_user.username
             }
