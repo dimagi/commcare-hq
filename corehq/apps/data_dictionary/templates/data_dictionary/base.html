@@ -30,7 +30,7 @@
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
   <div data-bind="saveButton: saveButton"></div>
   <div class="row">
-    <div class="col-md-10">
+    <div class="col-md-12">
       <h3 data-bind="text: $root.activeCaseType()"></h3>
       {% if fhir_integration_enabled %}
         <div class="form-inline" data-bind="visible: fhirResourceTypes().length">
