@@ -13,6 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.case.xml import V2
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from dimagi.utils.parsing import json_format_datetime
@@ -400,9 +401,16 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         return headers
 
     def get_payload(self, repeat_record, payload_doc):
+        helper = self._get_registry_helper(payload_doc)
+
+        target_case_type = payload_doc.get_case_property("target_case_type")
+        target_case_id = payload_doc.get_case_property("target_case_id")
+        submitting_user = CouchUser.get_by_user_id(payload_doc.user_id)
+        case = helper.get_case(target_case_id, target_case_type, submitting_user, repeat_record.repeater)
+
         block = CaseBlock(
             create=False,
-            case_id=payload_doc.get_case_property("target_case_id"),
+            case_id=target_case_id,
             # owner_id=owner_id,
             update={}
         ).as_text()
@@ -418,7 +426,7 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
                 "source_domain": payload_doc.domain,
                 "source_case_id": payload_doc.case_id,
                 "source_form_id": payload_doc.get_form_transactions()[-1].form_id,
-                "source_username": "TODO"
+                "source_username": submitting_user.username
             }
         })
         # raise DataRegistryCaseUpdateError()
@@ -428,6 +436,10 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
 
     def submission_user_id(self):
         return CouchUser.get_by_username(self.submission_username()).user_id
+
+    def _get_registry_helper(self, payload_doc):
+        registry_slug = payload_doc.get_case_property("target_data_registry")
+        return DataRegistryHelper(payload_doc.domain, registry_slug=registry_slug)
 
 
 

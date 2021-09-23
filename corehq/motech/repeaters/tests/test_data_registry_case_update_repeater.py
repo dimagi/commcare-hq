@@ -7,8 +7,9 @@ from testil import eq
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
-from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater
+from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater, Repeater
 from corehq.motech.repeaters.repeater_generators import DataRegistryCaseUpdatePayloadGenerator, SYSTEM_FORM_XMLNS
 
 
@@ -27,6 +28,7 @@ def _test_data_registry_case_update_payload_generator(intent_properties, expecte
         type="registry_case_update",
         case_json=intent_properties,
         case_id=uuid.uuid4().hex,
+        user_id="local_user1"
     )
     intent_case.track_create(CaseTransaction(form_id="form123", type=CaseTransaction.TYPE_FORM))
     copy_value = uuid.uuid4().hex
@@ -35,13 +37,15 @@ def _test_data_registry_case_update_payload_generator(intent_properties, expecte
         type="patient",
         case_json={"copy_this": copy_value}
     )
-    with patch.object(DataRegistryHelper, "get_case", return_value=[target_case]):
-        form = UpdateForm(generator.get_payload(None, intent_case))
+    with patch.object(DataRegistryHelper, "get_case", return_value=[target_case]), \
+         patch.object(CouchUser, "get_by_user_id", return_value=Mock(username="local_user")):
+        repeat_record = Mock(repeater=Repeater())
+        form = UpdateForm(generator.get_payload(repeat_record, intent_case))
         form.assert_form_props({
             "source_domain": domain,
             "source_form_id": "form123",
             "source_case_id": intent_case.case_id,
-            "source_username": "TODO",
+            "source_username": "local_user",
         })
         expected_update = expected_updates.copy()
         if "copy_this" in expected_update:
@@ -80,7 +84,7 @@ class PropertyBuilder:
     def target_case(self, domain="target_domain", case_id="1", case_type="patient"):
         self.props.update({
             "target_case_id": case_id,
-            "target_case_domain": domain,
+            "target_domain": domain,
             "target_case_type": case_type,
         })
         return self
