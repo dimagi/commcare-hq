@@ -10,6 +10,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.case.xml import V2
 from corehq.const import OPENROSA_VERSION_3
@@ -399,7 +400,28 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         return headers
 
     def get_payload(self, repeat_record, payload_doc):
-        raise DataRegistryCaseUpdateError()
+        block = CaseBlock(
+            create=False,
+            case_id=payload_doc.get_case_property("target_case_id"),
+            # owner_id=owner_id,
+            update={}
+        ).as_text()
+        return render_to_string('hqcase/xml/case_block.xml', {
+            'xmlns': SYSTEM_FORM_XMLNS,
+            'case_block': block,
+            'time': json_format_datetime(datetime.utcnow()),
+            'uid': uuid4().hex,
+            'username': self.submission_username(),
+            'user_id': self.submission_user_id(),
+            'device_id': "DataRegistryCaseUpdateRepeater",
+            'form_data': {
+                "source_domain": payload_doc.domain,
+                "source_case_id": payload_doc.case_id,
+                "source_form_id": payload_doc.get_form_transactions()[-1].form_id,
+                "source_username": "TODO"
+            }
+        })
+        # raise DataRegistryCaseUpdateError()
 
     def submission_username(self):
         return self.repeater.connection_settings.username
