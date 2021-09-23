@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters, get_repeaters_by_domain
+from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from datetime import timedelta
 from uuid import uuid4
 
