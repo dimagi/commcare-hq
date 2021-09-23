@@ -5,7 +5,7 @@ from datetime import date
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import connection, transaction
+from django.db import transaction
 from django.db.models import Q
 
 from corehq.apps.accounting.models import Subscription
@@ -65,17 +65,6 @@ class CustomDeletion(BaseDeletion):
     def execute(self, domain_name):
         if self.is_app_installed():
             self.deletion_fn(domain_name)
-
-
-class RawDeletion(BaseDeletion):
-
-    def __init__(self, app_label, models, raw_query):
-        super(RawDeletion, self).__init__(app_label, models)
-        self.raw_query = raw_query
-
-    def execute(self, cursor, domain_name):
-        if self.is_app_installed():
-            cursor.execute(self.raw_query, [domain_name])
 
 
 class ModelDeletion(BaseDeletion):
@@ -410,22 +399,5 @@ DOMAIN_DELETE_OPERATIONS = [
 ]
 
 def apply_deletion_operations(domain_name):
-    raw_ops, model_ops = _split_ops_by_type(DOMAIN_DELETE_OPERATIONS)
-
-    with connection.cursor() as cursor:
-        for op in raw_ops:
-            op.execute(cursor, domain_name)
-
-    for op in model_ops:
+    for op in DOMAIN_DELETE_OPERATIONS:
         op.execute(domain_name)
-
-
-def _split_ops_by_type(ops):
-    raw_ops = []
-    model_ops = []
-    for op in ops:
-        if isinstance(op, RawDeletion):
-            raw_ops.append(op)
-        else:
-            model_ops.append(op)
-    return raw_ops, model_ops
