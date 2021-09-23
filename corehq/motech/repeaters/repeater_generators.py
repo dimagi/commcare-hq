@@ -393,6 +393,71 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
         return CouchUser.get_by_username(self.submission_username()).user_id
 
 
+@attr.s
+class CaseUpdateConfig:
+    PROPS = {
+        "registry_slug": "target_data_registry",
+        "domain": "target_domain",
+        "case_type": "target_case_type",
+        "case_id": "target_case_id",
+        "includes": "target_property_includelist",
+        "excludes": "target_property_excludelist",
+        "create_case": "target_create_case",
+        "override_props": "target_property_override",
+        "index_case_id": "target_index_case_id",
+        "index_type": "target_index_type",
+        "owner_id": "target_case_owner_id",
+    }
+
+    intent_case = attr.ib()
+    registry_slug = attr.ib()
+    domain = attr.ib()
+    case_type = attr.ib()
+    case_id = attr.ib()
+    includes = attr.ib()
+    excludes = attr.ib()
+    create_case = attr.ib()
+    override_props = attr.ib()
+    index_case_id = attr.ib()
+    index_type = attr.ib()
+    owner_id = attr.ib()
+
+    @classmethod
+    def from_payload(cls, payload_doc):
+        kwargs = {
+            attr: payload_doc.get_case_property(prop_name)
+            for attr, prop_name in cls.PROPS.items()
+        }
+        kwargs["intent_case"] = payload_doc
+        config = CaseUpdateConfig(**kwargs)
+        config.validate()
+        return config
+
+    def validate(self):
+        if self.includes is not None and self.excludes is not None:
+            raise DataRegistryCaseUpdateError("Both exclude and include lists specified. Only one is allowed.")
+        if self.includes is None and self.excludes is None:
+            raise DataRegistryCaseUpdateError("Neither exclude and include lists specified. One is required.")
+
+    def get_case_updates(self):
+        case_json = self.intent_case.case_json
+        update_props = []
+        if self.excludes is not None:
+            update_props = set(case_json) - set(self.excludes.split())
+        if self.includes is not None:
+            update_props = set(case_json) & set(self.includes.split())
+
+        update_props = [
+            prop for prop in update_props
+            if not prop.startswith("target_")
+        ]
+
+        return {
+            prop: case_json[prop]
+            for prop in update_props
+        }
+
+
 class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
 
     def get_headers(self):
@@ -401,10 +466,11 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         return headers
 
     def get_payload(self, repeat_record, payload_doc):
+        config = CaseUpdateConfig.from_payload(payload_doc)
         submitting_user = CouchUser.get_by_user_id(payload_doc.user_id)
-        case = self._get_target_case(repeat_record, payload_doc, submitting_user)
+        case = self._get_target_case(repeat_record, config, submitting_user)
 
-        case_block = self._get_case_block(case, payload_doc)
+        case_block = self._get_case_block(case, config)
         return render_to_string('hqcase/xml/case_block.xml', {
             'xmlns': SYSTEM_FORM_XMLNS,
             'case_block': case_block,
@@ -428,42 +494,16 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
     def submission_user_id(self):
         return CouchUser.get_by_username(self.submission_username()).user_id
 
-    def _get_target_case(self, repeat_record, payload_doc, couch_user):
-        registry_slug = payload_doc.get_case_property("target_data_registry")
-        helper = DataRegistryHelper(payload_doc.domain, registry_slug=registry_slug)
+    def _get_target_case(self, repeat_record, config, couch_user):
+        registry_slug = config.registry_slug
+        helper = DataRegistryHelper(config.intent_case.domain, registry_slug=registry_slug)
+        return helper.get_case(config.case_id, config.case_type, couch_user, repeat_record.repeater)
 
-        target_case_type = payload_doc.get_case_property("target_case_type")
-        target_case_id = payload_doc.get_case_property("target_case_id")
-        return helper.get_case(target_case_id, target_case_type, couch_user, repeat_record.repeater)
-
-    def _get_case_block(self, case, payload_doc):
-        includes = payload_doc.get_case_property("target_property_includelist")
-        excludes = payload_doc.get_case_property("target_property_excludelist")
-        if includes is not None and excludes is not None:
-            raise DataRegistryCaseUpdateError("Both exclude and include lists specified. Only one is allowed.")
-        if includes is None and excludes is None:
-            raise DataRegistryCaseUpdateError("Neither exclude and include lists specified. One is required.")
-
-        case_json = payload_doc.case_json
-        update_props = []
-        if excludes is not None:
-            update_props = set(case_json) - set(excludes.split())
-        if includes is not None:
-            update_props = set(case_json) & set(includes.split())
-
-        update_props = [
-            prop for prop in update_props
-            if not prop.startswith("target_")
-        ]
-
-        update = {
-            prop: case_json[prop]
-            for prop in update_props
-        }
+    def _get_case_block(self, case, config):
         return CaseBlock(
             create=False,
             case_id=case.case_id,
-            update=update
+            update=config.get_case_updates()
         ).as_text()
 
 
