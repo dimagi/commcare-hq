@@ -51,31 +51,30 @@
       <td>
         <div data-bind="if: !configMany()">
           <div data-bind="foreach: configs">
-            <a data-bind="attr: {href: url}"><span data-bind="text:name"></span> (<span data-bind="text:report_name"></span>)</a>
+            <a data-bind="attr: {href: url}"><!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)</a>
           </div>
         </div>
         <div data-bind="if: configMany">
           <ul style="float: left">
             <div data-bind="foreach: configs">
-              <li ><a data-bind="attr: {href: url}"><span data-bind="text:name"></span> (<span data-bind="text:report_name"></span>)</a></li>
+              <li ><a data-bind="attr: {href: url}"><!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)</a></li>
             </div>
           </ul>
         </div>
       </td>
 
       <td>
-        <span data-bind="text: day_name"></span> at <span data-bind="text: hour"></span>:00
+        <!-- ko text: day_name --><!-- /ko --> at <!-- ko text: hour --><!-- /ko -->:00
       </td>
 
       <td>
         {# handles old documents #}
-        <!-- user_ids MIGHT be deprecated -->
         <div data-bind="if: is_owner">
-          <div data-bind="if: send_to_owner"> <!-- || user_ids"> -->
+          <div data-bind="if: send_to_owner">
             {% trans "me" %}<span data-bind="if: recipient_email_count">, </span>
           </div>
           <div data-bind="foreach: recipient_emails">
-            <span data-bind="text: $data"></span><span data-bind="ifnot: ($index() == ($parent.recipient_emails().length - 1))">, </span>
+            <!-- ko text: $data --><!-- /ko --><span data-bind="ifnot: ($index() == ($parent.recipient_emails().length - 1))">, </span>
           </div>
         </div>
         <div data-bind="if: !is_owner">
@@ -84,14 +83,14 @@
           </div>
           <div data-bind="if: is_admin">
             <div data-bind="if: send_to_owner"> <!-- || user_ids"> -->
-              <span data-bind="text: owner_email"></span><span data-bind="if: recipient_emails">,</span>
+              <!-- ko text: owner_email --><!-- /ko --><span data-bind="if: recipient_emails">,</span>
             </div>
             <div data-bind="foreach: recipient_emails">
               <div data-bind="if: user_email = $data">
                 {% trans "me" %}<span data-bind="ifnot: ($index() == ($parent.recipient_emails().length - 1))">, </span>
               </div>
               <div data-bind="if: user_email != $data">
-                <span data-bind="text: $data"></span><span data-bind="ifnot: ($index() == ($parent.recipient_emails().length - 1))">, </span>
+                <!-- ko text: $data --><!-- /ko --><span data-bind="ifnot: ($index() == ($parent.recipient_emails().length - 1))">, </span>
               </div>
             </div>
           </div>
@@ -153,12 +152,12 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title">{% trans "Stop sending report?" %}</h4>
               </div>
-              <form name="delete_scheduled_report" data-bind="attr: {action: deleteUrl}" method="post"> <!-- don't actually need name? -->
+              <form name="delete_scheduled_report" data-bind="attr: {action: deleteUrl}" method="post">
                 {% csrf_token %}
                 <div class="modal-body">
                   <p>{% trans "Are you sure you want to stop sending this report?" %}</p>
                   <div data-bind="foreach: configs">
-                    <div><span data-bind="text:name"></span> (<span data-bind="text:report_name"></span>)</div>
+                    <!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)</div>
                   </div>
                 </div>
                 <div class="modal-footer">
@@ -171,10 +170,7 @@
           </div>
         </div>
 
-        <!-- Bulk Action Modal (future work) -->
-
       </td>
     </tr>
-
   </tbody>
 </table>

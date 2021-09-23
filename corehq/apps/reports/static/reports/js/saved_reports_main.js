@@ -28,10 +28,6 @@ hqDefine("reports/js/saved_reports_main", [
             is_admin: initialPageData.get('is_admin'),
             user_email: initialPageData.get('user_email'),
             couch_user: initialPageData.get('couch_user'),
-            urls: {
-                getPage: initialPageData.reverse("page_context"),
-                getPagePage: initialPageData.reverse("reports_home"),
-            },
         }));
     });
 });

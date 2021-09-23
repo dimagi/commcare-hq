@@ -10,7 +10,6 @@
   {% initial_page_data 'configs' configs %}
   {% registerurl 'add_report_config' domain %}
   {% registerurl 'reports_home' domain %} <!-- is this actually used anymore -->
-  {% registerurl 'page_context' domain %}
   {% initial_page_data 'scheduled_reports' scheduled_reports %}
   {% initial_page_data 'others_scheduled_reports' others_scheduled_reports %}
   {% initial_page_data 'is_admin' is_admin %}
@@ -119,18 +118,28 @@
               </div>
             </div>
             <div data-bind="foreach: panels()">
-              <h3 data-bind="text: header"></h3> <!-- how to get the translator tag thing -->
+              <h3 data-bind="text: header"></h3>
               <div class="alert alert-info" data-bind="visible: isLoadingPanel">
                 <i class="fa fa-spin fa-spinner"></i>
                 {% trans "Loading reports..." %}
               </div>
               <div style="display: none" class="alert alert-info" data-bind="visible: $root.isBulkDeleting">
                 <i class="fa fa-refresh fa-spin"></i>
-                {% trans "Deleting reports..." %}
+                <!-- ko if: $parent.isMultiple -->
+                  {% trans "Deleting reports..." %}
+                <!-- /ko -->
+                <!-- ko if: !$parent.isMultiple() -->
+                  {% trans "Deleting report..." %}
+                <!-- /ko -->
               </div>
               <div style="display: none" class="alert alert-info" data-bind="visible: $root.isBulkSending">
                 <i class="fa fa-refresh fa-spin"></i>
-                {% trans "Sending reports..." %}
+                <!-- ko if: $parent.isMultiple -->
+                  {% trans "Sending reports..." %}
+                <!-- /ko -->
+                <!-- ko if: !$parent.isMultiple() -->
+                  {% trans "Sending report..." %}
+                <!-- /ko -->
               </div>
               <div style="display: none" data-bind="visible: !isLoadingPanel() && !$root.bulkAction()">
                 <div data-bind="if: is_owner">

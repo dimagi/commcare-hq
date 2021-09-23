@@ -47,8 +47,6 @@ hqDefine("reports/js/scheduled_reports_list", [
     var scheduledReportsPanelModel = function (options) {
         var self = {};
 
-        self.urls = options.urls
-
         self.scheduledReports = ko.observableArray();
         self.items = ko.observableArray();
         self.isLoadingPanel = ko.observable(true);
@@ -65,35 +63,7 @@ hqDefine("reports/js/scheduled_reports_list", [
             self.isLoadingPanel(true);
             self.items(self.scheduledReports.slice(self.perPage() * (page - 1), self.perPage() * page));
             self.isLoadingPanel(false);
-            //self.getScheduledReportsPage(page);
         }
-
-        /*
-        //eventually should slice list on server side - does it matter performance-wise?
-        self.getScheduledReportsPage = function (page) {
-            //self.pageLoaded(false);
-            $.ajax({
-                method: 'GET',
-                url: self.urls.getPage,
-                data: {
-                    'limit_request': true,
-                    'couch_user': options.couch_user,
-                    'page': page,
-                    'limit': self.perPage(),
-                    'myReports': self.is_owner,
-                },
-                success: function (data) {
-                    //self.pageLoaded(true);
-                    console.log("it's working?");
-                    console.log(data.total);
-                    //console.log(data.reports());
-                },
-                error: function () {
-                    console.log("failed");
-                },
-            });
-        }
-        */
 
         self.selectAll = function () {
             _.each(self.items(), function (e) { e.addedToBulk(true); });
@@ -117,8 +87,6 @@ hqDefine("reports/js/scheduled_reports_list", [
         var self = {};
         window.scrollTo(0, 0);
 
-        self.urls = options.urls;
-
         self.bulkAction = ko.observable(false);
         self.isBulkDeleting = ko.observable(false);
         self.isBulkSending = ko.observable(false);
@@ -128,16 +96,14 @@ hqDefine("reports/js/scheduled_reports_list", [
             reports: options.scheduled_reports,
             is_owner: true,
             is_admin: options.is_admin,
-            header: "My Scheduled Reports",
-            urls: options.urls,
+            header: gettext("My Scheduled Reports"),
             couch_user: options.couch_user,
         }));
         self.panels.push(scheduledReportsPanelModel({
             reports: options.other_scheduled_reports,
             is_owner: false,
             is_admin: options.is_admin,
-            header: "Other Scheduled Reports",
-            urls: options.urls,
+            header: gettext("Other Scheduled Reports"),
             couch_user: options.couch_user,
         }));
 
@@ -153,7 +119,7 @@ hqDefine("reports/js/scheduled_reports_list", [
             return self.selectedReports().length;
         });
 
-        self.multiple = ko.computed(function () {
+        self.isMultiple = ko.computed(function () {
             if (self.selectedReportsCount() > 1) {
                 return true;
             }

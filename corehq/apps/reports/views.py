@@ -231,7 +231,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
-        print(args)
         return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -341,21 +340,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
             self.report_details(r) for r in self.scheduled_reports
         ]
 
-        total = 0
-        if self.request.GET.get('limit_request') == 'true':
-            page = int(self.request.GET.get('page', 1))
-            limit = int(self.request.GET.get('limit', 5))
-            if self.request.GET.get('myReports') == 'true':
-                total = len(scheduled_reports)
-                scheduled_reports = scheduled_reports[limit * (page - 1):limit * page]
-            else:
-                total = len(others_scheduled_reports)
-                scheduled_reports = others_scheduled_reports[limit * (page - 1):limit * page]
-            return JsonResponse({
-                'reports': scheduled_reports,
-                'total': total,
-            })
-
         return {
             'couch_user': user,
             'user_email': user.get_email(),
@@ -371,9 +355,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
                 'section_name': self.section_name,
             }
         }
-
-    def get_page(self, page, limit):
-        return len(self.scheduled_reports), self.scheduled_reports[limit * (page - 1):limit * page]
 
     @staticmethod
     def report_details(report, user_email=None, context_secret=None):
@@ -412,29 +393,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
                                                 args=(report.get_id, user_email, context_secret))
 
         return details
-
-
-@login_and_domain_required
-@require_GET
-def page_context(request, domain):
-
-    #reports = ReportNotification.by_domain_and_owner(domain, request.couch_user._id)
-    #for r in reports:
-    #    print(r)
-
-    visa = MySavedReportsView()
-    print(type(visa))
-    #print(visa.others_scheduled_reports)
-
-    page = int(request.GET.get('page', 1))
-    limit = int(request.GET.get('limit', 5))
-
-    #(total, reports) = visa.get_page(page, limit)
-
-    return JsonResponse({
-        #'reports': reports,
-        #'total': total,
-    })
 
 
 def should_update_export(last_accessed):

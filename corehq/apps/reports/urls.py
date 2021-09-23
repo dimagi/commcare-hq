@@ -59,7 +59,6 @@ from .views import (
     unarchive_form,
     undo_close_case_view,
     view_scheduled_report,
-    page_context,
 )
 
 custom_report_urls = [
@@ -148,7 +147,6 @@ urlpatterns = [
         send_test_scheduled_report, name='send_test_scheduled_report'),
     url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',
         view_scheduled_report, name='view_scheduled_report'),
-    url(r'^page_context/$', page_context, name='page_context'),
 
     # V2 Reports
     url(r'^v2/', include('corehq.apps.reports.v2.urls')),
