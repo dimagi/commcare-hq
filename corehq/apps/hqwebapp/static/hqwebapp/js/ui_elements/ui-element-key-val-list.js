@@ -21,9 +21,9 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
         this.translated_value = {};
         this.edit = true;
         this.modal_id = 'enumModal-' + guid;
-        this.modal_title = modalTitle
-        this.sub_title = subTitle ? '<p>' + subTitle + '</p>' : ''
-        this.max_display = maxDisplay
+        this.modal_title = modalTitle;
+        this.sub_title = subTitle ? '<p>' + subTitle + '</p>' : '';
+        this.max_display = maxDisplay;
 
         this.$edit_view = $('<div class="well well-sm" />');
         this.$noedit_view = $('<div />');
