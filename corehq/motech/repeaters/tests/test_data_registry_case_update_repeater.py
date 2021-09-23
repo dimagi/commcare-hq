@@ -25,10 +25,13 @@ def test_data_registry_case_update_payload_generator_include_list():
 def test_data_registry_case_update_payload_generator_exclude_list():
     builder = (
         PropertyBuilder()
-        .properties(new_prop="new_prop_val", other_prop="other_prop_val")
+        .properties(new_prop="new_prop_val", target_something="1", other_prop="other_prop_val")
         .exclude_props(["other_prop"])
     )
-    _test_data_registry_case_update_payload_generator(builder.props, {"new_prop": "new_prop_val"})
+    _test_data_registry_case_update_payload_generator(builder.props, {
+        "new_prop": "new_prop_val",
+        "target_something": "1"
+    })
 
 
 def _test_data_registry_case_update_payload_generator(intent_properties, expected_updates):

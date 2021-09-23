@@ -447,11 +447,7 @@ class CaseUpdateConfig:
         if self.includes is not None:
             update_props = set(case_json) & set(self.includes.split())
 
-        update_props = [
-            prop for prop in update_props
-            if not prop.startswith("target_")
-        ]
-
+        update_props.difference_update(set(self.PROPS.values()))
         return {
             prop: case_json[prop]
             for prop in update_props
