@@ -42,13 +42,13 @@ def pull_missing_multimedia_for_app_and_notify_task(domain, app_id, email=None):
 
 
 @task(queue='linked_domain_queue')
-def push_models(master_domain, models, linked_domains, build_apps, username):
-    ReleaseManager(master_domain, username).release(models, linked_domains, build_apps)
+def push_models(upstream_domain, models, downstream_domains, build_apps, username):
+    ReleaseManager(upstream_domain, username).release(models, downstream_domains, build_apps)
 
 
 class ReleaseManager():
-    def __init__(self, master_domain, username):
-        self.master_domain = master_domain
+    def __init__(self, upstream_domain, username):
+        self.upstream_domain = upstream_domain
         self.user = CouchUser.get_by_username(username)
         self._reset()
 
@@ -92,14 +92,14 @@ class ReleaseManager():
     def _get_successes(self, domain, html=True):
         return self.successes_by_domain['html' if html else 'text'][domain]
 
-    def release(self, models, linked_domains, build_apps=False):
+    def release(self, models, downstream_domains, build_apps=False):
         self._reset()
         header = [
-            release_domain.si(self.master_domain, linked_domain, self.user.username, models, build_apps)
-            for linked_domain in linked_domains
+            release_domain.si(self.upstream_domain, downstream_domain, self.user.username, models, build_apps)
+            for downstream_domain in downstream_domains
         ]
-        callback = send_linked_domain_release_email.s(self.master_domain, self.user.username,
-                                                      models, linked_domains)
+        callback = send_linked_domain_release_email.s(self.upstream_domain, self.user.username,
+                                                      models, downstream_domains)
         chord(header)(callback)
 
     def get_email_message(self, models, linked_domains, html=True):
@@ -208,13 +208,13 @@ The following linked project spaces received content:
 
 
 @task(queue='linked_domain_queue')
-def release_domain(master_domain, linked_domain, username, models, build_apps=False):
-    manager = ReleaseManager(master_domain, username)
+def release_domain(upstream_domain, downstream_domain, username, models, build_apps=False):
+    manager = ReleaseManager(upstream_domain, username)
 
-    domain_link = get_upstream_domain_link(linked_domain)
-    if not domain_link or domain_link.master_domain != master_domain:
-        manager.add_error(linked_domain, _("Project space {} is no longer linked to {}. No content "
-                                           "was released to it.").format(master_domain, linked_domain))
+    domain_link = get_upstream_domain_link(downstream_domain)
+    if not domain_link or domain_link.master_domain != upstream_domain:
+        manager.add_error(downstream_domain, _("Project space {} is no longer linked to {}. No content "
+                                           "was released to it.").format(upstream_domain, downstream_domain))
         return manager.results()
 
     for model in models:
@@ -247,11 +247,11 @@ def release_domain(master_domain, linked_domain, username, models, build_apps=Fa
 
 
 @task(queue='linked_domain_queue')
-def send_linked_domain_release_email(results, master_domain, username, models, linked_domains):
-    manager = ReleaseManager(master_domain, username)
+def send_linked_domain_release_email(results, upstream_domain, username, models, downstream_domains):
+    manager = ReleaseManager(upstream_domain, username)
 
     # chord sends a list of results only if there were multiple tasks
-    if len(linked_domains) == 1:
+    if len(downstream_domains) == 1:
         results = [results]
 
     for result in results:
@@ -267,7 +267,7 @@ def send_linked_domain_release_email(results, master_domain, username, models, l
     send_html_email_async(
         subject,
         email,
-        manager.get_email_message(models, linked_domains, html=True),
-        text_content=manager.get_email_message(models, linked_domains, html=False),
+        manager.get_email_message(models, downstream_domains, html=True),
+        text_content=manager.get_email_message(models, downstream_domains, html=False),
         email_from=settings.DEFAULT_FROM_EMAIL
     )
