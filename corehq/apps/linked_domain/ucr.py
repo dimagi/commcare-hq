@@ -3,11 +3,18 @@ from collections import namedtuple
 
 from django.utils.translation import ugettext as _
 
-from corehq.apps.linked_domain.applications import get_downstream_app_id, get_upstream_app_ids
+from corehq.apps.linked_domain.applications import (
+    get_downstream_app_id,
+    get_upstream_app_ids,
+)
 from corehq.apps.linked_domain.const import MODEL_REPORT
-from corehq.apps.linked_domain.exceptions import DomainLinkError, MultipleDownstreamAppsError
+from corehq.apps.linked_domain.exceptions import (
+    DomainLinkError,
+    MultipleDownstreamAppsError,
+)
 from corehq.apps.linked_domain.models import ReportLinkDetail
-from corehq.apps.linked_domain.remote_accessors import get_ucr_config as remote_get_ucr_config
+from corehq.apps.linked_domain.remote_accessors import \
+    get_ucr_config as remote_get_ucr_config
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
     get_report_configs_for_domain,
