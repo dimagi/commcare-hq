@@ -89,7 +89,8 @@ def _create_keyword(domain, name="ping", upstream_id=None, should_save=True, is_
             action=KeywordAction.RECIPIENT_USER_GROUP,
             message_content='Test',
         )
-
+        if should_save:
+            keyword.save()
     return keyword
 
 
@@ -582,6 +583,7 @@ class TestBuildFeatureFlagViewModels(TestCase):
         view_models = build_feature_flag_view_models(self.domain)
 
         self.assertEqual(expected_view_models, view_models)
+
 
 class TestBuildDomainLevelViewModels(SimpleTestCase):
 

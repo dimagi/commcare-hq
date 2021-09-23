@@ -170,6 +170,7 @@ def user_has_admin_access_in_all_domains(user, domains):
 
 def is_keyword_linkable(keyword):
     from corehq.apps.sms.models import KeywordAction
-    return bool(keyword.keywordaction_set.filter(
+    keywords_with_group_recipients = keyword.keywordaction_set.filter(
         recipient=KeywordAction.RECIPIENT_USER_GROUP
-    ).count())
+    ).count()
+    return keywords_with_group_recipients == 0
