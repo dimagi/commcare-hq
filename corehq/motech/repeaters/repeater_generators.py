@@ -401,22 +401,13 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         return headers
 
     def get_payload(self, repeat_record, payload_doc):
-        helper = self._get_registry_helper(payload_doc)
-
-        target_case_type = payload_doc.get_case_property("target_case_type")
-        target_case_id = payload_doc.get_case_property("target_case_id")
         submitting_user = CouchUser.get_by_user_id(payload_doc.user_id)
-        case = helper.get_case(target_case_id, target_case_type, submitting_user, repeat_record.repeater)
+        case = self._get_target_case(repeat_record, payload_doc, submitting_user)
 
-        block = CaseBlock(
-            create=False,
-            case_id=target_case_id,
-            # owner_id=owner_id,
-            update={}
-        ).as_text()
+        case_block = self._get_case_block(case, payload_doc)
         return render_to_string('hqcase/xml/case_block.xml', {
             'xmlns': SYSTEM_FORM_XMLNS,
-            'case_block': block,
+            'case_block': case_block,
             'time': json_format_datetime(datetime.utcnow()),
             'uid': uuid4().hex,
             'username': self.submission_username(),
@@ -437,10 +428,28 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
     def submission_user_id(self):
         return CouchUser.get_by_username(self.submission_username()).user_id
 
-    def _get_registry_helper(self, payload_doc):
+    def _get_target_case(self, repeat_record, payload_doc, couch_user):
         registry_slug = payload_doc.get_case_property("target_data_registry")
-        return DataRegistryHelper(payload_doc.domain, registry_slug=registry_slug)
+        helper = DataRegistryHelper(payload_doc.domain, registry_slug=registry_slug)
 
+        target_case_type = payload_doc.get_case_property("target_case_type")
+        target_case_id = payload_doc.get_case_property("target_case_id")
+        return helper.get_case(target_case_id, target_case_type, couch_user, repeat_record.repeater)
+
+    def _get_case_block(self, case, payload_doc):
+        includes = payload_doc.get_case_property("target_property_includelist") or ""
+        includes = includes.split()
+        case_json = payload_doc.case_json
+        update = {
+            prop: case_json[prop]
+            for prop in includes
+            if prop in case_json
+        }
+        return CaseBlock(
+            create=False,
+            case_id=case.case_id,
+            update=update
+        ).as_text()
 
 
 class AppStructureGenerator(BasePayloadGenerator):

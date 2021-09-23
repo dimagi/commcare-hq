@@ -13,8 +13,13 @@ from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater, Repea
 from corehq.motech.repeaters.repeater_generators import DataRegistryCaseUpdatePayloadGenerator, SYSTEM_FORM_XMLNS
 
 
-def test_data_registry_case_update_payload_generator():
+def test_data_registry_case_update_payload_generator_empty_update():
     _test_data_registry_case_update_payload_generator(PropertyBuilder().props, {})
+
+
+def test_data_registry_case_update_payload_generator_update_prop():
+    builder = PropertyBuilder().properties(new_prop="new_prop_val").copy_properties(include=["new_prop"])
+    _test_data_registry_case_update_payload_generator(builder.props, {"new_prop": "new_prop_val"})
 
 
 def _test_data_registry_case_update_payload_generator(intent_properties, expected_updates):
@@ -31,13 +36,14 @@ def _test_data_registry_case_update_payload_generator(intent_properties, expecte
         user_id="local_user1"
     )
     intent_case.track_create(CaseTransaction(form_id="form123", type=CaseTransaction.TYPE_FORM))
-    copy_value = uuid.uuid4().hex
     target_case = CommCareCaseSQL(
         case_id="1",
         type="patient",
-        case_json={"copy_this": copy_value}
+        case_json={
+            "existing_prop": uuid.uuid4().hex,
+        }
     )
-    with patch.object(DataRegistryHelper, "get_case", return_value=[target_case]), \
+    with patch.object(DataRegistryHelper, "get_case", return_value=target_case), \
          patch.object(CouchUser, "get_by_user_id", return_value=Mock(username="local_user")):
         repeat_record = Mock(repeater=Repeater())
         form = UpdateForm(generator.get_payload(repeat_record, intent_case))
@@ -47,10 +53,7 @@ def _test_data_registry_case_update_payload_generator(intent_properties, expecte
             "source_case_id": intent_case.case_id,
             "source_username": "local_user",
         })
-        expected_update = expected_updates.copy()
-        if "copy_this" in expected_update:
-            expected_update["copy_this"] = copy_value
-        form.assert_case_updates(expected_update)
+        form.assert_case_updates(expected_updates)
 
 
 class UpdateForm:
@@ -100,9 +103,13 @@ class PropertyBuilder:
         })
         return self
 
-    def properties(self, include=(), exclude=()):
+    def copy_properties(self, include=(), exclude=()):
         self.props.update({
             "target_property_excludelist": " ".join(exclude),
             "target_property_includelist": " ".join(include),
         })
+        return self
+
+    def properties(self, **kwargs):
+        self.props.update(kwargs)
         return self
