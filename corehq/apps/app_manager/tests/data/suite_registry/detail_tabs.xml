@@ -1,0 +1,31 @@
+<partial>
+  <detail id="m0_case_long">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <detail>
+      <title>
+        <text>
+          <locale id="m0.case_long.tab.1.title"/>
+        </text>
+      </title>
+      <field>
+        <header>
+          <text>
+            <locale id="m0.case_long.case_whatever_2.header"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="whatever"/>
+          </text>
+        </template>
+      </field>
+    </detail>
+    <variables>
+      <case_id function="./@case_id"/>
+    </variables>
+  </detail>
+</partial>

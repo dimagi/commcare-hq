@@ -62,10 +62,7 @@ class FormProcessorTestUtils(object):
     def delete_all_v1_ledgers(domain=None):
         logger.debug("Deleting all V1 ledgers for domain %s", domain)
         from casexml.apps.stock.models import StockReport
-        from casexml.apps.stock.models import StockTransaction
-        stock_report_ids = StockReport.objects.filter(domain=domain).values_list('id', flat=True)
         StockReport.objects.filter(domain=domain).delete()
-        StockTransaction.objects.filter(report_id__in=stock_report_ids).delete()
 
     @staticmethod
     @unit_testing_only

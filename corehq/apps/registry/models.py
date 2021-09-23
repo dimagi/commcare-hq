@@ -110,7 +110,7 @@ class DataRegistry(models.Model):
         return RegistrySchema(self.schema)
 
     def get_granted_domains(self, domain):
-        self.check_access(domain)
+        self.check_domain_has_access(domain)
         return set(
             self.grants.filter(to_domains__contains=[domain])
             .values_list('from_domain', flat=True)
@@ -121,7 +121,7 @@ class DataRegistry(models.Model):
             status=RegistryInvitation.STATUS_ACCEPTED,
         ).values_list('domain', flat=True))
 
-    def check_access(self, domain):
+    def check_domain_has_access(self, domain):
         if not self.is_active:
             raise RegistryAccessDenied()
         invites = self.invitations.filter(domain=domain)

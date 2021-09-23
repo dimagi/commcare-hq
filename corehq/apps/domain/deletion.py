@@ -255,19 +255,12 @@ def _delete_demo_user_restores(domain_name):
             except DemoUserRestore.DoesNotExist:
                 pass
 
+
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
 DOMAIN_DELETE_OPERATIONS = [
-    RawDeletion('stock', ['stocktransaction'], """
-        DELETE FROM stock_stocktransaction
-        WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)
-    """),
     RawDeletion('stock', ['stockreport'], "DELETE FROM stock_stockreport WHERE domain=%s"),
-    RawDeletion('commtrack', ['stockstate'], """
-        DELETE FROM commtrack_stockstate
-        WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)
-    """),
     DjangoUserRelatedModelDeletion('otp_static', 'StaticDevice', 'user__username', ['StaticToken']),
     DjangoUserRelatedModelDeletion('otp_totp', 'TOTPDevice', 'user__username'),
     DjangoUserRelatedModelDeletion('two_factor', 'PhoneDevice', 'user__username'),
