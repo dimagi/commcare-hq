@@ -110,10 +110,6 @@ def test_generator_update_create_index_case_type_mismatch():
             _test_payload_generator(builder.props, {})
 
 
-def test_generator_update_set_owner():
-    raise Exception
-
-
 def test_generator_update_multiple_cases():
     raise Exception
 
@@ -197,10 +193,6 @@ class PropertyBuilder:
             "target_domain": domain,
             "target_case_type": case_type,
         })
-        return self
-
-    def set_owner(self, new_owner):
-        self.props["target_case_owner_id"] = new_owner
         return self
 
     def create_index(self, case_id, case_type, relationship="child"):

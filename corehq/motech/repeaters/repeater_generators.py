@@ -408,7 +408,6 @@ class CaseUpdateConfig:
         "index_case_id": "target_index_case_id",
         "index_case_type": "target_index_case_type",
         "index_relationship": "target_index_relationship",
-        "owner_id": "target_case_owner_id",
     }
 
     intent_case = attr.ib()
@@ -423,7 +422,6 @@ class CaseUpdateConfig:
     index_case_id = attr.ib()
     index_case_type = attr.ib()
     index_relationship = attr.ib()
-    owner_id = attr.ib()
 
     @classmethod
     def from_payload(cls, payload_doc):
