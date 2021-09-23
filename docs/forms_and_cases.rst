@@ -27,8 +27,6 @@ In the codebase there are now two models for form and case data.
 +------------------------+----------------------+
 | StockReport            |                      |
 +------------------------+----------------------+
-| StockTransaction       | LedgerTransaction    |
-+------------------------+----------------------+
 
 Some of these models define a common interface that allows you to perform the same operations
 irrespective of the type. Some examples are shown below:

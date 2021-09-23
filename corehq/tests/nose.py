@@ -313,6 +313,7 @@ def temporary_db_setup():
         DETAIL:  Table "commtrack_stockstate" references "products_sqlproduct".
         */
         DROP TABLE IF EXISTS commtrack_stockstate;
+        DROP TABLE IF EXISTS stock_stocktransaction;
         """)
 
 
