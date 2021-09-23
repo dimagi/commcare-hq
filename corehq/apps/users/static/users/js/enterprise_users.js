@@ -96,8 +96,8 @@ hqDefine("users/js/enterprise_users", [
                 resetColumnIcons(ascending);
                 userArr.sort(function (a, b) {
                     if (!a[column]) {
-                        return 1
-                    };
+                        return 1;
+                    }
                     if (!b[column]) {
                         return -1;
                     }
