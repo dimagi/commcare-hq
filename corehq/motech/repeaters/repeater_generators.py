@@ -439,7 +439,7 @@ class CaseUpdateConfig:
         if self.includes is None and self.excludes is None:
             raise DataRegistryCaseUpdateError("Neither exclude and include lists specified. One is required.")
 
-    def get_case_updates(self):
+    def get_case_updates(self, target_case):
         case_json = self.intent_case.case_json
         update_props = []
         if self.excludes is not None:
@@ -448,6 +448,11 @@ class CaseUpdateConfig:
             update_props = set(case_json) & set(self.includes.split())
 
         update_props.difference_update(set(self.PROPS.values()))
+        override = self.override_props is None or self.override_props.lower() in ("1", "true")
+        if not override:
+            target_props = set(target_case.case_json)
+            update_props.difference_update(target_props)
+
         return {
             prop: case_json[prop]
             for prop in update_props
@@ -495,11 +500,11 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         helper = DataRegistryHelper(config.intent_case.domain, registry_slug=registry_slug)
         return helper.get_case(config.case_id, config.case_type, couch_user, repeat_record.repeater)
 
-    def _get_case_block(self, case, config):
+    def _get_case_block(self, target_case, config):
         return CaseBlock(
             create=False,
-            case_id=case.case_id,
-            update=config.get_case_updates()
+            case_id=target_case.case_id,
+            update=config.get_case_updates(target_case)
         ).as_text()
 
 

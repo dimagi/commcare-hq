@@ -34,6 +34,17 @@ def test_data_registry_case_update_payload_generator_exclude_list():
     })
 
 
+def test_data_registry_case_update_payload_generator_dont_override_existing():
+    builder = (
+        PropertyBuilder(override_properties=False)
+        .properties(new_prop="new_prop_val", existing_prop="try override")
+        .exclude_props([])
+    )
+    _test_data_registry_case_update_payload_generator(builder.props, {
+        "new_prop": "new_prop_val",
+    })
+
+
 def _test_data_registry_case_update_payload_generator(intent_properties, expected_updates):
     domain = "source_domain"
     repeater = DataRegistryCaseUpdateRepeater(domain=domain)
@@ -91,8 +102,8 @@ class PropertyBuilder:
     def __init__(self, registry="registry1", create_case=False, override_properties=True):
         self.props: dict = {
             "target_data_registry": registry,
-            "target_create_case": int(create_case),
-            "target_property_override": int(override_properties),
+            "target_create_case": str(int(create_case)),
+            "target_property_override": str(int(override_properties)),
         }
         self.target_case()
 
