@@ -722,27 +722,28 @@ class ReferCaseRepeater(CreateCaseRepeater):
 
     def send_request(self, repeat_record, payload):
         """Add custom response handling to allow more nuanced handling of form errors"""
-        response = super().send_request(repeat_record, payload)
-        return self.get_response(response)
+        return get_repeater_response_from_submission_response(
+            super().send_request(repeat_record, payload)
+        )
 
-    @staticmethod
-    def get_response(response):
-        from couchforms.openrosa_response import ResponseNature, parse_openrosa_response
-        openrosa_response = parse_openrosa_response(response.text)
-        if not openrosa_response:
-            # unable to parse response so just let normal handling take place
-            return response
 
-        if response.status_code == 422:
-            # openrosa v3
-            retry = openrosa_response.nature != ResponseNature.PROCESSING_FAILURE
-            return RepeaterResponse(422, openrosa_response.nature, openrosa_response.message, retry)
-
-        if response.status_code == 201 and openrosa_response.nature == ResponseNature.SUBMIT_ERROR:
-            # openrosa v2
-            return RepeaterResponse(422, ResponseNature.SUBMIT_ERROR, openrosa_response.message, False)
-
+def get_repeater_response_from_submission_response(response):
+    from couchforms.openrosa_response import ResponseNature, parse_openrosa_response
+    openrosa_response = parse_openrosa_response(response.text)
+    if not openrosa_response:
+        # unable to parse response so just let normal handling take place
         return response
+
+    if response.status_code == 422:
+        # openrosa v3
+        retry = openrosa_response.nature != ResponseNature.PROCESSING_FAILURE
+        return RepeaterResponse(422, openrosa_response.nature, openrosa_response.message, retry)
+
+    if response.status_code == 201 and openrosa_response.nature == ResponseNature.SUBMIT_ERROR:
+        # openrosa v2
+        return RepeaterResponse(422, ResponseNature.SUBMIT_ERROR, openrosa_response.message, False)
+
+    return response
 
 
 class ShortFormRepeater(Repeater):
