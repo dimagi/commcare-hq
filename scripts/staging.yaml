@@ -81,7 +81,6 @@ branches:
     - gh/erm/link-reports-and-keywords-on-push # Graham Sept 15
     - fr/dedupe  # Farid Sept 17
     - jm/remove-es-scan  # Joel Sep 17 [QA]
-    - dmr/add-domain-to-celery-metrics  # Danny Sep 20
     - ap/add-permission-to-edit-ucrs # Amit Sept 21
     - smh/extract-messaging-permission # Steph Sept 21
     #- jls/smart-linking-in-web-apps # Jenny Sept 22
