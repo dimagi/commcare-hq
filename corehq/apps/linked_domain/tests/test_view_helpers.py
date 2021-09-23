@@ -278,33 +278,15 @@ class TestBuildIndividualViewModels(TestCase):
         actual_view_model = build_app_view_model(app)
         self.assertEqual(expected_view_model, actual_view_model)
 
-    def test_build_app_view_model_with_none_returns_unknown(self):
+    def test_build_app_view_model_with_none_returns_none(self):
         app = None
-        expected_view_model = {
-            'type': 'app',
-            'name': 'Application (Unknown App)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False,
-            'is_linkable': True,
-        }
-
         actual_view_model = build_app_view_model(app)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
-    def test_build_app_view_model_with_empty_dict_returns_unknown(self):
+    def test_build_app_view_model_with_empty_dict_returns_none(self):
         app = {}
-        expected_view_model = {
-            'type': 'app',
-            'name': 'Application (Unknown App)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False,
-            'is_linkable': True,
-        }
-
         actual_view_model = build_app_view_model(app)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
     def test_build_fixture_view_model_returns_match(self):
         fixture = _create_fixture(self.domain, tag="test-table", should_save=False)
@@ -316,37 +298,18 @@ class TestBuildIndividualViewModels(TestCase):
             'can_update': True,
             'is_linkable': True,
         }
-
         actual_view_model = build_fixture_view_model(fixture)
         self.assertEqual(expected_view_model, actual_view_model)
 
-    def test_build_fixture_view_model_with_none_returns_unknown(self):
+    def test_build_fixture_view_model_with_none_returns_none(self):
         fixture = None
-        expected_view_model = {
-            'type': 'fixture',
-            'name': 'Lookup Table (Unknown Table)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False,
-            'is_linkable': True,
-        }
-
         actual_view_model = build_fixture_view_model(fixture)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
     def test_build_fixture_view_model_with_empty_returns_none(self):
         fixture = {}
-        expected_view_model = {
-            'type': 'fixture',
-            'name': 'Lookup Table (Unknown Table)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False,
-            'is_linkable': True,
-        }
-
         actual_view_model = build_fixture_view_model(fixture)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
     def test_build_report_view_model(self):
         report = _create_report(self.domain, title='report-test', should_save=False)
@@ -363,33 +326,15 @@ class TestBuildIndividualViewModels(TestCase):
         actual_view_model = build_report_view_model(report)
         self.assertEqual(expected_view_model, actual_view_model)
 
-    def test_build_report_view_model_with_none_returns_unknown(self):
+    def test_build_report_view_model_with_none_returns_none(self):
         report = None
-        expected_view_model = {
-            'type': 'report',
-            'name': 'Report (Unknown Report)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False,
-            'is_linkable': True,
-        }
-
         actual_view_model = build_report_view_model(report)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
-    def test_build_report_view_model_with_empty_returns_unknown(self):
+    def test_build_report_view_model_with_empty_returns_none(self):
         report = {}
-        expected_view_model = {
-            'type': 'report',
-            'name': 'Report (Unknown Report)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False,
-            'is_linkable': True,
-        }
-
         actual_view_model = build_report_view_model(report)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
     def test_build_keyword_view_model_returns_match(self):
         keyword = _create_keyword(self.domain, name='keyword-test', should_save=False)
@@ -407,33 +352,15 @@ class TestBuildIndividualViewModels(TestCase):
         actual_view_model = build_keyword_view_model(keyword)
         self.assertEqual(expected_view_model, actual_view_model)
 
-    def test_build_keyword_view_model_with_none_returns_unknown(self):
+    def test_build_keyword_view_model_with_none_returns_none(self):
         keyword = None
-        expected_view_model = {
-            'type': 'keyword',
-            'name': 'Keyword (Deleted Keyword)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False,
-            'is_linkable': True,
-        }
-
         actual_view_model = build_keyword_view_model(keyword)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
-    def test_build_keyword_view_model_with_empty_returns_unknown(self):
+    def test_build_keyword_view_model_with_empty_returns_none(self):
         keyword = {}
-        expected_view_model = {
-            'type': 'keyword',
-            'name': 'Keyword (Deleted Keyword)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False,
-            'is_linkable': True,
-        }
-
         actual_view_model = build_keyword_view_model(keyword)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
     def test_build_keyword_view_model_with_grouped_returns_unlinkable(self):
         keyword = _create_keyword(self.domain, name='keyword-test', is_grouped=True)
@@ -447,7 +374,6 @@ class TestBuildIndividualViewModels(TestCase):
             'can_update': True,
             'is_linkable': False,
         }
-
         actual_view_model = build_keyword_view_model(keyword)
         self.assertEqual(expected_view_model, actual_view_model)
 

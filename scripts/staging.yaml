@@ -10,7 +10,7 @@
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
 #     $ scripts/rebuildstaging
-#     $ commcare-cloud staging deploy
+#     $ commcare-cloud --control staging deploy
 # Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
@@ -67,8 +67,7 @@ branches:
     #- sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
     - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
-    - jls/smart-linking-mvp  # Jenny Aug 9
-    - caktus:allowed_values_ui # Jenny Aug 13
+    - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
     - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
     - ml/add-bulk-action-scheduled-reports # Minha Aug 30
@@ -77,10 +76,12 @@ branches:
     - gh/erm/allow-text-input-for-new-domain # Graham Sept 13
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
-    - gh/erm/hide-deleted-content # Graham Sept 14
     - rp/improve-deleted-odata-feed-error-message # Rynhard Sept 15
     - gh/erm/link-reports-and-keywords-on-push # Graham Sept 15
     - fr/dedupe  # Farid Sept 17
     - jm/remove-es-scan  # Joel Sep 17 [QA]
-    - dmr/add-domain-to-celery-metrics  # Danny Sep 20
+    - ap/add-permission-to-edit-ucrs # Amit Sept 21
+    - smh/extract-messaging-permission # Steph Sept 21
+    #- jls/smart-linking-in-web-apps # Jenny Sept 22
+    - gh/erm/disable-grouped-keywords # Graham Sept 22
 submodules: { }

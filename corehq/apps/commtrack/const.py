@@ -16,11 +16,6 @@ MOBILE_WORKER_UUID_NS = uuid.UUID(
     ).hex
 )
 
-
-def is_supply_point_form(form):
-    return form.xmlns == COMMTRACK_SUPPLY_POINT_XMLNS
-
-
 SUPPLY_POINT_CASE_TYPE = 'supply-point'
 REQUISITION_CASE_TYPE = 'commtrack-requisition'  # legacy case type
 FULFILLMENT_CASE_TYPE = 'commtrack-fulfillment'
@@ -28,16 +23,6 @@ RECEIVED_CASE_TYPE = 'commtrack-received'
 ORDER_CASE_TYPE = 'commtrack-order'
 
 DAYS_IN_MONTH = 30.0
-
-
-def is_commtrack_case(case):
-    return case.type in [
-        SUPPLY_POINT_CASE_TYPE,
-        REQUISITION_CASE_TYPE,
-        FULFILLMENT_CASE_TYPE,
-        ORDER_CASE_TYPE,
-    ]
-
 ALL_PRODUCTS_TRANSACTION_TAG = '_all_products'
 
 # supply point products --> supply points and sp product --> requisitions
@@ -48,6 +33,7 @@ PARENT_CASE_REF = 'parent'
 
 def enum(**enums):
     return type('Enum', (), enums)
+
 
 StockActions = enum(
     STOCKONHAND='stockonhand',
@@ -62,5 +48,6 @@ def get_commtrack_user_id(domain):
     # abstracted out in case we one day want to back this
     # by a real user, but for now it's like demo_user
     return COMMTRACK_USERNAME
+
 
 USER_LOCATION_OWNER_MAP_TYPE = 'user-owner-mapping-case'
