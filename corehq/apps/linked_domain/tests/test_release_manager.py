@@ -1,11 +1,7 @@
 from mock import patch
 
-from corehq.apps.app_manager.models import (
-    Application,
-    LinkedApplication,
-)
+from corehq.apps.app_manager.models import Application, LinkedApplication
 from corehq.apps.app_manager.tests.util import patch_validate_xform
-from corehq.apps.app_manager.views.utils import get_blank_form_xml
 from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
     MODEL_APP,
@@ -14,12 +10,20 @@ from corehq.apps.linked_domain.const import (
     MODEL_DIALER_SETTINGS,
     MODEL_FLAGS,
     MODEL_HMAC_CALLOUT_SETTINGS,
+    MODEL_KEYWORD,
     MODEL_OTP_SETTINGS,
     MODEL_REPORT,
-    MODEL_USER_DATA, MODEL_KEYWORD,
+    MODEL_USER_DATA,
 )
-from corehq.apps.linked_domain.keywords import create_linked_keyword, get_downstream_keyword
-from corehq.apps.linked_domain.models import AppLinkDetail, ReportLinkDetail, KeywordLinkDetail
+from corehq.apps.linked_domain.keywords import (
+    create_linked_keyword,
+    get_downstream_keyword,
+)
+from corehq.apps.linked_domain.models import (
+    AppLinkDetail,
+    KeywordLinkDetail,
+    ReportLinkDetail,
+)
 from corehq.apps.linked_domain.tasks import ReleaseManager, release_domain
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.ucr import (
