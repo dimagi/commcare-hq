@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='caseproperty',
             name='data_type',
-            field=models.CharField(blank=True, choices=[('date', 'Date'), ('plain', 'Plain'), ('number', 'Number'), ('select', 'Multiple choice'), ('barcode', 'Barcode'), ('gps', 'GPS'), ('phone_number', 'Phone Number'), ('password', 'Password'), ('', 'No Type Currently Selected')], default='', max_length=20),
+            field=models.CharField(blank=True, choices=[('date', 'Date'), ('plain', 'Plain'), ('number', 'Number'), ('select', 'Multiple Choice'), ('barcode', 'Barcode'), ('gps', 'GPS'), ('phone_number', 'Phone Number'), ('password', 'Password'), ('', 'No Type Currently Selected')], default='', max_length=20),
         ),
     ]
