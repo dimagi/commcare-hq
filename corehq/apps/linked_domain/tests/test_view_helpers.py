@@ -41,7 +41,7 @@ from corehq.apps.linked_domain.view_helpers import (
     get_upstream_and_downstream_keywords,
     get_upstream_and_downstream_reports,
 )
-from corehq.apps.sms.models import Keyword
+from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
@@ -71,7 +71,7 @@ def _create_report(domain, title="report", upstream_id=None, should_save=True, a
     return report
 
 
-def _create_keyword(domain, name="ping", upstream_id=None, should_save=True):
+def _create_keyword(domain, name="ping", upstream_id=None, should_save=True, is_grouped=False):
     keyword = Keyword(
         domain=domain,
         keyword=name,
@@ -81,6 +81,14 @@ def _create_keyword(domain, name="ping", upstream_id=None, should_save=True):
     )
     if should_save:
         keyword.save()
+
+    if is_grouped:
+        keyword.keywordaction_set.create(
+            recipient='test',
+            recipient_id='abc123',
+            action=KeywordAction.RECIPIENT_USER_GROUP,
+            message_content='Test',
+        )
 
     return keyword
 
@@ -262,7 +270,8 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Application (Test Application)',
             'detail': {'app_id': 'abc123'},
             'last_update': None,
-            'can_update': True
+            'can_update': True,
+            'is_linkable': True,
         }
 
         actual_view_model = build_app_view_model(app)
@@ -275,7 +284,8 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Application (Unknown App)',
             'detail': None,
             'last_update': None,
-            'can_update': False
+            'can_update': False,
+            'is_linkable': True,
         }
 
         actual_view_model = build_app_view_model(app)
@@ -288,7 +298,8 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Application (Unknown App)',
             'detail': None,
             'last_update': None,
-            'can_update': False
+            'can_update': False,
+            'is_linkable': True,
         }
 
         actual_view_model = build_app_view_model(app)
@@ -301,7 +312,8 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Lookup Table (test-table)',
             'detail': {'tag': 'test-table'},
             'last_update': None,
-            'can_update': True
+            'can_update': True,
+            'is_linkable': True,
         }
 
         actual_view_model = build_fixture_view_model(fixture)
@@ -314,7 +326,8 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Lookup Table (Unknown Table)',
             'detail': None,
             'last_update': None,
-            'can_update': False
+            'can_update': False,
+            'is_linkable': True,
         }
 
         actual_view_model = build_fixture_view_model(fixture)
@@ -327,7 +340,8 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Lookup Table (Unknown Table)',
             'detail': None,
             'last_update': None,
-            'can_update': False
+            'can_update': False,
+            'is_linkable': True,
         }
 
         actual_view_model = build_fixture_view_model(fixture)
@@ -341,7 +355,8 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Report (report-test)',
             'detail': {'report_id': 'abc123'},
             'last_update': None,
-            'can_update': True
+            'can_update': True,
+            'is_linkable': True,
         }
 
         actual_view_model = build_report_view_model(report)
@@ -354,7 +369,8 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Report (Unknown Report)',
             'detail': None,
             'last_update': None,
-            'can_update': False
+            'can_update': False,
+            'is_linkable': True,
         }
 
         actual_view_model = build_report_view_model(report)
@@ -367,7 +383,8 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Report (Unknown Report)',
             'detail': None,
             'last_update': None,
-            'can_update': False
+            'can_update': False,
+            'is_linkable': True,
         }
 
         actual_view_model = build_report_view_model(report)
@@ -382,7 +399,8 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Keyword (keyword-test)',
             'detail': {'keyword_id': '100'},
             'last_update': None,
-            'can_update': True
+            'can_update': True,
+            'is_linkable': True,
         }
 
         actual_view_model = build_keyword_view_model(keyword)
@@ -395,7 +413,8 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Keyword (Deleted Keyword)',
             'detail': None,
             'last_update': None,
-            'can_update': False
+            'can_update': False,
+            'is_linkable': True,
         }
 
         actual_view_model = build_keyword_view_model(keyword)
@@ -408,7 +427,24 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Keyword (Deleted Keyword)',
             'detail': None,
             'last_update': None,
-            'can_update': False
+            'can_update': False,
+            'is_linkable': True,
+        }
+
+        actual_view_model = build_keyword_view_model(keyword)
+        self.assertEqual(expected_view_model, actual_view_model)
+
+    def test_build_keyword_view_model_with_grouped_returns_unlinkable(self):
+        keyword = _create_keyword(self.domain, name='keyword-test', is_grouped=True)
+        keyword.id = '100'
+
+        expected_view_model = {
+            'type': 'keyword',
+            'name': 'Keyword (keyword-test)',
+            'detail': {'keyword_id': '100'},
+            'last_update': None,
+            'can_update': True,
+            'is_linkable': False,
         }
 
         actual_view_model = build_keyword_view_model(keyword)
@@ -443,7 +479,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'Case Search Settings',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -458,7 +495,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'Data Dictionary',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -473,7 +511,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'Dialer Settings',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -488,7 +527,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'OTP Pass-through Settings',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -503,7 +543,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'Signed Callout',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -518,7 +559,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'Custom Product Data Fields',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -533,7 +575,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'Tableau Server and Visualizations',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -549,28 +592,32 @@ class TestBuildDomainLevelViewModels(SimpleTestCase):
                 'name': 'Custom User Data Fields',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             },
             {
                 'type': 'custom_location_data',
                 'name': 'Custom Location Data Fields',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             },
             {
                 'type': 'roles',
                 'name': 'User Roles',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             },
             {
                 'type': 'previews',
                 'name': 'Feature Previews',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             },
         ]
 
@@ -595,7 +642,8 @@ class TestBuildSuperuserViewModels(SimpleTestCase):
                 'name': 'Feature Flags',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             },
         ]
 
