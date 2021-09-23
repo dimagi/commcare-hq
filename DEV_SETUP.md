@@ -44,7 +44,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
     ```sh
     sudo apt install git
     ```
-- If you have a Mac with the M1 chip and thus the new ARM64 archinatecure, install Rosetta: 
+- If you have a Mac with the M1 chip and thus the new ARM64 architecture, install Rosetta: 
     ```sh
     softwareupdate --install-rosetta
     ```
@@ -59,7 +59,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
     sudo apt install python3.6-dev python3-pip python3-venv
     ```
     
-    - If you have a Mac with an M1 chip, you can try installing Python 3.8.12 instead using the Rosetta-enabled homebrew (see MacOS notes below):
+    - If you have a Mac with an M1 chip, you can try installing Python 3.8.12 instead using the Rosetta-enabled homebrew (make sure you have enabled the ibrew command using the MacOS notes below):
     
         ```sh
         ibrew install python@3.8
@@ -170,7 +170,8 @@ Save those backups to somewhere you'll be able to access from the new environmen
     xcode-select --install
     export LDFLAGS="-I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib"
     ```
-
+    
+    If you have an M1 chip and are using a Rosetta-based install of Postgres and run into problems with psycopg2, see [this solution](https://github.com/psycopg/psycopg2/issues/1216#issuecomment-767892042).
 
 ##### macOS Notes
 
@@ -303,6 +304,13 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     ```
     
     If you have problems installing pip dependencies related to a missing wheel package, try installing wheel and upgrade pip before attempting to install dependencies.
+    
+    - If you have ARM64 architecture (Apple M1 chip) and you're having trouble installing ReportLab:
+        ```sh
+        CFLAGS="-Wno-error=implicit-function-declaration" pip install -r requirements/local.in
+        ```
+        [Source](https://stackoverflow.com/questions/64871133/reportlab-installation-failed-after-upgrading-to-macos-big-sur)
+        
 
   - For production environments
 
@@ -335,11 +343,6 @@ First create your `localsettings.py` file:
 ```sh
 cp localsettings.example.py localsettings.py
 ```
-
-Open `localsettings.py` and do the following:
-
-- Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories
-  for both exist and are writeable. If they do not exist, create them.
 
 Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 run:
@@ -465,7 +468,7 @@ that to the new install.
 
 ### Getting all your services running properly (ARM64 arch users)
 
-Devs using computers with the ARM64 architecture (often Apple computers with the M1 chip) have run into trouble setting up all their services on Docker. See these reccomendations for the following services if they are not working properly on your computer:
+Devs using computers with the ARM64 architecture (often Apple computers with the M1 chip) have run into trouble setting up all their services on Docker. See these reccomendations for the following services if they are not working properly:
 
 - Postgres
 
@@ -477,7 +480,7 @@ Devs using computers with the ARM64 architecture (often Apple computers with the
         ```sh
         image: arm64v8/postgres
         ```
-        So that you are using a Postgres image built for ARM64 archtecture. Now your Docker servcie may run properly.
+        So that you are using a Postgres image built for ARM64 archtecture. Now your Docker service may run properly.
         
 - Elasticsearch
     
@@ -495,12 +498,12 @@ Devs using computers with the ARM64 architecture (often Apple computers with the
     ./bin/elasticsearch
     ```
 - Formplayer
-    If you are having trouble with Formplayer, try starting it outside of Docker (instructions farther down).
+    If you are having trouble with Formplayer, try starting it outside of Docker (instructions for this farther down).
 
 ### Initial Database Population
 
 Before running any of the commands below, you should have all of the following
-running: CouchDB, Redis, and Elasticsearch.
+running: Postgres, CouchDB, Redis, and Elasticsearch.
 The easiest way to do this is using the Docker instructions above.
 
 Populate your database:
