@@ -1,5 +1,6 @@
 from corehq.apps.linked_domain.keywords import create_linked_keyword, update_keyword
 from corehq.apps.app_manager.models import Module
+from corehq.apps.linked_domain.models import DomainLinkHistory, KeywordLinkDetail
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.reminders.models import METHOD_SMS
 from corehq.apps.sms.models import Keyword, KeywordAction
@@ -45,7 +46,9 @@ class TestLinkedKeywords(BaseLinkedAppsTest):
 
     def test_update_keyword_link(self):
         new_keyword_id = create_linked_keyword(self.domain_link, self.keyword.id)
-
+        pre_count = DomainLinkHistory.objects.filter(
+            link=self.domain_link, model_detail=KeywordLinkDetail(keyword_id=str(new_keyword_id)).to_json()
+        ).count()
         self.keyword.keyword = "foo"
         self.keyword.save()
         keyword_action = self.keyword.keywordaction_set.first()
@@ -57,3 +60,8 @@ class TestLinkedKeywords(BaseLinkedAppsTest):
         linked_keyword = Keyword.objects.get(id=new_keyword_id)
         self.assertEqual(linked_keyword.keyword, "foo")
         self.assertEqual(linked_keyword.keywordaction_set.first().message_content, "bar")
+        # make sure a domain link history event was added
+        post_count = DomainLinkHistory.objects.filter(
+            link=self.domain_link, model_detail=KeywordLinkDetail(keyword_id=str(new_keyword_id)).to_json()
+        ).count()
+        self.assertEqual(post_count - pre_count, 1)
