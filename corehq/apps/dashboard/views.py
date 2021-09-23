@@ -160,7 +160,7 @@ def _get_default_tiles(request):
     can_use_messaging = lambda request: (
         (_can_access_reminders(request) or _can_access_sms(request))
         and not request.couch_user.is_commcare_user()
-        and request.couch_user.can_edit_data()
+        and request.couch_user.can_edit_messaging()
     )
 
     is_billing_admin = lambda request: request.couch_user.can_edit_billing()
