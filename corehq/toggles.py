@@ -2134,3 +2134,10 @@ DO_NOT_REPUBLISH_DOCS = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+REJECT_REQUESTS_USING_CBC_CIPHER_SUITES = StaticToggle(
+    'reject_requests_using_cbc_cipher_suites',
+    'Responds with a 400 if the x-amzn-tls-cipher-suite is set to one of the four CBC cipher suites to be removed',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
