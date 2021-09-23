@@ -54,18 +54,18 @@ def update_keyword(domain_link, keyword_id, user_id):
             _("Linked keyword could not be found")
         )
     try:
-        master_keyword = Keyword.objects.get(id=linked_keyword.upstream_id)
+        upstream_keyword = Keyword.objects.get(id=linked_keyword.upstream_id)
     except Keyword.DoesNotExist:
         raise DomainLinkError(
             _("Upstream keyword could not be found. Maybe it has been deleted?")
         )
 
     for prop in ['keyword', 'description', 'delimiter', 'override_open_sessions', 'initiator_doc_type_filter']:
-        setattr(linked_keyword, prop, getattr(master_keyword, prop))
+        setattr(linked_keyword, prop, getattr(upstream_keyword, prop))
 
     linked_keyword.save()
 
-    _update_actions(domain_link, linked_keyword, master_keyword.keywordaction_set.all())
+    _update_actions(domain_link, linked_keyword, upstream_keyword.keywordaction_set.all())
 
     domain_link.update_last_pull(
         MODEL_KEYWORD,
