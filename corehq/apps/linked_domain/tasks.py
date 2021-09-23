@@ -46,7 +46,7 @@ def push_models(upstream_domain, models, downstream_domains, build_apps, usernam
     ReleaseManager(upstream_domain, username).release(models, downstream_domains, build_apps)
 
 
-class ReleaseManager():
+class ReleaseManager:
     def __init__(self, upstream_domain, username):
         self.upstream_domain = upstream_domain
         self.user = CouchUser.get_by_username(username)
@@ -57,7 +57,7 @@ class ReleaseManager():
         self.successes_by_domain = {'html': defaultdict(list), 'text': defaultdict(list)}
 
     def results(self):
-        return (self.successes_by_domain, self.errors_by_domain)
+        return self.successes_by_domain, self.errors_by_domain
 
     def add_error(self, domain, html, text=None):
         text = text or html
