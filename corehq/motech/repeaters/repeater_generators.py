@@ -403,7 +403,6 @@ class CaseUpdateConfig:
         "case_id": "target_case_id",
         "includes": "target_property_includelist",
         "excludes": "target_property_excludelist",
-        "create_case": "target_create_case",
         "override_props": "target_property_override",
         "index_case_id": "target_index_case_id",
         "index_case_type": "target_index_case_type",
@@ -417,7 +416,6 @@ class CaseUpdateConfig:
     case_id = attr.ib()
     includes = attr.ib()
     excludes = attr.ib()
-    create_case = attr.ib()
     override_props = attr.ib()
     index_case_id = attr.ib()
     index_case_type = attr.ib()

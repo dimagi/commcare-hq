@@ -179,10 +179,9 @@ class UpdateForm:
 
 
 class PropertyBuilder:
-    def __init__(self, registry="registry1", create_case=False, override_properties=True):
+    def __init__(self, registry="registry1", override_properties=True):
         self.props: dict = {
             "target_data_registry": registry,
-            "target_create_case": str(int(create_case)),
             "target_property_override": str(int(override_properties)),
         }
         self.target_case()
