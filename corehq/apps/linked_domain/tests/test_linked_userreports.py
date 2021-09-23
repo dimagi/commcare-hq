@@ -75,7 +75,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         self.report.title = "New title"
         self.report.save()
 
-        update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
+        update_linked_ucr(self.domain_link, linked_report_info.report.get_id, 'test-user-id')
 
         report = ReportConfiguration.get(linked_report_info.report.get_id)
         self.assertEqual("New title", report.title)
@@ -85,12 +85,12 @@ class TestLinkedUCR(BaseLinkedAppsTest):
     def test_delete_master_deletes_linked(self):
         linked_report_info = create_linked_ucr(self.domain_link, self.report.get_id)
         soft_delete(self.report)
-        update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
+        update_linked_ucr(self.domain_link, linked_report_info.report.get_id, 'test-user-id')
         report = ReportConfiguration.get(linked_report_info.report.get_id)
         self.assertTrue(is_deleted(report))
 
         self.report.config.deactivate()
-        update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
+        update_linked_ucr(self.domain_link, linked_report_info.report.get_id, 'test-user-id')
         report = ReportConfiguration.get(linked_report_info.report.get_id)
         self.assertTrue(report.config.is_deactivated)
 
@@ -147,6 +147,6 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         self.report.title = "Another new title"
         self.report.save()
 
-        update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
+        update_linked_ucr(self.domain_link, linked_report_info.report.get_id, 'test-user-id')
         report = ReportConfiguration.get(linked_report_info.report.get_id)
         self.assertEqual("Another new title", report.title)

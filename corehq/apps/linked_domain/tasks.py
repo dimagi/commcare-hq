@@ -150,13 +150,13 @@ The following linked project spaces received content:
         except Exception as e:  # intentionally broad
             return self._error_tuple(error_prefix + str(e))
 
-    def _release_report(self, domain_link, model):
+    def _release_report(self, domain_link, model, user_id):
         report_id = model['detail']['report_id']
         found = False
         for linked_report in get_report_configs_for_domain(domain_link.linked_domain):
             if linked_report.report_meta.master_id == report_id:
                 found = True
-                update_linked_ucr(domain_link, linked_report.get_id)
+                update_linked_ucr(domain_link, linked_report.get_id, user_id)
 
         if not found:
             report = ReportConfiguration.get(report_id)
@@ -223,7 +223,7 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
             if model['type'] == MODEL_APP:
                 errors = manager._release_app(domain_link, model, manager.user, build_apps)
             elif model['type'] == MODEL_REPORT:
-                errors = manager._release_report(domain_link, model)
+                errors = manager._release_report(domain_link, model, manager.user._id)
             elif model['type'] in FEATURE_FLAG_DATA_MODEL_TOGGLES:
                 errors = manager._release_flag_dependent_model(domain_link, model, manager.user,
                                                                FEATURE_FLAG_DATA_MODEL_TOGGLES[model['type']])
