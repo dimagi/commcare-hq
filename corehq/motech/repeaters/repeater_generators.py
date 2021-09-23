@@ -19,8 +19,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.repeaters.exceptions import ReferralError
-
+from corehq.motech.repeaters.exceptions import ReferralError, DataRegistryCaseUpdateError
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 
@@ -390,6 +389,24 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
 
     def submission_user_id(self):
         return CouchUser.get_by_username(self.submission_username()).user_id
+
+
+class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
+
+    def get_headers(self):
+        headers = super().get_headers()
+        headers[OPENROSA_VERSION_HEADER] = OPENROSA_VERSION_3
+        return headers
+
+    def get_payload(self, repeat_record, payload_doc):
+        raise DataRegistryCaseUpdateError()
+
+    def submission_username(self):
+        return self.repeater.connection_settings.username
+
+    def submission_user_id(self):
+        return CouchUser.get_by_username(self.submission_username()).user_id
+
 
 
 class AppStructureGenerator(BasePayloadGenerator):

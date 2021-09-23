@@ -150,6 +150,7 @@ from .repeater_generators import (
     ReferCasePayloadGenerator,
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
+    DataRegistryCaseUpdatePayloadGenerator,
 )
 from ..repeater_helpers import RepeaterResponse
 from ...util.urlvalidate.urlvalidate import PossibleSSRFAttempt
@@ -744,6 +745,31 @@ def get_repeater_response_from_submission_response(response):
         return RepeaterResponse(422, ResponseNature.SUBMIT_ERROR, openrosa_response.message, False)
 
     return response
+
+
+class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
+    """
+    A repeater that triggers off case creation but sends a form to update cases in
+    another commcare project space.
+    """
+    friendly_name = _("update Cases in another CommCare Project via a Data Registry")
+    payload_generator_classes = (DataRegistryCaseUpdatePayloadGenerator,)
+
+    def form_class_name(self):
+        return 'DataRegistryCaseUpdateRepeater'
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return toggles.DATA_REGISTRY_CASE_UPDATE_REPEATER.enabled(domain)
+
+    def get_url(self, repeat_record):
+        new_domain = self.payload_doc(repeat_record).get_case_property('target_case_domain')
+        return self.connection_settings.url.format(domain=new_domain)
+
+    def send_request(self, repeat_record, payload):
+        return get_repeater_response_from_submission_response(
+            super().send_request(repeat_record, payload)
+        )
 
 
 class ShortFormRepeater(Repeater):
