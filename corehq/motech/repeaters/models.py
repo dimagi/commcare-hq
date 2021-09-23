@@ -70,32 +70,16 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
-
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
 from requests.exceptions import ConnectionError, Timeout, RequestException
 
+from casexml.apps.case.const import CASE_INDEX_IDENTIFIER_HOST
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
-from couchforms.const import DEVICE_LOG_XMLNS
-from dimagi.ext.couchdbkit import (
-    BooleanProperty,
-    DateTimeProperty,
-    Document,
-    DocumentSchema,
-    IntegerProperty,
-    ListProperty,
-    StringListProperty,
-    StringProperty,
-)
-from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.modules import to_function
-from dimagi.utils.parsing import json_format_datetime
-
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -120,7 +104,21 @@ from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.couch import stale_ok
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
-
+from couchforms.const import DEVICE_LOG_XMLNS
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    StringListProperty,
+    StringProperty,
+)
+from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
+from dimagi.utils.parsing import json_format_datetime
 from .const import (
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
@@ -770,6 +768,15 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         return get_repeater_response_from_submission_response(
             super().send_request(repeat_record, payload)
         )
+
+    def allowed_to_forward(self, payload):
+        if not super().allowed_to_forward(payload):
+            return False
+
+        # Exclude extension cases where the host is also a case type that this repeater
+        # would act on since they get forwarded along with their host
+        host_index = payload.get_index(CASE_INDEX_IDENTIFIER_HOST)
+        return host_index.referenced_type not in self.white_listed_case_types
 
 
 class ShortFormRepeater(Repeater):
@@ -1431,4 +1438,3 @@ def domain_can_forward(domain):
 
 # import signals
 # Do not remove this import, its required for the signals code to run even though not explicitly used in this file
-from corehq.motech.repeaters import signals  # pylint: disable=unused-import,F401

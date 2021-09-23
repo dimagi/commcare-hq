@@ -5,26 +5,24 @@ from datetime import datetime
 from uuid import uuid4
 
 import attr
-
 from django.core.serializers.json import DjangoJSONEncoder
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS, CASE_INDEX_EXTENSION
+from casexml.apps.case.const import CASE_INDEX_IDENTIFIER_HOST
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.case.xml import V2
+from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 from corehq.apps.registry.exceptions import RegistryAccessException
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.users.models import CouchUser
 from corehq.const import OPENROSA_VERSION_3
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.middleware import OPENROSA_VERSION_HEADER
-from dimagi.utils.parsing import json_format_datetime
-
-from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
-from corehq.apps.users.models import CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.motech.repeaters.exceptions import ReferralError, DataRegistryCaseUpdateError
+from dimagi.utils.parsing import json_format_datetime
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 
@@ -527,8 +525,7 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
 
     def _get_configs(self, payload_doc):
         configs = [CaseUpdateConfig.from_payload(payload_doc)]
-        identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
-        extensions = payload_doc.get_subcases(identifier)
+        extensions = payload_doc.get_subcases(CASE_INDEX_IDENTIFIER_HOST)
         if extensions:
             configs.extend([
                 CaseUpdateConfig.from_payload(extension_case)
