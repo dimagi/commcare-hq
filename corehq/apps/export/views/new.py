@@ -3,7 +3,7 @@ import json
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import SuspiciousOperation
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
@@ -228,6 +228,8 @@ class BaseExportView(BaseProjectDataView):
                 return json_response({
                     'redirect': url,
                 })
+            if request.POST.get("count"):
+                return HttpResponse(url)
             return HttpResponseRedirect(url)
 
     @memoized
@@ -363,14 +365,38 @@ class DeleteNewCustomExportView(BaseExportView):
             raise Http404()
 
     def commit(self, request):
-        self.export_type = self.kwargs.get('export_type')
-        export = self.export_instance
-        export.delete()
-        messages.success(
-            request,
-            format_html(_("Export <strong>{}</strong> was deleted."), export.name)
-        )
-        return export._id
+        count = request.POST.get("count")
+        if count:
+            deletelist = json.loads(request.POST.get("deleteList"))
+            self.export_type = self.kwargs.get('export_type')
+            export = self.export_instance
+            export.delete()
+            for item in deletelist:
+                bulkexport = self.export_instance_cls.get(item["id"])
+                bulkexport.delete()
+
+            if self.export_instance.is_odata_config or self.export_instance.export_format == "html":
+                delete = "feed"
+            else:
+                delete = "export"
+            if int(count) > 1:
+                message = format_html(_("<strong>{}</strong> {}{} were deleted."), count, delete, "s")
+            else:
+                message = format_html(_("<strong>{}</strong> {}{} was deleted."), count, delete, "")
+            messages.success(
+                request,
+                message
+            )
+            return export._id
+        else:
+            self.export_type = self.kwargs.get('export_type')
+            export = self.export_instance
+            export.delete()
+            messages.success(
+                request,
+                format_html(_("Export <strong>{}</strong> was deleted."), export.name)
+            )
+            return export._id
 
     @property
     @memoized
