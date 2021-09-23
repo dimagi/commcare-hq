@@ -24,6 +24,13 @@ def test_generator_empty_update():
     _test_payload_generator(intent_case=IntentCaseBuilder().include_props([]).get_case(), expected_updates={})
 
 
+def test_generator_fail_if_case_domain_mismatch():
+    builder = IntentCaseBuilder().include_props([]).target_case(domain="other")
+
+    with assert_raises(DataRegistryCaseUpdateError, msg="Target case not found: 1"):
+        _test_payload_generator(intent_case=builder.get_case(), expected_updates={})
+
+
 def test_generator_include_list():
     builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").include_props(["new_prop"])
     _test_payload_generator(intent_case=builder.get_case(), expected_updates={"new_prop": "new_prop_val"})
