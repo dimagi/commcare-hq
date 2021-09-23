@@ -10,6 +10,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.case.xml import V2
@@ -439,6 +440,14 @@ class CaseUpdateConfig:
         if self.includes is None and self.excludes is None:
             raise DataRegistryCaseUpdateError("Neither exclude and include lists specified. One is required.")
 
+    def get_case_block(self, target_case):
+        return CaseBlock(
+            create=False,
+            case_id=target_case.case_id,
+            update=self.get_case_updates(target_case),
+            index=self.get_case_index(target_case)
+        ).as_text()
+
     def get_case_updates(self, target_case):
         case_json = self.intent_case.case_json
         update_props = []
@@ -488,14 +497,14 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         return headers
 
     def get_payload(self, repeat_record, payload_doc):
-        config = CaseUpdateConfig.from_payload(payload_doc)
+        configs = self._get_configs(payload_doc)
         submitting_user = CouchUser.get_by_user_id(payload_doc.user_id)
-        case = self._get_target_case(repeat_record, config, submitting_user)
+        cases = self._get_target_cases(repeat_record, configs, submitting_user)
 
-        case_block = self._get_case_block(case, config)
+        case_blocks = self._get_case_blocks(cases, configs)
         return render_to_string('hqcase/xml/case_block.xml', {
             'xmlns': SYSTEM_FORM_XMLNS,
-            'case_block': case_block,
+            'case_block': " ".join(case_blocks),
             'time': json_format_datetime(datetime.utcnow()),
             'uid': uuid4().hex,
             'username': self.submission_username(),
@@ -516,11 +525,29 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
     def submission_user_id(self):
         return CouchUser.get_by_username(self.submission_username()).user_id
 
-    def _get_target_case(self, repeat_record, config, couch_user):
-        registry_slug = config.registry_slug
-        helper = DataRegistryHelper(config.intent_case.domain, registry_slug=registry_slug)
+    def _get_configs(self, payload_doc):
+        configs = [CaseUpdateConfig.from_payload(payload_doc)]
+        identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
+        extensions = payload_doc.get_subcases(identifier)
+        if extensions:
+            configs.extend([
+                CaseUpdateConfig.from_payload(extension_case)
+                for extension_case in extensions
+            ])
+        return configs
+
+    def _get_target_cases(self, repeat_record, configs, couch_user):
+        main_config = configs[0]
+        registry_slug = main_config.registry_slug
+        helper = DataRegistryHelper(main_config.intent_case.domain, registry_slug=registry_slug)
+        return [
+            self._get_case(helper, repeat_record, config, couch_user)
+            for config in configs
+        ]
+
+    def _get_case(self, registry_helper, repeat_record, config, couch_user):
         try:
-            case = helper.get_case(config.case_id, config.case_type, couch_user, repeat_record.repeater)
+            case = registry_helper.get_case(config.case_id, config.case_type, couch_user, repeat_record.repeater)
         except RegistryAccessException:
             raise DataRegistryCaseUpdateError("User does not have permission to access the registry")
         except CaseNotFound:
@@ -531,13 +558,14 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
 
         return case
 
-    def _get_case_block(self, target_case, config):
-        return CaseBlock(
-            create=False,
-            case_id=target_case.case_id,
-            update=config.get_case_updates(target_case),
-            index=config.get_case_index(target_case)
-        ).as_text()
+    def _get_case_blocks(self, target_cases, configs):
+        targets_by_id = {
+            case.case_id: case for case in target_cases
+        }
+        return [
+            config.get_case_block(targets_by_id[config.case_id])
+            for config in configs
+        ]
 
 
 class AppStructureGenerator(BasePayloadGenerator):

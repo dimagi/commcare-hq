@@ -28,12 +28,13 @@ def test_generator_fail_if_case_domain_mismatch():
     builder = IntentCaseBuilder().include_props([]).target_case(domain="other")
 
     with assert_raises(DataRegistryCaseUpdateError, msg="Target case not found: 1"):
-        _test_payload_generator(intent_case=builder.get_case(), expected_updates={})
+        _test_payload_generator(intent_case=builder.get_case())
 
 
 def test_generator_include_list():
     builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").include_props(["new_prop"])
-    _test_payload_generator(intent_case=builder.get_case(), expected_updates={"new_prop": "new_prop_val"})
+    _test_payload_generator(intent_case=builder.get_case(), expected_updates={
+        "1": {"new_prop": "new_prop_val"}})
 
 
 def test_generator_exclude_list():
@@ -43,9 +44,10 @@ def test_generator_exclude_list():
         .exclude_props(["other_prop"])
     )
     _test_payload_generator(intent_case=builder.get_case(), expected_updates={
-        "new_prop": "new_prop_val",
-        "target_something": "1"
-    })
+        "1": {
+            "new_prop": "new_prop_val",
+            "target_something": "1"
+        }})
 
 
 def test_generator_dont_override_existing():
@@ -55,8 +57,9 @@ def test_generator_dont_override_existing():
         .exclude_props([])
     )
     _test_payload_generator(intent_case=builder.get_case(), expected_updates={
-        "new_prop": "new_prop_val",
-    })
+        "1": {
+            "new_prop": "new_prop_val",
+        }})
 
 
 def test_generator_update_create_index_to_parent():
@@ -68,8 +71,7 @@ def test_generator_update_create_index_to_parent():
 
     with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
         _test_payload_generator(intent_case=builder.get_case(), expected_indices={
-            "parent": IndexAttrs("parent_type", "case2", "child")
-        })
+            "1": {"parent": IndexAttrs("parent_type", "case2", "child")}})
 
 
 def test_generator_update_create_index_to_host():
@@ -81,8 +83,7 @@ def test_generator_update_create_index_to_host():
 
     with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
         _test_payload_generator(intent_case=builder.get_case(), expected_indices={
-            "host": IndexAttrs("parent_type", "case2", "extension")
-        })
+            "1": {"host": IndexAttrs("parent_type", "case2", "extension")}})
 
 
 def test_generator_update_create_index_not_found():
@@ -118,7 +119,32 @@ def test_generator_update_create_index_case_type_mismatch():
 
 
 def test_generator_update_multiple_cases():
-    raise Exception
+    main_case_builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").exclude_props([])
+    subcase1 = (
+        IntentCaseBuilder()
+        .target_case(case_id="sub1")
+        .case_properties(sub1_prop="sub1_val")
+        .exclude_props([])
+        .get_case()
+    )
+    subcase2 = (
+        IntentCaseBuilder()
+        .target_case(case_id="sub2")
+        .case_properties(sub2_prop="sub2_val")
+        .exclude_props([])
+        .get_case()
+    )
+    main_case_builder.set_subcases([subcase1, subcase2])
+
+    def _get_case(case_id):
+        return Mock(domain=TARGET_DOMAIN, case_type="parent", case_id=case_id)
+
+    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+        _test_payload_generator(intent_case=main_case_builder.get_case(), expected_updates={
+            "1": {"new_prop": "new_prop_val"},
+            "sub1": {"sub1_prop": "sub1_val"},
+            "sub2": {"sub2_prop": "sub2_val"},
+        })
 
 
 def _test_payload_generator(intent_case, expected_updates=None, expected_indices=None):
@@ -131,15 +157,12 @@ def _test_payload_generator(intent_case, expected_updates=None, expected_indices
     generator.submission_username = Mock(return_value='user1')
 
     # target_case is the case in the target domain which is being updated
-    target_case = CommCareCaseSQL(
-        domain=TARGET_DOMAIN,
-        case_id="1",
-        type="patient",
-        case_json={
+    def _get_case(self, case_id, case_type, *args, **kwargs):
+        return Mock(domain=TARGET_DOMAIN, case_type=case_type, case_id=case_id, case_json={
             "existing_prop": uuid.uuid4().hex,
-        }
-    )
-    with patch.object(DataRegistryHelper, "get_case", return_value=target_case), \
+        })
+
+    with patch.object(DataRegistryHelper, "get_case", new=_get_case), \
          patch.object(CouchUser, "get_by_user_id", return_value=Mock(username="local_user")):
         repeat_record = Mock(repeater=Repeater())
         form = UpdateForm(generator.get_payload(repeat_record, intent_case))
@@ -157,18 +180,29 @@ def _test_payload_generator(intent_case, expected_updates=None, expected_indices
 class UpdateForm:
     def __init__(self, form):
         self.formxml = ElementTree.fromstring(form)
-        self.case = CaseBlock.from_xml(self.formxml.find("{%s}case" % V2_NAMESPACE))
+        self.cases = {
+            case.get('case_id'): CaseBlock.from_xml(case)
+            for case in self.formxml.findall("{%s}case" % V2_NAMESPACE)
+        }
 
     def _get_form_value(self, name):
         return self.formxml.find(f"{{{SYSTEM_FORM_XMLNS}}}{name}").text
 
     def assert_case_updates(self, expected_updates):
-        eq(self.case.update, expected_updates)
+        """
+        :param expected_updates: Dict[case_id, Dict]
+        """
+        for case_id, updates in expected_updates.items():
+            eq(self.cases[case_id].update, updates)
 
     def assert_case_index(self, expected_indices):
-        for key, expected in expected_indices.items():
-            actual = self.case.index[key]
-            eq(actual, expected)
+        """
+        :param expected_indices: Dict[case_id, Dict[index_key, IndexAttrs]]
+        """
+        for case_id, indices in expected_indices.items():
+            for key, expected in indices.items():
+                actual = self.cases[case_id].index[key]
+                eq(actual, expected)
 
     def assert_form_props(self, expected):
         actual = {
@@ -179,12 +213,13 @@ class UpdateForm:
 
 
 class IntentCaseBuilder:
-    def __init__(self, registry="registry1", override_properties=True):
+    def __init__(self, registry="registry1", override_properties=True, case_id=None):
         self.props: dict = {
             "target_data_registry": registry,
             "target_property_override": str(int(override_properties)),
         }
         self.target_case()
+        self.subcases = []
 
     def target_case(self, domain=TARGET_DOMAIN, case_id="1", case_type="patient"):
         self.props.update({
@@ -214,6 +249,9 @@ class IntentCaseBuilder:
         self.props.update(kwargs)
         return self
 
+    def set_subcases(self, subcases):
+        self.subcases = subcases
+
     def get_case(self):
         intent_case = CommCareCaseSQL(
             domain=SOURCE_DOMAIN,
@@ -223,4 +261,9 @@ class IntentCaseBuilder:
             user_id="local_user1"
         )
         intent_case.track_create(CaseTransaction(form_id="form123", type=CaseTransaction.TYPE_FORM))
+
+        def _mock_subcases(*args, **kwargs):
+            return self.subcases
+
+        intent_case.get_subcases = _mock_subcases
         return intent_case
