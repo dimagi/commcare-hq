@@ -2,15 +2,22 @@ import uuid
 from unittest.mock import patch, Mock
 from xml.etree import cElementTree as ElementTree
 
-from testil import eq
+from testil import eq, assert_raises
 
-from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.mock import CaseBlock, IndexAttrs
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
+from corehq.motech.repeaters.exceptions import DataRegistryCaseUpdateError
 from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater, Repeater
 from corehq.motech.repeaters.repeater_generators import DataRegistryCaseUpdatePayloadGenerator, SYSTEM_FORM_XMLNS
+
+TARGET_DOMAIN = "target_domain"
+
+SOURCE_DOMAIN = "source_domain"
 
 
 def test_generator_empty_update():
@@ -45,8 +52,62 @@ def test_generator_dont_override_existing():
     })
 
 
-def test_generator_update_create_index():
-    raise Exception
+def test_generator_update_create_index_to_parent():
+    builder = PropertyBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+
+    def _get_case(case_id):
+        assert case_id == "case2"
+        return Mock(domain=TARGET_DOMAIN, case_type="parent_type")
+
+    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+        _test_payload_generator(builder.props, {}, {
+            "parent": IndexAttrs("parent_type", "case2", "child")
+        })
+
+
+def test_generator_update_create_index_to_host():
+    builder = PropertyBuilder().create_index("case2", "parent_type", "extension").exclude_props([])
+
+    def _get_case(case_id):
+        assert case_id == "case2"
+        return Mock(domain=TARGET_DOMAIN, case_type="parent_type")
+
+    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+        _test_payload_generator(builder.props, {}, {
+            "host": IndexAttrs("parent_type", "case2", "extension")
+        })
+
+
+def test_generator_update_create_index_not_found():
+    builder = PropertyBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+
+    with assert_raises(DataRegistryCaseUpdateError, msg="Index case not found: case2"):
+        with patch.object(CaseAccessorSQL, 'get_case', side_effect=CaseNotFound):
+            _test_payload_generator(builder.props, {})
+
+
+def test_generator_update_create_index_domain_mismatch():
+    builder = PropertyBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+
+    def _get_case(case_id):
+        assert case_id == "case2"
+        return Mock(domain="not target", case_type="parent_type")
+
+    with assert_raises(DataRegistryCaseUpdateError, msg="Index case not found: case2"):
+        with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+            _test_payload_generator(builder.props, {})
+
+
+def test_generator_update_create_index_case_type_mismatch():
+    builder = PropertyBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+
+    def _get_case(case_id):
+        assert case_id == "case2"
+        return Mock(domain=TARGET_DOMAIN, case_type="not parent")
+
+    with assert_raises(DataRegistryCaseUpdateError, msg="Index case type does not match"):
+        with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+            _test_payload_generator(builder.props, {})
 
 
 def test_generator_update_set_owner():
@@ -57,21 +118,25 @@ def test_generator_update_multiple_cases():
     raise Exception
 
 
-def _test_payload_generator(intent_properties, expected_updates):
-    domain = "source_domain"
-    repeater = DataRegistryCaseUpdateRepeater(domain=domain)
+def _test_payload_generator(intent_properties, expected_updates, expected_indices=None):
+    repeater = DataRegistryCaseUpdateRepeater(domain=SOURCE_DOMAIN)
     generator = DataRegistryCaseUpdatePayloadGenerator(repeater)
     generator.submission_user_id = Mock(return_value='user1')
     generator.submission_username = Mock(return_value='user1')
+    # intent case is the case created in the source domain which is used to trigger the repeater
+    # and which contains the config for updating the case in the target domain
     intent_case = CommCareCaseSQL(
-        domain=domain,
+        domain=SOURCE_DOMAIN,
         type="registry_case_update",
         case_json=intent_properties,
         case_id=uuid.uuid4().hex,
         user_id="local_user1"
     )
     intent_case.track_create(CaseTransaction(form_id="form123", type=CaseTransaction.TYPE_FORM))
+
+    # target_case is the case in the target domain which is being updated
     target_case = CommCareCaseSQL(
+        domain=TARGET_DOMAIN,
         case_id="1",
         type="patient",
         case_json={
@@ -83,12 +148,14 @@ def _test_payload_generator(intent_properties, expected_updates):
         repeat_record = Mock(repeater=Repeater())
         form = UpdateForm(generator.get_payload(repeat_record, intent_case))
         form.assert_form_props({
-            "source_domain": domain,
+            "source_domain": SOURCE_DOMAIN,
             "source_form_id": "form123",
             "source_case_id": intent_case.case_id,
             "source_username": "local_user",
         })
         form.assert_case_updates(expected_updates)
+        if expected_indices:
+            form.assert_case_index(expected_indices)
 
 
 class UpdateForm:
@@ -101,6 +168,11 @@ class UpdateForm:
 
     def assert_case_updates(self, expected_updates):
         eq(self.case.update, expected_updates)
+
+    def assert_case_index(self, expected_indices):
+        for key, expected in expected_indices.items():
+            actual = self.case.index[key]
+            eq(actual, expected)
 
     def assert_form_props(self, expected):
         actual = {
@@ -119,7 +191,7 @@ class PropertyBuilder:
         }
         self.target_case()
 
-    def target_case(self, domain="target_domain", case_id="1", case_type="patient"):
+    def target_case(self, domain=TARGET_DOMAIN, case_id="1", case_type="patient"):
         self.props.update({
             "target_case_id": case_id,
             "target_domain": domain,
@@ -131,10 +203,11 @@ class PropertyBuilder:
         self.props["target_case_owner_id"] = new_owner
         return self
 
-    def create_index(self, index_case_id="case2", index_type="child"):
+    def create_index(self, case_id, case_type, relationship="child"):
         self.props.update({
-            "target_index_case_id": index_case_id,
-            "target_index_type": index_type,
+            "target_index_case_id": case_id,
+            "target_index_case_type": case_type,
+            "target_index_relationship": relationship,
         })
         return self
 

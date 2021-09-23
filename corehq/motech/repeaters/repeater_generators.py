@@ -15,6 +15,7 @@ from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.case.xml import V2
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.const import OPENROSA_VERSION_3
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from dimagi.utils.parsing import json_format_datetime
 
@@ -405,7 +406,8 @@ class CaseUpdateConfig:
         "create_case": "target_create_case",
         "override_props": "target_property_override",
         "index_case_id": "target_index_case_id",
-        "index_type": "target_index_type",
+        "index_case_type": "target_index_case_type",
+        "index_relationship": "target_index_relationship",
         "owner_id": "target_case_owner_id",
     }
 
@@ -419,7 +421,8 @@ class CaseUpdateConfig:
     create_case = attr.ib()
     override_props = attr.ib()
     index_case_id = attr.ib()
-    index_type = attr.ib()
+    index_case_type = attr.ib()
+    index_relationship = attr.ib()
     owner_id = attr.ib()
 
     @classmethod
@@ -456,6 +459,27 @@ class CaseUpdateConfig:
         return {
             prop: case_json[prop]
             for prop in update_props
+        }
+
+    def get_case_index(self, target_case):
+        if not (self.index_case_id and self.index_case_type):
+            return
+
+        try:
+            index_case = CaseAccessors(self.domain).get_case(self.index_case_id)
+        except CaseNotFound:
+            raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_case_id}")
+
+        if index_case.domain != target_case.domain:
+            raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_case_id}")
+
+        if index_case.case_type != self.index_case_type:
+            raise DataRegistryCaseUpdateError("Index case type does not match")
+
+        relationship = self.index_relationship or "child"
+        key = "parent" if relationship == "child" else "host"
+        return {
+            key: (self.index_case_type, self.index_case_id, relationship)
         }
 
 
@@ -504,7 +528,8 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         return CaseBlock(
             create=False,
             case_id=target_case.case_id,
-            update=config.get_case_updates(target_case)
+            update=config.get_case_updates(target_case),
+            index=config.get_case_index(target_case)
         ).as_text()
 
 
