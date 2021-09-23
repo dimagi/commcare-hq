@@ -89,19 +89,24 @@ hqDefine("users/js/enterprise_users", [
                 var allColumns = $('[id=sort-icon]');
                 allColumns.removeClass('glyphicon-sort-by-attributes glyphicon-sort-by-attributes-alt');
                 allColumns.addClass('glyphicon-sort');
-                $(el).addClass(ascending ? 'glyphicon-sort-by-attributes' : 'glyphicon-sort-by-attributes-alt')
-            }
+                $(el).addClass(ascending ? 'glyphicon-sort-by-attributes' : 'glyphicon-sort-by-attributes-alt');
+            };
 
             var columnSort = function (userArr, ascending) {
                 resetColumnIcons(ascending);
                 userArr.sort(function (a, b) {
-                    if (!a[column]) return 1;
-                    if (!b[column]) return -1;
+                    if (!a[column]) {
+                        return 1
+                    };
+                    if (!b[column]) {
+                        return -1;
+                    }
+
                     return ascending ? a[column].localeCompare(b[column]) : b[column].localeCompare(a[column]);
                 });
 
                 return userArr;
-            }
+            };
 
             // Map mobile workers to web users to maintain ordering
             _.each(data.users(), function (user) {
