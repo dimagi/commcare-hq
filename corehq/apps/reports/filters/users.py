@@ -7,11 +7,11 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from memoized import memoized
 
-from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.reports.extension_points import customize_user_query
 from corehq.apps.user_importer.models import UserUploadRecord

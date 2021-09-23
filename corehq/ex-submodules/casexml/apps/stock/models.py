@@ -1,5 +1,8 @@
 import math
+
 from django.db import models
+
+from casexml.apps.stock import const
 from corehq.apps.products.models import SQLProduct
 from corehq.util.models import TruncatingCharField
 
@@ -139,4 +142,4 @@ class DocDomainMapping(models.Model):
         app_label = 'stock'
 
 
-from .signals import *
+from . import signals  # noqa: F401, E402
