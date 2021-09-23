@@ -13,7 +13,6 @@ from mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, SyncLogSQL
-from casexml.apps.stock.models import DocDomainMapping
 from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.apps.accounting.models import (
@@ -214,7 +213,6 @@ class TestDeleteDomain(TestCase):
     def _assert_sql_counts(self, domain, number):
         self.assertEqual(SQLLocation.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLProduct.objects.filter(domain=domain).count(), number)
-        self.assertEqual(DocDomainMapping.objects.filter(domain_name=domain).count(), 0)
         self.assertEqual(LocationType.objects.filter(domain=domain).count(), number)
 
         self.assertEqual(SMS.objects.filter(domain=domain).count(), number)

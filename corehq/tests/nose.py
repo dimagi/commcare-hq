@@ -315,6 +315,7 @@ def temporary_db_setup():
         DROP TABLE IF EXISTS commtrack_stockstate;
         DROP TABLE IF EXISTS stock_stocktransaction;
         DROP TABLE IF EXISTS stock_stockreport;
+        DROP TABLE IF EXISTS stock_docdomainmapping;
         """)
 
 
