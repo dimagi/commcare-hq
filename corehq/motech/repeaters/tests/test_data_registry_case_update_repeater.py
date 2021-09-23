@@ -13,39 +13,51 @@ from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater, Repea
 from corehq.motech.repeaters.repeater_generators import DataRegistryCaseUpdatePayloadGenerator, SYSTEM_FORM_XMLNS
 
 
-def test_data_registry_case_update_payload_generator_empty_update():
-    _test_data_registry_case_update_payload_generator(PropertyBuilder().include_props([]).props, {})
+def test_generator_empty_update():
+    _test_payload_generator(PropertyBuilder().include_props([]).props, {})
 
 
-def test_data_registry_case_update_payload_generator_include_list():
+def test_generator_include_list():
     builder = PropertyBuilder().properties(new_prop="new_prop_val").include_props(["new_prop"])
-    _test_data_registry_case_update_payload_generator(builder.props, {"new_prop": "new_prop_val"})
+    _test_payload_generator(builder.props, {"new_prop": "new_prop_val"})
 
 
-def test_data_registry_case_update_payload_generator_exclude_list():
+def test_generator_exclude_list():
     builder = (
         PropertyBuilder()
         .properties(new_prop="new_prop_val", target_something="1", other_prop="other_prop_val")
         .exclude_props(["other_prop"])
     )
-    _test_data_registry_case_update_payload_generator(builder.props, {
+    _test_payload_generator(builder.props, {
         "new_prop": "new_prop_val",
         "target_something": "1"
     })
 
 
-def test_data_registry_case_update_payload_generator_dont_override_existing():
+def test_generator_dont_override_existing():
     builder = (
         PropertyBuilder(override_properties=False)
         .properties(new_prop="new_prop_val", existing_prop="try override")
         .exclude_props([])
     )
-    _test_data_registry_case_update_payload_generator(builder.props, {
+    _test_payload_generator(builder.props, {
         "new_prop": "new_prop_val",
     })
 
 
-def _test_data_registry_case_update_payload_generator(intent_properties, expected_updates):
+def test_generator_update_create_index():
+    raise Exception
+
+
+def test_generator_update_set_owner():
+    raise Exception
+
+
+def test_generator_update_multiple_cases():
+    raise Exception
+
+
+def _test_payload_generator(intent_properties, expected_updates):
     domain = "source_domain"
     repeater = DataRegistryCaseUpdateRepeater(domain=domain)
     generator = DataRegistryCaseUpdatePayloadGenerator(repeater)
