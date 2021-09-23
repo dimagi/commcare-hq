@@ -260,7 +260,6 @@ def _delete_demo_user_restores(domain_name):
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
 DOMAIN_DELETE_OPERATIONS = [
-    RawDeletion('stock', ['stockreport'], "DELETE FROM stock_stockreport WHERE domain=%s"),
     DjangoUserRelatedModelDeletion('otp_static', 'StaticDevice', 'user__username', ['StaticToken']),
     DjangoUserRelatedModelDeletion('otp_totp', 'TOTPDevice', 'user__username'),
     DjangoUserRelatedModelDeletion('two_factor', 'PhoneDevice', 'user__username'),
