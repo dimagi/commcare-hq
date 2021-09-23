@@ -14,11 +14,20 @@ from corehq.motech.repeaters.repeater_generators import DataRegistryCaseUpdatePa
 
 
 def test_data_registry_case_update_payload_generator_empty_update():
-    _test_data_registry_case_update_payload_generator(PropertyBuilder().props, {})
+    _test_data_registry_case_update_payload_generator(PropertyBuilder().include_props([]).props, {})
 
 
-def test_data_registry_case_update_payload_generator_update_prop():
-    builder = PropertyBuilder().properties(new_prop="new_prop_val").copy_properties(include=["new_prop"])
+def test_data_registry_case_update_payload_generator_include_list():
+    builder = PropertyBuilder().properties(new_prop="new_prop_val").include_props(["new_prop"])
+    _test_data_registry_case_update_payload_generator(builder.props, {"new_prop": "new_prop_val"})
+
+
+def test_data_registry_case_update_payload_generator_exclude_list():
+    builder = (
+        PropertyBuilder()
+        .properties(new_prop="new_prop_val", other_prop="other_prop_val")
+        .exclude_props(["other_prop"])
+    )
     _test_data_registry_case_update_payload_generator(builder.props, {"new_prop": "new_prop_val"})
 
 
@@ -103,11 +112,12 @@ class PropertyBuilder:
         })
         return self
 
-    def copy_properties(self, include=(), exclude=()):
-        self.props.update({
-            "target_property_excludelist": " ".join(exclude),
-            "target_property_includelist": " ".join(include),
-        })
+    def include_props(self, include):
+        self.props["target_property_includelist"] = " ".join(include)
+        return self
+
+    def exclude_props(self, exclude):
+        self.props["target_property_excludelist"] = " ".join(exclude)
         return self
 
     def properties(self, **kwargs):

@@ -437,13 +437,28 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         return helper.get_case(target_case_id, target_case_type, couch_user, repeat_record.repeater)
 
     def _get_case_block(self, case, payload_doc):
-        includes = payload_doc.get_case_property("target_property_includelist") or ""
-        includes = includes.split()
+        includes = payload_doc.get_case_property("target_property_includelist")
+        excludes = payload_doc.get_case_property("target_property_excludelist")
+        if includes is not None and excludes is not None:
+            raise DataRegistryCaseUpdateError("Both exclude and include lists specified. Only one is allowed.")
+        if includes is None and excludes is None:
+            raise DataRegistryCaseUpdateError("Neither exclude and include lists specified. One is required.")
+
         case_json = payload_doc.case_json
+        update_props = []
+        if excludes is not None:
+            update_props = set(case_json) - set(excludes.split())
+        if includes is not None:
+            update_props = set(case_json) & set(includes.split())
+
+        update_props = [
+            prop for prop in update_props
+            if not prop.startswith("target_")
+        ]
+
         update = {
             prop: case_json[prop]
-            for prop in includes
-            if prop in case_json
+            for prop in update_props
         }
         return CaseBlock(
             create=False,
