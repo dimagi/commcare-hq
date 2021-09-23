@@ -750,7 +750,7 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
     A repeater that triggers off case creation but sends a form to update cases in
     another commcare project space.
     """
-    friendly_name = _("update Cases in another CommCare Project via a Data Registry")
+    friendly_name = _("Update Cases in another CommCare Project via a Data Registry")
     payload_generator_classes = (DataRegistryCaseUpdatePayloadGenerator,)
 
     def form_class_name(self):
