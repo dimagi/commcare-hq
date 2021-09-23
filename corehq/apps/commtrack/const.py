@@ -1,8 +1,17 @@
+import uuid
+
 COMMTRACK_USERNAME = 'commtrack-system'
 
 COMMTRACK_SUPPLY_POINT_XMLNS = 'http://commtrack.org/supply_point'
 
 META_XMLNS = 'http://openrosa.org/jr/xforms'
+
+MOBILE_WORKER_UUID_NS = uuid.UUID(
+    uuid.uuid5(
+        uuid.NAMESPACE_URL,
+        'www.commcarehq.org/mobile_worker'
+    ).hex
+)
 
 SUPPLY_POINT_CASE_TYPE = 'supply-point'
 
