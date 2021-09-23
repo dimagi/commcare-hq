@@ -21,7 +21,7 @@ Postgres and Couch data.
   - Create a pg dump.  You'll need to verify the host IP address:
 
     ```sh
-    pg_dump -h 0.0.0.0 -U commcarehq commcarehq > /path/to/backup_hq_db.sql
+    pg_dump -h localhost -U commcarehq commcarehq > /path/to/backup_hq_db.sql
     ```
 
 - CouchDB
@@ -439,7 +439,7 @@ that to the new install.
   - Restore the backup:
 
     ```sh
-    psql -U commcarehq -h 0.0.0.0 commcarehq < /path/to/backup_hq_db.sql
+    psql -U commcarehq -h localhost commcarehq < /path/to/backup_hq_db.sql
     ```
 
 - CouchDB
@@ -456,7 +456,7 @@ that to the new install.
     ./scripts/docker start couch
     ```
 
-  - Fire up Fauxton to check that the dbs are there: http://0.0.0.0:5984/_utils/
+  - Fire up Fauxton to check that the dbs are there: http://localhost:5984/_utils/
 
 - Shared Directory
   - If you are following the default instructions, move/merge the `sharedfiles`
@@ -669,7 +669,7 @@ LOCAL_APPS += ('django_extensions',)
 When running HQ, be sure to use `runserver_plus`:
 
 ```sh
-./manage.py runserver_plus 0.0.0.0:8000
+./manage.py runserver_plus localhost:8000
 ```
 
 Then you need to have Formplayer running.
@@ -734,7 +734,7 @@ Then run the following separately:
 
 ```sh
 # run the Django server
-./manage.py runserver 0.0.0.0:8000
+./manage.py runserver localhost:8000
 
 # Keeps elasticsearch index in sync
 # You can also skip this and run `./manage.py ptop_reindexer_v2` to manually sync ES indices when needed.
