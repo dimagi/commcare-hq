@@ -297,7 +297,9 @@ DOMAIN_DELETE_OPERATIONS = [
         'StockLevelsConfig', 'StockRestoreConfig',
     ]),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
-    ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', ['CustomDataFieldsProfile', 'Field']),
+    ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', [
+        'CustomDataFieldsProfile', 'Field',
+    ]),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_dictionary', 'CaseType', 'domain', [
@@ -397,6 +399,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('couchforms', 'UnfinishedArchiveStub', 'domain'),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
 ]
+
 
 def apply_deletion_operations(domain_name):
     for op in DOMAIN_DELETE_OPERATIONS:
