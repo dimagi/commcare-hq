@@ -776,7 +776,7 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         # Exclude extension cases where the host is also a case type that this repeater
         # would act on since they get forwarded along with their host
         host_index = payload.get_index(CASE_INDEX_IDENTIFIER_HOST)
-        return host_index.referenced_type not in self.white_listed_case_types
+        return not host_index or host_index.referenced_type not in self.white_listed_case_types
 
 
 class ShortFormRepeater(Repeater):

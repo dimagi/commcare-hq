@@ -358,13 +358,14 @@ class RegistryAuditHelper:
         if not related_object or not hasattr(related_object, "doc_type"):
             raise ValueError("Unexpected related object")
 
+        doc_type = getattr(related_object, 'base_doc', related_object.doc_type)
         try:
             related_object_type = {
                 "ReportConfiguration": RegistryAuditLog.RELATED_OBJECT_UCR,
                 "Application": RegistryAuditLog.RELATED_OBJECT_APPLICATION,
                 "LinkedApplication": RegistryAuditLog.RELATED_OBJECT_APPLICATION,
                 "Repeater": RegistryAuditLog.RELATED_OBJECT_REPEATER,
-            }[related_object.doc_type]
+            }[doc_type]
         except KeyError:
             raise ValueError(f"Unexpected related object type: {related_object.doc_type}")
 

@@ -165,7 +165,7 @@ def _test_payload_generator(intent_case, expected_updates=None, expected_indices
     with patch.object(DataRegistryHelper, "get_case", new=_get_case), \
          patch.object(CouchUser, "get_by_user_id", return_value=Mock(username="local_user")):
         repeat_record = Mock(repeater=Repeater())
-        form = UpdateForm(generator.get_payload(repeat_record, intent_case))
+        form = DataRegistryUpdateForm(generator.get_payload(repeat_record, intent_case))
         form.assert_form_props({
             "source_domain": SOURCE_DOMAIN,
             "source_form_id": "form123",
@@ -177,7 +177,7 @@ def _test_payload_generator(intent_case, expected_updates=None, expected_indices
             form.assert_case_index(expected_indices)
 
 
-class UpdateForm:
+class DataRegistryUpdateForm:
     def __init__(self, form):
         self.formxml = ElementTree.fromstring(form)
         self.cases = {
@@ -213,7 +213,7 @@ class UpdateForm:
 
 
 class IntentCaseBuilder:
-    def __init__(self, registry="registry1", override_properties=True, case_id=None):
+    def __init__(self, registry="registry1", override_properties=True):
         self.props: dict = {
             "target_data_registry": registry,
             "target_property_override": str(int(override_properties)),
