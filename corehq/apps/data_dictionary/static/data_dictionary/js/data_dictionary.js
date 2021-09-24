@@ -59,9 +59,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.deprecated = ko.observable(deprecated || false);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
         self.allowedValues = uiElementKeyValueList.new(
-            String(Math.random()).slice(2),
-            gettext("Valid Values"),
-            {"key": gettext("valid value"), "value": gettext("description")}
+            String(Math.random()).slice(2), /* guid */
+            interpolate('Edit valid values for "%s"', [name]), /* modalTitle */
+            gettext("When importing case data, CommCare will warn if rows don't match valid values"), /* subTitle */
+            {"key": gettext("valid value"), "value": gettext("description")}, /* placeholders */
+            10 /* maxDisplay */
         );
         self.allowedValues.val(allowedValues);
         self.$allowedValues = self.allowedValues.ui;
