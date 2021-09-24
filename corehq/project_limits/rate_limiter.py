@@ -145,7 +145,7 @@ def _get_users_included_in_subscription(domain):
             # Heavily bias towards allowing high throughput
             # 80% minimum, plus a fraction of 20% inversely proportional
             # to the number of domains that share the throughput allocation.
-            return n_included_users * (.8 + .2 / n_domains)
+            return n_included_users * (.8 + .2 / n_domains) if n_domains else 0
         else:
             return n_included_users
     else:
