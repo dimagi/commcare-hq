@@ -1,7 +1,6 @@
 {% load i18n %}
 <div data-bind="visible: bulkExportDownloadCount()">
-  <div style="float:right;" class="tooltip-bulkDelete" data-container=".tooltip-bulkDelete"
-       data-toggle="tooltip-bulkDelete" data-placement="top">
+  <div class="pull-right" data-toggle="tooltip-bulkDelete" data-placement="top">
     <input name="delete_list" type="hidden"/>
     <p style="float:right">
       <a class="btn btn-danger btn-primary"
@@ -30,16 +29,3 @@
     </p>
   </div>
 </div>
-
-<style>
-.tooltip-bulkDelete .tooltip .tooltip-inner {
-  background-color: #f2dede;
-  position: relative;
-  color: black;
-  min-width: 235px
-}
-
-.tooltip-bulkDelete .tooltip.top .tooltip-arrow {
-  border-top-color: #f2dede;
-}
-</style>
