@@ -41,6 +41,7 @@ from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq import toggles
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_SAVED_UCR_FORM_ID,
     send_hubspot_form,
@@ -146,6 +147,7 @@ from corehq.apps.userreports.util import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
@@ -611,7 +613,8 @@ class ConfigureReport(ReportBuilderView):
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.existing_report.get_id
-            ) if self.existing_report else {}
+            ) if self.existing_report else {},
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
         }
 
     def _get_bound_form(self, report_data):
