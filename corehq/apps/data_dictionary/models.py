@@ -13,7 +13,7 @@ PROPERTY_TYPE_CHOICES = (
     ('date', _('Date')),
     ('plain', _('Plain')),
     ('number', _('Number')),
-    ('select', _('Select')),
+    ('select', _('Multiple Choice')),
     ('barcode', _('Barcode')),
     ('gps', _('GPS')),
     ('phone_number', _('Phone Number')),
