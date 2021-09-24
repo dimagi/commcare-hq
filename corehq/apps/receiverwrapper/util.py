@@ -8,6 +8,7 @@ from django.http import Http404
 from couchdbkit import ResourceNotFound
 
 import couchforms
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from couchforms.models import DefaultAuthContext
 
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -28,6 +29,7 @@ def get_submit_url(domain, app_id=None):
 
 
 def submit_form_locally(instance, domain, **kwargs):
+    rate_limit_submission(domain, delay_rather_than_reject=True, max_wait=.1)
     # intentionally leave these unauth'd for now
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
     result = SubmissionPost(
