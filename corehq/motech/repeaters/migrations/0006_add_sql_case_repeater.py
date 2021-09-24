@@ -78,6 +78,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sqlrepeater',
             name='repeater_id',
-            field=models.CharField(db_index=True, max_length=36, unique=True),
+            field=models.CharField(max_length=36, unique=True),
         ),
     ]
