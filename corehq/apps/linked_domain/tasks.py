@@ -24,6 +24,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_REPORT,
 )
 from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
+from corehq.apps.linked_domain.exceptions import DomainLinkError
 from corehq.apps.linked_domain.keywords import update_keyword, create_linked_keyword
 from corehq.apps.linked_domain.ucr import (
     create_linked_ucr,
@@ -165,8 +166,11 @@ The following linked project spaces received content:
 
         if not found:
             if domain_has_privilege(self.upstream_domain, RELEASE_MANAGEMENT):
-                linked_report_info = create_linked_ucr(domain_link, report_id)
-                update_linked_ucr(domain_link, linked_report_info.report.get_id)
+                try:
+                    linked_report_info = create_linked_ucr(domain_link, report_id)
+                except DomainLinkError as e:
+                    return self._error_tuple(str(e))
+                update_linked_ucr(domain_link, linked_report_info.report.get_id, user_id)
             else:
                 report = ReportConfiguration.get(report_id)
                 if report.report_meta.created_by_builder:
