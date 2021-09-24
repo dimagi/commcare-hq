@@ -67,7 +67,7 @@
         {% include 'userreports/partials/delete_report_button.html' with report_id=existing_report.get_id %}
         &nbsp;
       {% endif %}
-      {% if request|toggle_enabled:"LINKED_DOMAINS" %}
+      {% if not has_release_management_privilege and request|toggle_enabled:"LINKED_DOMAINS" %}
         {% if existing_report %}
           {% include "userreports/partials/link_reports.html" %}
         {% endif %}
