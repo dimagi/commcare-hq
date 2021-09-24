@@ -44,11 +44,11 @@
         <thead>
           <tr>
             <th >
-              <i id="sort-icon" class="clickable glyphicon glyphicon-sort" data-bind="attr: { name: 'username' }, event: { click: sortByColumn }"></i>
+              <i class="sort-icon clickable glyphicon glyphicon-sort" data-name="username" data-bind="event: { click: sortByColumn }"></i>
               {% trans "Username" %}
             </th>
             <th>
-              <i id="sort-icon" class="clickable glyphicon glyphicon-sort" data-bind="attr: { name: 'name' }, event: { click: sortByColumn }"></i>
+              <i class="sort-icon clickable glyphicon glyphicon-sort" data-name="name" data-bind="event: { click: sortByColumn }"></i>
               {% trans "Name" %}
             </th>
             <th>
@@ -56,7 +56,7 @@
             </th>
             {% if show_profile_column %}
               <th>
-                <i id="sort-icon" class="clickable glyphicon glyphicon-sort" data-bind="attr: { name: 'profile' }, event: { click: sortByColumn }"></i>
+                <i class="sort-icon clickable glyphicon glyphicon-sort" data-name="profile" data-bind="event: { click: sortByColumn }"></i>
                 {% trans "Profile" %}
               </th>
             {% endif %}

@@ -80,13 +80,13 @@ hqDefine("users/js/enterprise_users", [
 
         self.sortByColumn = function (data, event) {
             var el = event.target;
-            var column = el.getAttribute('name');
+            var column = el.getAttribute('data-name');
             var webUsers = [];
             var mobileWorkersMap = {};
             var allSortedUsers = [];
             // Change target el icon depending on self.ascending() and revert all other icons
             var resetColumnIcons = function (ascending) {
-                var allColumns = $('[id=sort-icon]');
+                var allColumns = $('.sort-icon');
                 allColumns.removeClass('glyphicon-sort-by-attributes glyphicon-sort-by-attributes-alt');
                 allColumns.addClass('glyphicon-sort');
                 $(el).addClass(ascending ? 'glyphicon-sort-by-attributes' : 'glyphicon-sort-by-attributes-alt');
