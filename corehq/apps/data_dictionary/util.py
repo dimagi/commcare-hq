@@ -131,7 +131,7 @@ def get_values_hint_dict(domain, case_type_name):
     values_hint_dict = defaultdict(list)
     case_type = CaseType.objects.filter(domain=domain, name=case_type_name).first()
     if case_type:
-        for prop in case_type.properties:
+        for prop in case_type.properties.all():
             if prop.data_type == 'date':
                 values_hint_dict[prop.name] = [ugettext('YYYY-MM-DD')]
             elif prop.data_type == 'select':
