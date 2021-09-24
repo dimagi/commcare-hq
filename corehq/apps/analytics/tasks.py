@@ -574,9 +574,8 @@ def track_periodic_data():
             is_member_of_blocked_domain = False
             for domain in user['domains']:
                 if domain in blocked_domains:
-                    metrics_gauge(
+                    metrics_counter(
                         'commcare.hubspot_data.rejected.periodic_task.domain',
-                        1,
                         tags={
                             'domain': domain,
                         }
