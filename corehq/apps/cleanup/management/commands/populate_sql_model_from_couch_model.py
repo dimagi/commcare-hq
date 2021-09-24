@@ -227,9 +227,9 @@ class PopulateSQLCommand(BaseCommand):
             sql_doc_count = self._get_sql_doc_count_for_domains(domains)
             docs = self._iter_couch_docs_for_domains(domains)
         else:
-            doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
+            doc_count = self._get_couch_doc_count_for_type()
             sql_doc_count = self.sql_class().objects.count()
-            docs = get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()])
+            docs = self._get_all_couch_docs_for_model()
 
         print(f"\n\nDetailed log output file: {log_path}")
         print("Found {} {} docs and {} {} models".format(
@@ -289,3 +289,9 @@ class PopulateSQLCommand(BaseCommand):
             )
             for doc in iter_docs(self.couch_db(), doc_id_iter):
                 yield doc
+
+    def _get_all_couch_docs_for_model(self):
+        return get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()])
+
+    def _get_couch_doc_count_for_type(self):
+        return get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
