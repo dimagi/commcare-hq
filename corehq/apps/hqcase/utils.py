@@ -35,7 +35,7 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
                        xmlns=None, attachments=None, form_id=None,
-                       form_extras=None, case_db=None, device_id=None):
+                       form_extras=None, case_db=None, device_id=None, max_wait=Ellipsis):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
@@ -50,6 +50,8 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
     make it easier to trace the source. All new code should use this
     argument. A human recognizable value is recommended outside of test
     code. Example: "auto-close-rule-<GUID>"
+    :param max_wait: Maximum time to allow the process to be delayed if
+    the project is over its submission rate limit.
 
     returns the UID of the resulting form.
     """
@@ -74,6 +76,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
         domain=domain,
         attachments=attachments,
         case_db=case_db,
+        max_wait=max_wait,
         **form_extras
     )
     return result.xform, result.cases
