@@ -187,22 +187,6 @@ hqDefine("export/js/export_list", [
             });
         };
 
-        var tooltipText = "";
-        if (self.isOData() || self.isFeed()) {
-            tooltipText = "All of the selected feeds will be deleted.";
-        } else {
-            tooltipText = "All of the selected exports will be deleted.";
-        }
-
-        $(function () {
-            $('[data-toggle="tooltip-bulkExport"]').attr('title',
-                "All of the selected exports will be collected for download to a single Excel file, with each export as a separate sheet.").tooltip();
-        });
-
-        $(function () {
-            $('[data-toggle="tooltip-bulkDelete"]').attr('title', tooltipText).tooltip({trigger: 'hover'});
-        });
-
         return self;
     };
 
@@ -457,6 +441,23 @@ hqDefine("export/js/export_list", [
 
             return true;
         };
+
+        var tooltipText = "";
+        if (self.isOData || self.isFeed) {
+            tooltipText = gettext("All of the selected feeds will be deleted.");
+        } else {
+            tooltipText = gettext("All of the selected exports will be deleted.");
+        }
+
+        $(function () {
+            $('[data-toggle="tooltip-bulkExport"]').attr('title',
+                gettext("All of the selected exports will be collected for download to a " +
+                "single Excel file, with each export as a separate sheet.")).tooltip();
+        });
+
+        $(function () {
+            $('[data-toggle="tooltip-bulkDelete"]').attr('title', tooltipText).tooltip({trigger: 'hover'});
+        });
 
         self.isMultiple = ko.computed(function () {
             if (self.bulkDeleteList().length > 1) { return true; }
