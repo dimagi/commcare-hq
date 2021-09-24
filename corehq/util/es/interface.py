@@ -1,13 +1,18 @@
 import abc
 import logging
-import traceback
-
-from django.conf import settings
 
 from corehq.util.es.elasticsearch import bulk, scan
 
+logger = logging.getLogger(__name__)
+
 
 class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
+
+    # Default scroll parameters (same values hard-coded in elasticsearch-py's
+    # `scan()` helper).
+    SCROLL_KEEPALIVE = '5m'
+    SCROLL_SIZE = 1000
+
     def __init__(self, es):
         self.es = es
 
@@ -18,12 +23,8 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return self.es.indices.put_mapping(doc_type, {doc_type: mapping}, index=index)
 
     def _verify_is_alias(self, index_or_alias):
-        from corehq.elastic import ES_META, ESError
-        from pillowtop.tests.utils import TEST_ES_ALIAS
-        all_es_aliases = [index_info.alias for index_info in ES_META.values()] + [TEST_ES_ALIAS]
-        if index_or_alias not in all_es_aliases:
-            raise ESError(
-                f"{index_or_alias} is an unknown alias, query target must be one of {all_es_aliases}")
+        from corehq.elastic import verify_registered_alias
+        verify_registered_alias(index_or_alias)
 
     def update_index_settings(self, index, settings_dict):
         assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()
@@ -112,8 +113,40 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         self._fix_hits_in_results(results)
         return results
 
-    def scan(self, index_alias, query, doc_type):
-        return scan(self.es, query=query, index=index_alias, doc_type=doc_type, search_type='scan')
+    def iter_scroll(self, index_alias=None, doc_type=None, body=None,
+                    scroll=SCROLL_KEEPALIVE, size=SCROLL_SIZE, **kwargs):
+        """Perform one or more scroll requests to completely exhaust a scrolling
+        search context.
+
+        Read before using:
+        - Scroll queries are not designed for real-time user requests.
+        - Using aggregations with scroll queries may yield non-aggregated
+          results.
+        - The most efficient way to perform a scroll request is to sort by
+          `_doc`.
+        - Scroll request results reflect the state of the index at the time the
+          initial `search` is requested. Changes to the index after that time
+          will not be reflected for the duration of the scroll "search context".
+        - See: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-scroll.html
+        """
+        body = body.copy() if body else {}
+        body.setdefault("sort", "_doc")  # configure for efficiency if able
+        results = self.search(index_alias, doc_type, body, scroll=scroll,
+                              size=size, **kwargs)
+        scroll_id = results.get('_scroll_id')
+        if scroll_id is None:
+            return
+        try:
+            yield results
+            while True:
+                results = self.scroll(scroll_id)
+                scroll_id = results.get('_scroll_id')
+                yield results
+                if scroll_id is None or not results['hits']['total']:
+                    break
+        finally:
+            if scroll_id:
+                self.es.clear_scroll(body={'scroll_id': [scroll_id]}, ignore=(404,))
 
     @staticmethod
     def _fix_hit(hit):
@@ -132,7 +165,6 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         # In ES7 total is a dict
         if isinstance(total, dict):
             results['hits']['total'] = total.get('value', 0)
-
 
 
 class ElasticsearchInterfaceDefault(AbstractElasticsearchInterface):

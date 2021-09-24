@@ -10,7 +10,7 @@ from corehq.util.es.elasticsearch import ConnectionError, RequestError
 
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.views.data import lookup_doc_in_es
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, register_alias, deregister_alias
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, capture_log_output
 from pillowtop.es_utils import (
@@ -25,7 +25,13 @@ from pillowtop.index_settings import disallowed_settings_by_es_version, INDEX_RE
 from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.processors.elastic import send_to_elasticsearch
-from .utils import get_doc_count, get_index_mapping, TEST_INDEX_INFO
+from .utils import (
+    TEST_INDEX_INFO,
+    get_doc_count,
+    get_index_mapping,
+    register_pt_test_meta,
+    deregister_pt_test_meta,
+)
 
 
 @es_test
@@ -34,6 +40,7 @@ class ElasticPillowTest(SimpleTestCase):
     def setUp(self):
         self.index = TEST_INDEX_INFO.index
         self.es_alias = TEST_INDEX_INFO.alias
+        register_pt_test_meta()
         self.es = get_es_new()
         self.es_interface = ElasticsearchInterface(self.es)
         with trap_extra_setup(ConnectionError):
@@ -41,6 +48,7 @@ class ElasticPillowTest(SimpleTestCase):
 
     def tearDown(self):
         ensure_index_deleted(self.index)
+        deregister_pt_test_meta()
 
     def test_create_index(self):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
@@ -160,11 +168,6 @@ class ElasticPillowTest(SimpleTestCase):
                 .format(disallowed_setting))
 
 
-TEST_ES_META = {
-    TEST_INDEX_INFO.index: TEST_INDEX_INFO
-}
-
-
 @es_test
 class TestSendToElasticsearch(SimpleTestCase):
 
@@ -173,6 +176,8 @@ class TestSendToElasticsearch(SimpleTestCase):
         self.es_interface = ElasticsearchInterface(self.es)
         self.index = TEST_INDEX_INFO.index
         self.es_alias = TEST_INDEX_INFO.alias
+        # unsure why we're using '.index' instead of '.alias' here
+        register_alias(TEST_INDEX_INFO.index, TEST_INDEX_INFO)
 
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(self.index)
@@ -180,10 +185,8 @@ class TestSendToElasticsearch(SimpleTestCase):
 
     def tearDown(self):
         ensure_index_deleted(self.index)
+        deregister_alias(TEST_INDEX_INFO.index)
 
-    @mock.patch('corehq.apps.hqadmin.views.data.ES_META', TEST_ES_META)
-    @mock.patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @mock.patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         self._send_to_es_and_check(doc)
