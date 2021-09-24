@@ -499,8 +499,9 @@ def track_periodic_data():
     num_chunks = int(math.ceil(float(total_users) / float(chunk_size)))
 
     # Track no of users and domains with max_forms greater than HUBSPOT_THRESHOLD
-    hubspot_number_of_users = 0
+    hubspot_number_of_users_processed = 0
     hubspot_number_of_domains_with_forms_gt_threshold = 0
+    hubspot_number_of_users_blocked = 0
 
     blocked_domains = get_blocked_hubspot_domains()
     blocked_email_domains = get_blocked_hubspot_email_domains()
@@ -564,7 +565,6 @@ def track_periodic_data():
                 )
                 continue
 
-            hubspot_number_of_users += 1
             date_created = user.get('date_joined')
             max_forms = 0
             max_workers = 0
@@ -593,7 +593,13 @@ def track_periodic_data():
                     max_report = _get_report_count(domain)
 
             if is_member_of_blocked_domain:
+                # user is a member of a project space whose Billing Account
+                # has blocked HubSpot analytics, so we must not send any data
+                # about them.
+                hubspot_number_of_users_blocked += 1
                 continue
+
+            hubspot_number_of_users_processed += 1
 
             project_spaces_created = ", ".join(get_domains_created_by_user(email))
 
@@ -635,7 +641,9 @@ def track_periodic_data():
         submit_json = json.dumps(submit)
         submit_data_to_hub_and_kiss(submit_json)
 
-    metrics_gauge('commcare.hubspot.web_users_processed', hubspot_number_of_users,
+    metrics_gauge('commcare.hubspot.web_users_processed', hubspot_number_of_users_processed,
+        multiprocess_mode=MPM_LIVESUM)
+    metrics_gauge('commcare.hubspot.web_users_blocked', hubspot_number_of_users_blocked,
         multiprocess_mode=MPM_LIVESUM)
     metrics_gauge(
         'commcare.hubspot.domains_with_forms_gt_threshold', hubspot_number_of_domains_with_forms_gt_threshold,
