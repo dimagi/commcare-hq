@@ -485,6 +485,8 @@ def track_periodic_data():
     if not KISSMETRICS_ENABLED and not HUBSPOT_ENABLED:
         return
 
+    time_started = datetime.utcnow()
+
     three_months_ago = date.today() - timedelta(days=90)
 
     user_query = (UserES()
@@ -647,6 +649,13 @@ def track_periodic_data():
     metrics_gauge(
         'commcare.hubspot.domains_with_forms_gt_threshold', hubspot_number_of_domains_with_forms_gt_threshold,
         multiprocess_mode=MPM_MAX
+    )
+
+    task_time = datetime.utcnow() - time_started
+    metrics_gauge(
+        'commcare.hubspot.runtimes.track_periodic_data',
+        task_time.seconds,
+        multiprocess_mode=MPM_LIVESUM
     )
 
 
