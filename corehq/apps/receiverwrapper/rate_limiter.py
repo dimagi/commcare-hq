@@ -70,7 +70,7 @@ global_submission_rate_limiter = RateLimiter(
 SHOULD_RATE_LIMIT_SUBMISSIONS = settings.RATE_LIMIT_SUBMISSIONS and not settings.UNIT_TESTING
 
 
-@run_only_when(SHOULD_RATE_LIMIT_SUBMISSIONS)
+@run_only_when(lambda: SHOULD_RATE_LIMIT_SUBMISSIONS)
 @silence_and_report_error("Exception raised in the submission rate limiter",
                           'commcare.xform_submissions.rate_limiter_errors')
 def rate_limit_submission(domain, delay_rather_than_reject=False, max_wait=15):
