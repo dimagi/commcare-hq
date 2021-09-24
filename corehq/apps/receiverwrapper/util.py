@@ -28,8 +28,9 @@ def get_submit_url(domain, app_id=None):
         return "/a/{domain}/receiver/".format(domain=domain)
 
 
-def submit_form_locally(instance, domain, **kwargs):
-    rate_limit_submission(domain, delay_rather_than_reject=True, max_wait=.1)
+def submit_form_locally(instance, domain, max_wait=0.1, **kwargs):
+    if max_wait is not None:
+        rate_limit_submission(domain, delay_rather_than_reject=True, max_wait=max_wait)
     # intentionally leave these unauth'd for now
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
     result = SubmissionPost(

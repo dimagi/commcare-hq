@@ -323,3 +323,8 @@ class SubmitFormLocallyRateLimitTest(TestCase, TestFileMixin):
         form_xml = self.get_xml('simple_form')
         submit_form_locally(form_xml, domain=self.domain)
         allow_usage.assert_called()
+
+    def test_no_rate_limiting(self, allow_usage):
+        form_xml = self.get_xml('simple_form')
+        submit_form_locally(form_xml, domain=self.domain, max_wait=None)
+        allow_usage.assert_not_called()
