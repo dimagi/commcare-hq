@@ -3,11 +3,13 @@ import uuid
 from django.utils.translation import ugettext as _
 
 from corehq.apps.linked_domain.applications import get_downstream_app_id
+from corehq.apps.linked_domain.const import MODEL_KEYWORD
 from corehq.apps.linked_domain.exceptions import (
     DomainLinkError,
     MultipleDownstreamAppsError,
     MultipleDownstreamKeywordsError,
 )
+from corehq.apps.linked_domain.models import KeywordLinkDetail
 from corehq.apps.sms.models import Keyword
 
 
@@ -52,7 +54,7 @@ def create_linked_keyword(domain_link, keyword_id):
     return keyword.id
 
 
-def update_keyword(domain_link, keyword_id):
+def update_keyword(domain_link, keyword_id, user_id):
     try:
         linked_keyword = Keyword.objects.get(id=keyword_id)
     except Keyword.DoesNotExist:
@@ -60,18 +62,24 @@ def update_keyword(domain_link, keyword_id):
             _("Linked keyword could not be found")
         )
     try:
-        master_keyword = Keyword.objects.get(id=linked_keyword.upstream_id)
+        upstream_keyword = Keyword.objects.get(id=linked_keyword.upstream_id)
     except Keyword.DoesNotExist:
         raise DomainLinkError(
             _("Upstream keyword could not be found. Maybe it has been deleted?")
         )
 
     for prop in ['keyword', 'description', 'delimiter', 'override_open_sessions', 'initiator_doc_type_filter']:
-        setattr(linked_keyword, prop, getattr(master_keyword, prop))
+        setattr(linked_keyword, prop, getattr(upstream_keyword, prop))
 
     linked_keyword.save()
 
-    _update_actions(domain_link, linked_keyword, master_keyword.keywordaction_set.all())
+    _update_actions(domain_link, linked_keyword, upstream_keyword.keywordaction_set.all())
+
+    domain_link.update_last_pull(
+        MODEL_KEYWORD,
+        user_id,
+        model_detail=KeywordLinkDetail(keyword_id=str(linked_keyword.id)).to_json(),
+    )
 
 
 def _update_actions(domain_link, linked_keyword, keyword_actions):
