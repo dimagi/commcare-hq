@@ -54,7 +54,7 @@ class TestXFormInstanceResource(APIResourceTest):
         )[0]
 
         send_to_elasticsearch('forms', transform_xform_for_elasticsearch(form.to_json()))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        self.es.indices.refresh(XFORM_INDEX_INFO.alias)
 
         # Fetch the xform through the API
         response = self._assert_auth_get_resource(self.single_endpoint(form.form_id) + "?cases__full=true")
@@ -89,7 +89,7 @@ class TestXFormInstanceResource(APIResourceTest):
             to_ret.append(backend_form)
             self.addCleanup(backend_form.delete)
             send_to_elasticsearch('forms', transform_xform_for_elasticsearch(backend_form.to_json()))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        self.es.indices.refresh(XFORM_INDEX_INFO.alias)
         return to_ret
 
     def test_get_list(self):
@@ -200,7 +200,7 @@ class TestXFormInstanceResource(APIResourceTest):
         update = forms[0].to_json()
         update['doc_type'] = 'xformarchived'
         send_to_elasticsearch('forms', transform_xform_for_elasticsearch(update))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        self.es.indices.refresh(XFORM_INDEX_INFO.alias)
 
         # archived form should not be included by default
         response = self._assert_auth_get_resource(self.list_endpoint)
