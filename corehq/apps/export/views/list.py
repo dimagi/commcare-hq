@@ -224,6 +224,8 @@ class ExportListHelper(object):
             'formname': formname,
             'deleteUrl': reverse(DeleteNewCustomExportView.urlname,
                                  args=(self.domain, export.type, export.get_id)),
+            'domain': self.domain,
+            'type': export.type,
             'downloadUrl': reverse(self._download_view(export).urlname, args=(self.domain, export.get_id)),
             'showDetDownload': export.show_det_config_download,
             'detSchemaUrl': reverse(DownloadDETSchemaView.urlname,
