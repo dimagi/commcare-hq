@@ -310,3 +310,16 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
 
         transaction = result.cases[0].get_transaction_by_form_id(result.xform.form_id)
         self.assertTrue(transaction.is_form_transaction)
+
+
+@patch('corehq.apps.receiverwrapper.rate_limiter.SHOULD_RATE_LIMIT_SUBMISSIONS', True)
+@patch('corehq.apps.receiverwrapper.rate_limiter.global_submission_rate_limiter.allow_usage', return_value=True)
+class SubmitFormLocallyRateLimitTest(TestCase, TestFileMixin):
+    root = os.path.dirname(__file__)
+    file_path = ('data',)
+    domain = 'test-domain'
+
+    def test_rate_limiting(self, allow_usage):
+        form_xml = self.get_xml('simple_form')
+        submit_form_locally(form_xml, domain=self.domain)
+        allow_usage.assert_called()
