@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
-
+from corehq.apps.users.decorators import get_permission_name
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
@@ -159,10 +159,27 @@ class ProjectReportsTab(UITab):
             'icon': 'icon-tasks fa fa-tasks',
             'show_in_dropdown': True,
         }]
-        if toggles.USER_CONFIGURABLE_REPORTS.enabled(self.couch_user.username):
-            # Only show for **users** with the flag. This flag is also available for domains
-            # but should not be granted by domain, as the feature is too advanced to turn
-            # on for all of a domain's users.
+        from corehq.apps.users.models import Permissions
+        # For SaaS envs, if we want to display the tab only if Feature Flag is
+        # enabled on domain and the role has the permission to edit_ucrs
+        show_on_sass_env = (
+            toggles.USER_CONFIGURABLE_REPORTS.enabled(self.domain)
+            and self.couch_user.has_permission(
+                self.domain,
+                get_permission_name(Permissions.edit_ucrs)
+            )
+            and settings.IS_SAAS_ENVIRONMENT
+        )
+        # For Non SaaS Envs
+        # Only show for **users** with the flag. This flag is also available for domains
+        # but should not be granted by domain, as the feature is too advanced to turn
+        # on for all of a domain's users.
+        show_on_other_envs = (
+            toggles.USER_CONFIGURABLE_REPORTS.enabled(self.couch_user.username)
+            and not settings.IS_SAAS_ENVIRONMENT
+        )
+        if show_on_other_envs or show_on_sass_env:
+
             from corehq.apps.userreports.views import UserConfigReportsHomeView
             tools.append({
                 'title': _(UserConfigReportsHomeView.section_name),
