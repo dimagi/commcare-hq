@@ -100,17 +100,14 @@ Language
 import json
 from collections import namedtuple
 from copy import deepcopy
-from django.conf import settings
 
 from memoized import memoized
 
 from corehq.elastic import (
     ES_DEFAULT_INSTANCE,
     ES_META,
-    SCROLL_PAGE_SIZE_LIMIT,
     SIZE_LIMIT,
     ESError,
-    ScanResult,
     run_query,
     count_query,
     scroll_query,
@@ -237,16 +234,9 @@ class ESQuery(object):
         Run the query against the scroll api. Returns an iterator yielding each
         document that matches the query.
         """
-        query = deepcopy(self)
-        if query._size is None:
-            query._size = SCROLL_PAGE_SIZE_LIMIT
-        result = scroll_query(query.index, query.raw_query, es_instance_alias=self.es_instance_alias)
-        # scroll doesn't include _id in the source even if it's specified, so include it
-        include_id = getattr(query, '_source', None) and "_id" in query._source
+        result = scroll_query(self.index, self.raw_query, es_instance_alias=self.es_instance_alias)
         for r in result:
-            if include_id:
-                r['_source']['_id'] = r.get('_id', None)
-            yield ESQuerySet.normalize_result(query, r)
+            yield ESQuerySet.normalize_result(self, r)
 
     @property
     def _filters(self):
