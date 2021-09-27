@@ -7,13 +7,13 @@ services:
     depends_on:
       citus_worker1: { condition: service_healthy }
       citus_worker2: { condition: service_healthy }
-      postgres: { condition: service_healthy }
-      couch: { condition: service_healthy }
-      redis: { condition: service_healthy }
-      elasticsearch2: { condition: service_healthy }
-      elasticsearch5: { condition: service_healthy }
-      kafka: { condition: service_healthy }
-      minio: { condition: service_healthy }
+      postgres: { condition: service_started }
+      couch: { condition: service_started }
+      redis: { condition: service_started }
+      elasticsearch2: { condition: service_started }
+      elasticsearch5: { condition: service_started }
+      kafka: { condition: service_started }
+      minio: { condition: service_started }
 
   formplayer:
     extends:
