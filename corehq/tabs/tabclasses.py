@@ -1032,7 +1032,7 @@ class MessagingTab(UITab):
         return (self.can_access_reminders or self.can_use_outbound_sms) and (
             self.project and not (self.project.is_snapshot or
                                   self.couch_user.is_commcare_user())
-        ) and self.couch_user.can_edit_data()
+        ) and self.couch_user.can_edit_messaging()
 
     @property
     @memoized
@@ -1150,13 +1150,13 @@ class MessagingTab(UITab):
     def contacts_urls(self):
         contacts_urls = []
 
-        if self.couch_user.can_edit_data():
+        if self.couch_user.can_edit_messaging():
             contacts_urls.append(
                 {'title': _('Chat'),
                  'url': reverse('chat_contacts', args=[self.domain])}
             )
 
-        if self.couch_user.can_edit_data():
+        if self.couch_user.can_edit_messaging():
             from corehq.apps.data_interfaces.views import CaseGroupListView, CaseGroupCaseManagementView
             contacts_urls.append({
                 'title': _(CaseGroupListView.page_title),
