@@ -63,7 +63,7 @@ services:
   minio:
     extends:
       file: hq-compose.yml
-      service: mino
+      service: minio
 
   citus_master:
     extends:
