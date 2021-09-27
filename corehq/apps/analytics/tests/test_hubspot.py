@@ -71,7 +71,7 @@ class TestBlockedHubspotData(TestCase):
 
         plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
 
-        cls.blocked_account = generator.billing_account('test@diamgi.com', 'test@test.com')
+        cls.blocked_account = generator.billing_account('test@dimagi.com', 'test@test.com')
         cls.blocked_account.block_hubspot_data_for_all_users = True
         cls.blocked_account.save()
 
@@ -93,7 +93,7 @@ class TestBlockedHubspotData(TestCase):
 
         # this domain is not linked to an account that is blocking hubspot
         cls.allowed_domain = create_domain('allow-domain-hubspot')
-        allowed_account = generator.billing_account('test@diamgi.com', 'test@test.com')
+        allowed_account = generator.billing_account('test@dimagi.com', 'test@test.com')
         allowed_sub = Subscription.new_domain_subscription(
             allowed_account, cls.allowed_domain.name, plan
         )
