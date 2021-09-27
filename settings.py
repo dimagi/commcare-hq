@@ -275,7 +275,7 @@ HQ_APPS = (
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
     'corehq.sql_proxy_standby_accessors',
-    'corehq.pillows',
+    'corehq.pillows.app_config.PillowsAppConfig',
     'couchforms',
     'couchexport',
     'dimagi.utils',
