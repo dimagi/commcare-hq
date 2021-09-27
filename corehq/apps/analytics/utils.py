@@ -28,14 +28,6 @@ def analytics_enabled_for_email(email_address):
     return user.analytics_enabled if user else True
 
 
-def is_email_blocked_from_hubspot(email_address):
-    email_domain = email_address.split('@')[-1]
-    return BillingAccount.objects.filter(
-        is_active=True,
-        block_email_domains_from_hubspot__contains=[email_domain],
-    ).exists()
-
-
 def is_domain_blocked_from_hubspot(domain):
     return Subscription.visible_objects.filter(
         is_active=True,
@@ -52,8 +44,6 @@ def hubspot_enabled_for_user(user):
     :param user: CouchUser or WebUser
     :return: Boolean (True if hubspot is enabled/allowed)
     """
-    if is_email_blocked_from_hubspot(user.username):
-        return False
     if isinstance(user, WebUser):
         web_user = user
     else:

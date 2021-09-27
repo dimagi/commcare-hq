@@ -13,7 +13,6 @@ from corehq.apps.analytics.utils import (
     get_blocked_hubspot_email_domains,
     get_blocked_hubspot_accounts,
     is_domain_blocked_from_hubspot,
-    is_email_blocked_from_hubspot,
     hubspot_enabled_for_user,
     hubspot_enabled_for_email,
 )
@@ -112,16 +111,10 @@ class TestBlockedHubspotData(TestCase):
         )
         cls.allowed_user.save()
 
-        cls.blocked_by_email_user = WebUser.create(
-            cls.allowed_domain.name, 'jjj@blocked.com', '*****', None, None
-        )
-        cls.blocked_by_email_user.save()
-
         cls.blocked_user = WebUser.create(
             cls.blocked_domain.name, 'fff@example.com', '*****', None, None
         )
         cls.blocked_user.save()
-
         cls.blocked_couch_user = CouchUser.get_by_username(cls.blocked_user.username)
 
         cls.blocked_commcare_user = CommCareUser.create(
@@ -159,17 +152,11 @@ class TestBlockedHubspotData(TestCase):
         self.assertTrue(is_domain_blocked_from_hubspot(self.second_blocked_domain.name))
         self.assertFalse(is_domain_blocked_from_hubspot(self.allowed_domain.name))
 
-    def test_is_email_blocked_from_hubspot(self):
-        self.assertTrue(is_email_blocked_from_hubspot(self.blocked_by_email_user.username))
-        self.assertFalse(is_email_blocked_from_hubspot(self.allowed_user.username))
-
     def test_hubspot_enabled_for_user(self):
-        self.assertFalse(hubspot_enabled_for_user(self.blocked_by_email_user))
         self.assertFalse(hubspot_enabled_for_user(self.blocked_user))
         self.assertTrue(hubspot_enabled_for_user(self.allowed_user))
 
     def test_hubspot_enabled_for_email(self):
-        self.assertFalse(hubspot_enabled_for_email(self.blocked_by_email_user.username))
         self.assertFalse(hubspot_enabled_for_email(self.blocked_user.username))
         self.assertTrue(hubspot_enabled_for_email(self.allowed_user.username))
 
@@ -183,7 +170,6 @@ class TestBlockedHubspotData(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.blocked_user.delete(cls.blocked_domain.name, deleted_by=None)
-        cls.blocked_by_email_user.delete(cls.allowed_domain.name, deleted_by=None)
         cls.allowed_user.delete(cls.allowed_domain.name, deleted_by=None)
         cls.blocked_domain.delete()
         cls.second_blocked_domain.delete()
