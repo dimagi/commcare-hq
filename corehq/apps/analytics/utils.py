@@ -238,29 +238,6 @@ def _get_contact_ids_for_email_domain(email_domain, retry_num=0):
     return []
 
 
-def remove_blocked_email_domains_from_hubspot(stdout=None):
-    """
-    Removes contacts from Hubspot that emails matching our list of
-    blocked email domains.
-    :param stdout: the stdout of a management command (if applicable)
-    """
-    blocked_email_domains = get_blocked_hubspot_email_domains()
-    for email_domain in blocked_email_domains:
-        ids_to_delete = _get_contact_ids_for_email_domain(email_domain)
-        if stdout:
-            stdout.write(f"\n\nChecking EMAIL DOMAIN {email_domain}")
-            stdout.write(f"Found {len(ids_to_delete)} id(s) to delete.")
-        num_deleted = sum(_delete_hubspot_contact(vid) for vid in ids_to_delete)
-        metrics_gauge(
-            'commcare.hubspot_data.deleted_user.blocked_email_domain',
-            num_deleted,
-            tags={
-                'email_domain': email_domain,
-                'ids_deleted': ids_to_delete,
-            }
-        )
-
-
 def remove_blocked_domain_contacts_from_hubspot(stdout=None):
     """
     Removes contacts from Hubspot that are members of blocked domains.

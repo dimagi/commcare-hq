@@ -39,7 +39,6 @@ from corehq.apps.analytics.utils import (
     get_blocked_hubspot_email_domains,
     hubspot_enabled_for_user,
     hubspot_enabled_for_email,
-    remove_blocked_email_domains_from_hubspot,
     remove_blocked_domain_contacts_from_hubspot,
     MAX_API_RETRIES,
 )
@@ -871,5 +870,4 @@ def cleanup_blocked_hubspot_contacts():
     if not HUBSPOT_ENABLED:
         return
 
-    remove_blocked_email_domains_from_hubspot()
     remove_blocked_domain_contacts_from_hubspot()
