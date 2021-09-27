@@ -115,6 +115,10 @@ services:
       - "2181:2181"
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.4.13/data
+    healthcheck:
+        test: "nc -z zookeeper 2182"
+        interval: 5s
+        timeout: 1m
 
   kafka:
       image: wurstmeister/kafka:2.13-2.6.0
