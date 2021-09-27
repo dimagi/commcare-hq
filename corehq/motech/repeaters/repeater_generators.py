@@ -504,7 +504,7 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
             'xmlns': SYSTEM_FORM_XMLNS,
             'case_block': " ".join(case_blocks),
             'time': json_format_datetime(datetime.utcnow()),
-            'uid': uuid4().hex,
+            'uid': str(uuid4()),
             'username': self.submission_username(),
             'user_id': self.submission_user_id(),
             'device_id': "DataRegistryCaseUpdateRepeater",
@@ -514,7 +514,6 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
                 "source_username": submitting_user.username
             }
         })
-        # raise DataRegistryCaseUpdateError()
 
     def submission_username(self):
         return self.repeater.connection_settings.username
