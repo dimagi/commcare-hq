@@ -8,14 +8,12 @@ from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.util.test_utils import flag_enabled
 
 from ..fixtures import location_fixture_generator
 from .util import make_loc
 
 
-@run_with_sql_backend
 class LocationGroupBase(TestCase):
 
     @classmethod

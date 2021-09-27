@@ -8,7 +8,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_auto_generated_built_apps,
     get_latest_build_id,
 )
-from corehq.apps.app_manager.exceptions import SavedAppBuildException
+from corehq.apps.app_manager.exceptions import SavedAppBuildException, AppValidationError
 from corehq.apps.users.models import CommCareUser
 from corehq.util.decorators import serial_task
 
@@ -26,12 +26,13 @@ def create_usercases(domain_name):
 @serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
 def make_async_build_v2(app_id, domain, version, allow_prune=True, comment=None):
     app = get_app(domain, app_id)
-    errors = app.validate_app()
-    if not errors:
+    try:
         copy = app.make_build(comment=comment)
-        copy.is_auto_generated = allow_prune
-        copy.save(increment_version=False)
-        return copy
+    except AppValidationError:
+        return
+    copy.is_auto_generated = allow_prune
+    copy.save(increment_version=False)
+    return copy
 
 
 def autogenerate_build(app, username):
@@ -44,12 +45,7 @@ def autogenerate_build(app, username):
 
 @serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
 def autogenerate_build_task(app_id, domain, version, comment):
-    app = get_app(domain, app_id)
-    errors = app.validate_app()
-    if not errors:
-        copy = app.make_build(comment=comment)
-        copy.is_auto_generated = True
-        copy.save(increment_version=False)
+    make_async_build_v2(app_id, domain, version, allow_prune=True, comment=comment)
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True)

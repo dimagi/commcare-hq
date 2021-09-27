@@ -5,7 +5,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
 from corehq.form_processor.tests.utils import sharded
-from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
+from corehq.util.dates import coerce_to_datetime
 
 
 @sharded

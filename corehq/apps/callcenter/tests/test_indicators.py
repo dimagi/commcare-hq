@@ -34,7 +34,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend, sharded
+from corehq.form_processor.tests.utils import sharded
 from corehq.sql_db.connections import connection_manager, override_engine
 from corehq.sql_db.tests.utils import temporary_database
 
@@ -128,7 +128,6 @@ def expected_standard_indicators(
     return expected
 
 
-@run_with_sql_backend
 class BaseCCTests(TestCase):
     domain_name = None
 

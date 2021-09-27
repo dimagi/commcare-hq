@@ -79,24 +79,6 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
     return result.xform, result.cases
 
 
-def get_case_wrapper(data):
-    from corehq.apps.commtrack.util import get_case_wrapper as commtrack_wrapper
-
-    def pact_wrapper(data):
-        if data['domain'] == 'pact' and data['type'] == 'cc_path_client':
-            from pact.models import PactPatientCase
-            return PactPatientCase
-
-    wrapper_funcs = [pact_wrapper, commtrack_wrapper]
-
-    wrapper = None
-    for wf in wrapper_funcs:
-        wrapper = wf(data)
-        if wrapper is not None:
-            break
-    return wrapper
-
-
 def get_case_by_identifier(domain, identifier):
 
     case_accessors = CaseAccessors(domain)

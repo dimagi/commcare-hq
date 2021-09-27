@@ -25,6 +25,7 @@ from dimagi.utils.web import json_request, json_response
 from toggle.shortcuts import set_toggle
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_APP_TEMPLATE_FORM_ID,
     send_hubspot_form,
@@ -52,7 +53,7 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppLinkError,
     IncompatibleFormTypeException,
-    RearrangeError,
+    RearrangeError, AppValidationError,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
@@ -542,15 +543,17 @@ def load_app_from_slug(domain, username, slug):
 
 
 def _build_sample_app(app):
-    errors = app.validate_app()
-    if not errors:
-        comment = _("A sample CommCare application for you to explore")
+    comment = _("A sample CommCare application for you to explore")
+    try:
         copy = app.make_build(comment=comment)
-        copy.is_released = True
-        copy.save(increment_version=False)
-        return copy
-    else:
-        notify_exception(None, 'Validation errors building sample app', details=errors)
+    except AppValidationError as e:
+        notify_exception(None, 'Validation errors building sample app', details=e.errors)
+        return
+
+    copy.is_released = True
+    copy.save(increment_version=False)
+    return copy
+
 
 
 @require_can_edit_apps
@@ -564,6 +567,10 @@ def app_exchange(request, domain):
             continue
         results.reverse()
         first = results[0]
+
+        required_privileges = str(obj.required_privileges or '').split()
+        if not all(domain_has_privilege(domain, privilege) for privilege in required_privileges):
+            continue
 
         def _version_text(result):
             if result['_id'] == first['_id']:
@@ -591,12 +598,24 @@ def app_exchange(request, domain):
     if request.method == "POST":
         clear_app_cache(request, domain)
         from_app_id = request.POST.get('from_app_id')
+        if not _valid_exchange_record_exists_helper(from_app_id, records):
+            messages.error(request, _("Invalid application id requested for exchange import"))
+            return render(request, template, context)
+
         app_copy = import_app_util(from_app_id, domain, {
             'created_from_template': from_app_id,
         })
         return back_to_main(request, domain, app_id=app_copy._id)
 
     return render(request, template, context)
+
+
+def _valid_exchange_record_exists_helper(app_id, records):
+    for record in records:
+        for version in record["versions"]:
+            if version["id"] == app_id:
+                return True
+    return False
 
 
 @require_can_edit_apps

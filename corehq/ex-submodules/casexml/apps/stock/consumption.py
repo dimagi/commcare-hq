@@ -162,33 +162,6 @@ def compute_daily_consumption(
     return compute_daily_consumption_from_transactions(transactions, window_start, configuration)
 
 
-def compute_consumption_or_default(
-        domain, case_id, product_id, window_end,
-        section_id=const.SECTION_TYPE_STOCK, configuration=None):
-    """
-    Used when it's not important to know if the consumption
-    value is real or just a default value
-    """
-    configuration = configuration or ConsumptionConfiguration()
-    daily_consumption = compute_daily_consumption(
-        domain,
-        case_id,
-        product_id,
-        window_end,
-        section_id,
-        configuration
-    )
-
-    if daily_consumption:
-        return daily_consumption * 30.
-    else:
-        return compute_default_monthly_consumption(
-            case_id,
-            product_id,
-            configuration,
-        )
-
-
 def get_default_monthly_consumption_for_case_and_entry(domain, case_id, entry_id):
     if domain and domain.commtrack_settings:
         config = domain.commtrack_settings.get_consumption_config()

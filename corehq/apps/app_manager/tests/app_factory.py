@@ -20,6 +20,7 @@ from corehq.apps.app_manager.models import (
     ShadowModule,
     UpdateCaseAction,
 )
+from corehq.apps.app_manager.tests.util import get_build_spec_for_tests
 
 
 class AppFactory(object):
@@ -41,8 +42,7 @@ class AppFactory(object):
 
     def __init__(self, domain='test', name='Untitled Application', build_version=None, include_xmlns=False):
         self.app = Application.new_app(domain, name)
-        if build_version:
-            self.app.build_spec.version = build_version
+        self.app.build_spec = get_build_spec_for_tests(build_version)
 
         self.slugs = {}
         self.include_xmlns = include_xmlns

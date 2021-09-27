@@ -13,7 +13,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.util.test_utils import softer_assert
 
 LEDGER_BLOCKS_SIMPLE = """
@@ -37,7 +36,6 @@ LEDGER_BLOCKS_INFERRED = """
 """
 
 
-@run_with_sql_backend
 class RebuildStockStateTest(TestCase):
 
     def setUp(self):

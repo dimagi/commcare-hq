@@ -11,8 +11,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_sql_backend, sharded
-from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 
 from corehq.util.test_utils import softer_assert
 
@@ -21,7 +20,6 @@ TransactionValues = namedtuple('TransactionValues', ['type', 'product_id', 'delt
 
 
 @sharded
-@run_with_sql_backend
 class LedgerTests(TestCase):
 
     @classmethod
@@ -190,18 +188,17 @@ class LedgerTests(TestCase):
         self.assertEqual(expected_balance, ledger.balance)
 
     def _assert_transactions(self, values, ignore_ordering=False):
-        if should_use_sql_backend(DOMAIN):
-            txs = LedgerAccessorSQL.get_ledger_transactions_for_case(self.case.case_id)
-            self.assertEqual(len(values), len(txs))
-            if ignore_ordering:
-                values = sorted(values, key=lambda v: (v.type, v.product_id))
-                txs = sorted(txs, key=lambda t: (t.type, t.entry_id))
-            for expected, tx in zip(values, txs):
-                self.assertEqual(expected.type, tx.type)
-                self.assertEqual(expected.product_id, tx.entry_id)
-                self.assertEqual('stock', tx.section_id)
-                self.assertEqual(expected.delta, tx.delta)
-                self.assertEqual(expected.updated_balance, tx.updated_balance)
+        txs = LedgerAccessorSQL.get_ledger_transactions_for_case(self.case.case_id)
+        self.assertEqual(len(values), len(txs))
+        if ignore_ordering:
+            values = sorted(values, key=lambda v: (v.type, v.product_id))
+            txs = sorted(txs, key=lambda t: (t.type, t.entry_id))
+        for expected, tx in zip(values, txs):
+            self.assertEqual(expected.type, tx.type)
+            self.assertEqual(expected.product_id, tx.entry_id)
+            self.assertEqual('stock', tx.section_id)
+            self.assertEqual(expected.delta, tx.delta)
+            self.assertEqual(expected.updated_balance, tx.updated_balance)
 
     def _expected_val(self, delta, updated_balance, type_=LedgerTransaction.TYPE_BALANCE, product_id=None):
         return TransactionValues(type_, product_id or self.product_a._id, delta, updated_balance)

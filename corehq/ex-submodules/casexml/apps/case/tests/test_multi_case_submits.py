@@ -3,10 +3,8 @@ import os
 from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 
-@run_with_sql_backend
 class MultiCaseTest(TestCase):
 
     def setUp(self):

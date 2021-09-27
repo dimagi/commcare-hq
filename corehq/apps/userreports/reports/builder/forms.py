@@ -845,7 +845,6 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
         super().__init__(domain, source_type, source_id)
 
         registry_helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
-        registry_helper.pre_access_check(source_id)
         owning_domain = registry_helper.registry.domain
         prop_map = get_data_dict_props_by_case_type(owning_domain)
         self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})

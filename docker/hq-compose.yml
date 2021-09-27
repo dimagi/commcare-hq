@@ -23,8 +23,6 @@ services:
       TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
       TRAVIS_COMMIT: "${TRAVIS_COMMIT}"
       TRAVIS_EVENT_TYPE: "${TRAVIS_EVENT_TYPE}"
-      TRAVIS_HQ_PASSWORD: "${TRAVIS_HQ_PASSWORD}"
-      TRAVIS_HQ_USERNAME: "${TRAVIS_HQ_USERNAME}"
       TRAVIS_JOB_ID: "${TRAVIS_JOB_ID}"
       TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
       TRAVIS_PULL_REQUEST: "${TRAVIS_PULL_REQUEST}"
@@ -126,7 +124,7 @@ services:
           KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
           KAFKA_BROKER_ID: 1
           KAFKA_ADVERTISED_PORT: 9092
-          CUSTOM_INIT_SCRIPT: "curl https://raw.githubusercontent.com/vishnubob/wait-for-it/c096cface5fbd9f2d6b037391dfecae6fde1362e/wait-for-it.sh > wait.sh && chmod +x ./wait.sh && ./wait.sh zookeeper:2181 || exit 1"
+          CUSTOM_INIT_SCRIPT: "curl https://raw.githubusercontent.com/vishnubob/wait-for-it/c096cface5fbd9f2d6b037391dfecae6fde1362e/wait-for-it.sh > wait.sh && chmod +x ./wait.sh && ./wait.sh -t 30 zookeeper:2181 || exit 1"
           KAFKA_ADVERTISED_HOST_NAME: "kafka"
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock

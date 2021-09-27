@@ -1,28 +1,17 @@
-from decimal import Decimal
-
-from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
-from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from couchdbkit.exceptions import ResourceNotFound
-from memoized import memoized
 
 from casexml.apps.case.cleanup import close_case
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import ConsumptionConfiguration
-from casexml.apps.stock.models import DocDomainMapping
 from couchforms.signals import xform_archived, xform_unarchived
-from dimagi.ext.couchdbkit import *
 
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
-from corehq.form_processor.change_publishers import publish_ledger_v1_saved
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.util.quickcache import quickcache
 
 from . import const
 from .const import StockActions
@@ -261,137 +250,6 @@ class StockRestoreConfig(models.Model):
         }
 
 
-class SupplyPointCase(CommCareCase):
-    """
-    A wrapper around CommCareCases to get more built in functionality
-    specific to supply points.
-    """
-    location_id = StringProperty()
-
-    class Meta(object):
-        # This is necessary otherwise couchdbkit will confuse this app with casexml
-        app_label = "commtrack"
-
-    @property
-    @memoized
-    def sql_location(self):
-        return SQLLocation.objects.get(location_id=self.location_id)
-
-    location = sql_location
-
-
-UNDERSTOCK_THRESHOLD = 0.5  # months
-OVERSTOCK_THRESHOLD = 2.  # months
-DEFAULT_CONSUMPTION = 10.  # per month
-
-
-class ActiveManager(models.Manager):
-    """
-    Filter any object that is associated to an archived product
-    """
-
-    def get_queryset(self):
-        return super(ActiveManager, self).get_queryset() \
-            .exclude(sql_product__is_archived=True) \
-            .exclude(sql_location__is_archived=True)
-
-
-class StockState(models.Model):
-    """
-    Read only reporting model for keeping computed stock states per case/product
-    """
-    section_id = models.CharField(max_length=100, db_index=True)
-    case_id = models.CharField(max_length=100, db_index=True)
-    product_id = models.CharField(max_length=100, db_index=True)
-    stock_on_hand = models.DecimalField(max_digits=20, decimal_places=5, default=Decimal(0))
-    daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
-    last_modified_date = models.DateTimeField()
-    last_modified_form_id = models.CharField(max_length=100, null=True)
-    sql_product = models.ForeignKey(SQLProduct, on_delete=models.CASCADE)
-    sql_location = models.ForeignKey(SQLLocation, null=True, on_delete=models.CASCADE)
-
-    # override default model manager to only include unarchived data
-    objects = ActiveManager()
-
-    # leave a way to get unfiltered data
-    include_archived = models.Manager()
-
-    @property
-    def last_modified(self):
-        return self.last_modified_date
-
-    @property
-    def entry_id(self):
-        return self.product_id
-
-    @property
-    def location_id(self):
-        return self.sql_location.location_id if self.sql_location else None
-
-    @property
-    def balance(self):
-        return self.stock_on_hand
-
-    @property
-    def ledger_reference(self):
-        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-        return UniqueLedgerReference(
-            case_id=self.case_id, section_id=self.section_id, entry_id=self.product_id
-        )
-
-    @property
-    @memoized
-    def consumption_helper(self):
-        from corehq.apps.reports.commtrack.util import get_consumption_helper_from_ledger_value
-        return get_consumption_helper_from_ledger_value(self.domain, self)
-
-    @property
-    def months_remaining(self):
-        return self.consumption_helper.get_months_remaining()
-
-    @property
-    def resupply_quantity_needed(self):
-        return self.consumption_helper.get_resupply_quantity_needed()
-
-    @property
-    def stock_category(self):
-        return self.consumption_helper.get_stock_category()
-
-    @property
-    @memoized
-    def domain(self):
-        try:
-            domain_name = self.__domain
-            if domain_name:
-                return domain_name
-        except AttributeError:
-            pass
-
-        try:
-            return DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
-        except DocDomainMapping.DoesNotExist:
-            return CommCareCase.get(self.case_id).domain
-
-    @memoized
-    def get_domain(self):
-        return Domain.get_by_name(self.domain)
-
-    def get_daily_consumption(self):
-        return self.consumption_helper.get_daily_consumption()
-
-    def get_monthly_consumption(self):
-        return self.consumption_helper.get_monthly_consumption()
-
-    def to_json(self):
-        from corehq.form_processor.serializers import StockStateSerializer
-        serializer = StockStateSerializer(self)
-        return dict(serializer.data)
-
-    class Meta(object):
-        app_label = 'commtrack'
-        unique_together = ('section_id', 'case_id', 'product_id')
-
-
 def close_supply_point_case(domain, supply_point_id):
     if supply_point_id:
         close_case(
@@ -434,34 +292,6 @@ def sync_supply_point(location, is_deletion=False):
     else:
         updated_supply_point = _reopen_or_create_supply_point(location)
         location.supply_point_id = updated_supply_point.case_id
-
-
-@receiver(post_save, sender=StockState)
-def update_domain_mapping(sender, instance, *args, **kwargs):
-    case_id = str(instance.case_id)
-    try:
-        domain_name = instance.__domain
-        if not domain_name:
-            raise ValueError()
-    except (AttributeError, ValueError):
-        domain_name = CommCareCase.get(case_id).domain
-    if not DocDomainMapping.objects.filter(doc_id=case_id).exists():
-        mapping = DocDomainMapping(
-            doc_id=case_id,
-            doc_type='CommCareCase',
-            domain_name=domain_name,
-        )
-        mapping.save()
-
-
-@receiver(post_save, sender=StockState)
-def publish_stock_state_to_kafka_on_save(sender, instance, *args, **kwargs):
-    publish_ledger_v1_saved(instance)
-
-
-@receiver(post_delete, sender=StockState)
-def publish_stock_state_to_kafka_on_delete(sender, instance, *args, **kwargs):
-    publish_ledger_v1_saved(instance, deleted=True)
 
 
 @receiver(xform_archived)

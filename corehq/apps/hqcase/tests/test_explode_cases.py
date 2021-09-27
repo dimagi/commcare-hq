@@ -20,11 +20,9 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     LedgerAccessors,
 )
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.util.test_utils import flag_enabled
 
 
-@run_with_sql_backend
 class ExplodeCasesDbTest(TestCase):
 
     @classmethod
@@ -127,7 +125,6 @@ class ExplodeCasesDbTest(TestCase):
             self.assertTrue(child.indices[0].referenced_id in parent_cases)
 
 
-@run_with_sql_backend
 class ExplodeExtensionsDBTest(BaseSyncTest):
 
     def setUp(self):
@@ -213,7 +210,6 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
 
 
 @flag_enabled('NON_COMMTRACK_LEDGERS')
-@run_with_sql_backend
 class ExplodeLedgersTest(BaseSyncTest):
     def setUp(self):
         super(ExplodeLedgersTest, self).setUp()

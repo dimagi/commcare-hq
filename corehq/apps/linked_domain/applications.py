@@ -55,7 +55,7 @@ def get_downstream_app_id(downstream_domain, upstream_app_id, use_upstream_app_i
     :param use_upstream_app_id: whether to search for downstream app based on upstream_app_id or family_id
     DEPRECATED: family_id is deprecated and will be removed. If calling this method, try to use upstream_app_id
     """
-    downstream_ids = _get_downstream_app_id_map(
+    downstream_ids = get_downstream_app_id_map(
         downstream_domain,
         use_upstream_app_id=use_upstream_app_id
     )[upstream_app_id]
@@ -67,7 +67,7 @@ def get_downstream_app_id(downstream_domain, upstream_app_id, use_upstream_app_i
 
 
 def get_upstream_app_ids(downstream_domain):
-    return list(_get_downstream_app_id_map(downstream_domain))
+    return list(get_downstream_app_id_map(downstream_domain, use_upstream_app_id=False))
 
 
 @quickcache(
@@ -75,7 +75,7 @@ def get_upstream_app_ids(downstream_domain):
     skip_arg=lambda *args, **kwargs: settings.UNIT_TESTING,
     timeout=5 * 60
 )
-def _get_downstream_app_id_map(downstream_domain, use_upstream_app_id=False):
+def get_downstream_app_id_map(downstream_domain, use_upstream_app_id=True):
     """
     :param downstream_domain: domain name
     :param use_upstream_app_id: whether to search for downstream app based on upstream_app_id or family_id
@@ -137,7 +137,7 @@ def link_app(linked_app, master_domain, master_id, remote_details=None):
         except RemoteRequestError:
             raise AppLinkError('Error fetching multimedia from remote server. Please try again later.')
 
-    _get_downstream_app_id_map.clear(linked_app.domain)
+    get_downstream_app_id_map.clear(linked_app.domain)
     return linked_app
 
 
