@@ -182,7 +182,6 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_domain
-from corehq.util.view_utils import absolute_reverse
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
