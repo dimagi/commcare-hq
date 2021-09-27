@@ -611,7 +611,9 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
         http://manage.dimagi.com/default.asp?245341
         '''
-        with mock.patch('corehq.pillows.case.KafkaCheckpointEventHandler.should_update_checkpoint') as fake_checkpoint:
+        with mock.patch(
+                'corehq.pillows.case.KafkaCheckpointEventHandler.should_update_checkpoint'
+        ) as fake_checkpoint:
             fake_checkpoint.return_value = False
             pillow = pillow or self.pillow
             for i in range(3):
@@ -676,7 +678,9 @@ class ReuseEvaluationContextTest(TestCase):
         )
 
     def _test_pillow(self, pillow, since, num_queries=12):
-        with mock.patch('corehq.pillows.case.KafkaCheckpointEventHandler.should_update_checkpoint') as fake_checkpoint:
+        with mock.patch(
+                'corehq.pillows.case.KafkaCheckpointEventHandler.should_update_checkpoint'
+        ) as fake_checkpoint:
             fake_checkpoint.return_value = False
             with self.assertNumQueries(num_queries):
                 pillow.process_changes(since=since, forever=False)
