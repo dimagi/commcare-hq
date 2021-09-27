@@ -23,7 +23,7 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 2:
         IndicesClient,
         SnapshotClient,
     )
-    from elasticsearch2.helpers import bulk, scan
+    from elasticsearch2.helpers import BulkIndexError, bulk, scan
 elif settings.ELASTICSEARCH_MAJOR_VERSION == 5:
     import elasticsearch5 as elasticsearch
     from elasticsearch5.exceptions import AuthorizationException
@@ -50,6 +50,7 @@ else:
 
 __all__ = [
     'AuthorizationException',
+    'BulkIndexError',
     'ConflictError',
     'ConnectionError',
     'ConnectionTimeout',
@@ -62,5 +63,6 @@ __all__ = [
     'SnapshotClient',
     'TransportError',
     'bulk',
+    'scan',
     'elasticsearch',
 ]
