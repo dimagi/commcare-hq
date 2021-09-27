@@ -31,21 +31,9 @@ services:
       TRAVIS_REPO_SLUG: "${TRAVIS_REPO_SLUG}"
       UCR_CITUS_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
     privileged: true  # allows mount inside container
-    links:
-      - postgres
-      - couch
-      - redis
-      - elasticsearch2
-      - elasticsearch5
-      - kafka
-      - zookeeper
-      - minio
     volumes:
       - ..:/mnt/commcare-hq-ro${RO}
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-lib:}/mnt/lib
-    depends_on:
-      citus_worker1: { condition: service_healthy }
-      citus_worker2: { condition: service_healthy }
 
   formplayer:
     image: dimagi/formplayer
@@ -159,7 +147,6 @@ services:
   citus_manager:
     image: 'citusdata/membership-manager:0.2.0'
     volumes: ["${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock"]
-    depends_on: { citus_master: { condition: service_healthy } }
     environment:
       CITUS_HOST: citus_master
       POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
@@ -168,7 +155,6 @@ services:
   citus_worker1:
     image: 'citusdata/citus:8.1.1'
     labels: ['com.citusdata.role=Worker']
-    depends_on: { citus_manager: { condition: service_healthy } }
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker1:}/var/lib/postgresql/data
     environment:
@@ -177,7 +163,6 @@ services:
   citus_worker2:
     image: 'citusdata/citus:8.1.1'
     labels: ['com.citusdata.role=Worker']
-    depends_on: { citus_manager: { condition: service_healthy } }
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker2:}/var/lib/postgresql/data
     environment:

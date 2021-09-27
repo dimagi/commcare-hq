@@ -141,7 +141,7 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
             CMD=help
         fi
     fi
-    export COMPOSE_FILE=docker/hq-compose.yml
+    export COMPOSE_FILE=docker/hq-compose-travis.yml
     export COMPOSE_PROJECT_NAME=hqtest
     export UCR_CITUS_DB="${UCR_CITUS_DB:-test_commcare_ucr_citus}"
     if [ -n "$TRAVIS_BUILD_DIR" ]; then

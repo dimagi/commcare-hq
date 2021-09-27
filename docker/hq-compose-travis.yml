@@ -1,0 +1,86 @@
+version: '2.3'
+services:
+  web:
+    extends:
+      file: hq-compose.yml
+      service: web
+    depends_on:
+      citus_worker1: { condition: service_healthy }
+      citus_worker2: { condition: service_healthy }
+      postgres: {}
+      couch: {}
+      redis: {}
+      elasticsearch2: {}
+      elasticsearch5: {}
+      kafka: {}
+      minio: {}
+
+  formplayer:
+    extends:
+      file: hq-compose.yml
+      service: formplayer
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    extends:
+      file: hq-compose.yml
+      service: postgres
+
+  couch:
+    extends:
+      file: hq-compose.yml
+      service: couch
+
+  redis:
+    extends:
+      file: hq-compose.yml
+      service: redis
+
+  elasticsearch2:
+    extends:
+      file: hq-compose.yml
+      service: elasticsearch2
+
+  elasticsearch5:
+    extends:
+      file: hq-compose.yml
+      service: elasticsearch5
+
+  zookeeper:
+    extends:
+      file: hq-compose.yml
+      service: zookeeper
+
+  kafka:
+    extends:
+      file: hq-compose.yml
+      service: kafka
+    depends_on:
+      zookeeper: { condition: service_healthy }
+
+  minio:
+    extends:
+      file: hq-compose.yml
+      service: mino
+
+  citus_master:
+    extends:
+      file: hq-compose.yml
+      service: citus_master
+  citus_manager:
+    extends:
+      file: hq-compose.yml
+      service: citus_manager
+    depends_on: { citus_master: { condition: service_healthy } }
+  citus_worker1:
+    extends:
+      file: hq-compose.yml
+      service: citus_worker1
+    depends_on: { citus_manager: { condition: service_healthy } }
+  citus_worker2:
+    extends:
+      file: hq-compose.yml
+      service: citus_worker2
+    depends_on: { citus_manager: { condition: service_healthy } }
