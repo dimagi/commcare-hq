@@ -42,6 +42,7 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
         cls.repeater = DataRegistryCaseUpdateRepeater(
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
+            white_listed_case_types=[IntentCaseBuilder.CASE_TYPE]
         )
         cls.repeater.save()
 
@@ -114,6 +115,7 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
         )
         factory.create_or_update_case(extension, user_id=self.mobile_user.get_id)
         repeat_records = self.repeat_records(self.domain).all()
+        self.assertEqual(len(repeat_records), 1)
         payload = repeat_records[0].get_payload()
         form = DataRegistryUpdateForm(payload)
         form.assert_case_updates({

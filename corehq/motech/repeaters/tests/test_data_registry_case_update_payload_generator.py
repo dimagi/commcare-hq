@@ -227,6 +227,8 @@ class DataRegistryUpdateForm:
 
 
 class IntentCaseBuilder:
+    CASE_TYPE = "registry_case_update"
+
     def __init__(self, registry="registry1", override_properties=True):
         self.props: dict = {
             "target_data_registry": registry,
@@ -269,7 +271,7 @@ class IntentCaseBuilder:
     def get_case(self):
         intent_case = CommCareCaseSQL(
             domain=SOURCE_DOMAIN,
-            type="registry_case_update",
+            type=self.CASE_TYPE,
             case_json=self.props,
             case_id=uuid.uuid4().hex,
             user_id="local_user1"
