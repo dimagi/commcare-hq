@@ -164,7 +164,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.endpointArgs = options.endpointArgs;
         this.page = options.page;
         this.search = options.search;
-        this.smartLinkParams = options.smartLinkParams;
+        this.smartLinkTemplate = options.smartLinkTemplate;
         this.casesPerPage = options.casesPerPage;
         this.queryData = options.queryData;
         this.singleApp = options.singleApp;
@@ -210,8 +210,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
         };
 
-        this.setSmartLinkParams = function (smartLinkParams) {
-            this.smartLinkParams = smartLinkParams;
+        this.setSmartLinkTemplate = function (smartLinkTemplate) {
+            this.smartLinkTemplate = smartLinkTemplate;
         };
 
         this.setQueryData = function (queryDict, execute) {
@@ -290,7 +290,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             selections: self.selections,
             page: self.page,
             search: self.search,
-            smartLinkParams: self.smartLinkParams,
+            smartLinkTemplate: self.smartLinkTemplate,
             queryData: self.queryData || {},    // formplayer can't handle a null
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
@@ -313,7 +313,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'search': data.search,
             'queryData': data.queryData,
             'singleApp': data.singleApp,
-            'smartLinkParams': data.smartLinkParams,
+            'smartLinkTemplate': data.smartLinkTemplate,
             'sortIndex': data.sortIndex,
             'forceLoginAs': data.forceLoginAs,
             'forceManualAction': data.forceManualAction,

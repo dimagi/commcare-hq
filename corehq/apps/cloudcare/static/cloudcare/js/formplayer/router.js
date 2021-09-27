@@ -154,7 +154,12 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         if (smartLinkParams && smartLinkParams.length) {
             var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain;
             if (smartLinkParams[0] !== userDomain) {
-                urlObject.setSmartLinkParams(smartLinkParams);
+                var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", urlObject.appId),
+                    appId = currentApp.get("upstream_app_id") || currentApp.get("copy_of") || urlObject.appId;
+                var url = hqImport("hqwebapp/js/initial_page_data").get("smart_link_template");
+                url = url.replace("---", smartLinkParams[0]);
+                url = url.replace("---", appId);
+                urlObject.setSmartLinkTemplate(url);
             }
         }
         Util.setUrlToObject(urlObject);

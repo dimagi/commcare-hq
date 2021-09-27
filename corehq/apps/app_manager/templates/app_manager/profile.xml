@@ -28,7 +28,6 @@
     {% if support_email %}
     <property key="support-email-address" value="{{ support_email }}" force="true"/>
     {% endif %}
-    <property key="cc-smart-link-template" value="{{ smart_link_template }}" />
 
     <!-- Properties configured on CommCare HQ 1.0 -->
     {% for key, value in app_profile.properties.items %}{% if value != None %}

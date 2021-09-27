@@ -4966,10 +4966,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         })
         return s
 
-    @property
-    def smart_link_template(self):
-        return absolute_reverse("session_endpoint", args=["---", self.origin_id, "---"])
-
     @time_method()
     def create_profile(self, is_odk=False, with_media=False,
                        build_profile_id=None, commcare_flavor=None):
@@ -5044,7 +5040,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             'locale': locale,
             'apk_heartbeat_url': apk_heartbeat_url,
             'target_package_id': target_package_id,
-            'smart_link_template': self.smart_link_template,
             'support_email': settings.SUPPORT_EMAIL if not settings.IS_DIMAGI_ENVIRONMENT else None,
         }).encode('utf-8')
 
@@ -5728,10 +5723,6 @@ class LinkedApplication(Application):
     @property
     def supported_settings(self):
         return ['target_commcare_flavor', 'practice_mobile_worker_id']
-
-    @property
-    def smart_link_template(self):
-        return absolute_reverse("session_endpoint", args=["---", self.upstream_app_id, "---"])
 
     @property
     @memoized
