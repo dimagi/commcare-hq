@@ -78,25 +78,6 @@ def get_blocked_hubspot_domains():
     ).values_list('subscriber__domain', flat=True))
 
 
-def get_blocked_hubspot_email_domains():
-    """
-    Get the list of email domains (everything after the @ in an email address)
-    that have been blocked from Hubspot by BillingAccounts (excluding gmail.com)
-    :return: list
-    """
-    email_domains = {_email for email_list in BillingAccount.objects.filter(
-        is_active=True,
-    ).exclude(
-        block_email_domains_from_hubspot=[],
-    ).values_list(
-        'block_email_domains_from_hubspot',
-        flat=True,
-    ) for _email in email_list}
-    # we want to ensure that gmail.com is never a part of this list
-    email_domains.difference_update(['gmail.com'])
-    return list(email_domains)
-
-
 def get_blocked_hubspot_accounts():
     return [
         f'{account[1]} - ID # {account[0]}'

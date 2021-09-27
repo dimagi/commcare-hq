@@ -36,7 +36,6 @@ from corehq.apps.analytics.utils import (
     get_instance_string,
     get_meta,
     get_blocked_hubspot_domains,
-    get_blocked_hubspot_email_domains,
     hubspot_enabled_for_user,
     hubspot_enabled_for_email,
     remove_blocked_domain_contacts_from_hubspot,
@@ -505,7 +504,6 @@ def track_periodic_data():
     hubspot_number_of_users_blocked = 0
 
     blocked_domains = get_blocked_hubspot_domains()
-    blocked_email_domains = get_blocked_hubspot_email_domains()
 
     for chunk in range(num_chunks):
         users_to_domains = (user_query
@@ -542,28 +540,6 @@ def track_periodic_data():
         for user in users_to_domains:
             email = user.get('email') or user.get('username')
             if not _email_is_valid(email):
-                continue
-
-            email_domain = email.split('@')[-1]
-            if email_domain in blocked_email_domains:
-                metrics_gauge(
-                    'commcare.hubspot_data.rejected.periodic_task.email_domain',
-                    1,
-                    tags={
-                        'email_domain': email_domain,
-                    }
-                )
-                continue
-
-            username_email_domain = user.get('username').split('@')[-1]
-            if username_email_domain in blocked_email_domains:
-                metrics_gauge(
-                    'commcare.hubspot_data.rejected.periodic_task.username',
-                    1,
-                    tags={
-                        'username': username_email_domain,
-                    }
-                )
                 continue
 
             date_created = user.get('date_joined')

@@ -10,7 +10,6 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.tests import generator
 from corehq.apps.analytics.utils import (
     get_blocked_hubspot_domains,
-    get_blocked_hubspot_email_domains,
     get_blocked_hubspot_accounts,
     is_domain_blocked_from_hubspot,
     hubspot_enabled_for_user,
@@ -74,11 +73,6 @@ class TestBlockedHubspotData(TestCase):
 
         cls.blocked_account = generator.billing_account('test@diamgi.com', 'test@test.com')
         cls.blocked_account.block_hubspot_data_for_all_users = True
-        cls.blocked_account.block_email_domains_from_hubspot = [
-            'blocked.com',
-            'foo.org',
-            'gmail.com',
-        ]
         cls.blocked_account.save()
 
         # this is one domain linked to the billing account that blocks hubspot
@@ -126,20 +120,6 @@ class TestBlockedHubspotData(TestCase):
         self.assertListEqual(
             get_blocked_hubspot_domains(),
             [self.blocked_domain.name, self.second_blocked_domain.name]
-        )
-
-    def test_get_blocked_email_domains(self):
-        """
-        Ensure that gmail.com is never included in the list of blocked hubspot
-        email domains, and that if multiple values were specified, that they
-        are included.
-        """
-        self.assertListEqual(
-            sorted(get_blocked_hubspot_email_domains()),
-            sorted([
-                'blocked.com',
-                'foo.org',
-            ])
         )
 
     def test_get_blocked_hubspot_accounts(self):
