@@ -111,6 +111,14 @@ class TestBlockedHubspotData(TestCase):
         cls.blocked_user.save()
         cls.blocked_couch_user = CouchUser.get_by_username(cls.blocked_user.username)
 
+        cls.second_blocked_user = WebUser.create(
+            cls.second_blocked_domain.name, 'aaa-test@gmail.com', '*****', None, None
+        )
+        cls.second_blocked_user.save()
+        cls.second_blocked_couch_user = CouchUser.get_by_username(
+            cls.second_blocked_user.username
+        )
+
         cls.blocked_commcare_user = CommCareUser.create(
             cls.blocked_domain.name, 'testuser', '****', None, None
         )
@@ -134,10 +142,12 @@ class TestBlockedHubspotData(TestCase):
 
     def test_hubspot_enabled_for_user(self):
         self.assertFalse(hubspot_enabled_for_user(self.blocked_user))
+        self.assertFalse(hubspot_enabled_for_user(self.second_blocked_user))
         self.assertTrue(hubspot_enabled_for_user(self.allowed_user))
 
     def test_hubspot_enabled_for_email(self):
         self.assertFalse(hubspot_enabled_for_email(self.blocked_user.username))
+        self.assertFalse(hubspot_enabled_for_email(self.second_blocked_user.username))
         self.assertTrue(hubspot_enabled_for_email(self.allowed_user.username))
 
     def test_couch_user_is_blocked(self):
@@ -150,6 +160,7 @@ class TestBlockedHubspotData(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.blocked_user.delete(cls.blocked_domain.name, deleted_by=None)
+        cls.second_blocked_user.delete(cls.second_blocked_domain.name, deleted_by=None)
         cls.allowed_user.delete(cls.allowed_domain.name, deleted_by=None)
         cls.blocked_domain.delete()
         cls.second_blocked_domain.delete()
