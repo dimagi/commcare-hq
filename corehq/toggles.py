@@ -1922,7 +1922,7 @@ DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
     'USH: Allow data registry repeater to be setup to update cases in other domains',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="TODO",
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
 )
 
 
