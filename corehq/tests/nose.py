@@ -303,8 +303,8 @@ def temporary_db_setup():
     with connection.cursor() as cursor:
         cursor.execute("""
         /*
-        StockState table must be deleted so TransactionTest can flush the db.
-        See commit 07329e61fefaf1c563c998a164029d735d11a4fd
+        StockState table must be deleted so TransactionTestCase can flush
+        the db. See commit 07329e61fefaf1c563c998a164029d735d11a4fd
 
         Prevents CommandError: Database test_commcarehq couldn't be flushed.
 
@@ -314,6 +314,8 @@ def temporary_db_setup():
         */
         DROP TABLE IF EXISTS commtrack_stockstate;
         DROP TABLE IF EXISTS stock_stocktransaction;
+        DROP TABLE IF EXISTS stock_stockreport;
+        DROP TABLE IF EXISTS stock_docdomainmapping;
         """)
 
 
