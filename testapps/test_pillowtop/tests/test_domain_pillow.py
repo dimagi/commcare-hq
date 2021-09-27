@@ -83,7 +83,7 @@ class DomainPillowTest(TestCase):
         # verify there
         self._verify_domain_in_es(domain_name)
 
-        domain_obj = Domain.get_by_name('domain-pillow-delete')
+        domain_obj = Domain.get_by_name(domain_name)
         domain_obj.doc_type = 'Domain-DUPLICATE'
         domain_obj.save()
 
@@ -92,7 +92,7 @@ class DomainPillowTest(TestCase):
         publish_domain_saved(domain_obj)
 
         # undelete
-        domain_obj = Domain.get_by_name('domain-pillow-delete')
+        domain_obj = Domain.get_by_name(domain_name)
         domain_obj.doc_type = 'Domain'
         domain_obj.save()
 
