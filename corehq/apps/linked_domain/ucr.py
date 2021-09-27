@@ -3,18 +3,9 @@ from collections import namedtuple
 
 from django.utils.translation import ugettext as _
 
-from corehq.apps.linked_domain.applications import (
-    get_downstream_app_id,
-    get_upstream_app_ids,
-)
-from corehq.apps.linked_domain.const import MODEL_REPORT
-from corehq.apps.linked_domain.exceptions import (
-    DomainLinkError,
-    MultipleDownstreamAppsError,
-)
-from corehq.apps.linked_domain.models import ReportLinkDetail
-from corehq.apps.linked_domain.remote_accessors import \
-    get_ucr_config as remote_get_ucr_config
+from corehq.apps.linked_domain.applications import get_downstream_app_id, get_upstream_app_ids
+from corehq.apps.linked_domain.exceptions import DomainLinkError, MultipleDownstreamAppsError
+from corehq.apps.linked_domain.remote_accessors import get_ucr_config as remote_get_ucr_config
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
     get_report_configs_for_domain,
@@ -116,7 +107,7 @@ def _get_or_create_report_link(domain_link, report, datasource):
     return new_report
 
 
-def update_linked_ucr(domain_link, report_id, user_id):
+def update_linked_ucr(domain_link, report_id):
     linked_report = ReportConfiguration.get(report_id)
     linked_datasource = linked_report.config
 
@@ -130,12 +121,6 @@ def update_linked_ucr(domain_link, report_id, user_id):
 
     _update_linked_datasource(master_datasource, linked_datasource)
     _update_linked_report(master_report, linked_report)
-
-    domain_link.update_last_pull(
-        MODEL_REPORT,
-        user_id,
-        model_detail=ReportLinkDetail(report_id=linked_report.get_id).to_json(),
-    )
 
 
 def _update_linked_datasource(master_datasource, linked_datasource):
