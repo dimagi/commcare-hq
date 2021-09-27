@@ -25,7 +25,14 @@ from corehq.apps.linked_domain.const import (
 )
 from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
 from corehq.apps.linked_domain.exceptions import DomainLinkError
-from corehq.apps.linked_domain.keywords import update_keyword, create_linked_keyword
+from corehq.apps.linked_domain.keywords import (
+    create_linked_keyword,
+    update_keyword,
+)
+from corehq.apps.linked_domain.models import (
+    KeywordLinkDetail,
+    ReportLinkDetail,
+)
 from corehq.apps.linked_domain.ucr import (
     create_linked_ucr,
     get_downstream_report,
@@ -162,7 +169,12 @@ The following linked project spaces received content:
         linked_report = get_downstream_report(domain_link.linked_domain, report_id)
         if linked_report:
             found = True
-            update_linked_ucr(domain_link, linked_report.get_id, user_id)
+            update_linked_ucr(domain_link, linked_report.get_id)
+            domain_link.update_last_pull(
+                MODEL_REPORT,
+                user_id,
+                model_detail=ReportLinkDetail(report_id=linked_report.get_id).to_json(),
+            )
 
         if not found:
             if domain_has_privilege(self.upstream_domain, RELEASE_MANAGEMENT):
@@ -170,7 +182,7 @@ The following linked project spaces received content:
                     linked_report_info = create_linked_ucr(domain_link, report_id)
                 except DomainLinkError as e:
                     return self._error_tuple(str(e))
-                update_linked_ucr(domain_link, linked_report_info.report.get_id, user_id)
+                update_linked_ucr(domain_link, linked_report_info.report.get_id)
             else:
                 report = ReportConfiguration.get(report_id)
                 if report.report_meta.created_by_builder:
@@ -212,7 +224,12 @@ The following linked project spaces received content:
                     _('Could not find linked keyword. Please check the keyword has been linked.'),
                 )
 
-        update_keyword(domain_link, linked_keyword_id, user_id)
+        update_keyword(domain_link, linked_keyword_id)
+        domain_link.update_last_pull(
+            MODEL_KEYWORD,
+            user_id,
+            model_detail=KeywordLinkDetail(keyword_id=str(linked_keyword_id)).to_json(),
+        )
 
     def _release_model(self, domain_link, model, user):
         update_model_type(domain_link, model['type'], model_detail=model['detail'])
@@ -246,7 +263,7 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
             elif model['type'] == MODEL_KEYWORD:
                 errors = manager._release_keyword(domain_link, model, manager.user._id)
             else:
-                errors = manager._release_model(domain_link, model, manager.user)
+                manager._release_model(domain_link, model, manager.user)
         except Exception as e:   # intentionally broad
             errors = [str(e), str(e)]
             notify_exception(None, "Exception pushing linked domains: {}".format(e))
