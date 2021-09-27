@@ -22,7 +22,6 @@ from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.form_processor.utils import is_commcarecase
 from corehq.apps.users.util import normalize_username
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
@@ -43,7 +42,6 @@ from corehq.util.test_utils import create_test_case, set_parent_case
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
-@run_with_sql_backend
 class SchedulingRecipientTest(TestCase):
     domain = 'scheduling-recipient-test'
 

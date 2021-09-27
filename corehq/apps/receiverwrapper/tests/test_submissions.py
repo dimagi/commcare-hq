@@ -13,11 +13,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    run_with_sql_backend,
-    sharded,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
@@ -25,7 +21,6 @@ from corehq.util.test_utils import TestFileMixin, softer_assert
 from couchforms.exceptions import InvalidSubmissionFileExtensionError
 
 
-@run_with_sql_backend
 class BaseSubmissionTest(TestCase):
     def setUp(self):
         super(BaseSubmissionTest, self).setUp()
@@ -287,7 +282,6 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
         self.assertTrue(notification.called)
 
 
-@run_with_sql_backend
 class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
     file_path = ('data',)

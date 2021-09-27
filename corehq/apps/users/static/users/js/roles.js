@@ -27,11 +27,11 @@ hqDefine('users/js/roles',[
             accessSelectedText: gettext("Access Selected"),
             listHeading: gettext("Select which items the role can access:"),
         });
-        const [none, all, selected] = ["none", "all", "selected"];
+        const [NONE, ALL, SELECTED] = ["none", "all", "selected"];
         const selectOptions = [
-            {text: text.accessNoneText, value: none},
-            {text: text.accessAllText, value: all},
-            {text: text.accessSelectedText, value: selected},
+            {text: text.accessNoneText, value: NONE},
+            {text: text.accessAllText, value: ALL},
+            {text: text.accessSelectedText, value: SELECTED},
         ];
         let self = {
             id: id,
@@ -43,29 +43,33 @@ hqDefine('users/js/roles',[
             specific: permissionModel.specific,
         };
         self.showItems = ko.pureComputed(() =>{
-            return self.selection() === selected;
+            return self.selection() === SELECTED;
         });
 
         // set value of selection based on initial data
         if (self.all()) {
-            self.selection(all);
+            self.selection(ALL);
         } else if (_.find(permissionModel.specific(), item => item.value())) {
-            self.selection(selected)
+            self.selection(SELECTED)
         } else {
-            self.selection(none);
+            self.selection(NONE);
         }
 
         self.selection.subscribe(() => {
             // update permission data based on selection
-            if (self.selection() === all) {
+            if (self.selection() === ALL) {
                 self.all(true);
                 self.specific().forEach(item => item.value(false));
                 return;
             }
             self.all(false);
-            if (self.selection() === none) {
+            if (self.selection() === NONE) {
                 self.specific().forEach(item => item.value(false));
             }
+        });
+
+        self.hasError = ko.pureComputed(() => {
+            return self.selection() === SELECTED && permissionModel.filteredSpecific().length == 0;
         });
         return self;
     };
@@ -126,11 +130,16 @@ hqDefine('users/js/roles',[
                 };
 
                 self = ko.mapping.fromJS(data);
-                self.reportPermissions.filteredSpecific = ko.computed(function () {
-                    return ko.utils.arrayFilter(self.reportPermissions.specific(), function (report) {
-                        return report.value();
+                let filterSpecific = (permissions) => {
+                    return ko.computed(function () {
+                        return ko.utils.arrayFilter(permissions.specific(), function (item) {
+                            return item.value();
+                        });
                     });
-                });
+                };
+                self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
+                self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
+                self.viewRegistryContentsPermission.filteredSpecific = filterSpecific(self.viewRegistryContentsPermission);
                 self.unwrap = function () {
                     return cls.unwrap(self);
                 };
@@ -347,10 +356,21 @@ hqDefine('users/js/roles',[
                         self.viewRegistryContentsPermission,
                         {
                             permissionText: gettext("View Registry Data"),
-                            listHeading: gettext("Select which registries the role can view:"),
+                            listHeading: gettext("Select which registry data the role can view:"),
                         }
                     ),
                 ];
+
+                self.validate = function () {
+                    self.registryPermissions.forEach((perm) => {
+                        if (perm.hasError()) {
+                            throw interpolate(
+                                gettext('Select at least one item from the list for "%s"'),
+                                [perm.text]
+                            );
+                        }
+                    });
+                };
 
                 return self;
             },
@@ -478,7 +498,9 @@ hqDefine('users/js/roles',[
         self.roleError = ko.observable("");
         self.setRoleError = function (form, error) {
             self.roleError(error);
-            $(form).find('[type="submit"]').enableButton();
+            setTimeout(() => {
+                $(form).find('[type="submit"]').enableButton();
+            }, 100);
         };
         self.clearRoleError = function () {
             self.roleError("");
@@ -489,6 +511,12 @@ hqDefine('users/js/roles',[
         };
         self.submitNewRole = function (form) {
             self.clearRoleError();
+            try {
+                self.roleBeingEdited().validate();
+            } catch (e) {
+                self.setRoleError(form, e);
+                return;
+            }
             $.ajax({
                 method: 'POST',
                 url: o.saveUrl,

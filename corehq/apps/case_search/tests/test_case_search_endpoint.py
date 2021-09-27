@@ -20,13 +20,11 @@ from corehq.apps.es.tests.utils import (
     case_search_es_teardown,
     es_test,
 )
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 from ..utils import get_case_search_results
 
 
 @es_test
-@run_with_sql_backend
 class TestCaseSearchEndpoint(TestCase):
     domain = "TestCaseSearchEndpoint"
 

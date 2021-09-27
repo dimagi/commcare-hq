@@ -1697,8 +1697,6 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 # These are custom templates which can wrap default the sms/chat.html template
 CUSTOM_CHAT_TEMPLATES = {}
 
-CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
-
 PILLOWTOPS = {
     'core': [
         {
