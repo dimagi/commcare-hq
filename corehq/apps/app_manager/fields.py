@@ -136,6 +136,10 @@ class ApplicationDataSourceUIHelper(object):
             for app_data in self.all_sources.values():
                 app_data['data_source'] = [{"text": ds.display_name, "value": ds.data_source_id}
                                            for ds in available_data_sources]
+        self.registry_slug_field.choices = sort_tuple_field_choices_by_name(
+            [(registry["slug"], registry["name"]) for registry in get_data_registry_dropdown_options(domain)],
+        )
+
         # NOTE: This corresponds to a view-model that must be initialized in your template.
         # See the doc string of this class for more information.
         self.application_field.widget.attrs = {'data-bind': 'value: application'}
