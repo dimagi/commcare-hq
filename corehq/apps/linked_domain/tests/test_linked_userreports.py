@@ -1,14 +1,8 @@
-import json
-
 from mock import patch
 
 from dimagi.utils.couch.undo import is_deleted, soft_delete
 
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.linked_domain.applications import link_app
-from corehq.apps.linked_domain.decorators import REMOTE_REQUESTER_HEADER
-from corehq.apps.linked_domain.models import DomainLinkHistory, ReportLinkDetail
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.ucr import create_linked_ucr, update_linked_ucr
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
@@ -20,9 +14,6 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_data_source,
     get_sample_report_config,
 )
-from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import HQApiKey, WebUser
-from corehq.util import reverse
 
 
 class TestLinkedUCR(BaseLinkedAppsTest):
@@ -75,32 +66,23 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         linked_report_info = create_linked_ucr(self.domain_link, self.report.get_id)
         self.report.title = "New title"
         self.report.save()
-        pre_count = DomainLinkHistory.objects.filter(
-            link=self.domain_link,
-            model_detail=ReportLinkDetail(report_id=str(linked_report_info.report.get_id)).to_json()
-        ).count()
 
-        update_linked_ucr(self.domain_link, linked_report_info.report.get_id, 'test-user-id')
+        update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
 
         report = ReportConfiguration.get(linked_report_info.report.get_id)
         self.assertEqual("New title", report.title)
         self.assertEqual(self.report.get_id, report.report_meta.master_id)
         self.assertNotEqual(self.report.config_id, report.config_id)
-        post_count = DomainLinkHistory.objects.filter(
-            link=self.domain_link,
-            model_detail=ReportLinkDetail(report_id=str(linked_report_info.report.get_id)).to_json()
-        ).count()
-        self.assertEqual(post_count - pre_count, 1)
 
     def test_delete_master_deletes_linked(self):
         linked_report_info = create_linked_ucr(self.domain_link, self.report.get_id)
         soft_delete(self.report)
-        update_linked_ucr(self.domain_link, linked_report_info.report.get_id, 'test-user-id')
+        update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
         report = ReportConfiguration.get(linked_report_info.report.get_id)
         self.assertTrue(is_deleted(report))
 
         self.report.config.deactivate()
-        update_linked_ucr(self.domain_link, linked_report_info.report.get_id, 'test-user-id')
+        update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
         report = ReportConfiguration.get(linked_report_info.report.get_id)
         self.assertTrue(report.config.is_deactivated)
 
@@ -157,6 +139,6 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         self.report.title = "Another new title"
         self.report.save()
 
-        update_linked_ucr(self.domain_link, linked_report_info.report.get_id, 'test-user-id')
+        update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
         report = ReportConfiguration.get(linked_report_info.report.get_id)
         self.assertEqual("Another new title", report.title)
