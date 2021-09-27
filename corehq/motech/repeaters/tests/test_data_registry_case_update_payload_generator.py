@@ -53,7 +53,7 @@ def test_generator_exclude_list():
 def test_generator_dont_override_existing():
     builder = (
         IntentCaseBuilder(override_properties=False)
-        .case_properties(new_prop="new_prop_val", existing_prop="try override")
+        .case_properties(new_prop="new_prop_val", existing_prop="try override", existing_blank_prop="not blank")
         .exclude_props([])
     )
     _test_payload_generator(intent_case=builder.get_case(), expected_updates={
@@ -160,6 +160,7 @@ def _test_payload_generator(intent_case, expected_updates=None, expected_indices
     def _get_case(self, case_id, case_type, *args, **kwargs):
         return Mock(domain=TARGET_DOMAIN, case_type=case_type, case_id=case_id, case_json={
             "existing_prop": uuid.uuid4().hex,
+            "existing_blank_prop": ""
         })
 
     with patch.object(DataRegistryHelper, "get_case", new=_get_case), \
