@@ -32,6 +32,7 @@ from corehq.apps.api.resources import (
     SimpleSortableResourceMixin,
     v0_1,
     v0_3,
+    v0_5,
 )
 from corehq.apps.api.resources.auth import (
     DomainAdminAuthentication,
@@ -350,7 +351,7 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
         if couch_user.is_commcare_user():
             user_resource = v0_1.CommCareUserResource()
         elif couch_user.is_web_user():
-            user_resource = v0_1.WebUserResource()
+            user_resource = v0_5.WebUserResource()
         else:
             return HttpResponseForbidden()
 

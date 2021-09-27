@@ -124,36 +124,6 @@ class CommCareUserResource(UserResource):
             return UserQuerySetAdapter(domain, show_archived=show_archived)
 
 
-class WebUserResource(UserResource):
-    role = fields.CharField()
-    is_admin = fields.BooleanField()
-    permissions = fields.DictField()
-
-    def dehydrate_role(self, bundle):
-        role = bundle.obj.get_role(bundle.request.domain)
-        return role.name if role else ''
-
-    def dehydrate_permissions(self, bundle):
-        role = bundle.obj.get_role(bundle.request.domain)
-        return role.permissions.to_json() if role else {}
-
-    def dehydrate_is_admin(self, bundle):
-        return bundle.obj.is_domain_admin(bundle.request.domain)
-
-    class Meta(UserResource.Meta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_web_users)
-        object_class = WebUser
-        resource_name = 'web-user'
-
-    def obj_get_list(self, bundle, **kwargs):
-        domain = kwargs['domain']
-        username = bundle.request.GET.get('web_username')
-        if username:
-            user = WebUser.get_by_username(username)
-            return [user] if user else []
-        return list(WebUser.by_domain(domain))
-
-
 def _safe_bool(bundle, param, default=False):
     try:
         return string_to_boolean(bundle.request.GET.get(param))

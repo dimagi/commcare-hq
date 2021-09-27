@@ -342,12 +342,37 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         return ImmediateHttpResponse(response=http.HttpAccepted())
 
 
-class WebUserResource(v0_1.WebUserResource):
+class WebUserResource(v0_1.UserResource):
+    role = fields.CharField()
+    is_admin = fields.BooleanField()
+    permissions = fields.DictField()
 
-    class Meta(v0_1.WebUserResource.Meta):
+    class Meta(v0_1.UserResource.Meta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_web_users)
+        object_class = WebUser
+        resource_name = 'web-user'
         detail_allowed_methods = ['get']
         list_allowed_methods = ['get']
         always_return_data = True
+
+    def dehydrate_role(self, bundle):
+        role = bundle.obj.get_role(bundle.request.domain)
+        return role.name if role else ''
+
+    def dehydrate_permissions(self, bundle):
+        role = bundle.obj.get_role(bundle.request.domain)
+        return role.permissions.to_json() if role else {}
+
+    def dehydrate_is_admin(self, bundle):
+        return bundle.obj.is_domain_admin(bundle.request.domain)
+
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        username = bundle.request.GET.get('web_username')
+        if username:
+            user = WebUser.get_by_username(username)
+            return [user] if user else []
+        return list(WebUser.by_domain(domain))
 
     def serialize(self, request, data, format, options=None):
         if not isinstance(data, dict) and request.method == 'POST':

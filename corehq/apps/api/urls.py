@@ -45,7 +45,6 @@ API_LIST = (
     )),
     ((0, 4), (
         v0_1.CommCareUserResource,
-        v0_1.WebUserResource,
         v0_4.ApplicationResource,
         v0_4.CommCareCaseResource,
         v0_4.GroupResource,
