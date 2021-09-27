@@ -408,6 +408,12 @@ class CaseUpdateConfig:
         "index_case_type": "target_index_case_type",
         "index_relationship": "target_index_relationship",
     }
+    REQUIRED_FIELDS = [
+        "registry_slug",
+        "domain",
+        "case_id",
+        "case_type",
+    ]
 
     intent_case = attr.ib()
     registry_slug = attr.ib()
@@ -433,6 +439,13 @@ class CaseUpdateConfig:
         return config
 
     def validate(self):
+        missing = [
+            self.PROPS[field] for field in self.REQUIRED_FIELDS
+            if not getattr(self, field)
+        ]
+        if missing:
+            raise DataRegistryCaseUpdateError(f"Missing required case properties: {', '.join(missing)}")
+
         if self.includes is not None and self.excludes is not None:
             raise DataRegistryCaseUpdateError("Both exclude and include lists specified. Only one is allowed.")
         if self.includes is None and self.excludes is None:

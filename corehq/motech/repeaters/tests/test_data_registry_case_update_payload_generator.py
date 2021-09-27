@@ -147,6 +147,20 @@ def test_generator_update_multiple_cases():
         })
 
 
+def test_generator_required_fields():
+    intent_case = CommCareCaseSQL(
+        domain=SOURCE_DOMAIN,
+        type="registry_case_update",
+        case_json={},
+        case_id=uuid.uuid4().hex,
+        user_id="local_user1"
+    )
+    expect_missing = ["target_data_registry", "target_domain", "target_case_id", "target_case_type"]
+    expected_message = f"Missing required case properties: {', '.join(expect_missing)}"
+    with assert_raises(DataRegistryCaseUpdateError, msg=expected_message):
+        _test_payload_generator(intent_case=intent_case)
+
+
 def _test_payload_generator(intent_case, expected_updates=None, expected_indices=None):
     # intent case is the case created in the source domain which is used to trigger the repeater
     # and which contains the config for updating the case in the target domain
