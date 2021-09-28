@@ -52,20 +52,20 @@ def get_event_schema() -> dict:
     True
 
     """
+    coordinate_schema = get_coordinate_schema()
     note_schema = get_note_schema()
     relationship_schema = get_relationship_schema()
+    user_info_schema = get_user_info_schema()
     return {
         SchemaOptional("assignedUser"): id_schema,
         SchemaOptional("attributeCategoryOptions"): id_schema,
         SchemaOptional("attributeOptionCombo"): id_schema,
         SchemaOptional("completedBy"): str,
         SchemaOptional("completedDate"): date_schema,
-        SchemaOptional("coordinate"): {
-            "latitude": float,
-            "longitude": float,
-        },
+        SchemaOptional("coordinate"): coordinate_schema,
         SchemaOptional("created"): datetime_schema,
         SchemaOptional("createdAtClient"): datetime_schema,
+        SchemaOptional("createdByUserInfo"): user_info_schema,
         "dataValues": [{
             SchemaOptional("created"): datetime_schema,
             "dataElement": id_schema,
@@ -86,6 +86,7 @@ def get_event_schema() -> dict:
         },
         SchemaOptional("lastUpdated"): datetime_schema,
         SchemaOptional("lastUpdatedAtClient"): datetime_schema,
+        SchemaOptional("lastUpdatedByUserInfo"): user_info_schema,
         SchemaOptional("notes"): [note_schema],
         "orgUnit": id_schema,
         SchemaOptional("orgUnitName"): str,
@@ -133,7 +134,9 @@ def get_tracked_entity_schema() -> dict:
     Returns the schema of a tracked entity instance.
     """
     attribute_schema = get_attribute_schema()
+    coordinate_schema = get_coordinate_schema()
     event_schema = get_event_schema()
+    geometry_schema = get_geometry_schema()
     note_schema = get_note_schema()
     relationship_schema = get_relationship_schema()
     return {
@@ -147,10 +150,12 @@ def get_tracked_entity_schema() -> dict:
             SchemaOptional("createdAtClient"): datetime_schema,
             SchemaOptional("completedBy"): str,
             SchemaOptional("completedDate"): date_schema,
+            SchemaOptional("coordinate"): coordinate_schema,
             SchemaOptional("deleted"): bool,
             SchemaOptional("enrollment"): id_schema,
             SchemaOptional("enrollmentDate"): date_schema,
             SchemaOptional("events"): [event_schema],
+            SchemaOptional("geometry"): geometry_schema,
             SchemaOptional("incidentDate"): date_schema,
             SchemaOptional("lastUpdated"): datetime_schema,
             SchemaOptional("lastUpdatedAtClient"): datetime_schema,
@@ -165,16 +170,38 @@ def get_tracked_entity_schema() -> dict:
             SchemaOptional("trackedEntityType"): id_schema,
         }],
         SchemaOptional("featureType"): str,
-        SchemaOptional("geometry"): {
-            "type": str,
-            "coordinates": [float],
-        },
+        SchemaOptional("geometry"): geometry_schema,
         SchemaOptional("inactive"): bool,
         SchemaOptional("lastUpdated"): datetime_schema,
         SchemaOptional("lastUpdatedAtClient"): datetime_schema,
         "orgUnit": id_schema,
+        SchemaOptional("potentialDuplicate"): bool,
         SchemaOptional("programOwners"): [object],
         SchemaOptional("relationships"): [relationship_schema],
+        SchemaOptional("storedBy"): str,
         SchemaOptional("trackedEntityInstance"): id_schema,
         "trackedEntityType": id_schema,
+    }
+
+
+def get_coordinate_schema():
+    return {
+        "latitude": float,
+        "longitude": float,
+    }
+
+
+def get_geometry_schema():
+    return {
+        "type": str,
+        "coordinates": [float],
+    }
+
+
+def get_user_info_schema():
+    return {
+        "firstName": str,
+        "surname": str,
+        "uid": id_schema,
+        "username": str,
     }

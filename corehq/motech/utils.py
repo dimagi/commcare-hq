@@ -1,5 +1,6 @@
 import json
 from base64 import b64decode, b64encode
+from typing import Optional, Sequence
 
 from django.conf import settings
 
@@ -100,6 +101,8 @@ def unpad(bytestring):
 
     .. _iso7816: https://en.wikipedia.org/wiki/Padding_(cryptography)#ISO/IEC_7816-4
     """
+    if bytestring == b'':
+        return bytestring
     if bord(bytestring[-1]) in (0, 128):
         return crypto_unpad(bytestring, AES_BLOCK_SIZE, style='iso7816')
     return bytestring.rstrip(PAD_CHAR)
@@ -119,3 +122,68 @@ def pformat_json(data):
         return json.dumps(json_data, indent=2, sort_keys=True)
     except (TypeError, ValueError):
         return data
+
+
+def unpack_request_args(request_method, args, kwargs):
+    params = kwargs.pop('params', None)
+    json_data = kwargs.pop('json', None)  # dict
+    data = kwargs.pop('data', None)  # string
+    if data is None:
+        data = json_data
+    # Don't bother trying to cast `data` as a dict.
+    # RequestLog.request_body will store it, and it will be rendered
+    # as prettified JSON if possible, regardless of whether it's a
+    # dict or a string.
+    if args:
+        if request_method == 'GET':
+            params = args[0]
+        elif request_method == 'PUT':
+            data = args[0]
+    headers = kwargs.pop('headers', {})
+    return params, data, headers
+
+
+def get_endpoint_url(
+    base_url: Optional[str],
+    endpoint: Optional[str],
+) -> str:
+    """
+    Joins ``endpoint`` to ``base_url``. If either are None, returns the
+    other. If both are None, raises ValueError.
+
+    >>> get_endpoint_url('https://example.com/', '/foo')
+    'https://example.com/foo'
+
+    >>> get_endpoint_url('https://example.com', 'foo')
+    'https://example.com/foo'
+
+    >>> get_endpoint_url('https://example.com/foo', None)
+    'https://example.com/foo'
+
+    """
+    if base_url is None and endpoint is None:
+        raise ValueError('No URLs given')
+    if base_url is None:
+        return endpoint
+    if endpoint is None:
+        return base_url
+    return '/'.join((base_url.rstrip('/'), endpoint.lstrip('/')))
+
+
+def simplify_list(seq: Sequence):
+    """
+    Reduces ``seq`` to its only element, or ``None`` if it is empty.
+
+    >>> simplify_list([1])
+    1
+    >>> simplify_list([1, 2, 3])
+    [1, 2, 3]
+    >>> type(simplify_list([]))
+    <class 'NoneType'>
+
+    """
+    if len(seq) == 1:
+        return seq[0]
+    if not seq:
+        return None
+    return seq

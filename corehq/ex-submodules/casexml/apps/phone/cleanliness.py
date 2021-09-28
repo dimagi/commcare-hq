@@ -6,7 +6,6 @@ from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqcase.dbaccessors import get_all_case_owner_ids
 from corehq.apps.users.util import WEIRD_USER_IDS
 from django.conf import settings
 from corehq.form_processor.exceptions import CaseNotFound
@@ -49,9 +48,11 @@ def set_cleanliness_flags_for_all_domains(force_full=False):
     """
     Updates cleanliness for all domains
     """
-    for domain in Domain.get_all_names():
+    for domain_obj in Domain.get_all():
+        if domain_obj.use_livequery:
+            continue
         try:
-            set_cleanliness_flags_for_domain(domain, force_full=force_full)
+            set_cleanliness_flags_for_domain(domain_obj.name, force_full=force_full)
         except InvalidDomainError as e:
             notify_exception(None, six.text_type(e))
 

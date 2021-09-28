@@ -5,7 +5,7 @@ from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.ota.utils import get_restore_user, is_permitted_to_restore
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 
@@ -34,11 +34,15 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             username='billy@goats.com',
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.super_user = WebUser.create(
             username='super@woman.com',
             domain=cls.other_domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.super_user.is_superuser = True
         cls.super_user.save()
@@ -46,26 +50,36 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             username=format_username('super', cls.domain),
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.no_edit_commcare_user = CommCareUser.create(
             username=format_username('noedit', cls.domain),
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.location_user = CommCareUser.create(
             username=format_username('location', cls.domain),
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.wrong_location_user = CommCareUser.create(
             username=format_username('wrong-location', cls.domain),
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.web_location_user = WebUser.create(
             username='web-location@location.com',
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
 
         cls.commcare_user.set_location(cls.locations['usa'])
@@ -219,21 +233,29 @@ class GetRestoreUserTest(TestCase):
             username='billy@goats.com',
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.commcare_user = CommCareUser.create(
             username=format_username('jane', cls.domain),
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.other_commcare_user = CommCareUser.create(
             username=format_username('john', cls.domain),
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.super_user = WebUser.create(
             username='super@woman.com',
             domain=cls.other_domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.super_user.is_superuser = True
         cls.super_user.save()
@@ -241,13 +263,17 @@ class GetRestoreUserTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_users()
+        cls.project.delete()
+        cls.other_project.delete()
         super(GetRestoreUserTest, cls).tearDownClass()
 
     def test_get_restore_user_web_user(self):
         self.assertIsInstance(get_restore_user(self.domain, self.web_user, None), OTARestoreWebUser)
 
     def test_get_restore_user_commcare_user(self):
-        self.assertIsInstance(get_restore_user(self.domain, self.commcare_user, None), OTARestoreCommCareUser)
+        user = get_restore_user(self.domain, self.commcare_user, None)
+        self.assertIsInstance(user, OTARestoreCommCareUser)
+        self.assertEqual(user.request_user_id, self.commcare_user.user_id)
 
     def test_get_restore_user_as_user(self):
         self.assertIsInstance(
@@ -286,3 +312,4 @@ class GetRestoreUserTest(TestCase):
             self.other_commcare_user
         )
         self.assertEqual(user.user_id, self.other_commcare_user._id)
+        self.assertEqual(user.request_user_id, self.commcare_user.user_id)

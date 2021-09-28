@@ -1,6 +1,6 @@
 from operator import eq
 
-from jsonpath_rw import Child, Fields, Slice, Where, Root
+from jsonpath_ng import Child, Fields, Slice, Where, Root
 
 from corehq.motech.openmrs.jsonpath import Cmp
 
@@ -26,7 +26,7 @@ def get_entity_errors(response: dict) -> dict:
         Cmp(Fields("status"), eq, "ERROR")
     ), Fields("description"))
     # We write the JSONPath expression programmatically because
-    # currently jsonpath-rw does not support parsing comparison
+    # currently jsonpath-ng does not support parsing comparison
     # expressions like ``[?(@.status='ERROR')]``
     matches = jsonpath_expr.find(response)
     return {str(match.full_path): match.value for match in matches}

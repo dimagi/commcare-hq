@@ -41,7 +41,7 @@ class ReportDataSource(object):
         [{'village': 'Mazu', 'births': 30, 'deaths': 28},{...}]
         """
 
-        return {}
+        return [{}]
 
     def get_query_strings(self):
         return NotImplemented

@@ -14,3 +14,7 @@ class SQLSislogBackend(SQLHttpBackend):
     @classmethod
     def get_generic_name(cls):
         return "Sislog"
+
+    @staticmethod
+    def _encode_http_message(text):
+        return text.encode("utf-8")

@@ -17,6 +17,7 @@ from corehq.apps.accounting.async_handlers import (
     SoftwarePlanAsyncHandler,
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
+    CustomerInvoiceNumberAsyncHandler,
 )
 from corehq.apps.accounting.models import (
     BillingAccountType,
@@ -26,6 +27,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVisibility,
     SubscriptionAdjustmentMethod,
     SubscriptionType,
+    CreditAdjustmentReason,
 )
 from corehq.apps.reports.filters.base import (
     BaseReportFilter,
@@ -65,6 +67,23 @@ class DomainFilter(BaseAccountingSingleOptionFilter):
     default_text = _("All")
     async_handler = DomainFilterAsyncHandler
     async_action = 'domain_name'
+
+
+class CreditAdjustmentReasonFilter(BaseSingleOptionFilter):
+    slug = 'credit_adjustment_reason'
+    label = _("Credit Adjustment Reason")
+    default_text = _("Any Reason")
+    options = CreditAdjustmentReason.CHOICES
+
+
+class CreditAdjustmentLinkFilter(BaseSingleOptionFilter):
+    slug = 'credit_adjustment_link'
+    label = _("Credit Adjustment Reason")
+    default_text = _("Linked to Any Transaction")
+    options = (
+        ('invoice', "Linked to Invoice"),
+        ('customer_invoice', "Linked to Customer Invoice"),
+    )
 
 
 def clean_options(options):
@@ -413,6 +432,14 @@ class InvoiceNumberFilter(BaseAccountingSingleOptionFilter):
     default_text = 'All'
     async_handler = InvoiceNumberAsyncHandler
     async_action = 'invoice_number'
+
+
+class CustomerInvoiceNumberFilter(BaseAccountingSingleOptionFilter):
+    slug = 'customer_invoice_number'
+    label = 'Customer Invoice Number'
+    default_text = 'All'
+    async_handler = CustomerInvoiceNumberAsyncHandler
+    async_action = 'customer_invoice_number'
 
 
 class InvoiceBalanceFilter(BaseAccountingSingleOptionFilter):

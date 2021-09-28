@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+from . import CODES
 from .metadata import MetaDB
 
 NOT_SET = object()
@@ -52,14 +53,35 @@ class AbstractBlobDB(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get(self, key):
-        """Get a blob
+    def get(self, key=None, type_code=None, meta=None):
+        """Get a blob.
 
         :param key: Blob key.
-        :returns: A file-like object in binary read mode. The returned
+        :param type_code: Blob type code.
+        :param meta: BlobMeta instance.
+
+        key and type_code are required if meta is not provided. If meta
+        is provided, then key and type_code should be None. For type_code
+        form_xml, meta is required.
+
+        :returns: A BlobStream object in binary read mode. The returned
         object should be closed when finished reading.
         """
         raise NotImplementedError
+
+    @staticmethod
+    def _validate_get_args(key, type_code, meta):
+        if key is not None or type_code is not None:
+            if meta is not None:
+                raise ValueError("'key' and 'meta' are mutually exclusive")
+            if type_code == CODES.form_xml:
+                raise ValueError("form XML must be loaded with 'meta' argument")
+            if key is None or type_code is None:
+                raise ValueError("'key' must be specified with 'type_code'")
+            return key
+        if meta is None:
+            raise ValueError("'key' and 'type_code' or 'meta' is required")
+        return meta.key
 
     @abstractmethod
     def exists(self, key):
@@ -72,7 +94,8 @@ class AbstractBlobDB(metaclass=ABCMeta):
 
     @abstractmethod
     def size(self, key):
-        """Gets the size of a blob in bytes
+        """Gets the size of a stored blob in bytes. This may be different from the raw
+        content length if the blob was compressed.
 
         :param key: Blob key.
         :returns: The number of bytes of a blob

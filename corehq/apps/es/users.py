@@ -24,21 +24,22 @@ of all unknown users, web users, and demo users on a domain.
 """
 from copy import deepcopy
 
-from . import filters
+from . import filters, queries
 from .es_query import HQESQuery
 
 
 class UserES(HQESQuery):
     index = 'users'
     default_filters = {
-        'not_deleted': {"term": {"base_doc": "couchuser"}},
-        'active': {"term": {"is_active": True}},
+        'not_deleted': filters.term("base_doc", "couchuser"),
+        'active': filters.term("is_active", True),
     }
 
     @property
     def builtin_filters(self):
         return [
             domain,
+            domains,
             created,
             mobile_users,
             web_users,
@@ -50,6 +51,8 @@ class UserES(HQESQuery):
             is_practice_user,
             role_id,
             is_active,
+            username,
+            metadata,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -61,10 +64,20 @@ class UserES(HQESQuery):
         return query.is_active(False)
 
 
-def domain(domain):
+def domain(domain, allow_enterprise=False):
+    domain_list = [domain]
+    if allow_enterprise:
+        from corehq.apps.enterprise.models import EnterprisePermissions
+        config = EnterprisePermissions.get_by_domain(domain)
+        if config.is_enabled and domain in config.domains:
+            domain_list.append(config.source_domain)
+    return domains(domain_list)
+
+
+def domains(domains):
     return filters.OR(
-        filters.term("domain.exact", domain),
-        filters.term("domain_memberships.domain.exact", domain)
+        filters.term("domain.exact", domains),
+        filters.term("domain_memberships.domain.exact", domains)
     )
 
 
@@ -138,6 +151,7 @@ def location(location_id):
     # by any assigned-location primary or not
     return filters.OR(
         filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
+        # todo; this actually doesn't get applied since the below field is not indexed
         filters.AND(
             web_users(),
             filters.term('domain_memberships.assigned_location_ids', location_id)
@@ -150,8 +164,24 @@ def is_practice_user(practice_mode=True):
 
 
 def role_id(role_id):
-    return filters.term('domain_membership.role_id', role_id)
+    return filters.OR(
+        filters.term("domain_membership.role_id", role_id),     # mobile users
+        filters.term("domain_memberships.role_id", role_id)     # web users
+    )
 
 
 def is_active(active=True):
     return filters.term("is_active", active)
+
+
+def metadata(key, value):
+    # Note that this dict is stored in ES under the `user_data` field, and
+    # transformed into a queryable format (in ES) as `user_data_es`, but it's
+    # referenced in python as `metadata`
+    return queries.nested(
+        'user_data_es',
+        filters.AND(
+            filters.term(field='user_data_es.key', value=key),
+            queries.match(field='user_data_es.value', search_string=value, fuzziness=0),
+        )
+    )

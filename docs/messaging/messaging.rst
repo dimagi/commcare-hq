@@ -6,7 +6,7 @@ cases:
 
 * sending SMS to contacts
 * receiving SMS from contacts and performing pre-configured actions based on the content
-* scheduling reminders to contacts
+* time-based and rule-based schedules to send messages to contacts
 * creating alerts based on configurable criteria
 * sending outbound calls to contacts and initiating an Interactive Voice Response (IVR) session
 * collecting data via SMS surveys
@@ -24,5 +24,5 @@ knowledge of the messaging frameworks used in CommCareHQ.
     outbound_sms
     inbound_sms
     sms_backends
-    reminders
+    schedules
     keywords

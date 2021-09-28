@@ -28,7 +28,9 @@ hqDefine('hqwebapp/js/components/search_box', [
             self.placeholder = params.placeholder || '';
             self.immediate = params.immediate;
 
-            self.clickAction = params.action;
+            self.clickAction = function () {
+                self.action();
+            };
             self.keypressAction = function (model, e) {
                 if (e.keyCode === 13) {
                     self.action();

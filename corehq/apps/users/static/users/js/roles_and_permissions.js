@@ -56,15 +56,18 @@ hqDefine("users/js/roles_and_permissions",[
 
         userRoles.initUserRoles($userRolesTable, {
             userRoles: initialPageData.get("user_roles"),
+            nonAdminRoles: initialPageData.get("non_admin_roles"),
             defaultRole: initialPageData.get("default_role"),
             saveUrl: url("post_user_role"),
             deleteUrl: url("delete_user_role"),
             reportOptions: initialPageData.get("report_list"),
-            webAppsList: initialPageData.get("web_apps_list"),
-            appsList: initialPageData.get("apps_list"),
             allowEdit: initialPageData.get("can_edit_roles"),
             canRestrictAccessByLocation: initialPageData.get("can_restrict_access_by_location"),
             landingPageChoices: initialPageData.get("landing_page_choices"),
+            webAppsPrivilege: initialPageData.get("web_apps_privilege"),
+            DataFileDownloadEnabled: initialPageData.get("data_file_download_enabled"),
+            ExportOwnershipEnabled: initialPageData.get("export_ownership_enabled"),
+            dataRegistryChoices: initialPageData.get("data_registry_choices"),
         });
     });
 });

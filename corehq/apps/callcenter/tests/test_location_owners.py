@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_cases
 
-from corehq.apps.callcenter.sync_user_case import sync_call_center_user_case
+from corehq.apps.callcenter.sync_usercase import sync_call_center_user_case
 from corehq.apps.domain.models import CallCenterProperties
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType
@@ -34,7 +34,7 @@ class CallCenterLocationOwnerTest(TestCase):
         cls.domain.save()
 
         # Create user
-        cls.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***')
+        cls.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***', None, None)
 
         # Create locations
         LocationType.objects.get_or_create(
@@ -53,7 +53,7 @@ class CallCenterLocationOwnerTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
 
     def tearDown(self):

@@ -15,7 +15,9 @@ from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
+from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.users.models import CommCareUser, Permissions, WebUser
+from corehq.const import USER_CHANGE_VIA_API
 
 TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username', 'format']
 
@@ -38,6 +40,20 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
         except KeyError:
             user = None
         return user
+
+    @staticmethod
+    def _get_user_change_logger(bundle):
+        for_domain = bundle.obj.domain if bundle.obj.is_commcare_user() else None
+        return UserChangeLogger(
+            upload_domain=bundle.request.domain,
+            user_domain=for_domain,
+            user=bundle.obj,
+            is_new_user=False,  # only used for tracking updates, creation already tracked by model's create method
+            changed_by_user=bundle.request.couch_user,
+            changed_via=USER_CHANGE_VIA_API,
+            upload_record_id=None,
+            user_domain_required_for_log=bundle.obj.is_commcare_user()
+        )
 
     class Meta(CustomResourceMeta):
         list_allowed_methods = ['get']
@@ -89,7 +105,7 @@ class CommCareUserResource(UserResource):
         return super(UserResource, self).dehydrate(bundle)
 
     def dehydrate_user_data(self, bundle):
-        user_data = bundle.obj.user_data
+        user_data = bundle.obj.metadata
         if self.determine_format(bundle.request) == 'application/xml':
             # attribute names can't start with digits in xml
             user_data = {k: v for k, v in user_data.items() if not k[0].isdigit()}
@@ -119,7 +135,7 @@ class WebUserResource(UserResource):
 
     def dehydrate_permissions(self, bundle):
         role = bundle.obj.get_role(bundle.request.domain)
-        return role.permissions._doc if role else {}
+        return role.permissions.to_json() if role else {}
 
     def dehydrate_is_admin(self, bundle):
         return bundle.obj.is_domain_admin(bundle.request.domain)

@@ -20,12 +20,12 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from couchdbkit import ResourceNotFound
 from diff_match_patch import diff_match_patch
 from lxml import etree
-from unidecode import unidecode
+from text_unidecode import unidecode
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from corehq.apps.hqwebapp.decorators import waf_allow
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 
@@ -66,7 +66,6 @@ from corehq.apps.app_manager.models import (
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
-    MappingItem,
     ModuleNotFoundException,
     OpenCaseAction,
     UpdateCaseAction,
@@ -77,7 +76,7 @@ from corehq.apps.app_manager.templatetags.xforms_extras import (
 )
 from corehq.apps.app_manager.util import (
     CASE_XPATH_SUBSTRING_MATCHES,
-    USER_CASE_XPATH_SUBSTRING_MATCHES,
+    USERCASE_XPATH_SUBSTRING_MATCHES,
     actions_use_usercase,
     advanced_actions_use_usercase,
     enable_usercase,
@@ -94,6 +93,8 @@ from corehq.apps.app_manager.views.utils import (
     form_has_submissions,
     get_langs,
     handle_custom_icon_edits,
+    InvalidSessionEndpoint,
+    set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import (
     CaseError,
@@ -238,12 +239,14 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     return json_response(response_json)
 
 
+@waf_allow('XSS_BODY')
 @csrf_exempt
 @api_domain_view
 def edit_form_attr_api(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
+@waf_allow('XSS_BODY')
 @login_or_digest
 def edit_form_attr(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
@@ -287,14 +290,10 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform.exists():
                 xform.set_name(name)
                 save_xform(app, form, xform.render())
-        resp['update'] = {'.variable-form_name': trans(form.name, [lang], use_delim=False)}
+        resp['update'] = {'.variable-form_name': clean_trans(form.name, [lang])}
 
     if should_edit('comment'):
         form.comment = request.POST['comment']
-
-    if should_edit("name_enum"):
-        name_enum = json.loads(request.POST.get("name_enum"))
-        form.name_enum = [MappingItem(i) for i in name_enum]
 
     if should_edit("xform") or "xform" in request.FILES:
         try:
@@ -354,11 +353,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     "a release notes form <TODO messaging>")},
                 status_code=400
             )
-    if should_edit('no_vellum'):
-        form.no_vellum = request.POST['no_vellum'] == 'true'
-    if (should_edit("form_links_xpath_expressions") and
-            should_edit("form_links_form_ids") and
-            toggles.FORM_LINK_WORKFLOW.enabled(domain)):
+    if (should_edit("form_links_xpath_expressions")
+            and should_edit("form_links_form_ids")
+            and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
         form_links = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
@@ -367,9 +364,11 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 for datum_json in request.POST.getlist('datums_json')
             ],
         )
+        module_unique_ids = [m.unique_id for m in app.get_modules()]
         form.form_links = [FormLink(
             xpath=link[0],
-            form_id=link[1],
+            form_id=link[1] if link[1] not in module_unique_ids else None,
+            module_unique_id=link[1] if link[1] in module_unique_ids else None,
             datums=[
                 FormDatum(name=datum['name'], xpath=datum['xpath'])
                 for datum in link[2]
@@ -442,6 +441,14 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 {'message': error_message},
                 status_code=400
             )
+
+    if should_edit('session_endpoint_id'):
+        raw_endpoint_id = request.POST['session_endpoint_id']
+        try:
+            set_session_endpoint(form, raw_endpoint_id, app)
+        except InvalidSessionEndpoint as e:
+            return json_response({'message': str(e)}, status_code=400)
+
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
@@ -506,6 +513,7 @@ def new_form(request, domain, app_id, module_unique_id):
     )
 
 
+@waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
@@ -522,9 +530,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
     if conflict is not None:
         return conflict
 
-    current_xml = form.source
-    dmp = diff_match_patch()
-    xml, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
+    xml = apply_patch(patch, form.source)
     xml = save_xform(app, form, xml.encode('utf-8'))
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
@@ -536,6 +542,11 @@ def patch_xform(request, domain, app_id, form_unique_id):
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     return json_response(response_json)
+
+
+def apply_patch(patch, text):
+    dmp = diff_match_patch()
+    return dmp.patch_apply(dmp.patch_fromText(patch), text)[0]
 
 
 def _get_xform_conflict_response(form, sha1_checksum):
@@ -711,7 +722,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         form.get_unique_id()
         app.save()
 
-    allow_usercase = domain_has_privilege(request.domain, privileges.USER_CASE)
+    allow_usercase = domain_has_privilege(request.domain, privileges.USERCASE)
     valid_index_names = list(DEFAULT_CASE_INDEX_IDENTIFIERS.values())
     if allow_usercase:
         valid_index_names.append(USERCASE_PREFIX[0:-1])     # strip trailing slash
@@ -755,7 +766,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'form_filter_patterns': {
             'case_substring': CASE_XPATH_SUBSTRING_MATCHES,
-            'usercase_substring': USER_CASE_XPATH_SUBSTRING_MATCHES,
+            'usercase_substring': USERCASE_XPATH_SUBSTRING_MATCHES,
         },
         'custom_instances': [
             {'instanceId': instance.instance_id, 'instancePath': instance.instance_path}
@@ -765,8 +776,8 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
             {'test': assertion.test, 'text': assertion.text.get(current_lang)}
             for assertion in form.custom_assertions
         ],
-        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
         'form_icon': None,
+        'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
@@ -776,29 +787,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
     if toggles.FORM_LINK_WORKFLOW.enabled(domain):
-        def qualified_form_name(form, auto_link):
-            module_name = trans(module.name, langs)
-            form_name = trans(form.name, langs)
-            star = '* ' if auto_link else '  '
-            return "{}{} -> {}".format(star, module_name, form_name)
-
-        modules = [m for m in all_modules if m.case_type == module.case_type]
-        if getattr(module, 'root_module_id', None) and module.root_module not in modules:
-            modules.append(module.root_module)
-        auto_linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
-
-        def linkable_form(candidate_form):
-            auto_link = candidate_form in auto_linkable_forms
-            return {
-                'unique_id': candidate_form.unique_id,
-                'name': qualified_form_name(candidate_form, auto_link),
-                'auto_link': auto_link
-            }
-
-        context['linkable_forms'] = [
-            linkable_form(candidate_form) for candidate_module in all_modules
-            for candidate_form in candidate_module.get_forms()
-        ]
+        context.update(_get_form_link_context(module, langs))
 
     if isinstance(form, AdvancedForm):
         def commtrack_programs():
@@ -849,6 +838,52 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
 
     context.update({'case_config_options': case_config_options})
     return "app_manager/form_view.html", context
+
+
+def _get_form_link_context(module, langs):
+    def _module_name(module):
+        return trans(module.name, langs)
+
+    def _form_name(form):
+        module_name = _module_name(form.get_module())
+        form_name = trans(form.name, langs)
+        return "{} > {}".format(module_name, form_name)
+
+    linkable_items = []
+    for candidate_module in module.get_app().get_modules():
+        # Menus can be linked automatically if they're a top-level menu (no parent)
+        # or their parent menu's case type matches the current menu's parent's case type.
+        # Menus that use display-only forms can't be linked at all, since they don't have a
+        # dedicated screen to navigate to. All other menus can be linked manually.
+        if not candidate_module.put_in_root:
+            is_top_level = candidate_module.root_module_id is None
+            is_child_match = (
+                not is_top_level
+                and module.root_module_id is not None
+                and module.root_module.case_type == candidate_module.root_module.case_type
+            )
+            if is_top_level or is_child_match:
+                linkable_items.append({
+                    'unique_id': candidate_module.unique_id,
+                    'name': _module_name(candidate_module),
+                    'auto_link': True,
+                    'allow_manual_linking': False,
+                })
+        for candidate_form in candidate_module.get_forms():
+            # Forms can be linked automatically if their module is the same case type as this module,
+            # or if they belong to this module's parent module. All other forms can be linked manually.
+            case_type_match = candidate_module.case_type == module.case_type
+            is_parent = candidate_module.unique_id == module.root_module_id
+            linkable_items.append({
+                'unique_id': candidate_form.unique_id,
+                'name': _form_name(candidate_form),
+                'auto_link': case_type_match or is_parent,
+                'allow_manual_linking': True,
+            })
+
+    return {
+        'linkable_forms': sorted(linkable_items, key=lambda link: link['name']),
+    }
 
 
 @require_can_edit_apps

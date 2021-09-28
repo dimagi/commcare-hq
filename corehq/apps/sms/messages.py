@@ -35,12 +35,8 @@ MSG_USERNAME_TOO_LONG = "sms.validation.usernametoolong"
 MSG_VERIFICATION_START_WITH_REPLY = "sms.verify.startwithreplyto"
 MSG_VERIFICATION_START_WITHOUT_REPLY = "sms.verify.startwithoutreplyto"
 MSG_VERIFICATION_SUCCESSFUL = "sms.verify.successful"
-MSG_MOBILE_WORKER_INVITATION_START = "sms.invitation.mobile.start"
-MSG_MOBILE_WORKER_ANDROID_INVITATION = "sms.invitation.mobile.android"
-MSG_MOBILE_WORKER_JAVA_INVITATION = "sms.invitation.mobile.java"
 MSG_REGISTRATION_WELCOME_CASE = "sms.registration.welcome.case"
 MSG_REGISTRATION_WELCOME_MOBILE_WORKER = "sms.registration.welcome.mobileworker"
-MSG_REGISTRATION_INSTALL_COMMCARE = "sms.registration.installcommcare"
 
 _MESSAGES = {
     MSG_MULTIPLE_SESSIONS: ugettext_noop("An error has occurred. Please try restarting the survey."),
@@ -83,15 +79,8 @@ _MESSAGES = {
         "If yes, reply '123' to start using SMS with CommCareHQ."),
     MSG_VERIFICATION_SUCCESSFUL: ugettext_noop("Thank you. This phone has been verified for "
         "using SMS with CommCareHQ"),
-    MSG_MOBILE_WORKER_INVITATION_START: ugettext_noop("Welcome to CommCareHQ! What type of phone are you "
-        "using? Reply 1 for Android, 2 for other."),
-    MSG_MOBILE_WORKER_ANDROID_INVITATION: ugettext_noop("Welcome to CommCareHQ! Please register here: {0}"),
-    MSG_MOBILE_WORKER_JAVA_INVITATION: ugettext_noop("Welcome to CommCareHQ! Please reply with an SMS saying "
-        "'join {0} worker [username]', entering your requested username in place of [username]"),
     MSG_REGISTRATION_WELCOME_CASE: ugettext_noop("Thank you for registering with CommCareHQ."),
     MSG_REGISTRATION_WELCOME_MOBILE_WORKER: ugettext_noop("Thank you for registering with CommCareHQ."),
-    MSG_REGISTRATION_INSTALL_COMMCARE:
-        ugettext_noop("To install CommCare, follow this link to the Google Play store: {0}"),
 }
 
 

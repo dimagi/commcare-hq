@@ -1,7 +1,13 @@
+from datetime import datetime
+
 from django.db import models
 from django.utils.translation import ugettext as _
 
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.parsing import ISO_DATE_FORMAT
+
+from corehq.apps.case_importer import exceptions
+
 
 PROPERTY_TYPE_CHOICES = (
     ('date', _('Date')),
@@ -25,6 +31,9 @@ class CaseType(models.Model):
     class Meta(object):
         unique_together = ('domain', 'name')
 
+    def __str__(self):
+        return self.name or super().__str__()
+
     @classmethod
     def get_or_create(cls, domain, case_type):
         key = 'data-dict-case-type-{domain}-{type}'.format(
@@ -36,6 +45,11 @@ class CaseType(models.Model):
             except CaseType.DoesNotExist:
                 case_type_obj = CaseType.objects.create(domain=domain, name=case_type)
             return case_type_obj
+
+    def save(self, *args, **kwargs):
+        from .util import get_data_dict_case_types
+        get_data_dict_case_types.clear(self.domain)
+        return super(CaseType, self).save(*args, **kwargs)
 
 
 class CaseProperty(models.Model):
@@ -59,6 +73,11 @@ class CaseProperty(models.Model):
     class Meta(object):
         unique_together = ('case_type', 'name')
 
+    def __str__(self):
+        if self.name and self.case_type.name:
+            return f'{self.case_type.name}.{self.name}'
+        return super().__str__()
+
     @classmethod
     def get_or_create(cls, name, case_type, domain):
         key = 'data-dict-property-{domain}-{type}-{name}'.format(
@@ -78,3 +97,10 @@ class CaseProperty(models.Model):
         from .util import get_data_dict_props_by_case_type
         get_data_dict_props_by_case_type.clear(self.case_type.domain)
         return super(CaseProperty, self).save(*args, **kwargs)
+
+    def check_validity(self, value):
+        if value and self.data_type == 'date':
+            try:
+                datetime.strptime(value, ISO_DATE_FORMAT)
+            except ValueError:
+                raise exceptions.InvalidDate()

@@ -17,6 +17,7 @@ hqDefine('case_importer/js/import_history', [
 
         self.comment = ko.observable(options.comment || '');
         self.task_status = ko.observable(options.task_status);
+        self._ = _; // here to get inline <!-- ko if: _.isEmpty() --> underscore calls working
         self.isExpiredUpload = function () {
             var thresholdInDays = 2;
             var thresholdDate = new Date(new Date().setDate(new Date().getDate() - thresholdInDays));
@@ -60,6 +61,7 @@ hqDefine('case_importer/js/import_history', [
             FAILED: 3,
         };
         self.case_uploads = ko.observableArray(null);
+        self._ = _;  // here to get inline <!-- ko if: _.isEmpty() --> underscore calls working
         self.state = ko.observable(self.states.MISSING);
         var uploadIdsInDataMatchCurrent = function (data) {
             return _.chain(self.case_uploads()).pluck('upload_id').isEqual(_(data).pluck('upload_id')).value();
@@ -113,6 +115,7 @@ hqDefine('case_importer/js/import_history', [
             };
         }());
 
+        self.query = ko.observable('');
         self.goToPage = function (page) {
             if (self.state() === self.states.MISSING) {
                 // only show spinner on first fetch
@@ -122,6 +125,7 @@ hqDefine('case_importer/js/import_history', [
             $.get(initialPageData.reverse('case_importer_uploads'), {
                 page: page,
                 limit: self.itemsPerPage(),
+                query: self.query(),
             }).done(function (data) {
                 self.showPaginationSpinner(false);
                 self.state(self.states.SUCCESS);

@@ -247,7 +247,7 @@ def get_addpatient_caseblock(
             'patients added from OpenMRS Atom feed.'
         ))
     case_id = uuid.uuid4().hex
-    return CaseBlock(
+    return CaseBlock.deprecated_init(
         create=True,
         case_id=case_id,
         case_type=case_type,
@@ -258,7 +258,7 @@ def get_addpatient_caseblock(
 
 def get_updatepatient_caseblock(case, patient, repeater):
     case_block_kwargs = get_case_block_kwargs_from_patient(patient, repeater, case)
-    return CaseBlock(
+    return CaseBlock.deprecated_init(
         create=False,
         case_id=case.case_id,
         **case_block_kwargs
@@ -560,7 +560,7 @@ def get_encounter_datetime_value_sources(
 
 
 def update_case(repeater, case_id, case_block_kwargs, case_blocks):
-    case_blocks.append(CaseBlock(
+    case_blocks.append(CaseBlock.deprecated_init(
         case_id=case_id,
         create=False,
         **case_block_kwargs,
@@ -721,7 +721,7 @@ def get_case_block_for_indexed_case(
             f'Unable to determine mobile worker to own new "{case_type}" '
             f'{relationship} case or parent case "{parent_case_id}"'
         ))
-    case_block = CaseBlock(
+    case_block = CaseBlock.deprecated_init(
         create=True,
         case_id=case_id,
         case_type=case_type,

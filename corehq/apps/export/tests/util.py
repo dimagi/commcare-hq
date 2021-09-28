@@ -1,6 +1,6 @@
 import json
 import uuid
-
+from datetime import datetime
 
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
@@ -20,6 +20,8 @@ def new_case(domain=DOMAIN, user_id=DEFAULT_USER, owner_id=DEFAULT_USER,
              type=DEFAULT_CASE_TYPE, name=DEFAULT_CASE_NAME,
              closed=False, **kwargs):
     kwargs["_id"] = kwargs.get("_id", uuid.uuid4().hex)
+    kwargs["modified_on"] = kwargs.get("modified_on", datetime.utcnow())
+    kwargs["server_modified_on"] = kwargs.get("server_modified_on", datetime.utcnow())
     return CommCareCase(
         domain=domain,
         user_id=user_id,

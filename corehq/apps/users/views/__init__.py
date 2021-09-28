@@ -1,48 +1,55 @@
 import json
-import logging
+from collections import defaultdict
 from datetime import datetime
 
-from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth import authenticate, login
-from django.contrib.auth.views import redirect_to_login
-from django.core.exceptions import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import render
-from django.template.loader import render_to_string
-from django.urls import reverse
-from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_GET, require_POST
-
+import langcodes
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
+from crispy_forms.utils import render_crispy_form
+
+from corehq.apps.registry.utils import get_data_registry_dropdown_options
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
+from django.contrib import messages
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseRedirect,
+    JsonResponse,
+    HttpResponseBadRequest,
+)
+from django.http.response import HttpResponseServerError
+from django.shortcuts import render
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _, ngettext, ugettext_lazy, ugettext_noop
+
+from corehq.apps.users.analytics import get_role_user_count
+from dimagi.utils.couch import CriticalSection
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.debug import sensitive_post_parameters
+from django.views.decorators.http import require_GET, require_POST
+from django_digest.decorators import httpdigest
 from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
-from corehq.apps.accounting.decorators import always_allow_project_access
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.web import json_response
-
-import langcodes
 from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import always_allow_project_access, requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
-    HUBSPOT_EXISTING_USER_INVITE_FORM,
     HUBSPOT_INVITATION_SENT_FORM,
-    HUBSPOT_NEW_USER_INVITE_FORM,
     send_hubspot_form,
     track_workflow,
 )
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain, get_app_languages
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.app_manager.dbaccessors import get_app_languages
+from corehq.apps.cloudcare.esaccessors import login_as_user_filter
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -50,21 +57,16 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.es import AppES, UserES
-from corehq.apps.es.queries import search_string_query
+from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.es import UserES, queries
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.utils import send_confirmation_email
-from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (
-    conditionally_location_safe,
     location_safe,
     user_can_access_other_user,
 )
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
-    WebUserInvitationForm,
 )
-from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.verify import (
@@ -75,7 +77,10 @@ from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
 )
 from corehq.apps.translations.models import SMSTranslations
+from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import (
+    can_use_filtered_user_download,
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
     require_can_view_roles,
@@ -84,27 +89,37 @@ from corehq.apps.users.decorators import (
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
-    DomainRequestForm,
     SetUserPasswordForm,
-    UpdateUserPermissionForm,
     UpdateUserRoleForm,
 )
-from corehq.apps.users.landing_pages import get_allowed_landing_pages
+from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
 from corehq.apps.users.models import (
-    AdminUserRole,
     CommCareUser,
     CouchUser,
     DomainMembershipError,
     DomainRemovalRecord,
     DomainRequest,
-    SQLInvitation,
-    UserRole,
+    Invitation,
+    StaticRole,
     WebUser,
+    Permissions,
+    UserRole,
 )
-from corehq.elastic import es_query
+from corehq.apps.users.util import log_user_change
+from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
+from corehq.apps.user_importer.importer import UserUploadError
+from corehq.apps.user_importer.models import UserUploadRecord
+from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
+from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.pillows.utils import WEB_USER_TYPE
+from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
-from django_digest.decorators import httpdigest
+from corehq.util.workbook_json.excel import (
+    WorkbookJSONError,
+    WorksheetNotFound,
+    get_workbook,
+)
 
 
 def _users_context(request, domain):
@@ -156,7 +171,7 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
     def redirect(self):
         redirect = None
         has_project_access = has_privilege(self.request, privileges.PROJECT_ACCESS)
-        user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
+        user = CouchUser.get_by_user_id(self.couch_user._id)
         if user:
             if ((user.has_permission(self.domain, 'edit_commcare_users')
                     or user.has_permission(self.domain, 'view_commcare_users'))
@@ -252,7 +267,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     @memoized
     def editable_role_choices(self):
-        return _get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=False)
+        return get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=False)
 
     @property
     def can_change_user_roles(self):
@@ -282,23 +297,27 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     def backup_token(self):
         if Domain.get_by_name(self.request.domain).two_factor_auth:
-            device = self.editable_user.get_django_user().staticdevice_set.get_or_create(name='backup')[0]
-            token = device.token_set.first()
-            if token:
-                return device.token_set.first().token
-            else:
-                return device.token_set.create(token=StaticToken.random_token()).token
+            with CriticalSection([f"backup-token-{self.editable_user._id}"]):
+                device = (self.editable_user.get_django_user()
+                          .staticdevice_set
+                          .get_or_create(name='backup')[0])
+                token = device.token_set.first()
+                if token:
+                    return device.token_set.first().token
+                else:
+                    return device.token_set.create(token=StaticToken.random_token()).token
         return None
 
     @property
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
-            return CommtrackUserForm(self.request.POST, domain=self.domain)
+            return CommtrackUserForm(self.request.POST, request=self.request, domain=self.domain)
 
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         return CommtrackUserForm(
             domain=self.domain,
+            request=self.request,
             initial={
                 'primary_location': user_domain_membership.location_id,
                 'program_id': user_domain_membership.program_id,
@@ -351,7 +370,8 @@ class EditWebUserView(BaseEditUserView):
             data = self.request.POST
         else:
             data = None
-        form = UpdateUserRoleForm(data=data, domain=self.domain, existing_user=self.editable_user)
+        form = UpdateUserRoleForm(data=data, domain=self.domain, existing_user=self.editable_user,
+                                  request=self.request)
 
         if self.can_change_user_roles:
             form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
@@ -362,20 +382,7 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return _get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
-
-    @property
-    def form_user_update_permissions(self):
-        user = self.editable_user
-        is_super_user = user.is_superuser
-
-        return UpdateUserPermissionForm(auto_id=False, initial={'super_user': is_super_user})
-
-    @property
-    def main_context(self):
-        ctx = super(EditWebUserView, self).main_context
-        ctx.update({'form_user_update_permissions': self.form_user_update_permissions})
-        return ctx
+        return get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
 
     @property
     @memoized
@@ -398,6 +405,19 @@ class EditWebUserView(BaseEditUserView):
 
         ctx.update({'token': self.backup_token})
 
+        idp = IdentityProvider.get_active_identity_provider_by_username(
+            self.editable_user.username
+        )
+        ctx.update({
+            'has_untrusted_identity_provider': (
+                not IdentityProvider.does_domain_trust_user(
+                    self.domain,
+                    self.editable_user.username
+                )
+            ),
+            'idp_name': idp.name if idp else '',
+        })
+
         return ctx
 
     @method_decorator(always_allow_project_access)
@@ -412,11 +432,24 @@ class EditWebUserView(BaseEditUserView):
         if self.request.is_view_only:
             return self.get(request, *args, **kwargs)
 
-        if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
-            is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
-            if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
-                                                                        editable_user=self.editable_user, is_super_user=is_super_user):
-                messages.success(self.request, _('Changed system permissions for user "%s"') % self.editable_user.username)
+        if self.request.POST['form_type'] == 'trust-identity-provider':
+            idp = IdentityProvider.get_active_identity_provider_by_username(
+                self.editable_user.username
+            )
+            if idp:
+                idp.create_trust_with_domain(
+                    self.domain,
+                    self.request.user.username
+                )
+                messages.success(
+                    self.request,
+                    _('Your project space "{domain}" now trusts the SSO '
+                      'Identity Provider "{idp_name}".').format(
+                        domain=self.domain,
+                        idp_name=idp.name,
+                    )
+                )
+
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
@@ -444,29 +477,42 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
     @property
     @memoized
-    def user_roles(self):
-        user_roles = [AdminUserRole(domain=self.domain)]
-        user_roles.extend(sorted(
-            UserRole.by_domain(self.domain),
+    def web_apps_privilege(self):
+        return self.domain_object.has_privilege(
+            privileges.CLOUDCARE
+        )
+
+    @property
+    @memoized
+    def non_admin_roles(self):
+        return list(sorted(
+            UserRole.objects.get_by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
+    def get_roles_for_display(self):
         show_es_issue = False
-        # skip the admin role since it's not editable
-        for role in user_roles[1:]:
+        role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
+        for role in self.non_admin_roles:
+            role_data = role.to_json()
+            role_view_data.append(role_data)
+
             try:
-                role.hasUsersAssigned = bool(role.ids_of_assigned_users)
+                user_count = get_role_user_count(role.domain, role.couch_id)
+                role_data["hasUsersAssigned"] = bool(user_count)
             except TypeError:
                 # when query_result['hits'] returns None due to an ES issue
                 show_es_issue = True
-            role.has_unpermitted_location_restriction = (
+
+            role_data["has_unpermitted_location_restriction"] = (
                 not self.can_restrict_access_by_location
                 and not role.permissions.access_all_locations
             )
+
         if show_es_issue:
             messages.error(
                 self.request,
-                mark_safe(_(
+                mark_safe(_(  # nosec: no user input
                     "We might be experiencing issues fetching the entire list "
                     "of user roles right now. This issue is likely temporary and "
                     "nothing to worry about, but if you keep seeing this for "
@@ -474,7 +520,21 @@ class BaseRoleAccessView(BaseUserSettingsView):
                     "data-toggle='modal'>Report an Issue</a>."
                 ))
             )
-        return user_roles
+        return role_view_data
+
+
+@method_decorator(always_allow_project_access, name='dispatch')
+@method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
+class EnterpriseUsersView(BaseRoleAccessView):
+    template_name = 'users/enterprise_users.html'
+    page_title = ugettext_lazy("Enterprise Users")
+    urlname = 'enterprise_users'
+
+    @property
+    def page_context(self):
+        return {
+            "show_profile_column": domain_has_privilege(self.domain, privileges.APP_USER_PROFILES),
+        }
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
@@ -487,28 +547,80 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     @memoized
     def role_labels(self):
-        role_labels = {}
-        for r in self.user_roles:
-            key = 'user-role:%s' % r.get_id if r.get_id else r.get_qualified_id()
-            role_labels[key] = r.name
-        return role_labels
+        return {
+            r.get_qualified_id(): r.name
+            for r in [StaticRole.domain_admin(self.domain)] + self.non_admin_roles
+        }
 
     @property
     @memoized
     def invitations(self):
-        invitations = SQLInvitation.by_domain(self.domain)
-        for invitation in invitations:
-            invitation.role_label = self.role_labels.get(invitation.role, "")
-        return invitations
+        return [
+            {
+                "uuid": str(invitation.uuid),
+                "email": invitation.email,
+                "email_marked_as_bounced": bool(invitation.email_marked_as_bounced),
+                "invited_on": invitation.invited_on,
+                "role_label": self.role_labels.get(invitation.role, ""),
+                "email_status": invitation.email_status,
+            }
+            for invitation in Invitation.by_domain(self.domain)
+        ]
 
     @property
     def page_context(self):
+        from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
+        if can_use_filtered_user_download(self.domain):
+            bulk_download_url = reverse(FilteredWebUserDownload.urlname, args=[self.domain])
+        else:
+            bulk_download_url = reverse("download_web_users", args=[self.domain])
         return {
             'invitations': self.invitations,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
+            'bulk_download_url': bulk_download_url,
         }
+
+
+@require_can_edit_or_view_web_users
+def download_web_users(request, domain):
+    track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
+    from corehq.apps.users.views.mobile.users import download_users
+    return download_users(request, domain, user_type=WEB_USER_TYPE)
+
+
+class DownloadWebUsersStatusView(BaseUserSettingsView):
+    urlname = 'download_web_users_status'
+    page_title = ugettext_noop('Download Web Users Status')
+
+    @method_decorator(require_can_edit_or_view_web_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': ListWebUsersView.page_title,
+            'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+        }]
+
+    def get(self, request, *args, **kwargs):
+        context = super(DownloadWebUsersStatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('user_download_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Download Web Users Status"),
+            'progress_text': _("Preparing web user download."),
+            'error_text': _("There was an unexpected error! Please try again or report an issue."),
+            'next_url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+            'next_url_text': _("Go back to Web Users"),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
 class ListRolesView(BaseRoleAccessView):
@@ -538,7 +650,7 @@ class ListRolesView(BaseRoleAccessView):
     def page_context(self):
         if (not self.can_restrict_access_by_location
                 and any(not role.permissions.access_all_locations
-                        for role in self.user_roles)):
+                        for role in self.non_admin_roles)):
             messages.warning(self.request, _(
                 "This project has user roles that restrict data access by "
                 "organization, but the software plan no longer supports that. "
@@ -546,12 +658,11 @@ class ListRolesView(BaseRoleAccessView):
                 "by organization can no longer access this project.  Please "
                 "update the existing roles."))
         return {
-            'user_roles': self.user_roles,
+            'user_roles': self.get_roles_for_display(),
+            'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
-            'default_role': UserRole.get_default(),
+            'default_role': StaticRole.domain_default(self.domain),
             'report_list': get_possible_reports(self.domain),
-            'web_apps_list': get_cloudcare_apps(self.domain),
-            'apps_list': get_brief_apps_in_domain(self.domain),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
@@ -561,25 +672,81 @@ class ListRolesView(BaseRoleAccessView):
                 toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
                 toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
+            'web_apps_privilege': self.web_apps_privilege,
+            'has_report_builder_access': has_report_builder_access(self.request),
+            'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
+            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
+            'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
+
+@always_allow_project_access
+@require_can_edit_or_view_web_users
+@require_GET
+def paginate_enterprise_users(request, domain):
+    # Get web users
+    domains = [domain] + EnterprisePermissions.get_domains(domain)
+    web_users, pagination = _get_web_users(request, domains)
+
+    # Get linked mobile users
+    web_user_usernames = [u.username for u in web_users]
+    mobile_result = (
+        UserES().show_inactive().domains(domains).mobile_users().sort('username.exact')
+        .filter(
+            queries.nested(
+                'user_data_es',
+                login_as_user_filter(web_user_usernames)
+            )
+        )
+        .run()
+    )
+    mobile_users = defaultdict(list)
+    for hit in mobile_result.hits:
+        login_as_user = {data['key']: data['value'] for data in hit['user_data_es']}.get('login_as_user')
+        mobile_users[login_as_user].append(CommCareUser.wrap(hit))
+    users = []
+    allowed_domains = set(domains) - {domain}
+    for web_user in web_users:
+        loginAsUserCount = len(list(filter(lambda m: m['is_active'], mobile_users[web_user.username])))
+        other_domains = [m.domain for m in web_user.domain_memberships if m.domain in allowed_domains]
+        users.append({
+            **_format_enterprise_user(domain, web_user),
+            'otherDomains': other_domains,
+            'loginAsUserCount': loginAsUserCount,
+            'inactiveMobileCount': len(mobile_users[web_user.username]) - loginAsUserCount,
+        })
+        for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
+            profile = mobile_user.get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
+            users.append({
+                **_format_enterprise_user(mobile_user.domain, mobile_user),
+                'profile': profile.name if profile else None,
+                'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
+                'loginAsUser': web_user.username,
+                'is_active': mobile_user.is_active,
+            })
+
+    return JsonResponse({
+        'users': users,
+        **pagination,
+    })
+
+
+# user may be either a WebUser or a CommCareUser
+def _format_enterprise_user(domain, user):
+    membership = user.get_domain_membership(domain)
+    role = membership.role if membership else None
+    return {
+        'username': user.raw_username,
+        'name': user.full_name,
+        'id': user.get_id,
+        'role': role.name if role else None,
+    }
 
 
 @always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
 def paginate_web_users(request, domain):
-    limit = int(request.GET.get('limit', 10))
-    page = int(request.GET.get('page', 1))
-    skip = limit * (page - 1)
-    query = request.GET.get('query')
-
-    result = (
-        UserES().domain(domain).web_users().sort('username.exact')
-        .search_string_query(query, ["username", "last_name", "first_name"])
-        .start(skip).size(limit).run()
-    )
-
-    web_users = [WebUser.wrap(w) for w in result.hits]
+    web_users, pagination = _get_web_users(request, [domain])
     web_users_fmt = [{
         'email': u.get_email(),
         'domain': domain,
@@ -592,14 +759,37 @@ def paginate_web_users(request, domain):
             reverse('remove_web_user', args=[domain, u.user_id])
             if request.user.username != u.username else None
         ),
+        'isUntrustedIdentityProvider': not IdentityProvider.does_domain_trust_user(
+            domain, u.username
+        ),
     } for u in web_users]
 
     return JsonResponse({
         'users': web_users_fmt,
-        'total': result.total,
-        'page': page,
-        'query': query,
+        **pagination,
     })
+
+
+def _get_web_users(request, domains):
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    skip = limit * (page - 1)
+    query = request.GET.get('query')
+
+    result = (
+        UserES().domains(domains).web_users().sort('username.exact')
+        .search_string_query(query, ["username", "last_name", "first_name"])
+        .start(skip).size(limit).run()
+    )
+
+    return (
+        [WebUser.wrap(w) for w in result.hits],
+        {
+            'total': result.total,
+            'page': page,
+            'query': query,
+        },
+    )
 
 
 @always_allow_project_access
@@ -612,6 +802,10 @@ def remove_web_user(request, domain, couch_user_id):
     if user:
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
+        # web user's membership is bound to the domain, so log as a change for that domain
+        log_user_change(by_domain=request.domain, for_domain=domain, couch_user=user,
+                        changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
+                        change_messages=UserChangeMessage.domain_removal(domain))
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -648,12 +842,27 @@ def undo_remove_web_user(request, domain, record_id):
 @require_POST
 def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
-        return json_response({})
+        return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
-    role_data = dict(
-        (p, role_data[p])
-        for p in set(list(UserRole.properties()) + ['_id', '_rev']) if p in role_data
-    )
+
+    try:
+        role = _update_role_from_view(domain, role_data)
+    except ValueError as e:
+        return JsonResponse({
+            "message": str(e)
+        }, status=400)
+
+    response_data = role.to_json()
+    user_count = get_role_user_count(domain, role.couch_id)
+    response_data['hasUsersAssigned'] = user_count > 0
+    return JsonResponse(response_data)
+
+
+def _update_role_from_view(domain, role_data):
+    landing_page = role_data["default_landing_page"]
+    if landing_page:
+        validate_landing_page(domain, landing_page)
+
     if (
         not domain_has_privilege(domain, privileges.RESTRICT_ACCESS_BY_LOCATION)
         and not role_data['permissions']['access_all_locations']
@@ -661,246 +870,62 @@ def post_user_role(request, domain):
         # This shouldn't be possible through the UI, but as a safeguard...
         role_data['permissions']['access_all_locations'] = True
 
-    role = UserRole.wrap(role_data)
+    if "_id" in role_data:
+        try:
+            role = UserRole.objects.by_couch_id(role_data["_id"])
+        except UserRole.DoesNotExist:
+            role = UserRole()
+        else:
+            if role.domain != domain:
+                raise Http404()
+    else:
+        role = UserRole()
+
+    name = role_data["name"]
+    if not role.id:
+        if name.lower() == 'admin' or UserRole.objects.filter(domain=domain, name__iexact=name).exists():
+            raise ValueError(_("A role with the same name already exists"))
+
     role.domain = domain
-    if role.get_id:
-        old_role = UserRole.get(role.get_id)
-        assert(old_role.doc_type == UserRole.__name__)
-        assert(old_role.domain == domain)
-
-    if role.permissions.edit_web_users:
-        role.permissions.view_web_users = True
-
-    if role.permissions.edit_commcare_users:
-        role.permissions.view_commcare_users = True
-
-    if role.permissions.edit_groups:
-        role.permissions.view_groups = True
-
-    if role.permissions.edit_locations:
-        role.permissions.view_locations = True
-
-    if not role.permissions.edit_groups:
-        role.permissions.edit_users_in_groups = False
-
-    if not role.permissions.edit_locations:
-        role.permissions.edit_users_in_locations = False
-
+    role.name = name
+    role.default_landing_page = landing_page
+    role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
-    role.__setattr__('hasUsersAssigned',
-                     True if len(role.ids_of_assigned_users) > 0 else False)
-    return json_response(role)
+
+    permissions = Permissions.wrap(role_data["permissions"])
+    permissions.normalize()
+    role.set_permissions(permissions.to_list())
+
+    assignable_by = role_data["assignable_by"]
+    role.set_assignable_by_couch(assignable_by)
+    return role
 
 
 @domain_admin_required
 @require_POST
 def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
-        return json_response({})
+        return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
+    user_count = get_role_user_count(domain, role_data["_id"])
+    if user_count:
+        return JsonResponse({
+            "message": ngettext(
+                "Unable to delete role '{role}'. It has one user still assigned to it. "
+                "Remove all users assigned to the role before deleting it.",
+                "Unable to delete role '{role}'. It has {user_count} users still assigned to it. "
+                "Remove all users assigned to the role before deleting it.",
+                user_count
+            ).format(role=role_data["name"], user_count=user_count)
+        }, status=400)
     try:
-        role = UserRole.get(role_data["_id"])
-    except ResourceNotFound:
-        return json_response({})
-    copy_id = role._id
+        role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
+    except UserRole.DoesNotExist:
+        return JsonResponse({})
+    copy_id = role.couch_id
     role.delete()
     # return removed id in order to remove it from UI
-    return json_response({"_id": copy_id})
-
-
-class UserInvitationView(object):
-    # todo cleanup this view so it properly inherits from BaseSectionPageView
-    template = "users/accept_invite.html"
-
-    def __call__(self, request, uuid, **kwargs):
-        # add the correct parameters to this instance
-        self.request = request
-        if 'domain' in kwargs:
-            self.domain = kwargs['domain']
-
-        if request.GET.get('switch') == 'true':
-            logout(request)
-            return redirect_to_login(request.path)
-        if request.GET.get('create') == 'true':
-            logout(request)
-            return HttpResponseRedirect(request.path)
-
-        # Recently-sent invitations will use a URL based on UUID
-        try:
-            invitation = SQLInvitation.objects.get(uuid=uuid)
-        except (SQLInvitation.DoesNotExist, ValidationError):
-            invitation = None
-
-        # Older invitations, created before PR#26975, will use a URL based on SQL id
-        if not invitation:
-            try:
-                invitation = SQLInvitation.objects.get(id=int(uuid))
-            except (SQLInvitation.DoesNotExist, ValueError):
-                invitation = None
-
-        # The oldest invitations, created before PR#26686, will use a URL based on couch id.
-        if not invitation:
-            invitation = SQLInvitation.objects.filter(couch_id=uuid).first()
-
-        if not invitation:
-            messages.error(request, _("Sorry, it looks like your invitation has expired. "
-                                      "Please check the invitation link you received and try again, or "
-                                      "request a project administrator to send you the invitation again."))
-            return HttpResponseRedirect(reverse("login"))
-
-        if invitation.is_accepted:
-            messages.error(request, _("Sorry, that invitation has already been used up. "
-                                      "If you feel this is a mistake please ask the inviter for "
-                                      "another invitation."))
-            return HttpResponseRedirect(reverse("login"))
-
-        self.validate_invitation(invitation)
-
-        if invitation.is_expired:
-            return HttpResponseRedirect(reverse("no_permissions"))
-
-        # Add zero-width space to username for better line breaking
-        username = self.request.user.username.replace("@", "&#x200b;@")
-        context = {
-            'formatted_username': username,
-            'domain': self.domain,
-            'invite_to': self.domain,
-            'invite_type': _('Project'),
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
-        }
-        if request.user.is_authenticated:
-            context['current_page'] = {'page_name': _('Project Invitation')}
-        else:
-            context['current_page'] = {'page_name': _('Project Invitation, Account Required')}
-        if request.user.is_authenticated:
-            is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
-            if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
-                if is_invited_user:
-                    # if this invite was actually for this user, just mark it accepted
-                    messages.info(request, _("You are already a member of {entity}.").format(
-                        entity=self.inviting_entity))
-                    invitation.is_accepted = True
-                    invitation.save()
-                else:
-                    messages.error(request, _("It looks like you are trying to accept an invitation for "
-                                             "{invited} but you are already a member of {entity} with the "
-                                             "account {current}. Please sign out to accept this invitation "
-                                             "as another user.").format(
-                                                 entity=self.inviting_entity,
-                                                 invited=invitation.email,
-                                                 current=request.couch_user.username,
-                                             ))
-                return HttpResponseRedirect(self.redirect_to_on_success)
-
-            if not is_invited_user:
-                messages.error(request, _("The invited user {invited} and your user {current} do not match!").format(
-                    invited=invitation.email, current=request.couch_user.username))
-
-            if request.method == "POST":
-                couch_user = CouchUser.from_django_user(request.user, strict=True)
-                self._invite(invitation, couch_user)
-                track_workflow(request.couch_user.get_email(),
-                               "Current user accepted a project invitation",
-                               {"Current user accepted a project invitation": "yes"})
-                send_hubspot_form(HUBSPOT_EXISTING_USER_INVITE_FORM, request)
-                return HttpResponseRedirect(self.redirect_to_on_success)
-            else:
-                mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
-                context.update({
-                    'mobile_user': mobile_user,
-                    "invited_user": invitation.email if request.couch_user.username != invitation.email else "",
-                })
-                return render(request, self.template, context)
-        else:
-            if request.method == "POST":
-                form = WebUserInvitationForm(request.POST)
-                if form.is_valid():
-                    # create the new user
-                    user = activate_new_user(form, domain=invitation.domain)
-                    user.save()
-                    messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
-                    self._invite(invitation, user)
-                    authenticated = authenticate(username=form.cleaned_data["email"],
-                                                 password=form.cleaned_data["password"])
-                    if authenticated is not None and authenticated.is_active:
-                        login(request, authenticated)
-                    track_workflow(request.POST['email'],
-                                   "New User Accepted a project invitation",
-                                   {"New User Accepted a project invitation": "yes"})
-                    send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
-                    return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
-            else:
-                if CouchUser.get_by_username(invitation.email):
-                    return HttpResponseRedirect(reverse("login") + '?next=' +
-                        reverse('domain_accept_invitation', args=[invitation.domain, invitation.uuid]))
-                form = WebUserInvitationForm(initial={
-                    'email': invitation.email,
-                })
-
-        context.update({"form": form})
-        return render(request, self.template, context)
-
-    def _invite(self, invitation, user):
-        self.invite(invitation, user)
-        invitation.is_accepted = True
-        invitation.save()
-        messages.success(self.request, self.success_msg)
-        send_confirmation_email(invitation)
-
-    def validate_invitation(self, invitation):
-        assert invitation.domain == self.domain
-
-    def is_invited(self, invitation, couch_user):
-        return couch_user.is_member_of(invitation.domain)
-
-    @property
-    def inviting_entity(self):
-        return self.domain
-
-    @property
-    def success_msg(self):
-        return _('You have been added to the "%s" project space.') % self.domain
-
-    @property
-    def redirect_to_on_success(self):
-        return reverse("domain_homepage", args=[self.domain,])
-
-    def invite(self, invitation, user):
-        user.add_as_web_user(invitation.domain, role=invitation.role,
-                             location_id=invitation.supply_point, program_id=invitation.program)
-
-
-@always_allow_project_access
-@location_safe
-@sensitive_post_parameters('password')
-def accept_invitation(request, domain, uuid):
-    return UserInvitationView()(request, uuid, domain=domain)
-
-
-@always_allow_project_access
-@require_POST
-@require_can_edit_web_users
-def reinvite_web_user(request, domain):
-    uuid = request.POST['uuid']
-    try:
-        invitation = SQLInvitation.objects.get(uuid=uuid)
-    except SQLInvitation.DoesNotExist:
-        return json_response({'response': _("Error while attempting resend"), 'status': 'error'})
-
-    invitation.invited_on = datetime.utcnow()
-    invitation.save()
-    invitation.send_activation_email()
-    return json_response({'response': _("Invitation resent"), 'status': 'ok'})
-
-
-@always_allow_project_access
-@require_POST
-@require_can_edit_web_users
-def delete_invitation(request, domain):
-    uuid = request.POST['uuid']
-    invitation = SQLInvitation.objects.get(uuid=uuid)
-    invitation.delete()
-    return json_response({'status': 'ok'})
+    return JsonResponse({"_id": copy_id})
 
 
 @always_allow_project_access
@@ -908,7 +933,26 @@ def delete_invitation(request, domain):
 @require_can_edit_web_users
 def delete_request(request, domain):
     DomainRequest.objects.get(id=request.POST['id']).delete()
-    return json_response({'status': 'ok'})
+    return JsonResponse({'status': 'ok'})
+
+
+@always_allow_project_access
+@require_POST
+@require_can_edit_web_users
+def check_sso_trust(request, domain):
+    username = request.POST['username']
+    is_trusted = IdentityProvider.does_domain_trust_user(domain, username)
+    response = {
+        'is_trusted': is_trusted,
+    }
+    if not is_trusted:
+        response.update({
+            'email_domain': get_email_domain_from_username(username),
+            'idp_name': IdentityProvider.get_active_identity_provider_by_username(
+                username
+            ).name,
+        })
+    return JsonResponse(response)
 
 
 class BaseManageWebUserView(BaseUserSettingsView):
@@ -934,9 +978,10 @@ class InviteWebUserView(BaseManageWebUserView):
     @property
     @memoized
     def invite_web_user_form(self):
-        role_choices = _get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
+        role_choices = get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
         loc = None
         domain_request = DomainRequest.objects.get(id=self.request_id) if self.request_id else None
+        is_add_user = self.request_id is not None
         initial = {
             'email': domain_request.email if domain_request else None,
         }
@@ -945,14 +990,21 @@ class InviteWebUserView(BaseManageWebUserView):
             loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
-            pending_invites = [di.email for di in SQLInvitation.by_domain(self.domain)]
+            pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
             return AdminInvitesUserForm(
                 self.request.POST,
                 excluded_emails=current_users + pending_invites,
                 role_choices=role_choices,
-                domain=self.domain
+                domain=self.domain,
+                is_add_user=is_add_user,
             )
-        return AdminInvitesUserForm(initial=initial, role_choices=role_choices, domain=self.domain, location=loc)
+        return AdminInvitesUserForm(
+            initial=initial,
+            role_choices=role_choices,
+            domain=self.domain,
+            location=loc,
+            is_add_user=is_add_user,
+        )
 
     @property
     @memoized
@@ -965,7 +1017,6 @@ class InviteWebUserView(BaseManageWebUserView):
     def page_context(self):
         return {
             'registration_form': self.invite_web_user_form,
-            'request_id': self.request_id,
         }
 
     def post(self, request, *args, **kwargs):
@@ -997,9 +1048,15 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
-                invite = SQLInvitation(**data)
+                invite = Invitation(**data)
                 invite.save()
                 invite.send_activation_email()
+
+            # Ensure trust is established with Invited User's Identity Provider
+            if not IdentityProvider.does_domain_trust_user(self.domain, data["email"]):
+                idp = IdentityProvider.get_active_identity_provider_by_username(data["email"])
+                idp.create_trust_with_domain(self.domain, self.request.user.username)
+
             return HttpResponseRedirect(reverse(
                 ListWebUsersView.urlname,
                 args=[self.domain]
@@ -1007,51 +1064,151 @@ class InviteWebUserView(BaseManageWebUserView):
         return self.get(request, *args, **kwargs)
 
 
-@method_decorator(always_allow_project_access, name='dispatch')
-class DomainRequestView(BasePageView):
-    urlname = "domain_request"
-    page_title = ugettext_lazy("Request Access")
-    template_name = "users/domain_request.html"
-    request_form = None
+class BaseUploadUser(BaseUserSettingsView):
+    def post(self, request, *args, **kwargs):
+        """View's dispatch method automatically calls this"""
+        try:
+            self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+        except WorkbookJSONError as e:
+            messages.error(request, str(e))
+            return self.get(request, *args, **kwargs)
 
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.request.domain])
+        try:
+            self.user_specs = self.workbook.get_worksheet(title='users')
+        except WorksheetNotFound:
+            try:
+                self.user_specs = self.workbook.get_worksheet()
+            except WorksheetNotFound:
+                return HttpResponseBadRequest("Workbook has no worksheets")
+
+        try:
+            self.group_specs = self.workbook.get_worksheet(title='groups')
+        except WorksheetNotFound:
+            self.group_specs = []
+        try:
+            from corehq.apps.user_importer.importer import check_headers
+            check_headers(self.user_specs, self.domain, is_web_upload=self.is_web_upload)
+        except UserUploadError as e:
+            messages.error(request, _(str(e)))
+            return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
+        if PARALLEL_USER_IMPORTS.enabled(self.domain) and not self.is_web_upload:
+            if list(self.group_specs):
+                messages.error(
+                    request,
+                    _("Groups are not allowed with parallel user import. Please upload them separately")
+                )
+                return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+            task = parallel_user_import.delay(
+                self.domain,
+                list(self.user_specs),
+                request.couch_user
+            )
+        else:
+            upload_record = UserUploadRecord(
+                domain=self.domain,
+                user_id=request.couch_user.user_id
+            )
+            upload_record.save()
+            task = import_users_and_groups.delay(
+                self.domain,
+                list(self.user_specs),
+                list(self.group_specs),
+                request.couch_user,
+                upload_record.pk,
+                self.is_web_upload
+            )
+        task_ref.set_task(task)
+        if self.is_web_upload:
+            return HttpResponseRedirect(
+                reverse(
+                    WebUserUploadStatusView.urlname,
+                    args=[self.domain, task_ref.download_id]
+                )
+            )
+        else:
+            from corehq.apps.users.views.mobile import UserUploadStatusView
+            return HttpResponseRedirect(
+                reverse(
+                    UserUploadStatusView.urlname,
+                    args=[self.domain, task_ref.download_id]
+                )
+            )
+
+
+class UploadWebUsers(BaseUploadUser):
+    template_name = 'hqwebapp/bulk_upload.html'
+    urlname = 'upload_web_users'
+    page_title = ugettext_noop("Bulk Upload Web Users")
+    is_web_upload = True
+
+    @method_decorator(always_allow_project_access)
+    @method_decorator(require_can_edit_web_users)
+    @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
+    def dispatch(self, request, *args, **kwargs):
+        return super(UploadWebUsers, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
-        domain_obj = Domain.get_by_name(self.request.domain)
-        if self.request_form is None:
-            initial = {'domain': domain_obj.name}
-            if self.request.user.is_authenticated:
-                initial.update({
-                    'email': self.request.user.get_username(),
-                    'full_name': self.request.user.get_full_name(),
-                })
-            self.request_form = DomainRequestForm(initial=initial)
-        return {
-            'domain': domain_obj.name,
-            'hr_name': domain_obj.display_name(),
-            'request_form': self.request_form,
-        }
+        request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
+        from corehq.apps.users.views.mobile import get_user_upload_context
+        return get_user_upload_context(self.domain, request_params, "download_web_users", "web user", "web users")
 
     def post(self, request, *args, **kwargs):
-        self.request_form = DomainRequestForm(request.POST)
-        if self.request_form.is_valid():
-            data = self.request_form.cleaned_data
-            with CriticalSection(["domain_request_%s" % data['domain']]):
-                if DomainRequest.by_email(data['domain'], data['email']) is not None:
-                    messages.error(request, _("A request is pending for this email. "
-                        "You will receive an email when the request is approved."))
-                else:
-                    domain_request = DomainRequest(**data)
-                    domain_request.send_request_email()
-                    domain_request.save()
-                    domain_obj = Domain.get_by_name(domain_request.domain)
-                    return render(request, "users/confirmation_sent.html", {
-                        'hr_name': domain_obj.display_name() if domain_obj else domain_request.domain,
-                    })
-        return self.get(request, *args, **kwargs)
+        track_workflow(request.couch_user.get_email(), 'Bulk upload web users selected')
+        return super(UploadWebUsers, self).post(request, *args, **kwargs)
+
+
+class WebUserUploadStatusView(BaseManageWebUserView):
+    urlname = 'web_user_upload_status'
+    page_title = ugettext_noop('Web User Upload Status')
+
+    def get(self, request, *args, **kwargs):
+        context = super(WebUserUploadStatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse(WebUserUploadJobPollView.urlname, args=[self.domain, kwargs['download_id']]),
+            'title': _("Web User Upload Status"),
+            'progress_text': _("Importing your data. This may take some time..."),
+            'error_text': _("Problem importing data! Please try again or report an issue."),
+            'next_url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+            'next_url_text': _("Return to manage web users"),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+class UserUploadJobPollView(BaseUserSettingsView):
+
+    def get(self, request, domain, download_id):
+        try:
+            context = get_download_context(download_id)
+        except TaskFailedError:
+            return HttpResponseServerError()
+
+        context.update({
+            'on_complete_short': _('Bulk upload complete.'),
+            'on_complete_long': _(self.on_complete_long),
+            'user_type': _(self.user_type),
+        })
+
+        context['result'] = BulkUploadResponseWrapper(context)
+        return render(request, 'users/mobile/partials/user_upload_status.html', context)
+
+
+class WebUserUploadJobPollView(UserUploadJobPollView, BaseManageWebUserView):
+    urlname = "web_user_upload_job_poll"
+    on_complete_long = 'Web Worker upload has finished'
+    user_type = 'web users'
+
+    @method_decorator(require_can_edit_web_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(WebUserUploadJobPollView, self).dispatch(request, *args, **kwargs)
 
 
 @require_POST
@@ -1085,6 +1242,14 @@ def delete_phone_number(request, domain, couch_user_id):
         raise Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
+    log_user_change(
+        by_domain=request.domain,
+        for_domain=user.domain,
+        couch_user=user,
+        changed_by_user=request.couch_user,
+        changed_via=USER_CHANGE_VIA_WEB,
+        change_messages=UserChangeMessage.phone_numbers_removed([phone_number])
+    )
     from corehq.apps.users.views.mobile import EditCommCareUserView
     redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
@@ -1151,7 +1316,7 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
 @sensitive_post_parameters('new_password1', 'new_password2')
 @login_and_domain_required
 @location_safe
-def change_password(request, domain, login_id, template="users/partials/reset_password.html"):
+def change_password(request, domain, login_id):
     # copied from auth's password_change
 
     commcare_user = CommCareUser.get_by_user_id(login_id, domain)
@@ -1163,15 +1328,19 @@ def change_password(request, domain, login_id, template="users/partials/reset_pa
         form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
+            log_user_change(
+                by_domain=domain,
+                for_domain=commcare_user.domain,
+                couch_user=commcare_user,
+                changed_by_user=request.couch_user,
+                changed_via=USER_CHANGE_VIA_WEB,
+                change_messages=UserChangeMessage.password_reset()
+            )
             json_dump['status'] = 'OK'
             form = SetUserPasswordForm(request.project, login_id, user='')
     else:
         form = SetUserPasswordForm(request.project, login_id, user=django_user)
-    context = _users_context(request, domain)
-    context.update({
-        'reset_password_form': form,
-    })
-    json_dump['formHTML'] = render_to_string(template, context)
+    json_dump['formHTML'] = render_crispy_form(form)
     return HttpResponse(json.dumps(json_dump))
 
 
@@ -1190,15 +1359,3 @@ def register_fcm_device_token(request, domain, couch_user_id, device_token):
     user.fcm_device_token = device_token
     user.save()
     return HttpResponse()
-
-
-def _get_editable_role_choices(domain, couch_user, allow_admin_role):
-    def role_to_choice(role):
-        return (role.get_qualified_id(), role.name or _('(No Name)'))
-
-    roles = UserRole.by_domain(domain)
-    if not couch_user.is_domain_admin(domain):
-        roles = [role for role in roles if role.is_non_admin_editable]
-    elif allow_admin_role:
-        roles = [AdminUserRole(domain=domain)] + roles
-    return [role_to_choice(role) for role in roles]

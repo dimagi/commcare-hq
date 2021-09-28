@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.urls import reverse
 
 from corehq.apps.api.odata.views import (
     ODataCaseMetadataView,
@@ -7,13 +8,7 @@ from corehq.apps.api.odata.views import (
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.export.models import (
     CaseExportInstance,
-    ExportColumn,
-    ExportItem,
-    FormExportInstance,
-    PathNode,
-    TableConfiguration,
 )
-from corehq.util.test_utils import flag_enabled
 
 from .utils import CaseOdataTestMixin, FormOdataTestMixin
 
@@ -38,33 +33,19 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
 
     def test_missing_feed(self):
         correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
+        response = self._execute_query(
+            correct_credentials,
+            reverse(
+                self.view_urlname,
+                kwargs={
+                    'domain': self.domain.name,
+                    'config_id': 'FAKEID'
+                }
+            )
+        )
         self.assertEqual(response.status_code, 404)
 
     def test_populated_metadata_document(self):
-        odata_config = CaseExportInstance(
-            _id='my_config_id',
-            domain=self.domain.name,
-            is_odata_config=True,
-            tables=[
-                TableConfiguration(
-                    selected=True,
-                    columns=[
-                        ExportColumn(label='closed', selected=True,
-                                     # this is what exports generate for a base level property
-                                     item=ExportItem(path=[PathNode(name='closed')])),
-                        ExportColumn(label='date_modified', selected=True,
-                                     item=ExportItem(path=[PathNode(name='date_modified')])),
-                        ExportColumn(label='selected_property_1', selected=True),
-                        ExportColumn(label='selected_property_2', selected=True),
-                        ExportColumn(label='unselected_property'),
-                    ],
-                ),
-            ]
-        )
-        odata_config.save()
-        self.addCleanup(odata_config.delete)
-
         non_odata_config = CaseExportInstance(domain=self.domain.name)
         non_odata_config.save()
         self.addCleanup(non_odata_config.delete)
@@ -105,37 +86,19 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
 
     def test_missing_feed(self):
         correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
+        response = self._execute_query(
+            correct_credentials,
+            reverse(
+                self.view_urlname,
+                kwargs={
+                    'domain': self.domain.name,
+                    'config_id': 'FAKEID'
+                }
+            )
+        )
         self.assertEqual(response.status_code, 404)
 
     def test_populated_metadata_document(self):
-        odata_config = FormExportInstance(
-            _id='my_config_id',
-            domain=self.domain.name,
-            is_odata_config=True,
-            tables=[
-                TableConfiguration(
-                    selected=True,
-                    columns=[
-                        ExportColumn(label='received_on', selected=True,
-                                     item=ExportItem(path=[PathNode(name='received_on')])),
-                        ExportColumn(label='started_time', selected=True,
-                                     item=ExportItem(path=[
-                                         PathNode(name='form'),
-                                         PathNode(name='meta'),
-                                         PathNode(name='timeStart'),
-                                     ])),
-
-                        ExportColumn(label='selected_property_1', selected=True),
-                        ExportColumn(label='selected_property_2', selected=True),
-                        ExportColumn(label='unselected_property'),
-                    ],
-                ),
-            ]
-        )
-        odata_config.save()
-        self.addCleanup(odata_config.delete)
-
         correct_credentials = self._get_correct_credentials()
         response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)

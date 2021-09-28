@@ -6,10 +6,10 @@ from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
-from memoized import memoized_property
+from django.utils.translation import ugettext_noop
 
+from memoized import memoized_property
 from tastypie import fields, http
-from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
@@ -17,12 +17,7 @@ from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
-from casexml.apps.stock.models import StockTransaction
-from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.standard.cases.utils import (
-    query_location_restricted_cases,
-    query_location_restricted_forms,
-)
+from dimagi.utils.couch.bulk import get_docs
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
@@ -32,13 +27,18 @@ from corehq.apps.api.odata.serializers import (
     ODataFormSerializer,
 )
 from corehq.apps.api.odata.utils import record_feed_access_in_datadog
-from corehq.apps.api.odata.views import add_odata_headers
+from corehq.apps.api.odata.views import (
+    add_odata_headers,
+    raise_odata_permissions_issues,
+)
 from corehq.apps.api.resources.auth import (
     AdminAuthentication,
+    LoginAuthentication,
     ODataAuthentication,
     RequirePermissionAuthentication,
 )
 from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
@@ -50,10 +50,16 @@ from corehq.apps.export.esaccessors import (
 )
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
+from corehq.apps.reports.standard.cases.utils import (
+    query_location_restricted_cases,
+    query_location_restricted_forms,
+)
 from corehq.apps.sms.util import strip_plus
+from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -67,7 +73,8 @@ from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
 )
 from corehq.apps.users.models import (
@@ -78,11 +85,13 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.util import raw_username
+from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.timer import TimingContext
 
 from . import (
+    CorsResourceMixin,
     CouchResourceMixin,
     DomainSpecificResourceMixin,
     HqBaseResource,
@@ -107,15 +116,13 @@ def user_es_call(domain, q, fields, size, start_at):
 
 def _set_role_for_bundle(kwargs, bundle):
     # check for roles associated with the domain
-    domain_roles = UserRole.by_domain_and_name(kwargs['domain'], bundle.data.get('role'))
+    domain_roles = UserRole.objects.by_domain_and_name(kwargs['domain'], bundle.data.get('role'))
     if domain_roles:
-        qualified_role_id = domain_roles[0].get_qualified_id()
+        qualified_role_id = domain_roles[0].get_qualified_id()  # roles may not be unique by name
         bundle.obj.set_role(kwargs['domain'], qualified_role_id)
     else:
-        # check for preset roles and now create them for the domain
-        permission_preset_name = UserRole.get_preset_permission_by_name(bundle.data.get('role'))
-        if permission_preset_name:
-            bundle.obj.set_role(kwargs['domain'], permission_preset_name)
+        raise BadRequest(f"Invalid User Role '{bundle.data.get('role')}'")
+
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
@@ -208,23 +215,55 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                                                           api_name=self._meta.api_name,
                                                           pk=obj._id))
 
-    def _update(self, bundle):
+    def _update(self, bundle, user_change_logger=None):
         should_save = False
         for key, value in bundle.data.items():
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
+                    old_phone_numbers = set(bundle.obj.phone_numbers)
+                    new_phone_numbers = set()
                     bundle.obj.phone_numbers = []
                     for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
-
-                        bundle.obj.add_phone_number(strip_plus(phone_number))
+                        formatted_phone_number = strip_plus(phone_number)
+                        new_phone_numbers.add(formatted_phone_number)
+                        bundle.obj.add_phone_number(formatted_phone_number)
                         if idx == 0:
-                            bundle.obj.set_default_phone_number(strip_plus(phone_number))
+                            bundle.obj.set_default_phone_number(formatted_phone_number)
                         should_save = True
+
+                    if user_change_logger:
+                        (numbers_added, numbers_removed) = find_differences_in_list(
+                            target=list(new_phone_numbers),
+                            source=list(old_phone_numbers)
+                        )
+
+                        change_messages = {}
+                        if numbers_removed:
+                            change_messages.update(
+                                UserChangeMessage.phone_numbers_removed(list(numbers_removed))["phone_numbers"]
+                            )
+
+                        if numbers_added:
+                            change_messages.update(
+                                UserChangeMessage.phone_numbers_added(list(numbers_added))["phone_numbers"]
+                            )
+
+                        if change_messages:
+                            user_change_logger.add_change_message({'phone_numbers': change_messages})
                 elif key == 'groups':
-                    bundle.obj.set_groups(bundle.data.get("groups", []))
+                    group_ids = bundle.data.get("groups", [])
+                    groups_updated = bundle.obj.set_groups(group_ids)
+                    if user_change_logger and groups_updated:
+                        groups = []
+                        if group_ids:
+                            groups = [Group.wrap(doc) for doc in get_docs(Group.get_db(), group_ids)]
+                        user_change_logger.add_info(UserChangeMessage.groups_info(groups))
                     should_save = True
                 elif key in ['email', 'username']:
-                    setattr(bundle.obj, key, value.lower())
+                    lowercase_value = value.lower()
+                    if user_change_logger and getattr(bundle.obj, key) != lowercase_value:
+                        user_change_logger.add_changes({key: lowercase_value})
+                    setattr(bundle.obj, key, lowercase_value)
                     should_save = True
                 elif key == 'password':
                     domain = Domain.get_by_name(bundle.obj.domain)
@@ -237,18 +276,34 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                             bundle.obj.errors.append(str(e))
                             return False
                     bundle.obj.set_password(bundle.data.get("password"))
+                    if user_change_logger:
+                        user_change_logger.add_change_message(UserChangeMessage.password_reset())
                     should_save = True
+                elif key == 'user_data':
+                    try:
+                        original_user_data = bundle.obj.metadata.copy()
+                        bundle.obj.update_metadata(value)
+                        # check changes post update to account for any changes in update_metadata
+                        if user_change_logger and original_user_data != bundle.obj.user_data:
+                            user_change_logger.add_changes({'user_data': bundle.obj.user_data})
+                    except ValueError as e:
+                        raise BadRequest(str(e))
                 else:
+                    # first_name, last_name, language
+                    if user_change_logger and getattr(bundle.obj, key) != value:
+                        user_change_logger.add_changes({key: value})
                     setattr(bundle.obj, key, value)
                     should_save = True
         return should_save
 
-    def obj_create(self, bundle, request=None, **kwargs):
+    def obj_create(self, bundle, **kwargs):
         try:
             bundle.obj = CommCareUser.create(
                 domain=kwargs['domain'],
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
+                created_by=bundle.request.couch_user,
+                created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
             )
             del bundle.data['password']
@@ -256,21 +311,25 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             bundle.obj.save()
         except Exception:
             if bundle.obj._id:
-                bundle.obj.retire()
+                bundle.obj.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
+                                  deleted_via=USER_CHANGE_VIA_API)
             try:
                 django_user = bundle.obj.get_django_user()
             except User.DoesNotExist:
                 pass
             else:
                 django_user.delete()
+            raise
         return bundle
 
     def obj_update(self, bundle, **kwargs):
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
-        if self._update(bundle):
+        user_change_logger = self._get_user_change_logger(bundle)
+        if self._update(bundle, user_change_logger):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()
+            user_change_logger.save()
             return bundle
         else:
             raise BadRequest(''.join(chain.from_iterable(bundle.obj.errors)))
@@ -278,8 +337,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def obj_delete(self, bundle, **kwargs):
         user = CommCareUser.get(kwargs['pk'])
         if user:
-            user.retire()
+            user.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
+                        deleted_via=USER_CHANGE_VIA_API)
         return ImmediateHttpResponse(response=http.HttpAccepted())
+
 
 class WebUserResource(v0_1.WebUserResource):
 
@@ -293,23 +354,6 @@ class WebUserResource(v0_1.WebUserResource):
             data = {'id': data.obj._id}
         return self._meta.serializer.serialize(data, format, options)
 
-    def dispatch(self, request_type, request, **kwargs):
-        """
-        Override dispatch to check for proper params for user create : role and admin permissions
-        """
-        if request.method == 'POST':
-            details = self._meta.serializer.deserialize(request.body)
-            if details.get('is_admin', False):
-                if self._admin_assigned_another_role(details):
-                    raise BadRequest("An admin can have only one role : Admin")
-            else:
-                if not details.get('role', None):
-                    raise BadRequest("Please assign role for non admin user")
-                elif self._invalid_user_role(request, details):
-                    raise BadRequest("Invalid User Role %s" % details.get('role', None))
-
-        return super(WebUserResource, self).dispatch(request_type, request, **kwargs)
-
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if isinstance(bundle_or_obj, Bundle):
             domain = bundle_or_obj.request.domain
@@ -322,32 +366,80 @@ class WebUserResource(v0_1.WebUserResource):
                                                           api_name=self._meta.api_name,
                                                           pk=obj._id))
 
-    def _update(self, bundle):
+    def _validate(self, bundle):
+        if bundle.data.get('is_admin', False):
+            # default value Admin since that will be assigned later anyway since is_admin is True
+            if bundle.data.get('role', 'Admin') != 'Admin':
+                raise BadRequest("An admin can have only one role : Admin")
+        else:
+            if not bundle.data.get('role', None):
+                raise BadRequest("Please assign role for non admin user")
+
+    def _update(self, bundle, user_change_logger=None):
         should_save = False
         for key, value in bundle.data.items():
+            if key == "role":
+                # role handled in _set_role_for_bundle
+                continue
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
+                    old_phone_numbers = set(bundle.obj.phone_numbers)
+                    new_phone_numbers = set()
                     bundle.obj.phone_numbers = []
                     for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
-                        bundle.obj.add_phone_number(strip_plus(phone_number))
+                        formatted_phone_number = strip_plus(phone_number)
+                        new_phone_numbers.add(formatted_phone_number)
+                        bundle.obj.add_phone_number(formatted_phone_number)
                         if idx == 0:
-                            bundle.obj.set_default_phone_number(strip_plus(phone_number))
+                            bundle.obj.set_default_phone_number(formatted_phone_number)
                         should_save = True
+
+                    if user_change_logger:
+                        (numbers_added, numbers_removed) = find_differences_in_list(
+                            target=list(new_phone_numbers),
+                            source=list(old_phone_numbers)
+                        )
+
+                        change_messages = {}
+                        if numbers_removed:
+                            change_messages.update(
+                                UserChangeMessage.phone_numbers_removed(list(numbers_removed))["phone_numbers"]
+                            )
+
+                        if numbers_added:
+                            change_messages.update(
+                                UserChangeMessage.phone_numbers_added(list(numbers_added))["phone_numbers"]
+                            )
+
+                        if change_messages:
+                            user_change_logger.add_change_message({'phone_numbers': change_messages})
                 elif key in ['email', 'username']:
-                    setattr(bundle.obj, key, value.lower())
+                    lowercase_value = value.lower()
+                    if user_change_logger and getattr(bundle.obj, key) != lowercase_value:
+                        user_change_logger.add_changes({key: lowercase_value})
+                    setattr(bundle.obj, key, lowercase_value)
                     should_save = True
                 else:
+                    if user_change_logger:
+                        # we do call setattr for keys that are not really attributes i.e is_admin & permissions
+                        # track only once that are attributes
+                        if hasattr(bundle.obj, key) and getattr(bundle.obj, key) != value:
+                            # first_name, last_name
+                            user_change_logger.add_changes({key: value})
                     setattr(bundle.obj, key, value)
                     should_save = True
         return should_save
 
-    def obj_create(self, bundle, request=None, **kwargs):
+    def obj_create(self, bundle, **kwargs):
+        self._validate(bundle)
         try:
             self._meta.domain = kwargs['domain']
             bundle.obj = WebUser.create(
                 domain=kwargs['domain'],
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
+                created_by=bundle.request.couch_user,
+                created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
                 is_admin=bundle.data.get('is_admin', False)
             )
@@ -358,23 +450,30 @@ class WebUserResource(v0_1.WebUserResource):
                 _set_role_for_bundle(kwargs, bundle)
             bundle.obj.save()
         except Exception:
-            bundle.obj.delete()
+            if bundle.obj._id:
+                bundle.obj.delete(bundle.request.domain, deleted_by=bundle.request.couch_user,
+                                  deleted_via=USER_CHANGE_VIA_API)
+            else:
+                try:
+                    django_user = bundle.obj.get_django_user()
+                except User.DoesNotExist:
+                    pass
+                else:
+                    django_user.delete()
+            raise
         return bundle
 
     def obj_update(self, bundle, **kwargs):
+        self._validate(bundle)
         bundle.obj = WebUser.get(kwargs['pk'])
         assert kwargs['domain'] in bundle.obj.domains
-        if self._update(bundle):
+        user_change_logger = self._get_user_change_logger(bundle)
+        if self._update(bundle, user_change_logger):
             assert kwargs['domain'] in bundle.obj.domains
             bundle.obj.save()
+            user_change_logger.save()
         return bundle
 
-    def _invalid_user_role(self, request, details):
-        return details.get('role') not in UserRole.preset_and_domain_role_names(request.domain)
-
-    def _admin_assigned_another_role(self, details):
-        # default value Admin since that will be assigned later anyway since is_admin is True
-        return details.get('role', 'Admin') != 'Admin'
 
 class AdminWebUserResource(v0_1.UserResource):
     domains = fields.ListField(attribute='domains')
@@ -534,6 +633,7 @@ class GroupResource(v0_4.GroupResource):
         group.soft_delete()
         return bundle
 
+
 class DomainAuthorization(ReadOnlyAuthorization):
 
     def __init__(self, domain_key='domain', *args, **kwargs):
@@ -563,39 +663,6 @@ class DeviceReportResource(HqBaseResource, ModelResource):
             "xform_id": ('exact',),
             "device_id": ('exact',),
         }
-
-
-class StockTransactionResource(HqBaseResource, ModelResource):
-
-    class Meta(object):
-        queryset = StockTransaction.objects.all()
-        list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
-        resource_name = 'stock_transaction'
-        authentication = RequirePermissionAuthentication(Permissions.view_reports)
-        paginator_class = NoCountingPaginator
-        authorization = DomainAuthorization(domain_key='report__domain')
-
-        filtering = {
-            "case_id": ('exact',),
-            "section_id": ('exact'),
-        }
-
-        fields = ['case_id', 'product_id', 'type', 'section_id', 'quantity', 'stock_on_hand']
-        include_resource_uri = False
-
-    def build_filters(self, filters=None):
-        orm_filters = super(StockTransactionResource, self).build_filters(filters)
-        if 'start_date' in filters:
-            orm_filters['report__date__gte'] = filters['start_date']
-        if 'end_date' in filters:
-            orm_filters['report__date__lte'] = filters['end_date']
-        return orm_filters
-
-    def dehydrate(self, bundle):
-        bundle.data['product_name'] = bundle.obj.sql_product.name
-        bundle.data['transaction_date'] = bundle.obj.report.date
-        return bundle
 
 
 ConfigurableReportData = namedtuple("ConfigurableReportData", [
@@ -654,7 +721,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
             return ""
 
     def _get_report_data(self, report_config, domain, start, limit, get_params):
-        report = ConfigurableReportDataSource.from_spec(report_config)
+        report = ConfigurableReportDataSource.from_spec(report_config, include_prefilters=True)
 
         string_type_params = [
             filter.name
@@ -742,6 +809,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         return uri
 
     class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.view_reports, allow_session_auth=True)
         list_allowed_methods = []
         detail_allowed_methods = ["get"]
 
@@ -797,13 +865,13 @@ UserDomain = namedtuple('UserDomain', 'domain_name project_name')
 UserDomain.__new__.__defaults__ = ('', '')
 
 
-class UserDomainsResource(Resource):
+class UserDomainsResource(CorsResourceMixin, Resource):
     domain_name = fields.CharField(attribute='domain_name')
     project_name = fields.CharField(attribute='project_name')
 
     class Meta(object):
         resource_name = 'user_domains'
-        authentication = ApiKeyAuthentication()
+        authentication = LoginAuthentication(allow_session_auth=True)
         object_class = UserDomain
         include_resource_uri = False
 
@@ -837,6 +905,26 @@ class UserDomainsResource(Resource):
         return results
 
 
+class IdentityResource(CorsResourceMixin, Resource):
+    id = fields.CharField(attribute='get_id', readonly=True)
+    username = fields.CharField(attribute='username', readonly=True)
+    first_name = fields.CharField(attribute='first_name', readonly=True)
+    last_name = fields.CharField(attribute='last_name', readonly=True)
+    email = fields.CharField(attribute='email', readonly=True)
+
+    def obj_get_list(self, bundle, **kwargs):
+        return [bundle.request.couch_user]
+
+    class Meta(object):
+        resource_name = 'identity'
+        authentication = LoginAuthentication()
+        serializer = ListToSingleObjectSerializer()
+        detail_allowed_methods = []
+        list_allowed_methods = ['get']
+        object_class = CouchUser
+        include_resource_uri = False
+
+
 Form = namedtuple('Form', 'form_xmlns form_name')
 Form.__new__.__defaults__ = ('', '')
 
@@ -850,7 +938,7 @@ class DomainForms(Resource):
 
     class Meta(object):
         resource_name = 'domain_forms'
-        authentication = ApiKeyAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.access_api)
         object_class = Form
         include_resource_uri = False
         allowed_methods = ['get']
@@ -861,13 +949,6 @@ class DomainForms(Resource):
         application_id = bundle.request.GET.get('application_id')
         if not application_id:
             raise NotFound('application_id parameter required')
-
-        domain = kwargs['domain']
-        couch_user = CouchUser.from_django_user(bundle.request.user)
-        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
-            raise ImmediateHttpResponse(
-                HttpForbidden('You are not allowed to get list of forms for this domain')
-            )
 
         results = []
         application = Application.get(docid=application_id)
@@ -898,7 +979,7 @@ class DomainCases(Resource):
 
     class Meta(object):
         resource_name = 'domain_cases'
-        authentication = ApiKeyAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.access_api)
         object_class = CaseType
         include_resource_uri = False
         allowed_methods = ['get']
@@ -907,12 +988,6 @@ class DomainCases(Resource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        couch_user = CouchUser.from_django_user(bundle.request.user)
-        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
-            raise ImmediateHttpResponse(
-                HttpForbidden('You are not allowed to get list of case types for this domain')
-            )
-
         case_types = get_case_types_for_domain_es(domain)
         results = [CaseType(case_type=case_type) for case_type in case_types]
         return results
@@ -931,21 +1006,14 @@ class DomainUsernames(Resource):
 
     class Meta(object):
         resource_name = 'domain_usernames'
-        authentication = ApiKeyAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.view_commcare_users)
         object_class = User
         include_resource_uri = False
         allowed_methods = ['get']
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-
-        couch_user = CouchUser.from_django_user(bundle.request.user)
-        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
-            raise ImmediateHttpResponse(
-                HttpForbidden('You are not allowed to get list of usernames for this domain')
-            )
         user_ids_username_pairs = get_all_user_id_username_pairs_by_domain(domain)
-
         results = [UserInfo(user_id=user_pair[0], user_name=raw_username(user_pair[1]))
                    for user_pair in user_ids_username_pairs]
         return results
@@ -995,6 +1063,12 @@ class ODataCaseResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = get_document_or_404(CaseExportInstance, domain, self.config_id)
+        if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
+            raise ImmediateHttpResponse(
+                HttpForbidden(ugettext_noop(
+                    "You do not have permission to view this feed."
+                ))
+            )
         query = get_case_export_base_query(domain, config.case_type)
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
@@ -1027,6 +1101,13 @@ class ODataFormResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = get_document_or_404(FormExportInstance, domain, self.config_id)
+        if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
+            raise ImmediateHttpResponse(
+                HttpForbidden(ugettext_noop(
+                    "You do not have permission to view this feed."
+                ))
+            )
+
         query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=False)
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())

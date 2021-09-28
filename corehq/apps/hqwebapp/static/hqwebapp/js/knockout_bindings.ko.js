@@ -1,11 +1,18 @@
 hqDefine("hqwebapp/js/knockout_bindings.ko", [
     'jquery',
+    'underscore',
     'knockout',
-    'jquery-ui/ui/sortable',
+    'jquery-ui/ui/widgets/sortable',
 ], function (
     $,
+    _,
     ko
 ) {
+    // Need this due to https://github.com/knockout/knockout/pull/2324
+    // so that ko.bindingHandlers.foreach.update works properly
+    ko.options.foreachHidesDestroyed = true;
+
+
     ko.bindingHandlers.hqbSubmitReady = {
         update: function (element, valueAccessor) {
             var value = (valueAccessor()) ? valueAccessor()() : null;
@@ -130,14 +137,13 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
                     }
 
                     if (item !== undefined) {
-                        // this is voodoo to me, but I have to remove the ui item from its new position
-                        // and *not replace* it in its original position for all the foreach mechanisms to work correctly
-                        // I found this by trial and error
-                        ui.item.detach();
                         //remove the item and add it back in the right spot
                         if (newPosition >= 0) {
-                            list.remove(item);
-                            list.splice(newPosition, 0, item);
+
+                            var newList = _.without(list(), item);
+                            newList.splice(newPosition, 0, item);
+                            list(newList);
+
                             // Knockout 2.3 fix: refresh all of the `data-order`s
                             // this is an O(n) operation, so if experiencing slowness
                             // start here
@@ -356,11 +362,33 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
     };
 
     ko.bindingHandlers.openModal = {
+        /**
+         * Create modal content in script element with ID:
+         *  <script type="text/html" id="id-of-template">
+         *      <!-- modal content -->
+         *  </script>
+         *
+         * Use binding to open the modal on click:
+         *  <a data-bind="openModal: 'id-of-template'">...</a>
+         *
+         * Alternately provide a condition to use to determine if the modal should open:
+         *  <a data-bind="openModal: {templateId: 'id-of-template', if: isAllowed}">...</a>
+         *
+         */
         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            var templateID = valueAccessor(),
-                modal = $('<div></div>').addClass('modal fade').appendTo('body'),
+            let value = valueAccessor(),
+                templateID = value,
+                ifValue = true;
+            if (typeof value === 'object') {
+                templateID = value.templateId;
+                ifValue = _.has(value, 'if') ? value.if : true;
+            }
+            var modal = $('<div></div>').addClass('modal fade').appendTo('body'),
                 newValueAccessor = function () {
                     var clickAction = function () {
+                        if (!ifValue) {
+                            return;
+                        }
                         ko.bindingHandlers.template.init(modal.get(0), function () {
                             return templateID;
                         }, allBindingsAccessor, viewModel, bindingContext);
@@ -613,6 +641,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
     ko.bindingHandlers.popover = {
         update: function (element, valueAccessor) {
             var options = ko.utils.unwrapObservable(valueAccessor());
+            if (options.html) {
+                options.sanitize = false;
+            }
             if (options.title || options.content) { // don't show empty popovers
                 $(element).popover(options);
             }
@@ -671,6 +702,19 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
             if (itemSelector) {
                 $(element).sortable("option", "items", itemSelector);
             }
+        },
+    };
+
+    ko.bindingHandlers.onEnterKey = {
+        // calls a function when the enter key is pressed on an input
+        init: function (element, valueAccessor, allBindings, viewModel) {
+            $(element).keypress(function (event) {
+                if (event.key === "Enter" || event.keyCode === 13) {
+                    valueAccessor()();
+                    return false;
+                }
+                return true;
+            });
         },
     };
 

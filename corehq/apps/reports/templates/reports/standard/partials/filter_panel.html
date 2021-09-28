@@ -28,11 +28,8 @@
           </div>
         </form>
       </div>
-      {% initial_page_data 'hasAccessToIcdsDashboardFeatures' hasAccessToIcdsDashboardFeatures %}
-      {% if hasAccessToIcdsDashboardFeatures %}
-        {% if report.slug == 'mpr_report' %}
-          <span style="font-style: italic" id="mpr-banner-info">The report is currently available at Sector and Anganwadi Center level. The expansion to levels above is currently under development</span>
-        {% endif %}
+      {% if report.slug == 'mpr_report' %}
+        <span style="font-style: italic" id="mpr-banner-info">The report is currently available at Sector and Anganwadi Center level. The expansion to levels above is currently under development</span>
       {% endif %}
     </div>
   {% endif %}
@@ -50,14 +47,14 @@
           </a>
         {% endif %}
         {% block export %}
-          {% if report.is_exportable %}
+          {% if report.is_exportable and request.couch_user.can_download_reports %}
             <a href="#" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
               <i class="fa fa-share"></i>
               {% trans "Export to" %} {% if report.export_target %}{{ report.export_target }}{% else %}Excel{% endif %}
             </a>
           {% endif %}
         {% endblock %}
-        {% if report.is_emailable %}
+        {% if report.is_emailable and request.couch_user.can_download_reports %}
           <a href="#email-report-modal" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
             <i class="fa fa-envelope"></i> {% trans "Email report" %}
           </a>

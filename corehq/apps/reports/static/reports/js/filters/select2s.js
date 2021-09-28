@@ -3,10 +3,12 @@
  */
 hqDefine("reports/js/filters/select2s", [
     'jquery',
+    'underscore',
     'knockout',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
+    _,
     ko
 ) {
     var initSingle = function (el) {
@@ -50,7 +52,7 @@ hqDefine("reports/js/filters/select2s", [
                 width: '100%',
             },
             allowClear: true,
-            placeholder: " ",
+            placeholder: $filter.data("placeholder") || ' ',
         });
         var initial = $filter.data("selected");
         if (initial) {
@@ -99,6 +101,7 @@ hqDefine("reports/js/filters/select2s", [
             ajax: {
                 url: data.endpoint,
                 dataType: 'json',
+                delay: 500,
                 data: function (params) {
                     return {
                         q: params.term,
@@ -118,7 +121,6 @@ hqDefine("reports/js/filters/select2s", [
                 },
             },
             multiple: true,
-            escapeMarkup: function (m) { return m; },
             width: '100%',
         });
 

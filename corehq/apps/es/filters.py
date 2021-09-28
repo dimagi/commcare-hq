@@ -15,6 +15,7 @@ Contributing:
 Additions to this file should be added to the ``builtin_filters`` method on
 either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 """
+from .utils import es_format_datetime
 
 
 def match_all():
@@ -38,31 +39,17 @@ def term(field, value):
 
 def OR(*filters):
     """Filter docs to match any of the filters passed in"""
-    return {"or": filters}
+    return {"bool": {"should": filters}}
 
 
 def AND(*filters):
     """Filter docs to match all of the filters passed in"""
-    return {"and": filters}
+    return {"bool": {"filter": filters}}
 
 
 def NOT(filter_):
     """Exclude docs matching the filter passed in"""
-    if 'or' in filter_:
-        # ES 2.4 appears not to accept {"not": {"or": [A, B]}} e.g. not (A or B)
-        # but accepts the same logic
-        # formulated as {"and": [{"not": A}, {"not": B}]} (e.g. not A and not B)
-        return AND(*(NOT(condition) for condition in filter_['or']))
-    elif 'and' in filter_:
-        # Same ES 2.4 issue as above.
-        # Rewrite "not (A and B)" as "not A or not B"
-        return OR(*(NOT(condition) for condition in filter_['and']))
-    elif 'not' in filter_:
-        # This may not be strictly necessary
-        # but prevents {'not': {'not': A}}, in favor of just A
-        return filter_['not']
-    else:
-        return {"not": filter_}
+    return {"bool": {"must_not": filter_}}
 
 
 def not_term(field, value):
@@ -81,10 +68,8 @@ def range_filter(field, gt=None, gte=None, lt=None, lte=None):
 
 
 def date_range(field, gt=None, gte=None, lt=None, lte=None):
-    """Range filter that accepts datetime objects as arguments"""
-    def format_date(date):
-        return date if isinstance(date, str) else date.isoformat()
-    params = [d if d is None else format_date(d) for d in [gt, gte, lt, lte]]
+    """Range filter that accepts date and datetime objects as arguments"""
+    params = [d if d is None else es_format_datetime(d) for d in [gt, gte, lt, lte]]
     return range_filter(field, *params)
 
 
@@ -103,15 +88,9 @@ def doc_id(doc_id):
     return term("_id", doc_id)
 
 
-def missing(field, exist=True, null=True):
+def missing(field):
     """Only return docs missing a value for ``field``"""
-    return {
-        "missing": {
-            "field": field,
-            "existence": exist,
-            "null_value": null
-        }
-    }
+    return NOT(exists(field))
 
 
 def exists(field):
@@ -121,8 +100,7 @@ def exists(field):
 
 def empty(field):
     """Only return docs with a missing or null value for ``field``"""
-    return OR(missing(field, exist=True, null=True),
-              term(field, ''))
+    return OR(missing(field), term(field, ''))
 
 
 def non_null(field):
@@ -135,7 +113,11 @@ def nested(path, filter_):
     return {
         "nested": {
             "path": path,
-            "filter": filter_
+            "query": {
+                "bool": {
+                    "filter": filter_
+                }
+            }
         }
     }
 

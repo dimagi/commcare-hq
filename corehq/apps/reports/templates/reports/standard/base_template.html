@@ -33,6 +33,7 @@
     <script src="{% static 'reports/js/inspect_data.js' %}"></script>
     <script src="{% static 'reports/js/project_health_dashboard.js' %}"></script>
     <script src="{% static 'reports/js/aggregate_user_status.js' %}"></script>
+    <script src="{% static 'reports/js/user_history.js' %}"></script>
   {% endcompress %}
 {% endblock %}
 
@@ -106,7 +107,7 @@
     {% include "reports/standard/partials/filter_panel.html" %}
   {% endblock %}
 
-  {% if report.is_emailable %}
+  {% if report.is_emailable and request.couch_user.can_download_reports %}
     <div id="email-report-modal" class="modal fade" tabindex="-1" role="dialog">
       <div class="modal-dialog">
         <div class="modal-content">

@@ -65,7 +65,6 @@
         "en"
     ],
     "last_modified": "2017-08-29T11:16:47.300285Z",
-    "linked_whitelist": [],
     "logo_refs": {},
     "minimum_use_threshold": "15",
     "modules": [
@@ -122,7 +121,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 },
@@ -175,7 +173,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 }
@@ -644,7 +641,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 },
@@ -672,7 +668,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 }
@@ -687,8 +682,10 @@
             "root_module_id": null,
             "search_config": {
                 "blacklisted_owner_ids_expression": null,
-                "command_label": {
-                    "en": "Search All Cases"
+                "search_label": {
+                    "label": {
+                        "en": "Search All Cases"
+                    }
                 },
                 "default_properties": [],
                 "doc_type": "CaseSearch",
@@ -759,7 +756,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": false,
                     "tabs": [],
                     "use_case_tiles": null
                 },
@@ -810,7 +806,6 @@
                     "print_template": {},
                     "pull_down_tile": false,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": false
                 }
@@ -1052,7 +1047,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 },
@@ -1080,7 +1074,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 }
@@ -1095,8 +1088,10 @@
             "root_module_id": null,
             "search_config": {
                 "blacklisted_owner_ids_expression": null,
-                "command_label": {
-                    "en": "Search All Cases"
+                "search_label": {
+                    "label": {
+                        "en": "Search All Cases"
+                    }
                 },
                 "default_properties": [],
                 "doc_type": "CaseSearch",
@@ -1167,7 +1162,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 },
@@ -1220,7 +1214,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 }
@@ -1462,7 +1455,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 },
@@ -1490,7 +1482,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 }
@@ -1505,8 +1496,10 @@
             "root_module_id": null,
             "search_config": {
                 "blacklisted_owner_ids_expression": null,
-                "command_label": {
-                    "en": "Search All Cases"
+                "search_label": {
+                    "label": {
+                        "en": "Search All Cases"
+                    }
                 },
                 "default_properties": [],
                 "doc_type": "CaseSearch",

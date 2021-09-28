@@ -23,6 +23,7 @@ from django.views.generic.base import TemplateView
 
 from couchdbkit import ResourceNotFound
 
+from corehq.apps.hqwebapp.decorators import waf_allow
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
@@ -283,23 +284,9 @@ def download_item_lists(request, domain):
         table_ids=request.POST.getlist("table_ids[]", []),
         domain=domain,
         download_id=download.download_id,
+        owner_id=request.couch_user.get_id,
     ))
     return download.get_start_response()
-
-
-@require_can_edit_fixtures
-def download_file(request, domain):
-    download_id = request.GET.get("download_id")
-    try:
-        dw = CachedDownload.get(download_id)
-        if dw:
-            return dw.toHttpResponse()
-        else:
-            raise IOError
-    except IOError:
-        notify_exception(request)
-        messages.error(request, _("Sorry, Something went wrong with your download! Please try again. If you see this repeatedly please report an issue "))
-        return HttpResponseRedirect(reverse("fixture_interface_dispatcher", args=[], kwargs={'domain': domain, 'report_slug': 'edit_lookup_tables'}))
 
 
 def fixtures_home(domain):
@@ -438,6 +425,7 @@ class AsyncUploadFixtureAPIResponse(UploadFixtureAPIResponse):
         }
 
 
+@waf_allow('XSS_BODY')
 @csrf_exempt
 @require_POST
 @api_auth

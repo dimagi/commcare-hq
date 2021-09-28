@@ -89,6 +89,10 @@ def search_string_query(search_string, default_fields=None):
     }
 
 
+def ids_query(doc_ids):
+    return {"ids": {"values": doc_ids}}
+
+
 def match(search_string, field, fuzziness="AUTO"):
     return {
         "match": {
@@ -137,9 +141,9 @@ def filtered(query, filter_):
     Filtered query for performing both filtering and querying at once
     """
     return {
-        "filtered": {
-            "query": query,
-            "filter": filter_,
+        "bool": {
+            "filter": [filter_],
+            "must": query
         }
     }
 

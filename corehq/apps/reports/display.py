@@ -1,4 +1,5 @@
 from django.utils.translation import ugettext as _
+from django.utils.html import format_html
 
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -30,10 +31,11 @@ class FormDisplay(object):
 
     @property
     def form_data_link(self):
-        return "<a class='ajax_dialog' target='_new' href='%(url)s'>%(text)s</a>" % {
-            "url": absolute_reverse('render_form_data', args=[self.report.domain, self.form['_id']]),
-            "text": _("View Form")
-        }
+        return format_html(
+            "<a class='ajax_dialog' target='_new' href='{url}'>{text}</a>",
+            url=absolute_reverse('render_form_data', args=[self.report.domain, self.form['_id']]),
+            text=_("View Form")
+        )
 
     @property
     def username(self):

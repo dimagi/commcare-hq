@@ -1,4 +1,0 @@
-
-
-class KarixError(Exception):
-    pass

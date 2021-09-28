@@ -31,7 +31,7 @@ class Command(BaseCommand):
         linked_build = wrap_app(doc)
         log_prefix = "{}{} app {}, build {}".format("[DRY RUN] " if self.dry_run else "",
                                                     linked_build.domain,
-                                                    linked_build.master_id,
+                                                    linked_build.origin_id,
                                                     linked_build.get_id)
 
         if not linked_build.upstream_app_id or not linked_build.upstream_version:
@@ -66,7 +66,7 @@ class Command(BaseCommand):
         current_overrides = {
             pre_id: override.post_id
             for pre_id, override
-            in get_xform_resource_overrides(linked_build.domain, linked_build.master_id).items()
+            in get_xform_resource_overrides(linked_build.domain, linked_build.origin_id).items()
         }
         if set(override_map.items()) - set(current_overrides.items()):
             logger.info("{}: Found {} overrides, updating with {}".format(log_prefix,
@@ -74,7 +74,7 @@ class Command(BaseCommand):
                                                                           len(override_map)))
             if not self.dry_run:
                 try:
-                    add_xform_resource_overrides(linked_build.domain, linked_build.master_id, override_map)
+                    add_xform_resource_overrides(linked_build.domain, linked_build.origin_id, override_map)
                 except ResourceOverrideError as e:
                     logger.error("{}".format(str(e)))   # skip log_prefix, error message has same info
         else:

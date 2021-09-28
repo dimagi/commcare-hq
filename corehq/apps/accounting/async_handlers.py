@@ -13,6 +13,7 @@ from corehq.apps.accounting.models import (
     SoftwareProductRate,
     Subscriber,
     Subscription,
+    CustomerInvoice,
 )
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict,
@@ -440,15 +441,12 @@ class SoftwarePlanAsyncHandler(BaseSingleOptionFilterAsyncHandler):
                 for p in self.paginated_data]
 
 
-class InvoiceNumberAsyncHandler(BaseSingleOptionFilterAsyncHandler):
-    slug = 'invoice_number_filter'
-    allowed_actions = [
-        'invoice_number',
-    ]
+class BaseInvoiceNumberAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    invoice_class = None
 
     @property
     def query(self):
-        query = Invoice.objects.annotate(
+        query = self.invoice_class.objects.annotate(
             number_on_invoice=F('id') + settings.INVOICE_STARTING_NUMBER
         ).order_by('number_on_invoice')
         if self.search_string:
@@ -456,11 +454,35 @@ class InvoiceNumberAsyncHandler(BaseSingleOptionFilterAsyncHandler):
         return query
 
     @property
-    def invoice_number_response(self):
+    def base_response(self):
         return [
             self._fmt_select2_data(str(p.id), str(p.number_on_invoice))
             for p in self.paginated_data
         ]
+
+
+class InvoiceNumberAsyncHandler(BaseInvoiceNumberAsyncHandler):
+    slug = 'invoice_number_filter'
+    allowed_actions = [
+        'invoice_number',
+    ]
+    invoice_class = Invoice
+
+    @property
+    def invoice_number_response(self):
+        return self.base_response
+
+
+class CustomerInvoiceNumberAsyncHandler(BaseInvoiceNumberAsyncHandler):
+    slug = 'customer_invoice_number_filter'
+    allowed_actions = [
+        'customer_invoice_number',
+    ]
+    invoice_class = CustomerInvoice
+
+    @property
+    def customer_invoice_number_response(self):
+        return self.base_response
 
 
 class InvoiceBalanceAsyncHandler(BaseSingleOptionFilterAsyncHandler):
@@ -493,15 +515,18 @@ class DomainFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
     @property
     def query(self):
         db = Domain.get_db()
-        startkey = self.search_string
-        endkey = "{}Z".format(self.search_string) if startkey else ''
-        query = db.view(
-            'domain/domains',
-            reduce=False,
-            startkey=startkey,
-            endkey=endkey,
-            limit=20,
-        )
+
+        search_params = {
+            'reduce': False,
+            'limit': 20
+        }
+
+        if self.search_string:
+            # Search by string range: https://docs.couchdb.org/en/latest/ddocs/views/collation.html#string-ranges
+            search_params['startkey'] = self.search_string
+            search_params['endkey'] = "{}\ufff0".format(self.search_string)
+
+        query = db.view('domain/domains', **search_params)
         return query
 
     @property

@@ -2,6 +2,7 @@ files:
   ignore:
     - '*.min.js'
     - '**/_design/**/*.js'
+    - '*.xml'
 
 linters:
   flake8:
@@ -9,4 +10,5 @@ linters:
     config: .flake8
   eslint:
     config: ./.eslintrc.js
-    install_plugins: true
+#  pytype:  # failing due to timeout
+#    config: ./.pytype.cfg

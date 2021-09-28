@@ -1,8 +1,8 @@
 from itertools import chain
 from operator import eq
 
-from jsonpath_rw import Child, Fields, Slice, Union, Where
-from jsonpath_rw import parse as parse_jsonpath
+from jsonpath_ng import Child, Fields, Slice, Union, Where
+from jsonpath_ng import parse as parse_jsonpath
 
 from casexml.apps.case.models import (
     INDEX_RELATIONSHIP_CHILD,
@@ -264,9 +264,9 @@ def get_property_map(case_config):
             property_map[value_source_dict['case_property']] = (jsonpath, value_source_dict)
 
     for attr_type_uuid, value_source_dict in case_config['person_attributes'].items():
-        # jsonpath_rw offers programmatic JSONPath expressions. For details on how to create JSONPath
+        # jsonpath-ng offers programmatic JSONPath expressions. For details on how to create JSONPath
         # expressions programmatically see the
-        # `jsonpath_rw documentation <https://github.com/kennknowles/python-jsonpath-rw#programmatic-jsonpath>`__
+        # `jsonpath-ng documentation <https://github.com/h2non/jsonpath-ng#programmatic-jsonpath>`__
         #
         # The `Where` JSONPath expression "*jsonpath1* `where` *jsonpath2*" returns nodes matching *jsonpath1*
         # where a child matches *jsonpath2*. `Cmp` does a comparison in *jsonpath2*. It accepts a

@@ -3,12 +3,27 @@ from django.utils.translation import ugettext as _
 from couchdbkit import ResourceNotFound
 
 from corehq import toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import MultimediaMissingError
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.remote_accessors import fetch_remote_media
+from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.timezones.conversions import ServerTime
+
+
+def can_access_linked_domains(user, domain):
+    if not user or not domain:
+        return False
+    if domain_has_privilege(domain, RELEASE_MANAGEMENT):
+        return user.is_domain_admin()
+    else:
+        return toggles.LINKED_DOMAINS.enabled(domain)
+
+
+def can_access_release_management_feature(user, domain):
+    return domain_has_privilege(domain, RELEASE_MANAGEMENT) and user.is_domain_admin()
 
 
 def _clean_json(doc):
@@ -16,7 +31,6 @@ def _clean_json(doc):
         return doc
     doc.pop('domain', None)
     doc.pop('doc_type', None)
-    doc.pop('_id', None)
     doc.pop('_rev', None)
     for key, val in doc.items():
         if isinstance(val, dict):
@@ -93,3 +107,62 @@ def _get_missing_multimedia(app, old_multimedia_ids=None):
 def _add_domain_access(domain, media):
     if domain not in media.valid_domains:
         media.add_domain(domain)
+
+
+def is_linked_report(report):
+    return report.report_meta.master_id
+
+
+def is_domain_available_to_link(upstream_domain_name, candidate_name, user, should_enforce_admin=True):
+    if not upstream_domain_name or not candidate_name:
+        return False
+
+    if candidate_name == upstream_domain_name:
+        return False
+
+    if is_domain_in_active_link(candidate_name):
+        # cannot link to an already linked project
+        return False
+
+    if should_enforce_admin:
+        return user_has_admin_access_in_all_domains(user, [upstream_domain_name, candidate_name])
+    else:
+        return True
+
+
+def is_available_upstream_domain(potential_upstream_domain, downstream_domain, user, should_enforce_admin=True):
+    """
+    :param potential_upstream_domain: potential upstream domain
+    :param downstream_domain: domain that would be downstream in this link if able
+    :param user: couch user
+    :param should_enforce_admin: enforce user is admin in both domains
+    :return: True if the potential upstream domain is eligible to link to the specified downstream domain
+    """
+    from corehq.apps.linked_domain.dbaccessors import is_active_upstream_domain
+
+    if not potential_upstream_domain or not downstream_domain:
+        return False
+
+    if potential_upstream_domain == downstream_domain:
+        return False
+
+    if not is_active_upstream_domain(potential_upstream_domain):
+        # needs to be an active upstream domain
+        return False
+
+    if should_enforce_admin:
+        return user_has_admin_access_in_all_domains(user, [downstream_domain, potential_upstream_domain])
+    else:
+        return True
+
+
+def is_domain_in_active_link(domain_name):
+    from corehq.apps.linked_domain.dbaccessors import (
+        is_active_downstream_domain,
+        is_active_upstream_domain,
+    )
+    return is_active_downstream_domain(domain_name) or is_active_upstream_domain(domain_name)
+
+
+def user_has_admin_access_in_all_domains(user, domains):
+    return all([user.is_domain_admin(domain) for domain in domains])

@@ -3,14 +3,16 @@
 */
 hqDefine("hqwebapp/js/prepaid_modal", [
     'analytix/js/kissmetrix',
+    'hqwebapp/js/initial_page_data',
     'jquery',
     'jquery.cookie/jquery.cookie',
 ], function (
     kissmetrics,
+    initialPageData,
     $
 ) {
     function snooze(slug, domain) {
-        $.cookie(cookieName(slug, domain), true, { expires: 30, path: '/' });
+        $.cookie(cookieName(slug, domain), true, { expires: 30, path: '/', secure: initialPageData.get('secure_cookies') });
     }
 
     function cookieName(slug, domain) {

@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Count
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -16,6 +17,8 @@ from couchdbkit import BulkSaveError, ResourceConflict
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
+from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_MAX
 from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
@@ -23,8 +26,7 @@ from soil import DownloadBase
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
-from corehq.apps.user_importer.tasks import import_users_and_groups
-from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -36,28 +38,21 @@ logger = get_task_logger(__name__)
 
 
 @task(serializer='pickle')
-def bulk_upload_async(domain, user_specs, group_specs):
-    # remove this after deploying `import_users_and_groups`
-    return import_users_and_groups(domain, user_specs, group_specs)
-
-
-@task(serializer='pickle')
-def bulk_download_usernames_async(domain, download_id, user_filters):
+def bulk_download_usernames_async(domain, download_id, user_filters, owner_id):
     from corehq.apps.users.bulk_download import dump_usernames
-    dump_usernames(domain, download_id, user_filters, bulk_download_usernames_async)
+    dump_usernames(domain, download_id, user_filters, bulk_download_usernames_async, owner_id)
 
 
 @task(serializer='pickle')
-def bulk_download_users_async(domain, download_id, user_filters):
-    from corehq.apps.users.bulk_download import dump_users_and_groups, GroupNameError
+def bulk_download_users_async(domain, download_id, user_filters, is_web_download, owner_id):
+    from corehq.apps.users.bulk_download import dump_users_and_groups, dump_web_users, GroupNameError
     errors = []
     try:
-        dump_users_and_groups(
-            domain,
-            download_id,
-            user_filters,
-            bulk_download_users_async,
-        )
+        args = [domain, download_id, user_filters, bulk_download_users_async, owner_id]
+        if is_web_download:
+            dump_web_users(*args)
+        else:
+            dump_users_and_groups(*args)
     except GroupNameError as e:
         group_urls = [
             reverse('group_members', args=[domain, group.get_id])
@@ -80,7 +75,7 @@ def bulk_download_users_async(domain, download_id, user_filters):
                 'The following groups have no name. '
                 'Please name them before continuing: {}'
             ),
-            mark_safe(', '.join(group_links))
+            mark_safe(', '.join(group_links))  # nosec: no user input
         ))
     except BulkFetchException:
         errors.append(_('Error exporting data. Please try again later.'))
@@ -94,7 +89,6 @@ def bulk_download_users_async(domain, download_id, user_filters):
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
-    NotAllowed.check(domain)
     CaseAccessors(domain).soft_delete_cases(list(case_ids), deletion_date, deletion_id)
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
@@ -155,11 +149,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
         # all cases touched by this form are deleted
         return True
 
-    if is_deletion or Domain.get_by_name(domain).use_sql_backend:
-        all_forms = FormAccessors(domain).iter_forms(form_ids_to_modify)
-    else:
-        # accessor.iter_forms doesn't include deleted forms on the couch backend
-        all_forms = list(map(FormAccessors(domain).get_form, form_ids_to_modify))
+    all_forms = FormAccessors(domain).iter_forms(form_ids_to_modify)
     return [form.form_id for form in all_forms if _is_safe_to_modify(form)]
 
 
@@ -199,7 +189,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
     deleted_ids = set(case_ids)
     indexes_referencing_deleted_cases = CaseAccessors(domain).get_all_reverse_indices_info(list(case_ids))
     case_updates = [
-        CaseBlock(
+        CaseBlock.deprecated_init(
             case_id=index_info.case_id,
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
@@ -237,12 +227,12 @@ def _rebuild_case_with_retries(self, domain, case_id, detail):
     queue='background_queue',
 )
 def resend_pending_invitations():
-    from corehq.apps.users.models import SQLInvitation
+    from corehq.apps.users.models import Invitation
     days_to_resend = (15, 29)
     days_to_expire = 30
     domains = Domain.get_all()
     for domain_obj in domains:
-        invitations = SQLInvitation.by_domain(domain_obj.name)
+        invitations = Invitation.by_domain(domain_obj.name)
         for invitation in invitations:
             days = (datetime.utcnow() - invitation.invited_on).days
             if days in days_to_resend:
@@ -295,8 +285,8 @@ def remove_unused_custom_fields_from_users_task(domain):
 @task()
 def update_domain_date(user_id, domain):
     from corehq.apps.users.models import WebUser
-    user = WebUser.get_by_user_id(user_id, domain)
-    domain_membership = user.get_domain_membership(domain)
+    user = WebUser.get_by_user_id(user_id)
+    domain_membership = user.get_domain_membership(domain, allow_enterprise=False)
     today = datetime.today().date()
     if domain_membership and (
             not domain_membership.last_accessed or domain_membership.last_accessed < today):
@@ -341,3 +331,32 @@ def process_reporting_metadata_staging():
     run_again = run_periodic_task_again(process_reporting_metadata_staging_schedule, start, duration)
     if run_again and UserReportingMetadataStaging.objects.exists():
         process_reporting_metadata_staging.delay()
+
+
+@periodic_task(run_every=crontab(minute='*/10'), queue='background_queue')
+def gauge_pending_user_confirmations():
+    metric_name = 'commcare.pending_user_confirmations'
+    from corehq.apps.users.models import Invitation
+    for stats in (Invitation.objects.filter(is_accepted=False).all()
+                  .values('domain').annotate(Count('domain'))):
+        metrics_gauge(
+            metric_name, stats['domain__count'], tags={
+                'domain': stats['domain'],
+                'user_type': 'web',
+            },
+            multiprocess_mode=MPM_MAX
+        )
+
+    from corehq.apps.users.analytics import get_inactive_commcare_users_in_domain
+    for doc in Domain.get_all(include_docs=False):
+        domain_name = doc['key']
+        users = get_inactive_commcare_users_in_domain(domain_name)
+        num_unconfirmed = sum(1 for u in users if not u.is_account_confirmed)
+        if num_unconfirmed:
+            metrics_gauge(
+                metric_name, num_unconfirmed, tags={
+                    'domain': domain_name,
+                    'user_type': 'mobile',
+                },
+                multiprocess_mode=MPM_MAX
+            )

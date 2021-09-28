@@ -4,7 +4,7 @@ ROOT = 'root'
 
 
 def _format_to_regex(pattern):
-    """
+    r"""
     convert a format string with %s and %d to a regex
 
     %s => .*
@@ -14,13 +14,13 @@ def _format_to_regex(pattern):
     everything else gets `re.escape`d
 
     >>> import re
-    >>> format = '%shello %%sam %s, you are %d years old.'
-    >>> regex = _format_to_regex(format)
-    >>> print regex
+    >>> format_ = '%shello %%sam %s, you are %d years old.'
+    >>> regex = _format_to_regex(format_)
+    >>> print(regex)
     .*hello\ %sam\ .*\,\ you\ are\ [0-9]+\ years\ old\.
-    >>> bool(re.match(regex, format % ("Oh ", "i am", 6)))
+    >>> bool(re.match(regex, format_ % ("Oh ", "i am", 6)))
     True
-    >>> bool(re.match(regex, format))
+    >>> bool(re.match(regex, format_))
     False
 
     """
@@ -198,26 +198,9 @@ def mobile_ucr_annotation(module, uuid, annotation_index):
     )
 
 
-@pattern('m%d.enum.%s')
-def module_name_enum_variable(module, key_as_var):
-    return "m{module.id}.enum.{key_as_var}".format(
-        module=module,
-        key_as_var=key_as_var,
-    )
-
-
 @pattern('modules.m%d')
 def module_locale(module):
     return "modules.m{module.id}".format(module=module)
-
-
-@pattern('m%df%d.enum.%s')
-def form_name_enum_variable(form, key_as_var):
-    return "m{module.id}f{form.id}.enum.{key_as_var}".format(
-        module=form.get_module(),
-        form=form,
-        key_as_var=key_as_var,
-    )
 
 
 @pattern('forms.m%df%d')
@@ -251,6 +234,31 @@ def case_search_locale(module):
     return "case_search.m{module.id}".format(module=module)
 
 
+@pattern('case_search.m%d.icon')
+def case_search_icon_locale(module):
+    return "case_search.m{module.id}.icon".format(module=module)
+
+
+@pattern('case_search.m%d.audio')
+def case_search_audio_locale(module):
+    return "case_search.m{module.id}.audio".format(module=module)
+
+
+@pattern('case_search.m%d.again')
+def case_search_again_locale(module):
+    return "case_search.m{module.id}.again".format(module=module)
+
+
+@pattern('case_search_again.m%d.again.icon')
+def case_search_again_icon_locale(module):
+    return "case_search.m{module.id}.again.icon".format(module=module)
+
+
+@pattern('case_search.m%d.again.audio')
+def case_search_again_audio_locale(module):
+    return "case_search.m{module.id}.again.audio".format(module=module)
+
+
 @pattern('search_command.m%d')
 def search_command(module):
     return "search_command.m{module.id}".format(module=module)
@@ -259,6 +267,11 @@ def search_command(module):
 @pattern('search_property.m%d.%s')
 def search_property_locale(module, search_prop):
     return "search_property.m{module.id}.{search_prop}".format(module=module, search_prop=search_prop)
+
+
+@pattern('search_property.m%d.%s.hint')
+def search_property_hint_locale(module, search_prop):
+    return "search_property.m{module.id}.{search_prop}.hint".format(module=module, search_prop=search_prop)
 
 
 @pattern('custom_assertion.m%d.f%d.%d')

@@ -150,6 +150,7 @@ class TestContent(TestCase):
             'en': 'english message',            # project default
             'hin': 'hindi message',             # schedule default
             'es': 'spanish message',            # user's preferred language
+            'kan': 'kannada message',           # arbitrary language to test untranslated case
         }
         user_lang = self.user.get_language_code()
         content = Content()
@@ -195,6 +196,7 @@ class TestContent(TestCase):
             content.get_translation_from_message_dict(self.domain_obj, message_dict, user_lang),
             message_dict['*']
         )
+        message_dict.pop('kan')
 
         # Default: same as LANGUAGE_FALLBACK_UNTRANSLATED
         self.domain_obj.sms_language_fallback = None

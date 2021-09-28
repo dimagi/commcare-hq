@@ -4,29 +4,41 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
 from django.utils.translation import ugettext as _
 
+from corehq import toggles
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     redirect_for_login_or_domain,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import (
-    get_deleted_user_by_username,
-)
+from corehq.apps.users.dbaccessors import get_deleted_user_by_username
 from corehq.apps.users.models import CommCareUser, CouchUser
 
 
 def require_permission_raw(permission_check,
                            login_decorator=login_and_domain_required,
-                           view_only_permission_check=None):
+                           view_only_permission_check=None,
+                           permission_check_v2=None):
     """
     A way to do more fine-grained permissions via decorator. The permission_check should be
     a function that takes in a couch_user and a domain and returns True if that user can access
     the page, otherwise false.
+
+    If `permission_check_v2` is specified it will be used instead of permission_check.
+    This is to allow for changing the permission-checking API without having to update every
+    call at the same time.
+
+    permission_check_v2 takes in a *request* instead of a *user* so it can do more explicit
+    checking (e.g. check the exact API key that was used).
     """
     def decorator(view_func):
         @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
             if not hasattr(request, "couch_user"):
                 return redirect_for_login_or_domain(request)
+            elif permission_check_v2 is not None:
+                if permission_check_v2(request, domain):
+                    return view_func(request, domain, *args, **kwargs)
+                else:
+                    raise PermissionDenied()
             elif request.user.is_superuser or permission_check(request.couch_user, domain):
                 request.is_view_only = False
                 return view_func(request, domain, *args, **kwargs)
@@ -55,6 +67,45 @@ def get_permission_name(permission):
             return permission.__name__
         except AttributeError:
             return None
+
+
+def require_api_permission(permission, data=None, login_decorator=login_and_domain_required):
+    permission = get_permission_name(permission) or permission
+    # ensure all requests also have this permission
+    api_access_permission = 'access_api'
+    permissions_to_check = {permission, api_access_permission}
+
+    def permission_check(request, domain):
+        # first check user permissions and return immediately if not valid
+        user_has_permission = all(
+            request.couch_user.has_permission(domain, p, data=data)
+            for p in permissions_to_check
+        )
+        if not user_has_permission:
+            return False
+
+        # then check domain and role scopes, if present
+        api_key = getattr(request, 'api_key', None)
+
+        if not api_key:
+            return True  # only api keys support additional checks
+        elif api_key.role:
+            return (
+                api_key.role.domain == domain
+                and all(api_key.role.permissions.has(p, data) for p in permissions_to_check)
+            )
+        elif api_key.domain:
+            # we've already checked for user and role permissions so all that's left is domain matching
+            return domain == api_key.domain
+        else:
+            # unscoped API key defaults to user permissions
+            return True
+
+    return require_permission_raw(
+        None, login_decorator,
+        view_only_permission_check=None,
+        permission_check_v2=permission_check,
+    )
 
 
 def require_permission(permission,
@@ -94,6 +145,7 @@ require_can_edit_or_view_groups = require_permission(
     'edit_groups', view_only_permission='view_groups'
 )
 require_can_view_roles = require_permission('view_roles')
+require_can_login_as = require_permission_raw(lambda user, domain: user.can_login_as(domain))
 
 
 def require_permission_to_edit_user(view_func):
@@ -117,6 +169,23 @@ def require_permission_to_edit_user(view_func):
         else:
             return redirect_for_login_or_domain(request)
     return _inner
+
+
+def require_can_use_filtered_user_download(view_func):
+    @wraps(view_func)
+    def _inner(request, domain, *args, **kwargs):
+        if can_use_filtered_user_download(request.domain):
+            return view_func(request, domain, *args, **kwargs)
+        raise Http404()
+    return _inner
+
+
+def can_use_filtered_user_download(domain):
+    if toggles.FILTERED_BULK_USER_DOWNLOAD.enabled(domain):
+        return True
+    if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        return True
+    return False
 
 
 def ensure_active_user_by_username(username):

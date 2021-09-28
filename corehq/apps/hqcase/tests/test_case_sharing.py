@@ -15,14 +15,13 @@ class CaseSharingTest(TestCase):
     def setUp(self):
         """
         Two groups A and B, with users A1, A2 and B1, B2 respectively, and supervisor X who belongs to both.
-        
         """
         self.domain = "test-domain"
-        create_domain(self.domain)
+        self.domain_obj = create_domain(self.domain)
         password = "****"
 
         def create_user(username):
-            return CommCareUser.create(self.domain, format_username(username, self.domain), password)
+            return CommCareUser.create(self.domain, format_username(username, self.domain), password, None, None)
 
         def create_group(name, *users):
             group = Group(users=[user.user_id for user in users], name=name, domain=self.domain,
@@ -38,6 +37,9 @@ class CaseSharingTest(TestCase):
 
         self.groupA = create_group("A", self.userX, self.userA1, self.userA2)
         self.groupB = create_group("B", self.userX, self.userB1, self.userB2)
+
+    def tearDown(self):
+        self.domain_obj.delete()
 
     def test_sharing(self):
 
@@ -107,7 +109,7 @@ class CaseSharingTest(TestCase):
 
     def get_create_block(self, case_id, type, user_id, owner_id, name=None, **kwargs):
         name = name or case_id
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             case_name=name,
@@ -121,7 +123,7 @@ class CaseSharingTest(TestCase):
 
     def get_update_block(self, case_id, owner_id=None, update=None):
         update = update or {}
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             case_id=case_id,
             update=update,
             owner_id=owner_id or CaseBlock.undefined,

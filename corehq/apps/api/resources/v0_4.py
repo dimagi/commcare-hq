@@ -1,9 +1,11 @@
+from datetime import datetime
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
 from django.urls import reverse
+from memoized import memoized
 
 from tastypie import fields
 from tastypie.authentication import Authentication
@@ -12,9 +14,10 @@ from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.api.query_adapters import GroupQuerySetAdapter
+from corehq.apps.api.resources.pagination import DoesNothingPaginatorCompat
 from couchforms.models import doc_types
 
-from corehq.apps.api.es import ElasticAPIQuerySet, XFormES, es_search
+from corehq.apps.api.es import ElasticAPIQuerySet, FormESView, es_query_from_get_params
 from corehq.apps.api.fields import (
     ToManyDictField,
     ToManyDocumentsField,
@@ -43,19 +46,18 @@ from corehq.apps.api.serializers import (
 )
 from corehq.apps.api.util import get_obj, get_object_or_not_exist
 from corehq.apps.app_manager.app_schemas.case_properties import (
-    get_case_properties,
+    get_all_case_properties,
 )
 from corehq.apps.app_manager.dbaccessors import (
     get_all_built_app_results,
     get_apps_in_domain,
 )
-from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplication
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users.util import format_username
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.repeaters.models import Repeater
-from corehq.motech.repeaters.utils import get_all_repeater_types
+from corehq.motech.repeaters.models import Repeater, get_all_repeater_types
 from corehq.util.view_utils import absolute_reverse
 from no_exceptions.exceptions import Http400
 
@@ -146,23 +148,15 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         return self.xform_es(domain).get_document(instance_id)
 
     def xform_es(self, domain):
-        return MOCK_XFORM_ES or XFormES(domain)
+        return MOCK_XFORM_ES or FormESView(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        include_archived = 'include_archived' in bundle.request.GET
         try:
-            es_query = es_search(bundle.request, domain, ['include_archived'])
+            es_query = es_query_from_get_params(bundle.request.GET, domain, ['include_archived'])
         except Http400 as e:
             raise BadRequest(str(e))
-        if include_archived:
-            es_query['filter']['and'].append({'or': [
-                {'term': {'doc_type': 'xforminstance'}},
-                {'term': {'doc_type': 'xformarchived'}},
-            ]})
-        else:
-            es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
-        # Note that XFormES is used only as an ES client, for `run_query` against the proper index
+        # Note that FormESView is used only as an ES client, for `run_query` against the proper index
         return ElasticAPIQuerySet(
             payload=es_query,
             model=ESXFormInstance,
@@ -285,6 +279,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
     server_date_modified = fields.CharField(attribute='server_modified_on', default="1900-01-01")
     server_date_opened = fields.CharField(attribute='server_opened_on', default="1900-01-01")
     opened_by = fields.CharField(attribute='opened_by', null=True)
+    closed_by = fields.CharField(attribute='closed_by', null=True)
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']
@@ -292,7 +287,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         return self.case_es(domain).get_document(case_id)
 
     class Meta(v0_3.CommCareCaseResource.Meta):
-        max_limit = 1000
+        max_limit = 5000
         serializer = CommCareCaseSerializer()
         ordering = ['server_date_modified', 'date_modified', 'indexed_on']
         object_class = ESCase
@@ -379,17 +374,21 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
 class BaseApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        return get_apps_in_domain(domain, include_remote=False)
+        return sorted(get_apps_in_domain(domain, include_remote=False),
+                      key=lambda app: app.date_created or datetime.min)
 
     def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
+        # support returning linked applications upon receiving an application request
+        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'],
+                                       additional_doc_types=[LinkedApplication._doc_type])
 
     class Meta(CustomResourceMeta):
-        authentication = LoginAndDomainAuthentication()
+        authentication = LoginAndDomainAuthentication(allow_session_auth=True)
         object_class = Application
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'application'
+        paginator_class = DoesNothingPaginatorCompat
 
 
 class ApplicationResource(BaseApplicationResource):
@@ -421,8 +420,11 @@ class ApplicationResource(BaseApplicationResource):
             for result in results
         ]
 
-    @staticmethod
-    def dehydrate_module(app, module, langs):
+    @memoized
+    def get_all_case_properties_local(self, app):
+        return get_all_case_properties(app, exclude_invalid_properties=False)
+
+    def dehydrate_module(self, app, module, langs):
         """
         Convert a Module object to a JValue representation
         with just the good parts.
@@ -435,9 +437,8 @@ class ApplicationResource(BaseApplicationResource):
 
             dehydrated['case_type'] = module.case_type
 
-            dehydrated['case_properties'] = get_case_properties(
-                app, [module.case_type], defaults=['name']
-            )[module.case_type]
+            all_case_properties = self.get_all_case_properties_local(app)
+            dehydrated['case_properties'] = all_case_properties[module.case_type]
 
             dehydrated['unique_id'] = module.unique_id
 
@@ -451,7 +452,9 @@ class ApplicationResource(BaseApplicationResource):
                         langs,
                         include_triggers=True,
                         include_groups=True,
-                        include_translations=True),
+                        include_translations=True,
+                        include_fixtures=True,
+                    ),
                     'unique_id': form_unique_id,
                 }
                 dehydrated['forms'].append(form_jvalue)
@@ -464,7 +467,8 @@ class ApplicationResource(BaseApplicationResource):
     def dehydrate_modules(self, bundle):
         app = bundle.obj
 
-        if app.doc_type == Application._doc_type:
+        # support returning linked applications upon receiving an application list request
+        if app.doc_type in [Application._doc_type, LinkedApplication._doc_type]:
             return [self.dehydrate_module(app, module, app.langs) for module in bundle.obj.modules]
         elif app.doc_type == RemoteApp._doc_type:
             return []

@@ -148,7 +148,7 @@ class CaseXPathValidationError(XPathValidationError):
     pass
 
 
-class UserCaseXPathValidationError(XPathValidationError):
+class UsercaseXPathValidationError(XPathValidationError):
     pass
 
 
@@ -160,6 +160,10 @@ class PracticeUserException(AppManagerException):
 
 
 class AppLinkError(AppManagerException):
+    pass
+
+
+class CaseSearchConfigError(AppManagerException):
     pass
 
 
@@ -177,3 +181,8 @@ class BuildNotFoundException(AppManagerException):
 
 class BuildConflictException(Exception):
     pass
+
+
+class AppValidationError(AppManagerException):
+    def __init__(self, errors):
+        self.errors = errors

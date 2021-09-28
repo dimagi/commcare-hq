@@ -17,6 +17,17 @@
   {% initial_page_data 'hierarchy' hierarchy %}
   {% initial_page_data 'locations' locations %}
   {% initial_page_data 'location_parent_get_id' location.parent.get_id %}
+  {% initial_page_data 'can_edit_root' can_edit_root %}
+  {% initial_page_data 'show_inactive' show_inactive %}
+
+  {% registerurl 'location_search' domain %}
+  {% registerurl 'archive_location' domain '---' %}
+  {% registerurl 'unarchive_location' domain '---' %}
+  {% registerurl 'delete_location' domain '---' %}
+  {% registerurl 'location_lineage' domain '---' %}
+  {% registerurl 'location_descendants_count' domain '---'%}
+  {% registerurl 'edit_location' domain '---' %}
+  {% registerurl 'create_location' domain %}
 
   <div>
     {% if not creates_new_location %}
@@ -53,6 +64,10 @@
           <a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a>
         </li>
 
+        <li class="{% if form_tab == "descendants" %}active{% endif %}">
+          <a href="#descendants-info" data-toggle="tab">{% trans "Child Locations" %}</a>
+        </li>
+
         {% if users_per_location_form %}
           <li class="{% if form_tab == "users" %}active{% endif %}">
             <a href="#users" data-toggle="tab">{% trans "Users" %}</a>
@@ -61,12 +76,6 @@
 
         {% if products_per_location_form %}
           <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
-        {% endif %}
-
-        {% if related_location_form %}
-          <li class="{% if form_tab == "related_location" %}active{% endif %}">
-            <a href="#related_location" data-toggle="tab">{% trans "Related Locations" %}</a>
-          </li>
         {% endif %}
 
       </ul>
@@ -132,6 +141,18 @@
 
       </div>
 
+      {% if not creates_new_location %}
+        {% initial_page_data 'location' location %}
+
+        <div class="tab-pane {% if form_tab == "descendants" %}active{% endif %}" id="descendants-info">
+          <div class="panel panel-modern-gray panel-form-only">
+            <div class="panel-body">
+              {% include 'locations/manage/location_template.html' with view_only=request.is_view_only %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
       {% if users_per_location_form %}
         <div class="tab-pane {% if form_tab == "users" %}active{% endif %}" id="users">
           <div class="row">
@@ -185,29 +206,6 @@
         </div>
       {% endif %}
 
-      {% if related_location_form %}
-        <div class="tab-pane {% if form_tab == "related_location" %}active{% endif %}" id="related_location">
-          <div class="panel panel-modern-gray panel-form-only">
-            <div class="panel-body">
-              <form id="group_form" class="form-horizontal{% if request.is_view_only %} form-hide-actions{% endif %}" name="" method="post">
-                {% csrf_token %}
-                <fieldset>
-                  <legend>{% trans 'Related Locations' %}</legend>
-                  {% crispy related_location_form %}
-                  <input type="hidden" name="form_type" value="related_location" />
-                </fieldset>
-                <div class="form-actions">
-                  <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-                    <button type="submit" class="btn btn-primary disable-on-submit">
-                      {% trans 'Update Related Locations' %}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      {% endif %}
     </div>
 
   </div>
@@ -234,4 +232,4 @@
       </div>
     </div>
   {% endif %}
-{% endblock %}
+{% endblock modals %}

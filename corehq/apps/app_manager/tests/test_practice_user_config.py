@@ -27,7 +27,7 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
         cls.domain = "practice-user-domain"
 
         cls.project = create_domain(cls.domain)
-        cls.user = CommCareUser.create(cls.domain, 'test@main-domain.commcarehq.org', 'secret')
+        cls.user = CommCareUser.create(cls.domain, 'test@main-domain.commcarehq.org', 'secret', None, None)
 
     def setUp(self):
         self.factory = AppFactory(build_version='2.30.0', domain=self.domain)

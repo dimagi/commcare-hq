@@ -2,6 +2,7 @@ import json
 from decimal import Decimal
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from corehq.apps.consumption.const import DAYS_IN_MONTH
+from corehq.apps.domain.models import Domain
 
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
@@ -25,9 +26,13 @@ class ConsumptionHelper(object):
         self.balance = balance
         self.sql_location = sql_location
 
+    @property
+    def domain_obj(self):
+        return Domain.get_by_name(self.domain)
+
     def get_default_monthly_consumption(self):
         return get_default_monthly_consumption_for_case_and_entry(
-            self.domain, self.case_id, self.entry_id
+            self.domain_obj, self.case_id, self.entry_id
         )
 
     @memoized
@@ -155,33 +160,6 @@ def compute_daily_consumption(
         window_end
     )
     return compute_daily_consumption_from_transactions(transactions, window_start, configuration)
-
-
-def compute_consumption_or_default(
-        domain, case_id, product_id, window_end,
-        section_id=const.SECTION_TYPE_STOCK, configuration=None):
-    """
-    Used when it's not important to know if the consumption
-    value is real or just a default value
-    """
-    configuration = configuration or ConsumptionConfiguration()
-    daily_consumption = compute_daily_consumption(
-        domain,
-        case_id,
-        product_id,
-        window_end,
-        section_id,
-        configuration
-    )
-
-    if daily_consumption:
-        return daily_consumption * 30.
-    else:
-        return compute_default_monthly_consumption(
-            case_id,
-            product_id,
-            configuration,
-        )
 
 
 def get_default_monthly_consumption_for_case_and_entry(domain, case_id, entry_id):

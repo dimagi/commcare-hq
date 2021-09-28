@@ -3,6 +3,7 @@ from corehq.util.es.elasticsearch import ElasticsearchException
 from corehq.apps.es import CaseES, FormES, GroupES
 from corehq.apps.es.sms import SMSES
 from corehq.elastic import ES_EXPORT_INSTANCE, get_es_new
+from corehq.util.es.interface import ElasticsearchInterface
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
@@ -23,7 +24,8 @@ def get_case_export_base_query(domain, case_type):
     return (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
             .case_type(case_type)
-            .sort("opened_on"))
+            .sort("opened_on")
+            .sort('inserted_at', reset_sort=False))
 
 
 def get_sms_export_base_query(domain):
@@ -50,8 +52,13 @@ def get_groups_user_ids(group_ids):
 def get_case_name(case_id):
     from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
     try:
-        result = get_es_new().get(CASE_INDEX_INFO.index, case_id, _source_include=['name'])
+        result = ElasticsearchInterface(get_es_new()).get_doc(
+            CASE_INDEX_INFO.alias,
+            CASE_INDEX_INFO.type,
+            case_id,
+            source_includes=['name']
+        )
     except ElasticsearchException:
         return None
 
-    return result['_source']['name']
+    return result['name']

@@ -1,64 +1,84 @@
-from datetime import datetime
+from decimal import Decimal
 
 from django.test import TestCase
 
 from corehq.apps.sms.api import create_billable_for_sms
-from corehq.apps.sms.models import OUTGOING, SMS
-from corehq.apps.smsbillables.models import SmsBillable
-from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
+from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee
+from corehq.apps.smsbillables.tests.utils import get_fake_sms, short_text, long_text
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 
 
 class TestBillableCreation(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestBillableCreation, cls).setUpClass()
+        cls.domain = 'sms_test_domain'
+
+        cls.backend = SQLTestSMSBackend(
+            name="TEST",
+            is_global=True,
+            domain=cls.domain,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
+        cls.backend.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.backend.delete()
+        super(TestBillableCreation, cls).tearDownClass()
+
     def setUp(self):
         super(TestBillableCreation, self).setUp()
-        self.domain = 'sms_test_domain'
-        self.mobile_backend = SQLTropoBackend(
-            name="TEST",
-            is_global=False,
-            domain=self.domain,
-            hq_api_id=SQLTropoBackend.get_api_id()
-        )
-        self.mobile_backend.save()
-        self.text_short = "This is a test text message under 160 characters."
-        self.text_long = (
-            "This is a test text message that's over 160 characters in length. "
-            "Or at least it will be. Thinking about kale. I like kale. Kale is "
-            "a fantastic thing. Also bass music. I really like dat bass."
-        )
-
-    def _get_fake_sms(self, text):
-        msg = SMS(
-            domain=self.domain,
-            phone_number='+16175555454',
-            direction=OUTGOING,
-            date=datetime.utcnow(),
-            backend_id=self.mobile_backend.couch_id,
-            text=text
-        )
-        msg.save()
-        return msg
-
-    def test_creation(self):
-        msg = self._get_fake_sms(self.text_short)
-        create_billable_for_sms(msg, delay=False)
-        sms_billables = SmsBillable.objects.filter(
-            domain=self.domain,
-            log_id=msg.couch_id
-        )
-        self.assertEqual(sms_billables.count(), 1)
-        self.assertEqual(sms_billables[0].multipart_count, 1)
-
-    def test_long_creation(self):
-        msg = self._get_fake_sms(self.text_long)
-        create_billable_for_sms(msg, delay=False)
-        sms_billables = SmsBillable.objects.filter(
-            domain=self.domain,
-            log_id=msg.couch_id
-        )
-        self.assertEqual(sms_billables.count(), 1)
-        self.assertEqual(sms_billables[0].multipart_count, 2)
+        self.billable = self.gateway_fee = self.msg = None
 
     def tearDown(self):
-        self.mobile_backend.delete()
+        if self.billable is not None:
+            self.billable.delete()
+        if self.gateway_fee is not None:
+            self.gateway_fee.delete()
+        if self.msg is not None:
+            self.msg.delete()
         super(TestBillableCreation, self).tearDown()
+
+    def test_creation(self):
+        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id, self.backend.couch_id, short_text)
+
+        create_billable_for_sms(self.msg, delay=False)
+
+        sms_billables = SmsBillable.objects.filter(
+            domain=self.domain,
+            log_id=self.msg.couch_id
+        )
+        self.assertEqual(sms_billables.count(), 1)
+        self.billable = sms_billables[0]
+        self.assertEqual(self.billable.multipart_count, 1)
+
+    def test_long_creation(self):
+        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id, self.backend.couch_id, long_text)
+
+        create_billable_for_sms(self.msg, delay=False)
+
+        sms_billables = SmsBillable.objects.filter(
+            domain=self.domain,
+            log_id=self.msg.couch_id
+        )
+        self.assertEqual(sms_billables.count(), 1)
+        self.billable = sms_billables[0]
+        self.assertEqual(self.billable.multipart_count, 2)
+
+    def test_gateway_fee_after_creation(self):
+        expected_fee = Decimal('0.005')
+        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id, self.backend.couch_id, short_text)
+        self.gateway_fee = SmsGatewayFee.create_new(self.backend.hq_api_id, self.msg.direction, expected_fee)
+
+        create_billable_for_sms(self.msg, delay=False)
+
+        sms_billables = SmsBillable.objects.filter(
+            domain=self.domain,
+            log_id=self.msg.couch_id
+        )
+        self.assertEqual(sms_billables.count(), 1)
+        self.billable = sms_billables[0]
+        actual_fee = self.billable.gateway_fee.amount
+        self.assertEqual(expected_fee, actual_fee)

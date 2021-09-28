@@ -29,12 +29,7 @@ from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
 )
-from corehq.motech.repeaters.models import (
-    CaseRepeater,
-    FormRepeater,
-    Repeater,
-    get_requests,
-)
+from corehq.motech.repeaters.models import CaseRepeater, FormRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -68,7 +63,7 @@ class Dhis2Instance(Document):
         Notifies administrators if the version of DHIS2 exceeds the
         maximum supported version, but still saves and continues.
         """
-        requests = get_requests(self)
+        requests = self.connection_settings.get_requests(self)
         metadata = fetch_metadata(requests)
         dhis2_version = metadata["system"]["version"]
         try:
@@ -97,9 +92,6 @@ class Dhis2EntityRepeater(CaseRepeater, Dhis2Instance):
     dhis2_entity_config = SchemaProperty(Dhis2EntityConfig)
 
     _has_config = True
-
-    def __str__(self):
-        return Repeater.__str__(self)
 
     def allowed_to_forward(self, payload):
         # If the payload is the system form for updating a case with its
@@ -139,7 +131,7 @@ class Dhis2EntityRepeater(CaseRepeater, Dhis2Instance):
                           if 'case_property' in c],
             form_question_values=get_form_question_values(payload),
         )
-        requests = get_requests(self, repeat_record.payload_id)
+        requests = self.connection_settings.get_requests(repeat_record.payload_id)
         try:
             return send_dhis2_entities(requests, self, case_trigger_infos)
         except Exception:
@@ -163,9 +155,6 @@ class Dhis2Repeater(FormRepeater, Dhis2Instance):
     dhis2_config = SchemaProperty(Dhis2Config)
 
     _has_config = True
-
-    def __str__(self):
-        return Repeater.__str__(self)
 
     def __eq__(self, other):
         return (
@@ -206,7 +195,7 @@ class Dhis2Repeater(FormRepeater, Dhis2Instance):
         # Notify admins if API version is not supported
         self.get_api_version()
 
-        requests = get_requests(self, repeat_record.payload_id)
+        requests = self.connection_settings.get_requests(repeat_record.payload_id)
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
                 try:

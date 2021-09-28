@@ -12,15 +12,16 @@ from django.views.decorators.http import require_POST
 
 from couchdbkit.exceptions import ResourceNotFound
 
+from corehq.apps.toggle_ui.models import ToggleAudit
 from couchforms.analytics import get_last_form_submission_received
 from toggle.models import Toggle
-from toggle.shortcuts import parse_toggle
+from toggle.shortcuts import parse_toggle, namespaced_item
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.toggle_ui.utils import find_static_toggle
+from corehq.apps.toggle_ui.utils import find_static_toggle, get_toggles_attachment_file
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     ALL_NAMESPACES,
@@ -33,8 +34,12 @@ from corehq.toggles import (
     DynamicallyPredictablyRandomToggle,
     PredictablyRandomToggle,
     all_toggles,
+    NAMESPACE_EMAIL_DOMAIN,
+    toggles_enabled_for_domain,
+    toggles_enabled_for_user, FeatureRelease,
 )
 from corehq.util.soft_assert import soft_assert
+from couchexport.models import Format
 
 NOT_FOUND = "Not Found"
 
@@ -132,6 +137,10 @@ class ToggleEditView(BasePageView):
     def is_random_editable(self):
         return isinstance(self.static_toggle, DynamicallyPredictablyRandomToggle)
 
+    @property
+    def is_feature_release(self):
+        return isinstance(self.static_toggle, FeatureRelease)
+
     @cached_property
     def static_toggle(self):
         """
@@ -159,6 +168,7 @@ class ToggleEditView(BasePageView):
             'server_environment': settings.SERVER_ENVIRONMENT,
             'is_random': self.is_random_editable,
             'is_random_editable': self.is_random_editable,
+            'is_feature_release': self.is_feature_release,
             'allows_items': all(n in ALL_NAMESPACES for n in namespaces)
         }
         if self.usage_info:
@@ -171,8 +181,6 @@ class ToggleEditView(BasePageView):
 
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()
-        randomness = request.POST.get('randomness', None)
-        randomness = decimal.Decimal(randomness) if randomness else None
 
         item_list = request.POST.get('item_list', [])
         if item_list:
@@ -183,10 +191,17 @@ class ToggleEditView(BasePageView):
         currently_enabled = set(item_list)
         toggle.enabled_users = item_list
 
-        if self.is_random_editable and randomness is not None:
+        randomness = None
+        if self.is_random_editable:
+            randomness = request.POST.get('randomness', None)
+            randomness = decimal.Decimal(randomness) if randomness else None
             self._save_randomness(toggle, randomness)
 
         toggle.save()
+
+        ToggleAudit.objects.log_toggle_changes(
+            self.toggle_slug, self.request.user.username, currently_enabled, previously_enabled, randomness
+        )
         _notify_on_change(self.static_toggle, currently_enabled - previously_enabled, self.request.user.username)
         _call_save_fn_and_clear_cache(self.static_toggle, previously_enabled, currently_enabled)
 
@@ -234,21 +249,31 @@ def _call_save_fn_and_clear_cache(static_toggle, previously_enabled, currently_e
     for entry in changed_entries:
         enabled = entry in currently_enabled
         namespace, entry = parse_toggle(entry)
-        if namespace == NAMESPACE_DOMAIN:
-            domain = entry
-            if static_toggle.save_fn is not None:
-                static_toggle.save_fn(domain, enabled)
-        else:
-            # these are sent down with no namespace
-            assert ':' not in entry, entry
-            username = entry
+        _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled)
+        _clear_cache_for_toggle(namespace, entry)
+
+
+def _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled):
+    if namespace == NAMESPACE_DOMAIN:
+        domain = entry
+        if static_toggle.save_fn is not None:
+            static_toggle.save_fn(domain, enabled)
+
+
+def _clear_cache_for_toggle(namespace, entry):
+    if namespace == NAMESPACE_DOMAIN:
+        domain = entry
+        toggles_enabled_for_domain.clear(domain)
+    elif namespace != NAMESPACE_EMAIL_DOMAIN:
+        # these are sent down with no namespace
+        assert ':' not in entry, entry
+        username = entry
+        toggles_enabled_for_user.clear(username)
 
 
 def _clear_caches_for_dynamic_toggle(static_toggle):
     # note: this is rather coupled with python property internals
     DynamicallyPredictablyRandomToggle.randomness.fget.clear(static_toggle)
-    # also have to do this since the toggle itself is cached
-    all_toggles.clear()
 
 
 def _get_usage_info(toggle):
@@ -332,9 +357,27 @@ def set_toggle(request, toggle_slug):
     item = request.POST['item']
     enabled = request.POST['enabled'] == 'true'
     namespace = request.POST['namespace']
-    static_toggle.set(item=item, enabled=enabled, namespace=namespace)
+    if static_toggle.set(item=item, enabled=enabled, namespace=namespace):
+        action = ToggleAudit.ACTION_ADD if enabled else ToggleAudit.ACTION_REMOVE
+        ToggleAudit.objects.log_toggle_action(
+            toggle_slug, request.user.username, [namespaced_item(item, namespace)], action
+        )
 
     if enabled:
         _notify_on_change(static_toggle, [item], request.user.username)
 
+    _clear_cache_for_toggle(namespace, item)
+
     return HttpResponse(json.dumps({'success': True}), content_type="application/json")
+
+
+@require_superuser_or_contractor
+def export_toggles(request):
+    tag = request.GET['tag'] or None
+
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
+    response['Content-Disposition'] = 'attachment; filename="flags.xlsx"'
+    outfile = get_toggles_attachment_file(tag)
+    response.write(outfile.getvalue())
+
+    return response

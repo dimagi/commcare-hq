@@ -1,3 +1,6 @@
+import datetime
+
+from dateutil.parser import parse
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext as _
 
@@ -67,3 +70,51 @@ def case_to_es_case(case):
     from corehq.pillows.case import transform_case_for_elasticsearch
     from corehq.apps.api.models import ESCase
     return ESCase(transform_case_for_elasticsearch(case.to_json()))
+
+
+def make_date_filter(date_filter):
+    """Function builder that returns a function for processing API date
+    parameters.
+
+    :param date_filter: a function which is called with the final value
+        of the filter parameters.
+    """
+
+    def filter_fn(param, val):
+        if param not in ['gt', 'gte', 'lt', 'lte']:
+            raise ValueError(_("'{param}' is not a valid type of date range.").format(param=param))
+        try:
+            # If it's only a date, don't turn it into a datetime
+            val = datetime.datetime.strptime(val, '%Y-%m-%d').date()
+        except ValueError:
+            try:
+                val = parse(val)
+            except ValueError:
+                raise ValueError(_("Cannot parse datetime '{val}'").format(val=val))
+        return date_filter(**{param: val})
+
+    return filter_fn
+
+
+def django_date_filter(field_name, gt=None, gte=None, lt=None, lte=None):
+    """Return a dictionary mapping Django field filter names to filter values.
+
+    filters = django_date_filter("created_on", gt=d1, lte=d2)
+    Model.objects.filter(**filters)
+    """
+    params = dict(zip(['gt', 'gte', 'lt', 'lte'], [gt, gte, lt, lte]))
+
+    def _adjust_lte_date(param, value):
+        """Adjust `lte` when value is date (not datetime) so that it is inclusive of all data
+        in the day.
+        """
+        if param != 'lte' or isinstance(value, datetime.datetime):
+            return value
+
+        return datetime.datetime.combine(value, datetime.datetime.max.time())
+
+    return {
+        f"{field_name}__{param}": _adjust_lte_date(param, value)
+        for param, value in params.items()
+        if value is not None
+    }

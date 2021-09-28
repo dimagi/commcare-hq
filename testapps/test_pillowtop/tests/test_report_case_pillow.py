@@ -1,23 +1,28 @@
 import uuid
 
 from django.test import TestCase, override_settings
-from corehq.util.es.elasticsearch import ConnectionError
+
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.es import CaseES
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.elastic import get_es_new
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.util.es.elasticsearch import ConnectionError
+from corehq.util.test_utils import create_and_save_a_case, trap_extra_setup
 from testapps.test_pillowtop.utils import process_pillow_changes
+
+from .base import BasePillowTestCase
 
 DOMAIN = 'report-case-pillowtest-domain'
 
 
 @override_settings(ES_CASE_FULL_INDEX_DOMAINS=[DOMAIN])
-class ReportCasePillowTest(TestCase):
+@es_test
+class ReportCasePillowTest(BasePillowTestCase):
 
     def setUp(self):
         super(ReportCasePillowTest, self).setUp()
@@ -34,7 +39,6 @@ class ReportCasePillowTest(TestCase):
         FormProcessorTestUtils.delete_all_cases()
         super(ReportCasePillowTest, self).tearDown()
 
-    @run_with_all_backends
     def test_report_case_pillow(self):
         case_id, case_name = self._create_case_and_sync_to_es(DOMAIN)
 
@@ -46,7 +50,6 @@ class ReportCasePillowTest(TestCase):
         self.assertEqual(case_id, case_doc['_id'])
         self.assertEqual(case_name, case_doc['name'])
 
-    @run_with_all_backends
     def test_unsupported_domain(self):
         self._create_case_and_sync_to_es('unsupported-domain')
 
@@ -80,7 +83,6 @@ class ReportCaseReindexerTest(TestCase):
         ensure_index_deleted(REPORT_CASE_INDEX_INFO.index)
         super(ReportCaseReindexerTest, self).tearDown()
 
-    @run_with_all_backends
     def test_report_case_reindexer(self):
         cases_included = set()
         for i in range(3):

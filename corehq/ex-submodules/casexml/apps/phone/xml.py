@@ -1,6 +1,6 @@
 import logging
 from xml.sax import saxutils
-from xml.etree import cElementTree as ElementTree
+from lxml import etree as ElementTree
 from casexml.apps.case import const
 from casexml.apps.case.xml import check_version, V1
 from casexml.apps.case.xml.generator import get_generator, date_to_xml_string,\
@@ -27,7 +27,7 @@ def tostring(element):
 
 def get_sync_element(restore_id=None):
     elem = safe_element("Sync")
-    elem.attrib = {"xmlns": SYNC_XMLNS}
+    elem.set("xmlns", SYNC_XMLNS)
     if restore_id is not None:
         elem.append(safe_element("restore_id", restore_id))
     return elem
@@ -110,7 +110,7 @@ def get_casedb_element(case):
 
 def get_registration_element(restore_user):
     root = safe_element("Registration")
-    root.attrib = {"xmlns": USER_REGISTRATION_XMLNS}
+    root.set("xmlns", USER_REGISTRATION_XMLNS)
     root.append(safe_element("username", restore_user.username))
     root.append(safe_element("password", restore_user.password))
     root.append(safe_element("uuid", restore_user.user_id))
@@ -122,7 +122,7 @@ def get_registration_element(restore_user):
 # Case registration blocks do not have a password
 def get_registration_element_for_case(case):
     root = safe_element("Registration")
-    root.attrib = {"xmlns": USER_REGISTRATION_XMLNS}
+    root.set("xmlns", USER_REGISTRATION_XMLNS)
     root.append(safe_element("username", case.name))
     root.append(safe_element("password", ""))
     root.append(safe_element("uuid", case.case_id))
@@ -136,7 +136,7 @@ def get_data_element(name, dict):
     # sorted for deterministic unit tests
     for k, v in sorted(dict.items()):
         sub_el = safe_element("data", v)
-        sub_el.attrib = {"key": k}
+        sub_el.set("key", k)
         elem.append(sub_el)
     return elem
 

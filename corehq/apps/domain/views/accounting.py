@@ -10,10 +10,15 @@ from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models import Sum
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseRedirect,
+    HttpResponseForbidden,
+)
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
@@ -25,6 +30,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.accounting.utils.downgrade import can_domain_unpause
 from dimagi.utils.web import json_response
 
 from corehq import privileges
@@ -88,6 +94,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
+    LoginAndDomainMixin,
 )
 from corehq.apps.domain.forms import (
     INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS,
@@ -99,7 +106,7 @@ from corehq.apps.domain.forms import (
     EditBillingAccountInfoForm,
     SelectSubscriptionTypeForm,
 )
-from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
+from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
@@ -450,10 +457,6 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
     loading_message = ugettext_lazy("Loading statements...")
 
     @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-    @property
     def stripe_cards(self):
         return get_customer_cards(self.request.user.username, self.domain)
 
@@ -780,10 +783,18 @@ class WireInvoiceView(View):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        from corehq.apps.accounting.views import _get_account_or_404
         emails = request.POST.get('emails', []).split()
         balance = Decimal(request.POST.get('customPaymentAmount', 0))
-        account = _get_account_or_404(request, request.domain)
+
+        from corehq.apps.accounting.utils.account import (
+            get_account_or_404,
+            request_has_permissions_for_enterprise_admin,
+        )
+        account = get_account_or_404(request.domain)
+        if (account.is_customer_billing_account
+                and not request_has_permissions_for_enterprise_admin(request, account)):
+            return HttpResponseForbidden()
+
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails, account=account)
         try:
             wire_invoice_factory.create_wire_invoice(balance)
@@ -830,8 +841,14 @@ class BillingStatementPdfView(View):
             raise Http404()
 
         if invoice.is_customer_invoice:
-            from corehq.apps.accounting.views import _get_account_or_404
-            account = _get_account_or_404(request, domain)
+            from corehq.apps.accounting.utils.account import (
+                get_account_or_404,
+                request_has_permissions_for_enterprise_admin,
+            )
+            account = get_account_or_404(request.domain)
+            if not request_has_permissions_for_enterprise_admin(request, account):
+                return HttpResponseForbidden()
+
             filename = "%(pdf_id)s_%(account)s_%(filename)s" % {
                 'pdf_id': invoice_pdf._id,
                 'account': account,
@@ -879,14 +896,13 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                 form.process_subscription_management()
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             except (NewSubscriptionError, SubscriptionAdjustmentError) as e:
-                messages.error(self.request, mark_safe(
+                messages.error(self.request, format_html(
                     'This request will require Ops assistance. '
-                    'Please explain to <a href="mailto:%(ops_email)s">%(ops_email)s</a>'
-                    ' what you\'re trying to do and report the following error: <strong>"%(error)s"</strong>' % {
-                        'error': str(e),
-                        'ops_email': settings.ACCOUNTS_EMAIL,
-                    }
-                ))
+                    'Please explain to <a href="mailto:{ops_email}">{ops_email}</a>'
+                    ' what you\'re trying to do and report the following error: <strong>"{error}"</strong>',
+                    error=str(e),
+                    ops_email=settings.ACCOUNTS_EMAIL)
+                )
         return self.get(request, *args, **kwargs)
 
     @property
@@ -962,6 +978,11 @@ class SelectPlanView(DomainAccountingSettings):
     step_title = ugettext_lazy("Select Plan")
     edition = None
     lead_text = ugettext_lazy("Please select a plan below that fits your organization's needs.")
+
+    @property
+    @memoized
+    def can_domain_unpause(self):
+        return can_domain_unpause(self.domain)
 
     @property
     def plan_options(self):
@@ -1087,6 +1108,7 @@ class SelectPlanView(DomainAccountingSettings):
             'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
                                            if self.current_subscription is not None else False),
             'next_subscription_edition': self.next_subscription_edition,
+            'can_domain_unpause': self.can_domain_unpause,
         }
 
 
@@ -1313,6 +1335,8 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
 
     def post(self, request, *args, **kwargs):
+        if not self.can_domain_unpause:
+            return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
         if self.edition == SoftwarePlanEdition.ENTERPRISE:
             return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
@@ -1394,6 +1418,9 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
+
+        if not self.can_domain_unpause:
+            return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
 
         if self.is_form_post and self.billing_account_info_form.is_valid():
             if not self.current_subscription.user_can_change_subscription(self.request.user):
@@ -1513,7 +1540,7 @@ class SubscriptionMixin(object):
 class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
     urlname = "domain_subscription_renewal"
     page_title = ugettext_lazy("Renew Plan")
-    step_title = ugettext_lazy("Renew or Change Plan")
+    step_title = ugettext_lazy("Renew Plan")
     template_name = "domain/renew_plan.html"
 
     @property
@@ -1525,32 +1552,35 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
     def page_context(self):
         context = super(SubscriptionRenewalView, self).page_context
 
-        current_privs = get_privileges(self.subscription.plan_version)
-        plan = DefaultProductPlan.get_lowest_edition(
-            current_privs, return_plan=False,
-        ).lower()
+        current_edition = self.subscription.plan_version.plan.edition
 
-        current_edition = (plan
-                           if self.current_subscription is not None
-                           and not self.current_subscription.is_trial
-                           else "")
+        if current_edition in [
+            SoftwarePlanEdition.COMMUNITY,
+            SoftwarePlanEdition.PAUSED,
+        ]:
+            raise Http404()
 
-        # never allow renewal into community
-        if current_edition == SoftwarePlanEdition.COMMUNITY:
-            raise Http404
-
-        context['current_edition'] = current_edition
-
+        context.update({
+            'current_edition': current_edition,
+            'plan': self.subscription.plan_version.user_facing_description,
+            'tile_css': 'tile-{}'.format(current_edition.lower()),
+            'is_renewal_page': True,
+        })
         return context
 
 
-class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin, SubscriptionMixin):
+class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings, AsyncHandlerMixin, SubscriptionMixin):
     template_name = 'domain/confirm_subscription_renewal.html'
     urlname = 'domain_subscription_renewal_confirmation'
-    page_title = ugettext_lazy("Renew Plan")
+    page_title = ugettext_lazy("Confirm Billing Information")
+    step_title = ugettext_lazy("Confirm Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
     ]
+
+    @property
+    def is_request_from_current_step(self):
+        return self.request.method == 'POST' and "from_plan_page" not in self.request.POST
 
     @method_decorator(require_POST)
     def dispatch(self, request, *args, **kwargs):
@@ -1576,7 +1606,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def confirm_form(self):
-        if self.request.method == 'POST' and "from_plan_page" not in self.request.POST:
+        if self.is_request_from_current_step:
             return ConfirmSubscriptionRenewalForm(
                 self.account, self.domain, self.request.couch_user.username,
                 self.subscription, self.next_plan_version,
@@ -1594,6 +1624,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
             'plan': self.subscription.plan_version.user_facing_description,
             'confirm_form': self.confirm_form,
             'next_plan': self.next_plan_version.user_facing_description,
+            'is_renewal_page': True,
         }
 
     @property
@@ -1605,6 +1636,17 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
             return self.async_response
         if self.new_edition == SoftwarePlanEdition.ENTERPRISE:
             return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
+        if (not self.is_request_from_current_step
+                and self.new_edition not in SoftwarePlanEdition.SELF_RENEWABLE_EDITIONS):
+            messages.error(
+                request,
+                _("Your subscription is not eligible for self-renewal. "
+                  "Please sign up for a new subscription instead or contact {}"
+                  ).format(settings.BILLING_EMAIL)
+            )
+            return HttpResponseRedirect(
+                reverse(DomainSubscriptionView.urlname, args=[self.domain])
+            )
         if self.confirm_form.is_valid():
             is_saved = self.confirm_form.save()
             if not is_saved:
@@ -1773,7 +1815,7 @@ def pause_subscription(request, domain):
             ]).format(
                 user=request.couch_user.username,
                 domain=domain,
-                old_plan=request.POST.get('old_plan', 'unknown'),
+                old_plan=current_subscription.plan_version.plan.edition,
                 note=_get_downgrade_or_pause_note(request, True),
             )
 

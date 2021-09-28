@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.modules import to_function
 
 from corehq import privileges, toggles
@@ -32,7 +32,6 @@ from corehq.apps.sms.models import (
     PhoneBlacklist,
     PhoneNumber,
     QueuedSMS,
-    SelfRegistrationInvitation,
     SQLMobileBackend,
     SQLSMSBackend,
 )
@@ -45,9 +44,16 @@ from corehq.apps.sms.util import (
     strip_plus,
 )
 from corehq.apps.smsbillables.utils import log_smsbillables_error
+from corehq.apps.smsforms.models import (
+    SMSChannel,
+    XFormsSessionSynchronization,
+)
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.const import USER_CHANGE_VIA_SMS
 from corehq.form_processor.utils import is_commcarecase
+from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import sms_load_counter
+from corehq.util.quickcache import quickcache
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -138,7 +144,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
         date=get_utcnow(),
         backend_id=None,
         location_id=get_location_id_by_contact(domain, contact),
-        text = text
+        text=text
     )
     if contact:
         msg.couch_recipient = contact.get_id
@@ -147,6 +153,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     if domain and contact and is_commcarecase(contact):
         backend_name = contact.get_case_property('contact_backend_id')
         backend_name = backend_name.strip() if isinstance(backend_name, str) else ''
+
         if backend_name:
             try:
                 backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
@@ -162,9 +169,8 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
 
     return queue_outgoing_sms(msg)
 
-
 def send_sms_to_verified_number(verified_number, text, metadata=None,
-        logged_subevent=None):
+        logged_subevent=None, events=[]):
     """
     Sends an sms using the given verified phone number entry.
 
@@ -194,6 +200,15 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
         text = text
     )
     add_msg_tags(msg, metadata)
+
+    msg.custom_metadata = {}
+    for event in events:
+        multimedia_fields = ('caption_image', 'caption_audio', 'caption_video')
+        for field in multimedia_fields:
+            value = getattr(event, field, None)
+            if value is not None:
+                msg.custom_metadata[field] = value
+    msg.save()
 
     return queue_outgoing_sms(msg)
 
@@ -301,6 +316,11 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
 
         if backend.domain_is_authorized(msg.domain):
             backend.send(msg, orig_phone_number=orig_phone_number)
+            metrics_counter("commcare.sms.outbound_message", tags={
+                'domain': msg.domain,
+                'status': 'ok',
+                'backend': _get_backend_tag(backend),
+            })
         else:
             raise BackendAuthorizationException(
                 "Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend.pk)
@@ -310,11 +330,16 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         msg.backend_id = backend.couch_id
         msg.save()
         return True
-    except Exception:
+    except Exception as e:
+        metrics_counter("commcare.sms.outbound_message", tags={
+            'domain': msg.domain,
+            'status': 'error',
+            'backend': _get_backend_tag(backend),
+        })
         should_log_exception = True
 
         if backend:
-            should_log_exception = should_log_exception_for_backend(backend)
+            should_log_exception = should_log_exception_for_backend(backend, e)
 
         if should_log_exception:
             log_sms_exception(msg)
@@ -322,13 +347,30 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         return False
 
 
-def should_log_exception_for_backend(backend):
+@quickcache(['backend_id'], skip_arg='backend')
+def _get_backend_tag(backend=None, backend_id=None):
+    assert not (backend_id and backend)
+    if backend_id:
+        try:
+            backend = SQLMobileBackend.load(backend_id, is_couch_id=True)
+        except Exception:
+            backend = None
+
+    if not backend:
+        return 'unknown'
+    elif backend.is_global:
+        return backend.name
+    else:
+        return f'{backend.domain}/{backend.name}'
+
+
+def should_log_exception_for_backend(backend, exception):
     """
-    Only returns True if an exception hasn't been logged for the given backend
+    Only returns True if the exception hasn't been logged for the given backend
     in the last hour.
     """
     client = get_redis_client()
-    key = 'exception-logged-for-backend-%s' % backend.couch_id
+    key = f'exception-logged-for-backend-{backend.couch_id}-{hash(str(exception))}'
 
     if client.get(key):
         return False
@@ -366,53 +408,6 @@ def is_registration_text(text):
         return False
 
     return keywords[0] in REGISTRATION_KEYWORDS
-
-
-def process_pre_registration(msg):
-    """
-    Returns True if this message was part of the SMS pre-registration
-    workflow (see corehq.apps.sms.models.SelfRegistrationInvitation).
-    Returns False if it's not part of the pre-registration workflow or
-    if the workflow has already been completed.
-    """
-    invitation = SelfRegistrationInvitation.by_phone(msg.phone_number)
-    if not invitation:
-        return False
-
-    if any_migrations_in_progress(invitation.domain):
-        raise DelayProcessing()
-
-    domain_obj = Domain.get_by_name(invitation.domain, strict=True)
-    if not domain_obj.sms_mobile_worker_registration_enabled:
-        return False
-
-    text = msg.text.strip()
-    if is_registration_text(text):
-        # Return False to let the message be processed through the SMS
-        # registration workflow
-        return False
-    elif invitation.phone_type:
-        # If the user has already indicated what kind of phone they have,
-        # but is still replying with sms, then just resend them the
-        # appropriate registration instructions
-        if invitation.phone_type == SelfRegistrationInvitation.PHONE_TYPE_ANDROID:
-            invitation.send_step2_android_sms()
-        elif invitation.phone_type == SelfRegistrationInvitation.PHONE_TYPE_OTHER:
-            invitation.send_step2_java_sms()
-        return True
-    elif text == '1':
-        invitation.phone_type = SelfRegistrationInvitation.PHONE_TYPE_ANDROID
-        invitation.save()
-        invitation.send_step2_android_sms()
-        return True
-    elif text == '2':
-        invitation.phone_type = SelfRegistrationInvitation.PHONE_TYPE_OTHER
-        invitation.save()
-        invitation.send_step2_java_sms()
-        return True
-    else:
-        invitation.send_step1_sms()
-        return True
 
 
 def process_sms_registration(msg):
@@ -470,14 +465,10 @@ def process_sms_registration(msg):
                     try:
                         user_data = {}
 
-                        invitation = SelfRegistrationInvitation.by_phone(msg.phone_number)
-                        if invitation:
-                            invitation.completed()
-                            user_data = invitation.custom_user_data
-
                         username = process_username(username, domain_obj)
                         password = random_password()
-                        new_user = CommCareUser.create(domain_obj.name, username, password, user_data=user_data)
+                        new_user = CommCareUser.create(domain_obj.name, username, password, created_by=None,
+                                                       created_via=USER_CHANGE_VIA_SMS, metadata=user_data)
                         new_user.add_phone_number(cleaned_phone_number)
                         new_user.save()
 
@@ -515,7 +506,7 @@ def process_sms_registration(msg):
 
 def incoming(phone_number, text, backend_api, timestamp=None,
              domain_scope=None, backend_message_id=None,
-             raw_text=None, backend_id=None):
+             raw_text=None, backend_id=None, media_urls=None):
     """
     entry point for incoming sms
 
@@ -524,6 +515,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     backend_api - backend API ID of receiving sms backend
     timestamp - message received timestamp; defaults to now (UTC)
     domain_scope - set the domain scope for this SMS; see SMSBase.domain_scope for details
+    media_urls - list of urls for media download.
     """
     # Log message in message log
     if text is None:
@@ -540,6 +532,9 @@ def incoming(phone_number, text, backend_api, timestamp=None,
         backend_message_id=backend_message_id,
         raw_text=raw_text,
     )
+    if media_urls:
+        msg.custom_metadata = {"media_urls": media_urls}
+
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
         msg.datetime_to_process = get_utcnow()
@@ -565,9 +560,18 @@ def is_opt_message(text, keyword_list):
 
 def get_opt_keywords(msg):
     backend_class = get_sms_backend_classes().get(msg.backend_api, SQLSMSBackend)
+    try:
+        backend_model = msg.outbound_backend
+    except (BadSMSConfigException, SQLMobileBackend.DoesNotExist):
+        # Backend not found, we will just use the default
+        custom_opt_out = []
+        custom_opt_in = []
+    else:
+        custom_opt_out = backend_model.opt_out_keywords
+        custom_opt_in = backend_model.opt_in_keywords
     return (
-        backend_class.get_opt_in_keywords(),
-        backend_class.get_opt_out_keywords(),
+        backend_class.get_opt_in_keywords() + custom_opt_in,
+        backend_class.get_opt_out_keywords() + custom_opt_out,
         backend_class.get_pass_through_opt_in_keywords(),
     )
 
@@ -596,12 +600,39 @@ def load_and_call(sms_handler_names, phone_number, text, sms):
 def get_inbound_phone_entry(msg):
     if msg.backend_id:
         backend = SQLMobileBackend.load(msg.backend_id, is_couch_id=True)
-        if not backend.is_global and toggles.INBOUND_SMS_LENIENCY.enabled(backend.domain):
-            p = PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access)
-            return (
-                p,
-                p is not None
-            )
+        if toggles.INBOUND_SMS_LENIENCY.enabled(backend.domain):
+            p = None
+            if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(backend.domain):
+                running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(
+                    SMSChannel(backend_id=msg.backend_id, phone_number=msg.phone_number)
+                )
+                contact_id = running_session_info.contact_id
+                if contact_id:
+                    p = PhoneNumber.get_phone_number_for_owner(contact_id, msg.phone_number)
+                if p is not None:
+                    return (
+                        p,
+                        True
+                    )
+                elif running_session_info.session_id:
+                    # This would be very unusual, as it would mean the supposedly running form session
+                    # is linked to a phone number, contact pair that doesn't exist in the PhoneNumber table
+                    notify_error(
+                        "Contact from running session has no match in PhoneNumber table. "
+                        "Only known way for this to happen is if you "
+                        "unregister a phone number for a contact "
+                        "while they are in an active session.",
+                        details={
+                            'running_session_info': running_session_info
+                        }
+                    )
+
+            if not backend.is_global:
+                p = PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access)
+                return (
+                    p,
+                    p is not None
+                )
 
     return (
         PhoneNumber.get_reserved_number(msg.phone_number),
@@ -610,8 +641,39 @@ def get_inbound_phone_entry(msg):
 
 
 def process_incoming(msg):
+    try:
+        _process_incoming(msg)
+        status = 'ok'
+    except Exception:
+        status = 'error'
+        raise
+    finally:
+        # this needs to be in a try finally so we can
+        # - get msg.domain after it's set
+        # - report whether it raised an exception as status
+        # - always report the metric even if it fails
+        metrics_counter("commcare.sms.inbound_message", tags={
+            'domain': msg.domain,
+            'backend': _get_backend_tag(backend_id=msg.backend_id),
+            'status': status,
+        })
+
+
+def _allow_load_handlers(v, is_two_way, has_domain_two_way_scope):
+    return (
+        (is_two_way or has_domain_two_way_scope)
+        and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
+    )
+
+
+def _domain_accepts_inbound(msg):
+    return msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
+
+
+def _process_incoming(msg):
     sms_load_counter("inbound", msg.domain)()
     v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
+    is_two_way = v is not None and v.is_two_way
 
     if v:
         if any_migrations_in_progress(v.domain):
@@ -622,6 +684,7 @@ def process_incoming(msg):
         msg.domain = v.domain
         msg.location_id = get_location_id_by_verified_number(v)
         msg.save()
+
     elif msg.domain_scope:
         if any_migrations_in_progress(msg.domain_scope):
             raise DelayProcessing()
@@ -631,6 +694,7 @@ def process_incoming(msg):
 
     opt_in_keywords, opt_out_keywords, pass_through_opt_in_keywords = get_opt_keywords(msg)
     domain = v.domain if v else None
+    opt_keyword = False
 
     if is_opt_message(msg.text, opt_out_keywords):
         if PhoneBlacklist.opt_out_sms(msg.phone_number, domain=domain):
@@ -642,6 +706,7 @@ def process_incoming(msg):
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id, metadata=metadata)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text, metadata=metadata)
+            opt_keyword = True
     elif is_opt_message(msg.text, opt_in_keywords):
         if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
             text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
@@ -651,30 +716,24 @@ def process_incoming(msg):
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text)
+            opt_keyword = True
     else:
         if is_opt_message(msg.text, pass_through_opt_in_keywords):
             # Opt the phone number in, and then process the message normally
             PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain)
 
-        handled = False
-        is_two_way = v is not None and v.is_two_way
+    handled = False
 
-        if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
-            if v and v.pending_verification:
-                from . import verify
-                handled = verify.process_verification(v, msg, create_subevent_for_inbound=not has_domain_two_way_scope)
+    if _domain_accepts_inbound(msg):
+        if v and v.pending_verification:
+            from . import verify
+            handled = verify.process_verification(v, msg, create_subevent_for_inbound=not has_domain_two_way_scope)
 
-            if (
-                (is_two_way or has_domain_two_way_scope)
-                and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
-            ):
-                handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
+        if _allow_load_handlers(v, is_two_way, has_domain_two_way_scope):
+            handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
 
-        if not handled and not is_two_way:
-            handled = process_pre_registration(msg)
-
-            if not handled:
-                handled = process_sms_registration(msg)
+    if not handled and not is_two_way and not opt_keyword:
+        handled = process_sms_registration(msg)
 
     # If the sms queue is enabled, then the billable gets created in remove_from_queue()
     if (

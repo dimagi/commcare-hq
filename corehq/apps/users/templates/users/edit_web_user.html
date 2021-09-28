@@ -5,6 +5,33 @@
 {% load i18n %}
 
 {% block page_content %}
+  {% if has_untrusted_identity_provider %}
+    <div class="alert alert-setting">
+      <p class="lead">
+        <i class="fa fa-lock"></i>
+        {% blocktrans with couch_user.human_friendly_name as friendly_name %}
+          The SSO Identity Provider for {{ friendly_name }}, "{{ idp_name }}",
+          is not trusted by this project space.
+        {% endblocktrans %}
+      </p>
+      <p>
+        {% blocktrans %}
+          Click Trust Provider below to restore access for this user.
+          <a href="#">Learn more</a> about SSO on CommCare HQ.
+        {% endblocktrans %}
+      </p>
+      <form class="form form" name="trust_identity_provider" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="trust-identity-provider" />
+        <p style="margin-top: 10px;">
+          <button type="submit"
+                  class="btn btn-confirm">
+            {% trans "Trust Identity Provider" %}
+          </button>
+        </p>
+      </form>
+    </div>
+  {% endif %}
   <div class="form form-horizontal">
     <fieldset>
       <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Information for {{ friendly_name }}{% endblocktrans %}</legend>
@@ -45,24 +72,6 @@
         <div class="form-actions">
           <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
             <button type="submit" class="btn btn-primary">{% trans 'Update Role' %}</button>
-          </div>
-        </div>
-      </fieldset>
-    </form>
-  {% endif %}
-  {% if update_permissions and not request.is_view_only %}
-    <hr />
-    <form class="form form-horizontal" name="user_permissions" method="post">
-      {% csrf_token %}
-      <input type="hidden" name="form_type" value="update-user-permissions" />
-      <fieldset>
-
-        <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Staff Permissions{% endblocktrans %}</legend>
-        {% crispy form_user_update_permissions %}
-
-        <div class="form-actions">
-          <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-            <button type="submit" class="btn btn-primary">{% trans 'Update Permissions' %}</button>
           </div>
         </div>
       </fieldset>

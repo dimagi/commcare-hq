@@ -1,8 +1,11 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
+from django.conf import settings
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
+from corehq.apps.data_dictionary.util import get_data_dict_case_types
 from corehq.apps.es import (
     CaseES,
     CaseSearchES,
@@ -42,14 +45,14 @@ def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_a
         FormES(es_instance_alias=es_instance_alias)
         .domain(domain)
         .user_id(user_ids)
-        .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date())
+        .submitted(gte=datespan.startdate.date(), lte=datespan.enddate.date())
         .aggregation(
             TermsAggregation('user_id', 'form.meta.userID').aggregation(
                 TopHitsAggregation(
                     'top_hits_last_form_submissions',
-                    'form.meta.timeEnd',
+                    'received_on',
                     is_ascending=False,
-                    include='form.meta.timeEnd',
+                    include='received_on',
                 )
             )
         )
@@ -60,7 +63,7 @@ def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_a
     buckets_dict = aggregations.user_id.buckets_dict
     result = {}
     for user_id, bucket in buckets_dict.items():
-        result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['form']['meta']['timeEnd'])
+        result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['received_on'])
     return result
 
 
@@ -156,7 +159,7 @@ def get_paged_forms_by_type(
     return PagedResult(total=result.total, hits=result.hits)
 
 
-@quickcache(['domain', 'xmlns'], timeout=5 * 60)
+@quickcache(['domain', 'xmlns'], timeout=14 * 24 * 60)
 def guess_form_name_from_submissions_using_xmlns(domain, xmlns):
     return get_form_name_from_last_submission_for_xmlns(domain, xmlns)
 
@@ -287,11 +290,12 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
 
     results = form_query.run().aggregations.date_histogram.buckets_list
 
-    # Convert timestamp into timezone aware datetime. Must divide timestamp by 1000 since python's
-    # fromtimestamp takes a timestamp in seconds, whereas elasticsearch's timestamp is in milliseconds
+    # Convert timestamp from millis -> seconds -> aware datetime
+    # ES bucket key is an epoch timestamp relative to the timezone specified,
+    # so pass timezone into fromtimestamp() to create an accurate datetime, otherwise will be treated as UTC
     results = list(map(
         lambda result:
-            (datetime.fromtimestamp(result.key // 1000).date().isoformat(), result.doc_count),
+            (datetime.fromtimestamp(result.key // 1000, timezone).date().isoformat(), result.doc_count),
         results,
     ))
     return dict(results)
@@ -303,12 +307,30 @@ def get_group_stubs(group_ids):
         .values('_id', 'name', 'case_sharing', 'reporting'))
 
 
-def get_user_stubs(user_ids):
+def get_groups_by_querystring(domain, query, case_sharing_only):
+    group_result = (
+        GroupES()
+        .domain(domain)
+        .not_deleted()
+        .search_string_query(query, default_fields=['name'])
+        .size(10)
+        .sort('name.exact')
+        .source(('_id', 'name'))
+    )
+    if case_sharing_only:
+        group_result = group_result.is_case_sharing()
+    return [
+        {'id': group['_id'], 'text': group['name']}
+        for group in group_result.run().hits
+    ]
+
+
+def get_user_stubs(user_ids, extra_fields=None):
     from corehq.apps.reports.util import SimplifiedUserInfo
     return (UserES()
         .user_ids(user_ids)
         .show_inactive()
-        .values(*SimplifiedUserInfo.ES_FIELDS))
+        .values(*SimplifiedUserInfo.ES_FIELDS, *(extra_fields or [])))
 
 
 def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):
@@ -334,7 +356,20 @@ def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=No
 
 def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
                                   xmlnss=None, by_submission_time=True, export=False):
+    USER_FILTER_CHUNK_SIZE = getattr(settings, 'USER_FILTER_CHUNK_SIZE', 10000)
+    to_ret = defaultdict(lambda: 0)
+    if not user_ids:
+        to_ret.update(_chunked_get_form_counts_by_user_xmlns(
+            domain, startdate, enddate, None, xmlnss, by_submission_time, export))
+    else:
+        for chunk in chunked(user_ids, USER_FILTER_CHUNK_SIZE):
+            to_ret.update(_chunked_get_form_counts_by_user_xmlns(
+                domain, startdate, enddate, chunk, xmlnss, by_submission_time, export))
+    return to_ret
 
+
+def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
+                                  xmlnss=None, by_submission_time=True, export=False):
     missing_users = False
 
     date_filter_fn = submitted_filter if by_submission_time else completed_filter
@@ -345,7 +380,7 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
              .aggregation(
                  TermsAggregation('user_id', 'form.meta.userID').aggregation(
                      TermsAggregation('app_id', 'app_id').aggregation(
-                         TermsAggregation('xmlns', 'xmlns')
+                         TermsAggregation('xmlns', 'xmlns.exact')
                      )
                  )
              )
@@ -361,7 +396,7 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
             query = query.aggregation(
                 MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
                     TermsAggregation('app_id', 'app_id').aggregation(
-                        TermsAggregation('xmlns', 'xmlns')
+                        TermsAggregation('xmlns', 'xmlns.exact')
                     )
                 )
             )
@@ -384,6 +419,10 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
                 counts[key] = xmlns_bucket.doc_count
 
     return counts
+
+
+def _duration_script():
+    return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
 
 
 def get_form_duration_stats_by_user(
@@ -411,7 +450,7 @@ def get_form_duration_stats_by_user(
                 ExtendedStatsAggregation(
                     'duration_stats',
                     'form.meta.timeStart',
-                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                    script=_duration_script(),
                 )
             )
         )
@@ -427,7 +466,7 @@ def get_form_duration_stats_by_user(
                 ExtendedStatsAggregation(
                     'duration_stats',
                     'form.meta.timeStart',
-                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                    script=_duration_script(),
                 )
             )
         )
@@ -466,7 +505,7 @@ def get_form_duration_stats_for_users(
             ExtendedStatsAggregation(
                 'duration_stats',
                 'form.meta.timeStart',
-                script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                script=_duration_script(),
             )
         )
         .size(0)
@@ -489,7 +528,7 @@ def get_form_counts_for_domains(domains):
 
 def get_case_and_action_counts_for_domains(domains):
     actions_agg = aggregations.NestedAggregation('actions', 'actions')
-    aggregation = aggregations.TermsAggregation('domain', 'domain').aggregation(actions_agg)
+    aggregation = aggregations.TermsAggregation('domain', 'domain.exact').aggregation(actions_agg)
     results = CaseES() \
         .filter(filters.term('domain', domains)) \
         .aggregation(aggregation) \
@@ -527,18 +566,14 @@ def get_all_user_ids_submitted(domain, app_ids=None):
     return list(query.run().aggregations.user_id.buckets_dict)
 
 
-def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
-    enddate = datespan.enddate + timedelta(days=1)
-    query = (FormES()
-             .domain(domain)
-             .app(app_id)
-             .xmlns(xmlns)
-             .submitted(gte=datespan.startdate, lte=enddate)
-             .remove_default_filter("has_user")
-             .source(['_id', 'external_blobs']))
+def get_form_ids_with_multimedia(es_query):
+    return {
+        form['_id'] for form in _forms_with_attachments(es_query)
+    }
 
-    if user_types:
-        query = query.user_type(user_types)
+
+def _forms_with_attachments(es_query):
+    query = es_query.source(['_id', 'external_blobs'])
 
     for form in query.scroll():
         try:
@@ -550,15 +585,27 @@ def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
             pass
 
 
+# ToDo: Remove post build_form_multimedia_zipfile rollout. Deprecated by get_form_ids_with_multimedia
 def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types):
+    enddate = datespan.enddate + timedelta(days=1)
+    query = (FormES()
+             .domain(domain)
+             .app(app_id)
+             .xmlns(xmlns)
+             .submitted(gte=datespan.startdate, lte=enddate)
+             .remove_default_filter("has_user")
+             )
+
+    if user_types:
+        query = query.user_type(user_types)
     return {
-        form['_id'] for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types)
+        form['_id'] for form in _forms_with_attachments(query)
     }
 
 
-def media_export_is_too_big(domain, app_id, xmlns, datespan, user_types):
+def media_export_is_too_big(es_query):
     size = 0
-    for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
+    for form in _forms_with_attachments(es_query):
         for attachment in form.get('external_blobs', {}).values():
             size += attachment.get('content_length', 0)
             if size > MAX_MULTIMEDIA_EXPORT_SIZE:
@@ -577,6 +624,11 @@ def scroll_case_names(domain, case_ids):
 
 @quickcache(['domain', 'use_case_search'], timeout=24 * 3600)
 def get_case_types_for_domain_es(domain, use_case_search=False):
+    """
+    Returns case types for which there is at least one existing case.
+
+    get_case_types_for_domain is preferred for most uses
+    """
     index_class = CaseSearchES if use_case_search else CaseES
     query = (
         index_class().domain(domain).size(0)
@@ -587,3 +639,14 @@ def get_case_types_for_domain_es(domain, use_case_search=False):
 
 def get_case_search_types_for_domain_es(domain):
     return get_case_types_for_domain_es(domain, True)
+
+
+def get_case_types_for_domain(domain):
+    """
+    Returns case types for which there is at least one existing case and any
+    defined in the data dictionary, which includes those referenced in an app
+    and those added manually.
+    """
+    es_types = get_case_types_for_domain_es(domain)
+    data_dict_types = get_data_dict_case_types(domain)
+    return es_types | data_dict_types

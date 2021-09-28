@@ -1,6 +1,4 @@
-/* globals hqDefine, $ */
-
-hqDefine('hqwebapp/js/ui_elements/ui-element-langcode-button', function () {
+hqDefine('hqwebapp/js/ui_elements/ui-element-langcode-button', [], function () {
     'use strict';
     var module = {};
 

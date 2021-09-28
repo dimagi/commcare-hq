@@ -2,6 +2,7 @@ from django import forms
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.html import format_html
 
 from crispy_forms.bootstrap import PrependedText
 from crispy_forms.helper import FormHelper
@@ -120,7 +121,7 @@ class ConsumptionForm(forms.Form):
         products = SQLProduct.active_objects.filter(domain=domain)
         for product in products:
             field_name = 'default_%s' % product.product_id
-            display = _('Default %(product_name)s') % {'product_name': product.name}
+            display = format_html(_('Default {product_name}'), product_name=product.name)
             layout.append(field_name)
             self.fields[field_name] = forms.DecimalField(
                 label=display,

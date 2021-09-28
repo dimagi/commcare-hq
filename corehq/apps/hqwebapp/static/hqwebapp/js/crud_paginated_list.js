@@ -27,6 +27,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
         self.hasInitialLoadFinished = ko.observable(false);
 
         self.createItemForm = ko.observable($(options.createItemForm).html());
+        self.createItemFormClass = ko.observable(options.createItemFormClass);
         self.isCreateItemVisible = ko.computed(function () {
             return Boolean(self.createItemForm());
         });

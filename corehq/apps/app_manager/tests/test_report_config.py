@@ -53,7 +53,7 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_report_config,
     mock_datasource_config,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.toggles import (
     ADD_ROW_INDEX_TO_MOBILE_UCRS,
     MOBILE_UCR,
@@ -150,6 +150,8 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         return report_configuration
 
     @classmethod
+    @flag_enabled('MOBILE_UCR')
+    @flag_enabled('ADD_ROW_INDEX_TO_MOBILE_UCRS')
     def setUpClass(cls):
         super(ReportFiltersSuiteTest, cls).setUpClass()
         delete_all_users()
@@ -161,9 +163,6 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             domain=cls.domain,
             username='ralph',
         )
-        MOBILE_UCR.set(cls.domain, True, NAMESPACE_DOMAIN)
-        ADD_ROW_INDEX_TO_MOBILE_UCRS.set(cls.domain, True, NAMESPACE_DOMAIN)
-
         report_configuration = cls.make_report_config(cls.domain, cls.report_id)
 
         # also make a report with a hidden column
@@ -258,7 +257,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                     with mock_datasource_config():
                         fixtures = call_fixture_generator(report_fixture_generator, cls.user)
                         fixture = [f for f in fixtures if f.attrib.get('id') == ReportFixturesProviderV1.id][0]
-        cls.fixture = ElementTree.tostring(fixture)
+        cls.fixture = ElementTree.tostring(fixture, encoding='utf-8')
 
     def test_filter_entry(self):
         self.assertXmlPartialEqual("""
@@ -475,7 +474,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </header>
               <template>
                 <text>
-                  <xpath function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%d/%m/%Y'))">
+                  <xpath function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))">
                     <variable name="message">
                       <locale id="cchq.reports_last_updated_on"/>
                     </variable>

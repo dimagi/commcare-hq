@@ -1,11 +1,13 @@
 import io
 from collections import namedtuple
-
+from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
-
+from django.contrib import messages
+from corehq.toggles import VIEW_APP_CHANGES
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -25,6 +27,7 @@ from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.xform import VELLUM_TYPES
+from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
 
@@ -49,9 +52,9 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
             'app_langs': app.langs,
             'app_id': app.id,
             'app_name': app.name,
-            'read_only': is_linked_app(app) or app.id != app.master_id,
+            'read_only': is_linked_app(app) or app.id != app.origin_id,
             'app_version': app.version,
-            'latest_app_id': app.master_id,
+            'latest_app_id': app.origin_id,
         }
 
     @property
@@ -93,6 +96,17 @@ class AppFormSummaryView(AppSummaryView):
 
     @property
     def page_context(self):
+
+        if self._show_app_changes_notification():
+            messages.warning(
+                self.request,
+                'Hey Dimagi User! Have you tried out '
+                '<a href="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions" '
+                'target="_blank">Viewing App Changes between Versions</a> yet? It might be just what you are '
+                'looking for!',
+                extra_tags='html'
+            )
+
         context = super(AppFormSummaryView, self).page_context
         modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         context.update({
@@ -102,6 +116,15 @@ class AppFormSummaryView(AppSummaryView):
         })
         return context
 
+    def _show_app_changes_notification(self):
+        if settings.ENTERPRISE_MODE:
+            return False
+
+        if self.request.couch_user.is_dimagi and not VIEW_APP_CHANGES.enabled(self.domain):
+            return True
+
+        return False
+
 
 class FormSummaryDiffView(AppSummaryView):
     urlname = "app_form_summary_diff"
@@ -109,7 +132,7 @@ class FormSummaryDiffView(AppSummaryView):
 
     @property
     def app(self):
-        return self.get_app(self.first_app.master_id)
+        return self.get_app(self.first_app.origin_id)
 
     @property
     def first_app(self):
@@ -123,7 +146,7 @@ class FormSummaryDiffView(AppSummaryView):
     def page_context(self):
         context = super(FormSummaryDiffView, self).page_context
 
-        if self.first_app.master_id != self.second_app.master_id:
+        if self.first_app.origin_id != self.second_app.origin_id:
             # This restriction is somewhat arbitrary, as you might want to
             # compare versions between two different apps on the same domain.
             # However, it breaks a bunch of assumptions in the UI
@@ -136,7 +159,7 @@ class FormSummaryDiffView(AppSummaryView):
 
         context.update({
             'page_type': 'form_diff',
-            'app_id': self.app.master_id,
+            'app_id': self.app.origin_id,
             'first': first,
             'second': second,
         })
@@ -216,6 +239,12 @@ def _get_translated_module_name(app, module_id, language):
     return _translate_name(_get_name_map(app)[module_id]['module_name'], language)
 
 
+def _get_translated_form_link_name(app, form_link, language):
+    if form_link.module_unique_id:
+        return _get_translated_module_name(app, form_link.module_unique_id, language)
+    return _get_translated_form_name(app, form_link.form_id, language)
+
+
 APP_SUMMARY_EXPORT_HEADER_NAMES = [
     'app',
     'module',
@@ -274,10 +303,10 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             for form in module.get_forms():
                 post_form_workflow = form.post_form_workflow
                 if form.post_form_workflow == WORKFLOW_FORM:
-                    post_form_workflow = "form:\n{}".format(
+                    post_form_workflow = "link:\n{}".format(
                         "\n".join(
                             ["{form}: {xpath} [{datums}]".format(
-                                form=_get_translated_form_name(self.app, link.form_id, language),
+                                form=_get_translated_form_link_name(self.app, link, language),
                                 xpath=link.xpath,
                                 datums=", ".join(
                                     "{}: {}".format(
@@ -367,7 +396,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         headers = [(_('All Forms'),
                     ('module_name', 'form_name', 'comment', 'module_display_condition', 'form_display_condition'))]
         headers += [
-            (self._get_form_sheet_name(module, form, language), tuple(FORM_SUMMARY_EXPORT_HEADER_NAMES))
+            (self._get_form_sheet_name(form, language), tuple(FORM_SUMMARY_EXPORT_HEADER_NAMES))
             for module in modules for form in module.get_forms()
         ]
         data = list((
@@ -375,7 +404,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             self.get_all_forms_row(module, form, language)
         ) for module in modules for form in module.get_forms())
         data += list(
-            (self._get_form_sheet_name(module, form, language), self._get_form_row(form, language, case_meta))
+            (self._get_form_sheet_name(form, language), self._get_form_row(form, language, case_meta))
             for module in modules for form in module.get_forms()
         )
         export_string = io.BytesIO()
@@ -429,11 +458,9 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             )
         return tuple(form_summary_rows)
 
-    def _get_form_sheet_name(self, module, form, language):
-        return "{} - {}".format(
-            _get_translated_module_name(self.app, module.unique_id, language),
-            _get_translated_form_name(self.app, form.get_unique_id(), language),
-        )
+    def _get_form_sheet_name(self, form, language):
+        return _get_translated_form_name(self.app, form.get_unique_id(), language)
+
 
     def get_all_forms_row(self, module, form, language):
         return ((
@@ -458,10 +485,11 @@ CASE_SUMMARY_EXPORT_HEADER_NAMES = [
 PropertyRow = namedtuple('PropertyRow', CASE_SUMMARY_EXPORT_HEADER_NAMES)
 
 
-class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
+class DownloadCaseSummaryView(ApplicationViewMixin, View):
     urlname = 'download_case_summary'
     http_method_names = ['get']
 
+    @method_decorator(login_or_api_key)
     def get(self, request, domain, app_id):
         case_metadata = self.app.get_case_metadata()
         language = request.GET.get('lang', 'en')

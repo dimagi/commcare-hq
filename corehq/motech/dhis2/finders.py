@@ -48,8 +48,8 @@ class TrackedEntityInstanceFinder:
         except HTTPError as err:
             err.args += (_(
                 "An error occurred on the first API request to DHIS2. Please "
-                "refer to MOTECH Logs to confirm that the URL and the request "
-                "parameters are correct."
+                "refer to Remote API Logs to confirm that the URL and the "
+                "request parameters are correct."
             ),)
             raise
         candidate_scores = []

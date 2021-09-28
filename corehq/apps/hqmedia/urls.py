@@ -20,6 +20,7 @@ from corehq.apps.hqmedia.views import (
     ViewMultimediaFile,
     download_multimedia_paths,
 )
+from corehq.apps.hqwebapp.decorators import waf_allow
 
 urlpatterns = [
     url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(.+)?$',
@@ -36,8 +37,9 @@ application_urls = [
     url(r'^translations/$', MultimediaTranslationsCoverageView.as_view(),
         name=MultimediaTranslationsCoverageView.urlname),
     url(r'^uploaded/bulk/$', ProcessBulkUploadView.as_view(), name=ProcessBulkUploadView.urlname),
-    url(r'^uploaded/image/$', ProcessImageFileUploadView.as_view(), name=ProcessImageFileUploadView.urlname),
-    url(r'^uploaded/app_logo/(?P<logo_name>[\w\-]+)/$', ProcessLogoFileUploadView.as_view(),
+    url(r'^uploaded/image/$', waf_allow('XSS_BODY')(ProcessImageFileUploadView.as_view()),
+        name=ProcessImageFileUploadView.urlname),
+    url(r'^uploaded/app_logo/(?P<logo_name>[\w\-]+)/$', waf_allow('XSS_BODY')(ProcessLogoFileUploadView.as_view()),
         name=ProcessLogoFileUploadView.urlname),
     url(r'^uploaded/audio/$', ProcessAudioFileUploadView.as_view(), name=ProcessAudioFileUploadView.urlname),
     url(r'^uploaded/video/$', ProcessVideoFileUploadView.as_view(), name=ProcessVideoFileUploadView.urlname),

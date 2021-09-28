@@ -32,7 +32,6 @@ from corehq.apps.domain.forms import (
 )
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.permissions import can_manage_releases
 
 
 @method_decorator([toggles.MANAGE_RELEASES_PER_LOCATION.required_decorator(),
@@ -58,12 +57,9 @@ class ManageReleasesByLocation(BaseProjectSettingsView):
     def page_context(self):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         q = AppReleaseByLocation.objects.filter(domain=self.domain)
-        location_id_slug = self.request.GET.get('location_id')
-        location_id = None
-        if location_id_slug:
-            location_id = self.form.extract_location_id(location_id_slug)
-            if location_id:
-                q = q.filter(location_id=location_id)
+        location_id = self.request.GET.get('location_id')
+        if location_id:
+            q = q.filter(location_id=location_id)
         if self.request.GET.get('app_id'):
             q = q.filter(app_id=self.request.GET.get('app_id'))
         version = self.request.GET.get('version')
@@ -83,7 +79,7 @@ class ManageReleasesByLocation(BaseProjectSettingsView):
             'manage_releases_by_location_form': self.form,
             'app_releases_by_location': app_releases_by_location,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
-            'selected_location_details': ({'id': location_id_slug,
+            'selected_location_details': ({'id': location_id,
                                            'text': self._location_path_display(location_id)}
                                           if location_id else None),
         }
@@ -216,9 +212,6 @@ def toggle_release_restriction_by_app_profile(request, domain, restriction_id):
     release = LatestEnabledBuildProfiles.objects.get(id=restriction_id)
     if not release:
         return HttpResponseBadRequest()
-    if not can_manage_releases(request.couch_user, domain, release.app_id):
-        return JsonResponse(data={
-            'message': _("You don't have permission to set restriction for this application")})
     if request.POST.get('active') == 'false':
         return _update_release_restriction_by_app_profile(release, restriction_id, active=False)
     elif request.POST.get('active') == 'true':

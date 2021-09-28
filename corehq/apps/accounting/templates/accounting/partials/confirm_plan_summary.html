@@ -1,16 +1,16 @@
 {% load i18n %}
 
+{% if not is_renewal_page %}
 <p class="lead text-center">
   {% blocktrans with plan.name as p %}
     You have selected the <strong>{{ p }} Edition</strong> subscription.
   {% endblocktrans %}
 </p>
+{% endif %}
 <div class="confirm-plan-summary">
   <div class="tile {{ tile_css }}">
     <h3>
-      {% blocktrans with plan.name as p %}
-        {{ p }} Edition
-      {% endblocktrans %}
+      {{ plan.name }}
     </h3>
     <p class="plan-price">
       {{ plan.monthly_fee }}

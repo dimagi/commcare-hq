@@ -1,11 +1,13 @@
 hqDefine('openmrs/js/openmrs_importers', [
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
     'hqwebapp/js/base_ace',
 ], function (
     $,
+    _,
     ko,
     initialPageData,
     alertUser,

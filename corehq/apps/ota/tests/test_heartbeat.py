@@ -5,11 +5,11 @@ from uuid import uuid4
 from django.test import TestCase
 from django.urls.base import reverse
 
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import patch_validate_xform, get_simple_form
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import process_reporting_metadata_staging
-
 from ..models import DeviceLogRequest
 
 
@@ -19,13 +19,17 @@ class HeartbeatTests(TestCase):
     def setUpClass(cls):
         super(HeartbeatTests, cls).setUpClass()
         cls.domain_obj = create_domain(uuid4().hex)
-        cls.user = CommCareUser.create(cls.domain_obj.name, 'user1', '123')
+        cls.user = CommCareUser.create(cls.domain_obj.name, 'user1', '123', None, None)
         cls.app, cls.build = cls._create_app_and_build()
         cls.url = reverse('phone_heartbeat', args=[cls.domain_obj.name, cls.build.get_id])
 
     @classmethod
+    @patch_validate_xform()
     def _create_app_and_build(cls):
-        app = Application.new_app(cls.domain_obj.name, 'app')
+        factory = AppFactory(domain=cls.domain_obj.name, name="API App")
+        module1, form1 = factory.new_basic_module('open_case', 'house')
+        form1.source = get_simple_form()
+        app = factory.app
         app.save()
         build = app.make_build()
         build.save(increment_version=False)

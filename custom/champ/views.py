@@ -78,7 +78,7 @@ class PrevisionVsAchievementsView(ChampView):
             clienttype[idx] = type.lower()
 
         config.update({'clienttype': clienttype})
-        target_data = TargetsDataSource(config=config).data
+        target_data = list(TargetsDataSource(config=config).data.values())[0]
         return target_data
 
     def get_kp_prev_achievement(self, domain):
@@ -226,7 +226,7 @@ class PrevisionVsAchievementsTableView(ChampView):
                 client_type = 'cfsw'
             target_client_types.append(client_type.lower())
         config.update({'clienttype': target_client_types})
-        targets = TargetsDataSource(config=config.copy()).data
+        targets = list(TargetsDataSource(config=config.copy()).data.values())[0]
         kp_prev = UICFromEPMDataSource(config=config.copy()).data
         htc_tst = UICFromCCDataSource(config=config.copy()).data
         htc_pos = HivStatusDataSource(config=config.copy()).data

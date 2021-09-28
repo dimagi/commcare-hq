@@ -8,6 +8,7 @@ from django.db import DataError, transaction
 from celery.schedules import crontab
 
 from corehq.util.metrics import metrics_gauge_task, metrics_counter
+from corehq.util.metrics.const import MPM_MAX
 from dimagi.utils.couch import (
     CriticalSection,
     get_redis_client,
@@ -46,34 +47,59 @@ from corehq.apps.sms.models import (
     QueuedSMS,
 )
 from corehq.apps.sms.util import is_contact_active
-from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
+from corehq.apps.smsbillables.exceptions import (
+    RetryBillableTaskException,
+)
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.messaging.util import use_phone_entries
+from corehq.apps.users.models import CouchUser
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
+
+from corehq.apps.sms.const import DEFAULT_SMS_DAILY_LIMIT
 
 MAX_TRIAL_SMS = 50
 
 
 def remove_from_queue(queued_sms):
     with transaction.atomic():
-        sms = SMS()
-        for field in sms._meta.fields:
-            if field.name != 'id':
-                setattr(sms, field.name, getattr(queued_sms, field.name))
+        sms = get_sms_from_queued_sms(queued_sms)
         queued_sms.delete()
         sms.save()
 
     sms.publish_change()
 
+    tags = {'backend': sms.backend_api, 'icds_indicator': ''}
+    if isinstance(sms.custom_metadata, dict) and 'icds_indicator' in sms.custom_metadata:
+        tags.update({
+            'icds_indicator': sms.custom_metadata['icds_indicator']
+        })
     if sms.direction == OUTGOING and sms.processed and not sms.error:
         create_billable_for_sms(sms)
-        metrics_counter('commcare.sms.outbound_succeeded')
+        metrics_counter('commcare.sms.outbound_succeeded', tags=tags)
     elif sms.direction == OUTGOING:
-        metrics_counter('commcare.sms.outbound_failed')
+        metrics_counter('commcare.sms.outbound_failed', tags=tags)
     elif sms.direction == INCOMING and sms.domain and domain_has_privilege(sms.domain, privileges.INBOUND_SMS):
         create_billable_for_sms(sms)
+
+
+def get_sms_from_queued_sms(queued_sms):
+    sms = SMS()
+    for field in _get_sms_fields_to_copy():
+        setattr(sms, field, getattr(queued_sms, field))
+    return sms
+
+
+def _get_sms_fields_to_copy():
+    """Returns a set of field attribute names to copy from QueuedSMS to SMS.
+    This should be all fields in QueuedSMS except 'id'
+    """
+    res = set()
+    for field in QueuedSMS._meta.get_fields():
+        try:
+            res.add(field.attname)  # use attname to avoid DB lookups for related models
+        except AttributeError:
+            res.add(field.name)
+    return res - {"id"}
 
 
 def handle_unsuccessful_processing_attempt(msg):
@@ -312,7 +338,7 @@ class OutboundDailyCounter(object):
             # If the message isn't tied to a domain, still impose a limit.
             # Outbound messages not tied to a domain can happen when unregistered
             # contacts opt in or out from a gateway.
-            return 10000
+            return DEFAULT_SMS_DAILY_LIMIT
 
     def can_send_outbound_sms(self, queued_sms):
         """
@@ -326,10 +352,11 @@ class OutboundDailyCounter(object):
             # processing the backlog right away.
             self.decrement()
             delay_processing(queued_sms, 60)
-
-            # Log the fact that we reached this limit
+            domain = self.domain_object.name if self.domain_object else ''
+            # Log the fact that we reached this limit and send alert on first breach
+            # via Django Signals if needed
             DailyOutboundSMSLimitReached.create_for_domain_and_date(
-                self.domain_object.name if self.domain_object else '',
+                domain,
                 self.date
             )
             return False
@@ -430,9 +457,14 @@ def send_to_sms_queue(queued_sms):
     process_sms.apply_async([queued_sms.pk])
 
 
-@no_result_task(serializer='pickle', queue='background_queue', default_retry_delay=10 * 60,
-                max_retries=10, bind=True)
+@no_result_task(serializer='pickle', queue='background_queue', default_retry_delay=60 * 60,
+                max_retries=23, bind=True)
 def store_billable(self, msg):
+    """
+    Creates billable in db that contains price of the message
+    default_retry_delay/max_retries are set based on twilio support numbers:
+    Most messages will have a price within 2 hours of delivery, all within 24 hours max
+    """
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
 
@@ -450,6 +482,9 @@ def store_billable(self, msg):
                 multipart_count=int(math.ceil(len(msg.text) / msg_length)),
             )
         except RetryBillableTaskException as e:
+            # WARNING: Please do not remove messages from this queue
+            # unless you have a backup plan for how to process them
+            # before the end of the month billing cycle. If not, LEAVE AS IS.
             self.retry(exc=e)
 
 
@@ -533,7 +568,7 @@ def _sync_case_phone_number(contact_case):
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_user_phone_numbers(self, couch_user_id):
-    if not use_phone_entries():
+    if not settings.USE_PHONE_ENTRIES:
         return
 
     try:
@@ -588,4 +623,5 @@ def queued_sms():
     return QueuedSMS.objects.count()
 
 
-metrics_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab())
+metrics_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab(),
+    multiprocess_mode=MPM_MAX)

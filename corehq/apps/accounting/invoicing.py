@@ -48,6 +48,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
     months_from_date,
 )
+from corehq.apps.domain.dbaccessors import domain_exists, deleted_domain_exists
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.dates import (
     get_first_last_days,
@@ -100,7 +101,9 @@ class DomainInvoiceFactory(object):
                 & Q(date_end__gt=F('date_start'))
             ),
             subscriber=self.subscriber,
-            date_start__lte=self.date_end
+            date_start__lte=self.date_end,
+        ).exclude(
+            plan_version__plan__edition=SoftwarePlanEdition.PAUSED,
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 
@@ -175,7 +178,7 @@ class DomainInvoiceFactory(object):
                     else:
                         record.send_email(contact_email=settings.ACCOUNTS_EMAIL)
                 else:
-                    for email in self.recipients or invoice.contact_emails:
+                    for email in self.recipients or invoice.get_contact_emails():
                         record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
@@ -362,8 +365,8 @@ class CustomerAccountInvoiceFactory(object):
 
     def create_invoice(self):
         for sub in self.account.subscription_set.filter(do_not_invoice=False):
-            if not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY \
-                    and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end):
+            if (not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+                    and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end)):
                 self.subscriptions[sub.plan_version].append(sub)
         if not self.subscriptions:
             return
@@ -427,6 +430,11 @@ class CustomerAccountInvoiceFactory(object):
 
 
 def should_create_invoice(subscription, domain, invoice_start, invoice_end):
+    if subscription.plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
+        return False
+    if not domain_exists(domain) and deleted_domain_exists(domain):
+        # domain has been deleted, ignore
+        return False
     if subscription.is_trial:
         log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
         return False
@@ -598,7 +606,7 @@ class LineItemFactory(object):
 class ProductLineItemFactory(LineItemFactory):
 
     def create(self):
-        line_item = super(ProductLineItemFactory, self).create()
+        line_item = super().create()
         line_item.product_rate = self.rate
         if not self.is_prorated:
             line_item.base_cost = self.rate.monthly_fee
@@ -718,7 +726,11 @@ class UserLineItemFactory(FeatureLineItemFactory):
                     history = DomainUserHistory.objects.get(domain=domain, record_date=date)
                     total_users += history.num_users
                 except DomainUserHistory.DoesNotExist:
-                    raise
+                    if not deleted_domain_exists(domain):
+                        # this checks to see if the domain still exists
+                        # before raising an error. If it was deleted the
+                        # loop will continue
+                        raise
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
 

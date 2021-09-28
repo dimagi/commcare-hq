@@ -4,8 +4,6 @@ from django.dispatch import receiver
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.privileges import ZAPIER_INTEGRATION, DATA_FORWARDING
 from couchforms.signals import successful_form_received
 
 from corehq.apps.locations.models import SQLLocation
@@ -13,7 +11,10 @@ from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.repeaters.models import (
     CreateCaseRepeater,
+    ReferCaseRepeater,
     UpdateCaseRepeater,
+    domain_can_forward,
+    DataRegistryCaseUpdateRepeater,
 )
 
 
@@ -28,6 +29,8 @@ def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(CaseRepeater, case)
     create_repeat_records(CreateCaseRepeater, case)
     create_repeat_records(UpdateCaseRepeater, case)
+    create_repeat_records(ReferCaseRepeater, case)
+    create_repeat_records(DataRegistryCaseUpdateRepeater, case)
 
 
 def create_short_form_repeat_records(sender, xform, **kwargs):
@@ -42,12 +45,8 @@ def create_repeat_records(repeater_cls, payload):
         return
     domain = payload.domain
 
-    # todo reconcile ZAPIER_INTEGRATION and DATA_FORWARDING
-    #  they each do two separate things and are priced differently,
-    #  but use the same infrastructure
-    if domain and (domain_has_privilege(domain, ZAPIER_INTEGRATION)
-                   or domain_has_privilege(domain, DATA_FORWARDING)):
-        repeaters = repeater_cls.by_domain(domain)
+    if domain_can_forward(domain):
+        repeaters = repeater_cls.by_domain(domain, stale_query=True)
         for repeater in repeaters:
             repeater.register(payload)
 

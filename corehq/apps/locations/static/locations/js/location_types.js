@@ -270,7 +270,7 @@ hqDefine('locations/js/location_types', [
             var compiledName = "",
                 locationTypesSameLevel = self.view.types_by_index(self.view.loc_types())[self.level()];
 
-            locationTypesSameLevel.forEach(function (locationType, index) {
+            _.each(locationTypesSameLevel, function (locationType, index) {
                 compiledName += locationType.name();
                 if (index !== locationTypesSameLevel.length - 1) {
                     compiledName += " | ";

@@ -1,7 +1,9 @@
+import base64
 import json
 import re
 from contextlib import contextmanager
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
@@ -18,23 +20,31 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     ShadowModule,
 )
-from corehq.apps.app_manager.tests.util import add_build
+from corehq.apps.app_manager.tests.util import add_build, get_simple_form
 from corehq.apps.app_manager.views import (
     AppCaseSummaryView,
     AppFormSummaryView,
+    DownloadCaseSummaryView,
 )
 from corehq.apps.app_manager.views.forms import get_apps_modules
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.linked_domain.applications import create_linked_app
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
+from corehq.util.test_utils import timelimit, flag_enabled
 
-from .test_form_versioning import BLANK_TEMPLATE, INVALID_TEMPLATE
+from .test_form_versioning import INVALID_TEMPLATE
 
 
+User = get_user_model()
+
+
+@flag_enabled('CUSTOM_PROPERTIES')
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+@es_test
 class TestViews(TestCase):
     app = None
     build = None
@@ -42,18 +52,15 @@ class TestViews(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestViews, cls).setUpClass()
-        cls.project = Domain(name='app-manager-testviews-domain', is_active=True)
-        cls.project.save()
+        cls.project = Domain.get_or_create_with_name('app-manager-testviews-domain', is_active=True)
         cls.username = 'cornelius'
         cls.password = 'fudge'
-        cls.user = WebUser.create(cls.project.name, cls.username, cls.password, is_active=True)
+        cls.user = WebUser.create(cls.project.name, cls.username, cls.password, None, None, is_active=True)
         cls.user.is_superuser = True
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
         cls.es = get_es_new()
         initialize_index_and_mapping(cls.es, APP_INDEX_INFO)
-
-        toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.project.name), True)
 
     def setUp(self):
         self.app = Application.new_app(self.project.name, "TestApp")
@@ -66,7 +73,7 @@ class TestViews(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(cls.project.name, deleted_by=None)
         cls.build.delete()
         cls.project.delete()
         super(TestViews, cls).tearDownClass()
@@ -146,10 +153,11 @@ class TestViews(TestCase):
         send_to_elasticsearch('apps', app.to_json())
         self.es.indices.refresh(APP_INDEX_INFO.index)
 
+    @timelimit(90)
     @patch('corehq.apps.app_manager.views.formdesigner.form_has_submissions', return_value=True)
     def test_basic_app(self, mock1, mock2):
         module = self.app.add_module(Module.new_module("Module0", "en"))
-        form = self.app.new_form(module.id, "Form0", "en", attachment=BLANK_TEMPLATE.format(xmlns='xmlns-0.0'))
+        form = self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
         self.app.save()
         self._send_to_es(self.app)
 
@@ -302,3 +310,133 @@ def apps_modules_setup(test_case):
         Application.get_db().delete_doc(test_case.linked_app.id)
         Application.get_db().delete_doc(test_case.deleted_app.id)
         Application.get_db().delete_doc(test_case.other_app.id)
+
+
+class TestDownloadCaseSummaryViewByAPIKey(TestCase):
+    """Test that the DownloadCaseSummaryView can be accessed with an API key."""
+
+    @classmethod
+    def setUpClass(cls):
+        # Set up a domain and an app.
+        super().setUpClass()
+        cls.domain = Domain.get_by_name("test-domain")
+        if not cls.domain:
+            cls.domain = Domain(name="test-domain", is_active=True)
+        cls.domain.save()
+        cls.app = Application.new_app("test-domain", "TestApp")
+        cls.app.save()
+
+        # Set up the cls.web_user: set password and give access to the cls.domain.
+        old_web_user = WebUser.get_by_username("test_user")
+        if old_web_user:
+            old_web_user.delete(cls.domain.name, deleted_by=None)
+        cls.web_user = WebUser.create(
+            cls.domain.name, "test_user", "my_password", None, None, is_active=True
+        )
+
+        # Generate an API key for the cls.web_user.
+        cls.web_user_api_key = HQApiKey.objects.get_or_create(
+            user=cls.web_user.get_django_user()
+        )[0]
+        cls.web_user_api_key.key = cls.web_user_api_key.generate_key()
+        cls.web_user_api_key.save()
+
+        # The URL that tests in this class will use.
+        cls.url = reverse(
+            "download_case_summary",
+            kwargs={"domain": cls.domain.name, "app_id": cls.app.get_id},
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.app.delete()
+        cls.web_user_api_key.delete()
+        cls.web_user.delete(cls.domain.name, deleted_by=None)
+        cls.domain.delete()
+        super().tearDownClass()
+
+    def _encode_basic_credentials(self, username, password):
+        """Base64-encode a username and password."""
+        return base64.b64encode(
+            "{}:{}".format(username, password).encode("utf-8")
+        ).decode("utf-8")
+
+    def test_correct_api_key(self):
+        """Sending a correct API key returns a response with the case summary file."""
+        response = self.client.get(
+            self.url,
+            HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:{self.web_user_api_key.key}",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response._headers["content-type"],
+            ("Content-Type", "application/vnd.ms-excel"),
+        )
+
+    def test_incorrect_api_key(self):
+        """Sending an incorrect (or missing) API key returns a 401 response."""
+        with self.subTest("Missing API key"):
+            response = self.client.get(
+                self.url, HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:"
+            )
+            self.assertEqual(response.status_code, 401)
+
+        with self.subTest("Missing username"):
+            response = self.client.get(
+                self.url, HTTP_AUTHORIZATION=f"ApiKey :{self.web_user_api_key.key}"
+            )
+            self.assertEqual(response.status_code, 401)
+
+        with self.subTest("Missing header"):
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 401)
+
+        with self.subTest("Incorrect API key"):
+            response = self.client.get(
+                self.url,
+                HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:Incorrectkey",
+            )
+            self.assertEqual(response.status_code, 401)
+
+    def test_already_authenticated_does_not_need_api_key(self):
+        """If a user is already authenticated, then the user does not need to send an API key."""
+        # Authenticate the user.
+        self.client.force_login(self.web_user.get_django_user())
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response._headers["content-type"],
+            ("Content-Type", "application/vnd.ms-excel"),
+        )
+
+    def test_unsupported_request_methods(self):
+        """Test sending requests by unsupported HTTP methods to the view."""
+        unsupported_methods = ["POST", "PUT", "PATCH", "DELETE"]
+        for method_name in unsupported_methods:
+            with self.subTest(method_name=method_name):
+                request_method = getattr(self.client, method_name.lower())
+                response = request_method(self.url)
+                self.assertEqual(response.status_code, 405)
+
+    def test_correct_credentials(self):
+        """Sending valid or invalid username & password does not succeed."""
+        with self.subTest("Valid credentials"):
+            valid_credentials = self._encode_basic_credentials(
+                self.web_user.username, "my_password"
+            )
+            response = self.client.get(
+                self.url, HTTP_AUTHORIZATION=f"Basic {valid_credentials}"
+            )
+            self.assertEqual(response.status_code, 401)
+
+        with self.subTest("Invalid credentials"):
+            invalid_credentials = self._encode_basic_credentials(
+                self.web_user.username, "not_the_correct_password"
+            )
+            response = self.client.get(
+                self.url, HTTP_AUTHORIZATION=f"Basic {invalid_credentials}"
+            )
+            self.assertEqual(response.status_code, 401)

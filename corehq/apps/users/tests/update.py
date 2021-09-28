@@ -2,8 +2,8 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.models import CommCareUser
 
 
 class UpdateTestCase(TestCase):
@@ -15,7 +15,7 @@ class UpdateTestCase(TestCase):
         password = "password"
         self.domain = Domain(name='my-domain')
         self.domain.save()
-        self.couch_user = CommCareUser.create(self.domain.name, self.username, password)
+        self.couch_user = CommCareUser.create(self.domain.name, self.username, password, None, None)
         self.couch_user.save()
         
     def testAddRemovePhoneNumbers(self):

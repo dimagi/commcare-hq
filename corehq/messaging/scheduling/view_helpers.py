@@ -11,6 +11,7 @@ from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models.alert_schedule import AlertSchedule
 from corehq.messaging.scheduling.models.content import SMSContent
 from corehq.messaging.scheduling.models.timed_schedule import TimedSchedule
+from corehq.util.workbook_json.excel import WorksheetNotFound
 
 
 def get_conditional_alerts_queryset_by_domain(domain, query_string=''):
@@ -94,7 +95,12 @@ class ConditionalAlertUploader(object):
     def upload(self, workbook):
         self.msgs = []
         success_count = 0
-        worksheet = workbook.get_worksheet(title=self.sheet_name)
+
+        try:
+            worksheet = workbook.get_worksheet(title=self.sheet_name)
+        except WorksheetNotFound:
+            return [(messages.error, _("This file is missing the '{sheet_name}' sheet. Please add this sheet "
+                                       "and upload again.".format(sheet_name=self.sheet_name)))]
 
         errors = self.get_worksheet_errors(worksheet)
         if errors:
@@ -231,10 +237,6 @@ class ConditionalAlertUploader(object):
                 message_dirty = message_dirty or old_message != new_message
                 row_index += 1
             new_messages.append(new_message)
-
-        if message_dirty:
-            if any(True for message in new_messages for value in message.values() if not value):
-                raise RuleUpdateError(_("Missing message"))
 
         {
             ScheduleForm.SEND_IMMEDIATELY: self._save_immediate_schedule,

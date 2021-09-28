@@ -1,8 +1,11 @@
 from unittest import expectedFailure
 
+from django.utils.safestring import mark_safe
 from django.test import SimpleTestCase
 
 from corehq.apps.reports.generic import GenericTabularReport
+
+from ..generic import _sanitize_rows
 
 
 class GenericTabularReportTests(SimpleTestCase):
@@ -39,3 +42,35 @@ class GenericTabularReportTests(SimpleTestCase):
         value = '1 < 8 > 2'
         value = GenericTabularReport._strip_tags(value)
         self.assertEqual(value, '1 < 8 > 2')
+
+
+class SanitizeRowTests(SimpleTestCase):
+    def test_normal_output(self):
+        rows = [['One']]
+
+        result = _sanitize_rows(rows)
+        self.assertEqual(result[0], ['One'])
+
+    def test_escapes_rows(self):
+        rows = [['<script>Hello</script>']]
+
+        result = _sanitize_rows(rows)
+        self.assertEqual(result[0], ['&lt;script&gt;Hello&lt;/script&gt;'])
+
+    def test_does_not_escape_safe_text(self):
+        rows = [[mark_safe('<div>Safe!</div>')]]  # nosec: test data
+
+        result = _sanitize_rows(rows)
+        self.assertEqual(result[0], ['<div>Safe!</div>'])
+
+    def test_handles_rows(self):
+        rows = [
+            ['One', 'Two'],
+            ['Three', 'Four'],
+            ['Five', 'Six']
+        ]
+
+        result = _sanitize_rows(rows)
+        self.assertEqual(result[0], ['One', 'Two'])
+        self.assertEqual(result[1], ['Three', 'Four'])
+        self.assertEqual(result[2], ['Five', 'Six'])

@@ -70,12 +70,14 @@ StockLevelField = partial(models.DecimalField, max_digits=10, decimal_places=1)
 
 @memoized
 def stock_level_config_for_domain(domain, commtrack_enabled):
+    if not commtrack_enabled:
+        return None
     from corehq.apps.commtrack.models import CommtrackConfig
     ct_config = CommtrackConfig.for_domain(domain)
-    if ct_config is None or not commtrack_enabled:
+    if ct_config is None or not hasattr(ct_config, 'stocklevelsconfig'):
         return None
     else:
-        return ct_config.stock_levels_config
+        return ct_config.stocklevelsconfig
 
 
 class LocationType(models.Model):
@@ -168,17 +170,16 @@ class LocationType(models.Model):
             self._populate_stock_levels(config)
 
         is_not_first_save = self.pk is not None
-        saved = super(LocationType, self).save(*args, **kwargs)
+        super(LocationType, self).save(*args, **kwargs)
 
         if is_not_first_save:
             self.sync_administrative_status()
 
-        return saved
-
     def sync_administrative_status(self, sync_supply_points=True):
         from .tasks import sync_administrative_status
         if self._administrative_old != self.administrative:
-            sync_administrative_status.delay(self, sync_supply_points=sync_supply_points)
+            if sync_supply_points:
+                sync_administrative_status.delay(self)
             self._administrative_old = self.administrative
 
     def __str__(self):
@@ -352,6 +353,7 @@ class SQLLocation(AdjListModel):
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True, db_index=True)
     is_archived = models.BooleanField(default=False)
+    archived_on = models.DateTimeField(null=True, blank=True)
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
@@ -485,6 +487,7 @@ class SQLLocation(AdjListModel):
             'domain': self.domain,
             'external_id': self.external_id,
             'is_archived': self.is_archived,
+            'archived_on': self.archived_on.isoformat() if self.archived_on else None,
             'last_modified': self.last_modified.isoformat(),
             'latitude': float(self.latitude) if self.latitude else None,
             'longitude': float(self.longitude) if self.longitude else None,
@@ -504,7 +507,6 @@ class SQLLocation(AdjListModel):
 
     _id = property(lambda self: self.location_id)
     get_id = property(lambda self: self.location_id)
-    group_id = property(lambda self: self.location_id)
 
     @property
     def products(self):
@@ -524,7 +526,7 @@ class SQLLocation(AdjListModel):
         self.stocks_all_products = (set(value) ==
                                     set(SQLProduct.by_domain(self.domain)))
 
-        self._products = value
+        self._products.set(value)
 
     def _remove_user(self):
         """
@@ -547,6 +549,7 @@ class SQLLocation(AdjListModel):
         locations = self.get_descendants(include_self=True)
         for loc in locations:
             loc.is_archived = True
+            loc.archived_on = datetime.utcnow()
             loc.save()
             loc._remove_user()
 
@@ -566,6 +569,7 @@ class SQLLocation(AdjListModel):
         from corehq.apps.users.models import CommCareUser
         for loc in itertools.chain(self.get_descendants(include_self=True), self.get_ancestors()):
             loc.is_archived = False
+            loc.archived_on = None
             loc.save()
 
             if loc.user_id:
@@ -769,23 +773,6 @@ class LocationFixtureConfiguration(models.Model):
             return cls(domain=domain)
 
 
-def _unassign_users_from_location(domain, location_id):
-    """
-    Unset location for all users assigned to that location.
-    """
-    from corehq.apps.locations.dbaccessors import user_ids_at_locations
-    from corehq.apps.users.models import CouchUser
-    from dimagi.utils.couch.database import iter_docs
-
-    user_ids = user_ids_at_locations([location_id])
-    for doc in iter_docs(CouchUser.get_db(), user_ids):
-        user = CouchUser.wrap_correctly(doc)
-        if user.is_web_user():
-            user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
-        elif user.is_commcare_user():
-            user.unset_location_by_id(location_id, fall_back_to_next=True)
-
-
 def get_case_sharing_groups_for_locations(locations, for_user_id=None):
     # safety check to make sure all locations belong to same domain
     assert len(set([l.domain for l in locations])) < 2
@@ -802,98 +789,3 @@ def get_case_sharing_groups_for_locations(locations, for_user_id=None):
             location_type__shares_cases=True, is_archived=False)
     for loc in descendants:
         yield loc.case_sharing_group_object(for_user_id)
-
-
-class LocationRelation(models.Model):
-    """Implements a many-to-many mapping between locations.
-
-    Assumptions:
-      - This is not a directed graph. i.e. a connection between
-        location_a -> location_b implies the opposite connection exists
-
-    Caveats:
-      - This is currently under active development for REACH.
-        It's expected to change, so don't rely on it for other projects.
-      - There is no cycle checking. If you attempt to go further than one step,
-        you will get an infinite loop.
-    """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    location_a = models.ForeignKey(
-        SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
-    location_b = models.ForeignKey(
-        SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
-    distance = models.PositiveSmallIntegerField(null=True)
-    last_modified = models.DateTimeField(auto_now=True, db_index=True)
-
-    @classmethod
-    def from_locations(cls, locations):
-        """Returns  a list of location_ids that have a relation to the list of locations passed in.
-
-        The result will not include any duplicates and any locations that are passed in
-        """
-        relations = LocationRelation.objects.filter(
-            Q(location_a__in=locations) | Q(location_b__in=locations)
-        ).values_list('location_a_id', 'location_b_id')
-
-        related_locations = {loc_id for relation in relations for loc_id in relation}
-        return related_locations - {l.location_id for l in locations}
-
-    @classmethod
-    def relation_distance_dictionary(cls, locations):
-        """Returns a dictionary of the related locations and their distance to each
-        location that's passed in if it has a relation.
-
-        If two locations that are passed in that have a relation. That relation is ignored.
-
-        {
-          related_location: {
-            loc_a_passed_in: distance,
-            loc_b_passed_in: distance
-          }
-        }
-        """
-        relations = cls.objects.filter(
-            Q(location_a__in=locations) | Q(location_b__in=locations)
-        )
-        location_ids = {loc.location_id for loc in locations}
-
-        distance_dictionary = defaultdict(dict)
-
-        for relation in relations:
-            if relation.distance is None:
-                continue
-
-            a_id = relation.location_a_id
-            b_id = relation.location_b_id
-
-            if a_id in location_ids and b_id in location_ids:
-                # ignore when two locations were passed in that are related to each other
-                continue
-
-            if a_id in location_ids:
-                distance_dictionary[b_id][a_id] = relation.distance
-            elif b_id in location_ids:
-                distance_dictionary[a_id][b_id] = relation.distance
-
-        return distance_dictionary
-
-    @classmethod
-    def update_location_distances(cls, source_location_id, location_dict):
-        """Update the related locations for a source location.
-
-        location_dict: {loc_id: distance}
-        """
-
-        for loc_id, distance in location_dict.items():
-            relation = cls.objects.filter(
-                (Q(location_a_id=loc_id) & Q(location_b_id=source_location_id)) |
-                (Q(location_b_id=loc_id) & Q(location_a_id=source_location_id))
-            ).first()
-            if relation and relation.distance != distance:
-                relation.distance = distance
-                relation.save()
-
-    class Meta(object):
-        unique_together = [
-            ('location_a', 'location_b')
-        ]

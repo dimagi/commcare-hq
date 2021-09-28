@@ -29,9 +29,9 @@ from corehq.blobs.util import get_content_md5
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import UnknownActionType, MissingFormXml
 from corehq.form_processor.track_related import TrackRelatedChanges
-from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
+from corehq.util.models import TruncatingCharField
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.ext import jsonobject
@@ -41,6 +41,8 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from memoized import memoized
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, IsImageMixin
 from .exceptions import AttachmentNotFound
+
+STANDARD_CHARFIELD_LENGTH = 255
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormOperationSQL_DB_TABLE = 'form_processor_xformoperationsql'
@@ -53,18 +55,6 @@ LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 LedgerTransaction_DB_TABLE = 'form_processor_ledgertransaction'
 
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
-
-
-class TruncatingCharField(models.CharField):
-    """
-    http://stackoverflow.com/a/3460942
-    """
-
-    def get_prep_value(self, value):
-        value = super(TruncatingCharField, self).get_prep_value(value)
-        if value:
-            return value[:self.max_length]
-        return value
 
 
 @attr.s
@@ -97,6 +87,12 @@ class Attachment(IsImageMixin):
                     self.properties.update(width=img_size[0], height=img_size[1])
                 except IOError:
                     self.content_type = 'application/octet-stream'
+
+    def has_size(self):
+        if not hasattr(self.raw_content, 'size'):
+            return False
+
+        return self.raw_content.size is not None
 
     @property
     @memoized
@@ -151,6 +147,7 @@ class Attachment(IsImageMixin):
             return BytesIO(self.content)
         fileobj = self.raw_content.open()
 
+        # TODO remove when Django 1 is no longer supported
         if fileobj is None:
             assert not isinstance(self.raw_content, BlobMeta), repr(self)
             # work around Django 1.11 bug, fixed in 2.0
@@ -164,6 +161,10 @@ class Attachment(IsImageMixin):
     def content_md5(self):
         """Get RFC-1864-compliant Content-MD5 header value"""
         return get_content_md5(self.open())
+
+    @property
+    def type_code(self):
+        return CODES.form_xml if self.name == "form.xml" else CODES.form_attachment
 
     def write(self, blob_db, xform):
         """Save attachment
@@ -186,7 +187,7 @@ class Attachment(IsImageMixin):
             key=self.key,
             domain=xform.domain,
             parent_id=xform.form_id,
-            type_code=(CODES.form_xml if self.name == "form.xml" else CODES.form_attachment),
+            type_code=self.type_code,
             name=self.name,
             content_type=self.content_type,
             properties=self.properties,
@@ -313,6 +314,7 @@ class AttachmentMixin(SaveStateMixin):
 
         if self.is_saved():
             return self._get_attachment_from_db(attachment_name)
+        raise AttachmentNotFound(self.get_id, attachment_name)
 
     def _get_attachment_from_db(self, attachment_name):
         raise NotImplementedError
@@ -496,9 +498,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             form_json = convert_xform_to_json(xml)
         except XMLSyntaxError:
             return {}
-        # we can assume all sql domains are new timezone domains
-        with force_phone_timezones_should_be_processed():
-            adjust_datetimes(form_json)
+        adjust_datetimes(form_json)
 
         scrub_form_meta(self.form_id, form_json)
         return form_json
@@ -692,29 +692,9 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
             return LooseVersion(version_text)
 
 
-class SupplyPointCaseMixin(object):
-    CASE_TYPE = 'supply-point'
-
-    @property
-    @memoized
-    def location(self):
-        from corehq.apps.locations.models import SQLLocation
-        if self.location_id is None:
-            return None
-        try:
-            return self.sql_location
-        except SQLLocation.DoesNotExist:
-            return None
-
-    @property
-    def sql_location(self):
-        from corehq.apps.locations.models import SQLLocation
-        return SQLLocation.objects.get(location_id=self.location_id)
-
-
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
-                      SupplyPointCaseMixin, MessagingCaseContactMixin):
+                      MessagingCaseContactMixin):
     partition_attr = 'case_id'
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -768,6 +748,27 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     @memoized
     def xform_ids(self):
         return [t.form_id for t in self.transactions if not t.revoked and t.is_form_transaction]
+
+    @property
+    @memoized
+    def location(self):
+        """Get supply point location or `None` if it does not exist."""
+        from corehq.apps.locations.models import SQLLocation
+        if self.location_id is None:
+            return None
+        try:
+            return self.sql_location
+        except SQLLocation.DoesNotExist:
+            return None
+
+    @property
+    def sql_location(self):
+        """Get supply point location
+
+        Raises `SQLLocation.DoesNotExist` if not found.
+        """
+        from corehq.apps.locations.models import SQLLocation
+        return SQLLocation.objects.get(location_id=self.location_id)
 
     @property
     def user_id(self):
@@ -855,8 +856,12 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return indices
 
     @property
+    def live_indices(self):
+        return [i for i in self.indices if not i.is_deleted]
+
+    @property
     def has_indices(self):
-        return self.indices or self.reverse_indices
+        return self.live_indices or self.reverse_indices
 
     def has_index(self, index_id):
         return any(index.identifier == index_id for index in self.indices)
@@ -998,7 +1003,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         if relationship:
             indices = [index for index in indices if index.relationship_id == relationship]
 
-        return [index.referenced_case for index in indices]
+        return [index.referenced_case for index in indices if index.referenced_id]
 
     @property
     def parent(self):
@@ -1131,7 +1136,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
     def open(self):
         try:
-            return get_blob_db().get(key=self.key)
+            return get_blob_db().get(key=self.key, type_code=CODES.form_attachment)
         except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.case_id, self.name)
 
@@ -1179,6 +1184,10 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         return self.domain, self.case, self.identifier
 
     @property
+    def is_deleted(self):
+        return not self.referenced_id
+
+    @property
     @memoized
     def referenced_case(self):
         """
@@ -1189,7 +1198,10 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         :return: referenced case
         """
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_case(self.referenced_id)
+        if self.referenced_id:
+            return CaseAccessorSQL.get_case(self.referenced_id)
+        else:
+            return None
 
     @property
     def relationship(self):
@@ -1201,11 +1213,11 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
 
     def __eq__(self, other):
         return isinstance(other, CommCareCaseIndexSQL) and (
-            self.case_id == other.case_id and
-            self.identifier == other.identifier,
-            self.referenced_id == other.referenced_id,
-            self.referenced_type == other.referenced_type,
-            self.relationship_id == other.relationship_id,
+            self.case_id == other.case_id
+            and self.identifier == other.identifier
+            and self.referenced_id == other.referenced_id
+            and self.referenced_type == other.referenced_type
+            and self.relationship_id == other.relationship_id
         )
 
     def __hash__(self):
@@ -1390,6 +1402,9 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             self.form_id == other.form_id
         )
 
+    def __hash__(self):
+        return hash((self.case_id, self.type, self.form_id))
+
     @classmethod
     def form_transaction(cls, case, xform, client_date, action_types=None):
         """Get or create a form transaction for a the given form and case.
@@ -1543,7 +1558,7 @@ class FormReprocessRebuild(CaseTransactionDetail):
 
 class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedChanges):
     """
-    Represents the current state of a ledger. Supercedes StockState
+    Represents the current state of a ledger.
     """
     partition_attr = 'case_id'
 
@@ -1593,6 +1608,19 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     def location(self):
         from corehq.apps.locations.models import SQLLocation
         return SQLLocation.objects.get_or_None(supply_point_id=self.case_id)
+
+    @property
+    def sql_location(self):
+        return self.location
+
+    @property
+    @memoized
+    def sql_product(self):
+        from corehq.apps.products.models import SQLProduct
+        try:
+            return SQLProduct.objects.get(domain=self.domain, product_id=self.entry_id)
+        except SQLProduct.DoesNotExist:
+            return None
 
     @property
     def location_id(self):

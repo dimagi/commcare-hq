@@ -7,7 +7,7 @@ from django.db.models import Count, F, Q
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.html import escape
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -26,7 +26,6 @@ from corehq.apps.hqwebapp.doc_info import (
     DomainMismatchException,
     get_doc_info,
     get_doc_info_by_id,
-    get_object_info,
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.views import EditLocationView
@@ -51,10 +50,12 @@ from corehq.apps.reports.standard.message_event_display import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.sms.filters import (
+    ErrorCodeFilter,
+    EventContentFilter,
     EventStatusFilter,
     EventTypeFilter,
     MessageTypeFilter,
-    PhoneNumberFilter,
+    PhoneNumberOrEmailFilter,
     PhoneNumberReportFilter,
 )
 from corehq.apps.sms.mixin import apply_leniency
@@ -67,6 +68,7 @@ from corehq.apps.sms.models import (
     MessagingSubEvent,
     PhoneBlacklist,
     PhoneNumber,
+    Email
 )
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -125,12 +127,13 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         )
 
     def get_user_link(self, user):
-        user_link_template = '<a href="%(link)s">%(username)s</a>'
-        user_link = user_link_template % {
-            "link": absolute_reverse(EditCommCareUserView.urlname,
-                                     args=[self.domain, user._id]),
-            "username": user.username_in_report
-        }
+        user_link_template = '<a href="{link}">{username}</a>'
+        user_link = format_html(
+            user_link_template,
+            link=absolute_reverse(EditCommCareUserView.urlname,
+                args=[self.domain, user._id]),
+            username=user.username_in_report
+        )
         return self.table_cell(user.raw_username, user_link)
 
     @property
@@ -218,7 +221,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         username = username or "-"
         contact_type = contact_type or _("Unknown")
         if url:
-            ret = self.table_cell(username, '<a target="_blank" href="%s">%s</a>' % (url, username))
+            ret = self.table_cell(username, format_html('<a target="_blank" href="{}">{}</a>', url, username))
         else:
             ret = self.table_cell(username, username)
         ret['raw'] = "|||".join([username, contact_type,
@@ -255,19 +258,21 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             except (ResourceNotFound, CaseNotFound, ObjectDoesNotExist):
                 pass
 
-        doc_info = None
+        doc, doc_info = None, None
         if couch_object:
+            doc = couch_object.to_json()
+        elif sql_object:
+            doc = sql_object
+
+        if doc:
             try:
-                doc_info = get_doc_info(couch_object.to_json(), domain)
+                doc_info = get_doc_info(doc, domain)
             except DomainMismatchException:
                 # This can happen, for example, if a WebUser was sent an SMS
                 # and then they unsubscribed from the domain. If that's the
                 # case, we'll just leave doc_info as None and no contact link
                 # will be displayed.
                 pass
-
-        if sql_object:
-            doc_info = get_object_info(sql_object)
 
         contact_cache[recipient_id] = doc_info
 
@@ -305,10 +310,6 @@ class MessageLogReport(BaseCommConnectLogReport):
     ajax_pagination = True
 
     exportable = True
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
 
     def get_message_type_filter(self):
         filtered_types = MessageTypeFilter.get_value(self.request, self.domain)
@@ -530,6 +531,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             table = list(result[0][1])
             table[0].append(_("Message Log ID"))
             result[0][1] = table
+
         return result
 
     def _get_data(self, paginate):
@@ -601,7 +603,8 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
     def get_event_detail_link(self, event):
         display_text = _('View Details')
-        display = '<a target="_blank" href="/a/%s/reports/message_event_detail/?id=%s">%s</a>' % (
+        display = format_html(
+            '<a target="_blank" href="/a/{}/reports/message_event_detail/?id={}">{}</a>',
             self.domain,
             event.pk,
             display_text,
@@ -616,7 +619,8 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         if not subevent.xforms_session_id:
             return self._fmt(form_name)
         else:
-            display = '<a target="_blank" href="%s">%s</a>' % (
+            display = format_html(
+                '<a target="_blank" href="{}">{}</a>',
                 self.get_survey_detail_url(subevent),
                 form_name,
             )
@@ -629,14 +633,12 @@ class MessagingEventsReport(BaseMessagingEventReport):
     fields = [
         DatespanFilter,
         EventTypeFilter,
+        EventContentFilter,
         EventStatusFilter,
-        PhoneNumberFilter,
+        ErrorCodeFilter,
+        PhoneNumberOrEmailFilter,
     ]
     ajax_pagination = True
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
 
     @property
     def headers(self):
@@ -653,8 +655,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
     @property
     @memoized
-    def phone_number_filter(self):
-        value = PhoneNumberFilter.get_value(self.request, self.domain)
+    def phone_number_or_email_filter(self):
+        value = PhoneNumberOrEmailFilter.get_value(self.request, self.domain)
         if isinstance(value, str):
             return value.strip()
 
@@ -663,6 +665,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     def get_filters(self):
         source_filter = []
         content_type_filter = []
+        error_code_filter = ErrorCodeFilter.get_value(self.request, self.domain)
         event_status_filter = None
         event_type_filter = EventTypeFilter.get_value(self.request, self.domain)
 
@@ -687,12 +690,22 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 else:
                     source_filter.append(source_type)
 
+        content_types = EventContentFilter.get_value(self.request, self.domain)
+
         for content_type, x in MessagingEvent.CONTENT_CHOICES:
-            if content_type in event_type_filter:
+            if content_type in content_types:
                 if content_type == MessagingEvent.CONTENT_SMS_SURVEY:
                     content_type_filter.extend([
                         MessagingEvent.CONTENT_SMS_SURVEY,
                         MessagingEvent.CONTENT_IVR_SURVEY,
+                    ])
+                if content_type == MessagingEvent.CONTENT_SMS:
+                    content_type_filter.extend([
+                        MessagingEvent.CONTENT_SMS,
+                        MessagingEvent.CONTENT_PHONE_VERIFICATION,
+                        MessagingEvent.CONTENT_ADHOC_SMS,
+                        MessagingEvent.CONTENT_API_SMS,
+                        MessagingEvent.CONTENT_CHAT_SMS
                     ])
                 else:
                     content_type_filter.append(content_type)
@@ -723,8 +736,13 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 (Q(messagingsubevent__xforms_session__session_is_open=False) &
                  Q(messagingsubevent__xforms_session__submission_id__isnull=True))
             )
+        elif event_status == MessagingEvent.STATUS_EMAIL_DELIVERED:
+            event_status_filter = (
+                Q(status=event_status) |
+                Q(messagingsubevent__status=event_status)
+            )
 
-        return source_filter, content_type_filter, event_status_filter
+        return source_filter, content_type_filter, event_status_filter, error_code_filter
 
     def _fmt_recipient(self, event, doc_info):
         if event.recipient_type in (
@@ -743,22 +761,35 @@ class MessagingEventsReport(BaseMessagingEventReport):
             )
 
     def get_queryset(self):
-        source_filter, content_type_filter, event_status_filter = self.get_filters()
+        source_filter, content_type_filter, event_status_filter, error_code_filter = self.get_filters()
 
         data = MessagingEvent.objects.filter(
             Q(domain=self.domain),
             Q(date__gte=self.datespan.startdate_utc),
             Q(date__lte=self.datespan.enddate_utc),
-            (Q(source__in=source_filter) |
-                Q(content_type__in=content_type_filter) |
-                Q(messagingsubevent__content_type__in=content_type_filter)),
+            Q(source__in=source_filter),
         )
+        if error_code_filter:
+            data = data.filter(
+                Q(error_code__in=error_code_filter)
+                | Q(messagingsubevent__error_code__in=error_code_filter)
+            )
+
+        if content_type_filter:
+            data = data.filter(
+                (Q(content_type__in=content_type_filter) |
+                 Q(messagingsubevent__content_type__in=content_type_filter))
+            )
 
         if event_status_filter:
             data = data.filter(event_status_filter)
 
-        if self.phone_number_filter:
-            data = data.filter(messagingsubevent__sms__phone_number__contains=self.phone_number_filter)
+        if self.phone_number_or_email_filter:
+            phone_qs = data.filter(
+                messagingsubevent__sms__phone_number__contains=self.phone_number_or_email_filter)
+            email_qs = data.filter(
+                messagingsubevent__email__recipient_address__icontains=self.phone_number_or_email_filter)
+            data = (email_qs | phone_qs) if self.phone_number_or_email_filter.isdigit() else email_qs
 
         # We need to call distinct() on this because it's doing an
         # outer join to sms_messagingsubevent in order to filter on
@@ -776,8 +807,11 @@ class MessagingEventsReport(BaseMessagingEventReport):
             {'name': 'startdate', 'value': self.datespan.startdate.strftime('%Y-%m-%d')},
             {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
             {'name': EventTypeFilter.slug, 'value': EventTypeFilter.get_value(self.request, self.domain)},
+            {'name': EventContentFilter.slug, 'value': EventContentFilter.get_value(self.request, self.domain)},
             {'name': EventStatusFilter.slug, 'value': EventStatusFilter.get_value(self.request, self.domain)},
-            {'name': PhoneNumberFilter.slug, 'value': PhoneNumberFilter.get_value(self.request, self.domain)},
+            {'name': ErrorCodeFilter.slug, 'value': ErrorCodeFilter.get_value(self.request, self.domain)},
+            {'name': PhoneNumberOrEmailFilter.slug,
+             'value': PhoneNumberOrEmailFilter.get_value(self.request, self.domain)},
         ]
 
     @property
@@ -837,11 +871,17 @@ class MessageEventDetailReport(BaseMessagingEventReport):
 
     @property
     def headers(self):
+        EMAIL_ADDRRESS = _('Email Address')
+        PHONE_NUMBER = _('Phone Number')
+        if self.messaging_event and self.messaging_event.content_type == MessagingEvent.CONTENT_EMAIL:
+            contact_column = EMAIL_ADDRRESS
+        else:
+            contact_column = PHONE_NUMBER
         return DataTablesHeader(
             DataTablesColumn(_('Date')),
             DataTablesColumn(_('Recipient')),
             DataTablesColumn(_('Content')),
-            DataTablesColumn(_('Phone Number')),
+            DataTablesColumn(contact_column),
             DataTablesColumn(_('Direction')),
             DataTablesColumn(_('Gateway')),
             DataTablesColumn(_('Status')),
@@ -941,13 +981,21 @@ class MessageEventDetailReport(BaseMessagingEventReport):
             elif messaging_subevent.content_type == MessagingEvent.CONTENT_EMAIL:
                 timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
                 status = get_status_display(messaging_subevent)
+                content = '-'
+                recipient_address = '-'
+                try:
+                    email = Email.objects.get(messaging_subevent=messaging_subevent.pk)
+                    content = email.body
+                    recipient_address = email.recipient_address
+                except Email.DoesNotExist:
+                    pass
                 result.append([
                     self._fmt_timestamp(timestamp),
                     self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
-                    self._fmt('-'),
-                    self._fmt('-'),
-                    self._fmt_direction('-'),
-                    self._fmt('-'),
+                    self._fmt(content),
+                    self._fmt(recipient_address),
+                    self._fmt_direction(OUTGOING),
+                    self._fmt(_('Email')),
                     self._fmt(status),
                 ])
         return result
@@ -1385,7 +1433,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
         return ServerTime(timestamp).user_time(self.timezone).done().strftime('%Y-%m-%d %H:%M:%S')
 
     def get_link_display(self, href, text):
-        return '<a target="_blank" href="%s">%s</a>' % (href, escape(text))
+        return format_html('<a target="_blank" href="{}">{}</a>', href, text)
 
     def get_case_display(self, case):
         from corehq.apps.reports.views import CaseDataView

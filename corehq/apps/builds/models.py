@@ -232,6 +232,10 @@ class BuildSpec(DocumentSchema):
     def major_release(self):
         return self.version.split('.')[0]
 
+    def patch_release(self):
+        major, minor, minimal = self.version.split('.')
+        return int(major), int(minor), int(minimal)
+
     def release_greater_than_or_equal_to(self, version):
         if not self.version:
             return False

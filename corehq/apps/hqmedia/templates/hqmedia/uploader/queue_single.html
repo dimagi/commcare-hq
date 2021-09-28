@@ -1,7 +1,7 @@
 {% load i18n %}
-<div id="<%= unique_id %>" class="clearfix">
+<div id="<%- unique_id %>" class="clearfix">
   <div class="alert alert-success" style="margin-bottom: 2px; margin-top: 10px;">
-    <i class="fa fa-check"></i> <%= file_name %> <strong>[<%= file_size %> MB]</strong>
+    <i class="fa fa-check"></i> <%- file_name %> <strong>[<%- file_size %> MB]</strong>
   </div>
   <div class="hqm-progress">
     <div class="progress" style="margin-bottom: 5px;">

@@ -32,10 +32,6 @@ class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist):
         return "Attachment not found '{}:{}'".format(self.form_id, self.attachment_name)
 
 
-class CouchSaveAborted(Exception):
-    pass
-
-
 class CaseSaveError(Exception):
     pass
 
@@ -73,13 +69,3 @@ class XFormLockError(Exception):
 
 class MissingFormXml(Exception):
     pass
-
-
-class NotAllowed(Exception):
-
-    @classmethod
-    def check(cls, domain):
-        from corehq.apps.couch_sql_migration.progress import \
-            couch_sql_migration_in_progress
-        if couch_sql_migration_in_progress(domain):
-            raise cls("couch-to-SQL migration in progress")

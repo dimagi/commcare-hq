@@ -154,6 +154,11 @@ class SoftwarePlanEdition(object):
         PRO,
         ADVANCED,
     ]
+    SELF_RENEWABLE_EDITIONS = [
+        ADVANCED,
+        PRO,
+        STANDARD,
+    ]
 
 
 class SoftwarePlanVisibility(object):
@@ -174,13 +179,15 @@ class CreditAdjustmentReason(object):
     LINE_ITEM = "LINE_ITEM"
     TRANSFER = "TRANSFER"
     MANUAL = "MANUAL"
+    FRIENDLY_WRITE_OFF = "FRIENDLY_WRITE_OFF"
     CHOICES = (
-        (MANUAL, "manual"),
+        (MANUAL, "Manual"),
+        (FRIENDLY_WRITE_OFF, "Friendly Write-Off"),
         (SALESFORCE, "via Salesforce"),
-        (INVOICE, "invoice generated"),
-        (LINE_ITEM, "line item generated"),
-        (TRANSFER, "transfer from another credit line"),
-        (DIRECT_PAYMENT, "payment from client received"),
+        (INVOICE, "Invoice-generated"),
+        (LINE_ITEM, "Line Item generated"),
+        (TRANSFER, "Transfer from another credit line"),
+        (DIRECT_PAYMENT, "Payment from client received"),
     )
 
 
@@ -313,6 +320,17 @@ class PreOrPostPay(object):
     )
 
 
+class CommunicationType(object):
+    OTHER = "OTHER"
+    OVERDUE_INVOICE = "OVERDUE_INVOICE"
+    DOWNGRADE_WARNING = "DOWNGRADE_WARNING"
+    CHOICES = (
+        (OTHER, "other"),
+        (OVERDUE_INVOICE, "Overdue Invoice"),
+        (DOWNGRADE_WARNING, "Subscription Pause Warning"),
+    )
+
+
 class Currency(models.Model):
     """
     Keeps track of the current conversion rates so that we don't have to poll the free, but rate limited API
@@ -365,6 +383,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     )
     is_active = models.BooleanField(default=True)
     is_customer_billing_account = models.BooleanField(default=False, db_index=True)
+    is_sms_billable_report_visible = models.BooleanField(default=False)
     enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
     enterprise_restricted_signup_domains = ArrayField(models.CharField(max_length=128), default=list, blank=True)
     invoicing_plan = models.CharField(
@@ -394,6 +413,15 @@ class BillingAccount(ValidateModelMixin, models.Model):
     restrict_domain_creation = models.BooleanField(default=False)
     restrict_signup = models.BooleanField(default=False, db_index=True)
     restrict_signup_message = models.CharField(max_length=512, null=True, blank=True)
+
+    # Settings restricting Hubspot data
+    block_hubspot_data_for_all_users = models.BooleanField(default=False)
+    block_email_domains_from_hubspot = ArrayField(
+        models.CharField(max_length=253, null=True, blank=True),
+        blank=True,
+        null=True,
+        default=list
+    )
 
     class Meta(object):
         app_label = 'accounting'
@@ -480,6 +508,10 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         return StripePaymentMethod.objects.get(web_user=self.auto_pay_user).get_autopay_card(self)
 
+    def get_domains(self):
+        return list(Subscription.visible_objects.filter(account_id=self.id, is_active=True).values_list(
+                    'subscriber__domain', flat=True))
+
     def has_enterprise_admin(self, email):
         return self.is_customer_billing_account and email in self.enterprise_admin_emails
 
@@ -552,6 +584,11 @@ class BillingAccount(ValidateModelMixin, models.Model):
             render_to_string('accounting/email/invoice_autopay_setup.html', context),
             text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
         )
+
+    @staticmethod
+    def should_show_sms_billable_report(domain):
+        account = BillingAccount.get_account_by_domain(domain)
+        return account.is_sms_billable_report_visible
 
 
 class BillingContactInfo(models.Model):
@@ -1127,6 +1164,11 @@ class Subscription(models.Model):
             and other.account.pk == self.account.pk
         )
 
+    def __hash__(self):
+        # Defining __eq__ appears block a class from inheriting its parent's __hash__.
+        # This restores that.
+        return super().__hash__()
+
     def save(self, *args, **kwargs):
         """
         Overloaded to update domain pillow with subscription information
@@ -1328,6 +1370,10 @@ class Subscription(models.Model):
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
         This is not the same thing as simply updating the subscription.
+
+        date_end is a date in the future and only applies to the NEW
+        subscription. The current subscription will always end immediately
+        (today) and the date_start of the new subscription will always be today.
         """
         from corehq.apps.analytics.tasks import track_workflow
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
@@ -1520,6 +1566,10 @@ class Subscription(models.Model):
             raise SubscriptionReminderError(
                 "This subscription has no end date."
             )
+        if self.plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
+            # never send a subscription ending email for Paused subscriptions...
+            return
+
         today = datetime.date.today()
         num_days_left = (self.date_end - today).days
 
@@ -1726,6 +1776,16 @@ class Subscription(models.Model):
         if no_current_entry_point and self_serve and not self.is_trial:
             self.account.entry_point = EntryPoint.SELF_STARTED
             self.account.save()
+
+    @classmethod
+    def get_active_domains_for_account(cls, account_name):
+        try:
+            return cls.visible_objects.filter(
+                is_active=True,
+                account=account_name,
+            ).values_list('subscriber__domain', flat=True).distinct()
+        except cls.DoesNotExist:
+            return None
 
     @classmethod
     def get_active_subscription_by_domain(cls, domain_name_or_obj):
@@ -2039,21 +2099,20 @@ class Invoice(InvoiceBase):
         if self.subscription.service_type == SubscriptionType.IMPLEMENTATION:
             return [settings.ACCOUNTS_EMAIL]
         else:
-            return self.contact_emails
+            return self.get_contact_emails()
 
-    @property
-    def contact_emails(self):
+    def get_contact_emails(self, include_domain_admins=False, filter_out_dimagi=False):
         try:
             billing_contact_info = BillingContactInfo.objects.get(account=self.account)
             contact_emails = billing_contact_info.email_list
         except BillingContactInfo.DoesNotExist:
             contact_emails = []
 
-        if not contact_emails:
+        if include_domain_admins or not contact_emails:
             from corehq.apps.accounting.views import ManageBillingAccountView
             admins = WebUser.get_admins_by_domain(self.get_domain())
-            contact_emails = [admin.email if admin.email else admin.username for admin in admins]
-            if not settings.UNIT_TESTING:
+            contact_emails.extend([admin.email if admin.email else admin.username for admin in admins])
+            if not settings.UNIT_TESTING and not include_domain_admins:
                 _soft_assert_contact_emails_missing(
                     False,
                     "Could not find an email to send the invoice "
@@ -2064,6 +2123,23 @@ class Invoice(InvoiceBase):
                         absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
                     )
                 )
+
+        if filter_out_dimagi:
+            emails_with_dimagi = contact_emails
+            contact_emails = [e for e in contact_emails if not e.endswith('@dimagi.com')]
+            if not contact_emails:
+                # make sure at least someone (even if it's dimagi)
+                # gets this communication. Also helpful with QA when the only
+                # emails are @dimagi.com
+                contact_emails = emails_with_dimagi
+                _soft_assert_contact_emails_missing(
+                    False,
+                    f"Could not find a non-dimagi email to send invoice "
+                    f"{self.invoice_number}. "
+                    f"Sending to these dimagi emails instead: "
+                    f"{', '.join(emails_with_dimagi)}."
+                )
+
         return contact_emails
 
     @property
@@ -2128,13 +2204,15 @@ class Invoice(InvoiceBase):
         return self.subscription.subscriber.domain
 
     @classmethod
-    def autopayable_invoices(cls, date_due):
+    def autopayable_invoices(cls, date_due=Ellipsis):
         """ Invoices that can be auto paid on date_due """
         invoices = cls.objects.select_related('subscription__account').filter(
-            date_due=date_due,
             is_hidden=False,
             subscription__account__auto_pay_user__isnull=False,
         )
+        # we use Ellipsis because date due can actually be None
+        if date_due is not Ellipsis:
+            invoices = invoices.filter(date_due=date_due)
         return invoices
 
     def pay_invoice(self, payment_record):
@@ -2174,6 +2252,10 @@ class CustomerInvoice(InvoiceBase):
     @property
     def contact_emails(self):
         return self.account.enterprise_admin_emails
+
+    def get_contact_emails(self, include_domain_admins=False, filter_out_dimagi=False):
+        # mimic the behavior of the regular Invoice for notification purposes
+        return self.contact_emails
 
     @property
     def subtotal(self):
@@ -2548,7 +2630,7 @@ class BillingRecord(BillingRecordBase):
             context.update({
                 'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
                 'billing_account': self.invoice.subscription.account.name,
-                'billing_contacts': self.invoice.contact_emails,
+                'billing_contacts': self.invoice.get_contact_emails(),
                 'admin_invoices_url': "{url}?subscriber={domain}".format(
                     url=absolute_reverse(AccountingAdminInterfaceDispatcher.name(), args=['invoices']),
                     domain=self.invoice.get_domain()
@@ -2783,13 +2865,13 @@ class CustomerBillingRecord(BillingRecordBase):
         return not self.invoice.is_hidden
 
     def email_context(self):
-        from corehq.apps.accounting.views import EnterpriseBillingStatementsView
+        from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
         context = super(CustomerBillingRecord, self).email_context()
         is_small_invoice = self.invoice.balance < SMALL_INVOICE_THRESHOLD
         payment_status = (_("Paid")
                           if self.invoice.is_paid or self.invoice.balance == 0
                           else _("Payment Required"))
-        # Random domain, because all subscriptions on a customer account link to the same Enterprise Dashboard
+        # Random domain, because all subscriptions on a customer account link to the same Enterprise Console
         domain = self.invoice.subscriptions.first().subscriber.domain
         context.update({
             'account_name': self.invoice.account.name,
@@ -3161,7 +3243,7 @@ class LineItem(models.Model):
 
 class CreditLine(models.Model):
     """
-    The amount of money in USD that exists can can be applied toward a specific account,
+    The amount of money in USD that exists that can be applied toward a specific account,
     a specific subscription, or specific rates in that subscription.
     """
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
@@ -3202,7 +3284,6 @@ class CreditLine(models.Model):
             get_credits_available_for_product_in_account.clear(self.account)
         if self.subscription:
             get_credits_available_for_product_in_subscription.clear(self.subscription)
-
 
     def adjust_credit_balance(self, amount, is_new=False, note=None,
                               line_item=None, invoice=None, customer_invoice=None,
@@ -3362,6 +3443,15 @@ class CreditLine(models.Model):
         ).all()
 
     @classmethod
+    def get_non_general_credits_for_account(cls, account):
+        return cls.objects.filter(
+            account=account, subscription__exact=None, is_active=True
+        ).filter(
+            Q(is_product=True) |
+            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
+        ).all()
+
+    @classmethod
     def get_credits_by_subscription_and_features(cls, subscription,
                                                  feature_type=None,
                                                  is_product=False):
@@ -3514,7 +3604,7 @@ class StripePaymentMethod(PaymentMethod):
         if self.customer_id is not None:
             try:
                 customer = self._get_stripe_customer()
-            except stripe.InvalidRequestError:
+            except stripe.error.InvalidRequestError:
                 pass
         if customer is None:
             customer = self._create_stripe_customer()
@@ -3725,3 +3815,28 @@ class DomainUserHistory(models.Model):
 
     class Meta:
         unique_together = ('domain', 'record_date')
+
+
+class CommunicationHistoryBase(models.Model):
+    """
+    A record of any serious correspondence we initiate with admins / billing
+    contacts due to things like downgrade warnings or
+    overdue notices.
+    """
+    date_created = models.DateField(auto_now_add=True)
+    communication_type = models.CharField(
+        max_length=25,
+        default=CommunicationType.OTHER,
+        choices=CommunicationType.CHOICES,
+    )
+
+    class Meta(object):
+        abstract = True
+
+
+class InvoiceCommunicationHistory(CommunicationHistoryBase):
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
+
+
+class CustomerInvoiceCommunicationHistory(CommunicationHistoryBase):
+    invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT)

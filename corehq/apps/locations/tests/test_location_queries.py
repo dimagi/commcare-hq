@@ -1,8 +1,6 @@
 import pickle
 
-from django.test.utils import override_settings
-
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
 
 from ..models import SQLLocation
@@ -76,7 +74,7 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
 
     def setUp(self):
         super(TestLocationScopedQueryset, self).setUp()
-        self.web_user = WebUser.create(self.domain, 'blah', 'password')
+        self.web_user = WebUser.create(self.domain, 'blah', 'password', None, None)
         self.web_user.set_location(self.domain, self.locations['Middlesex'])
 
     def tearDown(self):
@@ -115,7 +113,7 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
 
     def test_location_restricted_but_unassigned(self):
         # unassigned users shouldn't be able to access any locations
-        unassigned_user = WebUser.create(self.domain, 'unassigned', 'password')
+        unassigned_user = WebUser.create(self.domain, 'unassigned', 'password', None, None)
         self.restrict_user_to_assigned_locations(unassigned_user)
         self.assertItemsEqual(
             [],

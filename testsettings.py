@@ -1,7 +1,12 @@
+import os
+
 from copy import deepcopy
 
 import settingshelper as helper
 from settings import *
+
+if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
+    ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
 
 USING_CITUS = any(db.get('ROLE') == 'citus_master' for db in DATABASES.values())
 
@@ -36,6 +41,8 @@ NOSE_PLUGINS = [
     'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
     'corehq.tests.noseplugins.cmdline_params.CmdLineParametersPlugin',
+    'corehq.tests.noseplugins.patches.PatchesPlugin',
+    'corehq.tests.noseplugins.redislocks.RedisLockTimeoutPlugin',
     'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
 
     # The following are not enabled by default
@@ -52,12 +59,11 @@ NOSE_PLUGINS = [
 for key, value in {
     'NOSE_DB_TEST_CONTEXT': 'corehq.tests.nose.HqdbContext',
     'NOSE_NON_DB_TEST_CONTEXT': 'corehq.tests.nose.ErrorOnDbAccessContext',
-
     'NOSE_IGNORE_FILES': '^localsettings',
+    'NOSE_EXCLUDE_DIRS': 'scripts',
 
-    'NOSE_EXCLUDE_DIRS': ';'.join([
-        'scripts',
-    ]),
+    'DD_DOGSTATSD_DISABLE': 'true',
+    'DD_TRACE_ENABLED': 'false',
 }.items():
     os.environ.setdefault(key, value)
 del key, value
@@ -69,10 +75,6 @@ CELERY_TASK_ALWAYS_EAGER = True
 # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
 _PILLOWTOPS = PILLOWTOPS
 PILLOWTOPS = {}
-
-# required by auditcare tests
-AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']
-AUDIT_ADMIN_VIEWS = False
 
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
@@ -87,10 +89,12 @@ def _set_logging_levels(levels):
     import logging
     for path, level in levels.items():
         logging.getLogger(path).setLevel(level)
+
+
 _set_logging_levels({
     # Quiet down noisy loggers. Selective removal can be handy for debugging.
     'alembic': 'WARNING',
-    'auditcare': 'INFO',
+    'corehq.apps.auditcare': 'INFO',
     'boto3': 'WARNING',
     'botocore': 'INFO',
     'couchdbkit.request': 'INFO',
@@ -117,22 +121,18 @@ LOGGING = {
     'loggers': {},
 }
 
-# Default custom databases to use the same configuration as the default
-# This is so that all devs don't have to run citus locally
-if 'icds-ucr' not in DATABASES:
-    DATABASES['icds-ucr'] = deepcopy(DATABASES['default'])
-    # use a different name otherwise migrations don't get run
-    DATABASES['icds-ucr']['NAME'] = 'commcarehq_icds_ucr'
-    del DATABASES['icds-ucr']['TEST']['NAME']  # gets set by `helper.assign_test_db_names`
-
 helper.assign_test_db_names(DATABASES)
-
-REPORTING_DATABASES = {
-    'default': 'default',
-    'ucr': 'default',
-    'aaa-data': 'default',
-    'icds-ucr-citus': 'icds-ucr',
-}
 
 # See comment under settings.SMS_QUEUE_ENABLED
 SMS_QUEUE_ENABLED = False
+
+# use all providers in tests
+METRICS_PROVIDERS = [
+    'corehq.util.metrics.datadog.DatadogMetrics',
+    'corehq.util.metrics.prometheus.PrometheusMetrics',
+]
+
+# timeout faster in tests
+ES_SEARCH_TIMEOUT = 5
+
+FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"

@@ -32,7 +32,6 @@ from corehq.form_processor.exceptions import (
     LedgerSaveError,
     LedgerValueNotFound,
     MissingFormXml,
-    NotAllowed,
     XFormNotFound,
     XFormSaveError,
 )
@@ -551,7 +550,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         from corehq.form_processor.change_publishers import publish_form_saved
 
         assert isinstance(form_ids, list)
-        NotAllowed.check(domain)
         problem = 'Restored on {}'.format(datetime.utcnow())
         with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
@@ -584,7 +582,6 @@ class FormAccessorSQL(AbstractFormAccessor):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         from corehq.form_processor.change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
-        NotAllowed.check(domain)
         deletion_date = deletion_date or datetime.utcnow()
         with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
@@ -699,8 +696,14 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_deleted_form_ids_in_domain(domain):
-        deleted_state = XFormInstanceSQL.NORMAL | XFormInstanceSQL.DELETED
-        return FormAccessorSQL.get_form_ids_in_domain_by_state(domain, deleted_state)
+        result = []
+        for db_name in get_db_aliases_for_partitioned_query():
+            result.extend(
+                XFormInstanceSQL.objects.using(db_name)
+                .annotate(state_deleted=F('state').bitand(XFormInstanceSQL.DELETED))
+                .filter(domain=domain, state_deleted=XFormInstanceSQL.DELETED).values_list('form_id', flat=True)
+            )
+        return result
 
     @staticmethod
     def get_form_ids_in_domain_by_state(domain, state):
@@ -808,6 +811,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def case_exists(case_id):
         return CommCareCaseSQL.objects.partitioned_query(case_id).filter(case_id=case_id).exists()
+
+    @staticmethod
+    def get_case_ids_that_exist(domain, case_ids):
+        result = []
+        for db_name, case_ids_chunk in split_list_by_db_partition(case_ids):
+            result.extend(CommCareCaseSQL.objects
+                          .using(db_name)
+                          .filter(domain=domain, case_id__in=case_ids_chunk)
+                          .values_list('case_id', flat=True))
+        return result
 
     @staticmethod
     def get_case_xform_ids(case_id):
@@ -1106,7 +1119,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_extension_case_ids(domain, case_ids, include_closed=True):
+    def get_extension_case_ids(domain, case_ids, include_closed=True, exclude_for_case_type=None):
         """
         Given a base list of case ids, get all ids of all extension cases that reference them
         """
@@ -1122,6 +1135,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 referenced_id__in=case_ids)
             if not include_closed:
                 query = query.filter(case__closed=False)
+            if exclude_for_case_type:
+                query = query.exclude(referenced_type=exclude_for_case_type)
             extension_case_ids.update(query.values_list('case_id', flat=True))
         return list(extension_case_ids)
 
@@ -1160,7 +1175,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         from corehq.form_processor.change_publishers import publish_case_saved
 
         assert isinstance(case_ids, list)
-        NotAllowed.check(domain)
 
         with CommCareCaseSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
@@ -1339,14 +1353,14 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             assert isinstance(entry_ids, list)
 
         return list(LedgerValue.objects.plproxy_raw(
-            'SELECT * FROM get_ledger_values_for_cases_2(%s, %s, %s, %s, %s)',
+            'SELECT * FROM get_ledger_values_for_cases_3(%s, %s, %s, %s, %s)',
             [case_ids, section_ids, entry_ids, date_start, date_end]
         ))
 
     @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.plproxy_raw(
-            'SELECT * FROM get_ledger_values_for_cases_2(%s)',
+            'SELECT * FROM get_ledger_values_for_cases_3(%s)',
             [[case_id]]
         ))
 
@@ -1425,7 +1439,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):
         ledger_values = LedgerValue.objects.plproxy_raw(
-            'SELECT * FROM get_ledger_values_for_cases_2(%s)',
+            'SELECT * FROM get_ledger_values_for_cases_3(%s)',
             [case_ids]
         )
         ret = {case_id: {} for case_id in case_ids}

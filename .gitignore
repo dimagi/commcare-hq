@@ -16,13 +16,14 @@ xforms/
 submissions/
 /formplayer_build
 /export/
-/bower_components
 bad/
 *.log*
 /CommCare.ja*
 startover.sh
 celery.db
 tmp.sh
+/requirements/local.in
+/requirements/local.txt
 /resource_versions.yaml
 /loadtest/results/
 /loadtest/localsettings.py
@@ -42,6 +43,7 @@ python_env-3.6
 services
 KEEP_UNTIL__*
 formplayer.properties
+application.properties
 formplayer.jar
 .vscode/*
 
@@ -54,6 +56,9 @@ ptop*.json
 /.coverage
 /coverage-report
 
+# pyenv
+/.python-version
+
 # Sphinx
 docs/_build
 celerybeat-schedule
@@ -65,4 +70,9 @@ node_modules/
 /sharedfiles/
 docker/data
 *.lock
+!yarn.lock
 fab/config.py
+extensions/
+
+# third-party js libraries
+corehq/apps/hqwebapp/static/hqwebapp/js/lib/modernizr.js

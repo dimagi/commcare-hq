@@ -1,0 +1,33 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% requirejs_main 'sso/js/edit_identity_provider' %}
+
+{% block page_content %}
+  {% initial_page_data 'idp_slug' idp_slug %}
+
+  <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
+    <li><a href="#idp" data-toggle="tab">{% trans "Identity Provider" %}</a></li>
+    <li><a href="#email-domains" data-toggle="tab">{% trans "Authenticated Email Domains" %}</a></li>
+    <li><a href="#sso-exempt-users" data-toggle="tab">{% trans "SSO Exempt Users" %}</a></li>
+    <li><a href="#danger-zone" data-toggle="tab">{% trans "Danger Zone" %}</a></li>
+  </ul>
+  <div class="tab-content tab-padded">
+    <div class="tab-pane" id="idp">
+      <form class="form form-horizontal" method="post">
+        {% crispy edit_idp_form %}
+      </form>
+    </div>
+    <div class="tab-pane" id="email-domains">
+      {% include 'sso/partials/manage_authenticated_email_domains.html' %}
+    </div>
+    <div class="tab-pane" id="sso-exempt-users">
+      {% include 'sso/partials/manage_sso_exempt_users.html' %}
+    </div>
+    <div class="tab-pane" id="danger-zone">
+      {% include 'sso/partials/admin_danger_zone.html' %}
+    </div>
+  </div>
+{% endblock %}

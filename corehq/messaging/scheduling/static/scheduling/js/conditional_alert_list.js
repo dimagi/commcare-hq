@@ -120,8 +120,13 @@ hqDefine("scheduling/js/conditional_alert_list", [
                 },
                 success: function (data) {
                     self.showPaginationSpinner(false);
+                    if (_.isString(data)) {
+                        // stop polling if data is HTML (login or error page)
+                        return;
+                    }
                     self.rules(_.map(data.rules, function (r) { return rule(r); }));
                     self.totalItems(data.total);
+                    self.reloadPageSoon();
                 },
             });
         };
@@ -130,11 +135,13 @@ hqDefine("scheduling/js/conditional_alert_list", [
             self.goToPage(self.currentPage());
         };
 
-        // Refresh table periodically
-        setInterval(function () {
-            self.goToPage(self.currentPage());
-        }, 10000);
+        self.reloadPageSoon = function () {
+            setTimeout(function () {
+                self.goToPage(self.currentPage());
+            }, 10000);
+        };
 
+        self.reloadPageSoon()
         return self;
     };
 

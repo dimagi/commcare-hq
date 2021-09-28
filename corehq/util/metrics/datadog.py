@@ -33,13 +33,6 @@ class DatadogMetrics(HqMetrics):
     """
 
     def __init__(self):
-        if settings.UNIT_TESTING or settings.DEBUG or 'ddtrace.contrib.django' not in settings.INSTALLED_APPS:
-            try:
-                from ddtrace import tracer
-                tracer.enabled = False
-            except ImportError:
-                pass
-
         if settings.UNIT_TESTING:
             return
 
@@ -84,7 +77,7 @@ class DatadogMetrics(HqMetrics):
 
             h = metrics_histogram(
                 'commcare.request.duration', 1.4,
-                bucket_tag='duration', buckets=[1,2,3], bucket_units='ms',
+                bucket_tag='duration', buckets=[1, 2, 3], bucket_unit='ms',
                 tags=tags
             )
 

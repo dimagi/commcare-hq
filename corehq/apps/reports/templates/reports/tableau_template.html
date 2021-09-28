@@ -1,0 +1,30 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block page_content %}
+<script src="https://{{ validate_hostname }}/javascripts/api/tableau-2.5.0.min.js"></script>
+
+<script type="text/javascript">
+    function initViz() {
+        var containerDiv = document.getElementById("vizContainer");
+
+        var url = "https://{{ validate_hostname }}/".concat(
+                  "{{ server_type }}" == "server" ? "trusted/{{ ticket }}/" : "",
+                  "{{ view_url }}");
+
+        var options = {
+            hideTabs: true,
+            width: "800px",
+            height: "700px",
+        };
+
+        var viz = new tableau.Viz(containerDiv, url, options);
+    }
+</script>
+
+<body onload="initViz();">
+    <div id="vizContainer"></div>
+</body>
+{% endblock %}

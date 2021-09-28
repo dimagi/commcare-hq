@@ -1,6 +1,6 @@
 from collections import namedtuple
 import uuid
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import (
@@ -21,7 +21,6 @@ Reminder = namedtuple('Reminder', ['domain', 'schedule_iteration_num', 'current_
 Handler = namedtuple('Handler', ['events'])
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestUCLACustomHandler(TestCase):
     domain_name = uuid.uuid4().hex
     case_type = 'ucla-reminder'
@@ -32,7 +31,7 @@ class TestUCLACustomHandler(TestCase):
         super(TestUCLACustomHandler, cls).setUpClass()
         cls.domain = Domain.get_or_create_with_name(cls.domain_name, is_active=True)
         email = 'dimagi@dimagi.com'
-        cls.user = WebUser.create(cls.domain_name, email, '***', email=email)
+        cls.user = WebUser.create(cls.domain_name, email, '***', None, None, email=email)
         cls.user.save()
         cls.schedule = TimedSchedule.create_simple_daily_schedule(
             cls.domain_name,
@@ -43,7 +42,7 @@ class TestUCLACustomHandler(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.schedule.delete()
-        cls.user.delete()
+        cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         super(TestUCLACustomHandler, cls).tearDownClass()
 

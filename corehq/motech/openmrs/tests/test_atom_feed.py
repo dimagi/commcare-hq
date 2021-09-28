@@ -4,7 +4,7 @@ import os
 import re
 from datetime import datetime
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 import attr
 from dateutil.tz import tzoffset, tzutc
@@ -23,6 +23,7 @@ from corehq.motech.openmrs.atom_feed import (
     import_encounter,
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.requests import Requests
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -130,7 +131,7 @@ class GetEncounterUuidTests(SimpleTestCase):
             get_encounter_uuid(element)
 
 
-class ImportEncounterTest(SimpleTestCase, TestFileMixin):
+class ImportEncounterTest(TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
@@ -141,6 +142,10 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             type='patient',
             owner_id='123456'
         )
+
+    def tearDown(self):
+        self.repeater.connection_settings.delete()
+        self.repeater.delete()
 
     def setUpRepeater(self):
         observations = [
@@ -283,6 +288,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         return {
             "_id": "123456",
             "domain": "test_domain",
+            "url": "https://example.com/openmrs/",
             "username": "foo",
             "password": "bar",
             "white_listed_case_types": ['patient'],
@@ -312,13 +318,12 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         response = Mock()
         response.json.return_value = self.get_json('encounter')
         self.setUpRepeater()
-        self.repeater.requests  # Initialise cached value
-        self.repeater.__dict__["requests"] = Mock()
-        self.repeater.requests.get.return_value = response
 
-        with patch('corehq.motech.openmrs.atom_feed.submit_case_blocks') as submit_case_blocks_patch, \
+        with patch.object(Requests, 'get') as get_patch, \
+                patch('corehq.motech.openmrs.atom_feed.submit_case_blocks') as submit_case_blocks_patch, \
                 patch('corehq.motech.openmrs.atom_feed.importer_util') as importer_util_patch, \
                 patch('corehq.motech.openmrs.repeaters.get_one_commcare_user_at_location'):
+            get_patch.return_value = response
             importer_util_patch.lookup_case.return_value = (self.case, None)
 
             import_encounter(self.repeater, 'c719b87f-d221-493b-bec7-c212aa813f5d')

@@ -37,6 +37,8 @@ class DataSourceResumeHelper(object):
         return self._client.lrange(self._key, 0, -1)
 
     def add_completed_case_type_or_xmlns(self, case_type_or_xmlns):
+        if case_type_or_xmlns is None:
+            case_type_or_xmlns = 'None'
         self._client.rpush(self._key, case_type_or_xmlns)
 
     def clear_resume_info(self):
@@ -110,6 +112,9 @@ def add_columns(engine, diffs):
 
 
 def apply_index_changes(engine, diffs):
+    """Note that this does not actually create the indexes. Indexes must be created
+    manually by copying the log output.
+    """
     index_diffs = _get_indexes_diffs_to_change(diffs)
     remove_indexes = [index.index for index in index_diffs if index.type == DiffTypes.REMOVE_INDEX]
     add_indexes = [index.index for index in index_diffs if index.type == DiffTypes.ADD_INDEX]

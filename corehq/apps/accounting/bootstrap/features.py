@@ -47,7 +47,7 @@ standard_v0 = community_v0 + [
     privileges.BULK_CASE_MANAGEMENT,
     privileges.ALLOW_EXCESS_USERS,
     privileges.LOCATIONS,
-    privileges.USER_CASE,
+    privileges.USERCASE,
     privileges.ZAPIER_INTEGRATION,
     privileges.LOGIN_AS,
     privileges.PRACTICE_MOBILE_WORKERS,
@@ -63,7 +63,7 @@ standard_v1 = community_v2 + [
     privileges.BULK_CASE_MANAGEMENT,
     privileges.BULK_USER_MANAGEMENT,
     privileges.ALLOW_EXCESS_USERS,
-    privileges.USER_CASE,
+    privileges.USERCASE,
     privileges.EXCEL_DASHBOARD,
     privileges.DAILY_SAVED_EXPORT,
     privileges.ZAPIER_INTEGRATION,
@@ -118,6 +118,15 @@ advanced_v0 = pro_v1 + [
     privileges.BUILD_PROFILES,
     privileges.ADVANCED_DOMAIN_SECURITY,
     privileges.ODATA_FEED,
+    privileges.APP_USER_PROFILES,
 ]
 
-enterprise_v0 = advanced_v0 + []
+enterprise_v0 = advanced_v0 + [
+    privileges.GEOCODER,
+    privileges.DEFAULT_EXPORT_SETTINGS,
+    privileges.LINKED_PROJECTS,
+]
+
+enterprise_v1 = enterprise_v0 + [
+    privileges.RELEASE_MANAGEMENT,
+]

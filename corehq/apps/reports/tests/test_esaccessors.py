@@ -2,33 +2,45 @@ import uuid
 from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
-from django.test.utils import override_settings
 
 import pytz
 from corehq.util.es.elasticsearch import ConnectionError
-from mock import patch
+from mock import MagicMock, patch
 
-from casexml.apps.case.const import CASE_ACTION_CREATE
-from casexml.apps.case.models import CommCareCase, CommCareCaseAction
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack.tests.util import bootstrap_domain
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.es_utils import initialize_index_and_mapping
 
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+    PROFILE_SLUG,
+)
+from corehq.apps.domain.calculations import cases_in_last, inactive_cases_in_last
+from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
+from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, get_case_by_identifier
+from corehq.apps.locations.tests.util import setup_locations_and_types, restrict_user_by_location
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
     get_all_user_ids_submitted,
     get_case_counts_closed_by_user,
     get_case_counts_opened_by_user,
     get_case_types_for_domain_es,
+    get_case_and_action_counts_for_domains,
     get_completed_counts_by_user,
     get_form_counts_by_user_xmlns,
+    get_form_counts_for_domains,
     get_form_duration_stats_by_user,
     get_form_duration_stats_for_users,
     get_form_ids_having_multimedia,
     get_forms,
+    get_last_submission_time_for_users,
     get_group_stubs,
     get_form_name_from_last_submission_for_xmlns,
     get_paged_forms_by_type,
@@ -36,27 +48,33 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
     get_total_case_counts_by_owner,
     get_user_stubs,
+    get_groups_by_querystring,
     get_username_in_last_form_user_id_submitted,
     guess_form_name_from_submissions_using_xmlns,
     scroll_case_names,
 )
+from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.blobs.mixin import BlobMetaRef
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted, reset_es_index
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
+@es_test
 class BaseESAccessorsTest(TestCase):
     es_index_info = None
 
@@ -128,7 +146,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.es.indices.refresh(GROUP_INDEX_INFO.index)
         return group
 
-    @run_with_all_backends
     def test_get_forms(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -156,7 +173,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(paged_result.hits[0]['form']['meta']['userID'], user_id)
         self.assertEqual(paged_result.hits[0]['received_on'], '2013-07-02T00:00:00.000000Z')
 
-    @run_with_all_backends
     def test_get_form_ids_having_multimedia(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -191,7 +207,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(len(form_ids), 1)
 
-    @run_with_all_backends
     def test_get_form_ids_having_multimedia_with_user_types(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -248,7 +263,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(len(form_ids), 2)
 
-    @run_with_all_backends
     def test_get_forms_multiple_apps_xmlnss(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -315,7 +329,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(paged_result.total, 1)
 
-    @run_with_all_backends
     def test_basic_completed_by_user(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -325,7 +338,25 @@ class TestFormESAccessors(BaseESAccessorsTest):
         results = get_completed_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEqual(results['cruella_deville'], 1)
 
-    @run_with_all_backends
+    def test_get_last_submission_time_for_users(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+
+        self._send_form_to_es(received_on=datetime(2013, 7, 2))
+
+        results = get_last_submission_time_for_users(self.domain, ['cruella_deville'], DateSpan(start, end))
+        self.assertEqual(results['cruella_deville'], datetime(2013, 7, 2).date())
+
+    def test_get_form_counts_for_domains(self):
+        self._send_form_to_es()
+        self._send_form_to_es()
+        self._send_form_to_es(domain='other')
+
+        self.assertEqual(
+            get_form_counts_for_domains([self.domain, 'other']),
+            {self.domain: 2, 'other': 1}
+        )
+
     def test_completed_out_of_range_by_user(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -346,7 +377,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         results = get_completed_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEqual(results['cruella_deville'], 1)
 
-    @run_with_all_backends
     def test_basic_submission_by_user(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -357,7 +387,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEqual(results['cruella_deville'], 1)
 
-    @run_with_all_backends
     def test_get_form_name_from_last_submission_for_xmlns(self):
         xmlns = 'http://a.b.org'
         kwargs = {
@@ -381,11 +410,9 @@ class TestFormESAccessors(BaseESAccessorsTest):
         name = get_form_name_from_last_submission_for_xmlns(self.domain, 'missing')
         self.assertIsNone(name)
 
-    @run_with_all_backends
     def test_guess_form_name_from_xmlns_not_found(self):
         self.assertEqual(None, guess_form_name_from_submissions_using_xmlns('missing', 'missing'))
 
-    @run_with_all_backends
     def test_guess_form_name_from_xmlns(self):
         form_name = 'my cool form'
         xmlns = 'http://a.b.org'
@@ -395,7 +422,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(form_name, guess_form_name_from_submissions_using_xmlns(self.domain, xmlns))
 
-    @run_with_all_backends
     def test_submission_out_of_range_by_user(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -407,7 +433,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEqual(results['cruella_deville'], 1)
 
-    @run_with_all_backends
     def test_submission_different_domain_by_user(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -419,7 +444,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEqual(results['cruella_deville'], 1)
 
-    @run_with_all_backends
     def test_basic_submission_by_date(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -436,7 +460,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(results['2013-07-15'], 1)
 
-    @run_with_all_backends
     def test_get_paged_forms_by_type(self):
         self._send_form_to_es()
         self._send_form_to_es()
@@ -445,7 +468,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(len(paged_result.hits), 1)
         self.assertEqual(paged_result.total, 2)
 
-    @run_with_all_backends
     def test_timezone_differences(self):
         """
         Our received_on dates are always in UTC, so if we submit a form right at midnight UTC, then the report
@@ -466,8 +488,26 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(results['2013-07-14'], 1)
 
+    def test_timezones_ahead_utc_in_get_submission_counts_by_date(self):
+        """
+        When bucketing form submissions, the returned bucket key needs to be converted to a datetime with
+        the timezone specified. Specifically an issue for timezones ahead of UTC (positive offsets)
+        """
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        received_on = datetime(2013, 7, 15)
 
-    @run_with_all_backends
+        self._send_form_to_es(received_on=received_on)
+        self._send_form_to_es(received_on=received_on, xmlns=SYSTEM_FORM_XMLNS)
+
+        results = get_submission_counts_by_date(
+            self.domain,
+            ['cruella_deville'],
+            DateSpan(start, end),
+            pytz.timezone('Africa/Johannesburg')
+        )
+        self.assertEqual(results['2013-07-15'], 1)
+
     def test_get_form_counts_by_user_xmlns(self):
         user1, user2 = 'u1', 'u2'
         app1, app2 = '123', '567'
@@ -478,7 +518,8 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         received_on = datetime(2013, 7, 15, 0, 0, 0)
         received_on_out = datetime(2013, 6, 15, 0, 0, 0)
-        self._send_form_to_es(received_on=received_on_out, completion_time=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
+        self._send_form_to_es(received_on=received_on_out, completion_time=received_on,
+                              user_id=user1, app_id=app1, xmlns=xmlns1)
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app2, xmlns=xmlns2)
@@ -514,7 +555,24 @@ class TestFormESAccessors(BaseESAccessorsTest):
             (None, app2, xmlns2): 1,
         })
 
-    @run_with_all_backends
+    def test_xmlns_case_sensitivity_for_get_form_counts_by_user_xmlns(self):
+        user = 'u1'
+        app = '123'
+        # the important part of this test is an xmlns identifier with both lower and uppercase characters
+        xmlns = 'LmN'
+
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+
+        received_on = datetime(2013, 7, 15, 0, 0, 0)
+        self._send_form_to_es(received_on=received_on, user_id=user, app_id=app, xmlns=xmlns)
+
+        check_case_sensitivity = get_form_counts_by_user_xmlns(self.domain, start, end,
+                                                               user_ids=[user], xmlnss=[xmlns])
+        self.assertEqual(check_case_sensitivity, {
+            (user, app, xmlns): 1,
+        })
+
     def test_get_form_duration_stats_by_user(self):
         """
         Tests the get_form_duration_stats_by_user basic ability to get duration stats
@@ -569,7 +627,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(results[MISSING_KEY]['count'], 1)
         self.assertEqual(timedelta(milliseconds=results[MISSING_KEY]['max']), completion_time - time_start)
 
-    @run_with_all_backends
     def test_get_form_duration_stats_by_user_decoys(self):
         """
         Tests the get_form_duration_stats_by_user ability to filter out forms that
@@ -640,7 +697,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(timedelta(milliseconds=results[user1]['max']), completion_time - time_start)
         self.assertIsNone(results.get('user2'))
 
-    @run_with_all_backends
     def test_get_form_duration_stats_for_users(self):
         """
         Tests the get_form_duration_stats_for_users basic ability to get duration stats
@@ -690,7 +746,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(results['count'], 3)
         self.assertEqual(timedelta(milliseconds=results['max']), completion_time - time_start)
 
-    @run_with_all_backends
     def test_get_form_duration_stats_for_users_decoys(self):
         """
         Tests the get_form_duration_stats_for_users ability to filter out forms that
@@ -760,7 +815,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(results['count'], 1)
         self.assertEqual(timedelta(milliseconds=results['max']), completion_time - time_start)
 
-    @run_with_all_backends
     def test_get_all_user_ids_submitted_without_app_id(self):
         user1, user2 = 'u1', 'u2'
         app1, app2 = '123', '567'
@@ -774,7 +828,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         user_ids = get_all_user_ids_submitted(self.domain)
         self.assertEqual(user_ids, ['u1', 'u2'])
 
-    @run_with_all_backends
     def test_get_all_user_ids_submitted_with_app_id(self):
         user1, user2 = 'u1', 'u2'
         app1, app2 = '123', '567'
@@ -790,7 +843,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         user_ids = get_all_user_ids_submitted(self.domain, app2)
         self.assertEqual(user_ids, ['u2'])
 
-    @run_with_all_backends
     def test_get_username_in_last_form_submitted(self):
         user1, user2 = 'u1', 'u2'
         app1 = '123'
@@ -807,83 +859,128 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(user_ids, 'u2')
 
 
-class TestUserESAccessors(SimpleTestCase):
+@es_test
+class TestUserESAccessors(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'user-esaccessors-test'
+        cls.domain_obj = create_domain(cls.domain)
+
+        cls.source_domain = cls.domain + "-source"
+        cls.source_domain_obj = create_domain(cls.source_domain)
+        create_enterprise_permissions("a@a.com", cls.source_domain, [cls.domain])
+
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(slug='job', label='Job'),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='daily_planet_staff',
+            fields={'job': 'reporter'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
+
+        cls.user = CommCareUser.create(
+            cls.domain,
+            'superman',
+            'secret agent man',
+            None,
+            None,
+            first_name='clark',
+            last_name='kent',
+            is_active=True,
+            metadata={PROFILE_SLUG: cls.profile.id, 'office': 'phone_booth'},
+        )
+        cls.user.save()
 
     def setUp(self):
         super(TestUserESAccessors, self).setUp()
-        self.username = 'superman'
-        self.first_name = 'clark'
-        self.last_name = 'kent'
-        self.doc_type = 'CommCareUser'
-        self.domain = 'user-esaccessors-test'
         self.es = get_es_new()
         ensure_index_deleted(USER_INDEX)
         initialize_index_and_mapping(self.es, USER_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):
+        cls.domain_obj.delete()
+        cls.source_domain_obj.delete()
+        cls.definition.delete()
         ensure_index_deleted(USER_INDEX)
         super(TestUserESAccessors, cls).tearDownClass()
 
-    def _send_user_to_es(self, _id=None, is_active=True):
-        user = CommCareUser(
-            domain=self.domain,
-            username=self.username,
-            _id=_id or uuid.uuid4().hex,
-            is_active=is_active,
-            first_name=self.first_name,
-            last_name=self.last_name,
-        )
-        send_to_elasticsearch('users', user.to_json())
+    def _send_user_to_es(self, is_active=True):
+        self.user.is_active = is_active
+        send_to_elasticsearch('users', transform_user_for_elasticsearch(self.user.to_json()))
         self.es.indices.refresh(USER_INDEX)
-        return user
 
     def test_active_user_query(self):
-        self._send_user_to_es('123')
-        results = get_user_stubs(['123'])
+        self._send_user_to_es()
+        results = get_user_stubs([self.user._id], ['user_data_es'])
 
         self.assertEqual(len(results), 1)
+        metadata = results[0].pop('user_data_es')
+        self.assertEqual({
+            'commcare_project': 'user-esaccessors-test',
+            PROFILE_SLUG: self.profile.id,
+            'job': 'reporter',
+            'office': 'phone_booth',
+        }, {item['key']: item['value'] for item in metadata})
+
         self.assertEqual(results[0], {
-            '_id': '123',
-            'username': self.username,
+            '_id': self.user._id,
+            '__group_ids': [],
+            'username': self.user.username,
             'is_active': True,
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'doc_type': self.doc_type,
-            'location_id': None
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'doc_type': 'CommCareUser',
+            'location_id': None,
         })
 
     def test_inactive_user_query(self):
-        self._send_user_to_es('123', is_active=False)
-        results = get_user_stubs(['123'])
+        self._send_user_to_es(is_active=False)
+        results = get_user_stubs([self.user._id])
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], {
-            '_id': '123',
-            'username': self.username,
+            '_id': self.user._id,
+            '__group_ids': [],
+            'username': self.user.username,
             'is_active': False,
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'doc_type': self.doc_type,
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'doc_type': 'CommCareUser',
             'location_id': None
         })
 
+    def test_domain_allow_enterprise(self):
+        self._send_user_to_es()
+        self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
+        self.assertEqual([], UserES().domain(self.source_domain).values_list('username', flat=True))
+        self.assertEqual(
+            ['superman'],
+            UserES().domain(self.domain, allow_enterprise=True).values_list('username', flat=True)
+        )
 
+
+@es_test
 class TestGroupESAccessors(SimpleTestCase):
 
     def setUp(self):
-        self.group_name = 'justice league'
         self.domain = 'group-esaccessors-test'
         self.reporting = True
-        self.case_sharing = False
         self.es = get_es_new()
         reset_es_index(GROUP_INDEX_INFO)
 
-    def _send_group_to_es(self, _id=None):
+    def _send_group_to_es(self, name, _id=None, case_sharing=False):
         group = Group(
             domain=self.domain,
-            name=self.group_name,
-            case_sharing=self.case_sharing,
+            name=name,
+            case_sharing=case_sharing,
             reporting=self.reporting,
             _id=_id or uuid.uuid4().hex,
         )
@@ -892,16 +989,35 @@ class TestGroupESAccessors(SimpleTestCase):
         return group
 
     def test_group_query(self):
-        self._send_group_to_es('123')
+        name = 'justice-league'
+        self._send_group_to_es(name, '123')
         results = get_group_stubs(['123'])
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], {
             '_id': '123',
-            'name': self.group_name,
-            'case_sharing': self.case_sharing,
+            'name': name,
+            'case_sharing': False,
             'reporting': self.reporting,
         })
+
+    def test_group_search_query(self):
+        self._send_group_to_es('Milkyway', '1')
+        self._send_group_to_es('Freeroad', '2')
+        self._send_group_to_es('Freeway', '3', True)
+        self.assertEqual(
+            get_groups_by_querystring(self.domain, 'Free', False),
+            [
+                {'id': '2', 'text': 'Freeroad'},
+                {'id': '3', 'text': 'Freeway'},
+            ]
+        )
+        self.assertEqual(
+            get_groups_by_querystring(self.domain, 'way', True),
+            [
+                {'id': '3', 'text': 'Freeway'},
+            ]
+        )
 
 
 class TestCaseESAccessors(BaseESAccessorsTest):
@@ -920,27 +1036,34 @@ class TestCaseESAccessors(BaseESAccessorsTest):
             user_id=None,
             case_type=None,
             opened_on=None,
-            closed_on=None):
+            closed_on=None,
+            modified_on=None):
 
-        actions = [CommCareCaseAction(
-            action_type=CASE_ACTION_CREATE,
-            date=opened_on,
-        )]
-
-        case = CommCareCase(
-            _id=uuid.uuid4().hex,
+        case = CommCareCaseSQL(
+            case_id=uuid.uuid4().hex,
             domain=domain or self.domain,
             owner_id=owner_id or self.owner_id,
-            user_id=user_id or self.user_id,
+            modified_by=user_id or self.user_id,
             type=case_type or self.case_type,
             opened_on=opened_on or datetime.now(),
             opened_by=user_id or self.user_id,
             closed_on=closed_on,
+            modified_on=modified_on or datetime.now(),
             closed_by=user_id or self.user_id,
-            actions=actions,
+            server_modified_on=datetime.utcnow(),
+            closed=bool(closed_on)
         )
-        send_to_elasticsearch('cases', case.to_json())
-        self.es.indices.refresh(CASE_INDEX_INFO.index)
+
+        case.track_create(CaseTransaction(
+            type=CaseTransaction.TYPE_FORM,
+            form_id=uuid.uuid4().hex,
+            case=case,
+            server_date=opened_on,
+        ))
+
+        es_case = transform_case_for_elasticsearch(case.to_json())
+        send_to_elasticsearch('cases', es_case)
+        self.es.indices.refresh(CASE_INDEX)
         return case
 
     def test_scroll_case_names(self):
@@ -1019,6 +1142,19 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         results = get_total_case_counts_by_owner(self.domain, datespan)
         self.assertEqual(results[self.owner_id], 1)
 
+    def test_get_case_and_action_counts_for_domains(self):
+        self._send_case_to_es()
+        self._send_case_to_es()
+        self._send_case_to_es('other')
+        results = get_case_and_action_counts_for_domains([self.domain, 'other'])
+        self.assertEqual(
+            results,
+            {
+                self.domain: {'cases': 2, 'case_actions': 2},
+                'other': {'cases': 1, 'case_actions': 1}
+            }
+        )
+
     def test_get_total_case_counts_opened_after(self):
         """Test a case opened after the startdate datespan"""
 
@@ -1072,6 +1208,27 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         results = get_case_counts_opened_by_user(self.domain, datespan, case_types=['not-here'])
         self.assertEqual(results, {})
 
+    def test_get_case_counts_in_last(self):
+        self._send_case_to_es(modified_on=datetime.now() - timedelta(days=2))
+        self._send_case_to_es(modified_on=datetime.now() - timedelta(days=2), case_type='new')
+        self._send_case_to_es(modified_on=datetime.now() - timedelta(days=5), case_type='new')
+        self.assertEqual(
+            cases_in_last(self.domain, 3),
+            2
+        )
+        self.assertEqual(
+            cases_in_last(self.domain, 3, self.case_type),
+            1
+        )
+        self.assertEqual(
+            inactive_cases_in_last(self.domain, 6),
+            0
+        )
+        self.assertEqual(
+            inactive_cases_in_last(self.domain, 1),
+            3
+        )
+
     def test_get_case_types(self):
         self._send_case_to_es(case_type='t1')
         self._send_case_to_es(case_type='t2')
@@ -1104,40 +1261,61 @@ class TestCaseESAccessors(BaseESAccessorsTest):
 
         self.assertEqual({'t1', 't2'}, get_case_types_for_domain_es(self.domain))
 
-
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class TestCaseESAccessorsSQL(TestCaseESAccessors):
-
-    def _send_case_to_es(self,
-            domain=None,
-            owner_id=None,
-            user_id=None,
-            case_type=None,
-            opened_on=None,
-            closed_on=None):
-
-        case = CommCareCaseSQL(
-            case_id=uuid.uuid4().hex,
-            domain=domain or self.domain,
-            owner_id=owner_id or self.owner_id,
-            modified_by=user_id or self.user_id,
-            type=case_type or self.case_type,
-            opened_on=opened_on or datetime.now(),
-            opened_by=user_id or self.user_id,
-            closed_on=closed_on,
-            closed_by=user_id or self.user_id,
-            server_modified_on=datetime.utcnow(),
-            closed=bool(closed_on)
-        )
-
-        case.track_create(CaseTransaction(
-            type=CaseTransaction.TYPE_FORM,
-            form_id=uuid.uuid4().hex,
-            case=case,
-            server_date=opened_on,
-        ))
-
-        es_case = transform_case_for_elasticsearch(case.to_json())
+    def test_case_by_identifier(self):
+        self._send_case_to_es(case_type='ccuser')
+        case = self._send_case_to_es()
+        case.external_id = '123'
+        case.save()
+        case = CaseAccessors(self.domain).get_case(case.case_id)
+        case_json = case.to_json()
+        case_json['contact_phone_number'] = '234'
+        es_case = transform_case_for_elasticsearch(case_json)
         send_to_elasticsearch('cases', es_case)
         self.es.indices.refresh(CASE_INDEX)
-        return case
+        self.assertEqual(
+            get_case_by_identifier(self.domain, case.case_id).case_id,
+            case.case_id
+        )
+        self.assertEqual(
+            get_case_by_identifier(self.domain, '234').case_id,
+            case.case_id
+        )
+        self.assertEqual(
+            get_case_by_identifier(self.domain, '123').case_id,
+            case.case_id
+        )
+
+    def test_location_restricted_cases(self):
+        domain_obj = bootstrap_domain(self.domain)
+        self.addCleanup(domain_obj.delete)
+
+        location_type_names = ['state', 'county', 'city']
+        location_structure = [
+            ('Massachusetts', [
+                ('Middlesex', [
+                    ('Cambridge', []),
+                    ('Somerville', []),
+                ]),
+                ('Suffolk', [
+                    ('Boston', []),
+                ])
+            ])
+        ]
+        locations = setup_locations_and_types(self.domain, location_type_names, [], location_structure)[1]
+        middlesex_user = CommCareUser.create(self.domain, 'guy-from-middlesex', '***', None, None)
+
+        middlesex_user.add_to_assigned_locations(locations['Middlesex'])
+        restrict_user_by_location(self.domain, middlesex_user)
+
+        fake_request = MagicMock()
+        fake_request.domain = self.domain
+        fake_request.couch_user = middlesex_user
+
+        self._send_case_to_es(owner_id=locations['Boston'].get_id)
+        middlesex_case = self._send_case_to_es(owner_id=locations['Middlesex'].get_id)
+        cambridge_case = self._send_case_to_es(owner_id=locations['Cambridge'].get_id)
+
+        returned_case_ids = query_location_restricted_cases(
+            CaseES().domain(self.domain),
+            fake_request).get_ids()
+        self.assertItemsEqual(returned_case_ids, [middlesex_case.case_id, cambridge_case.case_id])

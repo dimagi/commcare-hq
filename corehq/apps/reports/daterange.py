@@ -1,6 +1,7 @@
 import datetime
 from collections import namedtuple
 
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.reports.exceptions import InvalidDaterangeException
@@ -15,7 +16,7 @@ DateRangeChoice = namedtuple('DateRangeChoice', ['slug', 'description', 'simple'
 
 
 def get_all_daterange_choices():
-    return (
+    choices = (
         DateRangeChoice('last7', _('Last 7 Days'), True),
         DateRangeChoice('last30', _('Last 30 Days'), True),
         DateRangeChoice('lastn', _('Last N Days'), False),
@@ -28,6 +29,10 @@ def get_all_daterange_choices():
         DateRangeChoice('thisquarter', _('This Quarter'), True),
         DateRangeChoice('lastquarter', _('Last Quarter'), True),
     )
+    if settings.SERVER_ENVIRONMENT in settings.INDIAN_ENVIRONMENTS:
+        choices += (DateRangeChoice('currentindianfinancialyear',
+                                    _('Current Indian Financial Year'), True),)
+    return choices
 
 
 def get_all_daterange_slugs():
@@ -64,6 +69,12 @@ def get_daterange_start_end_dates(date_range, start_date=None, end_date=None, da
         return datetime.date(last_year, 1, 1), datetime.date(last_year, 12, 31)
     elif date_range == 'thisyear':
         return datetime.date(today.year, 1, 1), datetime.date(today.year, 12, 31)
+    elif date_range == 'currentindianfinancialyear':
+        # financial year is from 1st April to 31st March
+        if today.month > 3:
+            return datetime.date(today.year, 4, 1), datetime.date(today.year + 1, 3, 31)
+        else:
+            return datetime.date(today.year - 1, 4, 1), datetime.date(today.year, 3, 31)
     else:
         end_date = today
         days = {

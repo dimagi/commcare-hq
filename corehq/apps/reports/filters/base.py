@@ -129,7 +129,7 @@ class BaseSingleOptionFilter(BaseReportFilter):
             options = self.options
             if not isinstance(options, list) and not isinstance(options[0], tuple) and not len(options[0]) == 2:
                 raise ValueError("options must return a list of option tuples [('value','text')].")
-            options = [dict(val=o[0], text=o[1]) for o in self.options]
+            options = [{'val': val, 'text': text} for val, text in self.options]
         return {
             'select': {
                 'options': options,

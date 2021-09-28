@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-உங்கள் AWC இன் சமீபத்திய பதிவுகளின் படி, உங்கள் குழந்தையின் {{child_name}} எடை கடந்த மாதத்தில் குறைந்துள்ளது. தயவுசெய்து உங்கள் ஆலோசனையைத் தேவையான ஆலோசனையுடன் தொடர்புகொள்ளவும்.

@@ -15,6 +15,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from django.utils.html import escape
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
@@ -65,12 +66,14 @@ from corehq.apps.userreports.reports.data_source import (
 )
 from corehq.apps.userreports.reports.util import (
     ReportExport,
-    has_location_filter,
+    report_has_location_filter,
 )
 from corehq.apps.userreports.tasks import export_ucr_async
 from corehq.apps.userreports.util import (
+    can_delete_report,
     can_edit_report,
     default_language,
+    get_referring_apps,
     get_ucr_class_name,
     has_report_builder_access,
     has_report_builder_trial,
@@ -129,11 +132,17 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
 
 
 @contextmanager
-def tmp_report_config(report_config):
+def delete_report_config(report_config):
     yield report_config
     report_config.delete()
 
 
+def _ucr_view_is_safe(view_fn, *args, **kwargs):
+    return report_has_location_filter(config_id=kwargs.get('subreport_slug'),
+                                      domain=kwargs.get('domain'))
+
+
+@conditionally_location_safe(_ucr_view_is_safe)
 class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     section_name = ugettext_noop("Reports")
     template_name = 'userreports/configurable_report.html'
@@ -157,7 +166,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @use_datatables
     @use_nvd3
     @track_domain_request(calculated_prop='cp_n_viewed_ucr_reports')
-    @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):
             from corehq.apps.userreports.views import paywall_home
@@ -338,6 +346,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             'method': 'POST',
             'headers': self.headers,
             'can_edit_report': can_edit_report(self.request, self),
+            'can_delete_report': can_delete_report(self.request, self),
+            'referring_apps': get_referring_apps(self.domain, self.report_config_id),
             'has_report_builder_trial': has_report_builder_trial(self.request),
             'report_filter_form_action_css_class': CSS_ACTION_CLASS,
         }
@@ -345,7 +355,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         context.update(self.pop_report_builder_context_data())
         if isinstance(self.spec, ReportConfiguration) and self.spec.report_meta.builder_report_type == 'map':
             context['report_table']['default_rows'] = 100
-        if self.request.couch_user.is_staff:
+        if self.request.couch_user.is_staff and hasattr(self.data_source, 'data_source'):
             context['queries'] = self.data_source.data_source.get_query_strings()
         return context
 
@@ -398,6 +408,21 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def headers(self):
         return DataTablesHeader(*[col.data_tables_column for col in self.data_source.inner_columns])
 
+    @classmethod
+    def sanitize_page(cls, page):
+        result = []
+        for row in page:
+            result.append({k: cls._sanitize_column(v) for (k, v) in row.items()})
+
+        return result
+
+    @classmethod
+    def _sanitize_column(cls, col):
+        if isinstance(col, str):
+            return escape(col)
+
+        return col
+
     def get_ajax(self, params):
         sort_column = params.get('iSortCol_0')
         sort_order = params.get('sSortDir_0', 'ASC')
@@ -416,6 +441,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 )
 
             page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+            page = self.sanitize_page(page)
             total_records = data_source.get_total_records()
             total_row = data_source.get_total_row() if data_source.has_total_row else None
         except UserReportsError as e:
@@ -543,30 +569,30 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         return redirect(DownloadUCRStatusView.urlname, self.domain, download.download_id, self.report_config_id)
 
     @classmethod
-    def report_preview_data(cls, domain, temp_report):
+    def sanitize_export_table(cls, table):
+        result = []
+        for row in table:
+            result.append([cls._sanitize_column(x) for x in row])
 
-        with tmp_report_config(temp_report) as report_config:
-            view = cls(request=HttpRequest())
-            view._domain = domain
-            view._lang = "en"
-            view._report_config_id = report_config._id
-            try:
-                export_table = view.export_table
-                datatables_data = json.loads(view.get_ajax({}).content)
-            except UserReportsError:
-                # User posted an invalid report configuration
-                return None
-            except DataSourceConfigurationNotFoundError:
-                # A temporary data source has probably expired
-                # TODO: It would be more helpful just to quietly recreate the data source config from GET params
-                return None
-            else:
-                return {
-                    "table": export_table[0][1],
-                    "map_config": view.spec.map_config,
-                    "chart_configs": view.spec.charts,
-                    "aaData": datatables_data['aaData'],
-                }
+        return result
+
+    @classmethod
+    def report_preview_data(cls, domain, report_config):
+        try:
+            export = ReportExport(domain, report_config.title, report_config, "en", {})
+            return {
+                "table": cls.sanitize_export_table(export.get_table_data()),
+                "map_config": report_config.map_config,
+                "chart_configs": report_config.charts,
+                "aaData": cls.sanitize_page(export.get_data()),
+            }
+        except UserReportsError:
+            # User posted an invalid report configuration
+            return None
+        except DataSourceConfigurationNotFoundError:
+            # A temporary data source has probably expired
+            # TODO: It would be more helpful just to quietly recreate the data source config from GET params
+            return None
 
 
 # Base class for classes that provide custom rendering for UCRs
@@ -594,9 +620,10 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
             raise Http404
         return report_class.as_view()(request, domain=domain, subreport_slug=report_config_id, **kwargs)
 
-    def get_report(self, domain, slug, config_id):
+    @classmethod
+    def get_report(cls, domain, slug, config_id):
         try:
-            report_class = self._report_class(domain, config_id)
+            report_class = cls._report_class(domain, config_id)
         except BadSpecError:
             return None
         return report_class.get_report(domain, slug, config_id)
@@ -608,6 +635,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         return url(pattern, cls.as_view(), name=cls.slug)
 
 
+@conditionally_location_safe(_ucr_view_is_safe)
 class DownloadUCRStatusView(BaseDomainView):
     urlname = 'download_ucr_status'
     page_title = ugettext_noop('Download UCR Status')
@@ -635,10 +663,6 @@ class DownloadUCRStatusView(BaseDomainView):
             return render(request, 'hqwebapp/soil_status_full.html', context)
         else:
             raise Http403()
-
-    @conditionally_location_safe(has_location_filter)
-    def dispatch(self, *args, **kwargs):
-        return super(DownloadUCRStatusView, self).dispatch(*args, **kwargs)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -669,8 +693,7 @@ class DownloadUCRStatusView(BaseDomainView):
 
 
 def _safe_download_poll(view_fn, request, domain, download_id, *args, **kwargs):
-    config_id = request.GET.get('config_id')
-    return config_id and has_location_filter(None, domain=domain, subreport_slug=config_id)
+    return report_has_location_filter(request.GET.get('config_id'), domain)
 
 
 @conditionally_location_safe(_safe_download_poll)

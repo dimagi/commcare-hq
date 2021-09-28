@@ -1,0 +1,55 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% if not is_latest_version %}
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h4 class="panel-title panel-title-nolink">
+      Customer Plan Version Tools
+    </h4>
+  </div>
+  <div class="panel-body">
+    {% crispy upgrade_subscriptions_form %}
+  </div>
+</div>
+{% endif %}
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h4 class="panel-title panel-title-nolink">
+      Active Subscriptions on this Version
+    </h4>
+  </div>
+  <div class="panel-body">
+    {% if not active_subscriptions %}
+      <div class="alert alert-info">
+        There are no active subscriptions on this version.
+      </div>
+    {% else %}
+      <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+          <th>Project Space</th>
+          <th>Billing Account</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Salesforce Contract ID</th>
+          <th>Edit</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for subscription in active_subscriptions %}
+          <tr>
+            <td>{{ subscription.subscriber.domain }}</td>
+            <td>{{ subscription.account.name }}</td>
+            <td>{{ subscription.date_start }}</td>
+            <td>{{ subscription.date_end }}</td>
+            <td>{{ subscription.salesforce_contract_id }}</td>
+            <td><a href="{% url 'edit_subscription' subscription.id %}" class="btn btn-default">Edit</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</div>

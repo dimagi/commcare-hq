@@ -1,42 +1,4 @@
-from django.db.models.signals import post_save
-
-from casexml.apps.stock import const
-from casexml.apps.stock.models import DocDomainMapping, StockTransaction
-from casexml.apps.stock.signals import get_stock_state_for_transaction
-
-from corehq.apps.products.models import SQLProduct
-from corehq.util.context_managers import drop_connected_signals
 from corehq.util.quickcache import quickcache
-
-
-def recalculate_domain_consumption(domain):
-    """
-    Given a domain, recalculate all saved consumption settings in that domain.
-    """
-    # note: might get slow as this gets huge
-    found_doc_ids = DocDomainMapping.objects.filter(
-        domain_name=domain,
-        doc_type='CommCareCase',
-    ).values_list('doc_id', flat=True)
-    product_ids = SQLProduct.active_objects.filter(domain=domain).product_ids()
-    for supply_point_id in found_doc_ids:
-        for product_id in product_ids:
-            try:
-                latest_transaction = StockTransaction.get_ordered_transactions_for_stock(
-                    supply_point_id, const.SECTION_TYPE_STOCK, product_id
-                )[0]
-            except IndexError:
-                pass
-            else:
-                state = get_stock_state_for_transaction(latest_transaction)
-                daily_consumption = get_consumption_for_ledger(state)
-                state.daily_consumption = daily_consumption
-                with drop_connected_signals(post_save):
-                    state.save()
-
-
-def get_consumption_for_ledger(ledger):
-    return get_consumption_for_ledger_json(ledger.to_json())
 
 
 def get_consumption_for_ledger_json(ledger_json):
@@ -70,6 +32,6 @@ def should_exclude_invalid_periods(domain):
     from corehq.apps.commtrack.models import CommtrackConfig
     if domain:
         config = CommtrackConfig.for_domain(domain)
-        if config:
-            return config.consumption_config.exclude_invalid_periods
+        if config and hasattr(config, 'consumptionconfig'):
+            return config.consumptionconfig.exclude_invalid_periods
     return False

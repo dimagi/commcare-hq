@@ -228,14 +228,18 @@ hqDefine('app_manager/js/summary/models',[
 
         // Handling of id/label switcher
         self.showLabels = ko.observable(true);
-        self.showIds = ko.computed(function () {
-            return !self.showLabels();
-        });
-        self.turnLabelsOn = function () {
-            self.showLabels(true);
+        self.showIds = ko.observable(false);
+        self.toggleLabels = function () {
+            if (self.showLabels() && !self.showIds()) {
+                self.showIds(true);
+            }
+            self.showLabels(!self.showLabels());
         };
-        self.turnIdsOn = function () {
-            self.showLabels(false);
+        self.toggleIds = function () {
+            if (self.showIds() && !self.showLabels()) {
+                self.showLabels(true);
+            }
+            self.showIds(!self.showIds());
         };
 
         // App diff controls
@@ -275,14 +279,27 @@ hqDefine('app_manager/js/summary/models',[
             return question.label;  // hidden values don't have translations
         };
 
+        self.questionLabel = function (question) {
+            var text = "";
+            if (self.showLabels()) {
+                text += self.translateQuestion(question);
+            }
+            if (self.showLabels() && self.showIds()) {
+                text += " ";
+            }
+            if (self.showIds()) {
+                text += question.value;
+            }
+            return text;
+        };
         // Create "module -> form" link/text markup
         self.formNameMap = options.form_name_map;
         self.readOnly = options.read_only;
         self.moduleFormReference = function (formId) {
             var formData = self.formNameMap[formId];
             var template = self.readOnly
-                ? "<%= moduleName %> &rarr; <%= formName %>"
-                : "<a href='<%= moduleUrl %>'><%= moduleName %></a> &rarr; <a href='<%= formUrl %>'><%= formName %></a>"
+                ? "<%- moduleName %> &rarr; <%- formName %>"
+                : "<a href='<%- moduleUrl %>'><%- moduleName %></a> &rarr; <a href='<%- formUrl %>'><%- formName %></a>"
             ;
             return _.template(template)({
                 moduleName: self.translate(formData.module_name),
@@ -294,8 +311,8 @@ hqDefine('app_manager/js/summary/models',[
         self.moduleReference = function (moduleId) {
             var moduleData = self.formNameMap[moduleId];
             var template = self.readOnly
-                ? "<%= moduleName %>"
-                : "<a href='<%= moduleUrl %>'><%= moduleName %></a>"
+                ? "<%- moduleName %>"
+                : "<a href='<%- moduleUrl %>'><%- moduleName %></a>"
             ;
             return _.template(template)({
                 moduleName: self.translate(moduleData.module_name),

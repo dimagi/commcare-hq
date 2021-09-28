@@ -1,3 +1,3 @@
-external_id,name,unique_respondent_id,location_id,respondent_id,opened_date,opened_by_username,owner_name,recalled_date,recall_status,gender,age_years_calculated,age_months_calculated,pregnant,breastfeeding,supplements,urban_rural
+external_id,name,unique_respondent_id,location_id,respondent_id,date_opened,opened_by_username,owner_name,visit_date,recall_status,gender,age_years_calculated,age_months_calculated,pregnant,breastfeeding,supplements,urban_rural
 77453cd4-3f8e-430b-940e-fd0366ea748f,report_3,report_3,report,3,2020-02-27 16:03:13,nick,nick,2020-02-26,Completed,,30,361,pregnant_no,breastfeeding_yes,no,location_urban
 efc97c44-3acd-46df-b003-b1fb116693de,report_5,report_5,report,5,2020-02-27 21:41:51,nick,nick,2020-02-26,Completed,,28,348,pregnant_yes,breastfeeding_no,yes,location_urban

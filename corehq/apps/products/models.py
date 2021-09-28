@@ -293,7 +293,7 @@ class SQLProduct(models.Model):
     """
     A SQL based clone of couch Products.
 
-    This is used to efficiently filter StockState and other
+    This is used to efficiently filter LedgerValue and other
     SQL based queries to exclude data for archived products.
     """
     domain = models.CharField(max_length=255, db_index=True)

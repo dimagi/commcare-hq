@@ -8,13 +8,13 @@ Intended for developers of [CommCareHQ](https://github.com/dimagi/commcare-hq).
 You'll first need to install [ESLint](http://eslint.org):
 
 ```
-$ npm i eslint --save-dev
+$ yarn add eslint --save-dev
 ```
 
 Next, install `eslint-plugin-eslint-dimagi`:
 
 ```
-$ npm install eslint-plugin-eslint-dimagi --save-dev
+$ yarn add eslint-plugin-eslint-dimagi --save-dev
 ```
 
 **Note:** If you installed ESLint globally (using the `-g` flag) then you must also install `eslint-plugin-eslint-dimagi` globally.

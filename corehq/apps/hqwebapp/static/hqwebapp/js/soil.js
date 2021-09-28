@@ -1,16 +1,21 @@
-hqDefine("hqwebapp/js/soil", function () {
+hqDefine("hqwebapp/js/soil", [
+    "jquery",
+    "hqwebapp/js/initial_page_data",
+], function (
+    $,
+    initialPageData
+) {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-            downloadId = initialPageData("download_id"),
+        var downloadId = initialPageData.get("download_id"),
             autoRefresh = '',
             pollDownloader = function () {
                 if (!$('#ready_' + downloadId).length) {
-                    $.ajax(initialPageData("poll_url"), {
+                    $.ajax(initialPageData.get("poll_url"), {
                         success: function (data) {
                             $("#display_" + downloadId).html(data);
                         },
                         error: function (data) {
-                            var message = initialPageData("error_text");
+                            var message = initialPageData.get("error_text");
                             if (data.responseText !== undefined && data.responseText !== '') {
                                 message = data.responseText;
                             }

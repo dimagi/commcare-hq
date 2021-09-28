@@ -2,22 +2,22 @@ import decimal
 import uuid
 from datetime import datetime, timedelta
 
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 
 import mock
+from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.pillow_utils import rebuild_table
 from pillow_retry.models import PillowError
 
-from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.data_source_providers import (
     MockDataSourceProvider,
-)
+    DynamicDataSourceProvider)
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.models import (
     AsyncIndicator,
@@ -28,7 +28,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.pillow import (
     REBUILD_CHECK_INTERVAL,
     ConfigurableReportPillowProcessor,
-    ConfigurableReportTableManagerMixin,
+    ConfigurableReportTableManager,
 )
 from corehq.apps.userreports.tasks import (
     queue_async_indicators,
@@ -59,8 +59,11 @@ def teardown_module():
 def _get_pillow(configs, processor_chunk_size=0):
     pillow = get_case_pillow(processor_chunk_size=processor_chunk_size)
     # overwrite processors since we're only concerned with UCR here
-    ucr_processor = ConfigurableReportPillowProcessor(data_source_providers=[])
-    ucr_processor.bootstrap(configs)
+    table_manager = ConfigurableReportTableManager(data_source_providers=[])
+    ucr_processor = ConfigurableReportPillowProcessor(
+        table_manager
+    )
+    table_manager.bootstrap(configs)
     pillow.processors = [ucr_processor]
     return pillow
 
@@ -68,12 +71,12 @@ def _get_pillow(configs, processor_chunk_size=0):
 class ConfigurableReportTableManagerTest(SimpleTestCase):
 
     def test_needs_bootstrap_on_initialization(self):
-        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider()])
+        table_manager = ConfigurableReportTableManager([MockDataSourceProvider()])
         self.assertTrue(table_manager.needs_bootstrap())
 
     def test_bootstrap_sets_time(self):
         before_now = datetime.utcnow() - timedelta(microseconds=1)
-        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider()])
+        table_manager = ConfigurableReportTableManager([MockDataSourceProvider()])
         table_manager.bootstrap([])
         after_now = datetime.utcnow() + timedelta(microseconds=1)
         self.assertTrue(table_manager.bootstrapped)
@@ -83,7 +86,7 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
 
     def test_needs_bootstrap_window(self):
         before_now = datetime.utcnow() - timedelta(microseconds=1)
-        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider()])
+        table_manager = ConfigurableReportTableManager([MockDataSourceProvider()])
         table_manager.bootstrap([])
         table_manager.last_bootstrapped = before_now - timedelta(seconds=REBUILD_CHECK_INTERVAL - 5)
         self.assertFalse(table_manager.needs_bootstrap())
@@ -91,7 +94,115 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertTrue(table_manager.needs_bootstrap())
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class ConfigurableReportTableManagerDbTest(TestCase):
+    def tearDown(self):
+        for data_source in DynamicDataSourceProvider().get_all_data_sources():
+            data_source.get_db().delete_doc(data_source.get_id)
+
+    def test_table_adapters(self):
+        data_source_1 = get_sample_data_source()
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManager([MockDataSourceProvider({
+            ds_1_domain: [data_source_1]
+        })])
+        table_manager.bootstrap()
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(data_source_1, table_manager.table_adapters_by_domain[ds_1_domain][0].config)
+
+    def test_merge_table_adapters(self):
+        data_source_1 = get_sample_data_source()
+        data_source_1.save()
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManager([MockDataSourceProvider({
+            ds_1_domain: [data_source_1]
+        })])
+        table_manager.bootstrap()
+        # test in same domain
+        data_source_2 = self._copy_data_source(data_source_1)
+        data_source_2.save()
+        table_manager._add_data_sources_to_table_adapters([data_source_2])
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(
+            {data_source_1, data_source_2},
+            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+        # test in a new domain
+        data_source_3 = self._copy_data_source(data_source_1)
+        ds3_domain = 'new_domain'
+        data_source_3.domain = ds3_domain
+        data_source_3.save()
+        table_manager._add_data_sources_to_table_adapters([data_source_3])
+        # should now be 2 domains in the map
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain))
+        # ensure domain 1 unchanged
+        self.assertEqual(
+            {data_source_1, data_source_2},
+            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds3_domain]))
+        self.assertEqual(data_source_3, table_manager.table_adapters_by_domain[ds3_domain][0].config)
+
+        # finally pass in existing data sources and ensure they modify in place
+        table_manager._add_data_sources_to_table_adapters([data_source_1, data_source_3])
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(
+            {data_source_1, data_source_2},
+            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+        self.assertEqual(data_source_3, table_manager.table_adapters_by_domain[ds3_domain][0].config)
+
+    def test_complete_integration(self):
+        # initialize pillow with one data source
+        data_source_1 = get_sample_data_source()
+        data_source_1.save()
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManager([DynamicDataSourceProvider()])
+        table_manager.bootstrap()
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(data_source_1._id, table_manager.table_adapters_by_domain[ds_1_domain][0].config._id)
+
+        data_source_2 = self._copy_data_source(data_source_1)
+        data_source_2.save()
+        self.assertFalse(table_manager.needs_bootstrap())
+        # should call _update_modified_data_sources
+        table_manager.bootstrap_if_needed()
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(
+            {data_source_1._id, data_source_2._id},
+            {t.config._id for t in table_manager.table_adapters_by_domain[ds_1_domain]}
+        )
+
+    @patch("corehq.apps.cachehq.mixins.invalidate_document")
+    def test_bad_spec_error(self, _):
+        ExpressionFactory.register("missing_expression", lambda x, y: x)
+        data_source_1 = get_sample_data_source()
+        data_source_1.configured_indicators[0] = {
+            "column_id": "date",
+            "type": "expression",
+            "expression": {
+                "type": "missing_expression",
+            },
+            "datatype": "datetime"
+        }
+        data_source_1.save()
+        del ExpressionFactory.spec_map["missing_expression"]
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManager([DynamicDataSourceProvider()])
+        table_manager.bootstrap()
+        self.assertEqual(0, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(0, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+
+    def _copy_data_source(self, data_source):
+        data_source_json = data_source.to_json()
+        if data_source_json.get('_id'):
+            del data_source_json['_id']
+        return DataSourceConfiguration.wrap(data_source_json)
+
+
 class ChunkedUCRProcessorTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -114,6 +225,7 @@ class ChunkedUCRProcessorTest(TestCase):
         delete_all_cases()
         delete_all_xforms()
         InvalidUCRData.objects.all().delete()
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
         self.config.validations = []
         self.config.save()
 
@@ -144,6 +256,7 @@ class ChunkedUCRProcessorTest(TestCase):
         return cases
 
     def _create_and_process_changes(self, docs=[]):
+        self.pillow = _get_pillow([self.config], processor_chunk_size=100)
         since = self.pillow.get_change_feed().get_latest_offsets()
         cases = self._create_cases(docs=docs)
         # run pillow and check changes
@@ -155,7 +268,7 @@ class ChunkedUCRProcessorTest(TestCase):
     def test_full_fallback(self, process_change_patch, process_changes_patch):
 
         process_changes_patch.side_effect = Exception
-        cases = self._create_and_process_changes()
+        self._create_and_process_changes()
 
         process_changes_patch.assert_called_once()
         # since chunked processing failed, normal processing should get called
@@ -170,7 +283,7 @@ class ChunkedUCRProcessorTest(TestCase):
             for i in range(10)
         ]
         iter_docs_patch.return_value = docs[0:6]
-        cases = self._create_and_process_changes(docs)
+        self._create_and_process_changes(docs)
 
         # since chunked processing failed, normal processing should get called
         process_change_patch.assert_has_calls([mock.call(mock.ANY)] * 4)
@@ -194,6 +307,9 @@ class ChunkedUCRProcessorTest(TestCase):
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
     def test_invalid_data_bulk_processor(self, process_change):
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+
         self.config.validations = [
             Validation.wrap({
                 "name": "impossible_condition",
@@ -221,6 +337,9 @@ class ChunkedUCRProcessorTest(TestCase):
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_changes_chunk')
     def test_invalid_data_serial_processor(self, process_changes_chunk):
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+
         process_changes_chunk.side_effect = Exception
         self.config.validations = [
             Validation.wrap({
@@ -244,6 +363,11 @@ class ChunkedUCRProcessorTest(TestCase):
         self.assertEqual(num_rows, 0)
         invalid_data = InvalidUCRData.objects.all().values_list('doc_id', flat=True)
         self.assertEqual(set([case.case_id for case in cases]), set(invalid_data))
+
+    @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportTableManager.bootstrap_if_needed')
+    def test_bootstrap_if_needed(self, bootstrap_if_needed):
+        self._create_and_process_changes()
+        bootstrap_if_needed.assert_called_once_with()
 
 
 class IndicatorPillowTest(TestCase):
@@ -290,7 +414,7 @@ class IndicatorPillowTest(TestCase):
         later_config.save()
         self.assertNotEqual(self.config._rev, later_config._rev)
         with self.assertRaises(StaleRebuildError):
-            self.pillow.processors[0].rebuild_table(get_indicator_adapter(self.config))
+            rebuild_table(get_indicator_adapter(self.config))
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_change_transport(self, datetime_mock):
@@ -303,8 +427,7 @@ class IndicatorPillowTest(TestCase):
     def test_rebuild_indicators(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
-        CommCareCase.get_db().save_doc(sample_doc)
-        self.addCleanup(lambda id: CommCareCase.get_db().delete_doc(id), sample_doc['_id'])
+        _save_sql_case(sample_doc)
         rebuild_indicators(self.config._id)
         self._check_sample_doc_state(expected_indicators)
 
@@ -337,33 +460,6 @@ class IndicatorPillowTest(TestCase):
         self.assertEqual(0, self.adapter.get_query_object().count())
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
-    def test_process_doc_from_couch_chunked(self, datetime_mock):
-        pillow = _get_pillow([self.config], processor_chunk_size=100)
-        self._test_process_doc_from_couch(datetime_mock, pillow)
-
-    @mock.patch('corehq.apps.userreports.specs.datetime')
-    def test_process_doc_from_couch(self, datetime_mock):
-        self._test_process_doc_from_couch(datetime_mock, self.pillow)
-
-    def _test_process_doc_from_couch(self, datetime_mock, pillow):
-        datetime_mock.utcnow.return_value = self.fake_time_now
-        sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
-
-        # make sure case is in DB
-        case = CommCareCase.wrap(sample_doc)
-        with drop_connected_signals(case_post_save):
-            case.save()
-
-        # send to kafka
-        since = self.pillow.get_change_feed().get_latest_offsets()
-        producer.send_change(topics.CASE, doc_to_change(sample_doc).metadata)
-
-        # run pillow and check changes
-        pillow.process_changes(since=since, forever=False)
-        self._check_sample_doc_state(expected_indicators)
-        case.delete()
-
-    @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_sql_chunked(self, datetime_mock):
         self.pillow = _get_pillow([self.config], processor_chunk_size=100)
         self._test_process_doc_from_sql(datetime_mock)
@@ -373,7 +469,6 @@ class IndicatorPillowTest(TestCase):
     def test_process_doc_from_sql(self, datetime_mock):
         self._test_process_doc_from_sql(datetime_mock)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def _test_process_doc_from_sql(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -399,7 +494,6 @@ class IndicatorPillowTest(TestCase):
     def test_process_deleted_doc_from_sql(self, datetime_mock):
         self._test_process_deleted_doc_from_sql(datetime_mock)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def _test_process_deleted_doc_from_sql(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -422,7 +516,6 @@ class IndicatorPillowTest(TestCase):
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_process_filter_no_longer_pass(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -437,7 +530,6 @@ class IndicatorPillowTest(TestCase):
         self.assertEqual(0, self.adapter.get_query_object().count())
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_check_if_doc_exist(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -449,7 +541,6 @@ class IndicatorPillowTest(TestCase):
         self.assertIs(self.adapter.doc_exists(sample_doc), True)
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ProcessRelatedDocTypePillowTest(TestCase):
     domain = 'bug-domain'
 
@@ -462,6 +553,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
         self.config.delete()
         self.adapter.drop_table()
         delete_all_cases()
@@ -470,14 +562,14 @@ class ProcessRelatedDocTypePillowTest(TestCase):
     def _post_case_blocks(self, iteration=0):
         return post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=iteration == 0,
                     case_id='parent-id',
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': iteration},
                 ).as_xml(),
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=iteration == 0,
                     case_id='child-id',
                     case_name='child-name',
@@ -526,7 +618,6 @@ class ProcessRelatedDocTypePillowTest(TestCase):
             self.assertEqual(errors.count(), 0)
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ReuseEvaluationContextTest(TestCase):
     domain = 'bug-domain'
 
@@ -556,14 +647,14 @@ class ReuseEvaluationContextTest(TestCase):
     def _post_case_blocks(self, iteration=0):
         return post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=iteration == 0,
                     case_id='parent-id',
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': iteration},
                 ).as_xml(),
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=iteration == 0,
                     case_id='child-id',
                     case_name='child-name',
@@ -604,7 +695,6 @@ class ReuseEvaluationContextTest(TestCase):
             self.assertEqual(int(rows[0].parent_property), 0)
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class AsyncIndicatorTest(TestCase):
     domain = 'bug-domain'
 
@@ -630,6 +720,7 @@ class AsyncIndicatorTest(TestCase):
         delete_all_xforms()
         AsyncIndicator.objects.all().delete()
         InvalidUCRData.objects.all().delete()
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
         self.config.validations = []
         self.config.save()
 
@@ -639,14 +730,14 @@ class AsyncIndicatorTest(TestCase):
             since = self.pillow.get_change_feed().get_latest_offsets()
             form, cases = post_case_blocks(
                 [
-                    CaseBlock(
+                    CaseBlock.deprecated_init(
                         create=i == 0,
                         case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
                     ).as_xml(),
-                    CaseBlock(
+                    CaseBlock.deprecated_init(
                         create=i == 0,
                         case_id=child_id,
                         case_name='child-name',
@@ -684,14 +775,14 @@ class AsyncIndicatorTest(TestCase):
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         form, cases = post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True,
                     case_id=parent_id,
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': 0},
                 ).as_xml(),
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True,
                     case_id=child_id,
                     case_name='child-name',
@@ -719,6 +810,9 @@ class AsyncIndicatorTest(TestCase):
         self.assertEqual(indicators.count(), 1)
 
     def test_async_invalid_data(self):
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+
         self.config.validations = [
             Validation.wrap({
                 "name": "impossible_condition",
@@ -741,14 +835,14 @@ class AsyncIndicatorTest(TestCase):
         for i in range(3):
             form, cases = post_case_blocks(
                 [
-                    CaseBlock(
+                    CaseBlock.deprecated_init(
                         create=i == 0,
                         case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
                     ).as_xml(),
-                    CaseBlock(
+                    CaseBlock.deprecated_init(
                         create=i == 0,
                         case_id=child_id,
                         case_name='child-name',
@@ -813,7 +907,7 @@ def _save_sql_case(doc):
     with drop_connected_signals(case_post_save):
         form, cases = post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True,
                     case_id=doc['_id'],
                     case_name=doc['name'],

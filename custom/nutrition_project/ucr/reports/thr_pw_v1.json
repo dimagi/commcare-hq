@@ -1,0 +1,137 @@
+{
+  "domains": [
+    "india-nutrition-project",
+    "mh-mis-staging"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "report_id": "static-thr_pw_v1",
+  "data_source_table": "static-suppl_nutrition_thr_pw_lw_v1",
+  "config": {
+    "title": "Supplementary Nutrition THR (for Pregnant Women) V1 (Static)",
+    "description": "Monthly Supplementary Nutrition per woman per month",
+    "visible": true,
+    "aggregation_columns": [
+      "woman_case_id",
+      "supervisor_id",
+      "flw_id",
+      "month"
+    ],
+    "filters": [
+      {
+        "display": "Filter by FLW",
+        "slug": "flw_id",
+        "type": "dynamic_choice_list",
+        "field": "userID",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+          "field": "supervisor_id",
+          "location_type": "supervisor"
+        },
+        "datatype": "string"
+      },
+      {
+        "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "datatype": "string"
+      },
+      {
+        "type": "numeric",
+        "slug": "current_month_thr_days_calc",
+        "field": "current_month_thr_days_calc",
+        "display": "THR days equivalent given in a month",
+        "datatype": "integer"
+      },
+      {
+        "type": "pre",
+        "field": "add",
+        "slug": "add",
+        "pre_value": "",
+        "datatype": "date"
+      },
+      {
+        "type": "pre",
+        "field": "edd",
+        "slug": "edd",
+        "pre_value": "",
+        "pre_operator": "!=",
+        "datatype": "date"
+      }
+    ],
+    "columns": [
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "completed_time",
+        "format": "%Y-%m"
+      },
+      {
+        "display": "Supervisor ID",
+        "column_id": "supervisor_id",
+        "type": "field",
+        "field": "supervisor_id",
+        "aggregation": "simple"
+      },
+      {
+        "display": "FLW ID",
+        "column_id": "flw_id",
+        "type": "field",
+        "field": "flw_id",
+        "aggregation": "simple"
+      },
+      {
+        "display": "Residential Status",
+        "column_id": "member_residential_status",
+        "type": "array_agg_last_value",
+        "order_by_col": "completed_time",
+        "field": "member_residential_status"
+      },
+      {
+        "display": "Disability",
+        "column_id": "disability",
+        "type": "array_agg_last_value",
+        "order_by_col": "completed_time",
+        "field": "disability"
+      },
+      {
+        "display": "Caste",
+        "column_id": "family_unit_caste",
+        "type": "array_agg_last_value",
+        "order_by_col": "completed_time",
+        "field": "family_unit_caste"
+      },
+      {
+        "display": "Religion",
+        "column_id": "family_unit_religion",
+        "type": "array_agg_last_value",
+        "order_by_col": "completed_time",
+        "field": "family_unit_religion"
+      },
+      {
+        "display": "woman_case_id",
+        "column_id": "woman_case_id",
+        "type": "field",
+        "field": "woman_case_id",
+        "aggregation": "simple"
+      },
+      {
+        "display": "THR Days",
+        "column_id": "current_month_thr_days_calc",
+        "type": "array_agg_last_value",
+        "field": "current_month_thr_days_calc",
+        "order_by_col": "completed_time",
+        "comment": "pick the most recent value of the aggregated thr given in the month"
+      }
+    ]
+  },
+  "doc_type": "ReportConfiguration"
+}

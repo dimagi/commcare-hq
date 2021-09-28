@@ -15,7 +15,6 @@ from django.utils.translation import ugettext as _
 import yaml
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
-from memoized import memoized
 
 from dimagi.utils.couch import CriticalSection
 
@@ -34,9 +33,9 @@ from corehq.apps.app_manager.exceptions import (
     SuiteValidationError,
     XFormException,
 )
-from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.app_manager.tasks import create_usercases
 from corehq.apps.app_manager.xform import XForm, parse_xml
-from corehq.apps.app_manager.xpath import UserCaseXPath
+from corehq.apps.app_manager.xpath import UsercaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
@@ -54,9 +53,9 @@ CASE_XPATH_SUBSTRING_MATCHES = [
     "#host",
 ]
 
-USER_CASE_XPATH_SUBSTRING_MATCHES = [
+USERCASE_XPATH_SUBSTRING_MATCHES = [
     "#user",
-    UserCaseXPath().case(),
+    UsercaseXPath().case(),
 ]
 
 
@@ -112,9 +111,9 @@ def _check_xpath_for_matches(xpath, substring_matches=None, pattern_matches=None
 def xpath_references_case(xpath):
     # We want to determine here if the xpath references any cases other
     # than the user case. To determine if the xpath references the user
-    # case, see xpath_references_user_case()
+    # case, see xpath_references_usercase()
     # Assumes xpath has already been dot interpolated as needed.
-    for substring in USER_CASE_XPATH_SUBSTRING_MATCHES:
+    for substring in USERCASE_XPATH_SUBSTRING_MATCHES:
         xpath = xpath.replace(substring, '')
 
     return _check_xpath_for_matches(
@@ -123,11 +122,11 @@ def xpath_references_case(xpath):
     )
 
 
-def xpath_references_user_case(xpath):
+def xpath_references_usercase(xpath):
     # Assumes xpath has already been dot interpolated as needed.
     return _check_xpath_for_matches(
         xpath,
-        substring_matches=USER_CASE_XPATH_SUBSTRING_MATCHES,
+        substring_matches=USERCASE_XPATH_SUBSTRING_MATCHES,
     )
 
 
@@ -370,7 +369,7 @@ def enable_usercase(domain_name):
         if not domain_obj.usercase_enabled:
             domain_obj.usercase_enabled = True
             domain_obj.save()
-            create_user_cases.delay(domain_name)
+            create_usercases.delay(domain_name)
 
 
 def prefix_usercase_properties(properties):
@@ -511,14 +510,14 @@ def purge_report_from_mobile_ucr(report_config):
 SortOnlyElement = namedtuple("SortOnlyElement", "field, sort_element, order")
 
 
-def get_sort_and_sort_only_columns(detail, sort_elements):
+def get_sort_and_sort_only_columns(detail_columns, sort_elements):
     """
     extracts out info about columns that are added as only sort fields and columns added as both
     sort and display fields
     """
     sort_elements = OrderedDict((s.field, (s, i + 1)) for i, s in enumerate(sort_elements))
     sort_columns = {}
-    for column in detail.get_columns():
+    for column in detail_columns:
         sort_element, order = sort_elements.pop(column.field, (None, None))
         if sort_element:
             sort_columns[column.field] = (sort_element, order)
@@ -558,73 +557,6 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
                 username=user.username)
         )
     return user
-
-
-class LatestAppInfo(object):
-
-    def __init__(self, brief_app_id, domain):
-        """
-        Wrapper to get latest app version and CommCare APK version info
-
-        args:
-            brief_app_id: id of an app that is not copy (to facilitate quickcaching)
-
-        raises Http404 error if id is not valid
-        raises assertion error if an id of app copy is passed
-        """
-        self.app_id = brief_app_id
-        self.domain = domain
-
-    @property
-    @memoized
-    def app(self):
-        app = get_app(self.domain, self.app_id, latest=True, target='release')
-        # quickache based on a copy app_id will have to be updated too fast
-        is_app_id_brief = self.app_id == app.master_id
-        assert is_app_id_brief, "this class doesn't handle copy app ids"
-        return app
-
-    def clear_caches(self):
-        self.get_latest_app_version.clear(self)
-        self.get_latest_apk_version.clear(self)
-
-    @quickcache(vary_on=['self.app_id'])
-    def get_latest_apk_version(self):
-        from corehq.apps.app_manager.models import LATEST_APK_VALUE
-        from corehq.apps.builds.models import BuildSpec
-        from corehq.apps.builds.utils import get_default_build_spec
-        if self.app.global_app_config.apk_prompt == "off":
-            return {}
-        else:
-            configured_version = self.app.global_app_config.apk_version
-            if configured_version == LATEST_APK_VALUE:
-                value = get_default_build_spec().version
-            else:
-                value = BuildSpec.from_string(configured_version).version
-            force = self.app.global_app_config.apk_prompt == "forced"
-            return {"value": value, "force": force}
-
-    @quickcache(vary_on=['self.app_id'])
-    def get_latest_app_version(self):
-        from corehq.apps.app_manager.models import LATEST_APP_VALUE
-        if self.app.global_app_config.app_prompt == "off":
-            return {}
-        else:
-            force = self.app.global_app_config.app_prompt == "forced"
-            app_version = self.app.global_app_config.app_version
-            if app_version != LATEST_APP_VALUE:
-                return {"value": app_version, "force": force}
-            else:
-                if not self.app or not self.app.is_released:
-                    return {}
-                else:
-                    return {"value": self.app.version, "force": force}
-
-    def get_info(self):
-        return {
-            "latest_apk_version": self.get_latest_apk_version(),
-            "latest_ccz_version": self.get_latest_app_version(),
-        }
 
 
 def get_form_source_download_url(xform):
@@ -735,3 +667,11 @@ def _get_app_ids_by_form_unique_id(domain):
                     raise AppManagerException("Could not identify app for form {}".format(form.unique_id))
                 app_ids[form.unique_id] = app.get_id
     return app_ids
+
+
+def extract_instance_id_from_nodeset_ref(nodeset):
+    # note: for simplicity, this only returns the first instance ref in the event there are multiple.
+    # if that's ever a problem this method could be changed in the future to return a list
+    if nodeset:
+        matches = re.findall(r"instance\('(.*?)'\)", nodeset)
+        return matches[0] if matches else None

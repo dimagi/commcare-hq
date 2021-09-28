@@ -10,7 +10,7 @@ from corehq.apps.userreports.models import (
     AsyncIndicator,
     DataSourceConfiguration,
 )
-from corehq.apps.userreports.tasks import build_async_indicators
+from corehq.apps.userreports.tasks import build_async_indicators, queue_async_indicators
 from corehq.apps.userreports.tests.utils import load_data_from_db
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 
@@ -47,36 +47,6 @@ class RunAsynchronousTest(SimpleTestCase):
         indicator_configuration.asynchronous = True
         adapter = get_indicator_adapter(indicator_configuration)
         self.assertTrue(adapter.run_asynchronous)
-
-    # def test_related_doc_expression(self):
-    #     indicator_configuration = self._create_data_source_config([{
-    #         "datatype": "string",
-    #         "type": "expression",
-    #         "column_id": "confirmed_referral_target",
-    #         "expression": {
-    #             "type": "related_doc",
-    #             "related_doc_type": "CommCareUser",
-    #             "doc_id_expression": {
-    #                 "type": "property_path",
-    #                 "property_path": ["form", "meta", "userID"]
-    #             },
-    #             "value_expression": {
-    #                 "type": "property_path",
-    #                 "property_path": [
-    #                     "user_data",
-    #                     "confirmed_referral_target"
-    #                 ]
-    #             }
-    #         }
-    #     }])
-    #
-    #     adapter = get_indicator_adapter(indicator_configuration)
-    #     self.assertTrue(adapter.run_asynchronous)
-    #
-    # def test_named_expression(self):
-    #     indicator_configuration = get_data_source_with_related_doc_type()
-    #     adapter = get_indicator_adapter(indicator_configuration)
-    #     self.assertTrue(adapter.run_asynchronous)
 
 
 class TestBulkUpdate(TestCase):
@@ -261,6 +231,13 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
             mock.call('commcare.async_indicator.processed_success', 10),
             mock.call('commcare.async_indicator.processed_fail', 0)
         ])
+
+    @mock.patch('corehq.apps.userreports.tasks.build_async_indicators')
+    def test_queue_async_indicators(self, patched_build):
+        queue_async_indicators()
+        patched_build.assert_has_calls(
+            patched_build.call(self.doc_ids)
+        )
 
     def test_known_exception(self):
         # check that exceptions due to unknown configs are handled correctly

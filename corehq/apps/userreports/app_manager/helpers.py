@@ -1,4 +1,4 @@
-import unidecode
+from text_unidecode import unidecode
 
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.export.models import (
@@ -207,7 +207,7 @@ def clean_table_name(domain, readable_name):
     """
     Slugifies and truncates readable name to make a valid configurable report table name.
     """
-    name_slug = '_'.join(unidecode.unidecode(readable_name).lower().split(' '))
+    name_slug = '_'.join(unidecode(readable_name).lower().split(' '))
     # 63 = max postgres table name, 24 = table name prefix + hash overhead
     max_length = 63 - len(domain) - 24
     return name_slug[:max_length]

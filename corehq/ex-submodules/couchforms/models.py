@@ -32,7 +32,6 @@ from corehq.blobs.mixin import DeferredBlobMixin, CODES
 from corehq.form_processor.abstract_models import AbstractXFormInstance
 from corehq.form_processor.exceptions import (
     MissingFormXml,
-    NotAllowed,
     XFormNotFound,
 )
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -274,7 +273,6 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
         return safe_index(self, path.split("/"))
 
     def soft_delete(self):
-        NotAllowed.check(self.domain)
         self.doc_type += DELETED_SUFFIX
         self.save()
 
@@ -368,6 +366,7 @@ class XFormError(XFormInstance):
         instance.__class__ = XFormError
         instance.doc_type = 'XFormError'
         instance.problem = error_message
+        instance.orig_id = None
 
         if with_new_id:
             new_id = uuid.uuid4().hex
@@ -486,6 +485,7 @@ class DefaultAuthContext(DocumentSchema):
 
 
 class UnfinishedSubmissionStub(models.Model):
+    id = models.BigAutoField(primary_key=True)
     xform_id = models.CharField(max_length=200)
     timestamp = models.DateTimeField(db_index=True)
     saved = models.BooleanField(default=False)

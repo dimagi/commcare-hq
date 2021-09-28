@@ -10,6 +10,10 @@ class BaseSuiteContributor(metaclass=ABCMeta):
         self.build_profile_id = build_profile_id
         self.entries_helper = EntriesHelper(app, modules, build_profile_id=self.build_profile_id)
 
+    @property
+    def timing_context(self):
+        return self.app.timing_context
+
 
 class SectionContributor(BaseSuiteContributor, metaclass=ABCMeta):
     @abstractproperty

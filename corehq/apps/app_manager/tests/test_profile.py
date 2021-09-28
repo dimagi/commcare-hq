@@ -1,16 +1,16 @@
 import uuid
 import xml.etree.cElementTree as ET
 
-from django.test import SimpleTestCase
-
-import mock
+from django.conf import settings
+from django.test import SimpleTestCase, override_settings, TestCase
 
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_lookup,
     get_custom_commcare_settings,
 )
 from corehq.apps.app_manager.models import Application, BuildProfile
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import TestXmlMixin, get_simple_form, patch_validate_xform
 from corehq.apps.builds.models import BuildSpec
 from corehq.util.test_utils import flag_enabled
 
@@ -21,9 +21,8 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
         self.build_profile_id = uuid.uuid4().hex
-        self.app = Application(build_spec=BuildSpec(
-            version='2.7.0'
-            ),
+        self.app = Application(
+            build_spec=BuildSpec(version='2.7.2'),
             name="TÉST ÁPP",
             domain="potter",
             langs=['en'],
@@ -120,6 +119,7 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
         root = profile_xml.find('.')
         self.assertEqual(root.get('requiredMajor'), '2')
         self.assertEqual(root.get('requiredMinor'), '7')
+        self.assertEqual(root.get('requiredMinimal'), '2')
 
     @flag_enabled('MOBILE_RECOVERY_MEASURES')
     def test_mobile_recovery_measure(self):
@@ -130,3 +130,43 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
             value=self.app.recovery_measures_url,
             setting={'force': True},
         )
+
+    @override_settings(IS_DIMAGI_ENVIRONMENT=False)
+    def test_support_email_setting(self):
+        profile = self.app.create_profile()
+        self._test_property(
+            ET.fromstring(profile),
+            key='support-email-address',
+            value=settings.SUPPORT_EMAIL,
+            setting={'force': True},
+        )
+
+
+@patch_validate_xform()
+class ProfileBuildTests(TestCase):
+    def setUp(self):
+        factory = AppFactory("wizard", "Wizard's Handbook")
+        m0, f0 = factory.new_basic_module("spells", "spell")
+        f0.source = get_simple_form()
+        self.app = factory.app
+        self.app.save()
+
+    def tearDown(self):
+        self.app.delete()
+
+    def test_build_urls_in_profile_use_app_id_of_copy(self):
+        copy = self.app.make_build()
+        profile_xml = copy.lazy_fetch_attachment('files/profile.xml')
+        profile = ET.fromstring(profile_xml)
+
+        self.assertEqual(profile.get("uniqueid"), self.app.get_id)
+        self.assertIn(copy.profile_url, profile.get("update"))
+
+        property_xpaths = {
+            "./property[@key='ota-restore-url']": copy.ota_restore_url,
+            "./property[@key='PostURL']": copy.post_url,
+            "./property[@key='heartbeat-url']": copy.heartbeat_url(),
+        }
+        for xpath, value in property_xpaths.items():
+            node = profile.find(xpath)
+            self.assertEqual(node.get('value'), value)

@@ -1,11 +1,13 @@
 import json
-from xml.etree import cElementTree as ElementTree
+import re
+import string
 
+import sentry_sdk
 from django.conf import settings
+from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseBadRequest,
     HttpResponseRedirect,
     JsonResponse,
 )
@@ -14,18 +16,17 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.views.generic.base import TemplateView
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
-from couchdbkit import ResourceConflict
+import urllib.parse
+from text_unidecode import unidecode
 
-from casexml.apps.phone.fixtures import generator
-from dimagi.utils.parsing import string_to_boolean
+from corehq.apps.formplayer_api.utils import get_formplayer_url
+from corehq.util.metrics import metrics_counter
+from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_url_base, json_response
 
 from corehq import privileges, toggles
@@ -33,7 +34,9 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_for_commcare_user,
     requires_privilege_with_fallback,
 )
-from corehq.apps.accounting.utils import domain_is_on_trial
+from corehq.apps.accounting.utils import domain_is_on_trial, domain_has_privilege
+from corehq.apps.domain.models import Domain
+
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_ids_in_domain,
@@ -41,6 +44,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_current_app_doc,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    wrap_app,
 )
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -64,16 +68,19 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
+    use_daterangepicker,
     use_datatables,
     use_jquery_ui,
-    use_legacy_jquery,
+    waf_allow,
 )
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
-from corehq.apps.users.decorators import require_can_edit_commcare_users
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.decorators import require_can_login_as
+from corehq.apps.users.models import CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
+from corehq.apps.integration.util import integration_contexts
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -93,8 +100,8 @@ class FormplayerMain(View):
     preview = False
     urlname = 'formplayer_main'
 
+    @use_daterangepicker
     @use_datatables
-    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -102,12 +109,7 @@ class FormplayerMain(View):
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
     def fetch_app(self, domain, app_id):
-        username = self.request.couch_user.username
-        if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
-                toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
-            return get_latest_build_doc(domain, app_id)
-        else:
-            return get_latest_released_app_doc(domain, app_id)
+        return _fetch_build(domain, self.request.couch_user.username, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
         app_access = get_application_access_for_domain(domain)
@@ -120,9 +122,7 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
-        role = user.get_role(domain)
-        if role:
-            apps = [app for app in apps if role.permissions.view_web_app(app)]
+        apps = [_format_app_doc(app) for app in apps]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
 
@@ -139,7 +139,7 @@ class FormplayerMain(View):
         def set_cookie(response):  # set_coookie is a noop by default
             return response
 
-        cookie_name = six.moves.urllib.parse.quote(
+        cookie_name = urllib.parse.quote(
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
         username = request.COOKIES.get(cookie_name)
         if username:
@@ -150,6 +150,22 @@ class FormplayerMain(View):
                 def set_cookie(response):  # overwrite the default noop set_cookie
                     response.delete_cookie(cookie_name)
                     return response
+
+        elif request.couch_user.has_permission(domain, 'limited_login_as'):
+            login_as_users = login_as_user_query(
+                domain,
+                request.couch_user,
+                search_string='',
+                limit=1,
+                offset=0
+            ).run()
+            if login_as_users.total == 1:
+                def set_cookie(response):
+                    response.set_cookie(cookie_name, user.raw_username, secure=settings.SECURE_COOKIES)
+                    return response
+
+                user = CouchUser.get_by_username(login_as_users.hits[0]['username'])
+                return user, set_cookie
 
         return request.couch_user, set_cookie
 
@@ -179,32 +195,39 @@ class FormplayerMain(View):
         # first app's default, followed by english
         language = request.couch_user.language or _default_lang()
 
+        domain_obj = Domain.get_by_name(domain)
+
         context = {
             "domain": domain,
+            "default_geocoder_location": domain_obj.default_geocoder_location,
             "language": language,
             "apps": apps,
             "domain_is_on_trial": domain_is_on_trial(domain),
-            "maps_api_key": settings.GMAPS_API_KEY,
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.couch_user.username,
-            "formplayer_url": settings.FORMPLAYER_URL,
+            "formplayer_url": get_formplayer_url(for_js=True),
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
-            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
+            "integrations": integration_contexts(domain),
+            "has_geocoder_privs": has_geocoder_privs(domain),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
         )
 
 
+def _fetch_build(domain, username, app_id):
+    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+        return get_latest_build_doc(domain, app_id)
+    else:
+        return get_latest_released_app_doc(domain, app_id)
+
+
 class FormplayerMainPreview(FormplayerMain):
 
     preview = True
     urlname = 'formplayer_main_preview'
-
-    @use_legacy_jquery
-    def dispatch(self, request, *args, **kwargs):
-        return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
     def fetch_app(self, domain, app_id):
         return get_current_app_doc(domain, app_id)
@@ -215,7 +238,6 @@ class FormplayerPreviewSingleApp(View):
     urlname = 'formplayer_single_app'
 
     @use_datatables
-    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -230,10 +252,6 @@ class FormplayerPreviewSingleApp(View):
         if not app_access.user_can_access_app(request.couch_user, app):
             raise Http404()
 
-        role = request.couch_user.get_role(domain)
-        if role and not role.permissions.view_web_app(app):
-            raise Http404()
-
         def _default_lang():
             try:
                 return app['langs'][0]
@@ -243,18 +261,21 @@ class FormplayerPreviewSingleApp(View):
         # default language to user's preference, followed by
         # first app's default, followed by english
         language = request.couch_user.language or _default_lang()
+        domain_obj = Domain.get_by_name(domain)
 
         context = {
             "domain": domain,
+            "default_geocoder_location": domain_obj.default_geocoder_location,
             "language": language,
-            "apps": [app],
-            "maps_api_key": settings.GMAPS_API_KEY,
+            "apps": [_format_app_doc(app)],
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.user.username,
-            "formplayer_url": settings.FORMPLAYER_URL,
+            "formplayer_url": get_formplayer_url(for_js=True),
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
-            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
+            "integrations": integration_contexts(domain),
+            "has_geocoder_privs": has_geocoder_privs(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -263,15 +284,25 @@ class PreviewAppView(TemplateView):
     template_name = 'preview_app/base.html'
     urlname = 'preview_app'
 
-    @use_legacy_jquery
+    @use_daterangepicker
+    @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
-            'app': app,
-            'formplayer_url': settings.FORMPLAYER_URL,
-            "maps_api_key": settings.GMAPS_API_KEY,
+            'app': _format_app_doc(app.to_json()),
+            'formplayer_url': get_formplayer_url(for_js=True),
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
+            "integrations": integration_contexts(request.domain),
+            "has_geocoder_privs": has_geocoder_privs(request.domain),
         })
+
+
+def has_geocoder_privs(domain):
+    return (
+        toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
+        and domain_has_privilege(domain, privileges.GEOCODER)
+    )
 
 
 @location_safe
@@ -281,7 +312,7 @@ class LoginAsUsers(View):
     urlname = 'login_as_users'
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_login_as)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, *args, **kwargs):
         return super(LoginAsUsers, self).dispatch(*args, **kwargs)
@@ -317,21 +348,19 @@ class LoginAsUsers(View):
         })
 
     def _user_query(self, search_string, page, limit):
-        user_data_fields = []
         return login_as_user_query(
             self.domain,
             self.couch_user,
             search_string,
             limit,
             page * limit,
-            user_data_fields=user_data_fields
         )
 
     def _format_user(self, user_json):
         user = CouchUser.wrap_correctly(user_json)
         formatted_user = {
             'username': user.raw_username,
-            'customFields': user.user_data,
+            'customFields': user.metadata,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,
@@ -339,6 +368,13 @@ class LoginAsUsers(View):
             'location': user.sql_location.to_json() if user.sql_location else None,
         }
         return formatted_user
+
+
+def _format_app_doc(doc):
+    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile']
+    context = {key: doc.get(key) for key in keys}
+    context['imageUri'] = doc.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
+    return context
 
 
 @login_and_domain_required
@@ -370,7 +406,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
     root_context = {
         'form_url': form_url,
-        'formplayer_url': settings.FORMPLAYER_URL,
+        'formplayer_url': get_formplayer_url(for_js=True),
     }
     if instance_id:
         try:
@@ -461,3 +497,127 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         ], bulk=False)
         access.save()
         return json_response({'success': 1})
+
+
+@waf_allow('XSS_BODY')
+@location_safe
+@login_and_domain_required
+def report_formplayer_error(request, domain):
+    data = json.loads(request.body)
+    error_type = data.get('type')
+
+    with sentry_sdk.configure_scope() as scope:
+        scope.set_tag("cloudcare_error_type", error_type)
+
+    if error_type == 'webformsession_request_failure':
+        metrics_counter('commcare.formplayer.webformsession_request_failure', tags={
+            'request': data.get('request'),
+            'statusText': data.get('statusText'),
+            'state': data.get('state'),
+            'status': data.get('status'),
+            'domain': domain,
+            'cloudcare_env': data.get('cloudcareEnv'),
+        })
+        message = data.get("readableErrorMessage") or "request failure in web form session"
+        thread_topic = _message_to_sentry_thread_topic(message)
+        notify_error(message=f'[Cloudcare] {thread_topic}', details=data)
+    elif error_type == 'show_error_notification':
+        message = data.get('message')
+        thread_topic = _message_to_sentry_thread_topic(message)
+        metrics_counter('commcare.formplayer.show_error_notification', tags={
+            'message': _message_to_tag_value(message or 'no_message'),
+            'domain': domain,
+            'cloudcare_env': data.get('cloudcareEnv'),
+        })
+        notify_error(message=f'[Cloudcare] {thread_topic}', details=data)
+    else:
+        metrics_counter('commcare.formplayer.unknown_error_type', tags={
+            'domain': domain,
+            'cloudcare_env': data.get('cloudcareEnv'),
+        })
+        notify_error(message=f'[Cloudcare] unknown error type', details=data)
+    return JsonResponse({'status': 'ok'})
+
+
+def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + string.digits + '_'):
+    """
+    Turn a long user-facing error message into a short slug that can be used as a datadog tag value
+
+    passes through unidecode to get something ascii-compatible to work with,
+    then uses the first four space-delimited words and filters out unwanted characters.
+
+    >>> _message_to_tag_value('Sorry, an error occurred while processing that request.')
+    'sorry_an_error_occurred'
+    >>> _message_to_tag_value('Another process prevented us from servicing your request. Please try again later.')
+    'another_process_prevented_us'
+    >>> _message_to_tag_value('509 Unknown Status Code')
+    '509_unknown_status_code'
+    >>> _message_to_tag_value(
+    ... 'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@1f984e3c, '
+    ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
+    ... 'If this error persists please report a bug to CommCareHQ.')
+    'entityscreen_entityscreen_detail_org'
+    """
+    message_tag = unidecode(message)
+    message_tag = ''.join((c if c in allowed_chars else ' ') for c in message_tag.lower())
+    message_tag = '_'.join(re.split(r' +', message_tag)[:4])
+    return message_tag[:59]
+
+
+def _message_to_sentry_thread_topic(message):
+    """
+    >>> _message_to_sentry_thread_topic(
+    ... 'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@1f984e3c, '
+    ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
+    ... 'If this error persists please report a bug to CommCareHQ.')
+    'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCareHQ.'
+    """
+    return re.sub(r'[a-f0-9-]{7,}', '[...]', message)
+
+
+@login_and_domain_required
+@require_cloudcare_access
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
+@location_safe
+def session_endpoint(request, domain, app_id, endpoint_id):
+    def _fail(error):
+        messages.error(request, error)
+        return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]))
+
+    if not toggles.SESSION_ENDPOINTS.enabled_for_request(request):
+        return _fail(_("Linking directly into Web Apps has been disabled."))
+
+    build = _fetch_build(domain, request.couch_user.username, app_id)
+    if not build:
+        # These links can be used for cross-domain web apps workflows, where a link jumps to the
+        # same screen but in another domain's corresponding app. This works if both the source and
+        # target apps are downstream apps that share an upstream app - the link references the upstream app.
+        from corehq.apps.linked_domain.applications import get_downstream_app_id_map
+        id_map = get_downstream_app_id_map(domain)
+        if app_id in id_map:
+            build = _fetch_build(domain, request.couch_user.username, id_map[app_id])
+        if not build:
+            return _fail(_("Could not find application."))
+    build = wrap_app(build)
+
+    valid_endpoint_ids = {m.session_endpoint_id for m in build.get_modules() if m.session_endpoint_id}
+    valid_endpoint_ids |= {f.session_endpoint_id for f in build.get_forms() if f.session_endpoint_id}
+    if endpoint_id not in valid_endpoint_ids:
+        return _fail(_("This link does not exist. "
+                       "Your app may have changed so that the given link is no longer valid."))
+
+    restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
+    force_login_as = not restore_as_user.is_commcare_user()
+    if force_login_as and not can_use_restore_as(request):
+        return _fail(_("This user cannot access this link."))
+
+    cloudcare_state = json.dumps({
+        "appId": build._id,
+        "endpointId": endpoint_id,
+        "endpointArgs": {
+            urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)
+            for key, value in request.GET.items()
+        },
+        "forceLoginAs": force_login_as,
+    })
+    return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)

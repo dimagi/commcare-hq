@@ -11,7 +11,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from django.conf import settings
 from jinja2 import Template
-from requests import RequestException
+from requests import ReadTimeout, RequestException
 
 from casexml.apps.case.mock import CaseBlock
 from toggle.shortcuts import find_domains_with_toggle_enabled
@@ -42,12 +42,10 @@ from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.exceptions import OpenmrsException
 from corehq.motech.openmrs.models import OpenmrsImporter, deserialize
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.requests import Requests
+from corehq.motech.requests import get_basic_requests
 from corehq.motech.utils import b64_aes_decrypt
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
-# REQUEST_TIMEOUT is 5 minutes, but reports can take up to an hour
-REPORT_REQUEST_TIMEOUT = 60 * 60
 # The location metadata key that maps to its corresponding OpenMRS location UUID
 LOCATION_OPENMRS = 'openmrs_uuid'
 
@@ -78,8 +76,21 @@ def get_openmrs_patients(requests, importer, location=None):
     """
     endpoint = f'/ws/rest/v1/reportingrest/reportdata/{importer.report_uuid}'
     params = parse_params(importer.report_params, location)
-    response = requests.get(endpoint, params=params, raise_for_status=True,
-                            timeout=REPORT_REQUEST_TIMEOUT)
+
+    for minutes in (5, 10, 20, 40):
+        try:
+            response = requests.get(
+                endpoint,
+                params=params,
+                raise_for_status=True,
+                timeout=(5, minutes * 60),  # connection timeout, read timeout
+            )
+            break
+        except ReadTimeout:
+            if minutes < 40:
+                continue
+            else:
+                raise
     data = response.json()
     return data['dataSets'][0]['rows']  # e.g. ...
     #     [{u'familyName': u'Hornblower', u'givenName': u'Horatio', u'personId': 2},
@@ -123,7 +134,7 @@ def get_addpatient_caseblock(patient, importer, owner_id):
     """
     case_id = uuid.uuid4().hex
     case_name, fields_to_update = get_case_properties(patient, importer)
-    return CaseBlock(
+    return CaseBlock.deprecated_init(
         create=True,
         case_id=case_id,
         owner_id=owner_id,
@@ -139,7 +150,7 @@ def get_updatepatient_caseblock(case, patient, importer):
     Updates a case with imported patient details. Does not change owner.
     """
     case_name, fields_to_update = get_case_properties(patient, importer)
-    return CaseBlock(
+    return CaseBlock.deprecated_init(
         create=False,
         case_id=case.get_id,
         case_name=case_name,
@@ -227,8 +238,10 @@ def import_patients_to_domain(domain_name, force=False):
 def import_patients_with_importer(importer_json):
     importer = OpenmrsImporter.wrap(importer_json)
     password = b64_aes_decrypt(importer.password)
-    requests = Requests(importer.domain, importer.server_url, importer.username, password,
-                        notify_addresses=importer.notify_addresses)
+    requests = get_basic_requests(
+        importer.domain, importer.server_url, importer.username, password,
+        notify_addresses=importer.notify_addresses,
+    )
     if importer.location_type_name:
         try:
             location_type = LocationType.objects.get(domain=importer.domain, name=importer.location_type_name)

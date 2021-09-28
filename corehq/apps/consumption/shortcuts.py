@@ -4,7 +4,7 @@ from corehq.apps.consumption.models import (
     TYPE_DOMAIN,
     TYPE_PRODUCT,
     TYPE_SUPPLY_POINT,
-    SQLDefaultConsumption,
+    DefaultConsumption,
 )
 
 
@@ -14,14 +14,14 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
     parameters.
     """
 
-    consumption = SQLDefaultConsumption.objects.filter(
+    consumption = DefaultConsumption.objects.filter(
         domain=domain,
         product_id=product_id,
         supply_point_id=case_id
     ).first()
 
     if not consumption:
-        consumption = SQLDefaultConsumption.objects.filter(
+        consumption = DefaultConsumption.objects.filter(
             domain=domain,
             product_id=product_id,
             supply_point_type=location_type,
@@ -29,7 +29,7 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
         ).first()
 
     if not consumption:
-        consumption = SQLDefaultConsumption.objects.filter(
+        consumption = DefaultConsumption.objects.filter(
             domain=domain,
             product_id=product_id,
             supply_point_type=None,
@@ -37,7 +37,7 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
         ).first()
 
     if not consumption:
-        consumption = SQLDefaultConsumption.objects.filter(
+        consumption = DefaultConsumption.objects.filter(
             domain=domain,
             product_id=None,
             supply_point_type=None,
@@ -51,12 +51,12 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
 
 
 def set_default_monthly_consumption_for_domain(domain, amount):
-    default = SQLDefaultConsumption.get_domain_default(domain)
+    default = DefaultConsumption.get_domain_default(domain)
     return _update_or_create_default(domain, amount, default, TYPE_DOMAIN)
 
 
 def set_default_consumption_for_product(domain, product_id, amount):
-    default = SQLDefaultConsumption.get_product_default(domain, product_id)
+    default = DefaultConsumption.get_product_default(domain, product_id)
     return _update_or_create_default(domain, amount, default, TYPE_PRODUCT, product_id=product_id)
 
 
@@ -68,7 +68,7 @@ def _update_or_create_default(domain, amount, default, type, **kwargs):
         default.save()
         return default
     else:
-        default = SQLDefaultConsumption(domain=domain, default_consumption=amount, type=type, **kwargs)
+        default = DefaultConsumption(domain=domain, default_consumption=amount, type=type, **kwargs)
         default.save()
         return default
 
@@ -79,7 +79,7 @@ def build_consumption_dict(domain):
     """
     return {
         _hash_key(obj): obj.default_consumption
-        for obj in SQLDefaultConsumption.objects.filter(domain=domain)
+        for obj in DefaultConsumption.objects.filter(domain=domain)
         if obj.default_consumption
     }
 

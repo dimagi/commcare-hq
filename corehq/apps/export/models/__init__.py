@@ -41,3 +41,12 @@ from .new import (
     TableConfiguration,
     UserDefinedExportColumn,
 )
+
+from .incremental import (
+    IncrementalExport,
+    IncrementalExportCheckpoint
+)
+
+from .export_settings import (
+    DefaultExportSettings,
+)

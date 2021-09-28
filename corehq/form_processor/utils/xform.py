@@ -1,11 +1,11 @@
 from datetime import datetime
 from lxml import etree
+import re
 
 import iso8601
 import pytz
 
 import xml2json
-from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.models import Attachment
 from corehq.form_processor.exceptions import XFormQuestionValueNotFound
@@ -29,6 +29,30 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
     </n1:meta>
     {case_block}
 </data>"""
+
+
+# this is like jsonobject.api.re_datetime,
+# but without the "time" parts being optional
+# i.e. I just removed (...)? surrounding the second two lines
+# This is used to in our form processor so we detect what strings are datetimes.
+RE_DATETIME_MATCH = re.compile(r"""
+    ^
+    (\d{4})  # year
+    \D?
+    (0[1-9]|1[0-2])  # month
+    \D?
+    ([12]\d|0[1-9]|3[01])  # day
+    [ T]
+    ([01]\d|2[0-3])  # hour
+    \D?
+    ([0-5]\d)  # minute
+    \D?
+    ([0-5]\d)?  # second
+    \D?
+    (\d{3,6})?  # millisecond
+    ([zZ]|([\+-])([01]\d|2[0-3])\D?([0-5]\d)?)?  # timezone
+    $
+""", re.VERBOSE)
 
 
 class TestFormMetadata(jsonobject.JsonObject):
@@ -91,7 +115,7 @@ def _build_node_list_from_dict(form_properties, separator=''):
 
 def build_form_xml_from_property_dict(form_properties, separator=''):
     return separator.join(
-        etree.tostring(e).decode('utf-8')
+        etree.tostring(e, encoding='utf-8').decode('utf-8')
         for e in _build_node_list_from_dict(form_properties, separator)
     )
 
@@ -99,7 +123,7 @@ def build_form_xml_from_property_dict(form_properties, separator=''):
 def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
     from casexml.apps.case.mock import CaseBlock
 
-    case_blocks = [CaseBlock(create=True, case_id=case_id)] if case_id else []
+    case_blocks = [CaseBlock.deprecated_init(create=True, case_id=case_id)] if case_id else []
     return FormSubmissionBuilder(
         form_id=form_id,
         metadata=metadata,
@@ -172,44 +196,31 @@ def convert_xform_to_json(xml_string):
     return json_form
 
 
-def adjust_text_to_datetime(text, process_timezones=None):
+def adjust_text_to_datetime(text):
     matching_datetime = iso8601.parse_date(text)
-    if process_timezones or phone_timezones_should_be_processed():
-        return matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
-    else:
-        return matching_datetime.replace(tzinfo=None)
+    return matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
 
 
-def adjust_datetimes(data, parent=None, key=None, process_timezones=None):
+def adjust_datetimes(data, parent=None, key=None):
     """
     find all datetime-like strings within data (deserialized json)
     and format them uniformly, in place.
-
-    this only processes timezones correctly if the call comes from a request with domain information
-    otherwise it will default to not processing timezones.
-
-    to force timezone processing, it can be called as follows
-
-    >>> from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
-    >>> with force_phone_timezones_should_be_processed():
-    >>>     adjust_datetimes(form_json)
     """
-    process_timezones = process_timezones or phone_timezones_should_be_processed()
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
-    if isinstance(data, str) and jsonobject.re_loose_datetime.match(data):
+    if isinstance(data, str) and RE_DATETIME_MATCH.match(data):
         try:
             parent[key] = str(json_format_datetime(
-                adjust_text_to_datetime(data, process_timezones=process_timezones)
+                adjust_text_to_datetime(data)
             ))
         except (iso8601.ParseError, ValueError):
             pass
     elif isinstance(data, dict):
         for key, value in data.items():
-            adjust_datetimes(value, parent=data, key=key, process_timezones=process_timezones)
+            adjust_datetimes(value, parent=data, key=key)
     elif isinstance(data, list):
         for i, value in enumerate(data):
-            adjust_datetimes(value, parent=data, key=i, process_timezones=process_timezones)
+            adjust_datetimes(value, parent=data, key=i)
 
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
@@ -217,13 +228,8 @@ def adjust_datetimes(data, parent=None, key=None, process_timezones=None):
 
 
 def resave_form(domain, form):
-    from corehq.form_processor.utils import should_use_sql_backend
     from corehq.form_processor.change_publishers import publish_form_saved
-    from couchforms.models import XFormInstance
-    if should_use_sql_backend(domain):
-        publish_form_saved(form)
-    else:
-        XFormInstance.get_db().save_doc(form.to_json())
+    publish_form_saved(form)
 
 
 def get_node(root, question, xmlns=''):

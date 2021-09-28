@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from abc import ABCMeta, abstractproperty
+from abc import ABCMeta, abstractmethod
 from collections import OrderedDict, namedtuple
 
 from django import forms
@@ -17,6 +17,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.xform import XForm
 from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.userreports import tasks
@@ -24,10 +25,11 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
     APP_DATA_SOURCE_TYPE_VALUES,
     DATA_SOURCE_TYPE_RAW,
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
-    get_app_data_source_meta,
+    DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM,
+    make_case_data_source_filter, make_form_data_source_filter,
 )
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
-from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE
+from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE, LENIENT_MAXIMUM_EXPANSION
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.models import (
     DataSourceBuildInformation,
@@ -42,7 +44,7 @@ from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
     get_filter_format_from_question_type,
-)
+    const)
 from corehq.apps.userreports.reports.builder.columns import (
     CasePropertyColumnOption,
     CountColumn,
@@ -54,6 +56,9 @@ from corehq.apps.userreports.reports.builder.columns import (
     UsernameComputedCasePropertyOption,
 )
 from corehq.apps.userreports.reports.builder.const import (
+    COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+    COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+    COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID,
     COMPUTED_OWNER_NAME_PROPERTY_ID,
     COMPUTED_USER_NAME_PROPERTY_ID,
     PROPERTY_TYPE_CASE_PROP,
@@ -69,24 +74,23 @@ from corehq.apps.userreports.reports.builder.const import (
     UI_AGG_GROUP_BY,
     UI_AGG_SUM,
 )
+from corehq.apps.userreports.reports.builder.filter_formats import get_pre_filter_format
 from corehq.apps.userreports.reports.builder.sources import (
     get_source_type_from_report_config,
 )
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.toggles import SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER
+from corehq.toggles import (
+    SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER,
+    SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
+    OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER,
+    SHOW_IDS_IN_REPORT_BUILDER)
 
-# This dict maps filter types from the report builder frontend to UCR filter types
-REPORT_BUILDER_FILTER_TYPE_MAP = {
-    'Choice': 'dynamic_choice_list',
-    'Date': 'date',
-    'Numeric': 'numeric',
-    'Value': 'pre',
-}
 
 STATIC_CASE_PROPS = [
     "closed",
+    "closed_on",
     "modified_on",
     "name",
     "opened_on",
@@ -109,7 +113,7 @@ class FilterField(JsonField):
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
-            if filter_conf.get('format', None) not in (list(REPORT_BUILDER_FILTER_TYPE_MAP) + [""]):
+            if filter_conf.get('format', None) not in (list(const.REPORT_BUILDER_FILTER_TYPE_MAP) + [""]):
                 raise forms.ValidationError("Invalid filter format!")
 
 
@@ -170,7 +174,12 @@ class DataSourceProperty(object):
         elif self._type == PROPERTY_TYPE_META:
             return FormMetaColumnOption(self._id, self._data_types, self._text, self._source)
         elif self._type == PROPERTY_TYPE_CASE_PROP:
-            if self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
+            if self._id in (
+                    COMPUTED_OWNER_NAME_PROPERTY_ID,
+                    COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+                    COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+                    COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID
+            ):
                 return OwnernameComputedCasePropertyOption(self._id, self._data_types, self._text)
             elif self._id == COMPUTED_USER_NAME_PROPERTY_ID:
                 return UsernameComputedCasePropertyOption(self._id, self._data_types, self._text)
@@ -192,7 +201,7 @@ class DataSourceProperty(object):
                 assert self._type == 'meta'
                 filter_format = get_filter_format_from_question_type(self._source[1])
         else:
-            filter_format = REPORT_BUILDER_FILTER_TYPE_MAP[selected_filter_type]
+            filter_format = const.REPORT_BUILDER_FILTER_TYPE_MAP[selected_filter_type]
         return filter_format
 
     def _get_ui_aggregation_for_filter_format(self, filter_format):
@@ -223,17 +232,42 @@ class DataSourceProperty(object):
             "display": configuration["display_text"],
             "type": filter_format
         }
-        if configuration['format'] == 'Date':
+        if configuration['format'] == const.FORMAT_DATE:
             filter.update({'compare_as_string': True})
+
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "owner"}})
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_USER_NAME_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "user"}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "location"}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "location", "include_descendants": True}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "location", "include_descendants": True, "show_all_locations": True}})
         if configuration.get('pre_value') or configuration.get('pre_operator'):
             filter.update({
                 'type': 'pre',  # type could have been "date"
                 'pre_operator': configuration.get('pre_operator', None),
                 'pre_value': configuration.get('pre_value', []),
+            })
+        if configuration['format'] == const.PRE_FILTER_VALUE_IS_EMPTY:
+            filter.update({
+                'type': 'pre',
+                'pre_operator': "",
+                'pre_value': "",  # for now assume strings - this may not always work but None crashes
+            })
+        if configuration['format'] == const.PRE_FILTER_VALUE_EXISTS:
+            filter.update({
+                'type': 'pre',
+                'pre_operator': "!=",
+                'pre_value': "",
+            })
+        if configuration['format'] == const.PRE_FILTER_VALUE_NOT_EQUAL:
+            filter.update({
+                'type': 'pre',
+                'pre_operator': "distinct from",
+                # pre_value already set by "pre" clause
             })
         return filter
 
@@ -250,25 +284,26 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
     """
     Abstract interface to a data source in report builder.
 
-    A data source could be an (app, form), (app, case_type) pair (see DataSourceBuilder),
-    or it can be a real UCR data soure (see ReportBuilderDataSourceReference)
+    A data source could be an (app, form), (app, case_type) pair (see ApplicationDataSourceHelper),
+    or it can be a real UCR data source (see UnmanagedDataSourceHelper)
     """
-
-    @abstractproperty
+    @property
+    @abstractmethod
     def uses_managed_data_source(self):
         """
         Whether this interface uses a managed data source.
 
         If true, the data source will be created / modified with the report, and the
-        temporary data source workflow will be enageld.
+        temporary data source workflow will be enabled.
 
-        If false, the data source is assumed to exist and be available as self.source_id.
+        If false, the data source is assumed to exist and be available as self.data_source_id.
 
         :return:
         """
-        pass
+        raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def data_source_properties(self):
         """
         A dictionary containing the various properties that may be used as indicators
@@ -304,12 +339,55 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
         """
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def report_column_options(self):
         pass
 
 
-class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
+class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
+    """Abstract class that represents the interface required for building managed
+    data sources
+    """
+
+    @property
+    def uses_managed_data_source(self):
+        return True
+
+    @abstractmethod
+    def indicators(self, columns, filters, as_dict=False):
+        """Override if `uses_managed_data_source` is False
+
+        Return a list of indicators to be used in a data source configuration that supports the given columns and
+        indicators.
+        :param columns: A list of objects representing columns in the report.
+            Each object has a "property" and "calculation" key
+        :param filters: A list of filter configuration objects
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_datasource_constructor_kwargs(self, columns, filters, is_multiselect_chart_report=False, multiselect_field=None):
+        """Override if `uses_managed_data_source` is False"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_temp_datasource_constructor_kwargs(self, required_columns, required_filters):
+        """Override if `uses_managed_data_source` is False"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def all_possible_indicators(self, required_columns, required_filters):
+        """
+        Override if `uses_managed_data_source` is False
+
+        Will generate a set of possible indicators for the datasource making sure to include the
+        provided columns and filters
+        """
+        raise NotImplementedError
+
+
+class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
     """
     A ReportBuilderDataSourceInterface that encapsulates an existing data source.
     """
@@ -320,7 +398,7 @@ class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
         self.app = app
         self.source_type = source_type
         # source_id is the ID of a UCR data source
-        self.source_id = source_id
+        self.data_source_id = source_id
 
     @property
     def uses_managed_data_source(self):
@@ -329,7 +407,7 @@ class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
     @property
     @memoized
     def data_source(self):
-        return get_datasource_config_infer_type(self.source_id, self.domain)[0]
+        return get_datasource_config_infer_type(self.data_source_id, self.domain)[0]
 
     @property
     def data_source_properties(self):
@@ -358,13 +436,13 @@ class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
         return options
 
 
-class DataSourceBuilder(ReportBuilderDataSourceInterface):
+class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
     """
     A ReportBuilderDataSourceInterface that encapsulates an (app, form) or (app, case_type) pair.
     It also provides convenience methods for creating the underlying UCR data source associated
     with the data.
 
-    When configuring a report, one can use DataSourceBuilder to determine some
+    When configuring a report, one can use ApplicationDataSourceHelper to determine some
     of the properties of the required report data source, such as:
         - referenced doc type
         - filter
@@ -377,36 +455,141 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         self.domain = domain
         self.app = app
         self.source_type = source_type
-        # source_id is a case type of form id
+
+        # case type or form ID
         self.source_id = source_id
-        self.data_source_meta = get_app_data_source_meta(self.domain, self.app.id,
-                                                         self.source_type, self.source_id)
-        if self.source_type == 'form':
-            self.source_form = self.data_source_meta.source_form
-            self.source_xform = self.data_source_meta.source_xform
-        if self.source_type == 'case':
-            prop_map = get_case_properties(
-                self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
-                include_parent_properties=True,
-            )
-            self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
 
     @property
-    def uses_managed_data_source(self):
-        return True
-
-    @property
-    @memoized
+    @abstractmethod
     def source_doc_type(self):
-        return self.data_source_meta.get_doc_type()
+        """Return the doc_type the datasource.referenced_doc_type"""
+        raise NotImplementedError
 
     @property
-    @memoized
+    @abstractmethod
     def filter(self):
         """
         Return the filter configuration for the DataSourceConfiguration.
         """
-        return self.data_source_meta.get_filter()
+        raise NotImplementedError
+
+    @abstractmethod
+    def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
+        raise NotImplementedError
+
+    def indicators(self, columns, filters, as_dict=False):
+        """
+        Return a list of indicators to be used in a data source configuration that supports the given columns and
+        indicators.
+        :param columns: A list of objects representing columns in the report.
+            Each object has a "property" and "calculation" key
+        :param filters: A list of filter configuration objects
+        """
+
+        indicators = OrderedDict()
+        for column in columns:
+            # Property is only set if the column exists in report_column_options
+            if column['property']:
+                column_option = self.report_column_options[column['property']]
+                for indicator in column_option.get_indicators(column['calculation']):
+                    # A column may have multiple indicators. e.g. "Group By" and "Count Per Choice" aggregations
+                    # will use one indicator for the field's string value, and "Sum" and "Average" aggregations
+                    # will use a second indicator for the field's numerical value. "column_id" includes the
+                    # indicator's data type, so it is unique per indicator ... except for choice list indicators,
+                    # because they get expanded to one column per choice. The column_id of choice columns will end
+                    # up unique because they will include a slug of the choice value. Here "column_id + type" is
+                    # unique.
+                    indicator_key = (indicator['column_id'], indicator['type'])
+                    indicators.setdefault(indicator_key, indicator)
+
+        for filter_ in filters:
+            # Property is only set if the filter exists in report_column_options
+            if filter_['property']:
+                property_ = self.data_source_properties[filter_['property']]
+                indicator = property_.to_report_filter_indicator(filter_)
+                indicator_key = (indicator['column_id'], indicator['type'])
+                indicators.setdefault(indicator_key, indicator)
+
+        if as_dict:
+            return indicators
+
+        return list(indicators.values())
+
+    def all_possible_indicators(self, required_columns, required_filters):
+        """
+        Will generate a set of possible indicators for the datasource making sure to include the
+        provided columns and filters
+        """
+        indicators = self.indicators(required_columns, required_filters, as_dict=True)
+
+        for column_option in self.report_column_options.values():
+            for agg in column_option.aggregation_options:
+                for indicator in column_option.get_indicators(agg):
+                    indicator_key = (indicator['column_id'], indicator['type'])
+                    indicators.setdefault(indicator_key, indicator)
+
+        return list(indicators.values())[:MAX_COLUMNS]
+
+    @property
+    @abstractmethod
+    def data_source_properties(self):
+        raise NotImplementedError
+
+    @property
+    @memoized
+    def report_column_options(self):
+        options = OrderedDict()
+        for id_, prop in self.data_source_properties.items():
+            options[id_] = prop.to_report_column_option()
+
+        # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
+        # the options are currently static, after loading the report builder a user can switch to an aggregated
+        # report.
+        count_col = CountColumn("Number of Cases" if self.source_type == "case" else "Number of Forms")
+        options[count_col.get_property()] = count_col
+
+        return options
+
+    @property
+    @abstractmethod
+    def data_source_name(self):
+        raise NotImplementedError
+
+    def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
+        if is_multiselect_chart_report:
+            base_item_expression = self.base_item_expression(True, multiselect_field)
+        else:
+            base_item_expression = self.base_item_expression(False)
+
+        return dict(
+            display_name=self.data_source_name,
+            referenced_doc_type=self.source_doc_type,
+            configured_filter=self.filter,
+            configured_indicators=indicators,
+            base_item_expression=base_item_expression,
+            meta=DataSourceMeta(build=DataSourceBuildInformation(
+                source_id=self.source_id,
+                app_id=self.app._id,
+                app_version=self.app.version,
+            ))
+        )
+
+    def get_temp_datasource_constructor_kwargs(self, required_columns, required_filters):
+        indicators = self.all_possible_indicators(required_columns, required_filters)
+        return self._ds_config_kwargs(indicators)
+
+    def get_datasource_constructor_kwargs(self, columns, filters,
+                                          is_multiselect_chart_report=False, multiselect_field=None):
+        indicators = self.indicators(columns, filters)
+        return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
+
+
+class ApplicationFormDataSourceHelper(ApplicationDataSourceHelper):
+    def __init__(self, domain, app, source_type, source_id):
+        assert source_type == 'form'
+        super().__init__(domain, app, source_type, source_id)
+        self.source_form = self.app.get_form(source_id)
+        self.source_xform = XForm(self.source_form.source)
 
     def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
         """
@@ -465,123 +648,19 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
                 "map_expression": sub_doc(path)
             }
 
-    def indicators(self, columns, filters, is_multiselect_chart_report=False, as_dict=False):
-        """
-        Return a list of indicators to be used in a data source configuration that supports the given columns and
-        indicators.
-        :param columns: A list of objects representing columns in the report.
-            Each object has a "property" and "calculation" key
-        :param filters: A list of filter configuration objects
-        """
+    @property
+    def source_doc_type(self):
+        return 'XFormInstance'
 
-        indicators = OrderedDict()
-        for column in columns:
-            # Property is only set if the column exists in report_column_options
-            if column['property']:
-                column_option = self.report_column_options[column['property']]
-                for indicator in column_option.get_indicators(column['calculation'], is_multiselect_chart_report):
-                    # A column may have multiple indicators. e.g. "Group By" and "Count Per Choice" aggregations
-                    # will use one indicator for the field's string value, and "Sum" and "Average" aggregations
-                    # will use a second indicator for the field's numerical value. "column_id" includes the
-                    # indicator's data type, so it is unique per indicator ... except for choice list indicators,
-                    # because they get expanded to one column per choice. The column_id of choice columns will end
-                    # up unique because they will include a slug of the choice value. Here "column_id + type" is
-                    # unique.
-                    indicator_key = (indicator['column_id'], indicator['type'])
-                    indicators.setdefault(indicator_key, indicator)
-
-        for filter_ in filters:
-            # Property is only set if the filter exists in report_column_options
-            if filter_['property']:
-                property_ = self.data_source_properties[filter_['property']]
-                indicator = property_.to_report_filter_indicator(filter_)
-                indicator_key = (indicator['column_id'], indicator['type'])
-                indicators.setdefault(indicator_key, indicator)
-
-        if as_dict:
-            return indicators
-
-        return list(indicators.values())
-
-    def all_possible_indicators(self, required_columns, required_filters):
-        """
-        Will generate a set of possible indicators for the datasource making sure to include the
-        provided columns and filters
-        """
-        indicators = self.indicators(required_columns, required_filters, as_dict=True)
-
-        for column_option in self.report_column_options.values():
-            for agg in column_option.aggregation_options:
-                for indicator in column_option.get_indicators(agg):
-                    indicator_key = (indicator['column_id'], indicator['type'])
-                    indicators.setdefault(indicator_key, indicator)
-
-        return list(indicators.values())[:MAX_COLUMNS]
+    @property
+    @memoized
+    def filter(self):
+        return make_form_data_source_filter(
+            self.source_xform.data_node.tag_xmlns, self.source_form.get_app().get_id)
 
     @property
     @memoized
     def data_source_properties(self):
-        if self.source_type == 'case':
-            return self._get_data_source_properties_from_case(self.case_properties)
-
-        if self.source_type == 'form':
-            return self._get_data_source_properties_from_form(self.source_form, self.source_xform)
-
-    @classmethod
-    def _get_data_source_properties_from_case(cls, case_properties):
-        property_map = {
-            'closed': _('Case Closed'),
-            'user_id': _('User ID Last Updating Case'),
-            'owner_name': _('Case Owner'),
-            'mobile worker': _('Mobile Worker Last Updating Case'),
-        }
-
-        properties = OrderedDict()
-        for property in case_properties:
-            if property in DEFAULT_CASE_PROPERTY_DATATYPES:
-                data_types = DEFAULT_CASE_PROPERTY_DATATYPES[property]
-            else:
-                data_types = ["string", "decimal", "datetime"]
-
-            properties[property] = DataSourceProperty(
-                type=PROPERTY_TYPE_CASE_PROP,
-                id=property,
-                text=property_map.get(property, property.replace('_', ' ')),
-                source=property,
-                data_types=data_types,
-            )
-        properties[COMPUTED_OWNER_NAME_PROPERTY_ID] = cls._get_owner_name_pseudo_property()
-        properties[COMPUTED_USER_NAME_PROPERTY_ID] = cls._get_user_name_pseudo_property()
-        return properties
-
-    @staticmethod
-    def _get_owner_name_pseudo_property():
-        # owner_name is a special pseudo-case property for which
-        # the report builder will create a related_doc indicator based
-        # on the owner_id of the case.
-        return DataSourceProperty(
-            type=PROPERTY_TYPE_CASE_PROP,
-            id=COMPUTED_OWNER_NAME_PROPERTY_ID,
-            text=_('Case Owner'),
-            source=COMPUTED_OWNER_NAME_PROPERTY_ID,
-            data_types=["string"],
-        )
-
-    @staticmethod
-    def _get_user_name_pseudo_property():
-        # user_name is a special pseudo case property for which
-        # the report builder will create a related_doc indicator based on the
-        # user_id of the case
-        return DataSourceProperty(
-            type=PROPERTY_TYPE_CASE_PROP,
-            id=COMPUTED_USER_NAME_PROPERTY_ID,
-            text=_('Mobile Worker Last Updating Case'),
-            source=COMPUTED_USER_NAME_PROPERTY_ID,
-            data_types=["string"],
-        )
-
-    @staticmethod
-    def _get_data_source_properties_from_form(form, form_xml):
         property_map = {
             'username': _('User Name'),
             'userID': _('User ID'),
@@ -589,7 +668,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
             'timeEnd': _('Date Form Completed'),
         }
         properties = OrderedDict()
-        questions = form_xml.get_questions([], exclude_select_with_itemsets=True)
+        questions = self.source_xform.get_questions([], exclude_select_with_itemsets=True)
         for prop in FORM_METADATA_PROPERTIES:
             question_type = prop[1]
             data_type = {
@@ -617,7 +696,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
                 source=question,
                 data_types=data_types,
             )
-        if form.get_app().auto_gps_capture:
+        if self.source_form.get_app().auto_gps_capture:
             properties['location'] = DataSourceProperty(
                 type=PROPERTY_TYPE_META,
                 id='location',
@@ -629,66 +708,160 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
 
     @property
     @memoized
-    def report_column_options(self):
-        options = OrderedDict()
-        for id_, prop in self.data_source_properties.items():
-            options[id_] = prop.to_report_column_option()
+    def data_source_name(self):
+        today = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        return "{} (v{}) {}".format(self.source_form.default_name(), self.app.version, today)
 
-        # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
-        # the options are currently static, after loading the report builder a user can switch to an aggregated
-        # report.
-        count_col = CountColumn("Number of Cases" if self.source_type == "case" else "Number of Forms")
-        options[count_col.get_property()] = count_col
 
-        return options
+class ApplicationCaseDataSourceHelper(ApplicationDataSourceHelper):
+    def __init__(self, domain, app, source_type, source_id):
+        assert source_type == 'case'
+        super().__init__(domain, app, source_type, source_id)
+        prop_map = get_case_properties(
+            self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
+            include_parent_properties=True,
+        )
+        self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
+
+    def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
+        assert not is_multiselect_chart_report
+        return {}
+
+    @property
+    def source_doc_type(self):
+        return 'CommCareCase'
+
+    @property
+    @memoized
+    def filter(self):
+        return make_case_data_source_filter(self.source_id)
+
+    @property
+    @memoized
+    def data_source_properties(self):
+        property_map = {
+            'closed': _('Case Closed'),
+            'user_id': _('User ID Last Updating Case'),
+            'owner_name': _('Case Owner'),
+            'mobile worker': _('Mobile Worker Last Updating Case'),
+            'case_id': _('Case ID')
+        }
+
+        properties = OrderedDict()
+        for property in self.case_properties:
+            if property in DEFAULT_CASE_PROPERTY_DATATYPES:
+                data_types = DEFAULT_CASE_PROPERTY_DATATYPES[property]
+            else:
+                data_types = ["string", "decimal", "datetime"]
+
+            properties[property] = DataSourceProperty(
+                type=PROPERTY_TYPE_CASE_PROP,
+                id=property,
+                text=property_map.get(property, property.replace('_', ' ')),
+                source=property,
+                data_types=data_types,
+            )
+        properties[COMPUTED_OWNER_NAME_PROPERTY_ID] = self._get_owner_name_pseudo_property()
+        properties[COMPUTED_USER_NAME_PROPERTY_ID] = self._get_user_name_pseudo_property()
+
+        if SHOW_IDS_IN_REPORT_BUILDER.enabled(self.domain):
+            properties['case_id'] = self._get_case_id_pseudo_property()
+
+        if SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER.enabled(self.domain):
+            properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID] = self._get_owner_location_pseudo_property()
+            properties[COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID] = \
+                self._get_owner_location_with_descendants_pseudo_property()
+            properties[COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID] = \
+                self._get_owner_location_archived_with_descendants_pseudo_property()
+
+        return properties
+
+    @staticmethod
+    def _get_case_id_pseudo_property():
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id='case_id',
+            text=_('Case ID'),
+            source='case_id',
+            data_types=["string"],
+        )
+
+    @staticmethod
+    def _get_owner_name_pseudo_property():
+        # owner_name is a special pseudo-case property for which
+        # the report builder will create a related_doc indicator based
+        # on the owner_id of the case.
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_NAME_PROPERTY_ID,
+            text=_('Case Owner'),
+            source=COMPUTED_OWNER_NAME_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_pseudo_property(cls):
+        # owner_location is a special pseudo-case property for which
+        # the report builder reference the owner_id, but treat it as a location
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+            text=_('Case Owner (Location)'),
+            source=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_with_descendants_pseudo_property(cls):
+        # similar to the location property but also include descendants
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+            text=_('Case Owner (Location w/ Descendants)'),
+            source=COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_archived_with_descendants_pseudo_property(cls):
+        # similar to the location property but also include descendants
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID,
+            text=_('Case Owner (Location w/ Descendants and Archived Locations)'),
+            source=COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @staticmethod
+    def _get_user_name_pseudo_property():
+        # user_name is a special pseudo case property for which
+        # the report builder will create a related_doc indicator based on the
+        # user_id of the case
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_USER_NAME_PROPERTY_ID,
+            text=_('Mobile Worker Last Updating Case'),
+            source=COMPUTED_USER_NAME_PROPERTY_ID,
+            data_types=["string"],
+        )
 
     @property
     @memoized
     def data_source_name(self):
         today = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        if self.source_type == 'form':
-            return "{} (v{}) {}".format(self.source_form.default_name(), self.app.version, today)
-        if self.source_type == 'case':
-            return "{} (v{}) {}".format(self.source_id, self.app.version, today)
-
-    def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
-        if is_multiselect_chart_report:
-            base_item_expression = self.base_item_expression(True, multiselect_field)
-        else:
-            base_item_expression = self.base_item_expression(False)
-
-        return dict(
-            display_name=self.data_source_name,
-            referenced_doc_type=self.source_doc_type,
-            configured_filter=self.filter,
-            configured_indicators=indicators,
-            base_item_expression=base_item_expression,
-            meta=DataSourceMeta(build=DataSourceBuildInformation(
-                source_id=self.source_id,
-                app_id=self.app._id,
-                app_version=self.app.version,
-            ))
-        )
-
-    def get_temp_ds_config_kwargs(self, required_columns, required_filters):
-        indicators = self.all_possible_indicators(required_columns, required_filters)
-        return self._ds_config_kwargs(indicators)
-
-    def get_ds_config_kwargs(self, columns, filters,
-                             is_multiselect_chart_report=False, multiselect_field=None):
-        indicators = self.indicators(
-            columns,
-            filters,
-            is_multiselect_chart_report
-        )
-        return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
+        return "{} (v{}) {}".format(self.source_id, self.app.version, today)
 
 
 def get_data_source_interface(domain, app, source_type, source_id):
     if source_type in APP_DATA_SOURCE_TYPE_VALUES:
-        return DataSourceBuilder(domain, app, source_type, source_id)
+        helper = {
+            DATA_SOURCE_TYPE_CASE: ApplicationCaseDataSourceHelper,
+            DATA_SOURCE_TYPE_FORM: ApplicationFormDataSourceHelper
+        }[source_type]
+        return helper(domain, app, source_type, source_id)
     else:
-        return ReportBuilderDataSourceReference(domain, app, source_type, source_id)
+        return UnmanagedDataSourceHelper(domain, app, source_type, source_id)
 
 
 class DataSourceForm(forms.Form):
@@ -704,34 +877,14 @@ class DataSourceForm(forms.Form):
             enable_raw=SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER.enabled(self.domain)
 
         )
-        self.app_source_helper.source_type_field.label = _('Forms or Cases')
-        self.app_source_helper.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
         self.app_source_helper.bootstrap(self.domain)
-        report_source_fields = self.app_source_helper.get_fields()
-        report_source_help_texts = {
-            "source_type": _(
-                "<strong>Form</strong>: Display data from form submissions.<br/>"
-                "<strong>Case</strong>: Display data from your cases. You must be using case management for this "
-                "option."),
-            "application": _("Which application should the data come from?"),
-            "source": _("Choose the case type or form from which to retrieve data for this report."),
-        }
-        self.fields.update(report_source_fields)
+        self.fields.update(self.app_source_helper.get_fields())
 
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
         self.helper.form_id = "report-builder-form"
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-
-        report_source_crispy_fields = []
-        for k in report_source_fields.keys():
-            if k in report_source_help_texts:
-                report_source_crispy_fields.append(hqcrispy.FieldWithHelpBubble(
-                    k, help_bubble_text=report_source_help_texts[k]
-                ))
-            else:
-                report_source_crispy_fields.append(k)
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -745,7 +898,7 @@ class DataSourceForm(forms.Form):
                 )
             ),
             crispy.Fieldset(
-                _('Data'), *report_source_crispy_fields
+                _('Data'), *self.app_source_helper.get_crispy_fields()
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -860,7 +1013,7 @@ class ConfigureNewReportBase(forms.Form):
     @property
     def _configured_columns(self):
         """
-        To be used by DataSourceBuilder.indicators()
+        To be used by ApplicationDataSourceHelper.indicators()
         """
         configured_columns = self.cleaned_data['columns']
         location = self.cleaned_data.get("location")
@@ -875,10 +1028,10 @@ class ConfigureNewReportBase(forms.Form):
     def _get_data_source_configuration_kwargs(self):
         filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
         ms_field = self._report_aggregation_cols[0] if self._is_multiselect_chart_report else None
-        return self.ds_builder.get_ds_config_kwargs(self._configured_columns,
-                                                    filters,
-                                                    self._is_multiselect_chart_report,
-                                                    ms_field)
+        return self.ds_builder.get_datasource_constructor_kwargs(self._configured_columns,
+                                                                 filters,
+                                                                 self._is_multiselect_chart_report,
+                                                                 ms_field)
 
     def _build_data_source(self):
         data_source_config = DataSourceConfiguration(
@@ -895,7 +1048,7 @@ class ConfigureNewReportBase(forms.Form):
     def update_report(self):
         self._update_data_source_if_necessary()
         self.existing_report.aggregation_columns = self._report_aggregation_cols
-        self.existing_report.columns = self._report_columns
+        self.existing_report.columns = self._get_report_columns()
         self.existing_report.filters = self._report_filters
         self.existing_report.configured_charts = self._report_charts
         self.existing_report.title = self.cleaned_data['report_title'] or _("Report Builder Report")
@@ -920,13 +1073,13 @@ class ConfigureNewReportBase(forms.Form):
                 indicators = self.ds_builder.indicators(
                     self._configured_columns,
                     self.cleaned_data['user_filters'] + self.cleaned_data['default_filters'],
-                    self._is_multiselect_chart_report,
                 )
                 if data_source.configured_indicators != indicators:
                     for property_name, value in self._get_data_source_configuration_kwargs().items():
                         setattr(data_source, property_name, value)
                     data_source.save()
-                    tasks.rebuild_indicators.delay(data_source._id, source='report_builder_update')
+                    now = datetime.datetime.utcnow()
+                    tasks.rebuild_indicators.delay(data_source._id, source='report_builder_update', trigger_time=now)
 
     def create_report(self):
         """
@@ -937,13 +1090,13 @@ class ConfigureNewReportBase(forms.Form):
         if self.ds_builder.uses_managed_data_source:
             data_source_config_id = self._build_data_source()
         else:
-            data_source_config_id = self.ds_builder.source_id
+            data_source_config_id = self.ds_builder.data_source_id
         report = ReportConfiguration(
             domain=self.domain,
             config_id=data_source_config_id,
             title=self.cleaned_data['report_title'] or self.report_name,
             aggregation_columns=self._report_aggregation_cols,
-            columns=self._report_columns,
+            columns=self._get_report_columns(),
             filters=self._report_filters,
             configured_charts=self._report_charts,
             description=self.cleaned_data['report_description'],
@@ -974,7 +1127,7 @@ class ConfigureNewReportBase(forms.Form):
             config_id=data_source_id,
             title=self.report_name,
             aggregation_columns=self._report_aggregation_cols,
-            columns=self._report_columns,
+            columns=self._get_report_columns(),
             filters=self._report_filters,
             configured_charts=self._report_charts,
             data_source_type=guess_data_source_type(data_source_id),
@@ -994,7 +1147,7 @@ class ConfigureNewReportBase(forms.Form):
         """
         if not self.ds_builder.uses_managed_data_source:
             # if the data source interface doens't use a temp data source then the id is just the source_id
-            return self.ds_builder.source_id
+            return self.ds_builder.data_source_id
 
         filters = [f._asdict() for f in self.initial_user_filters + self.initial_default_filters]
         columns = [c._asdict() for c in self.initial_columns]
@@ -1002,7 +1155,7 @@ class ConfigureNewReportBase(forms.Form):
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             table_id=clean_table_name(self.domain, uuid.uuid4().hex),
-            **self.ds_builder.get_temp_ds_config_kwargs(columns, filters)
+            **self.ds_builder.get_temp_datasource_constructor_kwargs(columns, filters)
         )
         data_source_config.validate()
         data_source_config.save()
@@ -1055,7 +1208,7 @@ class ConfigureNewReportBase(forms.Form):
 
         # rebuild the table
         if missing_columns:
-            temp_config = self.ds_builder.get_temp_ds_config_kwargs(self._configured_columns, filters)
+            temp_config = self.ds_builder.get_temp_datasource_constructor_kwargs(self._configured_columns, filters)
             data_source_config.configured_indicators = temp_config["configured_indicators"]
             data_source_config.configured_filter = temp_config["configured_filter"]
             data_source_config.base_item_expression = temp_config["base_item_expression"]
@@ -1112,7 +1265,7 @@ class ConfigureNewReportBase(forms.Form):
                 property='timeEnd',
                 data_source_field=None,
                 display_text='Form completion time',
-                format='Date',
+                format=const.FORMAT_DATE,
             ),
         ]
 
@@ -1125,22 +1278,14 @@ class ConfigureNewReportBase(forms.Form):
         field = filter['field']
         field, exists = self._check_and_update_column(field)
         if filter['type'] == 'pre':
-            return DefaultFilterViewModel(
-                exists_in_current_version=exists,
-                display_text='',
-                format='Value' if filter['pre_value'] else 'Date',
-                property=self._get_property_id_by_indicator_id(field) if exists else None,
-                data_source_field=field if not exists else None,
-                pre_value=filter['pre_value'],
-                pre_operator=filter['pre_operator'],
-            )
+            return self._get_default_filter_view_model_from_pre_filter(field, filter, exists)
         else:
             filter_type_map = {
-                'dynamic_choice_list': 'Choice',
+                'dynamic_choice_list': const.FORMAT_CHOICE,
                 # This exists to handle the `closed` filter that might exist
-                'choice_list': 'Choice',
-                'date': 'Date',
-                'numeric': 'Numeric'
+                'choice_list': const.FORMAT_CHOICE,
+                'date': const.FORMAT_DATE,
+                'numeric': const.FORMAT_NUMERIC
             }
             try:
                 format_ = filter_type_map[filter['type']]
@@ -1156,6 +1301,17 @@ class ConfigureNewReportBase(forms.Form):
                 property=self._get_property_id_by_indicator_id(field) if exists else None,
                 data_source_field=field if not exists else None
             )
+
+    def _get_default_filter_view_model_from_pre_filter(self, field, pre_filter, exists):
+        return DefaultFilterViewModel(
+            exists_in_current_version=exists,
+            display_text='',
+            format=get_pre_filter_format(pre_filter),
+            property=self._get_property_id_by_indicator_id(field) if exists else None,
+            data_source_field=field if not exists else None,
+            pre_value=pre_filter['pre_value'],
+            pre_operator=pre_filter['pre_operator'],
+        )
 
     def _get_column_option_by_indicator_id(self, indicator_column_id):
         """
@@ -1222,6 +1378,18 @@ class ConfigureNewReportBase(forms.Form):
     @property
     def _report_aggregation_cols(self):
         return ['doc_id']
+
+    def _get_report_columns(self):
+        """
+        Columns to be passed to the ReportConfiguration object.
+        You can add additional transformations that should apply to all report types here.
+        """
+        columns = self._report_columns
+        if OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER.enabled(self.domain):
+            for column in columns:
+                if column['aggregation'] == UCR_AGG_EXPAND:
+                    column['max_expansion'] = LENIENT_MAXIMUM_EXPANSION
+        return columns
 
     @property
     def _report_columns(self):
@@ -1421,13 +1589,23 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def _report_columns(self):
+        return self._build_report_columns(
+            ui_aggregation_override=UI_AGG_GROUP_BY, is_aggregated_on_override=False
+        )
+
+    def _build_report_columns(self, ui_aggregation_override=None, is_aggregated_on_override=None):
         columns = []
         for i, conf in enumerate(self.cleaned_data['columns']):
+            ui_aggregation = conf['calculation'] if ui_aggregation_override is None else ui_aggregation_override
+            is_aggregated_on = is_aggregated_on_override
+            if is_aggregated_on_override is None:
+                is_aggregated_on = conf.get('calculation') == UI_AGG_GROUP_BY
             columns.extend(
                 self.ds_builder.report_column_options[conf['property']].to_column_dicts(
                     index=i,
                     display_text=conf.get('display_text', conf['property']),
-                    ui_aggregation=UI_AGG_GROUP_BY
+                    ui_aggregation=ui_aggregation,
+                    is_aggregated_on=is_aggregated_on,
                 )
             )
         return columns
@@ -1484,17 +1662,7 @@ class ConfigureTableReportForm(ConfigureListReportForm):
 
     @property
     def _report_columns(self):
-        columns = []
-        for i, conf in enumerate(self.cleaned_data['columns']):
-            column = self.ds_builder.report_column_options[conf['property']]
-            columns.extend(
-                column.to_column_dicts(
-                    index=i,
-                    display_text=conf['display_text'],
-                    ui_aggregation=conf['calculation'],
-                    is_aggregated_on=conf.get('calculation') == UI_AGG_GROUP_BY,
-                ))
-        return columns
+        return self._build_report_columns()
 
     @property
     @memoized

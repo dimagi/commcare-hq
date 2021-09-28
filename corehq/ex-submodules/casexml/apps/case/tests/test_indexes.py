@@ -2,7 +2,6 @@ import re
 import uuid
 from xml.etree import cElementTree as ElementTree
 import datetime
-from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock, CaseBlockError, IndexAttrs, ChildIndexAttrs
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
@@ -11,8 +10,8 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 
 
 class IndexSimpleTest(SimpleTestCase):
@@ -55,6 +54,7 @@ class IndexSimpleTest(SimpleTestCase):
         self.assertRaises(ValueError, self.case.remove_index_by_ref_id, 'i2')
 
 
+@sharded
 class IndexTest(TestCase):
     CASE_ID = 'test-index-case'
     MOTHER_CASE_ID = 'text-index-mother-case'
@@ -82,13 +82,12 @@ class IndexTest(TestCase):
         # Step 0. Create mother and father cases
         for prereq in [self.MOTHER_CASE_ID, self.FATHER_CASE_ID]:
             post_case_blocks(
-                [CaseBlock(create=True, case_id=prereq, user_id=self.user.user_id).as_xml()],
+                [CaseBlock.deprecated_init(create=True, case_id=prereq, user_id=self.user.user_id).as_xml()],
                 domain=self.project.name
             )
 
-
         # Step 1. Create a case with index <mom>
-        create_index = CaseBlock(
+        create_index = CaseBlock.deprecated_init(
             create=True,
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
@@ -102,7 +101,7 @@ class IndexTest(TestCase):
         # Step 2. Update the case to delete <mom> and create <dad>
 
         now = datetime.datetime.utcnow()
-        update_index = CaseBlock(
+        update_index = CaseBlock.deprecated_init(
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
             index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
@@ -110,12 +109,12 @@ class IndexTest(TestCase):
             date_opened=now.date()
         ).as_xml()
 
-        update_index_expected = CaseBlock(
+        update_index_expected = CaseBlock.deprecated_init(
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
             create=True,
-            index={'dad': ('father-case', self.FATHER_CASE_ID)},
+            index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
             date_opened=now.date()
         ).as_xml()
@@ -126,7 +125,7 @@ class IndexTest(TestCase):
 
         # Step 3. Put <mom> back
 
-        update_index = CaseBlock(
+        update_index = CaseBlock.deprecated_init(
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
@@ -134,7 +133,7 @@ class IndexTest(TestCase):
             date_opened=now.date()
         ).as_xml()
 
-        update_index_expected = CaseBlock(
+        update_index_expected = CaseBlock.deprecated_init(
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
@@ -152,10 +151,10 @@ class IndexTest(TestCase):
     def testRelationshipGetsSet(self):
         parent_case_id = uuid.uuid4().hex
         post_case_blocks(
-            [CaseBlock(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
+            [CaseBlock.deprecated_init(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
             domain=self.project.name
         )
-        create_index = CaseBlock(
+        create_index = CaseBlock.deprecated_init(
             create=True,
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
@@ -168,10 +167,10 @@ class IndexTest(TestCase):
     def test_default_relationship(self):
         parent_case_id = uuid.uuid4().hex
         post_case_blocks(
-            [CaseBlock(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
+            [CaseBlock.deprecated_init(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
             domain=self.project.name
         )
-        create_index = CaseBlock(
+        create_index = CaseBlock.deprecated_init(
             create=True,
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
@@ -185,18 +184,13 @@ class IndexTest(TestCase):
         self.assertEqual(cases[0].indices[0].relationship, 'child')
 
 
-@use_sql_backend
-class IndexTestSQL(IndexTest):
-    pass
-
-
 class CaseBlockIndexRelationshipTests(SimpleTestCase):
 
     def test_case_block_index_supports_relationship(self):
         """
         CaseBlock index should allow the relationship to be set
         """
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             case_id='abcdef',
             case_type='at_risk',
             date_modified='2015-07-24',
@@ -207,7 +201,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         )
 
         self.assertEqual(
-            ElementTree.tostring(case_block.as_xml()).decode('utf-8'),
+            ElementTree.tostring(case_block.as_xml(), encoding='utf-8').decode('utf-8'),
             re.sub(r'(\n| {2,})', '', """
             <case case_id="abcdef" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update>
@@ -225,7 +219,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         """
         CaseBlock index relationship omit relationship attribute if set to "child"
         """
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             case_id='123456',
             case_type='newborn',
             date_modified='2015-07-24',
@@ -236,7 +230,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         )
 
         self.assertEqual(
-            ElementTree.tostring(case_block.as_xml()).decode('utf-8'),
+            ElementTree.tostring(case_block.as_xml(), encoding='utf-8').decode('utf-8'),
             re.sub(r'(\n| {2,})', '', """
             <case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update>
@@ -254,7 +248,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         """
         CaseBlock index relationship should default to "child"
         """
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             case_id='123456',
             case_type='newborn',
             date_modified='2015-07-24',
@@ -265,7 +259,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         )
 
         self.assertEqual(
-            ElementTree.tostring(case_block.as_xml()).decode('utf-8'),
+            ElementTree.tostring(case_block.as_xml(), encoding='utf-8').decode('utf-8'),
             re.sub(r'(\n| {2,})', '', """
             <case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update>
@@ -284,8 +278,8 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         CaseBlock index relationship should only allow valid values
         """
         with self.assertRaisesRegex(CaseBlockError,
-                                     'Valid values for an index relationship are "child" and "extension"'):
-            CaseBlock(
+                                    'Valid values for an index relationship are "child" and "extension"'):
+            CaseBlock.deprecated_init(
                 case_id='abcdef',
                 case_type='at_risk',
                 date_modified='2015-07-24',

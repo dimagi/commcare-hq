@@ -1,8 +1,46 @@
 {% extends "userreports/userreports_base.html" %}
+{% load hq_shared_tags %}
 {% load i18n %}
+
+{% requirejs_main 'userreports/js/configurable_reports_home' %}
+
 {% block page_content %}
   <h1>{% trans "Configurable Reports" %}</h1>
-  <a href="{% url 'create_configurable_data_source' domain %}" class="btn btn-primary">{% trans 'Add data source' %}</a>
-  <a href="{% url 'create_configurable_report' domain %}" class="btn btn-default">{% trans 'Add report' %}</a>
-  <a href="{% url 'import_configurable_report' domain %}" class="btn btn-default">{% trans 'Import report' %}</a>
+  <a href="{% url 'create_configurable_report' domain %}" class="btn btn-default">
+    <i class="fa fa-plus"></i>
+    {% trans 'Add Report' %}
+  </a>
+  <a href="{% url 'import_configurable_report' domain %}" class="btn btn-default">
+    <i class="fa fa-cloud-upload"></i>
+    {% trans 'Import Report' %}
+  </a>
+  <a href="{% url 'create_configurable_data_source' domain %}" class="btn btn-default">
+    <i class="fa fa-plus"></i>
+    {% trans 'Add Data Source' %}
+  </a>
+
+  <br><br><br>
+
+  <div class="row">
+    <div class="col-sm-6">
+      <select id="select2-navigation" class="form-control">
+        <option></option>
+        {% for report in reports %}
+          <option data-label="report"
+                  data-is-static="{{ report.is_static|yesno:"true,false" }}"
+                  value="{% url 'edit_configurable_report' domain report.get_id %}">
+            {{ report.title }}
+          </option>
+        {% endfor %}
+        {% for data_source in data_sources %}
+          <option data-label="data_source"
+                  data-is-static="{{ data_source.is_static|yesno:"true,false" }}"
+                  data-is-deactivated="{{ data_source.is_deactivated|yesno:"true,false" }}"
+                  value="{% url 'edit_configurable_data_source' domain data_source.get_id %}">
+            {{ data_source.display_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
 {% endblock %}

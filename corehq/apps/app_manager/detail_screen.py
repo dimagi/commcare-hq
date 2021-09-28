@@ -9,7 +9,7 @@ from corehq.apps.app_manager.xpath import (
     IndicatorXpath,
     LedgerdbXpath,
     LocationXpath,
-    UserCaseXPath,
+    UsercaseXPath,
     XPath,
     dot_interpolate,
 )
@@ -104,7 +104,7 @@ class FormattedDetailColumn(object):
         self.parent_tab_nodeset = parent_tab_nodeset
 
     def has_sort_node_for_nodeset_column(self):
-        return False
+        return self.parent_tab_nodeset and self.detail.sort_nodeset_columns_for_detail()
 
     @property
     def locale_id(self):
@@ -336,9 +336,7 @@ class Plain(FormattedDetailColumn):
 
 @register_format_type('date')
 class Date(FormattedDetailColumn):
-
-    XPATH_FUNCTION = "if({xpath} = '', '', format_date(date(if({xpath} = '', 0, {xpath})),'short'))"
-
+    XPATH_FUNCTION = "if({xpath} = '', '', format-date(date({xpath}), '{column.date_format}'))"
     SORT_XPATH_FUNCTION = "{xpath}"
 
 
@@ -472,9 +470,6 @@ class LateFlag(HideShortHeaderColumn):
 @register_format_type('invisible')
 class Invisible(HideShortColumn):
 
-    def has_sort_node_for_nodeset_column(self):
-        return self.parent_tab_nodeset and self.detail.sort_nodeset_columns_for_detail()
-
     @property
     def header(self):
         """
@@ -596,10 +591,10 @@ class PropertyXpathGenerator(BaseXpathGenerator):
             case = CaseXPath('')
 
         if indexes and indexes[0] == 'user':
-            case = CaseXPath(UserCaseXPath().case())
+            case = CaseXPath(UsercaseXPath().case())
         else:
             for index in indexes:
-                case = case.index_id(index).case()
+                case = case.index_id(index).case(instance_name=self.detail.instance_name)
 
         if property == '#owner_name':
             return self.owner_name(case.property('@owner_id'))

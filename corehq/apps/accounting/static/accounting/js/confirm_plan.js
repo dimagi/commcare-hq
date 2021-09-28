@@ -64,13 +64,13 @@ hqDefine('accounting/js/confirm_plan', [
             return _.contains(self.oNewToolReason(), OTHER);
         });
         self.oRequiredQuestionsAnswered = ko.computed(function () {
-            if (!self.oDowngradeReason()) {
+            if (_.isEmpty(self.oDowngradeReason())) {
                 return false;
             }
             var newToolNeeded = _.contains(self.oDowngradeReason(), SWITCH_TOOLS),
                 newToolAnswered = self.oNewTool() !== "",
-                newToolReasonAnswered = (self.oNewToolReason() && !_.contains(self.oNewToolReason(), OTHER))
-                    || (self.oOtherNewToolReason() && _.contains(self.oNewToolReason(), OTHER));
+                newToolReasonAnswered = (!_.isEmpty(self.oNewToolReason()) && !_.contains(self.oNewToolReason(), OTHER))
+                    || (!_.isEmpty(self.oOtherNewToolReason()) && _.contains(self.oNewToolReason(), OTHER));
 
             return (self.oDowngradeReason() && !newToolNeeded) || (newToolNeeded && newToolAnswered && newToolReasonAnswered);
         });

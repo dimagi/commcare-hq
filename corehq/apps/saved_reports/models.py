@@ -1,4 +1,5 @@
 import calendar
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 import functools
 import hashlib
 import json
@@ -6,6 +7,7 @@ import logging
 import uuid
 from collections import defaultdict, namedtuple
 from datetime import datetime
+from couchdbkit.exceptions import ResourceNotFound
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -171,6 +173,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         dispatchers = [
             ProjectReportDispatcher,
             CustomProjectReportDispatcher,
+            EnterpriseReportDispatcher
         ]
 
         for dispatcher in dispatchers:
@@ -330,12 +333,15 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def owner(self):
         return CouchUser.get_by_user_id(self.owner_id)
 
-    def get_report_content(self, lang, attach_excel=False):
+    def get_report_content(self, lang, attach_excel=False, couch_user=None):
         """
         Get the report's HTML content as rendered by the static view format.
 
         """
         from corehq.apps.locations.middleware import LocationAccessMiddleware
+
+        if couch_user is None:
+            couch_user = self.owner
 
         try:
             if self.report is None:
@@ -359,8 +365,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             )
 
         mock_request = HttpRequest()
-        mock_request.couch_user = self.owner
-        mock_request.user = self.owner.get_django_user()
+        mock_request.couch_user = couch_user
+        mock_request.user = couch_user.get_django_user()
         mock_request.domain = self.domain
         mock_request.couch_user.current_domain = self.domain
         mock_request.couch_user.language = lang
@@ -368,9 +374,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         mock_request.bypass_two_factor = True
 
         mock_query_string_parts = [self.query_string, 'filterSet=true']
-        if self.is_configurable_report:
-            mock_query_string_parts.append(urlencode(self.filters, True))
-            mock_query_string_parts.append(urlencode(self.get_date_range(), True))
         mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
 
         # Make sure the request gets processed by PRBAC Middleware
@@ -532,6 +535,18 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             return True
 
     @classmethod
+    def get_report(cls, report_id):
+        try:
+            notification = ReportNotification.get(report_id)
+        except ResourceNotFound:
+            notification = None
+        else:
+            if notification.doc_type != 'ReportNotification':
+                notification = None
+
+        return notification
+
+    @classmethod
     def by_domain_and_owner(cls, domain, owner_id, stale=True, **kwargs):
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
@@ -546,10 +561,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def all_recipient_emails(self):
-        # handle old documents
-        if not self.owner_id:
-            return frozenset([self.owner.get_email()])
-
         emails = frozenset(self.recipient_emails)
         if self.send_to_owner and self.owner_email:
             emails |= {self.owner_email}
@@ -661,7 +672,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def send(self):
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
-        if not self.owner.is_member_of(self.domain):
+        if not self.owner.is_member_of(self.domain, allow_enterprise=True):
             self.delete()
             return
 
@@ -681,7 +692,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def _get_and_send_report(self, language, emails):
         from corehq.apps.reports.views import get_scheduled_report_response, render_full_report_notification
-
+        from corehq.apps.reports.standard.deployments import ApplicationStatusReport
         with localize(language):
             title = (
                 _(DEFAULT_REPORT_NOTIF_SUBJECT)
@@ -690,19 +701,20 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             )
 
             attach_excel = getattr(self, 'attach_excel', False)
+            excel_files = None
             try:
-                content, excel_files = get_scheduled_report_response(
+                report_text, excel_files = get_scheduled_report_response(
                     self.owner, self.domain, self._id, attach_excel=attach_excel,
                     send_only_active=True
                 )
 
-                # Will be False if ALL the ReportConfigs in the ReportNotification
+                # Both are empty if ALL the ReportConfigs in the ReportNotification
                 # have a start_date in the future.
-                if content is False:
+                if not report_text and not excel_files:
                     return
 
                 for email in emails:
-                    body = render_full_report_notification(None, content, email, self).content
+                    body = render_full_report_notification(None, report_text, email, self).content
                     send_html_email_async(
                         title, email, body,
                         email_from=settings.DEFAULT_FROM_EMAIL,
@@ -718,7 +730,14 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                         'error': er,
                     }
                 )
-                if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
+                if excel_files:
+                    message = _("Unable to generate email report. Excel files are attached.")
+                    send_html_email_async(title, email, message,
+                                          email_from=settings.DEFAULT_FROM_EMAIL,
+                                          file_attachments=excel_files,
+                                          smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
+
+                elif getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
                     # If the email doesn't work because it is too large to fit in the HTML body,
                     # send it as an excel attachment, by creating a mock request with the right data.
 
@@ -733,18 +752,16 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                         mock_request.bypass_two_factor = True
 
                         mock_query_string_parts = [report_config.query_string, 'filterSet=true']
-                        if report_config.is_configurable_report:
-                            mock_query_string_parts.append(urlencode(report_config.filters, True))
-                            mock_query_string_parts.append(urlencode(report_config.get_date_range(), True))
                         mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
-                        date_range = report_config.get_date_range()
-                        start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
-                        end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
-
-                        datespan = DateSpan(start_date, end_date)
                         request_data = vars(mock_request)
                         request_data['couch_user'] = mock_request.couch_user.userID
-                        request_data['datespan'] = datespan
+                        if report_config.report_slug != ApplicationStatusReport.slug:
+                            # ApplicationStatusReport doesn't have date filter
+                            date_range = report_config.get_date_range()
+                            start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
+                            end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
+                            datespan = DateSpan(start_date, end_date)
+                            request_data['datespan'] = datespan
 
                         full_request = {'request': request_data,
                                         'domain': request_data['domain'],
@@ -770,6 +787,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def verify_start_date(self, start_date):
         if start_date != self.start_date and start_date < datetime.today().date():
             raise ValidationError("You can not specify a start date in the past.")
+
+    def can_be_viewed_by(self, user):
+        return ((user._id == self.owner_id)
+                or (user.is_domain_admin(self.domain)
+                or (user.get_email() in self.all_recipient_emails)))
 
 
 class ScheduledReportsCheckpoint(models.Model):

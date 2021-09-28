@@ -79,17 +79,17 @@ class TestLocationOwnership(LocationHierarchyTestCase):
         make_data_item('Somerville', '7')
         get_fixture_data_types.clear(cls.domain)
 
-        cls.no_location_user = CommCareUser.create(cls.domain, 'no_location', '***')
-        cls.suffolk_user = CommCareUser.create(cls.domain, 'guy-from-suffolk', '***')
+        cls.no_location_user = CommCareUser.create(cls.domain, 'no_location', '***', None, None)
+        cls.suffolk_user = CommCareUser.create(cls.domain, 'guy-from-suffolk', '***', None, None)
         cls.suffolk_user.set_location(cls.locations['Suffolk'])
-        cls.boston_user = CommCareUser.create(cls.domain, 'guy-from-boston', '***')
+        cls.boston_user = CommCareUser.create(cls.domain, 'guy-from-boston', '***', None, None)
         cls.boston_user.set_location(cls.locations['Boston'])
-        cls.middlesex_user = CommCareUser.create(cls.domain, 'guy-from-middlesex', '***')
+        cls.middlesex_user = CommCareUser.create(cls.domain, 'guy-from-middlesex', '***', None, None)
         cls.middlesex_user.set_location(cls.locations['Middlesex'])
 
     @staticmethod
     def _get_value(fixture_item, field_name):
-        return fixture_item.fields[field_name].field_list[0].field_value
+        return fixture_item['fields'][field_name]['field_list'][0]['field_value']
 
     def test_sees_fixture_at_own_location(self):
         fixture_items = FixtureDataItem.by_user(self.suffolk_user)

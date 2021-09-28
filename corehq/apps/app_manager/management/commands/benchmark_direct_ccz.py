@@ -2,7 +2,7 @@ import json
 
 from django.core.management import BaseCommand
 
-from dimagi.utils.decorators.profile import profile
+from dimagi.utils.decorators.profile import profile_dump
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.management.commands.benchmark_build_times import (
@@ -36,9 +36,9 @@ class Command(BaseCommand):
 
 def _code_to_benchmark(domain, app_id):
     app = get_app(domain, app_id)
-    get_direct_ccz(domain, app, None, None)
+    get_direct_ccz(domain, app, None)
 
 
-@profile('direct_ccz.prof')
+@profile_dump('direct_ccz.prof')
 def _profile_and_benchmark(domain, app_id):
     _code_to_benchmark(domain, app_id)

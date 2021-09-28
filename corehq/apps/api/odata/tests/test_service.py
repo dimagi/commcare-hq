@@ -6,7 +6,6 @@ from corehq.apps.api.odata.views import (
     ODataCaseServiceView,
     ODataFormServiceView,
 )
-from corehq.util.test_utils import flag_enabled
 
 from .utils import CaseOdataTestMixin, FormOdataTestMixin
 
@@ -33,7 +32,7 @@ class TestCaseServiceDocument(TestCase, CaseOdataTestMixin):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['OData-Version'], '4.0')
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
-            '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/cases/my_config_id/$metadata',
+            '@odata.context': f'http://localhost:8000/a/test_domain/api/v0.5/odata/cases/{self.instance._id}/$metadata',
             'value': [{
                 'name': 'feed',
                 'kind': 'EntitySet',
@@ -64,7 +63,7 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['OData-Version'], '4.0')
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
-            '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/forms/my_config_id/$metadata',
+            '@odata.context': f'http://localhost:8000/a/test_domain/api/v0.5/odata/forms/{self.instance._id}/$metadata',
             'value': [{
                 'name': 'feed',
                 'kind': 'EntitySet',

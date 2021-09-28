@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
 import yaml
@@ -18,6 +19,8 @@ from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from memoized import memoized
 
+from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_report_paths
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -57,6 +60,8 @@ from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
     get_number_of_report_configs_by_data_source,
     get_report_configs_for_domain,
+    get_all_registry_data_source_ids,
+    get_registry_data_sources_by_domain,
 )
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -98,6 +103,9 @@ def _check_ids(value):
 
 
 class DataSourceActionLog(models.Model):
+    """
+    Audit model that tracks changes to UCRs and their underlying tables.
+    """
     BUILD = 'build'
     MIGRATE = 'migrate'
     REBUILD = 'rebuild'
@@ -169,6 +177,9 @@ class DataSourceBuildInformation(DocumentSchema):
 
 class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
+
+    # If this is a linked datasource, this is the ID of the datasource this pulls from
+    master_id = StringProperty()
 
 
 class Validation(DocumentSchema):
@@ -481,8 +492,8 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
 
         rows = []
         for item in self.get_items(doc, eval_context):
-            indicators = self.indicators.get_values(item, eval_context)
-            rows.append(indicators)
+            values = self.indicators.get_values(item, eval_context)
+            rows.append(values)
             eval_context.increment_iteration()
 
         return rows
@@ -612,6 +623,77 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         return columns
 
 
+class RegistryDataSourceConfiguration(DataSourceConfiguration):
+    """This is a special data source that can contain data from
+    multiple domains. These data sources are built from
+    data accessible to the domain via a Data Registry."""
+
+    # this field indicates whether the data source is available
+    # to all domains participating in the registry
+    globally_accessible = BooleanProperty(default=False)
+    registry_slug = StringProperty(required=True)
+
+    @cached_property
+    def registry_helper(self):
+        return DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
+
+    @property
+    def data_domains(self):
+        if self.globally_accessible:
+            return self.registry_helper.participating_domains
+        else:
+            return self.registry_helper.visible_domains
+
+    def validate(self, required=True):
+        super().validate(required)
+        if self.referenced_doc_type != 'CommCareCase':
+            raise BadSpecError(
+                _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
+
+    def _get_domain_filter_spec(self):
+        return {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "domain",
+            },
+            "operator": "in",
+            "property_value": self.data_domains,
+        }
+
+    @property
+    @memoized
+    def default_indicators(self):
+        default_indicators = super().default_indicators
+        default_indicators.append(IndicatorFactory.from_spec({
+            "column_id": "domain",
+            "type": "expression",
+            "display_name": "Project Space",
+            "datatype": "string",
+            "is_nullable": False,
+            "create_index": True,
+            "expression": {
+                "type": "root_doc",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "domain"
+                }
+            }
+        }, self.get_factory_context()))
+        return default_indicators
+
+    def get_report_count(self):
+        raise NotImplementedError("TODO")
+
+    @classmethod
+    def by_domain(cls, domain):
+        return get_registry_data_sources_by_domain(domain)
+
+    @classmethod
+    def all_ids(cls):
+        return get_all_registry_data_source_ids()
+
+
 class ReportMeta(DocumentSchema):
     # `True` if this report was initially constructed by the report builder.
     created_by_builder = BooleanProperty(default=False)
@@ -621,6 +703,9 @@ class ReportMeta(DocumentSchema):
     last_modified = DateTimeProperty()
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
     builder_source_type = StringProperty(choices=REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES)
+
+    # If this is a linked report, this is the ID of the report this pulls from
+    master_id = StringProperty()
 
 
 class ReportConfiguration(QuickCachedDocumentMixin, Document):
@@ -644,6 +729,10 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     soft_rollout = DecimalProperty(default=0)  # no longer used
     report_meta = SchemaProperty(ReportMeta)
     custom_query_provider = StringProperty(required=False)
+
+    class Meta(object):
+        # prevent JsonObject from auto-converting dates etc.
+        string_conversions = ()
 
     def __str__(self):
         return '{} - {}'.format(self.domain, self.title)
@@ -731,7 +820,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
         """
         langs = set()
         for item in self.columns + self.filters:
-            if isinstance(item['display'], dict):
+            if isinstance(item.get('display'), dict):
                 langs |= set(item['display'].keys())
         return langs
 
@@ -788,6 +877,27 @@ STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
 
 
+class RegistryReportConfiguration(ReportConfiguration):
+    @property
+    def registry_slug(self):
+        return self.config.registry_slug
+
+    @cached_property
+    def registry_helper(self):
+        return DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
+
+    @property
+    @memoized
+    def config(self):
+        try:
+            config = get_document_or_not_found(RegistryDataSourceConfiguration, self.domain, self.config_id)
+        except DocumentNotFound:
+            raise DataSourceConfigurationNotFoundError(_(
+                'The data source referenced by this report could not be found.'
+            ))
+        return config
+
+
 class StaticDataSourceConfiguration(JsonObject):
     """
     For custom data sources maintained in the repository.
@@ -824,7 +934,9 @@ class StaticDataSourceConfiguration(JsonObject):
         :return: Generator of all wrapped configs read from disk
         """
         def __get_all():
-            for path_or_glob in settings.STATIC_DATA_SOURCES:
+            paths = list(settings.STATIC_DATA_SOURCES)
+            paths.extend(static_ucr_data_source_paths())
+            for path_or_glob in paths:
                 if os.path.isfile(path_or_glob):
                     yield _get_wrapped_object_from_file(path_or_glob, cls)
                 else:
@@ -908,7 +1020,9 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def _all(cls):
         def __get_all():
-            for path_or_glob in settings.STATIC_UCR_REPORTS:
+            paths = list(settings.STATIC_UCR_REPORTS)
+            paths.extend(static_ucr_report_paths())
+            for path_or_glob in paths:
                 if os.path.isfile(path_or_glob):
                     yield _get_wrapped_object_from_file(path_or_glob, cls)
                 else:
@@ -1119,7 +1233,7 @@ class AsyncIndicator(models.Model):
         new_doc_ids = set(doc_ids) - set([i.doc_id for i in current_indicators])
         AsyncIndicator.objects.bulk_create([
             AsyncIndicator(doc_id=doc_id, doc_type=doc_type_by_id[doc_id], domain=domain,
-                indicator_config_ids=sorted(configs_by_docs[doc_id]))
+                           indicator_config_ids=sorted(configs_by_docs[doc_id]))
             for doc_id in new_doc_ids
         ])
 

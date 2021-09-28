@@ -11,7 +11,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustmentMethod,
 )
-from corehq.apps.accounting.tasks import ensure_community_or_paused_subscription
+from corehq.apps.accounting.utils.subscription import ensure_community_or_paused_subscription
 from corehq.apps.domain.models import Domain
 
 

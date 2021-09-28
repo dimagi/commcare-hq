@@ -42,7 +42,7 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
             self.errorMessage = ko.observable();
             self.ajaxInProgress = ko.observable(false);
             self.actionText = ko.computed(function () {
-                return (self.active() ? gettext("Remove") : gettext("Add"));
+                return (self.active() ? gettext("Deactivate") : gettext("Activate"));
             });
             self.buttonClass = ko.computed(function () {
                 return (self.active() ? "btn-danger" : "btn-success");

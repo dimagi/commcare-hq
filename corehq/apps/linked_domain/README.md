@@ -1,14 +1,84 @@
 # Linking Domains
 
-* Ability to sync models between two domains (master domain -> linked domain)
-* Can be within the same HQ instance or between remote instances.
+Linked project spaces allow project spaces to share much of their data. You configure one controlling upstream domain
+with one or more downstream domains and then can overwrite downstream content with upstream content.
+Most code refers to upstream domains as "master" and downstream as "linked", though we're updating that
+terminology.
 
-# Remote linking
+Linked domains have two major use cases:
+
+1. Setting up a practice domain and then a production domain
+1. Multi-geography projects that have one upstream domain and then a downstream domain for each of several different locations.
+
+Most domain linkages are "local",  with all domains residing in the same HQ cloud environment.
+There are also "remote" links, where the upstream domain is in a different environment than the downstream domains.
+Not all functionality is supported by remote linked domains, but most of it is. See below for more on remote
+linking.
+
+## User Interface
+
+The upstream domain looks like any other domain, but downstream domains have a more limited UI, because most of
+their configuration
+comes from their upstream domain and much of that shared content is read-only (see below for details on specific
+data models). Both upstream and downstream domains have a settings
+page (Project Settings > Linked Project Spaces) used to overwrite content.
+
+Overwriting can be triggered from either the upstream domain ("pushing" / "Enterprise Release Management") or any
+downstream domain ("pulling"). Individual downstream domains can be pushed/pulled, and individual data types can be
+pushed/pulled.
+
+To enable linked domains, turn on the feature flag
+[LINKED_DOMAINS](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/toggles.py#L1497).
+To link two domains, copy an application from the upstream domain to the desired downstream domain, checking the
+checkbox "Copy as linked application." This is a legacy workflow, leftover from when linked domains **only**
+supported applications. Remote domain linkages cannot be created via the UI; see below for details.
+
+## Data models
+
+Linked domains share configuration data. Supported data types are defined in
+corehq.apps.linked_domain.const.ALL_LINKED_MODELS:
+
+- Applications
+- Reports
+- Lookup tables
+- Keywords
+- User roles
+- Custom data fields for users, products, and locations
+- Feature Flags
+- Feature Previews
+- Case search settings
+- Data dictionary
+- Dialer settings
+- OTP Pass-through Settings
+- Signed Callout
+- Tableau Server and Visualizaions
+
+Of these, apps, keywords, and reports need to be linked individually, from the app settings, keywords, and edit report UIs, and are
+overwritten individually. The rest of the data types are overwritten as entire blocks: for example, you can't
+overwrite a single user role, you update them as one unit. Lookup tables are in between: you don't need to link
+them individually, but you can update them individually (due to performance concerns around updating them as a
+block).
+
+The ability to edit linked data on a downstream domain depends on the data type. For example, applications are
+read-only on downstream domains, with a few settings (controlled by
+[supports_linked_app](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/apps/app_manager/static/app_manager/json/commcare-profile-settings.yaml#L97))
+that may be edited and will retain their
+values even when the app is updated. Reports cannot be edited at all. Other data, such as user roles, can typically
+be edited on the downstream domain, but any edits will be overwritten the next time that data type is
+pushed/pulled.
+
+Support for additional models is added as time permits. Any configuration-related data type could potentially be shared.
+Project data like forms and cases would not be shared.
+
+
+## Remote linking
 
 ### On 'master domain':
 
+Run `add_downstream_domain` management command on source HQ.
+
 ```
-DomainLink.link_domains('https://url.of.linked.hq/a/linked_domain_name/', 'master_domain_name')
+$ ./manage.py add_downstream_domain --downstream_url {https://url.of.linked.hq/a/linked_domain_name/} --upstream_domain {upstream_domain_name}
 ```
 
 This gets used as a permissions check during remote requests to ensure
@@ -16,21 +86,19 @@ that the remote domain is allowed to sync from this domain.
 
 ### On 'linked domain'
 
+Run `link_to_upstream_domain` management command on downsream HQ.
 ```
-remote_details = RemoteLinkDetails(
-    url_base='https://url.of.master.hq',
-    username='username@email.com',
-    api_key='api key for username'
-)
-DomainLink.link_domains('linked_domain_name', 'master_domain_name', remote_details)
+$ ./manage.py link_to_upstream_domain --url_base {base_url_for_upstream_domain} --upstream_domain {upstream_domain_name} --username {username} --api_key {user_api_key} --downstream_domain {downstream_domain_name}
 ```
-
+The specified username and API key are needed to authenticate requests to the upstream environment.
 ### Pulling changes from master
 
-On remote HQ, enable `linked_domains` feature flag and navigate to `project settings > Linked Projects` page which has a UI to pull changes from master domain for custom data fields for Location, User and Product models, user roles and feature flags/previews.
+On downstream HQ, enable `linked_domains` feature flag and navigate to `project settings > Linked Projects` page which has a UI to pull changes from master domain for custom data fields for Location, User and Product models, user roles and feature flags/previews.
 
-Linked apps can be setup between linked domains by running `link_app_to_remote` command on linked domain.
-
+To link apps, create an app in the upstream domain, and another app in the downstream domain. These app ids can then be used when running the `link_app_to_remote` command:
+```
+$ ./manage.py link_app_to_remote --master_id {upstream_app_id} --linked_id {downstream_app_id} --url_base {base url} --domain {upstream_domain_name} --username {username} --api_key {api_key}
+```
 # Linked Applications
 
 Linked applications predate linked domains. Now that linked domains exist, when you link an app, the linked domain record is automatically created. A linked/downstream app is tied to one or more master/upstream apps via the `upstream_app_id` and `upstream_version` attributes. 

@@ -9,8 +9,15 @@ INDICES_PATH = 'indices'
 REFERENCED_ID = 'referenced_id'
 IDENTIFIER = 'identifier'
 
+# Maximum number of results to pull from ElasticSearch
+CASE_SEARCH_MAX_RESULTS = 500
+
 # Added to each case response when case searches are performed
 RELEVANCE_SCORE = "commcare_search_score"
+COMMCARE_PROJECT = "commcare_project"
+# Added to secondary results in case search to filter them out of the case list
+IS_RELATED_CASE = "commcare_is_related_case"
+EXCLUDE_RELATED_CASES_FILTER = "[not(commcare_is_related_case=true())]"
 
 # Added to each case on the index for debugging when a case was added to ES
 INDEXED_ON = '@indexed_on'
@@ -21,7 +28,7 @@ SYSTEM_PROPERTIES = [
     INDEXED_ON,
 ]
 
-# Properties that are inconsitent between case models stored in HQ and casedb
+# Properties that are inconsistent between case models stored in HQ and casedb
 # expressions. We store these as case properties in the case search index so
 # they are easily searchable, then remove them when pulling the case source
 # from ES
@@ -40,6 +47,7 @@ SPECIAL_CASE_PROPERTIES_MAP = {
     'external_id': SpecialCaseProperty('external_id', lambda doc: doc.get('external_id', ''), 'external_id'),
 
     'date_opened': SpecialCaseProperty('date_opened', lambda doc: doc.get('opened_on'), 'opened_on'),
+    'closed_on': SpecialCaseProperty('closed_on', lambda doc: doc.get('closed_on'), 'closed_on'),
     'last_modified': SpecialCaseProperty('last_modified', lambda doc: doc.get('modified_on'), 'modified_on'),
 }
 SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys())

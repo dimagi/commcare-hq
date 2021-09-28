@@ -47,19 +47,31 @@
             <h4 class="panel-title panel-title-nolink">{% trans "Menu" %}</h4>
           </div>
           <div class="panel-body">
-            {% if request|toggle_enabled:"APP_BUILDER_CONDITIONAL_NAMES" %}
-              <div class="form-group">
-                <label class="{% css_label_class %} control-label">
-                  {% trans "Name Mapping" %}
-                </label>
-                <div class="{% css_field_class %}" id="name-enum-mapping">
-                  <input name="name_enum" type="hidden" value="{% html_attr module_brief.name_enum %}" />
-                </div>
-              </div>
-            {% endif %}
-
             {% if not module.is_surveys and module.module_type != 'shadow' %}
               {% include "app_manager/partials/modules/module_view_case_type.html" %}
+
+              {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+              <div class="form-group">
+                <label class="{% css_label_class %} control-label">
+                  {% trans "Case List and Case Search Types" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Case List and Case Search Types" %}"
+                        data-content="{% blocktrans %}
+                             Cases of these types will be displayed in Case List  and Case Search screens.
+                             <a target='_blank'
+                             href='https://confluence.dimagi.com/display/ccinternal/Case+Search+and+Claim'>(More   Information)</a>
+                              {% endblocktrans %}">
+                  </span>
+                </label>
+                <div class="{% css_field_class %}">
+                <select name='additional_case_types' class='form-control  multiselect-caselist' multiple="multiple" >
+                    {% for case_type in case_types %}
+                    <option value="{{ case_type }}" {% if case_type in  module.search_config.additional_case_types %}selected{% endif   %}>{{ case_type }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              {% endif %}
             {% endif %}
 
             {% if child_module_enabled and not module.is_training_module%}
@@ -70,19 +82,28 @@
                         data-title="{% trans "Parent Menu" %}"
                         data-content="{% blocktrans %}
                                Nest this menu under another for easier application navigation.
-                               <a href='https://confluence.dimagi.com/display/ccinternal/Sub-menus'>(More Information)</span>
+                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>
                                {% endblocktrans %}">
                   </span>
                 </label>
                 <div class="{% css_field_class %}">
-                  <select type="text" name="root_module_id" class="form-control">
-                    <option value="">{% trans "No Parent" %}</option>
-                    {% for mod in valid_parents_for_child_module %}
-                      <option value="{{mod.unique_id}}"{% if mod.unique_id == module.root_module_id %} selected{% endif %}>
-                        {{ mod.name|trans:langs }}
+                  {% if shadow_parent %}
+                    <select type="text" name="root_module_id" class="form-control" disabled>
+                      <option value="{{shadow_parent.unique_id}}" selected >
+                        {{ shadow_parent.name|trans:langs }}
                       </option>
-                    {% endfor %}
-                  </select>
+                    </select>
+                  {% else %}
+                    <select type="text" name="root_module_id" class="form-control"
+                            {% if module.module_type == 'shadow' %} disabled {% endif %}>
+                      <option value="">{% trans "No Parent" %}</option>
+                      {% for mod in valid_parents_for_child_module %}
+                        <option value="{{mod.unique_id}}"{% if mod.unique_id == module.root_module_id %} selected{% endif %}>
+                          {{ mod.name|trans:langs }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  {% endif %}
                 </div>
               </div>
             {% endif %}
@@ -94,7 +115,9 @@
                     {% trans "Source Menu" %}
                   </label>
                   <div class="{% css_field_class %}">
+                    {# If this is a child-shadow whose parent is also a shadow, you cannot edit the source #}
                     <select name="source_module_id" class="form-control"
+                            {% if shadow_parent.module_type == 'shadow' %} disabled {% endif %}
                             data-bind="options: modules,
                                              optionsText: 'name',
                                              optionsValue: 'uniqueId',
@@ -120,6 +143,19 @@
                   </div>
                 </div>
               </div>
+              {% if module.shadow_module_version == 1 %}
+                <div class="form-group">
+                  <label class="{% css_label_class %} control-label">
+                    {% trans "Shadow Module Version" %}
+                  </label>
+                  <div class="{% css_field_class %}">
+                    v. {{ module.shadow_module_version }}
+                      <a class="btn btn-primary" href="{% url 'upgrade_shadow_module' domain app.id module.unique_id %}">
+                        {% trans "Upgrade to version 2" %}
+                      </a>
+                  </div>
+                </div>
+              {% endif %}
             {% endif %}
 
             {% if add_ons.menu_mode %}
@@ -214,6 +250,11 @@
                 </div>
               </div>
             {% endif %}
+
+            {% if session_endpoints_enabled %}
+              {% include "app_manager/partials/session_endpoints.html" with module_or_form=module %}
+            {% endif %}
+
           </div><!-- end .panel-body -->
         </div><!-- end .panel -->
       {% endif %}

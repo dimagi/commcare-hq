@@ -1,4 +1,3 @@
-import json
 import uuid
 
 from django.http import HttpRequest
@@ -7,11 +6,12 @@ from django.test import TestCase
 from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 
+from corehq import toggles
+from corehq.apps.domain.models import Domain
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import (
@@ -19,7 +19,8 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.users.models import Permissions, UserRole, WebUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 
@@ -31,7 +32,7 @@ class ConfigurableReportTestMixin(object):
     @classmethod
     def _new_case(cls, properties):
         id = uuid.uuid4().hex
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=id,
             case_type=cls.case_type,
@@ -39,7 +40,7 @@ class ConfigurableReportTestMixin(object):
         ).as_xml()
         with drop_connected_signals(case_post_save):
             post_case_blocks([case_block], {'domain': cls.domain})
-        return CommCareCase.get(id)
+        return CaseAccessors(cls.domain).get_case(id)
 
     @classmethod
     def _delete_everything(cls):
@@ -51,7 +52,7 @@ class ConfigurableReportTestMixin(object):
 
 class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
-    def _build_report_and_view(self):
+    def _build_report_and_view(self, request=HttpRequest()):
         # Create report
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
@@ -139,7 +140,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         report_config.save()
         self.addCleanup(report_config.delete)
 
-        view = ConfigurableReportView(request=HttpRequest())
+        view = ConfigurableReportView(request=request)
         view._domain = self.domain
         view._lang = "en"
         view._report_config_id = report_config._id
@@ -177,6 +178,27 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         ]
         self.assertEqual(view.export_table, expected)
 
+    def test_report_preview_data(self):
+        """
+        Test the output of ConfigurableReportView.export_table()
+        """
+        report, view = self._build_report_and_view()
+
+        actual = ConfigurableReportView.report_preview_data(report.domain, report)
+        expected = {
+            "table": [
+                ['report_column_display_fruit', 'report_column_display_percent'],
+                ['apple', '150%']
+            ],
+            "map_config": report.map_config,
+            "chart_configs": report.charts,
+            "aaData": [{
+                "report_column_col_id_fruit": "apple",
+                "report_column_col_id_percent": "150%"
+            }]
+        }
+        self.assertEqual(actual, expected)
+
     def test_paginated_build_table(self):
         """
         Simulate building a report where chunking occurs
@@ -207,3 +229,53 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         report.save()
         request = HttpRequest()
         self.assertTrue(view.should_redirect_to_paywall(request))
+
+    def test_can_edit_report(self):
+        """
+        Test whether ConfigurableReportView.page_context allows report editing
+        """
+        domain = Domain(name='test_domain', is_active=True)
+        domain.save()
+        self.addCleanup(domain.delete)
+
+        def create_view(can_edit_reports):
+            rolename = 'edit_role' if can_edit_reports else 'view_role'
+            username = 'editor' if can_edit_reports else 'viewer'
+            toggles.USER_CONFIGURABLE_REPORTS.set(username, True, toggles.NAMESPACE_USER)
+
+            # user_role should be deleted along with the domain.
+            user_role = UserRole.create(
+                domain=domain.name,
+                name=rolename,
+                permissions=Permissions(edit_commcare_users=True,
+                                        view_commcare_users=True,
+                                        edit_groups=True,
+                                        view_groups=True,
+                                        edit_locations=True,
+                                        view_locations=True,
+                                        access_all_locations=False,
+                                        edit_data=True,
+                                        edit_reports=can_edit_reports,
+                                        view_reports=True
+                                        )
+            )
+
+            web_user = WebUser.create(domain.name, username, '***', None, None)
+            web_user.set_role(domain.name, user_role.get_qualified_id())
+            web_user.current_domain = domain.name
+            web_user.save()
+            self.addCleanup(web_user.delete, domain.name, deleted_by=None)
+
+            request = HttpRequest()
+            request.can_access_all_locations = True
+            request.user = web_user.get_django_user()
+            request.couch_user = web_user
+            request.session = {}
+            _, view = self._build_report_and_view(request=request)
+            return view
+
+        cannot_edit_view = create_view(False)
+        self.assertEqual(cannot_edit_view.page_context['can_edit_report'], False)
+
+        can_edit_view = create_view(True)
+        self.assertEqual(can_edit_view.page_context['can_edit_report'], True)

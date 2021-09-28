@@ -16,22 +16,25 @@ import sys
 import threading
 from fnmatch import fnmatch
 
-from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django import loading
-from django.core.management import call_command
-from django.test.utils import get_unique_databases_and_mirrors
-from mock import patch, Mock
-from nose.plugins import Plugin
-from nose.tools import nottest
 from django.conf import settings
+from django.core.management import call_command
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.db.utils import OperationalError
+from django.test.utils import get_unique_databases_and_mirrors
+
+from couchdbkit import ResourceNotFound
+from couchdbkit.ext.django import loading
 from django_nose.plugin import DatabaseContext
+from mock import Mock, patch
+from nose.plugins import Plugin
+from nose.tools import nottest
+from requests.exceptions import HTTPError
+
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq.tests.noseplugins.cmdline_params import CmdLineParametersPlugin
 from corehq.util.couchdb_management import couch_config
-from corehq.util.test_utils import unit_testing_only
+from corehq.util.test_utils import timelimit, unit_testing_only
 
 log = logging.getLogger(__name__)
 
@@ -43,10 +46,11 @@ class HqTestFinderPlugin(Plugin):
 
     INCLUDE_DIRS = [
         "corehq/ex-submodules/*",
-        "submodules/auditcare-src",
         "submodules/dimagi-utils-src",
         "submodules/django-digest-src",
         "submodules/toggle",
+        "extensions/*/*",
+        "custom",
     ]
 
     def options(self, parser, env):
@@ -195,6 +199,7 @@ class HqdbContext(DatabaseContext):
     def should_skip_test_setup(self):
         return CmdLineParametersPlugin.get('collect_only')
 
+    @timelimit(480)
     def setup(self):
         if self.should_skip_test_setup():
             return
@@ -221,6 +226,7 @@ class HqdbContext(DatabaseContext):
             # that already exist
             self.runner.keepdb = True
         super(HqdbContext, self).setup()
+        temporary_db_setup()
 
     def reset_databases(self):
         self.delete_couch_databases()
@@ -288,6 +294,31 @@ class HqdbContext(DatabaseContext):
         super(HqdbContext, self).teardown()
 
 
+def temporary_db_setup():
+    """Temporary setup while V1 ledger models are being removed
+
+    Can be removed when migrations are added to delete the tables.
+    """
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("""
+        /*
+        StockState table must be deleted so TransactionTestCase can flush
+        the db. See commit 07329e61fefaf1c563c998a164029d735d11a4fd
+
+        Prevents CommandError: Database test_commcarehq couldn't be flushed.
+
+        SQL error:
+        ERROR:  cannot truncate a table referenced in a foreign key constraint
+        DETAIL:  Table "commtrack_stockstate" references "products_sqlproduct".
+        */
+        DROP TABLE IF EXISTS commtrack_stockstate;
+        DROP TABLE IF EXISTS stock_stocktransaction;
+        DROP TABLE IF EXISTS stock_stockreport;
+        DROP TABLE IF EXISTS stock_docdomainmapping;
+        """)
+
+
 def print_imports_until_thread_change():
     """Print imports until the current thread changes
 
@@ -334,7 +365,7 @@ def flush_databases():
     for db in get_all_test_dbs():
         try:
             db.flush()
-        except ResourceNotFound:
+        except (ResourceNotFound, HTTPError):
             pass
     call_command('flush', interactive=False)
 

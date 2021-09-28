@@ -1,20 +1,27 @@
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
+from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from memoized import memoized
 
-from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_other_user
+from corehq.apps.reports.extension_points import customize_user_query
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.cases import get_wrapped_owner
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
+from corehq.apps.users.util import cached_user_id_to_user_display
+from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone_for_user
 
 from .. import util
 from ..analytics.esaccessors import get_group_stubs, get_user_stubs
@@ -24,6 +31,9 @@ from .base import (
     BaseReportFilter,
     BaseSingleOptionFilter,
 )
+
+#TODO: replace with common code
+mark_safe_lazy = lazy(mark_safe, str)
 
 
 class UserOrGroupFilter(BaseSingleOptionFilter):
@@ -209,8 +219,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_types = emwf.selected_user_types(mobile_user_and_group_slugs)
         group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
-    location_search_help = ugettext_lazy(mark_safe(
-        '<i class="fa fa-info-circle"></i> '
+    location_search_help = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Search+for+Locations"'
         'target="_blank">Advanced Search:</a> '
         'Put your location name in quotes to show only exact matches. To more '
@@ -224,11 +233,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     placeholder = ugettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options_all_users'
-    filter_help_inline = ugettext_lazy(mark_safe("""
-        <i class="fa fa-info-circle"></i> See
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
-        ' target="_blank"> Filter Definitions</a>.
-    """))
+    filter_help_inline = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+        '<i class="fa fa-info-circle"></i> See '
+        '<a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
+        ' target="_blank"> Filter Definitions</a>.'))
 
     @property
     @memoized
@@ -340,8 +348,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
-        q = user_es.UserES().domain(domain)
-        if ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs):
+        q = user_es.UserES().domain(domain, allow_enterprise=True)
+        q = customize_user_query(request_user, domain, q)
+        if (
+            ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs)
+            and request_user.has_permission(domain, 'access_all_locations')
+        ):
             return q.show_inactive()
 
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
@@ -350,6 +362,24 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         location_ids = cls.selected_location_ids(mobile_user_and_group_slugs)
 
         user_type_filters = []
+        has_user_ids = bool(user_ids)
+
+        if has_user_ids:
+            # if userid are passed then remove default active filter
+            # and move it with mobile worker filter
+            q = q.remove_default_filter('active')
+            has_user_ids = True
+            if HQUserType.DEACTIVATED in user_types:
+                deactivated_mbwf = filters.AND(user_es.is_active(False), user_es.mobile_users())
+                user_type_filters.append(deactivated_mbwf)
+            if HQUserType.ACTIVE in user_types:
+                activated_mbwf = filters.AND(user_es.is_active(), user_es.mobile_users())
+                user_type_filters.append(activated_mbwf)
+        elif HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
+            q = q.show_inactive()
+        elif HQUserType.DEACTIVATED in user_types:
+            q = q.show_only_inactive()
+
         if HQUserType.ADMIN in user_types:
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
@@ -358,11 +388,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.web_users())
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
-
-        if HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
-            q = q.show_inactive()
-        elif HQUserType.DEACTIVATED in user_types:
-            q = q.show_only_inactive()
 
         if not request_user.has_permission(domain, 'access_all_locations'):
             cls._verify_users_are_accessible(domain, request_user, user_ids)
@@ -375,9 +400,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             )
 
         if HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
-            # return all users with selected user_types
-            user_type_filters.append(user_es.mobile_users())
-            return q.OR(*user_type_filters)
+            if has_user_ids:
+                return q.OR(*user_type_filters, filters.OR(filters.term("_id", user_ids)))
+            else:
+                return q.OR(*user_type_filters, user_es.mobile_users())
 
         # return matching user types and exact matches
         location_ids = list(SQLLocation.active_objects
@@ -433,6 +459,68 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return {
             cls.slug: 'g__%s' % group_id
         }
+
+
+class AffectedUserFilter(ExpandedMobileWorkerFilter):
+    label = _("Affected User(s)")
+
+
+class ChangedByUserFilter(ExpandedMobileWorkerFilter):
+    slug = "changed_by_user"
+    label = ugettext_lazy("Modified by User(s)")
+
+    def get_default_selections(self):
+        return [('t__6', _("[Web Users]"))]
+
+
+class UserPropertyFilter(BaseSingleOptionFilter):
+    label = ugettext_noop('Modified Property')
+    default_text = ugettext_noop('Select Property')
+    slug = 'user_property'
+
+    @property
+    def options(self):
+        from corehq.apps.reports.standard.users.reports import UserHistoryReport
+        properties = UserHistoryReport.get_primary_properties(self.domain)
+        properties.pop("username", None)
+        return list(properties.items())
+
+
+class ChangeActionFilter(BaseMultipleOptionFilter):
+    ALL = '0'
+
+    label = ugettext_noop('Action')
+    default_text = ugettext_noop('Select Action')
+    slug = 'action'
+
+    options = [
+        (ALL, ugettext_noop('All')),
+        (str(UserHistory.CREATE), ugettext_noop('Create')),
+        (str(UserHistory.UPDATE), ugettext_noop('Update')),
+        (str(UserHistory.DELETE), ugettext_noop('Delete')),
+    ]
+    default_options = ['0']
+
+
+class UserUploadRecordFilter(BaseSingleOptionFilter):
+    label = ugettext_noop('User Bulk Upload')
+    default_text = ugettext_noop('Select upload')
+    slug = 'user_upload_record'
+
+    @property
+    def options(self):
+        timezone = get_timezone_for_user(self.request.couch_user, self.domain)
+        records = UserUploadRecord.objects.filter(domain=self.domain).order_by('-date_created')
+        return [
+            (
+                str(record.id),
+                _("Upload by {username} at {time}").format(
+                    username=cached_user_id_to_user_display(record.user_id),
+                    time=ServerTime(record.date_created).user_time(timezone).ui_string(USER_DATETIME_FORMAT)
+                )
+            )
+            for record in records
+        ]
 
 
 def get_user_toggle(request):

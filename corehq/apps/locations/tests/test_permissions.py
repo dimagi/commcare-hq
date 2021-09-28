@@ -12,10 +12,9 @@ import mock
 from casexml.apps.case.tests.util import delete_all_xforms
 
 from corehq.apps.es.fake.users_fake import UserESFake
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.views.mobile import users as user_views
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils.xform import (
     TestFormMetadata,
     get_simple_wrapped_form,
@@ -58,20 +57,16 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
         cls.extra_teardown()
         super(TestNewFormEditRestrictions, cls).tearDownClass()
 
-    @run_with_all_backends
     def test_can_edit_form_in_county(self):
         self.assertCanEdit(self.middlesex_web_user, self.cambridge_form)
 
-    @run_with_all_backends
     def test_cant_edit_out_of_county(self):
         self.assertCannotEdit(self.middlesex_web_user, self.boston_form)
 
-    @run_with_all_backends
     def test_can_edit_any_form(self):
         self.assertCanEdit(self.massachusetts_web_user, self.cambridge_form)
         self.assertCanEdit(self.massachusetts_web_user, self.boston_form)
 
-    @run_with_all_backends
     def test_project_admin_can_edit_anything(self):
         self.project_admin.get_domain_membership(self.domain).is_admin = True
         self.project_admin.save()
@@ -79,7 +74,6 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
         self.assertCanEdit(self.project_admin, self.cambridge_form)
         self.assertCanEdit(self.project_admin, self.boston_form)
 
-    @run_with_all_backends
     def test_unassigned_web_user_cant_edit_anything(self):
         self.assertCannotEdit(self.locationless_web_user, self.cambridge_form)
         self.assertCannotEdit(self.locationless_web_user, self.boston_form)
@@ -89,14 +83,14 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
     @classmethod
     def make_web_user(cls, location):
         username = ''.join(random.sample(string.ascii_letters, 8))
-        user = WebUser.create(cls.domain, username, 'password')
+        user = WebUser.create(cls.domain, username, 'password', None, None)
         user.set_location(cls.domain, cls.locations[location])
         return user
 
     @classmethod
     def make_mobile_user(cls, location):
         username = ''.join(random.sample(string.ascii_letters, 8))
-        user = CommCareUser.create(cls.domain, username, 'password')
+        user = CommCareUser.create(cls.domain, username, 'password', None, None)
         user.set_location(cls.locations[location])
         return user
 
@@ -116,8 +110,8 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
         boston_user = cls.make_mobile_user('Boston')
         cls.boston_form = cls.make_form(boston_user)
 
-        cls.locationless_web_user = WebUser.create(cls.domain, 'joeshmoe', 'password')
-        cls.project_admin = WebUser.create(cls.domain, 'kennedy', 'password')
+        cls.locationless_web_user = WebUser.create(cls.domain, 'joeshmoe', 'password', None, None)
+        cls.project_admin = WebUser.create(cls.domain, 'kennedy', 'password', None, None)
 
     @classmethod
     def extra_teardown(cls):
@@ -155,12 +149,12 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     @classmethod
     def setUpClass(cls):
         super(TestAccessRestrictions, cls).setUpClass()
-        cls.suffolk_user = WebUser.create(cls.domain, 'suffolk-joe', 'password')
+        cls.suffolk_user = WebUser.create(cls.domain, 'suffolk-joe', 'password', None, None)
         cls.suffolk_user.set_location(cls.domain, cls.locations['Suffolk'])
         cls.restrict_user_to_assigned_locations(cls.suffolk_user)
 
         def make_mobile_worker(username, location):
-            worker = CommCareUser.create(cls.domain, username, '123')
+            worker = CommCareUser.create(cls.domain, username, '123', None, None)
             worker.set_location(cls.locations[location])
             UserESFake.save_doc(worker._doc)
             return worker
@@ -171,7 +165,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
-        cls.suffolk_user.delete()
+        cls.suffolk_user.delete(cls.domain, deleted_by=None)
         delete_all_users()
         super(TestAccessRestrictions, cls).tearDownClass()
 

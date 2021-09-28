@@ -12,7 +12,7 @@
     </table>
     <div class="page-footer">
       <button class="btn btn-primary js-done">
-        <i class="fa"></i> {% trans "Save" %}
+        {% trans "Done" %}
       </button>
     </div>
   </div>
@@ -27,7 +27,7 @@
     <select class="form-control js-lang">
       <% _.each(langs, function(lang) { %>
       <option <% if (lang === currentLang) { %>selected<% } %>>
-      <%= lang %>
+      <%- lang %>
       </option>
       <% }) %>
     </select>
@@ -36,4 +36,8 @@
 <script type="text/template" id="clear-user-data-setting-template">
   <th>{% trans "Clear user data" %}</th>
   <td><button class="js-clear-user-data btn btn-sm btn-danger">{% trans "Clear" %}</button></td>
+</script>
+<script type="text/template" id="break-locks-setting-template">
+	  <th>{% trans "Break Pending Request Locks" %}</th>
+	    <td><button class="js-break-locks btn btn-sm btn-danger">{% trans "Break" %}</button></td>
 </script>

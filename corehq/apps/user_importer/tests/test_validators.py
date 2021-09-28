@@ -10,6 +10,7 @@ from corehq.apps.user_importer.validation import (
     GroupValidator,
     UsernameLengthValidator,
     NewUserPasswordValidator,
+    ProfileValidator,
     RoleValidator,
     UsernameTypeValidator,
     RequiredFieldsValidator,
@@ -17,7 +18,7 @@ from corehq.apps.user_importer.validation import (
     BooleanColumnValidator)
 
 factory = Faker()
-factory.seed(1571040848)
+Faker.seed(1571040848)
 
 IsActiveValidator = BooleanColumnValidator('domain', 'is_active')
 IsAccountConfirmedValidator = BooleanColumnValidator('domain', 'is_account_confirmed')
@@ -82,6 +83,7 @@ TEST_CASES = [
             {'username': factory.user_name(), 'is_account_confirmed': 'False'},
             {'username': factory.user_name(), 'is_account_confirmed': 'True'},
             {'username': factory.user_name(), 'is_account_confirmed': ''},
+            {'username': factory.user_name(), 'is_account_confirmed': False},
         ],
         NewUserPasswordValidator('domain'),
         {
@@ -95,8 +97,8 @@ TEST_CASES = [
             {'email': 'Joe Smith <email@example.com>'},
             {'email': 'email@example.com'}
         ],
-        EmailValidator('domain'),
-        {0: EmailValidator.error_message}
+        EmailValidator('domain', 'email'),
+        {0: EmailValidator.error_message.format('email')}
     ),
     (
         [
@@ -106,6 +108,15 @@ TEST_CASES = [
         ],
         RoleValidator('domain', {'r1', 'r2'}),
         {0: RoleValidator.error_message.format('r3')}
+    ),
+    (
+        [
+            {'user_profile': 'p1'},
+            {'user_profile': 'r1'},
+            {},
+        ],
+        ProfileValidator('domain', {'p1', 'p2'}),
+        {1: ProfileValidator.error_message.format('r1')}
     ),
     (
         [

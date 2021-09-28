@@ -56,7 +56,7 @@ of django's `TemplateView`.
 
         @property
         def page_name(self):
-            return mark_safe("This is a page for <strong>%s</strong>" % self.kitten.name)
+            return format_html("This is a page for <strong>{}</strong>", self.kitten.name)
 
     `page_name` will not show up in the `<title>` tags, as you can include html in this name.
 

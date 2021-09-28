@@ -38,7 +38,7 @@ def submit_form_locally(instance, domain, **kwargs):
     if not 200 <= result.response.status_code < 300:
         raise LocalSubmissionError('Error submitting (status code %s): %s' % (
             result.response.status_code,
-            result.response.content,
+            result.response.content.decode('utf-8', errors='backslashreplace'),
         ))
     return result
 
@@ -48,6 +48,9 @@ def get_meta_appversion_text(form_metadata):
         text = form_metadata['appVersion']
     except KeyError:
         return None
+
+    if isinstance(text, dict) and '#text' in text:
+        text = text["#text"]
 
     # just make sure this is a longish string and not something like '2.0'
     if isinstance(text, (str, str)) and len(text) > 5:
@@ -202,10 +205,9 @@ def from_demo_user(form_json):
     except (KeyError, ValueError):
         return False
 
+
 # Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
 DEMO_SUBMIT_MODE = 'demo'
-
-IGNORE_ALL_DEMO_USER_SUBMISSIONS = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
 
 
 def _submitted_by_demo_user(form_meta, domain):
@@ -237,7 +239,7 @@ def should_ignore_submission(request):
     the submissions should be ignored
     """
     form_json = None
-    if IGNORE_ALL_DEMO_USER_SUBMISSIONS:
+    if settings.IGNORE_ALL_DEMO_USER_SUBMISSIONS:
         instance, _ = couchforms.get_instance_and_attachment(request)
         try:
             form_json = convert_xform_to_json(instance)
@@ -262,7 +264,7 @@ def should_ignore_submission(request):
 def _notify_submission_if_applicable(request, form_meta):
     # notify the submission if form would have gotten processed due to missing param
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
-        app_version_text = form_meta.get('appVersion')
+        app_version_text = get_meta_appversion_text(form_meta)
         if app_version_text:
             commcare_version = get_commcare_version_from_appversion_text(app_version_text)
             if commcare_version and commcare_version >= '2.44.0':

@@ -1,4 +1,5 @@
 from django.urls import NoReverseMatch, reverse
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from django.views import View
@@ -124,10 +125,11 @@ class SubmissionErrorReport(DeploymentsReport):
                 else:
                     view_name = 'download_form'
                 try:
-                    return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
-                        "url": reverse(view_name, args=[self.domain, doc_id]),
-                        "text": _("View Form")
-                    }
+                    return format_html(
+                        "<a class='ajax_dialog' href='{url}'>{text}</a>",
+                        url=reverse(view_name, args=[self.domain, doc_id]),
+                        text=_("View Form")
+                    )
                 except NoReverseMatch:
                     return 'unable to view form'
 

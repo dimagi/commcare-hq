@@ -1,16 +1,20 @@
 hqDefine('hqwebapp/js/multiselect_utils', [
     "jquery",
+    "knockout",
     "underscore",
     "multiselect/js/jquery.multi-select",
     "quicksearch/dist/jquery.quicksearch.min",
 ], function (
     $,
+    ko,
     _
 ) {
     var multiselect_utils = {};
 
     var _renderHeader = function (title, action, search) {
-        var header = _.template('<div class="ms-header"><%= headerTitle %><%= actionButton %></div><%= searchInput %>');
+        // Since action and search are created from _renderAction() and _renderSearch()
+        // and the variables the functions are esacaped so it would be safe to use them with <%=
+        var header = _.template('<div class="ms-header"><%- headerTitle %><%= actionButton %></div><%= searchInput %>');
         return header({
             headerTitle: title,
             actionButton: action || '',
@@ -20,9 +24,9 @@ hqDefine('hqwebapp/js/multiselect_utils', [
 
     var _renderAction = function (buttonId, buttonClass, buttonIcon, text) {
         var action = _.template(
-            '<a href="#" class="btn <%=actionButtonClass %> btn-xs pull-right" id="<%= actionButtonId %>">' +
-                '<i class="<%= actionButtonIcon %>"></i> <%= actionButtonText %>' +
-            '</a>'
+            '<button class="btn <%-actionButtonClass %> btn-xs pull-right" id="<%- actionButtonId %>">' +
+                '<i class="<%- actionButtonIcon %>"></i> <%- actionButtonText %>' +
+            '</button>'
         );
         return action({
             actionButtonId: buttonId,
@@ -38,7 +42,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                 '<span class="input-group-addon">' +
                     '<i class="fa fa-search"></i>' +
                 '</span>' +
-                '<input type="search" class="form-control search-input" id="<%= searchInputId %>" autocomplete="off" placeholder="<%= searchInputPlaceholder %>" />' +
+                '<input type="search" class="form-control search-input" id="<%- searchInputId %>" autocomplete="off" placeholder="<%- searchInputPlaceholder %>" />' +
             '</div>'
         );
         return input({
@@ -48,17 +52,19 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     };
 
     multiselect_utils.createFullMultiselectWidget = function (
-        multiselectId,
+        elementOrId,
         selectableHeaderTitle,
         selectedHeaderTitle,
-        searchItemTitle
+        searchItemTitle,
     ) {
-        var selectAllId = multiselectId + '-select-all',
-            removeAllId = multiselectId + '-remove-all',
-            searchSelectableId = multiselectId + '-search-selectable',
-            searchSelectedId = multiselectId + '-search-selected';
+        var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId),
+            baseId = _.isString(elementOrId) ? elementOrId : "multiselect-" + String(Math.random()).substring(2),
+            selectAllId = baseId + '-select-all',
+            removeAllId = baseId + '-remove-all',
+            searchSelectableId = baseId + '-search-selectable',
+            searchSelectedId = baseId + '-search-selected';
 
-        $('#' + multiselectId).multiSelect({
+        $element.multiSelect({
             selectableHeader: _renderHeader(
                 selectableHeaderTitle,
                 _renderAction(selectAllId, 'btn-default', 'fa fa-plus', gettext("Add All")),
@@ -125,13 +131,50 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         });
 
         $('#' + selectAllId).click(function () {
-            $('#' + multiselectId).multiSelect('select_all');
+            $element.multiSelect('select_all');
             return false;
         });
         $('#' + removeAllId).click(function () {
-            $('#' + multiselectId).multiSelect('deselect_all');
+            $element.multiSelect('deselect_all');
             return false;
         });
+    };
+
+    /*
+     * A custom binding for setting multiselect properties in knockout content.
+     * The only dynamic part of this binding are the options
+     * For a list of configurable properties, see http://loudev.com/ under Options
+     */
+    ko.bindingHandlers.multiselectProperties = {
+        init: function (element, valueAccessor) {
+            var properties = valueAccessor();
+            multiselect_utils.createFullMultiselectWidget(
+                element,
+                properties.selectableHeaderTitle || gettext("Items"),
+                properties.selectedHeaderTitle || gettext("Selected items"),
+                properties.searchItemTitle || gettext("Search items"),
+            );
+            if (properties.options) {
+                // add the `options` binding to the element, valueAccessor() should return an observable
+                ko.applyBindingsToNode(element, {options: properties.options});
+            }
+        },
+        update: function (element, valueAccessor) {
+            var properties = valueAccessor();
+            if (properties.options) {
+                // have to access the observable to get the `update` method to fire on changes to options
+                ko.unwrap(properties.options());
+            }
+
+            // multiSelect('refresh') breaks existing click handlers, so the alternative is to destroy and rebuild
+            $(element).multiSelect('destroy');
+            multiselect_utils.createFullMultiselectWidget(
+                element,
+                properties.selectableHeaderTitle || gettext("Items"),
+                properties.selectedHeaderTitle || gettext("Selected items"),
+                properties.searchItemTitle || gettext("Search items")
+            );
+        },
     };
 
     return multiselect_utils;

@@ -156,39 +156,6 @@ class TestRepeatRecordDBAccessors(TestCase):
         records = list(iter_repeat_records_by_domain(self.domain, repeater_id=self.repeater_id))
         self.assertEqual(len(records), 5)
 
-    def test_get_all_repeat_records_by_domain_since(self):
-        new_records = [
-            # FAIL
-            RepeatRecord(
-                domain=self.domain,
-                repeater_id=self.repeater_id,
-                last_checked=datetime(2017, 5, 24, 0, 0, 0),
-                failure_reason='some error',
-            ),
-            # CANCELLED
-            RepeatRecord(
-                domain=self.domain,
-                repeater_id=self.repeater_id,
-                last_checked=datetime(2017, 5, 10, 0, 0, 0),
-                cancelled=True,
-            ),
-            # CANCELLED
-            RepeatRecord(
-                domain=self.domain,
-                repeater_id=self.repeater_id,
-                last_checked=datetime(2017, 5, 24, 0, 0, 0),
-                cancelled=True,
-            ),
-        ]
-        RepeatRecord.bulk_save(new_records)
-        self.addCleanup(RepeatRecord.bulk_delete, new_records)
-
-        records = list(iter_repeat_records_by_domain(self.domain, state=RECORD_CANCELLED_STATE,
-                                                     since=datetime(2017, 5, 20)))
-        self.assertEqual(len(records), 1)
-        record, = records
-        self.assertEqual(record.to_json(), new_records[-1].to_json())
-
     def test_get_all_repeat_records_by_domain(self):
         records = list(iter_repeat_records_by_domain(self.domain))
         self.assertEqual(len(records), len(self.records))

@@ -482,9 +482,11 @@ def get_case_properties(app, case_types, defaults=(), include_parent_properties=
     return builder.get_case_property_map(case_types)
 
 
-@quickcache(vary_on=['app.get_id'])
-def get_all_case_properties(app):
-    return get_case_properties(app, app.get_case_types(), defaults=('name',), exclude_invalid_properties=True)
+@quickcache(vary_on=['app.get_id', 'exclude_invalid_properties'])
+def get_all_case_properties(app, exclude_invalid_properties=True):
+    return get_case_properties(
+        app, app.get_case_types(), defaults=('name',), exclude_invalid_properties=exclude_invalid_properties
+    )
 
 
 def get_all_case_properties_for_case_type(domain, case_type):
@@ -534,4 +536,4 @@ def _get_usercase_default_properties(domain):
     from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 
     fields_def = CustomDataFieldsDefinition.get_or_create(domain, CUSTOM_USER_DATA_FIELD_TYPE)
-    return [f.slug for f in fields_def.fields]
+    return [f.slug for f in fields_def.get_fields()]

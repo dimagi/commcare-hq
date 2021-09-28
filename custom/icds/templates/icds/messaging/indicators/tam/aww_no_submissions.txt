@@ -1,9 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-{% if more_than_one_week %}
-AWC {{ awc }} எந்தவொரு வரியையும் சமர்ப்பிக்கவில்லை அல்லது ICDS CAS பயன்பாட்டில் எந்தவொரு வதிவிடமும் செய்யவில்லை, தயவுசெய்து பிளாக் நிலை உதவித்தொகை அல்லது மேற்பார்வையாளரிடம் உதவி|
-{% endif %}
-
-{% if more_than_one_month %}
-AWC {{ awc }} எந்தவொரு படிவத்தையும் சமர்ப்பிக்கவில்லை அல்லது ஒரு மாதத்திற்கும் மேலாக ICDS CAS பயன்பாட்டில் எந்த நடவடிக்கையும் செய்யவில்லை. தயவுசெய்து பிளாக் நிலை உதவித்தொகை அல்லது மேற்பார்வையாளருடன் தொடர்ந்து உதவவும்|
-{% endif %}

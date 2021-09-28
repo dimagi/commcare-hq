@@ -1,15 +1,18 @@
-import random
-from functools import wraps
 import cProfile
-import resource
-import os
 import gc
 import logging
-
+import os
+import pstats
+import random
+import resource
+import sys
+from contextlib import contextmanager
 from datetime import datetime
+from functools import wraps
+
 from django.conf import settings
+
 from corehq.util.decorators import ContextDecorator
-from dimagi.utils.modules import to_function
 
 logger = logging.getLogger(__name__)
 
@@ -21,16 +24,53 @@ except Exception:
 # Source: http://code.djangoproject.com/wiki/ProfilingDjango
 
 
-def profile(log_file):
-    return profile_prod(log_file, 1, None)
+def profile(func=None, stream=sys.stderr, limit=100):
+    """Profile a function or with block
+
+    Good for local profiling where it is easy to inspect process output.
+
+    :param func: Function to be decorated.
+    :param stream: Output stream (default: `sys.stderr`).
+    :param limit: `print_stats` restriction.
+
+    Usage:
+
+        # decorator with default parameters
+        @profile
+        def do_something(arg):
+            ...
+
+        # decorator with parameters
+        @profile(stream=sys.stdout)
+        def do_something(arg):
+            ...
+
+        # context manager with parameters
+        with profile(stream=sys.stdout):
+            ...
+    """
+    @contextmanager
+    def do_profile():
+        profile = cProfile.Profile()
+        profile.enable()
+        try:
+            yield
+        finally:
+            profile.disable()
+            stats = pstats.Stats(profile, stream=stream)
+            stats.sort_stats('cumulative').print_stats(limit)
+
+    return do_profile() if func is None else do_profile()(func)
 
 
-def profile_prod(log_file, probability, limit):
+def profile_dump(log_file, probability=1, limit=None):
     """Profile some callable.
 
     This decorator uses the hotshot profiler to profile some callable (like
     a view function or method) and dumps the profile data somewhere sensible
-    for later processing and examination.
+    for later processing and examination. This is good for profiling a
+    remote system where its easier to grab a profile dump file than it is
+    to inspect the output of a running process.
 
     :param log_file: If it's a relative path, it places it under the PROFILE_LOG_BASE.
         It also inserts a time stamp into the file name, such that

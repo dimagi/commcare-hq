@@ -45,14 +45,14 @@ hqDefine("app_manager/js/forms/form_view", function () {
             return false;
         });
 
-        self.userCaseReferenceNotAllowed = ko.computed(function () {
+        self.usercaseReferenceNotAllowed = ko.computed(function () {
             return !initialPageData('is_usercase_in_use') && formFilterMatches(
                 self.formFilter(), patterns.usercase_substring
             );
         });
 
         self.allowed = ko.computed(function () {
-            return !self.formFilter() || !self.caseReferenceNotAllowed() && !self.userCaseReferenceNotAllowed();
+            return !self.formFilter() || !self.caseReferenceNotAllowed() && !self.usercaseReferenceNotAllowed();
         });
 
         return self;
@@ -69,23 +69,6 @@ hqDefine("app_manager/js/forms/form_view", function () {
         });
 
         // Settings > Logic
-        var $nameEnumContainer = $('#name-enum-mapping');
-        if ($nameEnumContainer.length) {
-            var nameMapping = hqImport('hqwebapp/js/ui-element').key_value_mapping({
-                lang: initialPageData('current_language'),
-                langs: initialPageData('langs'),
-                items: initialPageData('name_enum'),
-                property_name: 'name',
-                values_are_icons: false,
-                keys_are_conditions: true,
-            });
-            nameMapping.on("change", function () {
-                $nameEnumContainer.find("[name='name_enum']").val(JSON.stringify(this.getItems()));
-                $nameEnumContainer.find("[name='name_enum']").trigger('change');    // trigger save button
-            });
-            $nameEnumContainer.append(nameMapping.ui);
-        }
-
         var $formFilter = $('#form-filter');
         if ($formFilter.length && initialPageData('allow_form_filtering')) {
             $('#form-filter').koApplyBindings(formFilterModel());
@@ -110,7 +93,7 @@ hqDefine("app_manager/js/forms/form_view", function () {
         };
 
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('FORM_LINK_WORKFLOW') || initialPageData('uses_form_workflow')) {
-            labels[FormWorkflow.Values.FORM] = gettext("Link to other form");
+            labels[FormWorkflow.Values.FORM] = gettext("Link to other form or menu");
             options.forms = initialPageData('linkable_forms');
             options.formLinks = initialPageData('form_links');
             options.formDatumsUrl = hqImport('hqwebapp/js/initial_page_data').reverse('get_form_datums');
@@ -142,10 +125,6 @@ hqDefine("app_manager/js/forms/form_view", function () {
         if ($shadowParent.length) {
             $shadowParent.koApplyBindings({
                 shadow_parent: ko.observable(initialPageData('shadow_parent_form_id')),
-            });
-        } else if (hqImport('hqwebapp/js/toggles').toggleEnabled('NO_VELLUM')) {
-            $('#no-vellum').koApplyBindings({
-                no_vellum: ko.observable(initialPageData('no_vellum')),
             });
         }
 

@@ -1,18 +1,17 @@
+from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.utils.text import slugify
 
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
-from corehq.util.metrics import metrics_histogram_timer
 from dimagi.ext.couchdbkit import Document
-from dimagi.utils.web import json_response
 from soil import FileDownload
 
 from corehq import toggles
-from corehq.apps.app_manager.views.utils import get_langs
+from corehq.apps.app_manager.views.utils import get_langs, report_build_time
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqmedia.tasks import build_application_zip
+from corehq.apps.hqmedia.tasks import create_files_for_ccz
 from corehq.util.view_utils import absolute_reverse, json_error
 
 from ..dbaccessors import (
@@ -36,7 +35,7 @@ def list_apps(request, domain):
                                              params={'app_id': app.get_id})
         }
     applications = Domain.get_by_name(domain).applications()
-    return json_response({
+    return JsonResponse({
         'status': 'success',
         'applications': list(map(app_to_json, applications)),
     })
@@ -55,7 +54,7 @@ def direct_ccz(request, domain):
     """
 
     def error(msg, code=400):
-        return json_response({'status': 'error', 'message': msg}, status_code=code)
+        return JsonResponse({'status': 'error', 'message': msg}, status_code=code)
 
     def get_app(app_id, version, latest):
         if version:
@@ -97,11 +96,11 @@ def direct_ccz(request, domain):
 
     lang, langs = get_langs(request, app)
 
-    with metrics_histogram_timer('commcare.app_build.live_preview', timing_buckets=(1, 10, 30, 60, 120, 240)):
-        return get_direct_ccz(domain, app, lang, langs, version, include_multimedia, visit_scheduler_enabled)
+    with report_build_time(domain, app._id, 'live_preview'):
+        return get_direct_ccz(domain, app, langs, version, include_multimedia, visit_scheduler_enabled)
 
 
-def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=False, visit_scheduler_enabled=False):
+def get_direct_ccz(domain, app, langs, version=None, include_multimedia=False, visit_scheduler_enabled=False):
     if not app.copy_of:
         errors = app.validate_app()
     else:
@@ -115,26 +114,22 @@ def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=Fa
             'langs': langs,
             'visit_scheduler_enabled': visit_scheduler_enabled,
         })
-        return json_response(
+        return JsonResponse(
             {'error_html': error_html},
             status_code=400,
         )
 
     app.set_media_versions()
     download = FileDownload('application-{}-{}'.format(app.get_id, version))
-    errors = build_application_zip(
-        include_multimedia_files=include_multimedia,
-        include_index_files=True,
-        domain=app.domain,
-        app_id=app.id,
-        download_id=download.download_id,
-        compress_zip=True,
-        filename='{}.ccz'.format(slugify(app.name)),
-    )
-
-    if errors is not None and errors['errors']:
-        return json_response(
-            errors,
-            status_code=400,
+    try:
+        create_files_for_ccz(
+            build=app,
+            build_profile_id=None,
+            include_multimedia_files=include_multimedia,
+            download_id=download.download_id,
+            compress_zip=True,
+            filename='{}.ccz'.format(slugify(app.name)),
         )
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status_code=400)
     return FileDownload.get(download.download_id).toHttpResponse()

@@ -221,3 +221,17 @@ class DiffDaysExpressionSpec(JsonObject):
     def __str__(self):
 
         return "({}) - ({})".format(self._to_date_expression, self._from_date_expression)
+
+
+def _datetime_now():
+    return datetime.datetime.utcnow()
+
+
+class UTCNow(JsonObject):
+    type = TypeProperty('utcnow')
+
+    def __call__(self, item, context=None):
+        return _datetime_now()
+
+    def __str__(self):
+        return "utcnow"

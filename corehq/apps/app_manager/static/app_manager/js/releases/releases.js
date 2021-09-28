@@ -47,7 +47,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             if (self.doc_type() !== "LinkedApplication") {
                 return "";
             }
-            var brief = releasesMain.masterBriefsById[self.upstream_app_id()] || {};
+            var brief = releasesMain.upstreamBriefsById[self.upstream_app_id()] || {};
             return brief.name || gettext("Unknown App");
         });
 
@@ -250,7 +250,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.latestReleasedVersion = ko.observable(self.options.latestReleasedVersion);
         self.lastAppVersion = ko.observable();
         self.buildComment = ko.observable();
-        self.masterBriefsById = _.indexBy(self.options.masterBriefs, '_id');
+        self.upstreamBriefsById = _.indexBy(self.options.upstreamBriefs, '_id');
         self.upstreamUrl = self.options.upstreamUrl;
 
         self.download_modal = $(self.options.download_modal_id);
@@ -281,7 +281,13 @@ hqDefine('app_manager/js/releases/releases', function () {
             // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
             // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
             $('.modal.fade.in').modal('hide');
-            self.download_modal.modal({show: true});
+            try {
+                self.download_modal.modal({show: true});
+            } catch (e) {
+                // do nothing. this error only shows up in mocha tests when run
+                // via grunt rather than the browser due to how the DOM is
+                // interpreted. this runs fine in the browser.
+            }
         };
 
         self.buildButtonEnabled = ko.computed(function () {
@@ -334,6 +340,11 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
             return '';
         });
+
+        self.trackClick = function (message) {
+            hqImport('analytix/js/kissmetrix').track.event(message);
+            return true;
+        };
 
         self.onViewChanges = function (appIdOne, appIdTwo) {
             appDiff.renderDiff(appIdOne, appIdTwo);

@@ -2,9 +2,15 @@
 module.exports = {
     "extends": "eslint:recommended",
 
+    // https://eslint.org/docs/4.0.0/user-guide/configuring#specifying-parser-options
+    "parserOptions": {
+        "ecmaVersion": 6,
+    },
+
     // http://eslint.org/docs/user-guide/configuring#specifying-environments
     "env": {
         "browser": true,
+        "es6": true,
     },
 
     // http://eslint.org/docs/user-guide/configuring#specifying-globals
@@ -17,6 +23,7 @@ module.exports = {
         "requirejs": false,
         "gettext": false,
         "ngettext": false,
+        "interpolate": false,
         "assert": false,
         "sinon": false,
         "$": false,
@@ -30,15 +37,11 @@ module.exports = {
         "d3": false,
     },
 
-    "plugins": [
-        "eslint-dimagi",
-    ],
-
     // http://eslint.org/docs/rules/
     // http://eslint.org/docs/user-guide/configuring#configuring-rules
     "rules": {
         // First option can be off, warn, or error
-        "brace-style": ["error", "1tbs"],
+        "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
         "camelcase": ["error", {"properties": "never"}],
         "comma-dangle": ["warn", "always-multiline"],
         "curly": ["error"],
@@ -61,7 +64,5 @@ module.exports = {
         "space-before-blocks": ["error"],
         "space-in-parens": ["error", "never"],
         "space-infix-ops": ["error"],   // match flake8 E225
-
-        "eslint-dimagi/no-unblessed-new": ["error", ["Date", "Error", "FormData", "Option", "RegExp", "Clipboard", "MutationObserver"]],
     }
 };

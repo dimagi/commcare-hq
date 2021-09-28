@@ -1,6 +1,6 @@
 import logging
 import re
-import sys
+
 from datetime import datetime
 
 from django.conf import settings
@@ -19,12 +19,12 @@ from django.views.generic.base import TemplateView, View
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
+from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
 
 from corehq.apps.accounting.models import BillingAccount
-from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     HUBSPOT_COOKIE,
@@ -34,9 +34,9 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
 )
 from corehq.apps.analytics.utils import get_meta
-from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import NameUnavailableException
+from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
 from corehq.apps.hqwebapp.views import BasePageView
@@ -44,21 +44,28 @@ from corehq.apps.registration.forms import (
     DomainRegistrationForm,
     RegisterWebUserForm,
 )
-from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.registration.models import (
+    RegistrationRequest,
+    AsyncSignupRequest,
+)
 from corehq.apps.registration.utils import (
-    activate_new_user,
+    activate_new_user_via_reg_form,
     request_new_domain,
     send_domain_registration_email,
     send_mobile_experience_reminder,
     send_new_request_update_email,
 )
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.models import CouchUser, WebUser, Invitation
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.soft_assert import soft_assert
 
 _domainless_new_user_soft_assert = soft_assert(to=[
     '{}@{}'.format('biyeun', 'dimagi.com')
 ], send_to_ops=False, fail_if_debug=False)
+
+
+CONFIRMATION_RESEND_LIMIT_SECONDS = 60
 
 
 def get_domain_context():
@@ -76,10 +83,12 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         raise Http404()
 
     def _create_new_account(self, reg_form, additional_hubspot_data=None):
-        activate_new_user(reg_form, ip=get_ip(self.request))
+        activate_new_user_via_reg_form(
+            reg_form, created_by=None, created_via=USER_CHANGE_VIA_WEB, ip=get_ip(self.request))
         new_user = authenticate(
             username=reg_form.cleaned_data['email'],
-            password=reg_form.cleaned_data['password']
+            password=reg_form.cleaned_data['password'],
+            request=self.request
         )
         web_user = WebUser.get_by_username(new_user.username, strict=True)
 
@@ -128,16 +137,37 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
     @allow_remote_invocation
     def register_new_user(self, data):
-        reg_form = RegisterWebUserForm(data['data'])
+        idp = None
+        if settings.ENFORCE_SSO_LOGIN:
+            idp = IdentityProvider.get_required_identity_provider(data['data']['email'])
+
+        reg_form = RegisterWebUserForm(data['data'], is_sso=idp is not None)
         if reg_form.is_valid():
             ab_test = ab_tests.SessionAbTest(ab_tests.APPCUES_V3_APP, self.request)
             appcues_ab_test = ab_test.context['version']
+
+            if idp:
+                signup_request = AsyncSignupRequest.create_from_registration_form(
+                    reg_form,
+                    additional_hubspot_data={
+                        "appcues_test": appcues_ab_test,
+                    }
+                )
+                return {
+                    'success': True,
+                    'appcues_ab_test': appcues_ab_test,
+                    'ssoLoginUrl': idp.get_login_url(signup_request.username),
+                    'ssoIdpName': idp.name,
+                }
+
             self._create_new_account(reg_form, additional_hubspot_data={
                 "appcues_test": appcues_ab_test,
             })
             try:
                 request_new_domain(
-                    self.request, reg_form, is_new_user=True
+                    self.request,
+                    reg_form.cleaned_data['project_name'],
+                    is_new_user=True
                 )
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
@@ -151,7 +181,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 }
             return {
                 'success': True,
-                'appcues_ab_test': appcues_ab_test
+                'appcues_ab_test': appcues_ab_test,
             }
         logging.error(
             "There was an error processing a new user registration form."
@@ -181,11 +211,23 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                     subject = _("CommCareHQ account request")
                     message = re.sub(regex, "<a href='mailto:\\1?subject={}'>\\1</a>".format(subject), message)
                     break
-        return {
+
+        response = {
             'isValid': message is None,
             'restrictedByDomain': restricted_by_domain,
             'message': message,
         }
+        if settings.ENFORCE_SSO_LOGIN and response['isValid']:
+            idp = IdentityProvider.get_required_identity_provider(email)
+            if idp:
+                response.update({
+                    'isSso': True,
+                    'ssoMessage': _(
+                        "This email is managed by {}. You will be asked to login "
+                        "with Single Sign-On after the next step."
+                    ).format(idp.name),
+                })
+        return response
 
 
 class UserRegistrationView(BasePageView):
@@ -232,8 +274,7 @@ class UserRegistrationView(BasePageView):
         context = {
             'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
-            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
+            'hide_password_feedback': has_custom_clean_password(),
             'professional_features': [
                 _("Custom mobile app builder"),
                 _("Powerful case management"),
@@ -283,6 +324,20 @@ class RegisterDomainView(TemplateView):
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
 
     @property
+    def extra_context(self):
+        invitations = [
+            e for e in Invitation.by_email(self.request.user.username)
+            if not e.is_expired
+        ]
+        return {
+            'invitation_links': [{
+                'domain': i.domain,
+                'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]) + '?no_redirect=true',
+            } for i in invitations],
+            'show_multiple_invites': len(invitations) > 1,
+        }
+
+    @property
     @memoized
     def is_new_user(self):
         user = self.request.user
@@ -317,7 +372,11 @@ class RegisterDomainView(TemplateView):
             return render(request, 'error.html', context)
 
         try:
-            domain_name = request_new_domain(request, form, is_new_user=self.is_new_user)
+            domain_name = request_new_domain(
+                request,
+                form.cleaned_data['hr_name'],
+                is_new_user=self.is_new_user
+            )
         except NameUnavailableException:
             context.update({
                 'current_page': {'page_name': _('Oops!')},
@@ -372,9 +431,20 @@ def resend_confirmation(request):
         return redirect('domain_select')
 
     context = get_domain_context()
+    default_page_name = _('Resend Confirmation Email')
 
     if request.method == 'POST':
+        if (datetime.utcnow() - dom_req.request_time).seconds < CONFIRMATION_RESEND_LIMIT_SECONDS:
+            context = {
+                'message_body': _(f'Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} '
+                                  f'seconds before requesting again.'),
+                'current_page': {'page_name': default_page_name},
+            }
+            return render(request, 'registration/confirmation_error.html', context)
         try:
+            dom_req.request_time = datetime.utcnow()
+            dom_req.request_ip = get_ip(request)
+            dom_req.save()
             send_domain_registration_email(dom_req.new_user_username,
                     dom_req.domain, dom_req.activation_guid,
                     request.user.get_full_name(), request.user.first_name)
@@ -388,14 +458,14 @@ def resend_confirmation(request):
         else:
             context.update({
                 'requested_domain': dom_req.domain,
-                'current_page': {'page_name': ('Confirmation Email Sent')},
+                'current_page': {'page_name': _('Confirmation Email Sent')},
             })
             return render(request, 'registration/confirmation_sent.html',
                 context)
 
     context.update({
         'requested_domain': dom_req.domain,
-        'current_page': {'page_name': _('Resend Confirmation Email')},
+        'current_page': {'page_name': default_page_name},
     })
     return render(request, 'registration/confirmation_resend.html', context)
 
@@ -471,7 +541,6 @@ def eula_agreement(request):
 @login_required
 @require_POST
 def send_mobile_reminder(request):
-    send_mobile_experience_reminder(request.user.username,
+    send_mobile_experience_reminder(request.couch_user.email or request.user.username,
                                     request.couch_user.full_name)
-
     return HttpResponse()

@@ -1,0 +1,8 @@
+-r base-requirements.in
+
+django-extensions
+docutils
+myst-parser
+Sphinx
+sphinxcontrib-django
+sphinx-rtd-theme

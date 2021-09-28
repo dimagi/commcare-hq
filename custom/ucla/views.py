@@ -132,7 +132,7 @@ def _ucla_form_modifier(form, question_ids):
 
     app = form.get_app()
     # Save the xform modifications
-    save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
+    save_xform(app, form, etree.tostring(xform.xml, encoding='utf-8'))
     # save the action modifications
     app.save()
     message += "Form saved.\n"

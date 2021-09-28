@@ -14,10 +14,10 @@
   <div class="container-fluid">
     <h1>App Build Timings</h1>
     <h4>
-      <a href="{% url 'view_app' app.domain app.master_id %}">
+      <a href="{% url 'view_app' app.domain app.origin_id %}">
         {{ app.name }}
       </a>
-      <small>{{ app.master_id }}</small>
+      <small>{{ app.origin_id }}</small>
     </h4>
 
     <div class="row">

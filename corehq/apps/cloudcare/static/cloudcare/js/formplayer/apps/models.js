@@ -1,7 +1,7 @@
-/*global FormplayerFrontend */
+/*global Backbone */
 
-FormplayerFrontend.module("Apps.Models", function (Models, FormplayerFrontend, Backbone) {
-    Models.App = Backbone.Model.extend({
+hqDefine("cloudcare/js/formplayer/apps/models", function () {
+    return Backbone.Model.extend({
         urlRoot: "appSelects",
         idAttribute: "_id",
     });

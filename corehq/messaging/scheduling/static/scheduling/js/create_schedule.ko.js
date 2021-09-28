@@ -3,7 +3,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/select2_handler',
-    'jquery-ui/ui/datepicker',
+    'jquery-ui/ui/widgets/datepicker',
     'bootstrap-timepicker/js/bootstrap-timepicker',
 ], function ($, ko, initialPageData, select2Handler) {
     ko.bindingHandlers.useTimePicker = {

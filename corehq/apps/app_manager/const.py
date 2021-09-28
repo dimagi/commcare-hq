@@ -38,8 +38,6 @@ AMPLIFIES_NOT_SET = 'not_set'
 
 DEFAULT_MONTH_FILTER_PERIOD_LENGTH = 0
 
-CLAIM_DEFAULT_RELEVANT_CONDITION = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0"
-
 STOCK_QUESTION_TAG_NAMES = [
     'balance',
     'transfer',
@@ -69,7 +67,7 @@ WORKFLOW_ROOT = 'root'  # go to the module select screen
 WORKFLOW_PARENT_MODULE = 'parent_module'  # go to the parent module's screen
 WORKFLOW_MODULE = 'module'  # go to the current module's screen
 WORKFLOW_PREVIOUS = 'previous_screen'  # go to the previous screen (prior to entering the form)
-WORKFLOW_FORM = 'form'  # go straight to another form
+WORKFLOW_FORM = 'form'  # go straight to another form or menu
 ALL_WORKFLOWS = [
     WORKFLOW_DEFAULT,
     WORKFLOW_ROOT,

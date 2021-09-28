@@ -4,7 +4,7 @@ import logging
 import os
 import traceback
 import uuid
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from contextlib import ExitStack, contextmanager
 from datetime import datetime, timedelta
 from functools import wraps
@@ -16,6 +16,7 @@ from unittest import SkipTest, TestCase
 from django.conf import settings
 from django.db import connections
 from django.db.backends import utils
+from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 
 import mock
@@ -38,6 +39,8 @@ def unit_testing_only(fn):
                 'You may only call {} during unit testing'.format(fn.__name__))
         return fn(*args, **kwargs)
     return inner
+
+
 unit_testing_only.__test__ = False
 
 
@@ -127,10 +130,16 @@ class flag_enabled(object):
     enabled = True
 
     def __init__(self, toggle_name, is_preview=False):
-        location = 'corehq.feature_previews' if is_preview else 'corehq.toggles'
+        from corehq.feature_previews import all_previews_by_name
+        from corehq.toggles import all_toggles_by_name
+        provider = all_previews_by_name if is_preview else all_toggles_by_name
+        toggles = [
+            t for name, t in provider().items() if name == toggle_name
+        ]
+        assert len(toggles) == 1, f"Toggle not found: {toggle_name}"
+        toggle = toggles[0]
         self.patches = [
-            mock.patch('.'.join([location, toggle_name, method_name]),
-                       new=lambda *args, **kwargs: self.enabled)
+            mock.patch.object(toggle, method_name, new=lambda *args, **kwargs: self.enabled)
             for method_name in ['enabled', 'enabled_for_request']
         ]
 
@@ -150,6 +159,18 @@ class flag_enabled(object):
 
 class flag_disabled(flag_enabled):
     enabled = False
+
+
+def privilege_enabled(privilege_name):
+    """Enable an individual privilege for tests"""
+    from django_prbac.utils import has_privilege
+
+    def patched(request, slug, **assignment):
+        if slug == privilege_name:
+            return True
+        return has_privilege(request, slug, **assignment)
+
+    return mock.patch('django_prbac.decorators.has_privilege', new=patched)
 
 
 class DocTestMixin(object):
@@ -379,6 +400,10 @@ def timelimit(limit):
     without raising an error and the elapsed run time is longer than
     the allowed time limit.
 
+    This decorator can be used to extend the time limit imposed by
+    --max-test-time when `corehq.tests.noseplugins.timing.TimingPlugin`
+    is enabled.
+
     Usage:
 
         @timelimit
@@ -388,6 +413,9 @@ def timelimit(limit):
         @timelimit(0.5)
         def lt_half_second():
             ...
+
+    See also: `patch_max_test_time` for overriding time limits for an
+    entire test group (module, test class, etc.)
 
     :param limit: number of seconds or a callable to decorate. If
     callable, the time limit defaults to one second.
@@ -399,13 +427,95 @@ def timelimit(limit):
         return lambda func: timelimit((func, limit))
     func, limit = limit
     @wraps(func)
-    def decorator(*args, **kw):
+    def time_limit(*args, **kw):
+        from corehq.tests.noseplugins.timing import add_time_limit
+        add_time_limit(limit.total_seconds())
         start = datetime.utcnow()
         rval = func(*args, **kw)
         elapsed = datetime.utcnow() - start
         assert elapsed < limit, f"{func.__name__} took too long: {elapsed}"
         return rval
-    return decorator
+    return time_limit
+
+
+def patch_max_test_time(limit):
+    """Temporarily override test time limit (--max-test-time)
+
+    Note: this is only useful when spanning multiple test events because
+    the limit must be present at the _end_ of a test event to take
+    effect. Therefore it will do nothing if used within the context of a
+    single test (use `timelimit` for that). It also does not affect the
+    time limit on the final teardown fixture (in which the patch is
+    removed).
+
+    :param limit: New time limit (seconds).
+
+    Usage at module level:
+
+        TIME_LIMIT = patch_max_test_time(9)
+
+        def setup_module():
+            TIME_LIMIT.start()
+
+        def teardown_module():
+            TIME_LIMIT.stop()
+
+    Usage as class decorator:
+
+        @patch_max_test_time(9)
+        class TestSomething(TestCase):
+            ...
+    """
+    from corehq.tests.noseplugins.timing import patch_max_test_time
+    return patch_max_test_time(limit)
+
+
+patch_max_test_time.__test__ = False
+
+
+def patch_foreign_value_caches():
+    """Patch django.test to clear ForeignValue LRU caches
+
+    This complements `django.test.TransactionTestCase` and
+    `django.test.TestCase` automatic database cleanup feature. It is
+    necessary because cached foreign value objects become invalid once
+    the transaction in which they were created is rolled back.
+    """
+    from corehq.util.models import ForeignValue
+
+    def wrap(cached_prop, cache_clear=None):
+        @wraps(cached_prop)
+        def monitored_getter(self):
+            value = cached_prop(self)
+            if cache_clear is None:
+                if self.cache_size:
+                    value = wrap(value, value.cache_clear)
+            else:
+                clear_funcs.add(cache_clear)
+            return value
+
+        if cache_clear is not None:
+            # copy 'public' fields of `cached_prop` to `monitored_getter`
+            # e.g. cache_clear, cache_info
+            for name in dir(cached_prop):
+                if not name.startswith("_"):
+                    value = getattr(cached_prop, name)
+                    setattr(monitored_getter, name, value)
+
+        return monitored_getter
+
+    def post_teardown(self):
+        if clear_funcs:
+            for cache_clear in clear_funcs:
+                cache_clear()
+            clear_funcs.clear()
+        django_post_teardown(self)
+
+    clear_funcs = set()
+    ForeignValue.get_related.func = wrap(ForeignValue.get_related.func)
+    ForeignValue.get_value.func = wrap(ForeignValue.get_value.func)
+    django_post_teardown = TransactionTestCase._post_teardown
+    TransactionTestCase._post_teardown = post_teardown
 
 
 def get_form_ready_to_save(metadata, is_db_test=False):
@@ -459,12 +569,12 @@ def _create_case(domain, **kwargs):
     from casexml.apps.case.mock import CaseBlock
     from corehq.apps.hqcase.utils import submit_case_blocks
     return submit_case_blocks(
-        [CaseBlock(**kwargs).as_text()], domain=domain
+        [CaseBlock.deprecated_init(**kwargs).as_text()], domain=domain
     )
 
 
 def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None,
-        drop_signals=True, owner_id=None, user_id=None):
+        drop_signals=True, owner_id=None, user_id=None, index=None):
     from casexml.apps.case.signals import case_post_save
     from corehq.form_processor.signals import sql_case_post_save
 
@@ -473,6 +583,7 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
         'case_id': case_id,
         'case_name': case_name,
         'update': case_properties,
+        'index': index,
     }
 
     if case_type:
@@ -499,7 +610,6 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
         case_id=None, owner_id=None, user_id=None):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-    from corehq.form_processor.utils.general import should_use_sql_backend
     from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import delete_schedule_instances_by_case_id
 
     case = create_and_save_a_case(domain, case_id or uuid.uuid4().hex, case_name,
@@ -510,10 +620,8 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
     finally:
         delete_phone_numbers_for_owners([case.case_id])
         delete_schedule_instances_by_case_id(domain, case.case_id)
-        if should_use_sql_backend(domain):
-            CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
-        else:
-            case.delete()
+        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
+
 
 create_test_case.__test__ = False
 
@@ -567,7 +675,7 @@ def update_case(domain, case_id, case_properties, user_id=None):
         kwargs['user_id'] = user_id
 
     post_case_blocks(
-        [CaseBlock(**kwargs).as_xml()], domain=domain
+        [CaseBlock.deprecated_init(**kwargs).as_xml()], domain=domain
     )
 
 
@@ -707,3 +815,18 @@ def require_db_context(fn):
         if not isinstance(Domain.get_db(), mock.Mock):
             return fn(*args, **kwargs)
     return inner
+
+
+def disable_quickcache(test_case=None):
+    """A patch/decorator that disables quickcache
+
+    :param test_case: Optional test class or function. The patch is
+    applied as a decorator to this object if provided.
+    :returns: A `mock.patch` object that disables the cache when started
+    and re-enables it when stopped OR a decorated test case when
+    `test_case` is provided.
+    """
+    def call(self, *args, **kw):
+        return self.fn(*args, **kw)
+    patch = mock.patch("quickcache.quickcache_helper.QuickCacheHelper.__call__", call)
+    return patch if test_case is None else patch(test_case)

@@ -1,3 +1,4 @@
+{% load hq_shared_tags %}
 {% load i18n %}
 
 <script type="text/html"
@@ -139,12 +140,9 @@
                        'has-error': validateProperty || validateQuestion,
                      }">
         <td class="col-sm-1 text-center">
-          <a href="#"
-             class="btn btn-danger"
-             data-bind="click: $parent.removePreload,
-                        visible: !(isBlank() && $index() === $parent.case_preload().length - 1)">
+          <button class="btn btn-danger" data-bind="click: $parent.removePreload">
             <i class="fa fa-remove"></i>
-          </a>
+          </button>
         </td>
         <td class="col-sm-5">
           <div class="full-width-select2"
@@ -177,13 +175,12 @@
          data-bind="visible: !case_preload().length">
       {% trans "No properties will be loaded" %}
     </div>
-    <a href="#"
-       class="firstProperty btn btn-default"
-       data-bind="click: addPreload,
-                  visible: !case_preload().length">
-      <i class="fa fa-plus"></i>
-      {% trans "Load properties" %}
-    </a>
+    <div class="add-property">
+      <button class="btn btn-default" data-bind="click: addPreload">
+        <i class="fa fa-plus"></i>
+        {% trans "Add Property" %}
+      </button>
+    </div>
   </div>
 </script>
 
@@ -191,6 +188,17 @@
         id="case-config:case-transaction:case-properties">
   <div class="panel-heading">
     <h4 class="panel-title panel-title-nolink">
+      <div data-bind="if: searchAndFilter">
+        <div class="pull-right"
+             style="max-width: 25%; margin-top: -5px;"
+             data-bind="visible: case_properties().length">
+          <search-box data-apply-bindings="false"
+                      params="value: case_property_query,
+                              action: goToPage,
+                              immediate: true,
+                              placeholder: '{% trans_html_attr "Search properties..." %}'"></search-box>
+        </div>
+      </div>
       <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
       {% trans "Save Questions to Case Properties" %}
     </h4>
@@ -211,7 +219,7 @@
       </tr>
       </thead>
 
-      <tbody data-bind="foreach: case_properties">
+      <tbody data-bind="foreach: visible_case_properties">
       <tr class="form-group"
           data-bind="css: {
                       'has-error': validate,
@@ -219,12 +227,9 @@
                     }">
         <td class="col-sm-1 text-center"
             data-bind="if: $parent.hasPrivilege">
-          <a href="#"
-             class="btn btn-danger"
-             data-bind="click: $parent.removeProperty,
-                        visible: !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)">
+          <button class="btn btn-danger" data-bind="click: $parent.removeProperty, visible: !required()">
             <i class="fa fa-remove"></i>
-          </a>
+          </button>
         </td>
         <td class="col-sm-5">
           <div class="full-width-select2"
@@ -265,24 +270,33 @@
                                },
                                afterRenderFunc: $root.makePopover"></inline-edit>
           <!-- /ko -->
-          <!-- ko if: $data.description -->
+          <!-- ko if: $data.description() && !$parent.hasPrivilege -->
             <p data-bind="text: $data.description"></p>
           <!-- /ko -->
         </td>
       </tr>
       </tbody>
     </table>
+    <div data-bind="if: searchAndFilter">
+      <div class="pull-right" data-bind="visible: filtered_case_properties().length">
+        <pagination data-apply-bindings="false"
+                    params="goToPage: goToPage,
+                            perPage: per_page,
+                            totalItems: total_case_properties,
+                            resetFlag: pagination_reset_flag,
+                            inlinePageListOnly: true"></pagination>
+      </div>
+    </div>
     <div class="alert alert-info"
          data-bind="visible: !case_properties().length">
       {% trans "No properties will be saved" %}
     </div>
-    <a href="#"
-       class="firstProperty btn btn-default"
-       data-bind="click: addProperty,
-                  visible: !case_properties().length && $parent.hasPrivilege">
-      <i class="fa fa-plus"></i>
-      {% trans "Save properties" %}
-    </a>
+    <div class="add-property">
+      <button class="btn btn-default" data-bind="click: addProperty, visible: $parent.hasPrivilege">
+        <i class="fa fa-plus"></i>
+        {% trans "Add Property" %}
+      </button>
+    </div>
     <!-- ko if: !case_properties().length && !$parent.hasPrivilege -->
       <p>
         {% blocktrans %}

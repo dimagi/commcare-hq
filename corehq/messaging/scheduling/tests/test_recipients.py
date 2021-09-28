@@ -2,12 +2,18 @@ import contextlib
 import uuid
 from datetime import time
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from mock import patch
 
+from casexml.apps.case.tests.util import create_case
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.data_interfaces.tests.util import create_case
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+    PROFILE_SLUG,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import update_case
@@ -16,8 +22,9 @@ from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
+from corehq.apps.users.util import normalize_username
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.messaging.pillow import get_case_messaging_sync_pillow
 from corehq.messaging.scheduling.models import (
     Content,
@@ -49,28 +56,55 @@ class SchedulingRecipientTest(TestCase):
         cls.state_location = make_loc('ma', domain=cls.domain, type='state', parent=cls.country_location)
         cls.city_location = make_loc('boston', domain=cls.domain, type='city', parent=cls.state_location)
 
-        cls.mobile_user = CommCareUser.create(cls.domain, 'mobile', 'abc')
+        cls.mobile_user = CommCareUser.create(cls.domain, 'mobile', 'abc', None, None)
         cls.mobile_user.set_location(cls.city_location)
 
-        cls.mobile_user2 = CommCareUser.create(cls.domain, 'mobile2', 'abc')
+        cls.mobile_user2 = CommCareUser.create(cls.domain, 'mobile2', 'abc', None, None)
         cls.mobile_user2.set_location(cls.state_location)
 
-        cls.mobile_user3 = CommCareUser.create(cls.domain, 'mobile3', 'abc')
-        cls.mobile_user3.user_data['role'] = 'pharmacist'
+        cls.mobile_user3 = CommCareUser.create(cls.domain, 'mobile3', 'abc', None, None, metadata={
+            'role': 'pharmacist',
+        })
         cls.mobile_user3.save()
 
-        cls.mobile_user4 = CommCareUser.create(cls.domain, 'mobile4', 'abc')
-        cls.mobile_user4.user_data['role'] = 'nurse'
+        cls.mobile_user4 = CommCareUser.create(cls.domain, 'mobile4', 'abc', None, None, metadata={
+            'role': 'nurse',
+        })
         cls.mobile_user4.save()
 
-        cls.mobile_user5 = CommCareUser.create(cls.domain, 'mobile5', 'abc')
-        cls.mobile_user5.user_data['role'] = ['nurse', 'pharmacist']
+        cls.mobile_user5 = CommCareUser.create(cls.domain, 'mobile5', 'abc', None, None, metadata={
+            'role': ['nurse', 'pharmacist'],
+        })
         cls.mobile_user5.save()
 
-        cls.web_user = WebUser.create(cls.domain, 'web', 'abc')
+        full_username = normalize_username('mobile', cls.domain)
+        cls.full_mobile_user = CommCareUser.create(cls.domain, full_username, 'abc', None, None)
 
-        cls.web_user2 = WebUser.create(cls.domain, 'web2', 'abc')
-        cls.web_user2.user_data['role'] = 'nurse'
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain, field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(
+                slug='role',
+                label='Role',
+            ),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='nurse_profile',
+            fields={'role': ['nurse']},
+            definition=cls.definition,
+        )
+        cls.profile.save()
+        cls.mobile_user6 = CommCareUser.create(cls.domain, 'mobile6', 'abc', None, None, metadata={
+            PROFILE_SLUG: cls.profile.id,
+        })
+        cls.mobile_user5.save()
+
+        cls.web_user = WebUser.create(cls.domain, 'web', 'abc', None, None)
+
+        cls.web_user2 = WebUser.create(cls.domain, 'web2', 'abc', None, None, metadata={
+            'role': 'nurse',
+        })
         cls.web_user2.save()
 
         cls.group = Group(domain=cls.domain, users=[cls.mobile_user.get_id])
@@ -83,6 +117,7 @@ class SchedulingRecipientTest(TestCase):
                 cls.mobile_user3.get_id,
                 cls.mobile_user4.get_id,
                 cls.mobile_user5.get_id,
+                cls.mobile_user6.get_id,
             ]
         )
         cls.group2.save()
@@ -106,7 +141,6 @@ class SchedulingRecipientTest(TestCase):
     def user_ids(self, users):
         return [user.get_id for user in users]
 
-    @run_with_all_backends
     def test_specific_case_recipient(self):
         with create_case(self.domain, 'person') as case:
             instance = ScheduleInstance(
@@ -217,14 +251,12 @@ class SchedulingRecipientTest(TestCase):
         )
         self.assertIsNone(instance.recipient)
 
-    @run_with_all_backends
     def test_case_recipient(self):
         with create_case(self.domain, 'person') as case:
             instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id, recipient_type='Self')
             self.assertTrue(is_commcarecase(instance.recipient))
             self.assertEqual(instance.recipient.case_id, case.case_id)
 
-    @run_with_all_backends
     def test_owner_recipient(self):
         with create_case(self.domain, 'person', owner_id=self.city_location.location_id) as case:
             instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id, recipient_type='Owner')
@@ -250,7 +282,6 @@ class SchedulingRecipientTest(TestCase):
             instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id, recipient_type='Owner')
             self.assertIsNone(instance.recipient)
 
-    @run_with_all_backends
     def test_last_submitting_user_recipient(self):
         with create_test_case(self.domain, 'person', 'Joe', user_id=self.mobile_user.get_id) as case:
             instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id,
@@ -269,7 +300,6 @@ class SchedulingRecipientTest(TestCase):
                 recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER)
             self.assertIsNone(instance.recipient)
 
-    @run_with_all_backends
     def test_parent_case_recipient(self):
         with create_case(self.domain, 'person') as child, create_case(self.domain, 'person') as parent:
             instance = CaseTimedScheduleInstance(domain=self.domain, case_id=child.case_id,
@@ -281,7 +311,6 @@ class SchedulingRecipientTest(TestCase):
                 recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE)
             self.assertEqual(instance.recipient.case_id, parent.case_id)
 
-    @run_with_all_backends
     def test_child_case_recipient(self):
         with create_case(self.domain, 'person') as child_1, \
                 create_case(self.domain, 'person') as child_2, \
@@ -302,7 +331,6 @@ class SchedulingRecipientTest(TestCase):
             self.assertEqual(len(instance.recipient), 2)
             self.assertItemsEqual([c.case_id for c in instance.recipient], [child_1.case_id, child_2.case_id])
 
-    @run_with_all_backends
     def test_host_case_owner_location(self):
         with create_test_case(self.domain, 'test-extension-case', 'name') as extension_case:
             with create_test_case(self.domain, 'test-host-case', 'name') as host_case:
@@ -349,7 +377,6 @@ class SchedulingRecipientTest(TestCase):
                 )
                 self.assertIsNone(instance.recipient)
 
-    @run_with_all_backends
     def test_host_case_owner_location_parent(self):
         with create_test_case(self.domain, 'test-extension-case', 'name') as extension_case:
             with create_test_case(self.domain, 'test-host-case', 'name') as host_case:
@@ -513,7 +540,7 @@ class SchedulingRecipientTest(TestCase):
         )
         self.assertEqual(
             self.user_ids(instance.expand_recipients()),
-            [self.mobile_user4.get_id, self.mobile_user5.get_id]
+            [self.mobile_user4.get_id, self.mobile_user5.get_id, self.mobile_user6.get_id]
         )
 
     def test_web_user_recipient_with_user_data_filter(self):
@@ -544,7 +571,6 @@ class SchedulingRecipientTest(TestCase):
         self.assertIsInstance(recipients[0], WebUser)
         self.assertEqual(recipients[0].get_id, self.web_user2.get_id)
 
-    @run_with_all_backends
     def test_case_group_recipient_with_user_data_filter(self):
         # The user data filter should have no effect here because all
         # the recipients are cases.
@@ -572,7 +598,80 @@ class SchedulingRecipientTest(TestCase):
             self.assertEqual(len(recipients), 1)
             self.assertEqual(recipients[0].case_id, case.case_id)
 
-    def create_user_case(self, user):
+    def test_username_case_property_recipient(self):
+        # test valid username
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id,
+                update={'recipient': 'mobile'}
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_id='recipient'
+            )
+            self.assertEqual(instance.recipient.get_id, self.full_mobile_user.get_id)
+
+        # test invalid username
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id,
+                update={'recipient': 'mobile10'}
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_id='recipient'
+            )
+            self.assertIsNone(instance.recipient)
+
+        # test no username
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_id='recipient'
+            )
+            self.assertIsNone(instance.recipient)
+
+    def test_email_case_property_recipient(self):
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id,
+                update={'recipient': 'fake@mail.com'}
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL,
+                recipient_id='recipient'
+            )
+            self.assertEqual(instance.recipient.get_email(), 'fake@mail.com')
+
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL,
+                recipient_id='recipient'
+            )
+            self.assertIsNone(instance.recipient.get_email())
+
+    def create_usercase(self, user):
         create_case_kwargs = {
             'external_id': user.get_id,
             'update': {'hq_user_id': user.get_id},
@@ -590,24 +689,23 @@ class SchedulingRecipientTest(TestCase):
         self.assertEqual(entry.phone_number, expected_phone_number)
         self.assertTrue(entry.is_two_way)
 
-    @run_with_all_backends
     def test_one_way_numbers(self):
-        user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        self.addCleanup(user1.delete)
-        self.addCleanup(user2.delete)
-        self.addCleanup(user3.delete)
+        user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+        user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+        user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+        self.addCleanup(user1.delete, self.domain, deleted_by=None)
+        self.addCleanup(user2.delete, self.domain, deleted_by=None)
+        self.addCleanup(user3.delete, self.domain, deleted_by=None)
 
         self.assertIsNone(user1.memoized_usercase)
         self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
-        with self.create_user_case(user2) as case:
+        with self.create_usercase(user2) as case:
             self.assertIsNotNone(user2.memoized_usercase)
             self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
             self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
 
-        with self.create_user_case(user3) as case:
+        with self.create_usercase(user3) as case:
             # If the user has no number, the user case's number is used
             update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
             case = CaseAccessors(self.domain).get_case(case.case_id)
@@ -626,7 +724,6 @@ class SchedulingRecipientTest(TestCase):
             # Referencing the case directly uses the case's phone number
             self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '12345678')
 
-    @run_with_all_backends
     def test_ignoring_entries(self):
         with create_case(self.domain, 'person') as case:
             update_case(self.domain, case.case_id,
@@ -635,11 +732,7 @@ class SchedulingRecipientTest(TestCase):
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(1, only_count_two_way=True)
 
-            with patch('corehq.apps.sms.tasks.use_phone_entries') as patch1, \
-                    patch('corehq.messaging.tasks.use_phone_entries') as patch2, \
-                    patch('corehq.messaging.scheduling.models.abstract.use_phone_entries') as patch3:
-
-                patch1.return_value = patch2.return_value = patch3.return_value = False
+            with override_settings(USE_PHONE_ENTRIES=False):
                 update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '23456'})
                 case = CaseAccessors(self.domain).get_case(case.case_id)
 
@@ -649,23 +742,23 @@ class SchedulingRecipientTest(TestCase):
                 self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '23456')
 
     def _test_two_way_numbers(self, change_context_manager):
-        user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        self.addCleanup(user1.delete)
-        self.addCleanup(user2.delete)
-        self.addCleanup(user3.delete)
+        user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+        user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+        user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+        self.addCleanup(user1.delete, self.domain, deleted_by=None)
+        self.addCleanup(user2.delete, self.domain, deleted_by=None)
+        self.addCleanup(user3.delete, self.domain, deleted_by=None)
 
         self.assertIsNone(user1.memoized_usercase)
         self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
         with change_context_manager:
-            with self.create_user_case(user2) as case:
+            with self.create_usercase(user2) as case:
                 self.assertIsNotNone(user2.memoized_usercase)
                 self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
                 self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
 
-        with self.create_user_case(user3) as case:
+        with self.create_usercase(user3) as case:
             # If the user has no number, the user case's number is used
             with change_context_manager:
                 update_case(self.domain, case.case_id,
@@ -687,40 +780,32 @@ class SchedulingRecipientTest(TestCase):
             # Referencing the case directly uses the case's phone number
             self.assertTwoWayEntry(Content.get_two_way_entry_or_phone_number(case), '12345678')
 
-    @run_with_all_backends
     def test_two_way_numbers_with_signal_task(self):
         nullcontext = contextlib.suppress()
         self._test_two_way_numbers(nullcontext)
 
-    @run_with_all_backends
     @patch('corehq.messaging.signals.sync_case_for_messaging')
     def test_two_way_numbers_with_pillow(self, _):
         self._test_two_way_numbers(self.process_pillow_changes)
 
-    @run_with_all_backends
     def test_not_using_phone_entries(self):
-        with patch('corehq.apps.sms.tasks.use_phone_entries') as patch1, \
-                patch('corehq.messaging.tasks.use_phone_entries') as patch2, \
-                patch('corehq.messaging.scheduling.models.abstract.use_phone_entries') as patch3:
-
-            patch1.return_value = patch2.return_value = patch3.return_value = False
-
-            user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-            user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-            user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-            self.addCleanup(user1.delete)
-            self.addCleanup(user2.delete)
-            self.addCleanup(user3.delete)
+        with override_settings(USE_PHONE_ENTRIES=False):
+            user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+            user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+            user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+            self.addCleanup(user1.delete, self.domain, deleted_by=None)
+            self.addCleanup(user2.delete, self.domain, deleted_by=None)
+            self.addCleanup(user3.delete, self.domain, deleted_by=None)
 
             self.assertIsNone(user1.memoized_usercase)
             self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
-            with self.create_user_case(user2) as case:
+            with self.create_usercase(user2) as case:
                 self.assertIsNotNone(user2.memoized_usercase)
                 self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
                 self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
 
-            with self.create_user_case(user3) as case:
+            with self.create_usercase(user3) as case:
                 # If the user has no number, the user case's number is used
                 update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
                 case = CaseAccessors(self.domain).get_case(case.case_id)
@@ -737,10 +822,9 @@ class SchedulingRecipientTest(TestCase):
                 # Referencing the case directly uses the case's phone number
                 self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '12345678')
 
-    @run_with_all_backends
     def test_phone_number_preference(self):
-        user = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        self.addCleanup(user.delete)
+        user = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
 
         user.add_phone_number('12345')
         user.add_phone_number('23456')

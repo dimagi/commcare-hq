@@ -25,8 +25,6 @@ class Command(BaseCommand):
             help='Tells Django to NOT prompt the user for input of any kind.')
         parser.add_argument('--fake', action='store_true', dest='fake', default=False,
             help='Mark migrations as run without actually running them.')
-        parser.add_argument('--list', '-l', action='store_true', dest='list', default=False,
-            help='Show a list of all known migrations and which are applied.')
 
     def handle(self, app_label, migration_name, **options):
         args = []
@@ -40,11 +38,7 @@ class Command(BaseCommand):
         def migrate_db(db_alias, options=options):
             call_options = copy(options)
             call_options['database'] = db_alias
-            call_command(
-                'migrate',
-                *args,
-                **call_options
-            )
+            call_command('migrate', *args, **call_options)
 
         dbs_to_migrate = [
             db_alias

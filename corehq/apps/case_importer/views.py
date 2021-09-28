@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from corehq.apps.hqwebapp.decorators import waf_allow
 from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
@@ -30,7 +31,9 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.util.workbook_reading import SpreadsheetFileExtError
+from corehq.util.view_utils import absolute_reverse
+from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError, SpreadsheetFileInvalidError
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
@@ -64,6 +67,7 @@ def _case_importer_breadcrumb_context(page_name, domain):
     }
 
 
+@waf_allow('XSS_BODY')
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
 def excel_config(request, domain):
@@ -81,7 +85,9 @@ def excel_config(request, domain):
 
     uploaded_file_handle = request.FILES['file']
     try:
-        case_upload, context = _process_file_and_get_upload(uploaded_file_handle, request, domain)
+        case_upload, context = _process_file_and_get_upload(
+            uploaded_file_handle, request, domain, max_columns=MAX_CASE_IMPORTER_COLUMNS
+        )
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
     except SpreadsheetFileExtError:
@@ -91,15 +97,15 @@ def excel_config(request, domain):
     return render(request, "case_importer/excel_config.html", context)
 
 
-def _process_file_and_get_upload(uploaded_file_handle, request, domain):
+def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_columns=None):
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
 
     # NOTE: We may not always be able to reference files from subsequent
     # views if your worker changes, so we have to store it elsewhere
     # using the soil framework.
 
-    if extension not in importer_util.ALLOWED_EXTENSIONS:
-        return render_error(request, domain, _(
+    if extension not in valid_extensions:
+        raise SpreadsheetFileExtError(_(
             'The file you chose could not be processed. '
             'Please check that it is saved as a Microsoft '
             'Excel file.'
@@ -111,7 +117,7 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain):
                                     domain=domain)
 
     request.session[EXCEL_SESSION_ID] = case_upload.upload_id
-    
+
     case_upload.check_file()
     invalid_column_names = set()
     with case_upload.get_spreadsheet() as spreadsheet:
@@ -128,23 +134,23 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain):
         raise ImporterRawError(error_message)
 
     if row_count == 0:
-        raise ImporterError('Your spreadsheet is empty. Please try again with a different spreadsheet.')
+        raise ImporterError(_('Your spreadsheet is empty. Please try again with a different spreadsheet.'))
 
-    if len(columns) > MAX_CASE_IMPORTER_COLUMNS:
-        raise ImporterError(
+    if max_columns is not None and len(columns) > max_columns:
+        raise ImporterError(_(
             'Your spreadsheet has too many columns. '
             'A maximum of %(max_columns)s is supported.'
-            % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
+        ) % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
 
     case_types_from_apps = sorted(get_case_types_from_apps(domain))
     unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
                                       if t not in case_types_from_apps])
 
     if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
-        raise ImporterError(
-            'No cases have been submitted to this domain and there are no '
-            'applications yet. You cannot import case details from an Excel '
-            'file until you have existing cases or applications.')
+        raise ImporterError(_(
+            'Your project does not use cases yet. To import cases from Excel, '
+            'you must first create an application with a case list.'
+        ))
 
     context = {
         'columns': columns,
@@ -215,6 +221,12 @@ def excel_fields(request, domain):
     if search_column in excel_fields:
         excel_fields.remove(search_column)
 
+    # 'domain' case property cannot be created if domain mirror flag is enabled,
+    # as this enables a multi-domain case import.
+    # see: https://dimagi-dev.atlassian.net/browse/USH-81
+    if 'domain' in excel_fields and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        excel_fields.remove('domain')
+
     field_specs = get_suggested_case_fields(
         domain, case_type, exclude=[search_field])
 
@@ -266,20 +278,7 @@ def excel_commit(request, domain):
     return HttpResponseRedirect(base.ImportCases.get_url(domain))
 
 
-def _get_bulk_case_upload_args_from_request(request, domain):
-    try:
-        upload_file = request.FILES["file"]
-        case_type = request.POST["case_type"]
-        search_field = request.POST['search_field']
-        create_new_cases = request.POST.get('create_new_cases') == 'on'
-        search_column = request.POST['search_column']
-        return upload_file, case_type, search_field, create_new_cases, search_column
-    except Exception:
-        raise ImporterError(
-                "Invalid post request."
-                "Submit the form with field 'file' and the required params")
-
-
+@waf_allow('XSS_BODY')
 @csrf_exempt
 @require_POST
 @api_auth
@@ -291,12 +290,38 @@ def bulk_case_upload_api(request, domain, **kwargs):
     except ImporterError as e:
         error = get_importer_error_message(e)
     except SpreadsheetFileExtError:
-        error = "Please upload file with extension .xls or .xlsx"
-        return json_response({'error_msg': _(error)})
+        error = "Please upload file with one of the following extensions: {}".format(
+            ', '.join(valid_extensions)
+        )
+    except SpreadsheetFileInvalidError as e:
+        error = str(e)
+    return json_response({'code': 500, 'message': error}, status_code=500)
 
 
 def _bulk_case_upload_api(request, domain):
-    upload_file, case_type, search_field, create_new_cases, search_column =_get_bulk_case_upload_args_from_request(request, domain)
+    try:
+        upload_file = request.FILES["file"]
+        case_type = request.POST["case_type"]
+        if not upload_file or not case_type:
+            raise Exception
+    except Exception:
+        raise ImporterError("Invalid POST request. "
+        "Both 'file' and 'case_type' are required")
+
+    search_field = request.POST.get('search_field', 'case_id')
+    create_new_cases = request.POST.get('create_new_cases') == 'on'
+
+    if search_field == 'case_id':
+        default_search_column = 'case_id'
+    elif search_field == 'external_id':
+        default_search_column = 'external_id'
+    else:
+        raise ImporterError("Illegal value for search_field: %s" % search_field)
+
+    search_column = request.POST.get('search_column', default_search_column)
+    name_column = request.POST.get('name_column', 'name')
+
+    upload_comment = request.POST.get('comment')
 
     case_upload, context = _process_file_and_get_upload(upload_file, request, domain)
 
@@ -313,11 +338,12 @@ def _bulk_case_upload_api(request, domain):
     custom_fields = []
     case_fields = []
 
-    #populate field arrays
+    #Create the field arrays for the importer in the same format
+    #as the "Step 2" Web UI from the manual process
     for f in excel_fields:
-        if f == "name":
+        if f == name_column:
             custom_fields.append("")
-            case_fields.append(f)
+            case_fields.append("name")
         else:
             custom_fields.append(f)
             case_fields.append("")
@@ -332,5 +358,9 @@ def _bulk_case_upload_api(request, domain):
             search_field=search_field,
             create_new_cases=create_new_cases)
 
-    case_upload.trigger_upload(domain, config)
-    return json_response({"msg": "success"})
+    case_upload.trigger_upload(domain, config, comment=upload_comment)
+
+    upload_id = case_upload.upload_id
+    status_url = absolute_reverse('case_importer_upload_status', args=(domain, upload_id))
+
+    return json_response({"code": 200, "message": "success", "status_url": status_url})

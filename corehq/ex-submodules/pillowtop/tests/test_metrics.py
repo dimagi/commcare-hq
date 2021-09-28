@@ -24,38 +24,24 @@ class TestPillowMetrics(SimpleTestCase):
         metrics = self._get_metrics([self._get_change()])
         self.assertEqual(set(metrics.to_flattened_dict()), {
             'commcare.change_feed.changes.count.datasource:test_commcarehq',
-            'commcare.change_feed.changes.count.is_deletion:False',
             'commcare.change_feed.changes.count.pillow_name:fake pillow',
-            'commcare.change_feed.changes.count.processor:all_processors',
+            'commcare.change_feed.changes.count.case_type:NA',
             'commcare.change_feed.change_lag.pillow_name:fake pillow',
             'commcare.change_feed.change_lag.topic:case',
-            'commcare.change_feed.processing_time.total.datasource:test_commcarehq',
-            'commcare.change_feed.processing_time.total.is_deletion:False',
             'commcare.change_feed.processing_time.total.pillow_name:fake pillow',
-            'commcare.change_feed.processing_time.total.processor:all_processors',
-            'commcare.change_feed.processing_time.count.datasource:test_commcarehq',
-            'commcare.change_feed.processing_time.count.is_deletion:False',
             'commcare.change_feed.processing_time.count.pillow_name:fake pillow',
-            'commcare.change_feed.processing_time.count.processor:all_processors',
         })
 
     def test_basic_metrics_with_partition(self):
         metrics = self._get_metrics([self._get_change_with_partition()])
         self.assertEqual(set(metrics.to_flattened_dict()), {
             'commcare.change_feed.changes.count.datasource:test_commcarehq',
-            'commcare.change_feed.changes.count.is_deletion:False',
             'commcare.change_feed.changes.count.pillow_name:fake pillow',
-            'commcare.change_feed.changes.count.processor:all_processors',
+            'commcare.change_feed.changes.count.case_type:NA',
             'commcare.change_feed.change_lag.pillow_name:fake pillow',
             'commcare.change_feed.change_lag.topic:case-1',
-            'commcare.change_feed.processing_time.total.datasource:test_commcarehq',
-            'commcare.change_feed.processing_time.total.is_deletion:False',
             'commcare.change_feed.processing_time.total.pillow_name:fake pillow',
-            'commcare.change_feed.processing_time.total.processor:all_processors',
-            'commcare.change_feed.processing_time.count.datasource:test_commcarehq',
-            'commcare.change_feed.processing_time.count.is_deletion:False',
             'commcare.change_feed.processing_time.count.pillow_name:fake pillow',
-            'commcare.change_feed.processing_time.count.processor:all_processors',
         })
 
     @override_settings(ENTERPRISE_MODE=True)

@@ -20,6 +20,11 @@ class XPathField(StringField):
     pass
 
 
+class BooleanField(SimpleBooleanField):
+    def __init__(self, xpath, *args, **kwargs):
+        return super().__init__(xpath, 'true', 'false', *args, **kwargs)
+
+
 class OrderedXmlObject(XmlObject):
     ORDER = ()
 
@@ -204,6 +209,7 @@ class LocaleResource(AbstractResource):
 class MediaResource(AbstractResource):
     ROOT_NAME = 'media'
     path = StringField('@path')
+    lazy = BooleanField('resource/@lazy')
 
 
 class PracticeUserRestoreResource(AbstractResource):
@@ -212,10 +218,23 @@ class PracticeUserRestoreResource(AbstractResource):
 
 class Display(OrderedXmlObject):
     ROOT_NAME = 'display'
-    ORDER = ('text', 'media_image', 'media_audio')
+    ORDER = ('text', 'media_image', 'media_audio', 'hint')
     text = NodeField('text', Text)
     media_image = StringField('media/@image')
     media_audio = StringField('media/@audio')
+    hint = NodeField('hint', 'self')
+
+
+class Hint(Display):
+    ROOT_NAME = 'hint'
+
+
+class Itemset(XmlObject):
+    ROOT_NAME = 'itemset'
+    nodeset = StringField('@nodeset')
+    value_ref = StringField('value/@ref')
+    label_ref = StringField('label/@ref')
+    sort_ref = StringField('sort/@ref')
 
 
 class DisplayNode(XmlObject):
@@ -227,23 +246,19 @@ class DisplayNode(XmlObject):
     text = NodeField('text', Text)
     display = NodeField('display', Display)
 
-    def __init__(self, node=None, context=None,
-                 locale_id=None, enum_text=None,
+    def __init__(self, node=None, context=None, locale_id=None,
                  media_image=None, media_audio=None, **kwargs):
         super(DisplayNode, self).__init__(node, context, **kwargs)
         self.set_display(
             locale_id=locale_id,
-            enum_text=enum_text,
             media_image=media_image,
             media_audio=media_audio,
         )
 
-    def set_display(self, locale_id=None, enum_text=None, media_image=None, media_audio=None):
+    def set_display(self, locale_id=None, media_image=None, media_audio=None):
         text = None
         if locale_id:
             text = Text(locale_id=locale_id)
-        elif enum_text:
-            text = enum_text
 
         if media_image or media_audio:
             self.display = Display(
@@ -279,14 +294,12 @@ class TextOrDisplay(XmlObject):
     display = NodeField('display', LocalizedMediaDisplay)
 
     def __init__(self, node=None, context=None, custom_icon_locale_id=None, custom_icon_form=None,
-                 custom_icon_xpath=None, menu_locale_id=None, menu_enum_text=None, image_locale_id=None,
+                 custom_icon_xpath=None, menu_locale_id=None, image_locale_id=None,
                  audio_locale_id=None, media_image=None, media_audio=None, for_action_menu=False, **kwargs):
         super(TextOrDisplay, self).__init__(node, context, **kwargs)
         text = None
         if menu_locale_id:
             text = Text(locale_id=menu_locale_id)
-        elif menu_enum_text:
-            text = menu_enum_text
 
         media_text = []
         if media_image:
@@ -365,7 +378,7 @@ class SessionDatum(IdNode, OrderedXmlObject):
     detail_confirm = StringField('@detail-confirm')
     detail_persistent = StringField('@detail-persistent')
     detail_inline = StringField('@detail-inline')
-    autoselect = SimpleBooleanField('@autoselect', true="true", false="false")
+    autoselect = BooleanField('@autoselect')
 
 
 class StackDatum(IdNode):
@@ -437,11 +450,55 @@ class Stack(XmlObject):
         self.node.append(frame.node)
 
 
+class Argument(IdNode):
+    ROOT_NAME = 'argument'
+
+
+class SessionEndpoint(IdNode):
+    ROOT_NAME = 'endpoint'
+
+    arguments = NodeListField('argument', Argument)
+    stack = NodeField('stack', Stack)
+
+
 class Assertion(XmlObject):
     ROOT_NAME = 'assert'
 
     test = XPathField('@test')
     text = NodeListField('text', Text)
+
+
+class QueryData(XmlObject):
+    ROOT_NAME = 'data'
+
+    key = StringField('@key')
+    ref = XPathField('@ref')
+
+
+class QueryPrompt(DisplayNode):
+    ROOT_NAME = 'prompt'
+
+    key = StringField('@key')
+    appearance = StringField('@appearance', required=False)
+    receive = StringField('@receive', required=False)
+    hidden = BooleanField('@hidden', required=False)
+    input_ = StringField('@input', required=False)
+    default_value = StringField('@default', required=False)
+    allow_blank_value = BooleanField('@allow_blank_value', required=False)
+
+    itemset = NodeField('itemset', Itemset)
+
+
+class RemoteRequestQuery(OrderedXmlObject, XmlObject):
+    ROOT_NAME = 'query'
+    ORDER = ('data', 'prompts')
+
+    url = StringField('@url')
+    storage_instance = StringField('@storage-instance')
+    template = StringField('@template')
+    data = NodeListField('data', QueryData)
+    prompts = NodeListField('prompt', QueryPrompt)
+    default_search = BooleanField("@default_search")
 
 
 class Entry(OrderedXmlObject, XmlObject):
@@ -453,6 +510,7 @@ class Entry(OrderedXmlObject, XmlObject):
     instances = NodeListField('instance', Instance)
 
     datums = NodeListField('session/datum', SessionDatum)
+    queries = NodeListField('session/query', RemoteRequestQuery)
 
     stack = NodeField('stack', Stack)
 
@@ -492,36 +550,12 @@ class Entry(OrderedXmlObject, XmlObject):
             self.instances = sorted_instances
 
 
-class QueryData(XmlObject):
-    ROOT_NAME = 'data'
-
-    key = StringField('@key')
-    ref = XPathField('@ref')
-
-
-class QueryPrompt(DisplayNode):
-    ROOT_NAME = 'prompt'
-
-    key = StringField('@key')
-
-
 class RemoteRequestPost(XmlObject):
     ROOT_NAME = 'post'
 
     url = StringField('@url')
     relevant = StringField('@relevant')
     data = NodeListField('data', QueryData)
-
-
-class RemoteRequestQuery(OrderedXmlObject, XmlObject):
-    ROOT_NAME = 'query'
-    ORDER = ('data', 'prompts')
-
-    url = StringField('@url')
-    storage_instance = StringField('@storage-instance')
-    template = StringField('@template')
-    data = NodeListField('data', QueryData)
-    prompts = NodeListField('prompt', QueryPrompt)
 
 
 class RemoteRequestSession(OrderedXmlObject, XmlObject):
@@ -703,7 +737,7 @@ class Lookup(OrderedXmlObject):
     ORDER = ('auto_launch', 'extras', 'responses', 'field')
 
     name = StringField("@name")
-    auto_launch = SimpleBooleanField("@auto_launch", "true", "false")
+    auto_launch = BooleanField("@auto_launch")
     action = StringField("@action", required=True)
     image = StringField("@image")
     extras = NodeListField('extra', Extra)
@@ -717,6 +751,8 @@ class ActionMixin(OrderedXmlObject):
 
     stack = NodeField('stack', Stack)
     relevant = XPathField('@relevant')
+    auto_launch = StringField("@auto_launch")
+    redo_last = BooleanField("@redo_last")
 
 
 class Action(ActionMixin):
@@ -831,7 +867,7 @@ class Detail(OrderedXmlObject, IdNode):
 
         for field in self.fields:
             if field.template.form == 'graph':
-                s = etree.tostring(field.template.node)
+                s = etree.tostring(field.template.node, encoding='utf-8')
                 template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
                 result.update(_get_graph_config_xpaths(template.graph.configuration))
                 for series in template.graph.series:
@@ -903,6 +939,7 @@ class Suite(OrderedXmlObject):
     details = NodeListField('detail', Detail)
     entries = NodeListField('entry', Entry)
     menus = NodeListField('menu', Menu)
+    endpoints = NodeListField('endpoint', SessionEndpoint)
     remote_requests = NodeListField('remote-request', RemoteRequest)
 
     fixtures = NodeListField('fixture', Fixture)

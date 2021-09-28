@@ -40,7 +40,6 @@ from soil.progress import set_task_progress
 from corehq import feature_previews
 from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
-    get_case_properties,
 )
 from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
@@ -554,6 +553,16 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
                 ))
         return rows
 
+    @staticmethod
+    def _create_index(_path, _transform):
+        return f'{_path_nodes_to_string(_path)} t.{_transform}'
+
+    def _regenerate_column_cache(self):
+        self._string_column_paths = [
+            self._create_index(column.item.path, column.item.transform)
+            for column in self.columns
+        ]
+
     def get_column(self, item_path, item_doc_type, column_transform):
         """
         Given a path and transform, will return the column and its index. If not found, will
@@ -566,46 +575,46 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
         :returns index, column: The index of the column in the list and an ExportColumn
         """
 
-        def _create_index(_path, _transform):
-            return f'{_path_nodes_to_string(_path)} t.{_transform}'
-
-        string_item_path = _create_index(item_path, column_transform)
+        string_item_path = self._create_index(item_path, column_transform)
 
         # Previously we iterated over self.columns with each call to return the
         # index. Now we do an index lookup on the string-ified path names for
         # self.columns and regenerate it only when the length of self.columns
-        # changes, which probably happens due to some couch db magic in the bg:
+        # changes. This happens frequently when the table is being constructed.
         if (not hasattr(self, '_string_column_paths')
                 or len(self._string_column_paths) != len(self.columns)):
-            self._string_column_paths = [
-                _create_index(column.item.path, column.item.transform)
-                for column in self.columns
-            ]
+            self._regenerate_column_cache()
 
-        try:
-            index = self._string_column_paths.index(string_item_path)
+        # While unlikely, it is possible for the same path to be used for multiple items.
+        # This can occur, for example, when a new reserved case property is introduced.
+        # In this case, the reserved property will be an 'ExportItem', while a user-defined
+        #  case property would be a 'ScalarItem'.
+        # If we can ensure that paths are one-to-one with items, this can be removed in the future.
+        indices = [index for (index, path) in enumerate(self._string_column_paths) if path == string_item_path]
+        for index in indices:
             column = self.columns[index]
-            # on rare occasions, the paths may not match,
-            # and it's a sign to regenerate the cache
+
+            # The column cache can currently get out of sync because other code directly modifies
+            # the columns. For example, ExportInstance._move_selected_columns_to_top just completely
+            # overwrites column order without updating our cache.
+            # TODO: Modify code such that all table manipulation is done through this class
             if column.item.path != item_path:
-                self._string_column_paths = [
-                    _create_index(column.item.path, column.item.transform)
-                    for column in self.columns
-                ]
+                self._regenerate_column_cache()
                 index = self._string_column_paths.index(string_item_path)
                 column = self.columns[index]
-        except ValueError:
-            return None, None
 
-        if (column.item.path == item_path
-                and column.item.transform == column_transform
-                and column.item.doc_type == item_doc_type):
-            return index, column
-        # No item doc type searches for a UserDefinedExportColumn
-        elif (isinstance(column, UserDefinedExportColumn)
-                and column.custom_path == item_path
-                and item_doc_type is None):
-            return index, column
+            # Despite the column being found based on a key containing the item_path and transform,
+            # both still need to be checked here to prevent the edge case where the the path or the transform
+            # contain formatting that makes them blend together.
+            if (column.item.path == item_path
+                    and column.item.transform == column_transform
+                    and column.item.doc_type == item_doc_type):
+                return index, column
+            elif (isinstance(column, UserDefinedExportColumn)
+                    and column.custom_path == item_path
+                    and item_doc_type is None):
+                return index, column
+
         return None, None
 
     @memoized
@@ -704,6 +713,11 @@ class ExportInstanceFilters(DocumentSchema):
             return True
         elif self.can_access_all_locations:
             return False
+        elif not self.accessible_location_ids:
+            # if accessible_location_ids is empty, then in theory the user could
+            # have access to all data if can_access_all_locations was ever set
+            # to False. We need to prevent this from ever happening.
+            return False
         else:  # It can be restricted by location
             users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(
                 request.domain, request.couch_user
@@ -744,7 +758,7 @@ class ExportInstance(BlobMixin, Document):
     # Whether to automatically convert dates to excel dates
     transform_dates = BooleanProperty(default=True)
 
-    # Whether to typset the cells in Excel 2007+ exports
+    # Whether to typeset the cells in Excel 2007+ exports
     format_data_in_excel = BooleanProperty(default=False)
 
     # Whether the export is de-identified
@@ -757,6 +771,8 @@ class ExportInstance(BlobMixin, Document):
 
     is_daily_saved_export = BooleanProperty(default=False)
     auto_rebuild_enabled = BooleanProperty(default=True)
+
+    show_det_config_download = BooleanProperty(default=False)
 
     # daily saved export fields:
     last_updated = DateTimeProperty()
@@ -821,16 +837,16 @@ class ExportInstance(BlobMixin, Document):
         return None
 
     @classmethod
-    def _new_from_schema(cls, schema):
+    def _new_from_schema(cls, schema, export_settings=None):
         raise NotImplementedError()
 
     @classmethod
-    def generate_instance_from_schema(cls, schema, saved_export=None, auto_select=True):
+    def generate_instance_from_schema(cls, schema, saved_export=None, auto_select=True, export_settings=None):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
         if saved_export:
             instance = saved_export
         else:
-            instance = cls._new_from_schema(schema)
+            instance = cls._new_from_schema(schema, export_settings)
 
         instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
         instance.app_id = schema.app_id
@@ -1114,11 +1130,19 @@ class CaseExportInstance(ExportInstance):
         return self.case_type
 
     @classmethod
-    def _new_from_schema(cls, schema):
-        return cls(
-            domain=schema.domain,
-            case_type=schema.case_type,
-        )
+    def _new_from_schema(cls, schema, export_settings=None):
+        if export_settings is not None:
+            return cls(
+                domain=schema.domain,
+                case_type=schema.case_type,
+                export_format=export_settings.cases_filetype,
+                transform_dates=export_settings.cases_auto_convert,
+            )
+        else:
+            return cls(
+                domain=schema.domain,
+                case_type=schema.case_type,
+            )
 
     def get_filters(self):
         if self.filters:
@@ -1183,12 +1207,23 @@ class FormExportInstance(ExportInstance):
         return xmlns_to_name(self.domain, self.xmlns, self.app_id)
 
     @classmethod
-    def _new_from_schema(cls, schema):
-        return cls(
-            domain=schema.domain,
-            xmlns=schema.xmlns,
-            app_id=schema.app_id,
-        )
+    def _new_from_schema(cls, schema, export_settings=None):
+        if export_settings is not None:
+            return cls(
+                domain=schema.domain,
+                xmlns=schema.xmlns,
+                app_id=schema.app_id,
+                export_format=export_settings.forms_filetype,
+                transform_dates=export_settings.forms_auto_convert,
+                format_data_in_excel=export_settings.forms_auto_format_cells,
+                split_multiselects=export_settings.forms_expand_checkbox,
+            )
+        else:
+            return cls(
+                domain=schema.domain,
+                xmlns=schema.xmlns,
+                app_id=schema.app_id,
+            )
 
     def get_filters(self):
         if self.filters:
@@ -1214,7 +1249,7 @@ class SMSExportInstance(ExportInstance):
     name = "Messages"
 
     @classmethod
-    def _new_from_schema(cls, schema):
+    def _new_from_schema(cls, schema, export_settings=None):
         main_table = TableConfiguration(
             label='Messages',
             path=MAIN_TABLE,
@@ -1823,7 +1858,7 @@ class FormExportDataSchema(ExportDataSchema):
         xform_schema = cls._generate_schema_from_xform(
             xform,
             app.langs,
-            app.master_id,  # If it's not a copy, must be current
+            app.origin_id,  # If it's not a copy, must be current
             app.version,
         )
 
@@ -2132,18 +2167,18 @@ class CaseExportDataSchema(ExportDataSchema):
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
             parent_types,
-            app.master_id,  # If not copy, must be current app
+            app.origin_id,  # If not copy, must be current app
             app.version,
         ))
         if any([relationship_tuple[1] in ['parent', 'host'] for relationship_tuple in parent_types]):
             case_schemas.append(cls._generate_schema_for_parent_case(
-                app.master_id,
+                app.origin_id,
                 app.version,
             ))
 
         case_schemas.append(cls._generate_schema_for_case_history(
             case_property_mapping,
-            app.master_id,
+            app.origin_id,
             app.version,
         ))
         case_schemas.append(current_schema)
@@ -2590,7 +2625,7 @@ class CaseIndexExportColumn(ExportColumn):
         case_type = self.item.case_type
 
         indices = NestedDictGetter(path)(doc) or []
-        case_ids = [index.get('referenced_id') for index in [index for index in indices if index.get('referenced_type') == case_type]]
+        case_ids = [index.get('referenced_id') for index in indices if index.get('referenced_type') == case_type]
         return ' '.join(case_ids)
 
 
@@ -2770,7 +2805,7 @@ class DataFile(object):
     def get_blob(self):
         db = get_blob_db()
         try:
-            blob = db.get(key=self._meta.key)
+            blob = db.get(meta=self._meta)
         except (KeyError, NotFound) as err:
             raise NotFound(str(err))
         return blob

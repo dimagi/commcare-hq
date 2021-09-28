@@ -246,6 +246,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
         raise Http404()
 
 
+@quickcache(['domain', 'include_remote'], timeout=24 * 60 * 60)
 def get_apps_in_domain(domain, include_remote=True):
     from .models import Application
     from corehq.apps.app_manager.util import get_correct_app_class
@@ -306,22 +307,6 @@ def get_apps_by_id(domain, app_ids):
         app_ids = [app_ids]
     docs = iter_docs(Application.get_db(), app_ids)
     return [get_correct_app_class(doc).wrap(doc) for doc in docs]
-
-
-def get_built_app_ids(domain):
-    """
-    Returns the app ids of all apps in the domain that have at least one build.
-    """
-    from .models import Application
-    result = Application.get_db().view(
-        'app_manager/saved_app',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=False,
-    )
-    app_ids = [data.get('value', {}).get('copy_of') for data in result]
-    app_ids = list(set(app_ids))
-    return [app_id for app_id in app_ids if app_id]
 
 
 def get_build_ids_after_version(domain, app_id, version):
@@ -461,20 +446,6 @@ def get_all_apps(domain):
         return map(correct_wrap, iter_docs(Application.get_db(), saved_app_ids))
 
     return chain(get_apps_in_domain(domain), _saved_apps())
-
-
-def get_all_app_ids(domain):
-    """
-    Returns a list of all the app_ids ever built and current Applications.
-    """
-    from .models import Application
-    results = Application.get_db().view(
-        'app_manager/saved_app',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=False,
-    ).all()
-    return [result['id'] for result in results]
 
 
 def get_all_built_app_ids_and_versions(domain, app_id=None):

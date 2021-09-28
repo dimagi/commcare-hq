@@ -1,16 +1,18 @@
 from datetime import datetime
 
 from django.contrib import messages
-from django.db.models.expressions import RawSQL
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext, ugettext_lazy
 from django.views import View
 
+from couchdbkit import ResourceNotFound
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
+from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -22,54 +24,98 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.util import is_linked_app
-from corehq.apps.case_search.models import (
-    CaseSearchConfig,
-    CaseSearchQueryAddition,
-)
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_or_api_key,
 )
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
+from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag
+from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
-from corehq.apps.linked_domain.const import LINKED_MODELS, LINKED_MODELS_MAP
-from corehq.apps.linked_domain.dbaccessors import (
-    get_domain_master_link,
-    get_linked_domains,
+from corehq.apps.linked_domain.const import (
+    LINKED_MODELS_MAP,
+    MODEL_APP,
+    MODEL_FIXTURE,
+    MODEL_KEYWORD,
+    MODEL_REPORT,
+    SUPERUSER_DATA_MODELS,
 )
-from corehq.apps.linked_domain.decorators import require_linked_domain
+from corehq.apps.linked_domain.dbaccessors import (
+    get_available_domains_to_link,
+    get_available_upstream_domains,
+    get_linked_domains,
+    get_upstream_domain_link,
+)
+from corehq.apps.linked_domain.decorators import require_linked_domain, require_access_to_linked_domains
+from corehq.apps.linked_domain.exceptions import (
+    DomainLinkError,
+    UnsupportedActionError,
+)
 from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
-    get_toggles_previews,
+    get_data_dictionary,
+    get_dialer_settings,
+    get_enabled_toggles_and_previews,
+    get_fixture,
+    get_hmac_callout_settings,
+    get_otp_settings,
     get_user_roles,
+    get_tableau_server_and_visualizations,
 )
 from corehq.apps.linked_domain.models import (
-    AppLinkDetail,
     DomainLink,
     DomainLinkHistory,
     wrap_detail,
 )
+from corehq.apps.linked_domain.remote_accessors import get_remote_linkable_ucr
 from corehq.apps.linked_domain.tasks import (
     pull_missing_multimedia_for_app_and_notify_task,
+    push_models,
 )
+from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
     pull_missing_multimedia_for_app,
     server_to_user_time,
 )
+from corehq.apps.linked_domain.view_helpers import (
+    build_domain_link_view_model,
+    build_pullable_view_models_from_data_models,
+    build_view_models_from_data_models,
+    get_upstream_and_downstream_apps,
+    get_upstream_and_downstream_fixtures,
+    get_upstream_and_downstream_keywords,
+    get_upstream_and_downstream_reports,
+)
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from corehq.apps.reports.dispatcher import DomainReportDispatcher
+from corehq.apps.reports.dispatcher import ReleaseManagementReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.sms.models import Keyword
+from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
+from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
 @login_or_api_key
 @require_linked_domain
+def tableau_server_and_visualizations(request, domain):
+    return JsonResponse(get_tableau_server_and_visualizations(domain))
+
+
+@login_or_api_key
+@require_linked_domain
 def toggles_and_previews(request, domain):
-    return JsonResponse(get_toggles_previews(domain))
+    return JsonResponse(get_enabled_toggles_and_previews(domain))
 
 
 @login_or_api_key
@@ -77,6 +123,12 @@ def toggles_and_previews(request, domain):
 def custom_data_models(request, domain):
     limit_types = request.GET.getlist('type')
     return JsonResponse(get_custom_data_models(domain, limit_types))
+
+
+@login_or_api_key
+@require_linked_domain
+def fixture(request, domain, tag):
+    return JsonResponse(get_fixture(domain, tag))
 
 
 @login_or_api_key
@@ -111,12 +163,38 @@ def case_search_config(request, domain):
     except CaseSearchConfig.DoesNotExist:
         config = None
 
-    try:
-        addition = CaseSearchQueryAddition.objects.get(domain=domain).to_json()
-    except CaseSearchQueryAddition.DoesNotExist:
-        addition = None
+    return JsonResponse({'config': config})
 
-    return JsonResponse({'config': config, 'addition': addition})
+
+@login_or_api_key
+@require_linked_domain
+@require_permission(Permissions.view_reports)
+def linkable_ucr(request, domain):
+    """Returns a list of reports to be used by the downstream
+    domain on a remote server to create linked reports by calling the
+    `ucr_config` view below
+
+    """
+    reports = get_report_configs_for_domain(domain)
+    return JsonResponse({
+        "reports": [
+            {"id": report._id, "title": report.title} for report in reports]
+    })
+
+
+@login_or_api_key
+@require_linked_domain
+def ucr_config(request, domain, config_id):
+    report_config = ReportConfiguration.get(config_id)
+    if report_config.domain != domain:
+        return Http404
+    datasource_id = report_config.config_id
+    datasource_config = DataSourceConfiguration.get(datasource_id)
+
+    return JsonResponse({
+        "report": report_config.to_json(),
+        "datasource": datasource_config.to_json(),
+    })
 
 
 @login_or_api_key
@@ -133,6 +211,30 @@ def get_latest_released_app_source(request, domain, app_id):
     return JsonResponse(convert_app_for_remote_linking(latest_master_build))
 
 
+@login_or_api_key
+@require_linked_domain
+def data_dictionary(request, domain):
+    return JsonResponse(get_data_dictionary(domain))
+
+
+@login_or_api_key
+@require_linked_domain
+def dialer_settings(request, domain):
+    return JsonResponse(get_dialer_settings(domain))
+
+
+@login_or_api_key
+@require_linked_domain
+def otp_settings(request, domain):
+    return JsonResponse(get_otp_settings(domain))
+
+
+@login_or_api_key
+@require_linked_domain
+def hmac_callout_settings(request, domain):
+    return JsonResponse(get_hmac_callout_settings(domain))
+
+
 @require_can_edit_apps
 def pull_missing_multimedia(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
@@ -147,101 +249,72 @@ def pull_missing_multimedia(request, domain, app_id):
     return HttpResponseRedirect(reverse('app_settings', args=[domain, app_id]))
 
 
+@method_decorator(require_access_to_linked_domains, name='dispatch')
 class DomainLinkView(BaseAdminProjectSettingsView):
     urlname = 'domain_links'
-    page_title = ugettext_lazy("Linked Projects")
+    page_title = ugettext_lazy("Linked Project Spaces")
     template_name = 'linked_domain/domain_links.html'
+
+    @use_multiselect
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
+        """
+        This view services both domains that are master domains and domains that are linked domains
+        (and legacy domains that are both).
+        """
         timezone = get_timezone_for_request()
+        upstream_link = get_upstream_domain_link(self.domain)
+        linked_domains = [build_domain_link_view_model(link, timezone) for link in get_linked_domains(self.domain)]
+        upstream_apps, downstream_apps = get_upstream_and_downstream_apps(self.domain)
+        upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.domain, upstream_link)
+        upstream_reports, downstream_reports = get_upstream_and_downstream_reports(self.domain)
+        upstream_keywords, downstream_keywords = get_upstream_and_downstream_keywords(self.domain)
 
-        def _link_context(link, timezone=timezone):
-            return {
-                'linked_domain': link.linked_domain,
-                'master_domain': link.qualified_master,
-                'remote_base_url': link.remote_base_url,
-                'is_remote': link.is_remote,
-                'last_update': server_to_user_time(link.last_pull, timezone) if link.last_pull else 'Never',
-            }
+        is_superuser = self.request.couch_user.is_superuser
+        timezone = get_timezone_for_request()
+        view_models_to_pull = build_pullable_view_models_from_data_models(
+            self.domain, upstream_link, downstream_apps, downstream_fixtures, downstream_reports,
+            downstream_keywords, timezone, is_superuser=is_superuser
+        )
 
-        model_status = []
-        linked_models = dict(LINKED_MODELS)
-        master_link = get_domain_master_link(self.domain)
-        if master_link:
-            linked_apps = {
-                app._id: app for app in get_brief_apps_in_domain(self.domain)
-                if is_linked_app(app)
-            }
-            models_seen = set()
-            history = DomainLinkHistory.objects.filter(link=master_link).annotate(row_number=RawSQL(
-                'row_number() OVER (PARTITION BY model, model_detail ORDER BY date DESC)',
-                []
-            ))
-            for action in history:
-                models_seen.add(action.model)
-                if action.row_number != 1:
-                    # first row is the most recent
-                    continue
-                name = linked_models[action.model]
-                update = {
-                    'type': action.model,
-                    'name': name,
-                    'last_update': server_to_user_time(action.date, timezone),
-                    'detail': action.model_detail,
-                    'can_update': True
-                }
-                if action.model == 'app':
-                    app_name = 'Unknown App'
-                    if action.model_detail:
-                        detail = action.wrapped_detail
-                        app = linked_apps.pop(detail.app_id, None)
-                        app_name = app.name if app else detail.app_id
-                        if app:
-                            update['detail'] = action.model_detail
-                        else:
-                            update['can_update'] = False
-                    else:
-                        update['can_update'] = False
-                    update['name'] = '{} ({})'.format(name, app_name)
-                model_status.append(update)
+        view_models_to_push = build_view_models_from_data_models(
+            self.domain, upstream_apps, upstream_fixtures, upstream_reports, upstream_keywords,
+            is_superuser=is_superuser
+        )
 
-            # Add in models that have never been synced
-            for model, name in LINKED_MODELS:
-                if model not in models_seen and model != 'app':
-                    model_status.append({
-                        'type': model,
-                        'name': name,
-                        'last_update': ugettext('Never'),
-                        'detail': None,
-                        'can_update': True
-                    })
+        account = BillingAccount.get_account_by_domain(self.request.domain)
+        available_domains_to_link = get_available_domains_to_link(self.request.domain,
+                                                                  self.request.couch_user,
+                                                                  billing_account=account)
 
-            # Add in apps that have never been synced
-            if linked_apps:
-                for app in linked_apps.values():
-                    update = {
-                        'type': 'app',
-                        'name': '{} ({})'.format(linked_models['app'], app.name),
-                        'last_update': None,
-                        'detail': AppLinkDetail(app_id=app._id).to_json(),
-                        'can_update': True
-                    }
-                    model_status.append(update)
+        upstream_domain_urls = []
+        upstream_domains = get_available_upstream_domains(self.request.domain,
+                                                          self.request.couch_user,
+                                                          billing_account=account)
+        for domain in upstream_domains:
+            upstream_domain_urls.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
+
+        if upstream_link and upstream_link.is_remote:
+            remote_linkable_ucr = get_remote_linkable_ucr(upstream_link)
+        else:
+            remote_linkable_ucr = None
 
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
             'view_data': {
-                'master_link': _link_context(master_link) if master_link else None,
-                'model_status': sorted(model_status, key=lambda m: m['name']),
-                'linked_domains': [
-                    _link_context(link) for link in get_linked_domains(self.domain)
-                ],
-                'models': [
-                    {'slug': model[0], 'name': model[1]}
-                    for model in LINKED_MODELS
-                ]
+                'is_downstream_domain': bool(upstream_link),
+                'upstream_domains': upstream_domain_urls,
+                'available_domains': available_domains_to_link,
+                'upstream_link': build_domain_link_view_model(upstream_link, timezone) if upstream_link else None,
+                'view_models_to_pull': sorted(view_models_to_pull, key=lambda m: m['name']),
+                'view_models_to_push': sorted(view_models_to_push, key=lambda m: m['name']),
+                'linked_domains': sorted(linked_domains, key=lambda d: d['downstream_domain']),
+                'linkable_ucr': remote_linkable_ucr,
             },
         }
 
@@ -255,18 +328,28 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         model = in_data['model']
         type_ = model['type']
         detail = model['detail']
-        detail_obj = wrap_detail(type, detail) if detail else None
+        detail_obj = wrap_detail(type_, detail) if detail else None
 
-        master_link = get_domain_master_link(self.domain)
-        update_model_type(master_link, type_, detail_obj)
-        master_link.update_last_pull(type_, self.request.couch_user._id, model_details=detail_obj)
+        upstream_link = get_upstream_domain_link(self.domain)
+        error = ""
+        try:
+            update_model_type(upstream_link, type_, detail_obj)
+            model_detail = detail_obj.to_json() if detail_obj else None
+            upstream_link.update_last_pull(type_, self.request.couch_user._id, model_detail=model_detail)
+        except (DomainLinkError, UnsupportedActionError) as e:
+            error = str(e)
 
-        track_workflow(self.request.couch_user.username, "Linked domain: updated '{}' model".format(type_))
+        track_workflow(
+            self.request.couch_user.username,
+            "Linked domain: pulled data model",
+            {"data_model": type_}
+        )
 
         timezone = get_timezone_for_request()
         return {
-            'success': True,
-            'last_update': server_to_user_time(master_link.last_pull, timezone)
+            'success': not error,
+            'error': error,
+            'last_update': server_to_user_time(upstream_link.last_pull, timezone)
         }
 
     @allow_remote_invocation
@@ -282,20 +365,75 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
             'success': True,
         }
 
+    @allow_remote_invocation
+    def create_release(self, in_data):
+        push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
+                          in_data['build_apps'], self.request.couch_user.username)
+
+        track_workflow(
+            self.request.couch_user.username,
+            "Linked domain: pushed data models",
+            {"data_models": in_data['models']}
+        )
+
+        return {
+            'success': True,
+            'message': ugettext('''
+                Your release has begun. You will receive an email when it is complete.
+                Until then, to avoid linked domains receiving inconsistent content, please
+                avoid editing any of the data contained in the release.
+            '''),
+        }
+
+    @allow_remote_invocation
+    def create_domain_link(self, in_data):
+        domain_to_link = in_data['downstream_domain']
+        try:
+            domain_link = DomainLink.link_domains(domain_to_link, self.domain)
+        except DomainLinkError as e:
+            return {
+                'success': False,
+                'message': str(e)
+            }
+
+        track_workflow(self.request.couch_user.username, "Linked domain: domain link created")
+
+        timezone = get_timezone_for_request()
+        return {
+            'success': True,
+            'domain_link': build_domain_link_view_model(domain_link, timezone)
+        }
+
+    @allow_remote_invocation
+    def create_remote_report_link(self, in_data):
+        linked_domain = in_data['linked_domain']
+        master_domain = in_data['master_domain'].strip('/').split('/')[-1]
+        report_id = in_data['report_id']
+        link = DomainLink.objects.filter(
+            remote_base_url__isnull=False,
+            linked_domain=linked_domain,
+            master_domain=master_domain,
+        ).first()
+        if link:
+            create_linked_ucr(link, report_id)
+            return {'success': True}
+        else:
+            return {'success': False}
+
 
 class DomainLinkHistoryReport(GenericTabularReport):
-    name = 'Linked Project History'
+    name = 'Linked Project Space History'
     base_template = "reports/base_template.html"
     section_name = 'Project Settings'
     slug = 'project_link_report'
-    dispatcher = DomainReportDispatcher
+    dispatcher = ReleaseManagementReportDispatcher
     ajax_pagination = True
     asynchronous = False
     sortable = False
 
     @property
     def fields(self):
-        if self.master_link:
+        if self.upstream_link:
             fields = []
         else:
             fields = ['corehq.apps.linked_domain.filters.DomainLinkFilter']
@@ -320,13 +458,13 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
     @property
     @memoized
-    def master_link(self):
-        return get_domain_master_link(self.domain)
+    def upstream_link(self):
+        return get_upstream_domain_link(self.domain)
 
     @property
     @memoized
     def selected_link(self):
-        return self.master_link or self.domain_link
+        return self.upstream_link or self.domain_link
 
     @property
     def total_records(self):
@@ -335,6 +473,11 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
     def _base_query(self):
         query = DomainLinkHistory.objects.filter(link=self.selected_link)
+
+        # filter out superuser data models
+        if not self.request.couch_user.is_superuser:
+            query = query.exclude(model__in=dict(SUPERUSER_DATA_MODELS).keys())
+
         if self.link_model:
             query = query.filter(model=self.link_model)
 
@@ -373,15 +516,44 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
     def _make_model_cell(self, record):
         name = LINKED_MODELS_MAP[record.model]
-        if record.model != 'app':
-            return name
+        if record.model == MODEL_APP:
+            detail = record.wrapped_detail
+            app_name = ugettext_lazy('Unknown App')
+            if detail:
+                app_names = self.linked_app_names(self.selected_link.linked_domain)
+                app_name = app_names.get(detail.app_id, detail.app_id)
+            return '{} ({})'.format(name, app_name)
 
-        detail = record.wrapped_detail
-        app_name = 'Unknown App'
-        if detail:
-            app_names = self.linked_app_names(self.selected_link.linked_domain)
-            app_name = app_names.get(detail.app_id, detail.app_id)
-        return '{} ({})'.format(name, app_name)
+        if record.model == MODEL_FIXTURE:
+            detail = record.wrapped_detail
+            tag = ugettext_lazy('Unknown')
+            if detail:
+                data_type = get_fixture_data_type_by_tag(self.selected_link.linked_domain, detail.tag)
+                if data_type:
+                    tag = data_type.tag
+            return '{} ({})'.format(name, tag)
+
+        if record.model == MODEL_REPORT:
+            detail = record.wrapped_detail
+            report_name = ugettext_lazy('Unknown Report')
+            if detail:
+                try:
+                    report_name = ReportConfiguration.get(detail.report_id).title
+                except ResourceNotFound:
+                    pass
+            return '{} ({})'.format(name, report_name)
+
+        if record.model == MODEL_KEYWORD:
+            detail = record.wrapped_detail
+            keyword_name = ugettext_lazy('Unknown Keyword')
+            if detail:
+                try:
+                    keyword_name = Keyword.objects.get(id=detail.keyword_id).keyword
+                except Keyword.DoesNotExist:
+                    pass
+            return f'{name} ({keyword_name})'
+
+        return name
 
     @property
     def headers(self):

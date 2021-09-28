@@ -1,7 +1,0 @@
-{% if more_than_one_week %}
-AWC {{ awc }} has not submitted any form or done any activity in ICDS CAS application in more than one week. Please follow up with Block Level Helpdesk or Supervisor for assistance
-{% endif %}
-
-{% if more_than_one_month %}
-AWC {{ awc }} has not submitted any form or done any activity in ICDS CAS application in more than one month. Please follow up with Block Level Helpdesk or Supervisor for assistance
-{% endif %}

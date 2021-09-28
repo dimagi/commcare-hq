@@ -1,7 +1,7 @@
 import os
 import tempfile
-from unidecode import unidecode
 from six.moves.urllib.parse import quote
+from text_unidecode import unidecode
 
 
 def file_extention_from_filename(filename):

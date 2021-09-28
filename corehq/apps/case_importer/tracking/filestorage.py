@@ -50,7 +50,7 @@ class PersistentFileStore(object):
     def get_tempfile_ref_for_contents(self, identifier):
         filename = self.get_filename(identifier)
         suffix = file_extention_from_filename(filename)
-        content = get_blob_db().get(key=identifier).read()
+        content = get_blob_db().get(key=identifier, type_code=CODES.data_import).read()
         return make_temp_file(content, suffix)
 
     @memoized

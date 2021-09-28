@@ -11,7 +11,7 @@ function usage() {
             echo "OPTIONS are passed to the selected test runner."
             echo ""
             echo "Set TEST environment variable to select a test runner:"
-            echo "  TEST=python|python-sharded|javascript"
+            echo "  TEST=python|python-sharded|javascript|python-sharded-and-javascript"
             echo ""
             echo "The default is python."
             echo ""
@@ -133,7 +133,7 @@ function usage() {
 
 CMD="$1"
 shift
-if [ "$CMD" == "test" -o "$CMD" == "hqtest" -o "$CMD" == "py3test" ]; then
+if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
     if [ "$CMD" == "hqtest" ]; then
         CMD="$1"
         shift
@@ -143,6 +143,7 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" -o "$CMD" == "py3test" ]; then
     fi
     export COMPOSE_FILE=docker/hq-compose.yml
     export COMPOSE_PROJECT_NAME=hqtest
+    export UCR_CITUS_DB="${UCR_CITUS_DB:-test_commcare_ucr_citus}"
     if [ -n "$TRAVIS_BUILD_DIR" ]; then
         export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
     else
@@ -212,16 +213,29 @@ else
     export KAFKA_ADVERTISED_HOST_NAME="$KAFKA_ADVERTISED_HOST_NAME"
 fi
 # export variables for compose file (they must be set or it complains)
+export CI="$CI"
+export CODECOV_TOKEN="$CODECOV_TOKEN"
+export DATADOG_API_KEY="$DATADOG_API_KEY"
+export DATADOG_APP_KEY="$DATADOG_APP_KEY"
 export DOCKERFILE="${DOCKERFILE:-Dockerfile}"
+export DOCKER_HQ_OVERLAYFS_METACOPY="${DOCKER_HQ_OVERLAYFS_METACOPY:-off}"
 export JS_SETUP="${JS_SETUP:-no}"
+export JS_TEST_EXTENSIONS="$JS_TEST_EXTENSIONS"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
 export REUSE_DB="$REUSE_DB"
-export TRAVIS_JOB_NUMBER="$TRAVIS_JOB_NUMBER"
+export TRAVIS="$TRAVIS"
+export TRAVIS_BRANCH="$TRAVIS_BRANCH"
 export TRAVIS_BUILD_ID="$TRAVIS_BUILD_ID"
 export TRAVIS_BUILD_NUMBER="$TRAVIS_BUILD_NUMBER"
-export TRAVIS_HQ_USERNAME="$TRAVIS_HQ_USERNAME"
-export TRAVIS_HQ_PASSWORD="$TRAVIS_HQ_PASSWORD"
-export DATADOG_API_KEY="$DATADOG_API_KEY"
+export TRAVIS_COMMIT="$TRAVIS_COMMIT"
+export TRAVIS_EVENT_TYPE="$TRAVIS_EVENT_TYPE"
+export TRAVIS_JOB_ID="$TRAVIS_JOB_ID"
+export TRAVIS_JOB_NUMBER="$TRAVIS_JOB_NUMBER"
+export TRAVIS_PULL_REQUEST="$TRAVIS_PULL_REQUEST"
+export TRAVIS_PULL_REQUEST_BRANCH="$TRAVIS_PULL_REQUEST_BRANCH"
+export TRAVIS_PULL_REQUEST_SHA="$TRAVIS_PULL_REQUEST_SHA"
+export TRAVIS_REPO_SLUG="$TRAVIS_REPO_SLUG"
+export UCR_CITUS_DB="${UCR_CITUS_DB:-commcare_ucr_citus}"
 
 if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
     # don't mount /mnt/commcare-hq-ro volume read-only on travis
@@ -229,8 +243,15 @@ if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
     export RO=""
     export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-none}"
 else
+    # TODO: use overlayfs and drop support for aufs
     export RO=":ro"
     export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-aufs}"
+fi
+
+if [ "$DOCKER_HQ_OVERLAY" == "overlayfs" ]; then
+    export DOCKER_HQ_OVERLAYFS_CHMOD="${DOCKER_HQ_OVERLAYFS_CHMOD:-yes}"
+else
+    export DOCKER_HQ_OVERLAYFS_CHMOD="${DOCKER_HQ_OVERLAYFS_CHMOD:-no}"
 fi
 
 case $CMD in
@@ -287,7 +308,8 @@ else
         fi
         docker volume rm \
             ${VOLUME_PREFIX}couchdb \
-            ${VOLUME_PREFIX}elasticsearch \
+            ${VOLUME_PREFIX}elasticsearch2 \
+            ${VOLUME_PREFIX}elasticsearch5 \
             ${VOLUME_PREFIX}kafka \
             ${VOLUME_PREFIX}lib \
             ${VOLUME_PREFIX}postgresql \

@@ -47,7 +47,7 @@ from corehq.apps.userreports.columns import (
 )
 from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
 from corehq.apps.userreports.exceptions import BadSpecError, InvalidQueryColumn
-from corehq.apps.userreports.expressions import ExpressionFactory
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
@@ -359,14 +359,6 @@ class IntegerBucketsColumn(_CaseExpressionColumn):
         return "{} between {} and {}".format(self.field, bounds[0], bounds[1])
 
 
-class AgeInMonthsBucketsColumn(IntegerBucketsColumn):
-    type = TypeProperty('age_in_months_buckets')
-
-    def _base_expression(self, bounds):
-        return "extract(year from age({}))*12 + extract(month from age({})) BETWEEN {} and {}".format(
-            self.field, self.field, bounds[0], bounds[1])
-
-
 class SumWhenColumn(_CaseExpressionColumn):
     type = TypeProperty("sum_when")
     else_ = IntegerProperty(default=0)
@@ -549,6 +541,9 @@ class ExpressionColumn(BaseReportColumn):
                 help_text=self.description
             )
         ])
+
+    def get_query_column_ids(self):
+        raise InvalidQueryColumn(_("Expression Columns do not support group by, sorting, or querying."))
 
 
 class ChartSpec(JsonObject):

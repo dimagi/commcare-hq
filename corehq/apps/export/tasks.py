@@ -3,20 +3,20 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
-from celery.schedules import crontab
-from celery.task import periodic_task, task
-
-from corehq.apps.export.exceptions import RejectedStaleExport
-from corehq.celery_monitoring.signals import get_task_time_to_start
 from couchexport.models import Format
 from soil import DownloadBase
 from soil.progress import get_task_status
 from soil.util import expose_blob_download, process_email_request
 
+from celery.schedules import crontab
+from celery.task import periodic_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
+from corehq.apps.export.models.incremental import generate_and_send_incremental_export
+from corehq.apps.export.exceptions import RejectedStaleExport
 from corehq.apps.export.utils import get_export
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
+from corehq.celery_monitoring.signals import get_task_time_to_start
 from corehq.util.decorators import serial_task
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_counter, metrics_track_errors
@@ -28,15 +28,20 @@ from .dbaccessors import (
     get_daily_saved_export_ids_for_auto_rebuild,
     get_properly_wrapped_export_instance,
 )
-from .export import get_export_file, rebuild_export
+from .export import (
+    get_export_file,
+    rebuild_export,
+)
+from .models.incremental import IncrementalExport
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 
 logger = logging.getLogger('export_migration')
 
 
-@task(serializer='pickle', queue=EXPORT_DOWNLOAD_QUEUE)
-def populate_export_download_task(domain, export_ids, exports_type, username, filters, download_id,
+@task(queue=EXPORT_DOWNLOAD_QUEUE)
+def populate_export_download_task(domain, export_ids, exports_type, username,
+                                  es_filters, download_id, owner_id,
                                   filename=None, expiry=10 * 60):
     """
     :param expiry:  Time period for the export to be available for download in minutes
@@ -58,7 +63,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username, fi
     with TransientTempfile() as temp_path, metrics_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
-            filters,
+            es_filters,
             temp_path,
             # We don't have a great way to calculate progress if it's a bulk download,
             # so only track the progress for single instance exports.
@@ -85,6 +90,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username, fi
                 mimetype=file_format.mimetype,
                 content_disposition=safe_filename_header(filename, file_format.extension),
                 download_id=download_id,
+                owner_ids=[owner_id],
             )
 
     for email_request in email_requests:
@@ -98,7 +104,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username, fi
     email_requests.delete()
 
 
-@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
+@task(queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
 def _start_export_task(export_instance_id):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
     rebuild_export(export_instance, progress_tracker=_start_export_task)
@@ -199,12 +205,30 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
     inferred_schema.save()
 
 
-@task(serializer='pickle', queue='background_queue', bind=True)
-def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier):
-    schema_cls.generate_schema_from_builds(
+@task(queue='background_queue', bind=True)
+def generate_schema_for_all_builds(self, export_type, domain, app_id, identifier):
+    from .views.utils import GenerateSchemaFromAllBuildsView
+    export_cls = GenerateSchemaFromAllBuildsView.export_cls(export_type)
+    export_cls.generate_schema_from_builds(
         domain,
         app_id,
         identifier,
         only_process_current_builds=False,
         task=self,
     )
+
+
+@periodic_task(run_every=crontab(hour="*", minute="30", day_of_week="*"),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def generate_incremental_exports():
+    incremental_exports = IncrementalExport.objects.filter(active=True)
+    for incremental_export in incremental_exports:
+        process_incremental_export.delay(incremental_export.id)
+
+
+@task
+def process_incremental_export(incremental_export_id):
+    incremental_export = IncrementalExport.objects.get(id=incremental_export_id)
+    last_valid_checkpoint = incremental_export.last_valid_checkpoint
+    last_doc_date = last_valid_checkpoint.last_doc_date if last_valid_checkpoint else None
+    generate_and_send_incremental_export(incremental_export, last_doc_date)

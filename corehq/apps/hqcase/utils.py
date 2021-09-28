@@ -5,8 +5,9 @@ from xml.etree import cElementTree as ElementTree
 from django.template.loader import render_to_string
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import property_changed_in_action
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es import filters
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -16,8 +17,8 @@ from corehq.form_processor.exceptions import (
     MissingFormXml,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.utils import should_use_sql_backend
 
+CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
 
@@ -78,74 +79,16 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
     return result.xform, result.cases
 
 
-def get_case_wrapper(data):
-    from corehq.apps.commtrack.util import get_case_wrapper as commtrack_wrapper
-
-    def pact_wrapper(data):
-        if data['domain'] == 'pact' and data['type'] == 'cc_path_client':
-            from pact.models import PactPatientCase
-            return PactPatientCase
-
-    wrapper_funcs = [pact_wrapper, commtrack_wrapper]
-
-    wrapper = None
-    for wf in wrapper_funcs:
-        wrapper = wf(data)
-        if wrapper is not None:
-            break
-    return wrapper
-
-
-def _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs):
-    return CommCareCase.view(
-        'case_by_domain_hq_user_id_type/view',
-        key=[domain, user_id, case_type],
-        reduce=False,
-        include_docs=include_docs
-    ).all()
-
-
-def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-    """
-    Return the first case of case_type owned by user_id
-    """
-    cases = _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs=True)
-    return cases[0] if cases else None
-
-
-def get_case_id_by_domain_hq_user_id(domain, user_id, case_type):
-    """
-    Return the ID of the first case of case_type owned by user_id
-    """
-    rows = _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs=False)
-    return rows[0]['id'] if rows else None
-
-
 def get_case_by_identifier(domain, identifier):
-    # circular import
-    from corehq.apps.api.es import CaseES
-    case_es = CaseES(domain)
-    case_accessors = CaseAccessors(domain)
 
-    def _query_by_type(i_type):
-        q = case_es.base_query(
-            terms={
-                i_type: identifier,
-            },
-            fields=['_id', i_type],
-            size=1
-        )
-        response = case_es.run_query(q)
-        raw_docs = response['hits']['hits']
-        if raw_docs:
-            return case_accessors.get_case(raw_docs[0]['_id'])
+    case_accessors = CaseAccessors(domain)
 
     # Try by any of the allowed identifiers
     for identifier_type in ALLOWED_CASE_IDENTIFIER_TYPES:
-        case = _query_by_type(identifier_type)
-        if case is not None:
-            return case
-
+        result = CaseES().domain(domain).filter(
+            filters.term(identifier_type, identifier)).get_ids()
+        if result:
+            return case_accessors.get_case(result[0])
     # Try by case id
     try:
         case_by_id = case_accessors.get_case(identifier)
@@ -162,7 +105,7 @@ def submit_case_block_from_template(domain, template, context, xmlns=None,
     case_block = render_to_string(template, context)
     # Ensure the XML is formatted properly
     # An exception is raised if not
-    case_block = ElementTree.tostring(ElementTree.XML(case_block)).decode('utf-8')
+    case_block = ElementTree.tostring(ElementTree.XML(case_block), encoding='utf-8').decode('utf-8')
 
     return submit_case_blocks(
         case_block,
@@ -184,7 +127,7 @@ def _get_update_or_close_case_block(case_id, case_properties=None, close=False, 
     if owner_id:
         kwargs['owner_id'] = owner_id
 
-    return CaseBlock(case_id, **kwargs)
+    return CaseBlock.deprecated_init(case_id, **kwargs)
 
 
 def update_case(domain, case_id, case_properties=None, close=False,
@@ -201,7 +144,7 @@ def update_case(domain, case_id, case_properties=None, close=False,
     """
     caseblock = _get_update_or_close_case_block(case_id, case_properties, close, owner_id)
     return submit_case_blocks(
-        ElementTree.tostring(caseblock.as_xml()).decode('utf-8'),
+        ElementTree.tostring(caseblock.as_xml(), encoding='utf-8').decode('utf-8'),
         domain,
         user_id=SYSTEM_USER_ID,
         xmlns=xmlns,
@@ -229,13 +172,7 @@ def bulk_update_cases(domain, case_changes, device_id):
 
 def resave_case(domain, case, send_post_save_signal=True):
     from corehq.form_processor.change_publishers import publish_case_saved
-    if should_use_sql_backend(domain):
-        publish_case_saved(case, send_post_save_signal)
-    else:
-        if send_post_save_signal:
-            case.save()
-        else:
-            CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+    publish_case_saved(case, send_post_save_signal)
 
 
 def get_last_non_blank_value(case, case_property):

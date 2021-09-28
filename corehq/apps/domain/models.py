@@ -1,10 +1,7 @@
-import time
 import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import reduce
-from importlib import import_module
-from itertools import chain
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -13,10 +10,8 @@ from django.db.models import F
 from django.db.transaction import atomic
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 
-from couchdbkit import PreconditionFailed
 from memoized import memoized
 
 from couchforms.analytics import domain_has_submission_in_last_30_days
@@ -34,7 +29,6 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
     TimeProperty,
 )
-from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
     get_safe_write_kwargs,
     iter_bulk_delete,
@@ -44,6 +38,7 @@ from dimagi.utils.logging import log_signal_errors
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 
+from corehq import toggles
 from corehq.apps.app_manager.const import (
     AMPLIFIES_NO,
     AMPLIFIES_NOT_SET,
@@ -53,7 +48,8 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.util import log_user_change
 from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import (
@@ -292,7 +288,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         see data, reports, charts, etc.
 
         Exceptions: accounting has some models that combine multiple domains,
-        which make "enterprise" multi-domain features like the enterprise dashboard possible.
+        which make "enterprise" multi-domain features like the enterprise console possible.
 
         Naming conventions:
         Most often, variables representing domain names are named `domain`, and
@@ -310,6 +306,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     is_active = BooleanProperty()
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
+    default_geocoder_location = DictProperty()
     case_sharing = BooleanProperty(default=False)
     secure_submissions = BooleanProperty(default=False)
     cloudcare_releases = StringProperty(choices=['stars', 'nostars', 'default'], default='default')
@@ -332,10 +329,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
     hipaa_compliant = BooleanProperty(default=False)
-    use_sql_backend = BooleanProperty(default=False)
+    use_livequery = BooleanProperty(default=False)
     first_domain_for_user = BooleanProperty(default=False)
-
-    case_display = SchemaProperty(CaseDisplaySettings)
 
     # CommConnect settings
     survey_management_enabled = BooleanProperty(default=False)
@@ -398,6 +393,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
     auto_case_update_limit = IntegerProperty()
 
+    # Time to run auto case update rules. Expected values are 0-23.
+    # If this value is None, the value in settings.RULE_UPDATE_HOUR is used.
+    auto_case_update_hour = IntegerProperty()
+
     # Allowed number of max OData feeds that this domain can create.
     # If this value is None, the value in settings.DEFAULT_ODATA_FEED_LIMIT is used
     odata_feed_limit = IntegerProperty()
@@ -436,8 +435,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
-    # when turned on, use SECURE_TIMEOUT for sessions of users who are members of this domain
+    # when turned on, use settings.SECURE_TIMEOUT for sessions of users who are members of this domain
     secure_sessions = BooleanProperty(default=False)
+    secure_sessions_timeout = IntegerProperty()
 
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
@@ -448,6 +448,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
+
+    ga_opt_out = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -504,6 +506,20 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     def is_secure_session_required(name):
         domain_obj = Domain.get_by_name(name)
         return domain_obj and domain_obj.secure_sessions
+
+    @staticmethod
+    @quickcache(['name'], timeout=24 * 60 * 60)
+    def secure_timeout(name):
+        domain_obj = Domain.get_by_name(name)
+        if not domain_obj:
+            return None
+
+        if domain_obj.secure_sessions:
+            if toggles.SECURE_SESSION_TIMEOUT.enabled(name):
+                return domain_obj.secure_sessions_timeout or settings.SECURE_TIMEOUT
+            return settings.SECURE_TIMEOUT
+
+        return None
 
     @staticmethod
     @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
@@ -622,7 +638,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return domain
 
     @classmethod
-    def get_or_create_with_name(cls, name, is_active=False, secure_submissions=True, use_sql_backend=False):
+    def get_or_create_with_name(cls, name, is_active=False, secure_submissions=True):
         result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
         if result:
             return result
@@ -632,7 +648,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 is_active=is_active,
                 date_created=datetime.utcnow(),
                 secure_submissions=secure_submissions,
-                use_sql_backend=use_sql_backend,
+                use_livequery=True,
             )
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
@@ -707,8 +723,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         if not self._rev:
             if domain_or_deleted_domain_exists(self.name):
                 raise NameUnavailableException(self.name)
-            # mark any new domain as timezone migration complete
-            set_tz_migration_complete(self.name)
         super(Domain, self).save(**params)
 
         from corehq.apps.domain.signals import commcare_domain_post_save
@@ -738,12 +752,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             return "Snapshot of %s" % self.copied_from.display_name()
         return self.hr_name or self.name
 
-    def long_display_name(self):
-        if self.is_snapshot:
-            return format_html("Snapshot of {}", self.copied_from.display_name())
-        return self.hr_name or self.name
-
-    __str__ = long_display_name
+    __str__ = display_name
 
     def get_license_display(self):
         return LICENSES.get(self.license)
@@ -788,19 +797,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
 
-    @classmethod
-    def get_module_by_name(cls, domain_name):
-        """
-        import and return the python module corresponding to domain_name, or
-        None if it doesn't exist.
-        """
-        module_name = settings.DOMAIN_MODULE_MAP.get(domain_name, domain_name)
-
-        try:
-            return import_module(module_name) if module_name else None
-        except ImportError:
-            return None
-
     @property
     @memoized
     def commtrack_settings(self):
@@ -826,14 +822,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     def put_attachment(self, *args, **kw):
         return super(Domain, self).put_attachment(domain=self.name, *args, **kw)
-
-    def get_case_display(self, case):
-        """Get the properties display definition for a given case"""
-        return self.case_display.case_details.get(case.type)
-
-    def get_form_display(self, form):
-        """Get the properties display definition for a given XFormInstance"""
-        return self.case_display.form_details.get(form.xmlns)
 
     @property
     def location_types(self):
@@ -866,6 +854,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         super(Domain, self).clear_caches()
         self.get_by_name.clear(self.__class__, self.name)
         self.is_secure_session_required.clear(self.name)
+        self.secure_timeout.clear(self.name)
         domain_restricts_superusers.clear(self.name)
 
     def get_daily_outbound_sms_limit(self):
@@ -990,7 +979,7 @@ class TransferDomainRequest(models.Model):
             text_content=text_content)
 
     @requires_active_transfer
-    def transfer_domain(self, *args, **kwargs):
+    def transfer_domain(self, by_user, *args, transfer_via=None, **kwargs):
 
         self.confirm_time = datetime.utcnow()
         if 'ip' in kwargs:
@@ -998,6 +987,13 @@ class TransferDomainRequest(models.Model):
 
         self.from_user.transfer_domain_membership(self.domain, self.to_user, is_admin=True)
         self.from_user.save()
+        if by_user:
+            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.from_user,
+                            changed_by_user=by_user, changed_via=transfer_via,
+                            change_messages=UserChangeMessage.domain_removal(self.domain))
+            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.to_user,
+                            changed_by_user=by_user, changed_via=transfer_via,
+                            change_messages=UserChangeMessage.domain_addition(self.domain))
         self.to_user.save()
         self.active = False
         self.save()

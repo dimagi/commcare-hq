@@ -7,75 +7,82 @@
 {% block page_content %}
   {% initial_page_data 'view_data' view_data %}
   {% registerurl 'linked_domain:domain_link_rmi' domain %}
-  {% registerurl 'domain_links' '---' %}
   {% registerurl 'app_settings' domain '---' %}
 
-  <div id="domain_links" class="ko-template">
-    <div data-bind="visible: !master_link && !linked_domains().length">
-      <p>
-        {% trans "This project has no links to other projects." %}
-      </p>
-    </div>
-    <div data-bind="if: master_link">
-      <h2>{% trans "Project Link" %}</h2>
-
-      <p>{% trans "This project is linked to " %}<a data-bind="attr: {'href': master_href}, text: master_link.master_domain"></a></p>
-      <div>
-        <table class="table table-striped table-hover">
-          <thead>
-          <tr>
-            <th>{% trans "Linked Model" %}</th>
-            <th>{% trans "Last Updated" %} ({{ timezone }})</th>
-            <th></th>
-          </tr>
-          </thead>
-          <tbody data-bind="foreach: model_status">
-          <tr>
-            <td data-bind="text: name"></td>
-            <td data-bind="text: last_update"></td>
-            <td>
-              <button class="btn btn-danger" data-bind="visible: showUpdate() && !update_url, click: update">
-                {% trans "Overwrite" %}
-              </button>
-              <button class="btn btn-default disabled" data-bind="visible: showSpinner">
-                <i class="fa fa-spinner"></i>
-              </button>
-              <button class="btn btn-success disabled" data-bind="visible: hasSuccess">
-                <i class="fa fa-check"></i> {% trans "Success" %}
-              </button>
-              <button class="btn btn-danger disabled" data-bind="visible: hasError">
-                <i class="fa fa-times"></i> {% trans "Error" %}
-              </button>
-              <a data-bind="visible: showUpdate && update_url, attr: {href: update_url}">{% trans "Go to update page" %}</a>
-            </td>
-          </tr>
-          </tbody>
-        </table>
+  <div id="ko-linked-projects" class="ko-template">
+    <!-- ko if: showGetStarted -->
+      {% if has_release_management_privilege %}
+        {% include 'linked_domain/partials/get_started.html' %}
+      {% else %}
+        <div class="alert alert-info">
+          {% trans "This project has no links to other projects." %}
+        </div>
+      {% endif %}
+    <!-- /ko -->
+    <!-- ko ifnot: showGetStarted -->
+      <!-- ko if: showMultipleTabs -->
+        <ul class="nav nav-tabs">
+          <!-- ko if: isUpstreamDomain -->
+            <li data-bind="class: manageDownstreamDomainsTabStatus"><a data-toggle="tab" href="#tabs-manage-downstream">{% trans "Downstream Project Spaces" %}</a></li>
+            <li><a data-toggle="tab" href="#tabs-push-content">{% trans "Push Content" %}</a></li>
+          <!-- /ko -->
+          <!-- ko if: isDownstreamDomain -->
+            <li data-bind="class: pullContentTabStatus"><a data-toggle="tab" href="#tabs-pull-content">{% trans "Manage Linked Project Space" %}</a></li>
+            {% if view_data.linkable_ucr %}
+              <li><a data-toggle="tab" href="#tabs-remote-report">{% trans "Add Remote Reports" %}</a></li>
+            {% endif %}
+          <!-- /ko -->
+        </ul>
+      <!-- /ko -->
+      <!-- ko ifnot: showMultipleTabs -->
+        <h2>{% trans "Manage Linked Project Space" %}</h2>  {# header for the only tab that will be displayed #}
+      <!-- /ko -->
+      <div id="domain_links">
+        <div class="tab-content">
+          <div class="tab-pane fade" id="tabs-pull-content" data-bind="class: pullTabActiveStatus">
+            {% include 'linked_domain/partials/pull_content.html' %}
+          </div>
+          <div class="tab-pane fade" id="tabs-manage-downstream" data-bind="class: manageTabActiveStatus">
+            {% include 'linked_domain/partials/manage_downstream_domains.html' %}
+          </div>
+          <div class="tab-pane fade" id="tabs-push-content">
+            {% include 'linked_domain/partials/push_content.html' %}
+          </div>
+          {% if view_data.linkable_ucr %}
+            <div class="tab-pane fade" id="tabs-remote-report">
+              {% include 'linked_domain/partials/link_remote_ucr.html' %}
+            </div>
+          {% endif %}
+        </div>
       </div>
-    </div>
-    <div data-bind="if: linked_domains().length">
-      <h2>{% trans "Projects Linked to this one" %}</h2>
-      <table class="table table-striped table-hover">
-        <thead>
-        <tr>
-          <th>{% trans "Project Name" %}</th>
-          <th>{% trans "Last Updated" %} ({{ timezone }})</th>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody data-bind="foreach: linked_domains">
-        <tr>
-          <td><a data-bind="attr: {'href': domain_link}, text: linked_domain"></a></td>
-          <td data-bind="text: last_update"></td>
-          <td>
-            <button type="button" class="btn btn-danger" data-bind="click: $root.deleteLink.bind($data)">
-              <i class="fa fa-trash"></i>
-              {% trans 'Delete' %}
-            </button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
+    <!-- /ko -->
+  </div>
+
+{% endblock %}
+
+{% block modals %}
+  {{ block.super }}
+  <div class="modal fade" id="new-downstream-domain-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">{% trans 'Add Downstream Project Space' %}</h4>
+          <!-- ko if: parent.showGetStarted -->
+            <p>To make this project space an upstream project space, you need to add a downstream project space.</p>
+          <!-- /ko -->
+        </div>
+        <div class="modal-body">
+          <div class="ko-model">
+            <label >{% trans 'Project Space:' %}</label>
+            <select class="form-control" data-bind="select2: availableDomains, value: value"></select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal" data-bind="click: addDownstreamDomain">{% trans 'Add' %}</button>
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}

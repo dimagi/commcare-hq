@@ -17,7 +17,7 @@ Logging
 -------
 
 All requests sent to DHIS2, and the responses from DHIS2, are logged
-and available under **Project Settings** > **MOTECH Logs**.
+and available under **Project Settings** > **Remote API Logs**.
 
 
 DataSets
@@ -79,7 +79,7 @@ button.
 
 To test your configuration, click "Send data now".
 
-Check **Project Settings** > **MOTECH Logs** to inspect the requests
+Check **Project Settings** > **Remote API Logs** to inspect the requests
 sent to DHIS2, and the responses from DHIS2.
 
 
@@ -210,7 +210,7 @@ Form submissions will appear here with "Record Status" "Pending". Queued
 payloads are forwarded every four minutes. To send it immediately, click
 "Resend Payload".
 
-Check **Project Settings** > **MOTECH Logs** to inspect the requests
+Check **Project Settings** > **Remote API Logs** to inspect the requests
 sent to DHIS2, and the responses from DHIS2.
 
 
@@ -324,6 +324,7 @@ tracked entity attributes.
 In "Followup Form", add questions:
 * "LMP Date" (Question ID: `lmp_date`)
 * "Visit Comment" (Question ID: `visit_comment`)
+* "Location" (Question ID: `event_location`)
 * and the rest of the case properties, so you can modify them if you
   want.
 
@@ -409,6 +410,9 @@ Paste the following into "Case config":
         "form_question": "/data/lmp_date"
       },
       "event_status": "ACTIVE",
+      "event_location": {
+          "form_question": "/data/event_location"
+      },
       "datavalue_maps": [
         {
           "data_element_id": "OuJ6sgPyAbC",
@@ -502,6 +506,12 @@ from a form question value.
 one of "ACTIVE", "COMPLETED", "VISITED", "SCHEDULED", "OVERDUE" or
 "SKIPPED".
 
+"event_location" is the location of the event. In the example above the
+location is specified as a `form_question`, so it assumes the app has a
+question capturing the geolocation which can be referenced with
+`/data/event_location`. \
+Note: It's assumed that the event location will also be the enrollment location.
+
 And lastly, "datavalue_maps" sets DHIS2 data element values. In this
 example we are only collecting one, but setting data element values is
 the reason we send Events to DHIS2, and usually there will be many.
@@ -546,5 +556,5 @@ to the location's metadata, in a field named "dhis_id".
 To test our configuration, open the app in App Preview and register a
 woman.
 
-Then click on "MOTECH Logs" and confirm the requests sent to DHIS2 all
-succeeded.
+Then click on **Remote API Logs** and confirm the requests sent to DHIS2
+all succeeded.

@@ -29,7 +29,7 @@ class TestMigratingBlobDB(get_base_class()):
 
     def test_fall_back_to_fsdb(self):
         meta = self.fsdb.put(BytesIO(b"content"), meta=new_meta())
-        with self.db.get(key=meta.key) as fh:
+        with self.db.get(meta=meta) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_copy_blob_masks_old_blob(self):
@@ -40,17 +40,17 @@ class TestMigratingBlobDB(get_base_class()):
         self.assertEndsWith(self.fsdb.get_path(key=meta.key), "/" + meta.key)
         with replattr(self.fsdb, "get", blow_up, sigcheck=False):
             with self.assertRaises(Boom):
-                self.fsdb.get(key=meta.key)
-            with self.db.get(key=meta.key) as fh:
+                self.fsdb.get(meta=meta)
+            with self.db.get(meta=meta) as fh:
                 self.assertEqual(fh.read(), b"fs content")
 
     def test_delete_from_both_fs_and_s3(self):
         meta = self.fsdb.put(BytesIO(b"content"), meta=new_meta())
-        with self.fsdb.get(key=meta.key) as content:
+        with self.fsdb.get(meta=meta) as content:
             self.db.copy_blob(content, key=meta.key)
         self.assertTrue(self.db.delete(key=meta.key))
         with self.assertRaises(mod.NotFound):
-            self.db.get(key=meta.key)
+            self.db.get(meta=meta)
 
     def assertEndsWith(self, a, b):
         assert a.endswith(b), (a, b)

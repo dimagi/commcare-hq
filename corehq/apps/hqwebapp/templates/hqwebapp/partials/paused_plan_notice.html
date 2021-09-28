@@ -7,10 +7,16 @@
     </div>
     <div class="col-xs-9 column-text">
       <h3>
-        {% blocktrans %}
-          Your previous <strong>{{ previous_edition }} Edition</strong> subscription was paused
-          on {{ paused_date }}.
-        {% endblocktrans %}
+        {% if is_trial %}
+          {% blocktrans %}
+            Your CommCare trial ended on {{ paused_date }}.
+          {% endblocktrans %}
+        {% else %}
+          {% blocktrans %}
+            Your previous <strong>{{ previous_edition }} Edition</strong> subscription was paused
+            on {{ paused_date }}.
+          {% endblocktrans %}
+        {% endif %}
       </h3>
       {% if can_edit_billing_info %}
         <p class="lead">

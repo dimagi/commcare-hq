@@ -244,12 +244,17 @@ hqDefine("reports/js/data_corrections", [
         self.submitForm = function (model, e) {
             var $button = $(e.currentTarget);
             $button.disableButton();
+
+            // Filter properties to those that are dirty, and transform to name => value object
+            var properties = _.chain(self.properties)
+                .filter(function (prop) { return prop.dirty(); })
+                .indexBy('name')
+                .mapObject(function (model) { return model.value(); })
+            .value();
             $.post({
                 url: options.saveUrl,
                 data: {
-                    properties: JSON.stringify(_.mapObject(self.properties, function (model) {
-                        return model.value();
-                    })),
+                    properties: JSON.stringify(properties),
                 },
                 success: function () {
                     window.location.reload();

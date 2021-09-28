@@ -1,13 +1,20 @@
 from casexml.apps.case.xform import extract_case_blocks
 
+from django.db.models import Q
+
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
-MAX_RECENT_UPLOADS = 1000
+MAX_RECENT_UPLOADS = 10000
 
 
-def get_case_upload_records(domain, user, limit, skip=0):
+def get_case_upload_records(domain, user, limit, skip=0, query=''):
     query_set = CaseUploadRecord.objects.filter(domain=domain)
+    if query:
+        query_set = query_set.filter(
+            Q(upload_file_meta__filename__icontains=query)
+            | Q(comment__icontains=query)
+        )
     if not user.has_permission(domain, 'access_all_locations'):
         query_set = query_set.filter(couch_user_id=user._id)
     return query_set.order_by('-created')[skip:skip + limit]

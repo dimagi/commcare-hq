@@ -17,7 +17,7 @@ class LedgerXML(XmlObject):
 
     @classmethod
     def from_xml(cls, node):
-        return load_xmlobject_from_string(ElementTree.tostring(node), cls)
+        return load_xmlobject_from_string(ElementTree.tostring(node, encoding='utf-8'), cls)
 
     def as_string(self):
         return self.serialize()

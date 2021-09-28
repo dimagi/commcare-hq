@@ -18,6 +18,7 @@ from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
     INDICES_PATH,
+    IS_RELATED_CASE,
     REFERENCED_ID,
     RELEVANCE_SCORE,
     SPECIAL_CASE_PROPERTIES,
@@ -25,27 +26,21 @@ from corehq.apps.case_search.const import (
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 from . import filters, queries
 
 
 class CaseSearchES(CaseES):
-    index = CASE_SEARCH_ALIAS
+    index = "case_search"
 
     @property
     def builtin_filters(self):
-        return [case_property_filter, blacklist_owner_id] + super(CaseSearchES, self).builtin_filters
-
-    @property
-    def _case_property_queries(self):
-        """
-        Returns all current case_property queries
-        """
-        try:
-            return self.es_query['query']['filtered']['query']['bool']['must']
-        except (KeyError, TypeError):
-            return []
+        return [
+            case_property_filter,
+            blacklist_owner_id,
+            external_id,
+            indexed_on,
+        ] + super(CaseSearchES, self).builtin_filters
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
         """
@@ -61,16 +56,7 @@ class CaseSearchES(CaseES):
         Can be chained with regular filters . Running a set_query after this will destroy it.
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
-        if fuzzy:
-            positive_clause = clause != queries.MUST_NOT
-            return (
-                # fuzzy match
-                self.add_query(case_property_text_query(case_property_name, value, fuzziness='AUTO'), clause)
-                # non-fuzzy match. added to improve the score of exact matches
-                .add_query(case_property_text_query(case_property_name, value),
-                            queries.SHOULD if positive_clause else clause))
-        else:
-            return self.add_query(exact_case_property_text_query(case_property_name, value), clause)
+        return self.add_query(case_property_query(case_property_name, value, fuzzy), clause)
 
     def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
         """
@@ -93,14 +79,7 @@ class CaseSearchES(CaseES):
             clause
         )
 
-    def date_range_case_property_query(self, case_property_name, gt=None,
-                                       gte=None, lt=None, lte=None, clause=queries.MUST):
-        """
-        Search for all cases where case property `case_property_name` fulfills the date range criteria.
-        """
-        return self.add_query(case_property_range_query(case_property_name, gt, gte, lt, lte), clause)
-
-    def xpath_query(self, domain, xpath):
+    def xpath_query(self, domain, xpath, fuzzy=False):
         """Search for cases using an XPath predicate expression.
 
         Enter an arbitrary XPath predicate in the context of the case. Also supports related case lookups.
@@ -110,9 +89,11 @@ class CaseSearchES(CaseES):
         - date ranges: "first_came_online >= '2017-08-12' or died <= '2020-11-15"
         - numeric ranges: "age >= 100 and height < 1.25"
         - related cases: "mother/first_name = 'maeve' or parent/parent/host/age = 13"
+
+        If fuzzy is true, all equality checks will be treated as fuzzy.
         """
         from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
-        return self.filter(build_filter_from_xpath(domain, xpath))
+        return self.filter(build_filter_from_xpath(domain, xpath, fuzzy=fuzzy))
 
     def get_child_cases(self, case_ids, identifier):
         """Returns all cases that reference cases with ids: `case_ids`
@@ -154,6 +135,22 @@ def case_property_filter(case_property_name, value):
             filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE), value),
         )
     )
+
+
+def case_property_query(case_property_name, value, fuzzy=False):
+    """
+    Search for all cases where case property with name `case_property_name`` has text value `value`
+    """
+    if value == '':
+        return case_property_missing(case_property_name)
+    if fuzzy:
+        return filters.OR(
+            # fuzzy match
+            case_property_text_query(case_property_name, value, fuzziness='AUTO'),
+            # non-fuzzy match. added to improve the score of exact matches
+            case_property_text_query(case_property_name, value),
+        )
+    return exact_case_property_text_query(case_property_name, value)
 
 
 def exact_case_property_text_query(case_property_name, value):
@@ -270,7 +267,7 @@ def _base_property_query(case_property_name, query):
         CASE_PROPERTIES_PATH,
         queries.filtered(
             query,
-            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name)
         )
     )
 
@@ -279,7 +276,15 @@ def blacklist_owner_id(owner_id):
     return filters.NOT(owner(owner_id))
 
 
-def flatten_result(hit, include_score=False):
+def external_id(external_id):
+    return filters.term('external_id', external_id)
+
+
+def indexed_on(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('@indexed_on', gt, gte, lt, lte)
+
+
+def flatten_result(hit, include_score=False, is_related_case=False):
     """Flattens a result from CaseSearchES into the format that Case serializers
     expect
 
@@ -293,6 +298,8 @@ def flatten_result(hit, include_score=False):
 
     if include_score:
         result[RELEVANCE_SCORE] = hit['_score']
+    if is_related_case:
+        result[IS_RELATED_CASE] = "true"
     case_properties = result.pop(CASE_PROPERTIES_PATH, [])
     for case_property in case_properties:
         key = case_property.get('key')

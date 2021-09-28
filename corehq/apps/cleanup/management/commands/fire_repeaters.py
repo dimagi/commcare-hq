@@ -2,8 +2,6 @@ import datetime
 
 from django.core.management.base import BaseCommand
 
-from dimagi.utils.post import simple_post
-
 from corehq.motech.repeaters.models import RepeatRecord
 
 

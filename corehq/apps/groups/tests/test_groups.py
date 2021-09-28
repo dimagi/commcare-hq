@@ -15,12 +15,15 @@ class GroupTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(GroupTest, cls).setUpClass()
-        cls.active_user = CommCareUser.create(domain=DOMAIN, username='activeguy', password='secret')
-        cls.inactive_user = CommCareUser.create(domain=DOMAIN, username='inactivegal', password='secret')
+        cls.active_user = CommCareUser.create(domain=DOMAIN, username='activeguy', password='secret',
+                                              created_by=None, created_via=None)
+        cls.inactive_user = CommCareUser.create(domain=DOMAIN, username='inactivegal', password='secret',
+                                                created_by=None, created_via=None)
         cls.inactive_user.is_active = False
         cls.inactive_user.save()
-        cls.deleted_user = CommCareUser.create(domain=DOMAIN, username='goner', password='secret')
-        cls.deleted_user.retire()
+        cls.deleted_user = CommCareUser.create(domain=DOMAIN, username='goner', password='secret',
+                                               created_by=None, created_via=None)
+        cls.deleted_user.retire(DOMAIN, deleted_by=None)
 
     def tearDown(self):
         for group in Group.by_domain(DOMAIN):
@@ -29,7 +32,7 @@ class GroupTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         for user in CommCareUser.all():
-            user.delete()
+            user.delete(DOMAIN, deleted_by=None)
         super(GroupTest, cls).tearDownClass()
 
     def testGetUsers(self):
@@ -107,8 +110,10 @@ class GroupTest(TestCase):
         )
         group.save()
 
-        group.set_user_ids([self.inactive_user._id, self.deleted_user._id])
+        users_added_ids, users_removed_ids = group.set_user_ids([self.inactive_user._id, self.deleted_user._id])
 
+        self.assertEqual({self.deleted_user.get_id}, users_added_ids)
+        self.assertEqual({self.active_user.get_id}, users_removed_ids)
         self.assertEqual(set(group.users), {self.inactive_user._id, self.deleted_user._id})
         self.assertEqual(set(group.removed_users), {self.active_user._id})
 

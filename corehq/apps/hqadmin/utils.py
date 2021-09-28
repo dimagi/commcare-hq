@@ -4,6 +4,7 @@ from itertools import groupby
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 import requests
 
@@ -43,7 +44,7 @@ def get_celery_stats():
         tasks_ok = 'label-success'
         tasks_full = 'label-warning'
 
-        tasks_html = mark_safe('<span class="label %s">unknown</span>' % tasks_full)
+        tasks_html = format_html('<span class="label {}">unknown</span>', tasks_full)
         try:
             worker_stats = detailed_stats[worker_name]
             pool_stats = worker_stats['stats']['pool']
@@ -52,10 +53,12 @@ def get_celery_stats():
             completed_tasks = pool_stats['writes']['total']
 
             tasks_class = tasks_full if running_tasks == concurrency else tasks_ok
-            tasks_html = mark_safe(
-                '<span class="label %s">%d / %d</span> :: %d' % (
-                    tasks_class, running_tasks, concurrency, completed_tasks
-                )
+            tasks_html = format_html(
+                '<span class="label {}">{} / {}</span> :: {}',
+                tasks_class,
+                running_tasks,
+                concurrency,
+                completed_tasks
             )
         except KeyError:
             pass
@@ -72,11 +75,13 @@ def get_celery_stats():
         worker_stats = get_stats(celery_monitoring, status_only=True)
         detailed_stats = get_stats(celery_monitoring, refresh=True)
         for worker_name, status in worker_stats.items():
-            status_html = mark_safe(worker_ok if status else worker_bad)
+            status_html = worker_ok if status else worker_bad
             tasks_html = get_task_html(detailed_stats, worker_name)
             worker_info.append(' '.join([worker_name, status_html, tasks_html]))
         worker_status = '<br>'.join(worker_info)
-    return mark_safe(worker_status)
+    # This is used by the system status admin page, and it doesn't look like celery is displayed
+    # properly on any environment, so this is likely not even used
+    return mark_safe(worker_status)  # nosec: the joined elements are safe
 
 
 def parse_celery_pings(worker_responses):

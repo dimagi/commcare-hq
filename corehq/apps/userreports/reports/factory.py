@@ -5,11 +5,13 @@ from django.utils.translation import ugettext as _
 
 from jsonobject.exceptions import BadValueError
 
-from corehq.apps.userreports.const import AGGGREGATION_TYPE_ARRAY_AGG_LAST_VALUE
+from corehq.apps.userreports.const import (
+    AGGGREGATION_TYPE_ARRAY_AGG_LAST_VALUE,
+)
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.specs import (
-    AgeInMonthsBucketsColumn,
     AggregateDateColumn,
+    ArrayAggLastValueReportColumn,
     ExpandedColumn,
     ExpressionColumn,
     FieldColumn,
@@ -22,7 +24,6 @@ from corehq.apps.userreports.reports.specs import (
     PieChartSpec,
     SumWhenColumn,
     SumWhenTemplateColumn,
-    ArrayAggLastValueReportColumn,
 )
 from corehq.apps.userreports.reports.sum_when_templates import (
     AdultFemaleMigrantDeathSpec,
@@ -32,40 +33,58 @@ from corehq.apps.userreports.reports.sum_when_templates import (
     CCSPhaseNullTemplateSpec,
     CCSPhaseTemplateSpec,
     ClosedOnNullTemplateSpec,
+    ComplementaryFeedingTemplateSpec,
     FemaleAgeAtDeathSpec,
     FemaleDeathTypeMigrantSpec,
     FemaleDeathTypeResidentSpec,
     OpenDisabilityTypeSpec,
     OpenFemaleDisabledSpec,
-    OpenFemaleHHCasteSpec,
     OpenFemaleHHCasteNotSpec,
+    OpenFemaleHHCasteSpec,
     OpenFemaleHHMinoritySpec,
-    OpenFemaleMigrantSpec,
     OpenFemaleMigrantDistinctFromSpec,
+    OpenFemaleMigrantSpec,
     OpenFemaleResidentSpec,
+    OpenFemaleSpec,
     OpenMaleDisabledSpec,
-    OpenMaleHHCasteSpec,
     OpenMaleHHCasteNotSpec,
+    OpenMaleHHCasteSpec,
     OpenMaleHHMinoritySpec,
-    OpenMaleMigrantSpec,
     OpenMaleMigrantDistinctFromSpec,
+    OpenMaleMigrantSpec,
     OpenMaleResidentSpec,
     OpenPregnantMigrantSpec,
     OpenPregnantResidentSpec,
-    ReachedReferralHealthProblemSpec,
     ReachedReferralHealthProblem2ProblemsSpec,
     ReachedReferralHealthProblem3ProblemsSpec,
-    ReferralHealthProblemSpec,
+    ReachedReferralHealthProblem5ProblemsSpec,
+    ReachedReferralHealthProblemSpec,
     ReferralHealthProblem2ProblemsSpec,
     ReferralHealthProblem3ProblemsSpec,
+    ReferralHealthProblem5ProblemsSpec,
+    ReferralHealthProblemSpec,
     UnderXMonthsTemplateSpec,
     YearRangeTemplateSpec,
+)
+from custom.nutrition_project.ucr.sum_when_templates import (
+    BreastfeedingSpec,
+    ChildDeathSpec,
+    ChildDeliverySpec,
+    ChildLowBirthWeightSpec,
+    ChildWeighedSpec,
+    ComplementaryFeedingStartedCheckSpec,
+    GenderAndResidentTypeSpec,
+    ImmediateBreastfeedingInitiatedSpec,
+    LatestBMICategorySpec,
+    NutritionCenterOpenTodaySpec,
+    OnTimeVisitCheckSpec,
+    WomanDeathSpec,
+    WomanDeathTypeSpec,
 )
 
 
 class ReportColumnFactory(object):
     class_map = {
-        'age_in_months_buckets': AgeInMonthsBucketsColumn,
         'aggregate_date': AggregateDateColumn,
         'expanded': ExpandedColumn,
         'expression': ExpressionColumn,
@@ -141,11 +160,13 @@ class SumWhenTemplateFactory(object):
         'age_at_death_range_resident': AgeAtDeathRangeResidentSpec,
         'ccs_phase': CCSPhaseTemplateSpec,
         'ccs_phase_null': CCSPhaseNullTemplateSpec,
+        'complementary_feeding': ComplementaryFeedingTemplateSpec,
         'closed_on_null': ClosedOnNullTemplateSpec,
         'female_age_at_death': FemaleAgeAtDeathSpec,
         'female_death_type_migrant': FemaleDeathTypeMigrantSpec,
         'female_death_type_resident': FemaleDeathTypeResidentSpec,
         'open_disability_type': OpenDisabilityTypeSpec,
+        'open_female': OpenFemaleSpec,
         'open_female_disabled': OpenFemaleDisabledSpec,
         'open_female_hh_caste': OpenFemaleHHCasteSpec,
         'open_female_hh_caste_not': OpenFemaleHHCasteNotSpec,
@@ -165,11 +186,28 @@ class SumWhenTemplateFactory(object):
         'reached_referral_health_problem': ReachedReferralHealthProblemSpec,
         'reached_referral_health_problem_2_problems': ReachedReferralHealthProblem2ProblemsSpec,
         'reached_referral_health_problem_3_problems': ReachedReferralHealthProblem3ProblemsSpec,
+        'reached_referral_health_problem_5_problems': ReachedReferralHealthProblem5ProblemsSpec,
         'referral_health_problem': ReferralHealthProblemSpec,
         'referral_health_problem_2_problems': ReferralHealthProblem2ProblemsSpec,
         'referral_health_problem_3_problems': ReferralHealthProblem3ProblemsSpec,
+        'referral_health_problem_5_problems': ReferralHealthProblem5ProblemsSpec,
         'under_x_months': UnderXMonthsTemplateSpec,
         'year_range': YearRangeTemplateSpec,
+
+        # India Nutrition Project templates
+        ChildDeliverySpec.type.choices[0]: ChildDeliverySpec,
+        ChildWeighedSpec.type.choices[0]: ChildWeighedSpec,
+        ChildLowBirthWeightSpec.type.choices[0]: ChildLowBirthWeightSpec,
+        ChildDeathSpec.type.choices[0]: ChildDeathSpec,
+        WomanDeathSpec.type.choices[0]: WomanDeathSpec,
+        WomanDeathTypeSpec.type.choices[0]: WomanDeathTypeSpec,
+        GenderAndResidentTypeSpec.type.choices[0]: GenderAndResidentTypeSpec,
+        NutritionCenterOpenTodaySpec.type.choices[0]: NutritionCenterOpenTodaySpec,
+        OnTimeVisitCheckSpec.type.choices[0]: OnTimeVisitCheckSpec,
+        BreastfeedingSpec.type.choices[0]: BreastfeedingSpec,
+        ImmediateBreastfeedingInitiatedSpec.type.choices[0]: ImmediateBreastfeedingInitiatedSpec,
+        ComplementaryFeedingStartedCheckSpec.type.choices[0]: ComplementaryFeedingStartedCheckSpec,
+        LatestBMICategorySpec.type.choices[0]: LatestBMICategorySpec,
     }
 
     @classmethod

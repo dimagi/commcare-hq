@@ -14,7 +14,8 @@ from corehq.apps.domain.forms import (
 )
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.domain.views.internal import TransferDomainView
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.models import WebUser, UserHistory
 
 
 class BaseDomainTest(TestCase):
@@ -28,20 +29,20 @@ class BaseDomainTest(TestCase):
 
         self.username = 'bananafana'
         self.password = '*******'
-        self.user = WebUser.create(self.domain.name, self.username, self.password)
+        self.user = WebUser.create(self.domain.name, self.username, self.password, None, None)
         self.user.set_role(self.domain.name, 'admin')
         self.user.save()
 
         self.another_domain = Domain(name='anotherdomain', is_active=True)
         self.another_domain.save()
         self.mugglename = 'muggle'
-        self.muggle = WebUser.create(self.another_domain.name, self.mugglename, self.password)
+        self.muggle = WebUser.create(self.another_domain.name, self.mugglename, self.password, None, None)
         self.muggle.save()
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
-        self.muggle.delete()
+        self.muggle.delete(self.another_domain.name, deleted_by=None)
         self.another_domain.delete()
 
 
@@ -97,17 +98,35 @@ class TestTransferDomainModel(BaseDomainTest):
         self.transfer.save()
 
         with self.assertRaises(InactiveTransferDomainException):
-            self.transfer.transfer_domain()
+            self.transfer.transfer_domain(by_user=None)
 
         with self.assertRaises(InactiveTransferDomainException):
             self.transfer.send_transfer_request()
 
     def test_domain_transfer(self):
-        self.transfer.transfer_domain()
+        self.transfer.transfer_domain(by_user=self.user, transfer_via='test')
 
         self.assertFalse(self.transfer.active)
         self.assertFalse(self.transfer.from_user.is_member_of(self.domain))
         self.assertTrue(self.transfer.to_user.is_member_of(self.domain))
+
+        user_history = UserHistory.objects.get(user_id=self.transfer.from_user.get_id)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.for_domain, self.domain.name)
+        self.assertEqual(user_history.changed_by, self.user.get_id)
+        self.assertEqual(user_history.change_messages,
+                         UserChangeMessage.domain_removal(self.domain.name))
+        self.assertEqual(user_history.changed_via, 'test')
+        self.assertEqual(user_history.changes, {})
+
+        user_history = UserHistory.objects.get(user_id=self.transfer.to_user.get_id)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.for_domain, self.domain.name)
+        self.assertEqual(user_history.changed_by, self.user.get_id)
+        self.assertEqual(user_history.change_messages,
+                         UserChangeMessage.domain_addition(self.domain.name))
+        self.assertEqual(user_history.changed_via, 'test')
+        self.assertEqual(user_history.changes, {})
 
     def test_send_transfer_request(self):
         with patch('corehq.apps.hqwebapp.tasks.send_HTML_email') as patched_send_HTML_email:
@@ -144,11 +163,11 @@ class TestTransferDomainViews(BaseDomainTest):
         self.transfer.save()
         self.transfer.send_transfer_request()
 
-        self.rando = WebUser.create(self.domain.name, 'rando', self.password)
+        self.rando = WebUser.create(self.domain.name, 'rando', self.password, None, None)
 
     def tearDown(self):
         self.transfer.delete()
-        self.rando.delete()
+        self.rando.delete(self.domain.name, deleted_by=None)
         super(TestTransferDomainViews, self).tearDown()
 
     def test_permissions_for_activation(self):

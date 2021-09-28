@@ -1,5 +1,6 @@
+import time
 from abc import ABCMeta, abstractproperty, abstractmethod
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime
 
 from django.conf import settings
@@ -10,6 +11,7 @@ import sys
 from sentry_sdk import configure_scope
 
 from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.metrics.const import MPM_MAX
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from kafka.common import TopicPartition
@@ -105,7 +107,12 @@ class PillowBase(metaclass=ABCMeta):
         pillow_logging.info("Starting pillow %s" % self.__class__)
         with configure_scope() as scope:
             scope.set_tag("pillow_name", self.get_name())
-        self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+        if self.is_dedicated_migration_process:
+            for processor in self.processors:
+                processor.bootstrap_if_needed()
+            time.sleep(10)
+        else:
+            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
     def _update_checkpoint(self, change, context):
         if change and context:
@@ -254,9 +261,7 @@ class PillowBase(metaclass=ABCMeta):
                 ))
                 raise
         if is_success:
-            self._record_change_success_in_datadog(change, processor)
-        else:
-            self._record_change_exception_in_datadog(change, processor)
+            self._record_change_success_in_datadog(change)
         return timer.duration
 
     @abstractmethod
@@ -291,27 +296,33 @@ class PillowBase(metaclass=ABCMeta):
         return sequence
 
     def _record_datadog_metrics(self, changes_chunk, processing_time):
-        tags = {"pillow_name": self.get_name(), "mode": "chunked"}
         change_count = len(changes_chunk)
-        if settings.ENTERPRISE_MODE:
-            type_counter = Counter([
-                change.metadata.document_subtype
-                for change in changes_chunk if change.metadata.document_type == 'CommCareCase'
-            ])
-            for case_type, type_count in type_counter.items():
-                metrics_counter('commcare.change_feed.changes.count', type_count,
-                                tags={**tags, 'case_type': case_type})
+        by_data_source = defaultdict(list)
+        for change in changes_chunk:
+            by_data_source[change.metadata.data_source_name].append(change)
+        for data_source, changes in by_data_source.items():
+            tags = {"pillow_name": self.get_name(), 'datasource': data_source}
+            if settings.ENTERPRISE_MODE:
+                type_counter = Counter([
+                    change.metadata.document_subtype
+                    for change in changes_chunk if change.metadata.document_type == 'CommCareCase'
+                ])
+                for case_type, type_count in type_counter.items():
+                    metrics_counter('commcare.change_feed.changes.count', type_count,
+                                    tags={**tags, 'case_type': case_type})
 
-            remainder = change_count - sum(type_counter.values())
-            if remainder:
-                metrics_counter('commcare.change_feed.changes.count', remainder, tags=tags)
-        else:
-            metrics_counter('commcare.change_feed.changes.count', change_count, tags=tags)
+                remainder = change_count - sum(type_counter.values())
+                if remainder:
+                    metrics_counter('commcare.change_feed.changes.count', remainder,
+                                    tags={**tags, 'case_type': 'NA'})
+            else:
+                metrics_counter('commcare.change_feed.changes.count', change_count,
+                                tags={**tags, 'case_type': 'NA'})
 
+        tags = {"pillow_name": self.get_name()}
         max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).total_seconds()
-        min_change_lag = (datetime.utcnow() - changes_chunk[-1].metadata.publish_timestamp).total_seconds()
-        metrics_gauge('commcare.change_feed.chunked.min_change_lag', min_change_lag, tags=tags)
-        metrics_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags)
+        metrics_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags,
+            multiprocess_mode=MPM_MAX)
 
         # processing_time per change
         metrics_counter('commcare.change_feed.processing_time.total', processing_time / change_count, tags=tags)
@@ -326,7 +337,7 @@ class PillowBase(metaclass=ABCMeta):
             metrics_gauge('commcare.change_feed.checkpoint_offsets', value, tags={
                 'pillow_name': self.get_name(),
                 'topic': _topic_for_ddog(topic),
-            })
+            }, multiprocess_mode=MPM_MAX)
 
     def _record_change_in_datadog(self, change, processing_time):
         self.__record_change_metric_in_datadog(
@@ -342,25 +353,21 @@ class PillowBase(metaclass=ABCMeta):
                 'processor': processor.__class__.__name__ if processor else "all_processors",
             })
 
-    def _record_change_success_in_datadog(self, change, processor):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change, processor)
+    def _record_change_success_in_datadog(self, change):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change)
 
-    def _record_change_exception_in_datadog(self, change, processor):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change, processor)
-
-    def __record_change_metric_in_datadog(self, metric, change, processor=None, processing_time=None,
+    def __record_change_metric_in_datadog(self, metric, change, processing_time=None,
                                           add_case_type_tag=False):
         if change.metadata is not None:
-            common_tags = {
+            metric_tags = {
                 'datasource': change.metadata.data_source_name,
-                'is_deletion': change.metadata.is_deletion,
                 'pillow_name': self.get_name(),
-                'processor': processor.__class__.__name__ if processor else "all_processors",
             }
 
-            metric_tags = common_tags.copy()
-            if add_case_type_tag and settings.ENTERPRISE_MODE and change.metadata.document_type == 'CommCareCase':
-                metric_tags['case_type'] = change.metadata.document_subtype
+            if add_case_type_tag:
+                metric_tags['case_type'] = 'NA'
+                if settings.ENTERPRISE_MODE and change.metadata.document_type == 'CommCareCase':
+                    metric_tags['case_type'] = change.metadata.document_subtype
 
             metrics_counter(metric, tags=metric_tags)
 
@@ -371,11 +378,12 @@ class PillowBase(metaclass=ABCMeta):
                     TopicPartition(change.topic, change.partition)
                     if change.partition is not None else change.topic
                 ),
-            })
+            }, multiprocess_mode=MPM_MAX)
 
             if processing_time:
-                metrics_counter('commcare.change_feed.processing_time.total', processing_time, tags=common_tags)
-                metrics_counter('commcare.change_feed.processing_time.count', tags=common_tags)
+                tags = {'pillow_name': self.get_name()}
+                metrics_counter('commcare.change_feed.processing_time.total', processing_time, tags=tags)
+                metrics_counter('commcare.change_feed.processing_time.count', tags=tags)
 
     @staticmethod
     def _deduplicate_changes(changes_chunk):
@@ -415,8 +423,9 @@ class ConstructedPillow(PillowBase):
     arguments it needs.
     """
 
-    def __init__(self, name, checkpoint, change_feed, processor,
-                 change_processed_event_handler=None, processor_chunk_size=0):
+    def __init__(self, name, checkpoint, change_feed, processor, process_num=0,
+                 change_processed_event_handler=None, processor_chunk_size=0,
+                 is_dedicated_migration_process=False):
         self._name = name
         self._checkpoint = checkpoint
         self._change_feed = change_feed
@@ -427,6 +436,7 @@ class ConstructedPillow(PillowBase):
             self.processors = [processor]
 
         self._change_processed_event_handler = change_processed_event_handler
+        self.is_dedicated_migration_process = is_dedicated_migration_process
 
     @property
     def topics(self):

@@ -19,6 +19,8 @@ libjpeg-dev
 libtiff-dev
 libwebp-dev
 libxml2-dev
+libxmlsec1-dev
+libxmlsec1-openssl
 libxslt-dev
 
 # dependencies for couchdb and building it (as done in install.sh)

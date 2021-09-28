@@ -1,12 +1,16 @@
-/* globals hqDefine, hqImport, $ */
-
-hqDefine('hqwebapp/js/ui_elements/ui-element-checkbox', function () {
+hqDefine('hqwebapp/js/ui_elements/ui-element-checkbox', [
+    'jquery',
+    'hqwebapp/js/main',
+], function (
+    $,
+    hqMain
+) {
     'use strict';
     var module = {};
 
     var Checkbox = function () {
         var that = this;
-        hqImport("hqwebapp/js/main").eventize(this);
+        hqMain.eventize(this);
         this.ui = $('<span/>');
         this.value = true;
         this.edit = true;

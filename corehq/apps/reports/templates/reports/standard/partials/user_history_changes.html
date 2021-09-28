@@ -1,0 +1,13 @@
+{% load i18n %}
+
+<div class="see-all">
+  {% if primary_changes %}
+    <div class="see-all-primary">{{ primary_changes }}</div>
+  {% endif %}
+  {% if more_count %}
+    {% blocktrans with count=more_count %}
+      <a class="see-all-link">See {{ count }} More</a>
+    {% endblocktrans %}
+    <div class="see-all-complete hide">{{ all_changes }}</div>
+  {% endif %}
+</div>

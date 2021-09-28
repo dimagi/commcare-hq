@@ -68,8 +68,8 @@ class ApplicationAccess(models.Model):
 
 
 class SQLAppGroup(models.Model):
-    app_id = models.CharField(max_length=255, null=False)
-    group_id = models.CharField(max_length=255)
+    app_id = models.CharField(max_length=255)
+    group_id = models.CharField(max_length=255, null=True)
     application_access = models.ForeignKey('ApplicationAccess', on_delete=models.CASCADE)
 
     class Meta(object):

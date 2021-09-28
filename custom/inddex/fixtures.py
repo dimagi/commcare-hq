@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from django.utils.functional import cached_property
 
-from attr import attrib, attrs
+from attr import attrib, attrs, fields_dict
 
 from corehq.apps.fixtures.dbaccessors import (
     get_fixture_data_types,
@@ -10,20 +10,29 @@ from corehq.apps.fixtures.dbaccessors import (
 )
 
 
+class InddexFixtureError(Exception):
+    pass
+
+
+def _wrap(FixtureClass, kwargs):
+    try:
+        return FixtureClass(**{k: v for k, v in kwargs.items()
+                               if k in fields_dict(FixtureClass)})
+    except Exception as e:
+        raise InddexFixtureError(f"Error loading lookup table '{FixtureClass.table_name}': {e}")
+
+
 @attrs(kw_only=True, frozen=True)
 class RecipeIngredient:
+    table_name = 'recipes'
     recipe_code = attrib()
-    recipe_descr = attrib()
-    recipe_type = attrib()
-    recipe_type_descr = attrib()
     ingr_code = attrib()
-    ingr_descr = attrib()
     ingr_fraction = attrib(converter=float)
-    ingr_fraction_type = attrib()
 
 
 @attrs(kw_only=True, frozen=True)
 class Food:
+    table_name = 'food_list'
     food_code = attrib()
     food_type = attrib()
     food_name = attrib()
@@ -42,43 +51,36 @@ class Food:
 
 @attrs(kw_only=True, frozen=True)
 class FoodComposition:
+    table_name = 'food_composition_table'
     food_code = attrib()
-    foodex2_code = attrib()
-    foodex2_code_description = attrib()
     user_defined_food_group = attrib()
     fao_who_gift_food_group_code = attrib()
     fao_who_gift_food_group_description = attrib()
-    fao_who_gift_nutrition_sub_group_code = attrib()
-    fao_who_gift_nutrition_sub_group_description = attrib()
-    fct_food_name = attrib()
-    survey_base_terms_and_food_items = attrib()
     reference_food_code_for_food_composition = attrib()
-    scientific_name = attrib()
-    fct_source_description = attrib()
-    yield_factor = attrib()
-    yield_source_descr = attrib()
-    retention_factor = attrib()
-    retention_source_description = attrib()
-    additional_details = attrib()
-    additional_details_on_nutrients = attrib()
     nutrients: dict = attrib()
 
 
 @attrs(kw_only=True, frozen=True)
 class Nutrient:
+    table_name = 'nutrients_lookup'
     nutrient_code = attrib()
-    nutrient_name = attrib()
     nutrient_name_unit = attrib()
-    unit = attrib()
 
 
 @attrs(kw_only=True, frozen=True)
 class ConversionFactor:
+    table_name = 'conv_factors'
     food_code = attrib()
     conv_method = attrib()
     conv_option = attrib()
     conv_factor = attrib(converter=lambda x: float(x) if x else None)
-    energy_kcal = attrib(converter=float)
+
+
+@attrs(kw_only=True, frozen=True)
+class Language:
+    table_name = 'languages'
+    lang_code = attrib()
+    is_primary = attrib()
 
 
 class FixtureAccessor:
@@ -99,21 +101,26 @@ class FixtureAccessor:
     def recipes(self):
         """Lists of recipe ingredients by recipe_code"""
         recipes = defaultdict(list)
-        for item_dict in self._get_fixture_dicts('recipes'):
+        for item_dict in self._get_fixture_dicts(RecipeIngredient.table_name):
             # The fixture contains duplicate entries for each language.
             if item_dict.pop('iso_code') == 'en':
-                ingredient = RecipeIngredient(**item_dict)
+                ingredient = _wrap(RecipeIngredient, item_dict)
                 recipes[ingredient.recipe_code].append(ingredient)
         return recipes
+
+    def _localize(self, col_name):
+        if self.lang_code == 'lang_0':
+            return col_name
+        return f'{col_name}_{self.lang_code}'
 
     @cached_property
     def foods(self):
         """Food items by food_code"""
         foods = {}
-        for item_dict in self._get_fixture_dicts('food_list'):
-            # A bunch of columns are duplicated - like food_name_lang_3
-            item_dict = {k: v for k, v in item_dict.items() if '_lang_' not in k}
-            food = Food(**item_dict)
+        for item_dict in self._get_fixture_dicts(Food.table_name):
+            item_dict['food_name'] = item_dict[self._localize('food_name')]
+            item_dict['food_base_term'] = item_dict[self._localize('food_base_term')]
+            food = _wrap(Food, item_dict)
             foods[food.food_code] = food
         return foods
 
@@ -124,8 +131,8 @@ class FixtureAccessor:
     @cached_property
     def _nutrients(self):
         return [
-            Nutrient(**item_dict)
-            for item_dict in self._get_fixture_dicts('nutrients_lookup')
+            _wrap(Nutrient, item_dict)
+            for item_dict in self._get_fixture_dicts(Nutrient.table_name)
         ]
 
     @cached_property
@@ -139,7 +146,7 @@ class FixtureAccessor:
     @cached_property
     def food_compositions(self):
         foods = {}
-        for item_dict in self._get_fixture_dicts('food_composition_table'):
+        for item_dict in self._get_fixture_dicts(FoodComposition.table_name):
             nutrients = {}
             composition_dict = {}
             for k, v in item_dict.items():
@@ -147,17 +154,24 @@ class FixtureAccessor:
                     nutrients[self._nutrient_names_by_code[k]] = _to_float(v)
                 else:
                     composition_dict[k] = v
-            food = FoodComposition(nutrients=nutrients, **composition_dict)
+            food = _wrap(FoodComposition, {'nutrients': nutrients, **composition_dict})
             foods[food.food_code] = food
         return foods
 
     @cached_property
     def conversion_factors(self):
-        conversion_factors = (ConversionFactor(**item_dict)
-                              for item_dict in self._get_fixture_dicts('conv_factors'))
+        conversion_factors = (_wrap(ConversionFactor, item_dict)
+                              for item_dict in self._get_fixture_dicts(ConversionFactor.table_name))
         return {
             (cf.food_code, cf.conv_method, cf.conv_option): cf.conv_factor for cf in conversion_factors
         }
+
+    @cached_property
+    def lang_code(self):
+        languages = (_wrap(Language, item_dict)
+                     for item_dict in self._get_fixture_dicts(Language.table_name))
+        primary = [l.lang_code for l in languages if l.is_primary == 'yes']
+        return primary[0] if primary else 'lang_1'
 
 
 def _to_float(v):

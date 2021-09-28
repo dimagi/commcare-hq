@@ -2,24 +2,39 @@ from django.utils.translation import ugettext as _
 
 from lxml import etree
 
-from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteValidationError
-from corehq.apps.app_manager.suite_xml.xml_models import Suite, Text, XpathEnum
+from corehq.apps.app_manager.suite_xml.xml_models import Suite
 
 
 def get_select_chain(app, module, include_self=True):
-    select_chain = [module] if include_self else []
+    return [
+        module
+        for (module, _) in get_select_chain_with_sessions(app, module, include_self=include_self)
+    ]
+
+
+def get_select_chain_with_sessions(app, module, include_self=True):
+    select_chain = [(module, 'case_id')] if include_self else []
     current_module = module
+    case_type = module.case_type
+    i = len(select_chain)
     while hasattr(current_module, 'parent_select') and current_module.parent_select.active:
+        is_other_relation = current_module.parent_select.relationship is None
         current_module = app.get_module_by_unique_id(
             current_module.parent_select.module_id,
             error=_("Case list used by parent child selection in '{}' not found").format(
                 current_module.default_name()),
         )
-        if current_module in select_chain:
+        if is_other_relation and case_type == current_module.case_type:
+            session_var = 'case_id_' + case_type
+        else:
+            session_var = ('parent_' * i or 'case_') + 'id'
+        case_type = current_module.case_type
+        if current_module in [m for (m, _) in select_chain]:
             raise SuiteValidationError("Circular reference in case hierarchy")
-        select_chain.append(current_module)
+        select_chain.append((current_module, session_var))
+        i += 1
     return select_chain
 
 
@@ -35,15 +50,15 @@ def get_select_chain_meta(app, module):
     if not (module and module.module_type == 'basic'):
         return []
 
-    select_chain = get_select_chain(app, module)
+    select_chain = get_select_chain_with_sessions(app, module)
     return [
         {
-            'session_var': ('parent_' * i or 'case_') + 'id',
+            'session_var': session_var,
             'case_type': mod.case_type,
             'module': mod,
             'index': i
         }
-        for i, mod in reversed(list(enumerate(select_chain)))
+        for i, (mod, session_var) in reversed(list(enumerate(select_chain)))
     ]
 
 
@@ -67,18 +82,6 @@ def validate_suite(suite):
             raise SuiteValidationError('field/sort/@order must be unique per detail')
 
 
-def _module_uses_name_enum(module):
-    if not toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(module.get_app().domain):
-        return False
-    return bool(module.name_enum)
-
-
-def _form_uses_name_enum(form):
-    if not toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(form.get_app().domain):
-        return False
-    return bool(form.name_enum)
-
-
 def _should_use_root_display(module):
     # child modules set to display only forms should use their parent module's
     # name so as not to confuse mobile when the two are combined
@@ -88,40 +91,8 @@ def _should_use_root_display(module):
 def get_module_locale_id(module):
     if _should_use_root_display(module):
         module = module.root_module
-    if not _module_uses_name_enum(module):
-        return id_strings.module_locale(module)
+    return id_strings.module_locale(module)
 
 
 def get_form_locale_id(form):
-    if not _form_uses_name_enum(form):
-        return id_strings.form_locale(form)
-
-
-def get_module_enum_text(module):
-    if _should_use_root_display(module):
-        module = module.root_module
-    if not _module_uses_name_enum(module):
-        return None
-
-    return Text(xpath=XpathEnum.build(
-        enum=module.name_enum,
-        template='if({key_as_condition}, {key_as_var_name}',
-        get_template_context=lambda item, i: {
-            'key_as_condition': item.key_as_condition(),
-            'key_as_var_name': item.ref_to_key_variable(i, 'display')
-        },
-        get_value=lambda key: id_strings.module_name_enum_variable(module, key)))
-
-
-def get_form_enum_text(form):
-    if not _form_uses_name_enum(form):
-        return None
-
-    return Text(xpath=XpathEnum.build(
-        enum=form.name_enum,
-        template='if({key_as_condition}, {key_as_var_name}',
-        get_template_context=lambda item, i: {
-            'key_as_condition': item.key_as_condition(),
-            'key_as_var_name': item.ref_to_key_variable(i, 'display')
-        },
-        get_value=lambda key: id_strings.form_name_enum_variable(form, key)))
+    return id_strings.form_locale(form)

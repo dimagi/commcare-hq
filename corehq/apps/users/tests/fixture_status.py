@@ -7,7 +7,7 @@ from mock import MagicMock
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.fixtures.models import UserFixtureStatus, UserFixtureType
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, get_fixture_statuses
 
 
@@ -19,7 +19,7 @@ class TestFixtureStatus(TestCase):
         password = "password"
         self.domain = Domain(name='my-domain')
         self.domain.save()
-        self.couch_user = CommCareUser.create(self.domain.name, self.username, password)
+        self.couch_user = CommCareUser.create(self.domain.name, self.username, password, None, None)
         self.couch_user.save()
 
     def tearDown(self):
@@ -58,7 +58,6 @@ class TestFixtureStatus(TestCase):
     def test_update_status_set_location(self):
         fake_location = MagicMock()
         fake_location.location_id = "the_depths_of_khazad_dum"
-        fake_location.group_id = "the_depths_of_khazad_dum"
         self.assertEqual(UserFixtureStatus.objects.all().count(), 0)
 
         self.couch_user.set_location(fake_location)
@@ -72,7 +71,6 @@ class TestFixtureStatus(TestCase):
     def test_update_status_unset_location(self):
         fake_location = MagicMock()
         fake_location.location_id = "the_mines_of_moria"
-        fake_location.group_id = "the_mines_of_moria"
         self.couch_user.set_location(fake_location)
         previously_updated_time = UserFixtureStatus.objects.get(user_id=self.couch_user._id).last_modified
 
@@ -84,12 +82,10 @@ class TestFixtureStatus(TestCase):
     def test_update_status_reset_location(self):
         fake_location = MagicMock()
         fake_location.location_id = "misty_mountains"
-        fake_location.group_id = "misty_mountains"
         self.couch_user.set_location(fake_location)
         previously_updated_time = UserFixtureStatus.objects.get(user_id=self.couch_user._id).last_modified
 
         fake_location.location_id = "lonely_mountain"
-        fake_location.group_id = "lonely_mountain"
         self.couch_user.set_location(fake_location)
 
         new_updated_time = UserFixtureStatus.objects.get(user_id=self.couch_user._id).last_modified

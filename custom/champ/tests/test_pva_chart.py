@@ -8,7 +8,6 @@ from custom.champ.views import PrevisionVsAchievementsView
 from django.urls import reverse
 
 
-@softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
 class TestPVAChart(ChampTestCase):
 
     def setUp(self):

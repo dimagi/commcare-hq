@@ -85,7 +85,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
         # If that changes, amend the error message accordingly.
         raise CaseXPathValidationError(_(CASE_REFERENCE_VALIDATION_ERROR), module=module, form=form)
     replacements = {
-        '#user': UserCaseXPath().case(),
+        '#user': UsercaseXPath().case(),
         '#session/': session_var('', path=''),
     }
     if fixture_xpath:
@@ -218,8 +218,18 @@ class CaseTypeXpath(CaseSelectionXPath):
         quoted = CaseTypeXpath("'{}'".format(self))
         return super(CaseTypeXpath, quoted).case(instance_name, case_name)
 
+    def cases(self, additional_types, instance_name='casedb', case_name='case'):
+        quoted = CaseTypeXpath("'{}'".format(self))
+        selector = "{sel}={quoted}".format(sel=self.selector, quoted=quoted)
+        for type in additional_types:
+            quoted = CaseTypeXpath("'{}'".format(type))
+            selector = "{selector} or {sel}={quoted}".format(selector=selector, sel=self.selector, quoted=quoted)
+        return CaseXPath("instance('{inst}')/{inst}/{case}[{sel}]".format(
+            inst=instance_name, case=case_name, sel=selector
+        ))
 
-class UserCaseXPath(XPath):
+
+class UsercaseXPath(XPath):
 
     def case(self):
         user_id = session_var(var='userid', path='context')
@@ -318,6 +328,14 @@ class LocationXpath(XPath):
                     next_types.add(child)
 
         return [unicode_slug(t) for t in _gen(hierarchy)]
+
+
+class CaseClaimXpath(object):
+    def __init__(self, session_var_name):
+        self.session_var_name = session_var_name
+
+    def default_relevant(self):
+        return CaseIDXPath(session_var(self.session_var_name)).case().count().eq(0)
 
 
 class LedgerdbXpath(XPath):

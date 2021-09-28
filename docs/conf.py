@@ -10,31 +10,24 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import django
 import sys, os
-from mock import MagicMock
 import sphinx_rtd_theme
-from recommonmark.parser import CommonMarkParser
 
 sys.path.insert(0, os.path.abspath('..'))
 from manage import init_hq_python_path
 
-init_hq_python_path()
+import settings
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
-django.setup()
+# this avoids having to import corehq.util.log.HQRequestFilter which has a chained dependency
+# to OpenSSL
+settings.LOGGING = {}
+init_hq_python_path()
 
 # -- Custom configuration -----------------------------------------------------
 
 # mock out stubborn modules that are hard to pip install
 # https://docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
-MOCK_MODULES = ["PIL.Image", "PIL"]
-sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
-
-
-# Support including markdown files in the documentation
-source_parsers = {
-    '.md': CommonMarkParser,
-}
+autodoc_mock_imports = ["OpenSSL", "onelogin"]
 
 # The suffix of source filenames.
 source_suffix = ['.rst', '.md']
@@ -47,7 +40,12 @@ source_suffix = ['.rst', '.md']
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinxcontrib_django']
+extensions = [
+    'myst_parser',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
+    'sphinxcontrib_django',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -57,7 +55,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'CommCareHQ'
-copyright = '2014, Dimagi'
+copyright = '2020, Dimagi'
 
 version = '1.0'
 release = '1.0'

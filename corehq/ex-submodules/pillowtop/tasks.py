@@ -3,6 +3,7 @@ from celery.task import periodic_task
 from django.conf import settings
 
 from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_MAX, MPM_MIN
 from pillowtop.utils import get_all_pillows_json
 
 
@@ -26,7 +27,8 @@ def pillow_datadog_metrics():
 
         metrics_gauge(
             'commcare.change_feed.seconds_since_last_update',
-            pillow['seconds_since_last'], tags=tags
+            pillow['seconds_since_last'], tags=tags,
+            multiprocess_mode=MPM_MIN
         )
 
         for topic_name, offset in pillow['offsets'].items():
@@ -49,14 +51,17 @@ def pillow_datadog_metrics():
 
             metrics_gauge(
                 'commcare.change_feed.current_offsets',
-                offset, tags=tags_with_topic
+                offset, tags=tags_with_topic,
+                multiprocess_mode=MPM_MAX
             )
             metrics_gauge(
                 'commcare.change_feed.processed_offsets',
-                processed_offset, tags=tags_with_topic
+                processed_offset, tags=tags_with_topic,
+                multiprocess_mode=MPM_MAX
             )
             needs_processing = offset - processed_offset
             metrics_gauge(
                 'commcare.change_feed.need_processing',
-                needs_processing, tags=tags_with_topic
+                needs_processing, tags=tags_with_topic,
+                multiprocess_mode=MPM_MAX
             )

@@ -25,7 +25,7 @@ class TestSubscriptionProperties(TestCase):
 
         cls.base_domain = Domain(name="base", is_active=True)
         cls.base_domain.save()
-        cls.user = WebUser.create(cls.base_domain.name, "tarso", "*****")
+        cls.user = WebUser.create(cls.base_domain.name, "tarso", "*****", None, None)
         cls.user.save()
 
         cls.community = Domain(name="community", is_active=True)

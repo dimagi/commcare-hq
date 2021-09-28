@@ -131,13 +131,27 @@
       </a>
     </div>
 
-    <div class="alert alert-info text-center"
+    <div class="alert {% if can_domain_unpause %}alert-info{% else %}alert-danger{% endif %} text-center"
          data-bind="visible: oIsCurrentPlanPaused">
       <p class="lead">
-        <i class="fa fa-pause-circle-o"></i>
-        {% blocktrans %}
-          Your subscription is currently paused.
-        {% endblocktrans %}
+        {% if can_domain_unpause %}
+          <i class="fa fa-pause-circle-o"></i>
+          {% blocktrans %}
+            Your subscription is currently paused.
+          {% endblocktrans %}
+        {% else %}
+          {% url 'domain_billing_statements' domain as url_statements %}
+          <i class="fa fa-warning"></i>
+          {% blocktrans %}
+            Your subscription is currently paused because you have
+            <a href="{{ url_statements }}">past-due invoices</a>.
+          {% endblocktrans %}
+            <br />
+          {% blocktrans %}
+            You will not be allowed to un-pause your project until
+            these invoices are paid.
+          {% endblocktrans %}
+        {% endif %}
       </p>
     </div>
 
@@ -189,14 +203,24 @@
         <input type="hidden" name="from_plan_page" value="true">
       {% endif %}
 
-      <input type="hidden" name="plan_edition" data-bind="value: oSelectedPlan">
-      <div class="text-center plan-next">
-        <button type="submit"
-                class="btn btn-primary btn-lg"
-                data-bind="click: openMinimumSubscriptionModal, disable: oIsSubmitDisabled">
-          {% trans 'Next' %}
-        </button>
-      </div>
+      {% if can_domain_unpause %}
+        <input type="hidden" name="plan_edition" data-bind="value: oSelectedPlan">
+        <div class="text-center plan-next">
+          <button type="submit"
+                  class="btn btn-primary btn-lg"
+                  data-bind="click: openMinimumSubscriptionModal, disable: oIsSubmitDisabled">
+            {% trans 'Next' %}
+          </button>
+        </div>
+      {% else %}
+        <div class="text-center plan-next">
+          <button type="button"
+                  class="btn btn-primary btn-lg"
+                  disabled="disabled">
+            {% trans 'Next' %}
+          </button>
+        </div>
+      {% endif %}
     </form>
 
     <form action="{% url 'annual_plan_request_quote' domain %}"

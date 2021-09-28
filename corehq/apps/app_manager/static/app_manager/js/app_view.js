@@ -23,12 +23,35 @@ hqDefine("app_manager/js/app_view", function () {
             }));
         }
 
-        // Set up typeahead for domain names when copying app
-        var $domainContainer = $("#id_domain");
+        var CopyAppViewModel = function (data) {
+            var self = {};
+            // Set up typeahead for domain names when copying app
+            // prepend with blank so placeholder works
+            self.domainNames = [''].concat(data("domain_names"));
+            self.linkableDomains = data("linkable_domains");
+            self.shouldLimitToLinkedDomains = data("limit_to_linked_domains");
+
+            self.isChecked = ko.observable(false);
+            self.shouldEnableLinkedAppOption = ko.observable(true);
+
+            self.domainChanged = function (data, event) {
+                if (self.shouldLimitToLinkedDomains) {
+                    var selectedDomain = event.currentTarget.options[event.currentTarget.selectedIndex].value;
+                    self.shouldEnableLinkedAppOption(self.linkableDomains.includes(selectedDomain));
+
+                    // ensure not checked if linked apps is not allowed
+                    if (!self.shouldEnableLinkedAppOption()) {
+                        self.isChecked(false);
+                    }
+                }
+            };
+
+            return self;
+        };
+
+        var $domainContainer = $("#copy-app-form");
         if ($domainContainer.length) {
-            $domainContainer.koApplyBindings({
-                domain_names: [''].concat(initial_page_data("domain_names")),   // prepend with blank so placeholder works
-            });
+            $domainContainer.koApplyBindings(CopyAppViewModel(initial_page_data));
         }
 
         // Multimedia analytics

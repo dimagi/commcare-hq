@@ -44,3 +44,11 @@ class MobileAuthKeyRecord(Document):
             include_docs=True,
         ).first()
         return key_record
+
+
+def _default_uuid():
+    return uuid.uuid4().hex
+
+
+def _default_key():
+    return generate_aes_key().decode('utf-8')

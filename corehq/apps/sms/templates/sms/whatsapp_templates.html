@@ -1,0 +1,58 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block title %}
+  {% trans "WhatsApp Templates" %}
+{% endblock %}
+
+
+{% block page_content %}
+  <h2>{% trans "WhatsApp Templates" %}</h2>
+  <hr/>
+  <p>
+    {% blocktrans %}
+      To send a template message, copy and paste the <strong>Template String</strong> as the message text, replacing each <code>{variable}</code> with the variables you want to add in to the template, surrounded by curly braces.
+    {% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      For example <code>cc_wa_template:daily_screening:en:{var1},{var2}</code> would become <code>cc_wa_template:daily_screening:en:{Hello dear user, }, {55}</code>
+    {% endblocktrans %}
+  </p>
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>{% trans "Template Name" %}</th>
+        <th>{% trans "Body" %}</th>
+        <th>{% trans "Category" %}</th>
+        <th>{% trans "Status" %}</th>
+        <th>{% trans "Language" %}</th>
+        <th>{% trans "Template String" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for template in wa_templates %}
+        <tr>
+          <td>{{ template.name }}</td>
+          <td>
+            {% if template.components %}
+              {% for component in template.components %}
+                {% if component.type == 'BODY' %}
+                  {{ component.text }}
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              {{ template.body }}
+            {% endif %}
+          </td>
+          <td>{{ template.category }}</td>
+          <td>{{ template.status }}</td>
+          <td>{{ template.language }}</td>
+          <td>{{ template.template_string }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+{% endblock %}

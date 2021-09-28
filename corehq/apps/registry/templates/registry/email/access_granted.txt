@@ -1,0 +1,15 @@
+{% load i18n %}
+
+{% blocktrans %}Dear {{ domain }} administrator,{% endblocktrans %}
+
+{% blocktrans trimmed %}
+The '{{ domain }}' project space has been granted access to data from the '{{ access_domain }}' project space via
+the '{{ registry_name }}' CommCare data registry.
+{% endblocktrans %}
+
+{% blocktrans %}You can view the data registry at the following link: {% endblocktrans %}<a href="{{ registry_url }}">{{ registry_url }}</a>
+
+{% blocktrans %}Thank you for using CommCare.
+Best regards,
+The CommCare HQ Team
+www.commcarehq.org{% endblocktrans %}

@@ -235,6 +235,7 @@ class WorkbookJSONReader(object):
             tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
             file_or_filename.seek(0)
             tmp.write(file_or_filename.read())
+            file_or_filename.seek(0)
             tmp.close()
             file_or_filename = tmp.name
         try:

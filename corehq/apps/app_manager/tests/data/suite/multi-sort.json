@@ -86,6 +86,7 @@
                             "field": "birthdate",
                             "filter_xpath": "",
                             "format": "date",
+                            "date_format": "%d/%m/%Y",
                             "header": {
                                 "en": "Birthdate"
                             },
@@ -141,6 +142,7 @@
                             "header": {
                                 "en": "Birthdate"
                             },
+                            "date_format": "%b %d, %Y",
                             "late_flag": 30,
                             "model": "case",
                             "time_ago_interval": 365.25

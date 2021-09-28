@@ -1,8 +1,8 @@
+from casexml.apps.case.tests.util import create_case
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.data_interfaces.tests.util import create_case
 
 
-def create_user_case(user):
+def create_usercase(user):
     """
     Returns a context manager that yields the user case and
     deletes it on exit.

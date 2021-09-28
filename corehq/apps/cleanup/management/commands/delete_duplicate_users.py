@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.core.management import BaseCommand
 
 from corehq.apps.es import FormES
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -25,6 +25,11 @@ class Command(BaseCommand):
             return
 
         print(f'Found {len(duplicate_users)} usernames with duplicates')
+        answer = input("Enter action [delete, print, quit]: ")
+        if answer != "delete":
+            if answer == "print":
+                print("Usernames:", ", ".join(u for u in duplicate_users))
+            return
         all_user_id = list(itertools.chain.from_iterable(duplicate_users.values()))
         user_ids_with_forms = get_users_with_forms(domain, all_user_id)
 

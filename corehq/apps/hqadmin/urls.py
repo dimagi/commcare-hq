@@ -12,7 +12,6 @@ from corehq.apps.hqadmin.views.operations import (
 from corehq.apps.hqadmin.views.reports import (
     DownloadGIRView,
     DownloadMALTView,
-    top_five_projects_by_country,
 )
 from corehq.apps.hqadmin.views.system import (
     SystemInfoView,
@@ -25,7 +24,6 @@ from corehq.apps.hqadmin.views.system import (
 from corehq.apps.hqadmin.views.users import (
     AdminRestoreView,
     AppBuildTimingsView,
-    AuthenticateAs,
     DisableTwoFactorView,
     DisableUserView,
     SuperuserManagement,
@@ -46,10 +44,6 @@ urlpatterns = [
     url(r'^mass_email/$', mass_email, name="mass_email"),
     # Same view supported with three possible urls to support tracking
     # username and domain in the url via audit
-    url(r'^auth_as/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
-    url(r'^auth_as/(?P<username>[^/]*)/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
-    url(r'^auth_as/(?P<username>[^/]*)/(?P<domain>{})/$'.format(new_domain_re),
-        AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
     url(r'^superuser_table.csv$', superuser_table, name='superuser_table'),
     url(r'^tombstone_management/$', TombstoneManagement.as_view(), name=TombstoneManagement.urlname),
@@ -71,7 +65,6 @@ urlpatterns = [
     url(r'^download_gir', DownloadGIRView.as_view(), name=DownloadGIRView.urlname),
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
-    url(r'^top_five_projects_by_country/$', top_five_projects_by_country, name='top_five_projects_by_country'),
     url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
     AdminReportDispatcher.url_pattern(),
 ]

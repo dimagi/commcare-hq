@@ -15,7 +15,7 @@ from corehq.apps.app_manager.views.apps import (
     copy_app,
     default_new_app,
     delete_app,
-    drop_user_case,
+    drop_usercase,
     edit_add_ons,
     edit_app_attr,
     edit_app_langs,
@@ -23,10 +23,9 @@ from corehq.apps.app_manager.views.apps import (
     get_app_ui_translations,
     import_app,
     new_app,
-    pull_master_app,
+    pull_upstream_app,
     rearrange,
     undo_delete_app,
-    update_linked_whitelist,
     view_app,
 )
 from corehq.apps.app_manager.views.cli import direct_ccz, list_apps
@@ -78,6 +77,7 @@ from corehq.apps.app_manager.views.modules import (
     new_module,
     overwrite_module_case_list,
     undo_delete_module,
+    upgrade_shadow_module,
     validate_module_for_build,
     view_module,
     view_module_legacy,

@@ -4,7 +4,9 @@ from django.conf import settings
 from django.test.utils import override_settings
 
 from mock import Mock, patch
+from testil import eq
 
+from corehq.apps.sms.tests.data_generator import get_test_sms_fields
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.domain.models import Domain
@@ -13,7 +15,7 @@ from corehq.apps.sms.models import SMS, QueuedSMS
 from corehq.apps.sms.tasks import (
     MAX_TRIAL_SMS,
     passes_trial_check,
-    process_sms,
+    process_sms, get_sms_from_queued_sms, _get_sms_fields_to_copy,
 )
 from corehq.apps.sms.tests.util import (
     BaseSMSTest,
@@ -65,7 +67,7 @@ class QueueingTestCase(BaseSMSTest):
         self.create_account_and_subscription(self.domain)
         self.domain_obj = Domain.get(self.domain_obj._id)
         self.backend, self.backend_mapping = setup_default_sms_test_backend()
-        self.contact = CommCareUser.create(self.domain, 'user1', 'abc', phone_number='999123')
+        self.contact = CommCareUser.create(self.domain, 'user1', 'abc', None, None, phone_number='999123')
         entry = self.contact.get_or_create_phone_entry('999123')
         entry.set_two_way()
         entry.set_verified()
@@ -76,7 +78,7 @@ class QueueingTestCase(BaseSMSTest):
         SMS.objects.filter(domain=self.domain).delete()
 
     def tearDown(self):
-        self.contact.delete()
+        self.contact.delete(self.domain, deleted_by=None)
         self.backend.delete()
         self.backend_mapping.delete()
 
@@ -332,3 +334,14 @@ class QueueingTestCase(BaseSMSTest):
         self.assertEqual(reporting_sms.backend_api, self.backend.get_api_id())
         self.assertEqual(reporting_sms.couch_id, couch_id)
         self.assertBillableExists(couch_id)
+
+
+def test_get_sms_from_queued_sms():
+    test_data = get_test_sms_fields("test_domain", datetime.utcnow(), 123)
+    expected = _get_sms_fields_to_copy()
+    eq(set(test_data), expected, set(test_data) ^ expected)
+
+    queued_sms = QueuedSMS(**test_data)
+    sms = get_sms_from_queued_sms(queued_sms)
+    for field, value in test_data.items():
+        eq(getattr(sms, field), value, field)

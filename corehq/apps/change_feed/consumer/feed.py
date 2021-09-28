@@ -7,6 +7,7 @@ from django.conf import settings
 from kafka import KafkaConsumer
 from kafka.common import TopicPartition
 
+from corehq.form_processor.document_stores import UnexpectedBackend
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
 from pillowtop.feed.interface import Change, ChangeFeed, ChangeMeta
@@ -25,7 +26,8 @@ class KafkaChangeFeed(ChangeFeed):
     """
     sequence_format = 'json'
 
-    def __init__(self, topics, client_id, strict=False, num_processes=1, process_num=0):
+    def __init__(self, topics, client_id, strict=False, num_processes=1,
+                 process_num=0, dedicated_migration_process=False,):
         """
         Create a change feed listener for a list of kafka topics, a client ID, and partition.
 
@@ -37,6 +39,7 @@ class KafkaChangeFeed(ChangeFeed):
         self.strict = strict
         self.num_processes = num_processes
         self.process_num = process_num
+        self.dedicated_migration_process = dedicated_migration_process
         self._consumer = None
 
     def __str__(self):
@@ -163,10 +166,20 @@ class KafkaChangeFeed(ChangeFeed):
     def _filter_partitions(self, topic_partitions):
         topic_partitions.sort()
 
-        return [
-            topic_partitions[num::self.num_processes]
-            for num in range(self.num_processes)
-        ][self.process_num]
+        if not self.dedicated_migration_process:
+            return [
+                topic_partitions[num::self.num_processes]
+                for num in range(self.num_processes)
+            ][self.process_num]
+        else:
+            if self.process_num == 0:
+                return None
+            else:
+                num_processes = self.num_processes - 1
+                return [
+                    topic_partitions[num::num_processes]
+                    for num in range(num_processes)
+                ][self.process_num - 1]
 
 
 class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
@@ -195,6 +208,9 @@ def change_from_kafka_message(message):
     except UnknownDocumentStore:
         document_store = None
         notify_error("Unknown document store: {}".format(change_meta.data_source_type))
+    except UnexpectedBackend:
+        document_store = None
+        notify_error("Change from incorrect backend", details=change_meta.to_json())
     return Change(
         id=change_meta.document_id,
         sequence_id=message.offset,

@@ -9,6 +9,7 @@ SERVER_DATE_FORMAT = "%Y-%m-%d"
 SERVER_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 SERVER_DATETIME_FORMAT_NO_SEC = "%Y-%m-%d %H:%M"
 
+FILENAME_DATETIME_FORMAT = "%Y-%m-%d %I-%M-%S %p"
 
 MISSING_APP_ID = '_MISSING_APP_ID'
 
@@ -23,7 +24,14 @@ OPENROSA_VERSION_MAP = {
     'INDEXED_PRODUCTS_FIXTURE': OPENROSA_VERSION_2_1,
 }
 
-GOOGLE_PLAY_STORE_COMMCARE_URL = 'https://play.google.com/store/apps/details?id=org.commcare.dalvik&hl=en'
-
 ONE_DAY = 60 * 60 * 24
 DEFAULT_PARALLEL_EXECUTION_TIMEOUT = 60 * 60  # one hour
+
+
+USER_CHANGE_VIA_API = "api"
+USER_CHANGE_VIA_WEB = "web"
+USER_CHANGE_VIA_SMS = "sms"
+USER_CHANGE_VIA_BULK_IMPORTER = "bulk_importer"
+USER_CHANGE_VIA_INVITATION = "invitation"
+USER_CHANGE_VIA_SSO_NEW_USER = "sso_new"
+USER_CHANGE_VIA_SSO_INVITE = "sso_invitation"

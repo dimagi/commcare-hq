@@ -14,12 +14,17 @@
         </div>
 
         <div class="modal-body" data-bind="validationOptions: {errorMessageClass: 'help-block'}">
-          <div data-bind="if: hasLocationRestrictions()">
-            {% trans "This export is limited to the following locations:" %}
-            <ul data-bind="foreach: locationRestrictions">
-              <li data-bind="text: $data"></li>
-            </ul>
-          </div>
+          <!-- ko if: hasLocationRestrictions() -->
+            <div class="alert alert-info">
+              <h4>
+                {% trans "Location-Limited Data" %}
+              </h4>
+              {% trans "This export is limited to the following locations:" %}
+              <ul data-bind="foreach: locationRestrictions">
+                <li data-bind="text: $data"></li>
+              </ul>
+            </div>
+          <!-- /ko -->
           {% crispy export_filter_form %}
           <div class="alert alert-danger" role="alert" data-bind="visible: formSubmitErrorMessage">
             <span data-bind="text: formSubmitErrorMessage"></span>

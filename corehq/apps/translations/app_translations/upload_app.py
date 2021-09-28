@@ -1,9 +1,12 @@
 import io
 
 from django.contrib import messages
+from django.template.defaultfilters import linebreaksbr
 from django.utils.translation import ugettext as _
 
 import ghdiff
+from CommcareTranslationChecker import validate_workbook
+from CommcareTranslationChecker.exceptions import FatalError
 
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -33,35 +36,72 @@ from corehq.apps.translations.const import (
     SINGLE_SHEET_NAME,
 )
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
+from corehq.util.files import read_workbook_content_as_file
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     get_single_worksheet,
 )
 
 
-def validate_bulk_app_translation_upload(app, workbook, email, lang_to_compare):
+def validate_bulk_app_translation_upload(app, workbook, email, lang_to_compare, file_obj):
     from corehq.apps.translations.validator import UploadedTranslationsValidator
     msgs = UploadedTranslationsValidator(app, workbook, lang_to_compare).compare()
-    if msgs:
-        _email_app_translations_discrepancies(msgs, email, app.name)
+    checker_messages, result_wb = run_translation_checker(file_obj)
+    if msgs or checker_messages:
+        _email_app_translations_discrepancies(msgs, checker_messages, email, app.name, result_wb)
         return [(messages.error, _("Issues found. You should receive an email shortly."))]
     else:
         return [(messages.success, _("No issues found."))]
 
 
-def _email_app_translations_discrepancies(msgs, email, app_name):
-    html_content = ghdiff.default_css
-    for sheet_name, msg in msgs.items():
-        html_content += "<strong>{}</strong>".format(sheet_name) + msg
+def run_translation_checker(file_obj):
+    translation_checker_messages = []
+    result_wb = None
+    try:
+        result_wb, translation_checker_messages = validate_workbook(file_obj)
+    except FatalError as e:
+        translation_checker_messages.append(
+            _("Workbook check failed to finish due to the following error : %s" % e))
+    return translation_checker_messages, result_wb
+
+
+def _email_app_translations_discrepancies(msgs, checker_messages, email, app_name, result_wb):
+    """
+    :param msgs: messages for app translation discrepancies
+    :param checker_messages: messages for issues found by translation checker
+    :param email: email to
+    :param app_name: name of the application
+    :param result_wb: result wb of translation checker to attach with the email
+    """
+    def form_email_content(msgs, checker_messages):
+        if msgs:
+            html_file_content = ghdiff.default_css
+            for sheet_name, msg in msgs.items():
+                html_file_content += "<strong>{}</strong>".format(sheet_name) + msg
+            text_content = _("Hi, PFA file for discrepancies found for app translations.") + "\n"
+        else:
+            html_file_content = None
+            text_content = _("Hi, No discrepancies found for app translations.") + "\n"
+        if checker_messages:
+            text_content += _("Issues found with the workbook are as follows :") + "\n"
+            text_content += '\n'.join([_(msg) for msg in checker_messages])
+        else:
+            text_content += _("No issues found with the workbook.")
+        return html_file_content, text_content
+
+    def attachment(title, content, mimetype='text/html'):
+        return {'title': title, 'file_obj': content, 'mimetype': mimetype}
 
     subject = _("App Translations Discrepancies for {}").format(app_name)
-    text_content = _("Hi, PFA file for discrepancies found for app translations.")
-    html_attachment = {
-        'title': "{} Discrepancies.html".format(app_name),
-        'file_obj': io.StringIO(html_content),
-        'mimetype': 'text/html',
-    }
-    send_html_email_async.delay(subject, email, text_content, file_attachments=[html_attachment])
+    html_file_content, text_content = form_email_content(msgs, checker_messages)
+    attachments = []
+    if html_file_content:
+        attachments.append(attachment("{} Discrepancies.html".format(app_name), io.StringIO(html_file_content)))
+    if result_wb:
+        attachments.append(attachment("{} TranslationChecker.xlsx".format(app_name),
+                           io.BytesIO(read_workbook_content_as_file(result_wb)), result_wb.mime_type))
+
+    send_html_email_async.delay(subject, email, linebreaksbr(text_content), file_attachments=attachments)
 
 
 def process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=None):

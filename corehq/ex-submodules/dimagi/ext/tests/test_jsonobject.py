@@ -2,7 +2,7 @@ import datetime
 from django.test import SimpleTestCase
 import jsonobject
 from jsonobject.exceptions import BadValueError
-from dimagi.ext.jsonobject import DateTimeProperty, re_loose_datetime, re_trans_datetime
+from dimagi.ext.jsonobject import DateTimeProperty, re_trans_datetime
 
 
 class Foo(jsonobject.JsonObject):
@@ -35,17 +35,6 @@ class TransitionalExactDateTimePropertyTest(SimpleTestCase):
 
 
 class TestDateRegex(SimpleTestCase):
-    def test_loose_match(self):
-        cases = [
-            ('2015-04-03', False),
-            ('2013-03-09T06:30:09.007', True),
-            ('2013-03-09T06:30:09.007+03', True),
-            ('351602061044374', False),
-            ('2015-01-01T12:00:00.120054Z', True),
-            ('2015-10-01T14:05:45.087434Z', True),
-        ]
-        for candidate, expected in cases:
-            self.assertEqual(bool(re_loose_datetime.match(candidate)), expected, candidate)
 
     def test_strict_match(self):
         cases = [

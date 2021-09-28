@@ -13,10 +13,10 @@ from dimagi.utils.logging import notify_error
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.history import get_recent_changes
 from corehq.elastic import get_es_new
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_ES_ALIAS
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_ALIAS
+from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS
 
 
 def check_es_cluster_health():
@@ -32,7 +32,7 @@ def check_es_cluster_health():
     return cluster_health['status']
 
 
-def check_index_by_doc(es_index, db, doc_id, interval=10):
+def check_index_by_doc(es_alias, db, doc_id, interval=10):
     """
     Given a doc, update it in couch (meaningless save that updates rev)
     and check to make sure that ES will eventually see it after some arbitrary delay
@@ -51,7 +51,7 @@ def check_index_by_doc(es_index, db, doc_id, interval=10):
         pass
 
     time.sleep(interval)
-    return _check_es_rev(es_index, doc_id, target_revs)
+    return _check_es_rev(es_alias, doc_id, target_revs)
 
 
 def check_reportxform_es_index(doc_id=None, interval=10):
@@ -64,10 +64,10 @@ def check_reportxform_es_index(doc_id=None, interval=10):
 
     if do_check:
         db = XFormInstance.get_db()
-        es_index = REPORT_XFORM_INDEX
+        es_alias = REPORT_XFORM_ALIAS
 
-        check_doc_id = doc_id if doc_id else _get_latest_doc_from_index(es_index, 'received_on')
-        return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
+        check_doc_id = doc_id if doc_id else _get_latest_doc_from_index(es_alias, 'received_on')
+        return check_index_by_doc(es_alias, db, check_doc_id, interval=interval)
     else:
         return {}
 
@@ -78,7 +78,7 @@ def check_xform_es_index(interval=10):
     except StopIteration:
         return None
     time.sleep(interval)
-    return _check_es_rev(XFORM_INDEX, doc_id, [doc_rev])
+    return _check_es_rev(XFORM_ALIAS, doc_id, [doc_rev])
 
 
 def check_reportcase_es_index(doc_id=None, interval=10):
@@ -91,9 +91,9 @@ def check_reportcase_es_index(doc_id=None, interval=10):
 
     if do_check:
         db = CommCareCase.get_db()
-        es_index = REPORT_CASE_INDEX
-        check_doc_id = doc_id if doc_id else _get_latest_doc_from_index(es_index, sort_field='opened_on')
-        return check_index_by_doc(es_index, db, check_doc_id, interval=interval)
+        es_alias = REPORT_CASE_ES_ALIAS
+        check_doc_id = doc_id if doc_id else _get_latest_doc_from_index(es_alias, sort_field='opened_on')
+        return check_index_by_doc(es_alias, db, check_doc_id, interval=interval)
     else:
         return {}
 
@@ -104,7 +104,7 @@ def check_case_es_index(interval=10):
     except StopIteration:
         return None
     time.sleep(interval)
-    return _check_es_rev(CASE_INDEX, doc_id, [doc_rev])
+    return _check_es_rev(CASE_ES_ALIAS, doc_id, [doc_rev])
 
 
 def get_last_change_for_doc_class(doc_class):
@@ -121,7 +121,7 @@ def get_last_change_for_doc_class(doc_class):
     )
 
 
-def _get_latest_doc_from_index(es_index, sort_field):
+def _get_latest_doc_from_index(es_alias, sort_field):
     """
     Query elasticsearch index sort descending by the sort field
     and get the doc_id back so we can then do a rev-update check.
@@ -139,22 +139,22 @@ def _get_latest_doc_from_index(es_index, sort_field):
     es_interface = ElasticsearchInterface(get_es_new())
 
     try:
-        res = es_interface.search(es_index, body=recent_query)
+        res = es_interface.search(es_alias, body=recent_query)
         if 'hits' in res:
             if 'hits' in res['hits']:
                 result = res['hits']['hits'][0]
                 return result['_source']['_id']
 
     except Exception as ex:
-        logging.error("Error querying get_latest_doc_from_index[%s]: %s" % (es_index, ex))
+        logging.error("Error querying get_latest_doc_from_index[%s]: %s" % (es_alias, ex))
         return None
 
 
-def _check_es_rev(index, doc_id, couch_revs):
+def _check_es_rev(es_alias, doc_id, couch_revs):
     """
     Specific docid and rev checker.
 
-    index: Elasticsearch index
+    es_alias: Elasticsearch alias
     doc_id: id to query in ES
     couch_rev: target couch_rev that you want to match
     """
@@ -167,7 +167,7 @@ def _check_es_rev(index, doc_id, couch_revs):
     }
 
     try:
-        res = es_interface.search(index, body=doc_id_query)
+        res = es_interface.search(es_alias, body=doc_id_query)
         status = False
         message = "Not in sync"
 
@@ -175,16 +175,16 @@ def _check_es_rev(index, doc_id, couch_revs):
             if res['hits'].get('total', 0) == 0:
                 status = False
                 # if doc doesn't exist it's def. not in sync
-                message = "Not in sync %s" % index
+                message = "Not in sync %s" % es_alias
             elif 'hits' in res['hits']:
                 fields = res['hits']['hits'][0]['fields']
                 if fields['_rev'] in couch_revs:
                     status = True
-                    message = "%s OK" % index
+                    message = "%s OK" % es_alias
                 else:
                     status = False
                     # less likely, but if it's there but the rev is off
-                    message = "Not in sync - %s stale" % index
+                    message = "Not in sync - %s stale" % es_alias
         else:
             status = False
             message = "Not in sync - query failed"
@@ -192,4 +192,4 @@ def _check_es_rev(index, doc_id, couch_revs):
     except Exception as ex:
         message = "ES Error: %s" % ex
         status = False
-    return {index: {"index": index, "status": status, "message": message}}
+    return {es_alias: {"es_alias": es_alias, "status": status, "message": message}}

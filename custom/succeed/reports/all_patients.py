@@ -19,7 +19,7 @@ from memoized import memoized
 from corehq.apps.cloudcare.api import get_cloudcare_app
 from corehq.apps.cloudcare.utils import webapps_module_case_form
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
-from django.utils import html
+from django.utils.html import format_html
 from custom.succeed.reports import EMPTY_FIELD, CM7, CM_APP_CM_MODULE, OUTPUT_DATE_FORMAT
 from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build, SUCCEED_DOMAIN
 
@@ -82,21 +82,21 @@ def group_name(owner_id):
 def edit_link(case_id, app_dict, latest_build):
     module = app_dict['modules'][CM_APP_CM_MODULE]
     form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
-    return html.mark_safe("<a target='_blank' class='ajax_dialog' href='%s'>Edit</a>") \
-        % html.escape(webapps_module_case_form(domain=app_dict['domain'],
-                                               app_id=latest_build,
-                                               module_id=CM_APP_CM_MODULE,
-                                               form_id=form_idx,
-                                               case_id=case_id))
+    case_form_link = webapps_module_case_form(
+        domain=app_dict['domain'],
+        app_id=latest_build,
+        module_id=CM_APP_CM_MODULE,
+        form_id=form_idx,
+        case_id=case_id)
+
+    return format_html("<a target='_blank' class='ajax_dialog' href='{}'>Edit</a>", case_form_link)
 
 
 def case_link(name, case_id):
-    url = html.escape(
-        PatientInteractionsReport.get_url(*[SUCCEED_DOMAIN]) + "?patient_id=%s" % case_id)
+    url = PatientInteractionsReport.get_url(*[SUCCEED_DOMAIN]) + "?patient_id=%s" % case_id
     if url:
         return {
-            'html': html.mark_safe("<a class='ajax_dialog' href='%s' "
-                                   "target='_blank'>%s</a>" % (url, html.escape(name))),
+            'html': format_html("<a class='ajax_dialog' href='{}' target='_blank'>{}</a>", url, name),
             'sort_key': name
         }
     else:
@@ -104,11 +104,9 @@ def case_link(name, case_id):
 
 
 def tasks(case_id):
-    url = html.escape(
-        PatientTaskListReport.get_url(*[SUCCEED_DOMAIN]) +
-        "?patient_id=%s&task_status=open" % case_id)
+    url = PatientTaskListReport.get_url(*[SUCCEED_DOMAIN]) + "?patient_id=%s&task_status=open" % case_id
     if url:
-        return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>Tasks</a>" % url)
+        return format_html("<a class='ajax_dialog' href='{}' target='_blank'>Tasks</a>", url)
     else:
         return "%s (bad ID format)" % case_id
 

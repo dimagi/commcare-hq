@@ -8,7 +8,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 
@@ -23,11 +23,11 @@ class OtaRestoreBugTest(TestCase):
         domain = create_domain(good_domain)
         bad_domain = 'bad-domain'
         create_domain(bad_domain)
-        user = CommCareUser.create(good_domain, format_username('user', good_domain), 'secret')
+        user = CommCareUser.create(good_domain, format_username('user', good_domain), 'secret', None, None)
 
         def _submit_case(domain):
             case_id = uuid.uuid4().hex
-            case_block = CaseBlock(
+            case_block = CaseBlock.deprecated_init(
                 create=True,
                 case_id=case_id,
                 case_name='donald',
@@ -56,5 +56,5 @@ class OtaRestoreBugTest(TestCase):
             params=RestoreParams(version=V2),
         )
         payload = restore_config.get_payload().as_string().decode('utf-8')
-        self.assertTrue(good_case._id in payload)
-        self.assertFalse(bad_case._id in payload)
+        self.assertIn(good_case.case_id, payload)
+        self.assertNotIn(bad_case.case_id, payload)

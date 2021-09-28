@@ -2,7 +2,7 @@ from .standard import *
 from .case import *
 
 
-def get_element_providers(timing_context):
+def get_element_providers(timing_context, skip_fixtures=False):
     """
     Get restore providers which contribute directly to the XML.
 
@@ -14,12 +14,15 @@ def get_element_providers(timing_context):
     """
     # note that ordering matters in this list as this is the order that the items
     # will appear in the XML, and have access to the RestoreState object
-    return [
+    providers = [
         SyncElementProvider(timing_context),
         RegistrationElementProvider(timing_context),
-        FixtureElementProvider(timing_context),
     ]
 
+    if not skip_fixtures:
+        providers.append(FixtureElementProvider(timing_context))
+
+    return providers
 
 def get_async_providers(timing_context, async_task=None):
     """

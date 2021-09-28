@@ -18,33 +18,38 @@ from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.change_feed import data_sources
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
-    ReportConfiguration,
+    ReportConfiguration, RegistryDataSourceConfiguration,
 )
 from corehq.sql_db.connections import connection_manager
 
 
 def get_sample_report_config():
-    folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-    sample_file = os.path.join(folder, 'sample_report_config.json')
-    with open(sample_file, encoding='utf-8') as f:
-        structure = json.loads(f.read())
-        return ReportConfiguration.wrap(structure)
+    return _get_sample_doc('sample_report_config.json', ReportConfiguration)
 
 
 def get_sample_data_source():
-    folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-    sample_file = os.path.join(folder, 'sample_data_source.json')
-    with open(sample_file, encoding='utf-8') as f:
-        structure = json.loads(f.read())
-        return DataSourceConfiguration.wrap(structure)
+    return _get_sample_doc('sample_data_source.json', DataSourceConfiguration)
+
+
+def get_sample_registry_data_source(**kwargs):
+    return _get_sample_doc('sample_registry_data_source.json', RegistryDataSourceConfiguration, **kwargs)
 
 
 def get_data_source_with_related_doc_type():
+    return _get_sample_doc('parent_child_data_source.json', DataSourceConfiguration)
+
+
+def get_data_source_with_repeat():
+    return _get_sample_doc('data_source_with_repeat.json', DataSourceConfiguration)
+
+
+def _get_sample_doc(filename, doc_class, **kwargs):
     folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-    sample_file = os.path.join(folder, 'parent_child_data_source.json')
+    sample_file = os.path.join(folder, filename)
     with open(sample_file, encoding='utf-8') as f:
         structure = json.loads(f.read())
-        return DataSourceConfiguration.wrap(structure)
+        structure.update(kwargs)
+        return doc_class.wrap(structure)
 
 
 def get_sample_doc_and_indicators(fake_time_now=None, owner_id='some-user-id'):
@@ -101,15 +106,6 @@ def doc_to_change(doc):
 def domain_lite(name):
     from corehq.apps.callcenter.utils import DomainLite
     return DomainLite(name, None, None, True)
-
-
-def post_run_with_sql_backend(fn, *args, **kwargs):
-    fn.doCleanups()
-    fn.tearDown()
-
-
-def pre_run_with_es_backend(fn, *args, **kwargs):
-    fn.setUp()
 
 
 def mock_datasource_config():
@@ -171,5 +167,5 @@ def mock_filter_missing_domains(configs):
 
 
 skip_domain_filter_patch = patch(
-    'corehq.apps.userreports.pillow._filter_missing_domains', mock_filter_missing_domains
+    'corehq.apps.userreports.pillow._filter_domains_to_skip', mock_filter_missing_domains
 )

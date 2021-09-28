@@ -39,3 +39,24 @@ class DoesNothingPaginator(Paginator):
             self.collection_name: self.objects,
             "meta": {'total_count': self.get_count()}
         }
+
+
+class DoesNothingPaginatorCompat(Paginator):
+    """Similar to DoesNothingPaginator this paginator
+    does not do any pagination but it preserves the
+    pagination fields for backwards compatibility.
+    """
+    def page(self):
+        count = self.get_count()
+        meta = {
+            'offset': 0,
+            'limit': None,
+            'total_count': count,
+            'previous': None,
+            'next': None,
+        }
+
+        return {
+            self.collection_name: self.objects,
+            'meta': meta,
+        }

@@ -6,10 +6,9 @@ from corehq.apps.commtrack.tests.util import (
     make_loc,
 )
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 def _count_locations(domain):
@@ -38,16 +37,16 @@ class LocationsTest(TestCase):
 
     def setUp(self):
         super(LocationsTest, self).setUp()
-        self.user = CommCareUser.create(domain=self.domain, username='d.abernathy', password='123')
+        self.user = CommCareUser.create(domain=self.domain, username='d.abernathy', password='123',
+                                        created_by=None, created_via=None)
         self.loc = make_loc('mariposa_saloon', domain=self.domain)
         self.user.set_location(self.loc)
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(self.domain, deleted_by=None)
         SQLLocation.objects.all().delete()
         super(LocationsTest, self).tearDown()
 
-    @run_with_all_backends
     def test_archive(self):
         test_state = make_loc(
             'pariah',
@@ -84,7 +83,6 @@ class LocationsTest(TestCase):
             1
         )
 
-    @run_with_all_backends
     def test_archive_flips_sp_cases(self):
         loc = make_loc('las_mudas', domain=self.domain).sql_location
         sp = loc.linked_supply_point()
@@ -98,7 +96,6 @@ class LocationsTest(TestCase):
         sp = loc.linked_supply_point()
         self.assertFalse(sp.closed)
 
-    @run_with_all_backends
     def test_full_delete(self):
         test_loc = make_loc(
             'abernathy_ranch',
@@ -128,7 +125,6 @@ class LocationsTest(TestCase):
             0
         )
 
-    @run_with_all_backends
     def test_delete_closes_sp_cases(self):
         accessor = SupplyInterface(self.domain)
         loc = make_loc('ghost_nation', domain=self.domain).sql_location

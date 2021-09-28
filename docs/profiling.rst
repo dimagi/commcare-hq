@@ -30,14 +30,32 @@ In this example we are investigating the performance of commtrack location downl
         dump_locations(response, domain)
         return response
 
+Getting profile output on stderr
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use the `profile` decorator to get profile output printed to stderr.
+
+.. code-block:: python
+
+    from dimagi.utils import profile
+    @login_and_domain_required
+    @profile
+    def location_export(request, domain):
+        ...
+
+`profile` may also be used as a context manager. See the docstring for more
+details.
+
 Getting a profile dump
 ^^^^^^^^^^^^^^^^^^^^^^
 
-To get a profile dump, simply add the following decoration to the function.::
+To get a profile dump, simply add the following decoration to the function.
 
-    from dimagi.utils.decorators.profile import profile
+.. code-block:: python
+
+    from dimagi.utils.decorators.profile import profile_dump
     @login_and_domain_required
-    @profile('locations_download.prof')
+    @profile_dump('locations_download.prof')
     def location_export(request, domain):
         response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
         response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
@@ -61,7 +79,7 @@ Here's an example:
 
 .. code-block:: python
 
-    @profile_prod('locations_download.prof', probability=float(os.getenv('PROFILE_LOCATIONS_EXPORT', 0))
+    @profile_dump('locations_download.prof', probability=float(os.getenv('PROFILE_LOCATIONS_EXPORT', 0))
     def location_export(request, domain):
         ....
 
@@ -75,7 +93,7 @@ You could also expose this via an environment variable or some other method to m
 
 .. code-block:: python
 
-    @profile_prod('locations_download.prof', 1, limit=10)
+    @profile_dump('locations_download.prof', 1, limit=10)
     def location_export(request, domain):
         ....
 
@@ -92,14 +110,22 @@ Creating a more useful output from the dump file
 The raw profile files are not human readable, and you need to use something
 like `cProfile <https://docs.python.org/2/library/profile.html#module-cProfile>`_ to make them
 useful.
-A script that will generate what is typically sufficient information to analyze
-these can be found in the `commcarehq-scripts`_ repository.
+
+`SnakeViz`_ is a great option for viewing .prof files::
+
+    $ pip install snakeviz
+    $ snakeviz /path/to/profile_dump.prof
+
+Alternately you can use a script that will output a readable version of the profile data to the console.
+You can find such a script in the `commcarehq-scripts`_ repository.
 You can read the source of that script to generate your own analysis, or just
 use it directly as follows::
 
-   $ ./reusable/convert_profile.py /path/to/profile_dump.prof
+    $ ./reusable/convert_profile.py /path/to/profile_dump.prof
 
+.. _snakeviz: https://jiffyclub.github.io/snakeviz/
 .. _commcarehq-scripts: https://github.com/dimagi/commcarehq-scripts/blob/master/reusable/convert_profile.py
+
 
 
 Reading the output of the analysis file

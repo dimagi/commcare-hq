@@ -20,11 +20,6 @@
     <script src="{% static 'app_manager/js/settings/commcare_settings.js' %}"></script>
     <script src="{% static 'app_manager/js/widgets.js' %}"></script><!-- version when copying app -->
   {% endcompress %}
-  {% if linked_domains_enabled %}
-    {% compress js %}
-      <script src="{% static 'app_manager/js/settings/linked_whitelist.js' %}"></script>
-    {% endcompress %}
-  {% endif %}
   {% compress js %}
     <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
   {% endcompress %}
@@ -33,19 +28,17 @@
 {% block app_view_tabs %}
   {% initial_page_data 'app_view_options' app_view_options %}
   {% initial_page_data 'domain_names' domain_names %}
+  {% initial_page_data 'linkable_domains' linkable_domains %}
+  {% initial_page_data 'limit_to_linked_domains' limit_to_linked_domains %}
   {% initial_page_data 'is_remote_app' app.is_remote_app %}
   {% initial_page_data 'is_superuser' request.user.is_superuser %}
   {% initial_page_data 'langs' app.langs %}
-  {% initial_page_data 'linked_whitelist' app.linked_whitelist %}
   {% initial_page_data 'media_refs' refs %}
   {% initial_page_data 'media_info' media_info %}
-  {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
-  {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
   {% initial_page_data 'uploaders' uploaders_js %}
   {% registerurl 'app_multimedia_ajax' domain app.get_id %}
   {% registerurl "hqmedia_remove_logo" domain app.id %}
   {% registerurl "paginate_releases" domain app.get_id %}
   {% registerurl "toggle_diff" domain %}
-  {% registerurl "update_linked_whitelist" domain app.id %}
   {% include "app_manager/partials/settings/app_settings.html" %}
 {% endblock app_view_tabs %}

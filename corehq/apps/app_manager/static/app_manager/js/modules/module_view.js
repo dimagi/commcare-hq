@@ -1,22 +1,21 @@
 hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
+        $('.multiselect-caselist').select2();
+        $('.overwrite-danger').on("click", function () {
+            hqImport('analytix/js/kissmetrix').track.event("Overwrite Case Lists/Case Details");
+        });
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
             moduleBrief = initial_page_data('module_brief'),
             moduleType = moduleBrief.module_type,
             options = initial_page_data('js_options') || {};
 
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
-
         // Set up details
         if (moduleBrief.case_type) {
-            var state = hqImport('app_manager/js/details/screen_config').state;
-            var DetailScreenConfig = hqImport('app_manager/js/details/screen_config').detailScreenConfig;
-            state.requires_case_details(moduleBrief.requires_case_details);
-
             var details = initial_page_data('details');
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
-                var detailScreenConfig = DetailScreenConfig.init({
+                var detailScreenConfig = hqImport("app_manager/js/details/screen_config")({
                     module_id: moduleBrief.id,
                     moduleUniqueId: moduleBrief.unique_id,
                     state: {
@@ -31,17 +30,25 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     langs: moduleBrief.langs,
                     saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_module_detail_screens'),
                     parentModules: initial_page_data('parent_case_modules'),
+                    allCaseModules: initial_page_data('all_case_modules'),
                     childCaseTypes: detail.subcase_types,
                     fixture_columns_by_type: options.fixture_columns_by_type || {},
                     parentSelect: detail.parent_select,
                     fixtureSelect: detail.fixture_select,
-                    contextVariables: state,
                     multimedia: initial_page_data('multimedia_object_map'),
                     searchProperties: options.search_properties || [],
-                    includeClosed: options.include_closed,
+                    searchDefaultRelevant: options.search_default_relevant,
+                    searchAdditionalRelevant: options.search_additional_relevant,
+                    autoLaunch: options.auto_launch,
+                    defaultSearch: options.default_search,
                     defaultProperties: options.default_properties || [],
                     searchButtonDisplayCondition: options.search_button_display_condition,
+                    searchLabel: options.search_label,
+                    searchAgainLabel: options.search_again_label,
+                    searchFilter: options.search_filter,
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
+                    dataRegistry: options.data_registry,
+                    additionalRegistryQueries: options.additional_registry_queries,
                 });
 
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
@@ -85,23 +92,6 @@ hqDefine("app_manager/js/modules/module_view", function () {
             $('#case_type_changed_warning').addClass('hide');
             $('#case_type_form_group').removeClass('has-error');
         };
-
-        var $nameEnumContainer = $('#name-enum-mapping');
-        if ($nameEnumContainer.length) {
-            var nameMapping = hqImport('hqwebapp/js/ui-element').key_value_mapping({
-                lang: moduleBrief.lang,
-                langs: moduleBrief.langs,
-                items: moduleBrief.name_enum,
-                property_name: 'name',
-                values_are_icons: false,
-                keys_are_conditions: true,
-            });
-            nameMapping.on("change", function () {
-                $nameEnumContainer.find("[name='name_enum']").val(JSON.stringify(this.getItems()));
-                $nameEnumContainer.find("[name='name_enum']").trigger('change');    // trigger save button
-            });
-            $nameEnumContainer.append(nameMapping.ui);
-        }
 
         $('#case_type').on('textchange', function () {
             var $el = $(this),
@@ -170,15 +160,25 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     return hqImport("hqwebapp/js/initial_page_data").reverse("view_form", self.caseListForm());
                 });
                 self.postFormWorkflow = ko.observable(postFormWorkflow);
-                self.endOfRegistrationOptions = [
-                    {id: 'case_list', text: gettext('Go back to case list')},
-                    {id: 'default', text: gettext('Proceed with registered case')},
-                ];
+                self.endOfRegistrationOptions = ko.computed(function () {
+                    if (!self.caseListForm() || formOptions[self.caseListForm()].is_registration_form) {
+                        return [
+                            {id: 'case_list', text: gettext('Go back to case list')},
+                            {id: 'default', text: gettext('Proceed with registered case')},
+                        ];
+                    } else {
+                        return [{id: 'case_list', text: gettext('Go back to case list')}];
+                    }
+                });
 
                 self.formMissing = ko.computed(function () {
                     return self.caseListForm() && !formOptions[self.caseListForm()];
                 });
-
+                self.caseListForm.subscribe(function () {
+                    if (self.caseListForm() && !formOptions[self.caseListForm()].is_registration_form) {
+                        self.postFormWorkflow('case_list');
+                    }
+                });
                 self.formHasEOFNav = ko.computed(function () {
                     if (!self.caseListForm()) {
                         return false;
@@ -227,7 +227,8 @@ hqDefine("app_manager/js/modules/module_view", function () {
             $('#sourceModuleForms').koApplyBindings(new ShadowModule(
                 shadowOptions.modules,
                 shadowOptions.source_module_id,
-                shadowOptions.excluded_form_ids
+                shadowOptions.excluded_form_ids,
+                shadowOptions.shadow_module_version
             ));
         } else if (moduleType === 'advanced') {
             if (moduleBrief.has_schedule || hqImport('hqwebapp/js/toggles').toggleEnabled('VISIT_SCHEDULER')) {

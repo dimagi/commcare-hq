@@ -1,5 +1,6 @@
 from django import forms
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -8,6 +9,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import PrependedText, StrictButton
 from crispy_forms.helper import FormHelper
 
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -17,20 +19,31 @@ from corehq import toggles
 from .dbaccessors import get_all_built_app_ids_and_versions
 from .models import LATEST_APK_VALUE, LATEST_APP_VALUE
 from .util import get_commcare_builds
+from ..accounting.utils import domain_has_privilege
+from ..hqwebapp.widgets import BootstrapCheckboxInput
+from ...privileges import RELEASE_MANAGEMENT
 
 
 class CopyApplicationForm(forms.Form):
     domain = forms.CharField(
         label=ugettext_lazy("Copy this app to project"),
         widget=forms.Select(choices=[], attrs={
-            "data-bind": "autocompleteSelect2: domain_names",
+            "data-bind": "autocompleteSelect2: domainNames, event:{ change: domainChanged }",
         }))
     name = forms.CharField(required=True, label=ugettext_lazy('Name'))
     linked = forms.BooleanField(
         required=False,
         label=_('Copy as Linked Application'),
+        widget=BootstrapCheckboxInput(
+            inline_label=mark_safe(_(
+                "<!-- ko ifnot: shouldEnableLinkedAppOption -->"
+                "The selected project space must first be linked to the current project space."
+                "<!-- /ko -->"
+            )),  # nosec: no user input
+            attrs={"data-bind": "enable: shouldEnableLinkedAppOption, checked: isChecked"},
+        ),
         help_text=_("This will create an application that can be updated from changes to this application."
-                    " This requires your app to have at least one released version.")
+                    " This requires your app to have at least one released version."),
     )
     build_id = forms.CharField(
         required=False,
@@ -47,7 +60,9 @@ class CopyApplicationForm(forms.Form):
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
-        if toggles.LINKED_DOMAINS.enabled(self.from_domain):
+        if (toggles.LINKED_DOMAINS.enabled(self.from_domain)
+            or domain_has_privilege(self.from_domain, RELEASE_MANAGEMENT)) \
+                and not is_linked_app(app):
             fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()
@@ -55,7 +70,7 @@ class CopyApplicationForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _('Copy Application'),
+                _('Copy Application for Editing') if is_linked_app(app) else _('Copy Application'),
                 *fields
             ),
             crispy.Hidden('app', app.get_id),
@@ -69,11 +84,6 @@ class CopyApplicationForm(forms.Form):
         domain_obj = Domain.get_by_name(domain)
         if domain_obj is None:
             raise forms.ValidationError("A valid project space is required.")
-        if toggles.MULTI_MASTER_BYPASS_VERSION_CHECK.enabled(domain):
-            raise forms.ValidationError("""
-                Copying an app to a domain that uses multi-master linked apps and bypasses
-                the minimum CommCare version check requires developer intervention.
-            """)
         return domain
 
     def clean(self):

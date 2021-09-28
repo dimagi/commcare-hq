@@ -28,6 +28,37 @@ these restricted users. Anything not explicitly whitelisted is inaccessible to
 restricted users.
 
 
+How data is associated with locations
+-------------------------------------
+
+Restricted users only have access to their section of the hierarchy. Here's a
+little about what that means conceptually, and how to implement these
+restrictions.
+
+Locations: Restricted users should be able to see and edit their own locations
+and any descendants of those locations, as well as access data at those locations. See
+also ``user_can_access_location_id``
+
+Users: If a user is assigned to an accessible location, the user is also
+accessible. See also ``user_can_access_other_user``
+
+Groups: Groups are never accessible.
+
+Forms: Forms are associated with a location via the submitting user, so if that
+user is currently accessible, so is the form. Note that this means that moving
+a user will affect forms even retroactively.  See also ``can_edit_form_location``
+
+Cases: Case accessibility is determined by case owner. If the owner is a user,
+then the user must be accessible for the case to be accessible. If the owner is
+a location, then it must be accessible. If the owner is a case-sharing group,
+the case is not accessible to any restricted users. See also
+``user_can_access_case``
+
+The ``SQLLocation`` queryset method ``accessible_to_user`` is helpful when
+implementing these restrictions. Also refer to the standard reports, which do
+this sort of filtering in bulk.
+
+
 Whitelist Implementation
 ------------------------
 
@@ -69,10 +100,8 @@ see.
 from functools import wraps
 
 from django.http import Http404
-from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy
-from django.views.generic import View
 
 from django_prbac.decorators import requires_privilege_raise404
 from tastypie.resources import Resource
@@ -82,26 +111,29 @@ from dimagi.utils.modules import to_function
 
 from corehq import privileges
 from corehq.apps.domain.decorators import (
-    domain_admin_required,
     login_and_domain_required,
 )
-from corehq.apps.domain.models import Domain
-from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser
+from corehq.middleware import get_view_func
 
 from .models import SQLLocation
 
-LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(
+
+# TODO: ugettext_lazy is likely not having the desired effect, as format_html will immediately
+# evaluate it against the current language.
+# https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
+# has details on how to create a delayed format_html/mark_safe
+
+
+LOCATION_ACCESS_DENIED = format_html(ugettext_lazy(
     "This project has restricted data access rules. Please contact your "
     "project administrator to be assigned access to data in this project. "
-    'More information is available <a href="{link}">here</a>.'
-).format(link="https://wiki.commcarehq.org/display/commcarepublic/Data+Access+and+User+Editing+Restrictions"))
+    'More information is available <a href="{}">here</a>.'),
+    "https://wiki.commcarehq.org/display/commcarepublic/Location-Based+Data+Access+and+User+Editing+Restrictions")
+
 
 LOCATION_SAFE_TASTYPIE_RESOURCES = set()
-
-LOCATION_SAFE_HQ_REPORTS = set()
-CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS = dict()
 
 NOTIFY_EXCEPTION_MSG = (
     "Someone was just denied access to a page due to location-based "
@@ -167,24 +199,19 @@ def location_safe(view):
     Supports view functions, class-based views, tastypie resources, and HQ reports.
     For classes, decorate the class, not the dispatch method.
     """
-    # view functions
     view.is_location_safe = True
 
-    if isinstance(view, type):  # it's a class
-
-        # Django class-based views
-        if issubclass(view, View):
-            view = method_decorator(location_safe, 'dispatch')(view)
-
-        # tastypie resources
-        if issubclass(view, Resource):
-            LOCATION_SAFE_TASTYPIE_RESOURCES.add(view.Meta.resource_name)
-
-        # HQ report classes
-        if issubclass(view, GenericReportView):
-            LOCATION_SAFE_HQ_REPORTS.add(view.slug)
+    # tastypie resources
+    if isinstance(view, type) and issubclass(view, Resource):
+        LOCATION_SAFE_TASTYPIE_RESOURCES.add(view.Meta.resource_name)
 
     return view
+
+
+# Use this decorator for views that need to be marked location safe but do not actually
+# apply location restrictions to the data they return e.g. case search. This is generally only applicable to endpoints
+# whose client is expected to be the application engine (mobile / web apps).
+location_safe_bypass = location_safe
 
 
 def conditionally_location_safe(conditional_function):
@@ -195,18 +222,7 @@ def conditionally_location_safe(conditional_function):
     Note - for the page to show up in the menus, the function should not rely on `request`.
     """
     def _inner(view_fn):
-        if isinstance(view_fn, type):
-
-            # Django class-based views
-            if issubclass(view_fn, View):
-                view_fn = method_decorator(_inner, 'dispatch')(view_fn)
-
-            # HQ report classes
-            if issubclass(view_fn, GenericReportView):
-                CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS[view_fn.slug] = conditional_function
-
-        else:
-            view_fn._conditionally_location_safe_function = conditional_function
+        view_fn._conditionally_location_safe_function = conditional_function
         return view_fn
     return _inner
 
@@ -223,31 +239,32 @@ def location_restricted_exception(request):
     return no_permissions_exception(request, message=LOCATION_ACCESS_DENIED)
 
 
+def _view_obj_is_safe(obj, request, *view_args, **view_kwargs):
+    if getattr(obj, 'is_location_safe', False):
+        return True
+    conditional_fn = getattr(obj, '_conditionally_location_safe_function', None)
+    if conditional_fn:
+        return conditional_fn(obj, request, *view_args, **view_kwargs)
+    return False
+
+
 def is_location_safe(view_fn, request, view_args, view_kwargs):
     """
     Check if view_fn had the @location_safe decorator applied.
     request, view_args and kwargs are also needed because view_fn alone doesn't always
     contain enough information
     """
-    if getattr(view_fn, 'is_location_safe', False):
-        return True
+    # Tastypie
     if 'resource_name' in view_kwargs:
         return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
-    if getattr(view_fn, '_conditionally_location_safe_function', False):
-        return view_fn._conditionally_location_safe_function(view_fn, request, *view_args, **view_kwargs)
-    if getattr(view_fn, 'is_hq_report', False):
-        if view_kwargs['report_slug'] in CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS:
-            return CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS[view_kwargs['report_slug']](
-                view_fn, request, *view_args, **view_kwargs
-            )
-        else:
-            return view_kwargs['report_slug'] in LOCATION_SAFE_HQ_REPORTS
-    return False
+
+    view_func = get_view_func(view_fn, view_kwargs)
+    return _view_obj_is_safe(view_func, request, *view_args, **view_kwargs)
 
 
 def report_class_is_location_safe(report_class):
     cls = to_function(report_class)
-    return cls and getattr(cls, 'slug', None) in LOCATION_SAFE_HQ_REPORTS
+    return cls and getattr(cls, 'is_location_safe', False)
 
 
 def user_can_access_location_id(domain, user, location_id):
@@ -281,11 +298,11 @@ def user_can_access_other_user(domain, user, other_user):
 
 
 def user_can_access_case(domain, user, case):
-    from corehq.apps.reports.standard.cases.data_sources import CaseInfo
+    from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
     if user.has_permission(domain, 'access_all_locations'):
         return True
 
-    info = CaseInfo(None, case.to_json())
+    info = CaseDisplay(case.to_json())
     if info.owner_type == 'location':
         return user_can_access_location_id(domain, user, info.owner_id)
     elif info.owner_type == 'user':

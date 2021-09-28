@@ -78,7 +78,6 @@ class CouchDomainDocTypeChangeProvider(ChangeProvider):
                 resumable_key,
                 data_function,
                 args_provider,
-                lambda x: x.id,
                 event_handler=event_handler
             )
         else:

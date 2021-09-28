@@ -58,10 +58,6 @@ class ProductPlanNotFoundError(Exception):
     pass
 
 
-class EnterpriseReportError(Exception):
-    pass
-
-
 class NoActiveSubscriptionError(Exception):
     pass
 

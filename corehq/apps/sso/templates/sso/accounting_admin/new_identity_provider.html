@@ -1,0 +1,12 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% requirejs_main 'sso/js/new_identity_provider' %}
+
+{% block page_content %}
+  <form class="form form-horizontal" method="post">
+    {% crispy create_idp_form %}
+  </form>
+{% endblock %}

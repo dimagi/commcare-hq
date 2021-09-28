@@ -1,5 +1,5 @@
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
 from custom.m4change.reports import get_location_hierarchy_by_id
 
@@ -23,7 +23,7 @@ class TestLocationHierarchy(LocationHierarchyTestCase):
 
     def setUp(self):
         super(TestLocationHierarchy, self).setUp()
-        self.web_user = WebUser.create(self.domain, 'test', 'test')
+        self.web_user = WebUser.create(self.domain, 'test', 'test', None, None)
 
     def tearDown(self):
         delete_all_users()

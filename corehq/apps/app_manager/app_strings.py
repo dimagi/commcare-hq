@@ -96,7 +96,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
             # To list app strings for properties used as sorting properties only
             if detail.sort_elements:
-                sort_only, sort_columns = get_sort_and_sort_only_columns(detail, detail.sort_elements)
+                sort_only, sort_columns = get_sort_and_sort_only_columns(detail.get_columns(), detail.sort_elements)
                 for field, sort_element, order in sort_only:
                     if sort_element.has_display_values():
                         column = create_temp_sort_column(sort_element, order)
@@ -110,10 +110,6 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                 yield id_strings.callout_header_locale(module), trans(detail.lookup_field_header)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
-
-        if toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(app.domain) and getattr(module, 'name_enum', None):
-            for item in module.name_enum:
-                yield id_strings.module_name_enum_variable(module, item.key_as_variable), trans(item.value)
 
         icon = module.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
         audio = module.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
@@ -159,10 +155,36 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                     yield id_strings.case_list_audio_locale(module), audio
 
         if module_offers_search(module):
-            yield id_strings.case_search_locale(module), trans(module.search_config.command_label)
-            # icon and audio not yet available
+            from corehq.apps.app_manager.models import CaseSearch
+            if toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain):
+                yield id_strings.case_search_locale(module), trans(module.search_config.search_label.label)
+                search_label_icon = module.search_config.search_label.icon_app_string(
+                    lang, for_default=for_default, build_profile_id=build_profile_id)
+                search_label_audio = module.search_config.search_label.audio_app_string(
+                    lang, for_default=for_default, build_profile_id=build_profile_id)
+                if search_label_icon:
+                    yield id_strings.case_search_icon_locale(module), search_label_icon
+                if search_label_audio:
+                    yield id_strings.case_search_audio_locale(module), search_label_audio
+
+                yield (id_strings.case_search_again_locale(module),
+                       trans(module.search_config.search_again_label.label))
+                search_again_label_icon = module.search_config.search_again_label.icon_app_string(
+                    lang, for_default=for_default, build_profile_id=build_profile_id)
+                search_again_label_audio = module.search_config.search_again_label.audio_app_string(
+                    lang, for_default=for_default, build_profile_id=build_profile_id)
+                if search_again_label_icon:
+                    yield id_strings.case_search_again_icon_locale(module), search_again_label_icon
+                if search_again_label_audio:
+                    yield id_strings.case_search_again_audio_locale(module), search_again_label_audio
+            else:
+                yield id_strings.case_search_locale(module), trans(CaseSearch.search_label.default().label)
+                yield (id_strings.case_search_again_locale(module),
+                       trans(CaseSearch.search_again_label.default().label))
+
             for prop in module.search_config.properties:
                 yield id_strings.search_property_locale(module, prop.name), trans(prop.label)
+                yield id_strings.search_property_hint_locale(module, prop.name), trans(prop.hint)
 
         if hasattr(module, 'referral_list'):
             if module.referral_list.show:
@@ -170,10 +192,6 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
         for form in module.get_forms():
             form_name = trans(form.name) + ('${0}' if form.show_count else '')
             yield id_strings.form_locale(form), maybe_add_index(form_name)
-
-            if toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(app.domain) and getattr(module, 'name_enum', None):
-                for item in form.name_enum:
-                    yield id_strings.form_name_enum_variable(form, item.key_as_variable), trans(item.value)
 
             icon = form.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
             audio = form.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
@@ -189,9 +207,14 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                 yield id_strings.custom_assertion_locale(module, form, id), trans(custom_assertion.text)
 
         if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
+            if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+                fallback_name = ugettext("Continue To {form_name}".format(
+                    form_name=trans(app.get_form(module.case_list_form.form_id).name)))
+            else:
+                fallback_name = ugettext("Create a new Case")
             yield (
                 id_strings.case_list_form_locale(module),
-                trans(module.case_list_form.label) or "Create a new Case"
+                trans(module.case_list_form.label) or fallback_name
             )
             icon = module.case_list_form.icon_app_string(lang, for_default=for_default,
                                                          build_profile_id=build_profile_id)

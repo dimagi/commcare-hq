@@ -5,6 +5,7 @@ from datetime import datetime
 from django.db import router
 from django.test import TestCase
 
+from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import (
@@ -22,13 +23,12 @@ from corehq.form_processor.models import (
     CaseTransaction,
     CommCareCaseIndexSQL,
     CommCareCaseSQL,
-    SupplyPointCaseMixin,
     XFormInstanceSQL,
 )
 from corehq.form_processor.tests.test_basics import _submit_case_block
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    sharded,
 )
 from corehq.sql_db.routers import HINT_PLPROXY
 
@@ -36,7 +36,7 @@ DOMAIN = 'test-case-accessor'
 CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
 
 
-@use_sql_backend
+@sharded
 class CaseAccessorTestsSQL(TestCase):
 
     def setUp(self):
@@ -77,6 +77,16 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(case1.case_id, cases[0].case_id)
         self.assertEqual(case2.case_id, cases[1].case_id)
 
+    def test_get_case_ids_that_exist(self):
+        case1 = _create_case()
+        case2 = _create_case()
+
+        case_ids = CaseAccessorSQL.get_case_ids_that_exist(
+            DOMAIN,
+            ['missing_case', case1.case_id, case2.case_id]
+        )
+        self.assertItemsEqual(case_ids, [case1.case_id, case2.case_id])
+
     def test_get_case_xform_ids(self):
         form_id1 = uuid.uuid4().hex
         case = _create_case(form_id=form_id1)
@@ -116,10 +126,10 @@ class CaseAccessorTestsSQL(TestCase):
     def test_get_reverse_indices(self):
         referenced_case_id = uuid.uuid4().hex
         case, index = _create_case_with_index(referenced_case_id)
+        index.referenced_id = index.case_id  # see CaseAccessorSQL.get_reverse_indices
         _create_case_with_index(referenced_case_id, case_is_deleted=True)
         indices = CaseAccessorSQL.get_reverse_indices(DOMAIN, referenced_case_id)
-        self.assertEqual(1, len(indices))
-        self.assertEqual(index, indices[0])
+        self.assertEqual([index], indices)
 
     def test_get_reverse_indexed_cases(self):
         referenced_case_ids = [uuid.uuid4().hex, uuid.uuid4().hex]
@@ -275,7 +285,7 @@ class CaseAccessorTestsSQL(TestCase):
         )
 
     def test_get_case_by_location(self):
-        case = _create_case(case_type=SupplyPointCaseMixin.CASE_TYPE)
+        case = _create_case(case_type=SUPPLY_POINT_CASE_TYPE)
         location_id = uuid.uuid4().hex
         case.location_id = location_id
         CaseAccessorSQL.save_case(case)
@@ -673,6 +683,7 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual({'user1', 'user2'}, owners)
 
 
+@sharded
 class CaseAccessorsTests(TestCase):
 
     def tearDown(self):
@@ -697,11 +708,6 @@ class CaseAccessorsTests(TestCase):
 
         case = accessors.get_case('c3')
         self.assertFalse(case.is_deleted)
-
-
-@use_sql_backend
-class CaseAccessorsTestsSQL(CaseAccessorsTests):
-    pass
 
 
 def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed=False, case_id=None):

@@ -159,6 +159,9 @@ class ESQueryFake(object):
             },
         }, self)
 
+    def count(self):
+        return self.run().total
+
     def scroll(self):
         result_docs = list(self._result_docs)
         total = len(result_docs)

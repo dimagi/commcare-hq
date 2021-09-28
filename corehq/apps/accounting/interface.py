@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 from memoized import memoized
 
@@ -27,6 +27,8 @@ from .filters import (
     BillingContactFilter,
     CreatedSubAdjMethodFilter,
     CustomerAccountFilter,
+    CreditAdjustmentReasonFilter,
+    CreditAdjustmentLinkFilter,
     DateCreatedFilter,
     DateFilter,
     DimagiContactFilter,
@@ -37,6 +39,7 @@ from .filters import (
     EntryPointFilter,
     InvoiceBalanceFilter,
     InvoiceNumberFilter,
+    CustomerInvoiceNumberFilter,
     IsHiddenFilter,
     NameFilter,
     PaymentStatusFilter,
@@ -77,10 +80,10 @@ from .utils import get_money_str, make_anchor_tag, quantize_accounting_decimal
 def invoice_column_cell(invoice):
     from corehq.apps.accounting.views import InvoiceSummaryView
     return format_datatables_data(
-        mark_safe(make_anchor_tag(
+        make_anchor_tag(
             reverse(InvoiceSummaryView.urlname, args=(invoice.id,)),
             invoice.invoice_number
-        )),
+        ),
         invoice.id,
     )
 
@@ -88,10 +91,10 @@ def invoice_column_cell(invoice):
 def customer_invoice_cell(invoice):
     from corehq.apps.accounting.views import CustomerInvoiceSummaryView
     return format_datatables_data(
-        mark_safe(make_anchor_tag(
+        make_anchor_tag(
             reverse(CustomerInvoiceSummaryView.urlname, args=(invoice.id,)),
             invoice.invoice_number
-        )),
+        ),
         invoice.id
     )
 
@@ -99,10 +102,10 @@ def customer_invoice_cell(invoice):
 def invoice_cost_cell(invoice):
     from corehq.apps.accounting.views import InvoiceSummaryView
     return format_datatables_data(
-        mark_safe(make_anchor_tag(
+        make_anchor_tag(
             reverse(InvoiceSummaryView.urlname, args=(invoice.id,)),
             '$%.2f' % invoice.subtotal
-        )),
+        ),
         invoice.subtotal,
     )
 
@@ -173,7 +176,7 @@ class AccountingInterface(AddItemInterface):
     def rows(self):
         def _account_to_row(account):
             return [
-                mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
+                format_html('<a href="./{}">{}</a>', account.id, account.name),
                 account.salesforce_account_id,
                 account.date_created.date(),
                 account.account_type,
@@ -296,10 +299,11 @@ class SubscriptionInterface(AddItemInterface):
             columns = [
                 subscription.subscriber.domain,
                 format_datatables_data(
-                    text=mark_safe('<a href="%s">%s</a>' % (
-                        reverse(
-                            ManageBillingAccountView.urlname, args=(subscription.account.id,)
-                        ), subscription.account.name)),
+                    text=format_html(
+                        '<a href="{}">{}</a>',
+                        reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)),
+                        subscription.account.name
+                    ),
                     sort_key=subscription.account.name,
                 ),
                 subscription.plan_version.plan.name,
@@ -313,7 +317,7 @@ class SubscriptionInterface(AddItemInterface):
                 subscription.pro_bono_status,
             ]
             if not self.is_rendered_as_email:
-                columns.append(mark_safe('<a href="./%d" class="btn btn-default">Edit</a>' % subscription.id))
+                columns.append(format_html('<a href="./{}" class="btn btn-default">Edit</a>', subscription.id))
             return columns
 
         return list(map(_subscription_to_row, self._subscriptions))
@@ -424,7 +428,7 @@ class SoftwarePlanInterface(AddItemInterface):
     def rows(self):
         def _plan_to_row(plan):
             return [
-                mark_safe('<a href="./%d">%s</a>' % (plan.id, plan.name)),
+                format_html('<a href="./{}">{}</a>', plan.id, plan.name),
                 plan.description,
                 plan.edition,
                 plan.visibility,
@@ -542,11 +546,11 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             invoice_url = reverse(WireInvoiceSummaryView.urlname, args=(invoice.id,))
             return [
                 format_datatables_data(
-                    mark_safe(make_anchor_tag(invoice_url, invoice.invoice_number)),
+                    make_anchor_tag(invoice_url, invoice.invoice_number),
                     invoice.id,
                 ),
                 format_datatables_data(
-                    mark_safe(make_anchor_tag(account_url, invoice.account.name)),
+                    make_anchor_tag(account_url, invoice.account.name),
                     invoice.account.name
                 ),
                 invoice.get_domain(),
@@ -718,11 +722,11 @@ class InvoiceInterface(InvoiceInterfaceBase):
             columns = [
                 invoice_column_cell(invoice),
                 format_datatables_data(
-                    mark_safe(make_anchor_tag(account_href, account_name)),
+                    make_anchor_tag(account_href, account_name),
                     invoice.subscription.account.name
                 ),
                 format_datatables_data(
-                    mark_safe(make_anchor_tag(plan_href, plan_name)),
+                    make_anchor_tag(plan_href, plan_name),
                     invoice.subscription.plan_version.plan.name
                 ),
                 invoice.subscription.subscriber.domain,
@@ -780,7 +784,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
                     "class": "btn btn-default",
                 }
                 columns.append(
-                    mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
+                    make_anchor_tag(adjust_href, adjust_name, adjust_attrs),
                 )
             return columns
 
@@ -1004,7 +1008,7 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
             columns = [
                 customer_invoice_cell(invoice),
                 format_datatables_data(
-                    mark_safe(make_anchor_tag(account_href, account_name)),
+                    make_anchor_tag(account_href, account_name),
                     invoice.account.name
                 ),
                 "YES" if new_this_month else "no",
@@ -1060,7 +1064,7 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
                     "class": "btn btn-default",
                 }
                 columns.append(
-                    mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
+                    make_anchor_tag(adjust_href, adjust_name, adjust_attrs),
                 )
             return columns
 
@@ -1168,7 +1172,7 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
                 self.adjust_balance_form.adjust_balance(
                     web_user=self.request.user.username,
                 )
-        return super(CustomerInvoiceInterface, self).view_response
+        return super().view_response
 
     @property
     def email_response(self):
@@ -1242,24 +1246,19 @@ class PaymentRecordInterface(GenericTabularReport):
                     sort_key=payment_record.date_created.isoformat(),
                 ),
                 format_datatables_data(
-                    text=mark_safe(
-                        make_anchor_tag(
-                            reverse(ManageBillingAccountView.urlname, args=[account.id]),
-                            account.name
-                        )
+                    text=make_anchor_tag(
+                        reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                        account.name
                     ),
                     sort_key=account.name,
                 ),
                 _get_domain_from_payment_record(payment_record),
                 payment_record.payment_method.web_user,
                 format_datatables_data(
-                    text=mark_safe(
-                        '<a href="https://dashboard.stripe.com/payments/%s"'
-                        '   target="_blank">%s'
-                        '</a>' % (
-                            payment_record.transaction_id,
-                            payment_record.transaction_id,
-                        )),
+                    text=format_html(
+                        '<a href="https://dashboard.stripe.com/payments/{id}" target="_blank">{id}</a>',
+                        id=payment_record.transaction_id,
+                    ),
                     sort_key=payment_record.transaction_id,
                 ),
                 quantize_accounting_decimal(payment_record.amount),
@@ -1332,10 +1331,10 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
             return [x or '' for x in [
                 sub_adj.date_created,
                 format_datatables_data(
-                    mark_safe(make_anchor_tag(
+                    make_anchor_tag(
                         reverse(EditSubscriptionView.urlname, args=(sub_adj.subscription.id,)),
                         sub_adj.subscription
-                    )),
+                    ),
                     sub_adj.subscription.id,
                 ),
                 sub_adj.subscription.subscriber.domain,
@@ -1380,6 +1379,10 @@ class CreditAdjustmentInterface(GenericTabularReport):
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.DomainFilter',
         'corehq.apps.accounting.interface.DateFilter',
+        'corehq.apps.accounting.interface.CreditAdjustmentReasonFilter',
+        'corehq.apps.accounting.interface.CreditAdjustmentLinkFilter',
+        'corehq.apps.accounting.interface.InvoiceNumberFilter',
+        'corehq.apps.accounting.interface.CustomerInvoiceNumberFilter',
     ]
 
     @property
@@ -1432,19 +1435,17 @@ class CreditAdjustmentInterface(GenericTabularReport):
 
             return [
                 format_datatables_data(
-                    text=mark_safe(
-                        make_anchor_tag(
-                            reverse(ManageBillingAccountView.urlname, args=[credit_line.account.id]),
-                            credit_line.account.name
-                        )
+                    text=make_anchor_tag(
+                        reverse(ManageBillingAccountView.urlname, args=[credit_line.account.id]),
+                        credit_line.account.name
                     ),
                     sort_key=credit_line.account.name,
                 ),
                 format_datatables_data(
-                    mark_safe(make_anchor_tag(
+                    make_anchor_tag(
                         reverse(EditSubscriptionView.urlname, args=(credit_line.subscription.id,)),
                         credit_line.subscription
-                    )),
+                    ),
                     credit_line.subscription.id,
                 ) if credit_line.subscription else '',
             ] + types
@@ -1491,6 +1492,36 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     invoice__isnull=True,
                     credit_line__account__created_by_domain=domain,
                 )
+            )
+
+        reason = CreditAdjustmentReasonFilter.get_value(
+            self.request, self.domain
+        )
+        if reason is not None:
+            queryset = queryset.filter(
+                reason=reason,
+            )
+
+        link_type = CreditAdjustmentLinkFilter.get_value(self.request, self.domain)
+        if link_type == 'customer_invoice':
+            queryset = queryset.exclude(
+                customer_invoice__isnull=True,
+            )
+        if link_type == 'invoice':
+            queryset = queryset.exclude(
+                invoice__isnull=True,
+            )
+
+        invoice_id = InvoiceNumberFilter.get_value(self.request, self.domain)
+        if invoice_id is not None:
+            queryset = queryset.filter(
+                invoice=int(invoice_id)
+            )
+
+        customer_invoice_id = CustomerInvoiceNumberFilter.get_value(self.request, self.domain)
+        if customer_invoice_id is not None:
+            queryset = queryset.filter(
+                customer_invoice=int(customer_invoice_id)
             )
 
         if DateFilter.use_filter(self.request):

@@ -1,18 +1,28 @@
 {% load i18n %}
 <ul class="dropdown-menu dropdown-menu-right" role="menu">
-    {% if domain_list %}
-        <li class="dropdown-header nav-header">{% trans 'Change Project' %}</li>
-        {% for d in domain_list %}
-            <li><a href="{{ d.url }}">{{ d.name }}</a></li>
-        {% endfor %}
-    {% endif %}
+  {% if domain_links %}
+    <li class="dropdown-header nav-header">{% trans 'Change Project' %}</li>
+    {% for d in domain_links %}
+      <li><a href="{{ d.url }}">{{ d.display_name }}</a></li>
+    {% endfor %}
+  {% endif %}
 
-    {% if not restrict_domain_creation or request.user.is_superuser %}
-        <li class="divider" />
-        <li>
-            <a href="{% url 'registration_domain' %}">
-                <i class="fa fa-plus icon-plus dropdown-icon"></i> {% trans 'Add Project' %}
-            </a>
-        </li>
-    {% endif %}
+  {% if show_all_projects_link %}
+    <li class="divider" />
+    <li>
+      <a href="{% url 'domain_select_redirect' %}">
+        <i class='fa fa-cubes'></i>
+        {% trans 'All Projects' %}
+      </a>
+    </li>
+  {% endif %}
+
+  {% if not restrict_domain_creation or request.user.is_superuser %}
+    <li class="divider" />
+    <li>
+      <a href="{% url 'registration_domain' %}">
+        <i class="fa fa-plus icon-plus dropdown-icon"></i> {% trans 'Add Project' %}
+      </a>
+    </li>
+  {% endif %}
 </ul>

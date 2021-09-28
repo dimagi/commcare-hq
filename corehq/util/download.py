@@ -37,9 +37,9 @@ class RangedFileWrapper(object):
 
                 yield data
 
-        if hasattr(self.filelike, 'seek'):
+        try:
             self.filelike.seek(self.start)
-        else:
+        except (AttributeError, ValueError):
             list(itertools.dropwhile(lambda x: True, _partial_read(0, self.start)))
 
         for data in _partial_read(self.start, self.stop):

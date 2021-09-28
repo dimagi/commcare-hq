@@ -15,6 +15,7 @@ from custom.up_nrhm.reports.block_level_month_report import (
 from custom.up_nrhm.reports.district_functionality_report import (
     DistrictFunctionalityReport,
 )
+from custom.up_nrhm.sql_data import DOMAIN
 from custom.up_nrhm.tests.utils import UpNrhmTestCase
 
 RUN_QUERY_VALUE = {
@@ -49,7 +50,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             'hierarchy_district': 'kaushambi',
             'hierarchy_block': 'Chail',
         }
-        asha_functionality_checklist_report = ASHAFunctionalityChecklistReport(request=mock, domain='up-nrhm')
+        asha_functionality_checklist_report = ASHAFunctionalityChecklistReport(request=mock, domain=DOMAIN)
         rows = asha_functionality_checklist_report.rows
         self.assertEqual(
             rows,
@@ -75,7 +76,6 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             ]
         )
 
-    @softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
     @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_asha_facilitators_report(self, mock_run_query):
         mock = MagicMock()
@@ -89,7 +89,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             'month': '01',
             'year': '2018',
         }
-        asha_facilitators_report = ASHAFacilitatorsReport(request=mock, domain='up-nrhm')
+        asha_facilitators_report = ASHAFacilitatorsReport(request=mock, domain=DOMAIN)
         rows = asha_facilitators_report.rows
         expected = (
             [
@@ -145,7 +145,6 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             for record in expected[0][i]:
                 self.assertIn(record, rows[0][i])
 
-    @softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
     @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_block_level_month_report(self, mock_run_query):
         mock = MagicMock()
@@ -159,7 +158,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             'month': '01',
             'year': '2018',
         }
-        block_level_month_report = BlockLevelMonthReport(request=mock, domain='up-nrhm')
+        block_level_month_report = BlockLevelMonthReport(request=mock, domain=DOMAIN)
         rows = block_level_month_report.rows
         expected = (
             [
@@ -224,7 +223,6 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             for record in expected[0][i]:
                 self.assertIn(record, rows[0][i])
 
-    @softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
     @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_block_level_af_report(self, mock_run_query):
         mock = MagicMock()
@@ -240,7 +238,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             'hierarchy_district': 'kaushambi',
             'hierarchy_block': 'Chail',
         }
-        block_level_af_report = BlockLevelAFReport(request=mock, domain='up-nrhm')
+        block_level_af_report = BlockLevelAFReport(request=mock, domain=DOMAIN)
         rows = block_level_af_report.rows
         expected = (
             [
@@ -364,7 +362,6 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             for record in expected[0][i]:
                 self.assertIn(record, rows[0][i])
 
-    @softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
     @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_district_functionality_report(self, mock_run_query):
         mock = MagicMock()
@@ -380,7 +377,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             'hierarchy_district': 'kaushambi',
             'hierarchy_block': 'Chail',
         }
-        district_functionality_report = DistrictFunctionalityReport(request=mock, domain='up-nrhm')
+        district_functionality_report = DistrictFunctionalityReport(request=mock, domain=DOMAIN)
         rows = district_functionality_report.rows
         expected = (
             [
