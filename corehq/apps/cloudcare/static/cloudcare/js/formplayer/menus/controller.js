@@ -141,7 +141,18 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
 
         $('#select-case').off('click').click(function () {
-            FormplayerFrontend.trigger("menu:select", caseId, model.smartLinkParams);
+            var smartLinkTemplate = undefined;
+            if (model.smartLinkParams && model.smartLinkParams.length) {
+                var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain;
+                if (model.smartLinkParams[0] !== userDomain) {
+                    var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", urlObject.appId),
+                        appId = currentApp.get("upstream_app_id") || currentApp.get("copy_of") || urlObject.appId;
+                    var url = hqImport("hqwebapp/js/initial_page_data").get("smart_link_template");
+                    url = url.replace("{domain}", model.smartLinkParams[0]);
+                    url = url.replace("{app_id}", appId);
+                }
+            }
+            FormplayerFrontend.trigger("menu:select", caseId, smartLinkTemplate);
         });
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
         $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
