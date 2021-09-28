@@ -3,7 +3,7 @@
 
 set -e
 
-TIMEOUT=90  # max seconds to wait for each service
+TIMEOUT=20  # max seconds to wait for each service
 
 if [ -f /mnt/commcare-hq-ro/scripts/bash-utils.sh ]; then
     source /mnt/commcare-hq-ro/scripts/bash-utils.sh # provides logmsg
