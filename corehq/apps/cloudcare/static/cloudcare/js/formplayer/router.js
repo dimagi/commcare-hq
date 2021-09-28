@@ -142,7 +142,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.landingPageApp(appId);
     });
 
-    FormplayerFrontend.on("menu:select", function (index) {
+    FormplayerFrontend.on("menu:select", function (index, smartLinkParams) {
         var urlObject = Util.currentUrlToObject();
         if (index === undefined) {
             urlObject.setQueryData(undefined, false);
@@ -150,6 +150,17 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         } else {
             urlObject.addSelection(index);
             urlObject.setForceManualAction(false);
+        }
+        if (smartLinkParams && smartLinkParams.length) {
+            var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain;
+            if (smartLinkParams[0] !== userDomain) {
+                var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", urlObject.appId),
+                    appId = currentApp.get("upstream_app_id") || currentApp.get("copy_of") || urlObject.appId;
+                var url = hqImport("hqwebapp/js/initial_page_data").get("smart_link_template");
+                url = url.replace("---", smartLinkParams[0]);
+                url = url.replace("---", appId);
+                urlObject.setSmartLinkTemplate(url);
+            }
         }
         Util.setUrlToObject(urlObject);
         API.listMenus();
