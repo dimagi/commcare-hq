@@ -277,7 +277,7 @@ class TestCommCareUserResource(APIResourceTest):
 
 class TestWebUserResource(APIResourceTest):
     """
-    Basic sanity checking of v0_1.CommCareUserResource
+    Basic sanity checking of v0_5.WebUserResource
     """
     resource = v0_5.WebUserResource
     api_name = 'v0.5'
