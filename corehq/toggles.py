@@ -2151,3 +2151,12 @@ DO_NOT_REPUBLISH_DOCS = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+THROTTLE_SYSTEM_FORMS = FeatureRelease(
+    'throttle_system_forms',
+    ('Throttles system forms (from auto update rules, etc.) with soft delays (no hard rejections) '
+     'to make them a better part of the overall submission rate limiting system.'),
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Danny Roberts',
+)
