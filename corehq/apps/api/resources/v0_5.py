@@ -3,6 +3,7 @@ from itertools import chain
 
 from django.conf.urls import url
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
@@ -1049,9 +1050,12 @@ class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def detail_uri_kwargs(self, bundle_or_obj):
         # Not sure why this is required but the feed 500s without it
-        return {
-            'pk': get_obj(bundle_or_obj)['_id']
-        }
+        try:
+            return {
+                'pk': get_obj(bundle_or_obj)['_id']
+            }
+        except ObjectDoesNotExist:
+            raise Http404()
 
     def determine_format(self, request):
         # Results should be sent as JSON
