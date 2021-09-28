@@ -103,11 +103,19 @@ class CaseProperty(models.Model):
             try:
                 datetime.strptime(value, ISO_DATE_FORMAT)
             except ValueError:
-                raise exceptions.InvalidDate()
+                raise exceptions.InvalidDate(sample=value)
         elif value and self.data_type == 'select':
             if not self.allowed_values.filter(allowed_value=value).exists():
-                raise exceptions.InvalidSelectValue()
+                raise exceptions.InvalidSelectValue(sample=value, message=self.valid_values_message)
 
+    @property
+    def valid_values_message(self):
+        allowed_values = self.allowed_values.values_list('allowed_value', flat=True)
+        if allowed_values:
+            allowed_string = ', '.join(f'"{av}"' for av in allowed_values)
+        else:
+            allowed_string = _("none configured in data dictionary")
+        return _("Valid values: %s") % allowed_string
 
 class CasePropertyAllowedValue(models.Model):
     case_property = models.ForeignKey(
