@@ -341,6 +341,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 @require_enterprise_admin
 def enterprise_permissions(request, domain):
     config = EnterprisePermissions.get_by_domain(domain)
+    if not config.id:
+        config.save()
     all_domains = set(config.account.get_domains())
     ignored_domains = all_domains - set(config.domains) - {config.source_domain}
 
