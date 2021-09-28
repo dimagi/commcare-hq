@@ -44,16 +44,14 @@ class TestRecipientsByLanguage(SimpleTestCase):
         self._establish_user_languages([{'username': 'test@user.com', 'language': None}])
 
         recipients_by_language = report.recipients_by_language
-        self.assertSetEqual(set(recipients_by_language.keys()), {'en'})
-        self.assertSetEqual(set(recipients_by_language['en']), {'test@dimagi.com'})
+        self.assertEqual(recipients_by_language, {'en': ['test@dimagi.com']})
 
     def test_missing_user_gets_default_language(self):
         report = self._create_report_for_emails('test@dimagi.com')
         self._establish_user_languages([])
 
         recipients_by_language = report.recipients_by_language
-        self.assertSetEqual(set(recipients_by_language.keys()), {'en'})
-        self.assertSetEqual(set(recipients_by_language['en']), {'test@dimagi.com'})
+        self.assertEqual(recipients_by_language, {'en': ['test@dimagi.com']})
 
     def setUp(self):
         owner_patcher = patch.object(ReportNotification, 'owner_email', new_callable=PropertyMock)

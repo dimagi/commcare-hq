@@ -752,7 +752,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         from corehq.apps.reports.views import render_full_report_notification
 
         email_is_too_large = False
-        total_sent = 0
 
         for email in emails:
             body = render_full_report_notification(None, report_text, email, self).content
@@ -760,9 +759,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 self._send_email(title, email, body, excel_files)
             except Exception as er:
                 if isinstance(er, SMTPSenderRefused) and (er.smtp_code in LARGE_FILE_SIZE_ERROR_CODES):
-                    # This should only occur on the first error we try to send,
-                    # as all the emails should be the same size
-                    assert total_sent == 0, f'Email sizes inconsistent, failed on email #{total_sent} in {emails}'
                     email_is_too_large = True
                     break
                 else:
@@ -770,9 +766,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             else:
                 ScheduledReportLogger.log_email_success(self, email, body)
 
-            total_sent = total_sent + 1
-
         if email_is_too_large:
+            # TODO: Because different domains may have different size thresholds,
+            # one of the middle addresses could have triggered this, causing us to send
+            # both the original email and the retried email to some users.
+            # This is likely best handled by treating each address separately.
             ScheduledReportLogger.log_email_size_failure(self, email, emails, body)
             # The body is too large -- attempt to resend the report as attachments.
             if excel_files:

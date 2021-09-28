@@ -16,7 +16,6 @@ class TestScheduledReports(TestCase):
         scheduled_report = self.create_scheduled_report([saved_report], ['test1@dimagi.com', 'test2@dimagi.com'])
         scheduled_report.send()
 
-        self.assertEqual(len(mail.outbox), 2)
         recipients = {', '.join(email.recipients()) for email in mail.outbox}
         self.assertSetEqual(recipients, {'test1@dimagi.com', 'test2@dimagi.com'})
 
