@@ -352,7 +352,7 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
         if couch_user.is_commcare_user():
             user_resource = v0_1.CommCareUserResource()
         elif couch_user.is_web_user():
-            user_resource = v0_5.WebUserResource()
+            user_resource = v0_1.WebUserResource()
         else:
             return HttpResponseForbidden()
 
