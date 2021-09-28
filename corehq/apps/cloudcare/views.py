@@ -86,6 +86,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
+from corehq.util.view_utils import absolute_reverse
 from xml2json.lib import xml2json
 
 
@@ -211,6 +212,7 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
+            "smart_link_template": absolute_reverse("session_endpoint", args=["---", "---", "---"]),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -276,6 +278,7 @@ class FormplayerPreviewSingleApp(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
+            "smart_link_template": absolute_reverse("session_endpoint", args=["---", "---", "---"]),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -371,7 +374,7 @@ class LoginAsUsers(View):
 
 
 def _format_app_doc(doc):
-    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile']
+    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile', 'upstream_app_id']
     context = {key: doc.get(key) for key in keys}
     context['imageUri'] = doc.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
     return context
