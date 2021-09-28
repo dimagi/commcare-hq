@@ -80,6 +80,6 @@ branches:
     - smh/extract-messaging-permission # Steph Sept 21
     - jls/smart-linking-in-web-apps # Jenny Sept 22
     - dmr/throttle-system-forms  # Danny Sept 24
-    - jls/merge-migrations # Jenny Sept 28
-    #- gh/erm/link-reports-and-keywords-on-push-take2 # Graham Sept 28
+    - smh/extract-messaging-permission+ap/add-permission-to-edit-ucrs # Graham Sept 28
+    - gh/erm/link-reports-and-keywords-on-push-take2 # Graham Sept 28
 submodules: { }
