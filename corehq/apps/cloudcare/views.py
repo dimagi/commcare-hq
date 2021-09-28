@@ -222,7 +222,7 @@ class FormplayerMain(View):
 # Template is manipulated both by javascript in web apps and java in formplayer.
 # It uses Java's URIComponentsBuilder syntax.
 def _smart_link_template():
-    template = absolute_reverse("session_endpoint", args=["---", "---", "---"]),
+    template = absolute_reverse("session_endpoint", args=["---", "---", "---"])
     template = template.replace("---", "{domain}", 1)
     template = template.replace("---", "{app_id}", 1)
     template = template.replace("---", "{endpoint_id}", 1)

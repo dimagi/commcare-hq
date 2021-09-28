@@ -145,8 +145,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             if (model.smartLinkParams && model.smartLinkParams.length) {
                 var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain;
                 if (model.smartLinkParams[0] !== userDomain) {
-                    var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", urlObject.appId),
-                        appId = currentApp.get("upstream_app_id") || currentApp.get("copy_of") || urlObject.appId;
+                    var currentAppId = Util.currentUrlToObject().appId,
+                        currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", currentAppId),
+                        appId = currentApp.get("upstream_app_id") || currentApp.get("copy_of") || appId;
                     var url = hqImport("hqwebapp/js/initial_page_data").get("smart_link_template");
                     url = url.replace("{domain}", model.smartLinkParams[0]);
                     url = url.replace("{app_id}", appId);
