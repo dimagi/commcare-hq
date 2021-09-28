@@ -68,7 +68,7 @@
             <p>
               {% blocktrans %}
                 Download mobile workers from all or a select number of project spaces
-                using the 'Project Spaces' filter on the 'Filter and Download Users' page!
+                using the 'Project Spaces' filter on the 'Filter and Download Mobile Workers' page!
               {% endblocktrans %}
             </p>
           </div>
@@ -84,11 +84,10 @@
               <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
             </button>
           {% endif %}
-          {% if can_access_all_locations %}
-            <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
-              <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
-            </a>
-          {% endif %}
+
+          <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
+            <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
+          </a>
 
           {% if not request.is_view_only %}
             {% if can_bulk_edit_users and can_access_all_locations %}
@@ -300,8 +299,16 @@
               Please contact your project's administrator if this is incorrect.
             {% endblocktrans %}
           {% else %}
+            {% if can_access_all_locations %}
+              {% blocktrans %}
+                  <strong>There are currently no mobile workers in this project.</strong>
+              {% endblocktrans %}
+            {% else %}
+              {% blocktrans %}
+                <strong>No mobile users are assigned to your user's location.</strong>
+              {% endblocktrans %}
+            {% endif %}
             {% blocktrans %}
-              <strong>There are currently no mobile workers in this project.</strong>
               Please create a new mobile worker above to get started.
             {% endblocktrans %}
           {% endif %}
