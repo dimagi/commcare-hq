@@ -162,23 +162,20 @@ class ProjectReportsTab(UITab):
         from corehq.apps.users.models import Permissions
         # For SaaS envs, if we want to display the tab only if Feature Flag is
         # enabled on domain and the role has the permission to edit_ucrs
-        show_on_sass_env = (
-            toggles.USER_CONFIGURABLE_REPORTS.enabled(self.domain)
-            and self.couch_user.has_permission(
-                self.domain,
-                get_permission_name(Permissions.edit_ucrs)
+        is_ucr_toggle_enabled = (
+            toggles.USER_CONFIGURABLE_REPORTS.enabled(
+                self.domain, namespace=toggles.NAMESPACE_DOMAIN
             )
-            and settings.IS_SAAS_ENVIRONMENT
+            or toggles.USER_CONFIGURABLE_REPORTS.enabled(
+                self.couch_user.username, namespace=toggles.NAMESPACE_USER
+            )
         )
-        # For Non SaaS Envs
-        # Only show for **users** with the flag. This flag is also available for domains
-        # but should not be granted by domain, as the feature is too advanced to turn
-        # on for all of a domain's users.
-        show_on_other_envs = (
-            toggles.USER_CONFIGURABLE_REPORTS.enabled(self.couch_user.username)
-            and not settings.IS_SAAS_ENVIRONMENT
+        has_ucr_permissions = self.couch_user.has_permission(
+            self.domain,
+            get_permission_name(Permissions.edit_ucrs)
         )
-        if show_on_other_envs or show_on_sass_env:
+
+        if is_ucr_toggle_enabled and has_ucr_permissions:
 
             from corehq.apps.userreports.views import UserConfigReportsHomeView
             tools.append({

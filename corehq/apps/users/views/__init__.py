@@ -2,8 +2,6 @@ import json
 from collections import defaultdict
 from datetime import datetime
 
-from django.conf import settings
-
 import langcodes
 import six.moves.urllib.error
 import six.moves.urllib.parse
@@ -679,7 +677,6 @@ class ListRolesView(BaseRoleAccessView):
             'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
             'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
-            'is_saas_environment': settings.IS_SAAS_ENVIRONMENT,
         }
 
 
