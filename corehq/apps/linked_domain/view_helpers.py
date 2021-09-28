@@ -291,10 +291,13 @@ def pop_report_for_action(action, reports):
     try:
         report = reports.get(report_id)
         del reports[report_id]
+        return report
     except KeyError:
         report = ReportConfiguration.get(report_id)
-
-    return report
+        if report.doc_type == "ReportConfiguration-Deleted":
+            return None
+        else:
+            return report
 
 
 def pop_keyword_for_action(action, keywords):
