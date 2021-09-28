@@ -344,8 +344,9 @@ First create your `localsettings.py` file:
 cp localsettings.example.py localsettings.py
 ```
 
-Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
-run:
+#### Create the shared directory
+
+If you have not modified `SHARED_DRIVE_ROOT`, then run:
 
 ```sh
 mkdir sharedfiles
