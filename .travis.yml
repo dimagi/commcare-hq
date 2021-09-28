@@ -21,7 +21,7 @@ env:
     # DOCKER_PASSWORD
     - secure: "ccELswO6fEqO/jgqr02ItTpn2lm9uW2EXXXWlxssMm+iGX2apRfLKfRCyUcuUUSGll5wBmict8jY0mDN72IYGovvPFLQGOW4Po8E5jc1Z847ZGMTgLR4Zg7/go98UkMxepcmDyy4YPFeGWtJo6m5Ocp3usifHvPuMQ0LgsYdZzo="
     # CODECOV_TOKEN
-    - secure: "b5cW5K0gK6wUqZh8lKZSmsj7Bxyh7vaGMtBOnIAWZ+ksvE1SExahvpQ/ANI+9zczBxhluFiVFgPwdmWZ0nAi4gKsmSLEigu7nQJLkeWxcfzQj8KJXtoM+Z7ykDPKP117p5Sp0GN+XhBvih/JUqRMFLp8xtIQZGYevtqqZwHm9ms="
+    - secure: "ae0iiAahjQMG+0qt+UMk3aKDIsKf7kdGoa7NACl/lhToH90AalF5206fpj7++pakWhO5prHLRgD/KQxplWRm6SVCHsZLSVq/vz//Ooc+ne6dzFSey0vystEpOlBwEpxPiWJV01Ows8t56SlOwm6zVOxKsxTLt9pfzeNsiw4Vdk0="
 before_install:
   # get newer version of docker-compose for variable substitution in compose files
   - curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-`uname -s`-`uname -m` > docker-compose
