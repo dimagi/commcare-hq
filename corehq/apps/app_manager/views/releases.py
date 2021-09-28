@@ -21,7 +21,6 @@ from couchdbkit import NoResultFound, ResourceNotFound
 from django_prbac.decorators import requires_privilege
 from django_prbac.utils import has_privilege
 
-from corehq.util.metrics import metrics_histogram_timer
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.web import json_response
 from phonelog.models import UserErrorEntry
@@ -49,10 +48,11 @@ from corehq.apps.app_manager.decorators import (
     require_deploy_apps,
 )
 from corehq.apps.app_manager.exceptions import (
+    AppValidationError,
     BuildConflictException,
     ModuleIdMissingException,
     PracticeUserException,
-    XFormValidationFailed, AppValidationError,
+    XFormValidationFailed,
 )
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.models import (
@@ -68,13 +68,17 @@ from corehq.apps.app_manager.tasks import (
 from corehq.apps.app_manager.util import get_and_assert_practice_user_in_domain
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
-from corehq.apps.app_manager.views.utils import back_to_main, get_langs
+from corehq.apps.app_manager.views.utils import (
+    back_to_main,
+    get_langs,
+    report_build_time,
+)
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
     login_or_api_key,
     track_domain_request,
-    LoginAndDomainMixin,
 )
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import queries
@@ -290,8 +294,7 @@ def save_copy(request, domain, app_id):
     app = get_app(domain, app_id)
     try:
         user_id = request.couch_user.get_id
-        buckets = (1, 10, 30, 60, 120, 240)
-        with metrics_histogram_timer('commcare.app_build.new_release', timing_buckets=buckets):
+        with report_build_time(domain, app._id, 'new_release'):
             copy = make_app_build(app, comment, user_id)
         CouchUser.get(user_id).set_has_built_app()
     except AppValidationError as e:

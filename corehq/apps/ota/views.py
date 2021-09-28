@@ -7,6 +7,8 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
     JsonResponse,
     HttpResponseNotFound,
     HttpResponseForbidden,

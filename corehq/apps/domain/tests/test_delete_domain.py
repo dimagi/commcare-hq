@@ -13,11 +13,6 @@ from mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, SyncLogSQL
-from casexml.apps.stock.models import (
-    DocDomainMapping,
-    StockReport,
-    StockTransaction,
-)
 from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.apps.accounting.models import (
@@ -151,23 +146,6 @@ class TestDeleteDomain(TestCase):
             location_type='facility'
         )
         location.save()
-        report = StockReport.objects.create(
-            type='balance',
-            domain=domain_name,
-            form_id='fake',
-            date=datetime.utcnow(),
-            server_date=datetime.utcnow(),
-        )
-
-        StockTransaction.objects.create(
-            report=report,
-            product_id=product.get_id,
-            sql_product=SQLProduct.objects.get(product_id=product.get_id),
-            section_id='stock',
-            type='stockonhand',
-            case_id=location.linked_supply_point().get_id,
-            stock_on_hand=100
-        )
 
         SMS.objects.create(domain=domain_name)
         Call.objects.create(domain=domain_name)
@@ -201,6 +179,7 @@ class TestDeleteDomain(TestCase):
         super(TestDeleteDomain, self).setUp()
         self.domain = Domain(name="test", is_active=True)
         self.domain.save()
+        self.addCleanup(ensure_deleted, self.domain)
         self.domain.convert_to_commtrack()
         self.current_subscription = Subscription.new_domain_subscription(
             BillingAccount.get_or_create_account_by_domain(self.domain.name, created_by='tests')[0],
@@ -211,6 +190,7 @@ class TestDeleteDomain(TestCase):
 
         self.domain2 = Domain(name="test2", is_active=True)
         self.domain2.save()
+        self.addCleanup(self.domain2.delete)
         self.domain2.convert_to_commtrack()
 
         LocationType.objects.create(
@@ -231,11 +211,8 @@ class TestDeleteDomain(TestCase):
         )
 
     def _assert_sql_counts(self, domain, number):
-        self.assertEqual(StockTransaction.objects.filter(report__domain=domain).count(), number)
-        self.assertEqual(StockReport.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLLocation.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLProduct.objects.filter(domain=domain).count(), number)
-        self.assertEqual(DocDomainMapping.objects.filter(domain_name=domain).count(), number)
         self.assertEqual(LocationType.objects.filter(domain=domain).count(), number)
 
         self.assertEqual(SMS.objects.filter(domain=domain).count(), number)
@@ -1026,10 +1003,6 @@ class TestDeleteDomain(TestCase):
         self.domain.delete()
         self.assertIsNone(CommtrackConfig.for_domain(self.domain.name))
 
-    def tearDown(self):
-        self.domain2.delete()
-        super(TestDeleteDomain, self).tearDown()
-
 
 class TestHardDeleteSQLFormsAndCases(TestCase):
 
@@ -1037,11 +1010,12 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         super(TestHardDeleteSQLFormsAndCases, self).setUp()
         self.domain = Domain(name='test')
         self.domain.save()
+        self.addCleanup(ensure_deleted, self.domain)
         self.domain2 = Domain(name='test2')
         self.domain2.save()
+        self.addCleanup(self.domain2.delete)
 
     def tearDown(self):
-        self.domain2.delete()
         call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name, noinput=True)
         call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
         super(TestHardDeleteSQLFormsAndCases, self).tearDown()
@@ -1131,3 +1105,8 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
 
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
+
+
+def ensure_deleted(domain):
+    if domain._rev:
+        domain.delete()

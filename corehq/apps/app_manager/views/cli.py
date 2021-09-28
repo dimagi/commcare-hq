@@ -4,12 +4,11 @@ from django.utils.text import slugify
 
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
-from corehq.util.metrics import metrics_histogram_timer
 from dimagi.ext.couchdbkit import Document
 from soil import FileDownload
 
 from corehq import toggles
-from corehq.apps.app_manager.views.utils import get_langs
+from corehq.apps.app_manager.views.utils import get_langs, report_build_time
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
@@ -97,7 +96,7 @@ def direct_ccz(request, domain):
 
     lang, langs = get_langs(request, app)
 
-    with metrics_histogram_timer('commcare.app_build.live_preview', timing_buckets=(1, 10, 30, 60, 120, 240)):
+    with report_build_time(domain, app._id, 'live_preview'):
         return get_direct_ccz(domain, app, langs, version, include_multimedia, visit_scheduler_enabled)
 
 

@@ -56,8 +56,6 @@ branches:
     #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
-    - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-    - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
@@ -67,22 +65,22 @@ branches:
     #- sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
     - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
-    - jls/smart-linking-mvp  # Jenny Aug 9
     - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
     - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
     - ml/add-bulk-action-scheduled-reports # Minha Aug 30
     - gh/remove-pickles-from-accounting # Graham Sep 3
-    - dmr/cbc-tools  # Danny Sept 10
     - gh/erm/allow-text-input-for-new-domain # Graham Sept 13
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
-    - gh/erm/hide-deleted-content # Graham Sept 14
     - rp/improve-deleted-odata-feed-error-message # Rynhard Sept 15
+    - gh/erm/link-reports-and-keywords-on-push+gh/erm/fix-bug-when-pulling # Graham Sept 27
     - gh/erm/link-reports-and-keywords-on-push # Graham Sept 15
     - fr/dedupe  # Farid Sept 17
     - jm/remove-es-scan  # Joel Sep 17 [QA]
-    - dmr/add-domain-to-celery-metrics  # Danny Sep 20
     - ap/add-permission-to-edit-ucrs # Amit Sept 21
     - smh/extract-messaging-permission # Steph Sept 21
+    - jls/smart-linking-in-web-apps # Jenny Sept 22
+    - dmr/throttle-system-forms  # Danny Sept 24
+    - gh/erm/fix-bug-when-pulling # Graham Sept 27
 submodules: { }
