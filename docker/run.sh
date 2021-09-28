@@ -29,31 +29,32 @@ function setup {
     [ -n "$1" ] && TEST="$1"
     logmsg INFO "performing setup..."
 
-    rm *.log || true
-
-    pip-sync requirements/test-requirements.txt
-    pip check  # make sure there are no incompatibilities in test-requirements.txt
-    python_preheat  # preheat the python libs
-
-    # compile pyc files
-    python -m compileall -q corehq custom submodules testapps *.py
-
-    if [[ "$TEST" =~ ^python ]]; then
-        keytool -genkey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -alias javarosakey \
-            -keypass onetwothreefourfive \
-            -keystore InsecureTestingKeyStore \
-            -storepass onetwothreefourfive \
-            -dname 'CN=Foo, OU=Bar, O=Bizzle, L=Bazzle, ST=Bingle, C=US'
-    fi
-
-    if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
-        yarn install --progress=false --frozen-lockfile
-    fi
-
+#
+#    rm *.log || true
+#
+#    pip-sync requirements/test-requirements.txt
+#    pip check  # make sure there are no incompatibilities in test-requirements.txt
+#    python_preheat  # preheat the python libs
+#
+#    # compile pyc files
+#    python -m compileall -q corehq custom submodules testapps *.py
+#
+#    if [[ "$TEST" =~ ^python ]]; then
+#        keytool -genkey \
+#            -keyalg RSA \
+#            -keysize 2048 \
+#            -validity 10000 \
+#            -alias javarosakey \
+#            -keypass onetwothreefourfive \
+#            -keystore InsecureTestingKeyStore \
+#            -storepass onetwothreefourfive \
+#            -dname 'CN=Foo, OU=Bar, O=Bizzle, L=Bazzle, ST=Bingle, C=US'
+#    fi
+#
+#    if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
+#        yarn install --progress=false --frozen-lockfile
+#    fi
+#
     /mnt/wait.sh
 }
 

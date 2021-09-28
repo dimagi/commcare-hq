@@ -270,8 +270,10 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
-    docker-compose pull
-    docker-compose run --rm web run_tests "${TEST:-python}" "$@"
+#    docker-compose pull
+#    docker-compose run --rm web run_tests "${TEST:-python}" "$@"
+    docker-compose run --rm web setup
+    if [ "$?" == "1" ]; then docker logs hqtest_kafka_1; fi
 elif [ "$CMD" == "shell" ]; then
     docker-compose run --rm web ./manage.py $CMD "$@"
 elif [ "$CMD" == "bootstrap" ]; then
