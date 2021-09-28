@@ -80,8 +80,8 @@ branches:
     - jm/remove-es-scan  # Joel Sep 17 [QA]
     - ap/add-permission-to-edit-ucrs # Amit Sept 21
     - smh/extract-messaging-permission # Steph Sept 21
-    #- jls/smart-linking-in-web-apps # Jenny Sept 22
-    - gh/erm/disable-grouped-keywords # Graham Sept 22
+    - jls/smart-linking-in-web-apps # Jenny Sept 22
     - dmr/throttle-system-forms  # Danny Sept 24
     - gh/erm/fix-bug-when-pulling # Graham Sept 27
+    - jls/merge-migrations # Jenny Sept 28
 submodules: { }
