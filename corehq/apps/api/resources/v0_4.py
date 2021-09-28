@@ -32,7 +32,6 @@ from corehq.apps.api.resources import (
     SimpleSortableResourceMixin,
     v0_1,
     v0_3,
-    v0_5,
 )
 from corehq.apps.api.resources.auth import (
     DomainAdminAuthentication,
@@ -329,6 +328,8 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
     """
 
     def post_list(self, request, **kwargs):
+        from corehq.apps.api.resources import v0_5
+
         domain = kwargs.get('domain')
         request.domain = domain
         username = request.POST.get('username')
