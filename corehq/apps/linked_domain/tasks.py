@@ -165,24 +165,15 @@ The following linked project spaces received content:
 
     def _release_report(self, domain_link, model, user_id):
         report_id = model['detail']['report_id']
-        found = False
         linked_report = get_downstream_report(domain_link.linked_domain, report_id)
-        if linked_report:
-            found = True
-            update_linked_ucr(domain_link, linked_report.get_id)
-            domain_link.update_last_pull(
-                MODEL_REPORT,
-                user_id,
-                model_detail=ReportLinkDetail(report_id=linked_report.get_id).to_json(),
-            )
 
-        if not found:
+        if not linked_report:
             if domain_has_privilege(self.upstream_domain, RELEASE_MANAGEMENT):
                 try:
                     linked_report_info = create_linked_ucr(domain_link, report_id)
+                    linked_report = linked_report_info.report
                 except DomainLinkError as e:
                     return self._error_tuple(str(e))
-                update_linked_ucr(domain_link, linked_report_info.report.get_id)
             else:
                 report = ReportConfiguration.get(report_id)
                 if report.report_meta.created_by_builder:
@@ -195,6 +186,14 @@ The following linked project spaces received content:
                       + 'report.').format(url),
                     text=_('Could not find report. Please check that the report has been linked.'),
                 )
+
+        # have no hit an error case, so update the ucr
+        update_linked_ucr(domain_link, linked_report.get_id)
+        domain_link.update_last_pull(
+            MODEL_REPORT,
+            user_id,
+            model_detail=ReportLinkDetail(report_id=linked_report.get_id).to_json(),
+        )
 
     def _release_flag_dependent_model(self, domain_link, model, user, feature_flag):
         if not feature_flag.enabled(domain_link.linked_domain):
