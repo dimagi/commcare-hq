@@ -1,5 +1,12 @@
-from dimagi.utils.dates import force_to_datetime
-from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
+from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import (
+    PopulateSQLCommand,
+)
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.dbaccessors import (
+    get_all_repeater_docs,
+    get_repeater_count_for_domains,
+    get_repeaters_by_domain,
+)
 
 
 class Command(PopulateSQLCommand):
