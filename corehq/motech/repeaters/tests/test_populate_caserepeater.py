@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.core.management import call_command
 from django.test import TestCase
 
@@ -61,9 +62,12 @@ class TestMigrationDiff(TestCase):
 
 
 class TestMigrationCommand(TestCase):
+
+    @classmethod
     def setUpClass(cls):
         cls.domain_1 = 'caserepeater-migration'
         cls.domain_2 = 'migration-caserepeater'
+        cls.date = datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
         cls.conn = ConnectionSettings(domain=cls.domain_1, url='http://url.com')
         cls.conn.save()
         cls.couch_repeater_1 = CaseRepeater(
@@ -85,16 +89,19 @@ class TestMigrationCommand(TestCase):
 
         for repeater in cls.repeaters:
             repeater.save(sync_to_sql=False)
-        return super().setUpClass()
+        return super(TestMigrationCommand, cls).setUpClass()
 
-    def tearDownClass(self):
-        for r in self.repeaters:
+    @classmethod
+    def tearDownClass(cls):
+        for r in cls.repeaters:
             r.delete()
         return super().tearDownClass()
 
     def test_migration_with_no_arguments(self):
         self.assertEqual(SQLCaseRepeater.objects.count(), 0)
-        call_command('populate_caserepeater')
+        # when multiple tests run in the same second they try to create log file with same name
+        # so we have to pass custom log_path to avoid test failure because of it
+        call_command('populate_caserepeater', log_path=f'caserepeater_noargs_{self.date}.log')
         self.assertEqual(SQLCaseRepeater.objects.count(), len(self.repeaters))
         sql_repeater_ids = SQLCaseRepeater.objects.all().values_list('repeater_id', flat=True)
         couch_repeater_ids = [r._id for r in self.repeaters]
@@ -102,7 +109,22 @@ class TestMigrationCommand(TestCase):
 
     def test_migration_for_one_domain(self):
         self.assertEqual(SQLCaseRepeater.objects.count(), 0)
-        call_command('populate_caserepeater', domains=[self.domain_1])
+        call_command(
+            'populate_caserepeater',
+            domains=[self.domain_1],
+            log_path=f'caserepeater_one_domain_{self.date}.log'
+        )
+        self.assertEqual(SQLCaseRepeater.objects.count(), 2)
+        self.assertEqual(
+            list(SQLCaseRepeater.objects.all().values_list('domain', flat=True).distinct()),
+            [self.domain_1]
+        )
+        # running migration twice to verify nothing unexpected happens
+        call_command(
+            'populate_caserepeater',
+            domains=[self.domain_1],
+            log_path=f'caserepeater_onedomain_{self.date}.log'
+        )
         self.assertEqual(SQLCaseRepeater.objects.count(), 2)
         self.assertEqual(
             list(SQLCaseRepeater.objects.all().values_list('domain', flat=True).distinct()),
