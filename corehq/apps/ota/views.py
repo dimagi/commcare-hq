@@ -93,6 +93,7 @@ def restore(request, domain, app_id=None):
 
 
 @location_safe_bypass
+@csrf_exempt
 @mobile_auth
 @check_domain_migration
 def search(request, domain):
@@ -100,6 +101,7 @@ def search(request, domain):
 
 
 @location_safe_bypass
+@csrf_exempt
 @mobile_auth
 @check_domain_migration
 def app_aware_search(request, domain, app_id):
@@ -110,7 +112,8 @@ def app_aware_search(request, domain, app_id):
 
     Returns results as a fixture with the same structure as a casedb instance.
     """
-    criteria = {k: v[0] if len(v) == 1 else v for k, v in request.GET.lists()}
+    request_dict = request.GET if request.method == 'GET' else request.POST
+    criteria = {k: v[0] if len(v) == 1 else v for k, v in request_dict.lists()}
     try:
         cases = get_case_search_results(domain, criteria, app_id, request.couch_user)
     except CaseSearchUserError as e:
