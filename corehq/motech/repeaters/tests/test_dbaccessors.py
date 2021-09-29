@@ -3,11 +3,12 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 
+from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.const import (
-    RECORD_CANCELLED_STATE,
     RECORD_PENDING_STATE,
 )
 from corehq.motech.repeaters.dbaccessors import (
+    get_all_repeater_docs,
     get_domains_that_have_repeat_records,
     get_failure_repeat_record_count,
     get_overdue_repeat_record_count,
@@ -15,6 +16,7 @@ from corehq.motech.repeaters.dbaccessors import (
     get_pending_repeat_record_count,
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
+    get_repeater_count_for_domains,
     get_repeaters_by_domain,
     get_success_repeat_record_count,
     iter_repeat_records_by_domain,
