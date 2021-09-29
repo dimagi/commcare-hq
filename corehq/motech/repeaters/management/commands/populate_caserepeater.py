@@ -15,11 +15,11 @@ class Command(PopulateSQLCommand):
         return "receiverwrapper"
 
     @classmethod
-    def couch_doc_type(self):
+    def couch_doc_type(cls):
         return 'CaseRepeater'
 
     @classmethod
-    def sql_class(self):
+    def sql_class(cls):
         from corehq.motech.repeaters.models import SQLCaseRepeater
         return SQLCaseRepeater
 
