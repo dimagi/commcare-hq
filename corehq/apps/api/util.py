@@ -48,7 +48,7 @@ def get_obj(bundle_or_obj):
     if isinstance(bundle_or_obj, Bundle):
         return bundle_or_obj.obj
     else:
-        return Http404()
+        return "Error 404"
 
 
 def form_to_es_form(xform_instance, include_attachments=False):
