@@ -135,6 +135,11 @@ def allowed_report_builder_reports(request):
     return 0
 
 
+def get_configurable_and_static_reports(domain):
+    from corehq.apps.userreports.models import StaticReportConfiguration
+    return get_existing_reports(domain) + StaticReportConfiguration.by_domain(domain)
+
+
 def get_existing_reports(domain):
     from corehq.apps.userreports.models import ReportConfiguration
     existing_reports = ReportConfiguration.by_domain(domain)
