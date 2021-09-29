@@ -256,6 +256,7 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
         }
 
 
+@method_decorator(require_permission(Permissions.edit_messaging), name="dispatch")
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/manage_case_groups.html'
     urlname = 'manage_case_groups'
@@ -266,10 +267,6 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     loading_message = ugettext_noop("Loading cases...")
     deleted_items_header = ugettext_noop("Removed Cases:")
     new_items_header = ugettext_noop("Added Cases:")
-
-    @method_decorator(require_permission(Permissions.edit_messaging))
-    def dispatch(self, request, *args, **kwargs):
-        return super(CaseGroupCaseManagementView, self).dispatch(request, *args, **kwargs)
 
     @property
     def group_id(self):
