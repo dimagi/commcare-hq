@@ -16,10 +16,7 @@ from corehq.apps.users.tasks import process_reporting_metadata_staging
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    run_with_sql_backend,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
@@ -28,7 +25,6 @@ from corehq.util.test_utils import get_form_ready_to_save
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
-@run_with_sql_backend
 class XFormPillowTest(TestCase):
     domain = 'xform-pillowtest-domain'
     username = 'xform-pillowtest-user'

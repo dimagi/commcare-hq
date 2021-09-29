@@ -36,7 +36,7 @@ from corehq.toggles import (
     all_toggles,
     NAMESPACE_EMAIL_DOMAIN,
     toggles_enabled_for_domain,
-    toggles_enabled_for_user,
+    toggles_enabled_for_user, FeatureRelease,
 )
 from corehq.util.soft_assert import soft_assert
 from couchexport.models import Format
@@ -137,6 +137,10 @@ class ToggleEditView(BasePageView):
     def is_random_editable(self):
         return isinstance(self.static_toggle, DynamicallyPredictablyRandomToggle)
 
+    @property
+    def is_feature_release(self):
+        return isinstance(self.static_toggle, FeatureRelease)
+
     @cached_property
     def static_toggle(self):
         """
@@ -164,6 +168,7 @@ class ToggleEditView(BasePageView):
             'server_environment': settings.SERVER_ENVIRONMENT,
             'is_random': self.is_random_editable,
             'is_random_editable': self.is_random_editable,
+            'is_feature_release': self.is_feature_release,
             'allows_items': all(n in ALL_NAMESPACES for n in namespaces)
         }
         if self.usage_info:

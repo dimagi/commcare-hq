@@ -1,9 +1,12 @@
 CommCare HQ
 ===========
 
-CommCare HQ is a server-side tool to help manage community health workers.
-It seamlessly integrates with CommCare J2ME, Android, and Web Apps as well as
-providing generic domain management and form data-collection functionality.
+CommCare HQ is a web application for building complex, customizable, frontline worker solutions.
+
+It includes multi-tenant application building, user management, data collection, and reporting.
+
+CommCare HQ apps work with [CommCare mobile](https://github.com/dimagi/commcare-android) and its
+bundled [web application platform](https://github.com/dimagi/formplayer).
 
 ### Key Components
 

@@ -1,7 +1,5 @@
 from memoized import memoized
 
-from ..utils import should_use_sql_backend
-
 
 class SupplyInterface(object):
 
@@ -16,12 +14,8 @@ class SupplyInterface(object):
     @property
     @memoized
     def supply_point(self):
-        from corehq.form_processor.backends.couch.supply import SupplyPointCouch
         from corehq.form_processor.backends.sql.supply import SupplyPointSQL
-        if should_use_sql_backend(self.domain):
-            return SupplyPointSQL
-        else:
-            return SupplyPointCouch
+        return SupplyPointSQL
 
     def get_or_create_by_location(self, location):
         return self.supply_point.get_or_create_by_location(location)

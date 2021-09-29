@@ -1,11 +1,11 @@
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 
 from corehq.apps.linked_domain.local_accessors import get_data_dictionary
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
+from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_data_dictionary
 
 
-class TestUpdateDataDictionary(BaseLinkedAppsTest):
+class TestUpdateDataDictionary(BaseLinkedDomainTest):
     def setUp(self):
         self.suspected = CaseType(domain=self.domain,
                                   name='Suspected',

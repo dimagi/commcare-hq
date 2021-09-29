@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.http import HttpRequest
@@ -26,6 +26,8 @@ from corehq.elastic import ESError
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 
+from .models import ScheduledReportLog
+
 
 def send_delayed_report(report_id):
     """
@@ -33,8 +35,8 @@ def send_delayed_report(report_id):
     """
     domain = ReportNotification.get(report_id).domain
     if (
-        settings.SERVER_ENVIRONMENT == 'production' and
-        any(re.match(pattern, domain) for pattern in settings.THROTTLE_SCHED_REPORTS_PATTERNS)
+        settings.SERVER_ENVIRONMENT == 'production'
+        and any(re.match(pattern, domain) for pattern in settings.THROTTLE_SCHED_REPORTS_PATTERNS)
     ):
         # This is to prevent a few scheduled reports from clogging up
         # the background queue.
@@ -69,6 +71,16 @@ def send_report_throttled(notification_id):
 )
 def initiate_queue_scheduled_reports():
     queue_scheduled_reports()
+
+
+@periodic_task(
+    run_every=crontab(hour="5", minute="0", day_of_week="*"),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
+def purge_old_scheduled_report_logs():
+    current_time = datetime.utcnow()
+    EXPIRED_DATE = current_time - timedelta(weeks=12)
+    ScheduledReportLog.objects.filter(timestamp__lt=EXPIRED_DATE).delete()
 
 
 @serial_task('queue_scheduled_reports', queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))

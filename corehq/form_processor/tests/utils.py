@@ -6,7 +6,6 @@ from uuid import uuid4
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.test import TestCase, TransactionTestCase
-from django.test.utils import override_settings
 from django.utils.decorators import classproperty
 from nose.plugins.attrib import attr
 from nose.tools import nottest
@@ -54,24 +53,9 @@ class FormProcessorTestUtils(object):
         cls._delete_all_sql_sharded_models(CommCareCaseSQL, domain)
 
     @staticmethod
+    @unit_testing_only
     def delete_all_ledgers(domain=None):
-        FormProcessorTestUtils.delete_all_v2_ledgers(domain)
-        FormProcessorTestUtils.delete_all_v1_ledgers(domain)
-
-    @staticmethod
-    @unit_testing_only
-    def delete_all_v1_ledgers(domain=None):
-        logger.debug("Deleting all V1 ledgers for domain %s", domain)
-        from casexml.apps.stock.models import StockReport
-        from casexml.apps.stock.models import StockTransaction
-        stock_report_ids = StockReport.objects.filter(domain=domain).values_list('id', flat=True)
-        StockReport.objects.filter(domain=domain).delete()
-        StockTransaction.objects.filter(report_id__in=stock_report_ids).delete()
-
-    @staticmethod
-    @unit_testing_only
-    def delete_all_v2_ledgers(domain=None):
-        logger.debug("Deleting all V2 ledgers for domain %s", domain)
+        logger.debug("Deleting all ledgers for domain %s", domain)
 
         def _delete_ledgers_for_case(case_id):
             transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
@@ -155,14 +139,15 @@ class FormProcessorTestUtils(object):
                     pass
 
 
-run_with_sql_backend = override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-run_with_all_backends = run_with_sql_backend
+def sharded(cls):
+    """Tag tests to run with the sharded SQL backend
 
+    This adds a "sharded" attribute to decorated tests indicating that
+    the tests should be run with a sharded database setup. Note that the
+    presence of that attribute does not prevent tests from  also running
+    in the default not-sharded database setup.
 
-def _sharded(cls):
-    """
-    Marks a test to be run with the partitioned database settings in
-    addition to the non-partitioned database settings.
+    Was previously named @use_sql_backend
     """
     return patch_shard_db_transactions(attr(sharded=True)(cls))
 
@@ -184,20 +169,7 @@ def only_run_with_partitioned_database(cls):
     skip_unless = skipUnless(
         settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup'
     )
-    return skip_unless(_sharded(cls))
-
-
-def sharded(cls):
-    """Tag tests to run with the sharded SQL backend
-
-    This adds a "sharded" attribute to decorated tests indicating that
-    the tests should be run with a sharded database setup. Note that the
-    presence of that attribute does not prevent tests from  also running
-    in the default not-sharded database setup.
-
-    Was previously named @use_sql_backend
-    """
-    return _sharded(run_with_sql_backend(cls))
+    return skip_unless(sharded(cls))
 
 
 def patch_testcase_databases():

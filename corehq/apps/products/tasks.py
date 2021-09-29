@@ -9,7 +9,7 @@ from corehq.util.workbook_json.excel_importer import (
 )
 
 
-@task(serializer='pickle')
+@task
 def import_products_async(domain, file_ref_id):
     try:
         importer = SingleExcelImporter(import_products_async, file_ref_id)

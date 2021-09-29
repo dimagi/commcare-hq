@@ -26,7 +26,6 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.util.test_utils import (
     create_and_save_a_case,
     create_and_save_a_form,
@@ -932,7 +931,6 @@ class RelatedDocExpressionTest(SimpleTestCase):
         self.assertEqual('foo', self.expression(my_doc, context))
 
 
-@run_with_sql_backend
 class RelatedDocExpressionDbTest(TestCase):
     domain = 'related-doc-db-test-domain'
 
@@ -1126,7 +1124,6 @@ class TestEvaluatorTypes(SimpleTestCase):
         self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), int)
 
 
-@run_with_sql_backend
 class TestFormsExpressionSpec(TestCase):
 
     @classmethod
@@ -1185,7 +1182,6 @@ class TestFormsExpressionSpec(TestCase):
         self.assertEqual(forms, [])
 
 
-@run_with_sql_backend
 class TestGetSubcasesExpression(TestCase):
 
     def setUp(self):
@@ -1243,7 +1239,6 @@ class TestGetSubcasesExpression(TestCase):
         self.assertEqual(extension.case_id, subcases[0]['_id'])
 
 
-@run_with_sql_backend
 class TestGetCaseSharingGroupsExpression(TestCase):
 
     def setUp(self):
@@ -1305,7 +1300,6 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         self.assertEqual(len(case_sharing_groups), 0)
 
 
-@run_with_sql_backend
 class TestGetReportingGroupsExpression(TestCase):
 
     def setUp(self):

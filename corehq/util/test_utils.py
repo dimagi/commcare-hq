@@ -610,10 +610,8 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
         case_id=None, owner_id=None, user_id=None):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-    from corehq.form_processor.utils.general import should_use_sql_backend
     from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import delete_schedule_instances_by_case_id
 
-    assert should_use_sql_backend(domain), domain
     case = create_and_save_a_case(domain, case_id or uuid.uuid4().hex, case_name,
         case_properties=case_properties, case_type=case_type, drop_signals=drop_signals,
         owner_id=owner_id, user_id=user_id)

@@ -1,10 +1,10 @@
 from corehq.apps.reports.models import TableauVisualization, TableauServer
 from corehq.apps.linked_domain.local_accessors import get_tableau_server_and_visualizations
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
+from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_tableau_server_and_visualizations
 
 
-class TestUpdateTableauVisualization(BaseLinkedAppsTest):
+class TestUpdateTableauVisualization(BaseLinkedDomainTest):
     def setUp(self):
         self.server = TableauServer(domain=self.domain,
         server_type='server',
