@@ -135,7 +135,7 @@ def allowed_report_builder_reports(request):
     return 0
 
 
-def _get_existing_reports(domain):
+def get_existing_reports(domain):
     from corehq.apps.userreports.models import ReportConfiguration
     from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
     existing_reports = ReportConfiguration.by_domain(domain)
@@ -147,7 +147,7 @@ def _get_existing_reports(domain):
 
 def number_of_report_builder_reports(domain):
     builder_reports = [
-        report for report in _get_existing_reports(domain)
+        report for report in get_existing_reports(domain)
         if report.report_meta.created_by_builder
     ]
     return len(builder_reports)
@@ -155,7 +155,7 @@ def number_of_report_builder_reports(domain):
 
 def number_of_ucr_reports(domain):
     ucr_reports = [
-        report for report in _get_existing_reports(domain)
+        report for report in get_existing_reports(domain)
         if not report.report_meta.created_by_builder
     ]
     return len(ucr_reports)
