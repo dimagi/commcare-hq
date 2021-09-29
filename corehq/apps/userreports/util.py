@@ -8,7 +8,7 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, TEMP_REPORT_PREFIX
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
@@ -137,7 +137,6 @@ def allowed_report_builder_reports(request):
 
 def get_existing_reports(domain):
     from corehq.apps.userreports.models import ReportConfiguration
-    from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
     existing_reports = ReportConfiguration.by_domain(domain)
     return [
         report for report in existing_reports
