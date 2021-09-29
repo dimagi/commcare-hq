@@ -142,14 +142,15 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         $('#select-case').off('click').click(function () {
             var smartLinkTemplate = undefined;
-            if (model.smartLinkParams && model.smartLinkParams.length) {
-                var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain;
-                if (model.smartLinkParams[0] !== userDomain) {
+            if (model.smartLinkParams) {
+                var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain,
+                    caseDomain = model.smartLinkParams.domain;
+                if (caseDomain && caseDomain !== userDomain) {
                     var currentAppId = Util.currentUrlToObject().appId,
                         currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", currentAppId),
                         appId = currentApp.get("upstream_app_id") || currentApp.get("copy_of") || appId;
                     smartLinkTemplate = hqImport("hqwebapp/js/initial_page_data").get("smart_link_template");
-                    smartLinkTemplate = smartLinkTemplate.replace("{domain}", model.smartLinkParams[0]);
+                    smartLinkTemplate = smartLinkTemplate.replace("{domain}", caseDomain);
                     smartLinkTemplate = smartLinkTemplate.replace("{app_id}", appId);
                 }
             }
