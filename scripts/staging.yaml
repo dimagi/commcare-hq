@@ -70,7 +70,6 @@ branches:
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
     - ml/add-bulk-action-scheduled-reports # Minha Aug 30
     - gh/remove-pickles-from-accounting # Graham Sep 3
-    - gh/erm/allow-text-input-for-new-domain # Graham Sept 13
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
     - rp/improve-deleted-odata-feed-error-message # Rynhard Sept 15
