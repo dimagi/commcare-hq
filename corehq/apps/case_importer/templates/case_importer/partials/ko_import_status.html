@@ -1,6 +1,6 @@
 {% load i18n %}
 <!--ko if: state === $root.states.SUCCESS && result-->
-<div class="text-success">
+<div>
   <!--ko if: result.match_count-->
   <p>
     {% blocktrans with match_count='result.match_count' %}
@@ -56,7 +56,7 @@
       <p data-bind="text: sample">
       </p>
       <p>
-        <span>{% trans "Affected rows:" %}</span>
+        <span>{% trans "Row(s):" %}</span>
         <span data-bind="text: rows.join(', ')"></span>
       </p>
     </li>
