@@ -78,7 +78,7 @@ class TestCaseSearchEndpoint(TestCase):
         ])
 
     def test_dynamic_property(self):
-        res = get_case_search_results(self.domain, {'family': 'Ramos'})
+        res = get_case_search_results(self.domain, {'case_type': 'person', 'family': 'Ramos'})
         self.assertItemsEqual(["Jane"], [case.name for case in res])
 
     def test_app_aware_related_cases(self):
