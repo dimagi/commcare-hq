@@ -898,6 +898,13 @@ CASE_API_V0_6 = StaticToggle(
     save_fn=_enable_search_index,
 )
 
+LIVEQUERY_SYNC = DynamicallyPredictablyRandomToggle(
+    'livequery_sync',
+    'Enable livequery sync algorithm',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
     'hipaa_compliance_checkbox',
     'Show HIPAA compliance checkbox',
