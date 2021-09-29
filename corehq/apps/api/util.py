@@ -3,6 +3,7 @@ import datetime
 from dateutil.parser import parse
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext as _
+from django.http import Http404
 
 from couchdbkit.exceptions import ResourceNotFound
 from tastypie.bundle import Bundle
@@ -47,7 +48,7 @@ def get_obj(bundle_or_obj):
     if isinstance(bundle_or_obj, Bundle):
         return bundle_or_obj.obj
     else:
-        return bundle_or_obj
+        return Http404()
 
 
 def form_to_es_form(xform_instance, include_attachments=False):
