@@ -46,7 +46,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_form">
+                <endpoint id="my_form" command_id="m0-f0">
                     <stack>
                         <push>
                             <command value="'m0'"/>
@@ -69,7 +69,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_form">
+                <endpoint id="my_form" command_id="m0-f0">
                     <argument id="case_id"/>
                     <stack>
                         <push>
@@ -111,7 +111,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_form">
+                <endpoint id="my_form" command_id="m1-f0">
                     <argument id="parent_id"/>
                     <argument id="case_id"/>
                     <stack>
@@ -170,7 +170,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_form">
+                <endpoint id="my_form" command_id="m0-f0">
                     <stack>
                         <push>
                             <command value="'m0'"/>
@@ -178,7 +178,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                         </push>
                     </stack>
                 </endpoint>
-                <endpoint id="my_child_form">
+                <endpoint id="my_child_form" command_id="m1-f0">
                     <argument id="parent_id"/>
                     <argument id="case_id"/>
                     <stack>
@@ -227,7 +227,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_case_list">
+                <endpoint id="my_case_list" command_id="m0">
                     <stack>
                         <push>
                             <command value="'m0'"/>
@@ -245,7 +245,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_child_module">
+                <endpoint id="my_child_module" command_id="m1">
                     <stack>
                         <push>
                             <command value="'m0'"/>
