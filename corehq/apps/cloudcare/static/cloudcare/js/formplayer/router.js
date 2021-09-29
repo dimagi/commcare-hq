@@ -152,7 +152,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             urlObject.setForceManualAction(false);
         }
         if (smartLinkTemplate) {
-            urlObject.setSmartLinkTemplate(url);
+            urlObject.setSmartLinkTemplate(smartLinkTemplate);
         }
         Util.setUrlToObject(urlObject);
         API.listMenus();

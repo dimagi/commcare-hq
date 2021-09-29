@@ -148,9 +148,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     var currentAppId = Util.currentUrlToObject().appId,
                         currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", currentAppId),
                         appId = currentApp.get("upstream_app_id") || currentApp.get("copy_of") || appId;
-                    var url = hqImport("hqwebapp/js/initial_page_data").get("smart_link_template");
-                    url = url.replace("{domain}", model.smartLinkParams[0]);
-                    url = url.replace("{app_id}", appId);
+                    smartLinkTemplate = hqImport("hqwebapp/js/initial_page_data").get("smart_link_template");
+                    smartLinkTemplate = smartLinkTemplate.replace("{domain}", model.smartLinkParams[0]);
+                    smartLinkTemplate = smartLinkTemplate.replace("{app_id}", appId);
                 }
             }
             FormplayerFrontend.trigger("menu:select", caseId, smartLinkTemplate);
