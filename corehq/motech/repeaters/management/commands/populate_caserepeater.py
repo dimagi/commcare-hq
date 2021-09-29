@@ -42,21 +42,14 @@ class Command(PopulateSQLCommand):
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
-            couch_id=doc['_id'],
+            repeater_id=doc.get('_id'),
             defaults={
                 "version": doc.get("version"),
-                "repeater_id": doc.get('repeater_id'),
                 "domain": doc.get("domain"),
-                "connection_settings": doc.get("connection_settings_id"),
-                "auth_type": doc.get("auth_type"),
-                "notify_addresses_str": doc.get("notify_addresses_str"),
+                "connection_settings": ConnectionSettings.objects.get(id=doc.get("connection_settings_id")),
                 "format": doc.get("format"),
-                "paused": doc.get("paused"),
-                "started_at": force_to_datetime(doc.get("started_at")),
-                "last_success_at": force_to_datetime(doc.get("last_success_at")),
-                "failure_streak": doc.get("failure_streak"),
-
+                "is_paused": doc.get("paused"),
+                "white_listed_case_types": doc.get("white_listed_case_types"),
+                "black_listed_users": doc.get("black_listed_users")
             })
-        # add code to migrate CaseRepeater.white_listed_case_types
-        # add code to migrate CaseRepeater.black_listed_users
         return model, created
