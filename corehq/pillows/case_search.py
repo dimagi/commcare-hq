@@ -88,7 +88,7 @@ def _get_case_properties(doc_dict):
     ]
     dynamic_case_properties = dict(doc_dict['case_json'])
 
-    dynamic_mapping = [{'key': key, VALUE: value} for key, value in dynamic_case_properties.items()]
+    dynamic_mapping = [{'key': key, VALUE: str(value)} for key, value in dynamic_case_properties.items()]
 
     return base_case_properties + dynamic_mapping
 
