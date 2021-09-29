@@ -35,7 +35,7 @@ def _get_usernames_for_toggle(toggle):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0036_reset_user_history_records'),
+        ('users', '0037_add_edit_messaging_permission'),
     ]
 
     operations = [
