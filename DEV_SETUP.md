@@ -335,7 +335,6 @@ will update all code and do a few more tasks like run migrations and update
 libraries, so it's good to run once a month or so, or when you pull code and
 then immediately hit an error.
 
-
 #### Setup localsettings
 
 First create your `localsettings.py` file:
@@ -739,37 +738,82 @@ Elasticsearch).
 Some of the services listed there aren't necessary for very basic operation, but
 it can give you a good idea of what's broken.
 
-Then run the following separately:
+Then run the django server with the following command:
 
 ```sh
-# run the Django server
 ./manage.py runserver 0.0.0.0:8000
+```
 
-# Keeps elasticsearch index in sync
-# You can also skip this and run `./manage.py ptop_reindexer_v2` to manually sync ES indices when needed.
+You should now be able to load CommCare HQ in a browser at [http://localhost:8000](http://localhost:8000).
+
+### Troubleshooting
+
+If you can load the page, but either the styling is missing or you get JavaScript console errors trying to create an account,
+try running the JavaScript set up steps again. In particular you may need to run:
+
+```sh
+yarn install --frozen-lockfile
+./manage.py compilejsi18n
+./manage.py fix_less_imports_collectstatic
+```
+
+## Create a superuser
+
+Once your application is online, you'll want to create a superuser, which you can do by running:
+
+```sh
+./manage.py make_superuser <email>
+```
+
+This can also be used to promote a user created by signing up to a superuser.
+
+## Running CommCare HQ's supporting jobs
+
+The following additional processes are required for certain parts of the application to work.
+They can each be run in separate terminals:
+
+### Pillowtop
+
+Pillowtop is used to keep elasticsearch indices and configurable reports in sync.
+
+It can be run as follows:
+
+```sh
 ./manage.py run_ptop --all --processor-chunk-size=1
+```
 
-# You can also run individual pillows with the following.
-# Pillow names can be found in settings.py
+You can also run individual pillows with the following command
+(Pillow names can be found in `settings.py`):
+
+```sh
 ./manage.py run_ptop --pillow-name=CaseSearchToElasticsearchPillow --processor-chunk-size=1
+```
 
-# Setting up the asynchronous task scheduler (only required if you have CELERY_TASK_ALWAYS_EAGER=False in settings)
+Alternatively, you can not run pillowtop and instead manually sync ES indices when needed, by calling the `ptop_reindexer_v2` command.
+See the command help for details, but it can be used to sync individual indices like this:
+
+```sh
+./manage.py ptop_reindexer_v2 user --reset
+```
+
+### Celery
+
+Celery is used for background jobs and scheduled tasks.
+You can avoid running it by setting `CELERY_TASK_ALWAYS_EAGER=False` in your `localsettings.py`,
+though some parts of HQ (especially those involving file uploads and exports) require running it.
+
+This can be done using:
+
+```sh
 celery -A corehq worker -l info
 ```
 
-For celery, you may need to add a `-Q` argument based on the queue you want to
-listen to.
+You may need to add a `-Q` argument based on the queue you want to listen to.
 
 For example, to use case importer with celery locally you need to run:
 
 ```sh
 celery -A corehq worker -l info -Q case_import_queue
-```
-
-Create a superuser for your local environment
-
-```sh
-./manage.py make_superuser <email>
 ```
 
 
