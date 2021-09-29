@@ -1,10 +1,10 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
-from django.core.exceptions import ObjectDoesNotExist
 
 from memoized import memoized
 
@@ -21,7 +21,10 @@ from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
-from corehq.apps.users.audit.change_messages import get_messages
+from corehq.apps.users.audit.change_messages import (
+    CHANGE_MESSAGES_FIELDS,
+    get_messages,
+)
 from corehq.apps.users.models import UserHistory
 from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
@@ -62,15 +65,16 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             user_data_label = _("user data")
         return {
             "username": _("username"),
-            "role_id": _("role"),
+            "role": _("role"),
             "email": _("email"),
             "domain": _("project"),
             "is_active": _("is active"),
             "language": _("language"),
             "phone_numbers": _("phone numbers"),
-            "location_id": _("location"),
+            "location": _("primary location"),
             "user_data": user_data_label,
-            "two_factor_auth_disabled_until": _("two factor authentication disabled"),
+            "two_factor": _("two factor authentication disabled"),
+            "assigned_locations": _("assigned locations"),
         }
 
     @property
@@ -132,7 +136,10 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             filters = filters & Q(changed_by__in=changed_by_user_ids)
 
         if user_property:
-            filters = filters & Q(**{"changes__has_key": user_property})
+            if user_property in CHANGE_MESSAGES_FIELDS:
+                filters = filters & Q(**{"change_messages__has_key": user_property})
+            else:
+                filters = filters & Q(**{"changes__has_key": user_property})
 
         if actions and ChangeActionFilter.ALL not in actions:
             filters = filters & Q(action__in=actions)
