@@ -82,4 +82,5 @@ branches:
     - jls/smart-linking-in-web-apps # Jenny Sept 22
     - dmr/throttle-system-forms  # Danny Sept 24
     - gh/erm/link-reports-and-keywords-on-push-take2 # Graham Sept 28
+    - gh/remove-pickles/sms # Graham Sept 28
 submodules: { }
