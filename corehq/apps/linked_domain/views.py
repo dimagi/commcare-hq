@@ -393,15 +393,15 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
             return {
                 'success': False,
                 'message': ugettext("The project space {} does not exist. Make sure the name is "
-                                    "correct and this domain hasn't been deleted.".format(domain_to_link))
+                                    "correct and this domain hasn't been deleted.").format(domain_to_link)
             }
 
         if DomainLink.objects.filter(master_domain=self.domain, linked_domain=domain_to_link):
             return {
                 'success': False,
                 'message': ugettext(
-                    "The project space {} is already linked to this project space.".format(domain_to_link)
-                )
+                    "The project space {} is already linked to this project space."
+                ).format(domain_to_link)
             }
 
         try:

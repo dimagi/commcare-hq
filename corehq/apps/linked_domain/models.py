@@ -102,7 +102,7 @@ class DomainLink(models.Model):
             already_linked_domain = active_links_with_other_domains[0].master_domain
             raise DomainLinkError(
                 _('{} is already a downstream project space of {}.\nYou must remove the existing link before '
-                  'creating this new link.'.format(linked_domain, already_linked_domain))
+                  'creating this new link.').format(linked_domain, already_linked_domain)
             )
 
         deleted_existing_links = [
