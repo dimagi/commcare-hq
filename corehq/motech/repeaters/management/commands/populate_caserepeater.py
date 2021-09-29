@@ -29,16 +29,31 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def diff_couch_and_sql(cls, couch, sql):
-        """
-        This should compare each attribute of the given couch document and sql object.
-        Return a list of human-reaedable strings describing their differences, or None if the
-        two are equivalent. The list may contain `None` or empty strings which will be filtered
-        out before display.
+        diff_results = []
+        list_props = ['white_listed_case_types', 'black_listed_users']
+        string_props = ['domain', 'version', 'format']
+        diff_results.append(
+            cls.diff_value('paused', couch.get('paused'), sql.is_paused)
+        )
+        diff_results.append(
+            cls.diff_value(
+                'connection_settings_id',
+                couch.get('connection_settings_id'),
+                sql.connection_settings.id
+            )
+        )
+        diff_results.append(
+            cls.diff_value('repeater_id', couch.get('_id'), sql.repeater_id)
+        )
+        for prop in list_props:
+            for diff in cls.diff_lists(prop, couch.get(prop), getattr(sql, prop)):
+                diff_results.append(diff)
 
-        Note: `diff_value`, `diff_attr` and `diff_lists` methods of `PopulateSQLCommand` are useful
-        helpers.
-        """
-        return None
+        for prop in string_props:
+            diff_results.append(cls.diff_value(prop, couch.get(prop), getattr(sql, prop)))
+
+        diff_results = [diff for diff in diff_results if diff]
+        return '\n'.join(diff_results) if diff_results else None
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
