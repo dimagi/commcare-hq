@@ -653,7 +653,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
         self.assertEqual(3, len(ledger_values))
         for state in ledger_values:
-            # balance should be reverted to 100 in the StockState
+            # balance should be reverted to 100 in the ledger value
             self.assertEqual(100, int(state.stock_on_hand))
             # consumption should be none since there will only be 1 data point
             self.assertIsNone(state.daily_consumption)

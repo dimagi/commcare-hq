@@ -21,10 +21,6 @@ class DataRegistryHelper:
             self.registry_slug = registry_slug
             self._registry = None
 
-    def check_access(self, couch_user):
-        checker = RegistryPermissionCheck(self.current_domain, couch_user)
-        return checker.can_view_registry_data(self.registry_slug)
-
     @property
     def registry(self):
         if not self._registry:
@@ -48,36 +44,31 @@ class DataRegistryHelper:
     def log_data_access(self, user, domain, related_object, filters=None):
         self.registry.logger.data_accessed(user, domain, related_object, filters)
 
-    def pre_access_check(self, case_type):
-        if case_type not in self.registry.wrapped_schema.case_types:
-            raise RegistryAccessException(f"'{case_type}' not available in registry")
-
-    def access_check(self, case):
-        if case.domain not in self.visible_domains:
-            raise RegistryAccessException("Data not available in registry")
-
-    def get_case(self, case_id, case_type, user, application):
+    def get_case(self, case_id, case_type, couch_user, accessing_object):
+        """
+        :param accessing_object: object that is calling 'get_case'.
+            See ``corehq.apps.registry.models.RegistryAuditHelper.data_accessed``
+        :return:
+        """
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 
-        self.pre_access_check(case_type)
         case = CaseAccessorSQL.get_case(case_id)
         if case.type != case_type:
             raise CaseNotFound("Case type mismatch")
 
-        self.access_check(case)
-        self.log_data_access(user, case.domain, application, filters={
+        self.check_data_access(couch_user, [case.type], case.domain)
+        self.log_data_access(couch_user.get_django_user(), case.domain, accessing_object, filters={
             "case_type": case_type,
             "case_id": case_id
         })
         return case
 
-    def get_case_hierarchy(self, case):
+    def get_case_hierarchy(self, couch_user, case):
         from casexml.apps.phone.data_providers.case.livequery import (
             get_live_case_ids_and_indices, PrefetchIndexCaseAccessor
         )
 
-        self.pre_access_check(case.type)
-        self.access_check(case)
+        self.check_data_access(couch_user, [case.type], case.domain)
 
         # using livequery to get related cases matches the semantics of case claim
         case_ids, indices = get_live_case_ids_and_indices(case.domain, [case.case_id], TimingContext())
@@ -86,3 +77,30 @@ class DataRegistryHelper:
         cases = accessor.get_cases(list(case_ids))
 
         return [case] + cases
+
+    def check_data_access(self, couch_user, case_types, case_domain=None):
+        """Perform all checks for data access.
+        Will raise a RegistryAccessException if access should be denied.
+        """
+        for case_type in case_types:
+            self._check_case_type_in_registry(case_type)
+        self._check_user_has_access(couch_user, case_domain)
+        if case_domain is not None:
+            self._check_domain_is_visible(case_domain)
+
+    def _check_user_has_access(self, couch_user, case_domain=None):
+        if case_domain and self.current_domain == case_domain:
+            # always allow to access data in the current domain
+            return
+
+        checker = RegistryPermissionCheck(self.current_domain, couch_user)
+        if not checker.can_view_registry_data(self.registry_slug):
+            raise RegistryAccessException("User not permitted to access registry data")
+
+    def _check_case_type_in_registry(self, case_type):
+        if case_type not in self.registry.wrapped_schema.case_types:
+            raise RegistryAccessException(f"'{case_type}' not available in registry")
+
+    def _check_domain_is_visible(self, domain):
+        if domain not in self.visible_domains:
+            raise RegistryAccessException("Data not available in registry")

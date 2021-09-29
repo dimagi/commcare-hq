@@ -567,10 +567,10 @@ class AbstractLedgerAccessor(metaclass=ABCMeta):
         """
         Given a list of case IDs return a dict of all current ledger data of the following format:
         {
-            "case_id": {
-                "section_id": {
-                     "product_id": StockState,
-                     "product_id": StockState,
+            case_id: {
+                section_id: {
+                     product_id: <LedgerValue>,
+                     product_id: <LedgerValue>,
                      ...
                 },
                 ...
