@@ -95,6 +95,9 @@
           <th class="text-center">
             {% trans "Apps" %}
           </th>
+          <th class="text-center">
+            {% trans "Messaging" %}
+          </th>
           {% if show_integration %}
             <th class="text-center">
               {% trans "Integration" %}
@@ -163,6 +166,11 @@
                                             permissionIcon: {
                                               edit: permissions.edit_apps,
                                               view: permissions.view_apps,
+                                            }"></div>
+          </td>
+          <td class="text-center">
+            <div data-bind="permissionIcon: {
+                                              edit: permissions.edit_messaging,
                                             }"></div>
           </td>
           {% if show_integration %}
