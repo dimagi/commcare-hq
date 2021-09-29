@@ -175,11 +175,13 @@ class Permissions(DocumentSchema):
     access_all_locations = BooleanProperty(default=True)
     access_api = BooleanProperty(default=True)
     access_web_apps = BooleanProperty(default=False)
+    edit_messaging = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
     download_reports = BooleanProperty(default=True)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
+    edit_ucrs = BooleanProperty(default=False)
 
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
@@ -2768,6 +2770,9 @@ class AnonymousCouchUser(object):
         return False
 
     def can_edit_data(self):
+        return False
+
+    def can_edit_messgaing(self):
         return False
 
     def can_edit_apps(self):
