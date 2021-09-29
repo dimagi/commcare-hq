@@ -35,7 +35,8 @@
                             "index": "not_analyzed",
                             "type": "string",
                             "null_value": "",
-                            "ignore_above": 8191
+                            "ignore_above": 8191,
+                            "ignore_malformed": true
                         },
                         "numeric": {
                             "type": "double",
