@@ -5,7 +5,7 @@ CommCare HQ is a web application for building complex, customizable, frontline w
 
 It includes multi-tenant application building, user management, data collection, and reporting.
 
-CommCare HQ works with [CommCare mobile](https://github.com/dimagi/commcare-android) and its
+CommCare HQ apps work with [CommCare mobile](https://github.com/dimagi/commcare-android) and its
 bundled [web application platform](https://github.com/dimagi/formplayer).
 
 ### Key Components
