@@ -2,6 +2,7 @@ from mock import patch
 
 from django.test import SimpleTestCase
 
+from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_LOAD_CASE, REGISTRY_WORKFLOW_SMART_LINK
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.util.test_utils import flag_enabled
 
@@ -46,7 +47,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_form" command_id="m0-f0">
+                <endpoint id="my_form">
                     <stack>
                         <push>
                             <command value="'m0'"/>
@@ -69,7 +70,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_form" command_id="m0-f0">
+                <endpoint id="my_form">
                     <argument id="case_id"/>
                     <stack>
                         <push>
@@ -111,7 +112,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_form" command_id="m1-f0">
+                <endpoint id="my_form">
                     <argument id="parent_id"/>
                     <argument id="case_id"/>
                     <stack>
@@ -170,7 +171,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_form" command_id="m0-f0">
+                <endpoint id="my_form">
                     <stack>
                         <push>
                             <command value="'m0'"/>
@@ -178,7 +179,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                         </push>
                     </stack>
                 </endpoint>
-                <endpoint id="my_child_form" command_id="m1-f0">
+                <endpoint id="my_child_form">
                     <argument id="parent_id"/>
                     <argument id="case_id"/>
                     <stack>
@@ -222,12 +223,51 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             ".remote-request[2]",
         )
 
+    def test_registry_workflows(self):
+        self.module.session_endpoint_id = 'my_case_list'
+
+        with patch("corehq.apps.app_manager.suite_xml.sections.endpoints.module_offers_search") as mock:
+            mock.return_value = True
+            self.module.search_config.data_registry_workflow = REGISTRY_WORKFLOW_SMART_LINK
+            self.assertXmlPartialEqual(
+                """
+                <partial>
+                    <endpoint id="my_case_list" command_id="m0">
+                        <stack>
+                            <push>
+                                <command value="'m0'"/>
+                            </push>
+                        </stack>
+                    </endpoint>
+                </partial>
+                """,
+                self.factory.app.create_suite(),
+                "./endpoint",
+            )
+
+            self.module.search_config.data_registry_workflow = REGISTRY_WORKFLOW_LOAD_CASE
+            self.assertXmlPartialEqual(
+                """
+                <partial>
+                    <endpoint id="my_case_list">
+                        <stack>
+                            <push>
+                                <command value="'m0'"/>
+                            </push>
+                        </stack>
+                    </endpoint>
+                </partial>
+                """,
+                self.factory.app.create_suite(),
+                "./endpoint",
+            )
+
     def test_module_session_endpoint_id(self):
         self.module.session_endpoint_id = 'my_case_list'
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_case_list" command_id="m0">
+                <endpoint id="my_case_list">
                     <stack>
                         <push>
                             <command value="'m0'"/>
@@ -245,7 +285,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_child_module" command_id="m1">
+                <endpoint id="my_child_module">
                     <stack>
                         <push>
                             <command value="'m0'"/>
