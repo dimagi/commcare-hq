@@ -68,3 +68,20 @@ class Command(PopulateSQLCommand):
                 "black_listed_users": doc.get("black_listed_users")
             })
         return model, created
+
+    def _get_all_couch_docs_for_model(self):
+        return [
+            repeater for repeater in get_all_repeater_docs()
+            if repeater['doc_type'] == self.couch_doc_type()
+        ]
+
+    def _get_couch_doc_count_for_type(self):
+        return len(self._get_all_couch_docs_for_model())
+
+    def _get_couch_doc_count_for_domains(self, domains):
+        return get_repeater_count_for_domains(domains)
+
+    def _iter_couch_docs_for_domains(self, domains):
+        for domain in domains:
+            for repeater in get_repeaters_by_domain(domain):
+                yield repeater.to_json()
