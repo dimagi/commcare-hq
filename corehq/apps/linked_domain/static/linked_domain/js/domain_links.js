@@ -353,17 +353,16 @@ hqDefine("linked_domain/js/domain_links", [
         var self = {};
         self.parent = data.parent;
         self.availableDomains = ko.observableArray(data.availableDomains.sort());
-        self.value = ko.observable();
+        self.domainToAdd = ko.observable();
 
         self.addDownstreamDomain = function (viewModel) {
             _private.RMI("create_domain_link", {
-                "downstream_domain": viewModel.value(),
+                "downstream_domain": viewModel.domainToAdd(),
             }).done(function (response) {
                 if (response.success) {
                     self.availableDomains(_.filter(self.availableDomains(), function (item) {
-                        return item !== viewModel.value();
+                        return item !== viewModel.domainToAdd();
                     }));
-                    self.value(null);
                     self.parent.domain_links.unshift(DomainLink(response.domain_link));
                     self.parent.goToPage(1);
                 } else {
@@ -372,6 +371,7 @@ hqDefine("linked_domain/js/domain_links", [
                     )({error: response.message});
                     alertUser.alert_user(errorMessage, 'danger');
                 }
+                self.domainToAdd(null);
             }).fail(function () {
                 alertUser.alert_user(gettext('Unable to link project spaces.\nPlease try again, or report an issue if the problem persists.'), 'danger');
             });
