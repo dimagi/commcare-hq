@@ -6,6 +6,7 @@ from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
+from corehq.util.timezones.conversions import ServerTime
 
 
 class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
@@ -47,7 +48,7 @@ class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport,
             if self._reports_only:
                 yield [
                     event.user,
-                    event.event_date,
+                    ServerTime(event.event_date).user_time(self.timezone).ui_string(),
                     self._get_report_name(event.view_kwargs.get('report_slug')),
                 ]
             else:
