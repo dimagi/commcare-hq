@@ -7,7 +7,7 @@ from django.utils.functional import cached_property
 
 import sqlalchemy
 from memoized import memoized
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.orm.session import sessionmaker
 
@@ -17,7 +17,6 @@ from .util import select_db_for_read
 
 DEFAULT_ENGINE_ID = DEFAULT_DB_ALIAS
 UCR_ENGINE_ID = 'ucr'
-ICDS_UCR_CITUS_ENGINE_ID = 'icds-ucr-citus'
 
 
 def get_db_alias_or_none(enigne_id):

@@ -1,5 +1,4 @@
 import hashlib
-import itertools
 import logging
 
 from django.utils.translation import ugettext as _
@@ -20,7 +19,6 @@ from corehq.apps.userreports.exceptions import (
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
-from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
 
 logger = logging.getLogger(__name__)
@@ -72,28 +70,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return TemporaryTableDef
 
     def _apply_sql_addons(self):
-        if self.config.sql_settings.citus_config.distribution_type:
-            self._distribute_table()
-
-    def _distribute_table(self):
-        config = self.config.sql_settings.citus_config
-        self.session_helper.Session.remove()
-        if not self.session_helper.is_citus_db:
-            # only do this if the database contains the citus extension
-            return
-
-        from custom.icds_core.db import create_citus_reference_table
-        from custom.icds_core.db import create_citus_distributed_table
-        with self.engine.begin() as connection:
-            if config.distribution_type == 'hash':
-                if config.distribution_column not in self.get_table().columns:
-                    raise ColumnNotFoundError("Column '{}' not found.".format(config.distribution_column))
-                create_citus_distributed_table(connection, self.get_table().name, config.distribution_column)
-            elif config.distribution_type == 'reference':
-                create_citus_reference_table(connection, self.get_table().name)
-            else:
-                raise ValueError("unknown distribution type: %r" % config.distribution_type)
-            return True
+        pass
 
     def rebuild_table(self, initiated_by=None, source=None, skip_log=False, diffs=None):
         self.log_table_rebuild(initiated_by, source, skip=skip_log, diffs=diffs)
@@ -180,11 +157,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             {i.column.database_column_name.decode('utf-8'): i.value for i in row}
             for row in rows
         ]
-        if self.session_helper.is_citus_db and use_shard_col:
-            config = self.config.sql_settings.citus_config
-            if config.distribution_type == 'hash':
-                self._by_column_update(formatted_rows)
-                return
         doc_ids = set(row['doc_id'] for row in formatted_rows)
         table = self.get_table()
         if self.supports_upsert() and use_shard_col:
@@ -205,36 +177,11 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             for query in queries:
                 session.execute(query)
 
-    def _by_column_update(self, rows):
-        config = self.config.sql_settings.citus_config
-        shard_col = config.distribution_column
-        table = self.get_table()
-
-        rows = sorted(rows, key=lambda row: row[shard_col])
-        for shard_value, rows_ in itertools.groupby(rows, key=lambda row: row[shard_col]):
-            formatted_rows = list(rows_)
-            doc_ids = set(row['doc_id'] for row in formatted_rows)
-            if self.supports_upsert():
-                queries = [self._upsert_query(table, formatted_rows)]
-            else:
-                delete = table.delete().where(table.c.get(shard_col) == shard_value)
-                delete = delete.where(table.c.doc_id.in_(doc_ids))
-                insert = table.insert().values(formatted_rows)
-                queries = [delete, insert]
-
-            with self.session_context() as session:
-                for query in queries:
-                    session.execute(query)
-
     def supports_upsert(self):
         """Return True if supports UPSERTS else False
 
-        Assumes that neither a distribution column (citus) nor doc_id can change.
+        Assumes that doc_id cannot change.
         """
-        if self.session_helper.is_citus_db:
-            # distribution_column and doc_id
-            return len(self.config.pk_columns) == 2
-
         # doc_id
         return len(self.config.pk_columns) == 1
 
@@ -255,61 +202,11 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.save_rows(rows)
 
     def bulk_delete(self, docs, use_shard_col=True):
-        if self.session_helper.is_citus_db and use_shard_col:
-            config = self.config.sql_settings.citus_config
-            if config.distribution_type == 'hash':
-                self._citus_bulk_delete(docs, config.distribution_column)
-                return
         table = self.get_table()
         doc_ids = [doc['_id'] for doc in docs]
         delete = table.delete(table.c.doc_id.in_(doc_ids))
         with self.session_context() as session:
             session.execute(delete)
-
-    def _citus_bulk_delete(self, docs, column):
-        """
-        When a delete is run on a distrbuted table, it grabs an exclusive write
-        lock on the entire table unless the shard column is also provided.
-
-        This function performs extra work to get the shard column so we are not
-        blocked on deletes.
-        """
-
-        # these doc types were blocking the queue but the approach could be applied
-        # more generally with some more testing
-        SHARDABLE_DOC_TYPES = ('XFormArchived', 'XFormDeprecated', 'XFormDuplicate', 'XFormError')
-        table = self.get_table()
-        doc_ids_to_delete = []
-
-        for doc in docs:
-            if doc.get('doc_type') in SHARDABLE_DOC_TYPES:
-                # get_all_values ignores duplicate and archived forms because
-                # the implicit filtering on all data sources filters doc_types
-                # get_all_values saves no changes to the original doc database
-                # so we change the doc_type locally to get the sharded column
-
-                tmp_doc = doc.copy()
-                tmp_doc['doc_type'] = 'XFormInstance'
-                rows = self.get_all_values(tmp_doc)
-                if rows:
-                    first_row = rows[0]
-                    sharded_column_value = [
-                        i.value for i in first_row
-                        if i.column.database_column_name.decode('utf-8') == column
-                    ]
-                    if sharded_column_value:
-                        delete = table.delete().where(table.c.doc_id == doc['_id'])
-                        delete = delete.where(table.c.get(column) == sharded_column_value[0])
-                        with self.session_context() as session:
-                            session.execute(delete)
-                        continue  # skip adding doc ID into doc_ids_to_delete
-
-            doc_ids_to_delete.append(doc['_id'])
-
-        if doc_ids_to_delete:
-            delete = table.delete().where(table.c.doc_id.in_(doc_ids_to_delete))
-            with self.session_context() as session:
-                session.execute(delete)
 
     def delete(self, doc, use_shard_col=True):
         self.bulk_delete([doc], use_shard_col)
@@ -431,15 +328,6 @@ def get_indicator_table(indicator_config, metadata, override_table_name=None):
     table_name = override_table_name or get_table_name(indicator_config.domain, indicator_config.table_id)
     columns_by_col_id = {col.database_column_name.decode('utf-8') for col in indicator_config.get_columns()}
     extra_indices = []
-
-    citus_config = indicator_config.sql_settings.citus_config
-    if citus_config.distribution_type == 'hash':
-        # Create hash index on doc_id for distributed tables
-        extra_indices.append(Index(
-            _custom_index_name(table_name, ['doc_id']),
-            'doc_id',
-            postgresql_using='hash'
-        ))
 
     for index in indicator_config.sql_column_indexes:
         if set(index.column_ids).issubset(columns_by_col_id):
