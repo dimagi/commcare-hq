@@ -87,13 +87,6 @@ class RemoteRequestFactory(object):
                 ),
             ],
         }
-        if self.module.search_config.data_registry:
-            # Disable claim request for data registry
-            kwargs["relevant"] = "false()"
-        else:
-            relevant = self.get_post_relevant()
-            if relevant:
-                kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def get_post_relevant(self):
@@ -315,7 +308,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
     @time_method()
     def get_module_contributions(self, module, detail_section_elements):
         elements = []
-        if module_offers_search(module):
+        if module_offers_search(module) and not module.search_config.data_registry:
             elements.append(RemoteRequestFactory(
                 module, detail_section_elements).build_remote_request()
             )

@@ -522,6 +522,10 @@ class EntriesHelper(object):
         return datums
 
     def get_data_registry_search_datums(self, module):
+        """When a data registry is the source of the search results we skip the normal case search
+        workflow and perform the search directly as part of the entry instead of via an action in the
+        details screen. The case details is then populated with data from the results of the query.
+        """
         from corehq.apps.app_manager.suite_xml.sections.remote_requests import RemoteRequestFactory
         factory = RemoteRequestFactory(module, [])
         query = factory.build_remote_request_queries()[0]

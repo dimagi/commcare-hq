@@ -98,6 +98,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         # assert remote request is not added
         self.assertXmlDoesNotHaveXpath(suite, "./remote-request")
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_case_short']/action")
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_short']")
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_search_data_registry_additional_registry_query(self, *args):
