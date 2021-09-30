@@ -21,7 +21,7 @@ def add_ucr_permissions(apps, schema_editor):
     user_roles = [role for role in all_user_roles if role and role.name != 'Admin']
     for role in user_roles:
         permissions = role.permissions
-        if permissions.edit_ucrs:
+        if not permissions.edit_ucrs:
             permissions.edit_ucrs = True
             role.set_permissions(permissions.to_list())
 
