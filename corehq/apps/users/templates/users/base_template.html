@@ -2,6 +2,4 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-  <script src="{% static "locations/js/widgets.js" %}"></script>
-{% endblock %}
+{% requirejs_main 'locations/js/widgets' %}

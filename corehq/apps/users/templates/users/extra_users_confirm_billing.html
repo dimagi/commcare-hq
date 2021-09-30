@@ -3,9 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}{{ block.super }}
-  <script src="{% static 'accounting/js/widgets.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'accounting/js/widgets' %}
 
 {% block page_content %}
   <div class="alert alert-info">
