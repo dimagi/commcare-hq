@@ -616,6 +616,12 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
 
+    rule_workflow = AutomaticUpdateRule.WORKFLOW_CASE_UPDATE
+
+    @property
+    def edit_url_name(self):
+        return EditCaseRuleView.urlname
+
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
         return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
@@ -666,7 +672,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
                          .user_time(self.project_timezone)
                          .done()
                          .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
-            'edit_url': reverse(EditCaseRuleView.urlname, args=[self.domain, rule.pk]),
+            'edit_url': reverse(self.edit_url_name, args=[self.domain, rule.pk]),
             'action_error': "",     # must be provided because knockout template looks for it
         }
 
@@ -682,7 +688,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def _rules(self):
         return AutomaticUpdateRule.by_domain(
             self.domain,
-            AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+            self.rule_workflow,
             active_only=False,
         ).order_by('name', 'id')
 
@@ -694,7 +700,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             return None, _("Please provide an id.")
 
         try:
-            rule = AutomaticUpdateRule.objects.get(pk=rule_id, workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
+            rule = AutomaticUpdateRule.objects.get(pk=rule_id, workflow=self.rule_workflow)
         except AutomaticUpdateRule.DoesNotExist:
             return None, _("Rule not found.")
 
@@ -844,6 +850,8 @@ class EditCaseRuleView(AddCaseRuleView):
     urlname = 'edit_case_rule'
     page_title = ugettext_lazy("Edit Case Rule")
 
+    rule_workflow = AutomaticUpdateRule.WORKFLOW_CASE_UPDATE
+
     @property
     @memoized
     def rule_id(self):
@@ -857,8 +865,10 @@ class EditCaseRuleView(AddCaseRuleView):
     @memoized
     def initial_rule(self):
         try:
-            rule = AutomaticUpdateRule.objects.get(pk=self.rule_id,
-                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
+            rule = AutomaticUpdateRule.objects.get(
+                pk=self.rule_id,
+                workflow=self.rule_workflow,
+            )
         except AutomaticUpdateRule.DoesNotExist:
             raise Http404()
 
@@ -866,3 +876,17 @@ class EditCaseRuleView(AddCaseRuleView):
             raise Http404()
 
         return rule
+
+
+class DeduplicationRuleListView(AutomaticUpdateRuleListView):
+    template_name = 'data_interfaces/list_deduplication_rules.html'
+    urlname = 'deduplication_rules'
+    page_title = ugettext_lazy("Deduplicate Cases")
+
+    rule_workflow = AutomaticUpdateRule.WORKFLOW_DEDUPLICATE
+
+    @property
+    def edit_url_name(self):
+        return DeduplicationRuleEditView.urlname
+
+
