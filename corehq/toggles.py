@@ -898,6 +898,13 @@ CASE_API_V0_6 = StaticToggle(
     save_fn=_enable_search_index,
 )
 
+LIVEQUERY_SYNC = DynamicallyPredictablyRandomToggle(
+    'livequery_sync',
+    'Enable livequery sync algorithm',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
     'hipaa_compliance_checkbox',
     'Show HIPAA compliance checkbox',
@@ -1917,6 +1924,15 @@ REFER_CASE_REPEATER = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
 
+DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
+    'data_registry_case_update_repeater',
+    'USH: Allow data registry repeater to be setup to update cases in other domains',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
+)
+
+
 WIDGET_DIALER = StaticToggle(
     'widget_dialer',
     'USH: Enable usage of AWS Connect Dialer',
@@ -2141,4 +2157,13 @@ DO_NOT_REPUBLISH_DOCS = StaticToggle(
     'Prevents automatic attempts to repair stale ES docs in this domain',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+THROTTLE_SYSTEM_FORMS = FeatureRelease(
+    'throttle_system_forms',
+    ('Throttles system forms (from auto update rules, etc.) with soft delays (no hard rejections) '
+     'to make them a better part of the overall submission rate limiting system.'),
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Danny Roberts',
 )

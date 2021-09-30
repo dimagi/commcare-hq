@@ -53,21 +53,9 @@ class FormProcessorTestUtils(object):
         cls._delete_all_sql_sharded_models(CommCareCaseSQL, domain)
 
     @staticmethod
+    @unit_testing_only
     def delete_all_ledgers(domain=None):
-        FormProcessorTestUtils.delete_all_v2_ledgers(domain)
-        FormProcessorTestUtils.delete_all_v1_ledgers(domain)
-
-    @staticmethod
-    @unit_testing_only
-    def delete_all_v1_ledgers(domain=None):
-        logger.debug("Deleting all V1 ledgers for domain %s", domain)
-        from casexml.apps.stock.models import StockReport
-        StockReport.objects.filter(domain=domain).delete()
-
-    @staticmethod
-    @unit_testing_only
-    def delete_all_v2_ledgers(domain=None):
-        logger.debug("Deleting all V2 ledgers for domain %s", domain)
+        logger.debug("Deleting all ledgers for domain %s", domain)
 
         def _delete_ledgers_for_case(case_id):
             transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)

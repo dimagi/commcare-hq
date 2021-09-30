@@ -15,7 +15,7 @@ from corehq.util.decorators import serial_task
 logger = get_task_logger(__name__)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
+@task(queue='background_queue', ignore_result=True)
 def create_usercases(domain_name):
     from corehq.apps.callcenter.sync_usercase import sync_usercase
     for user in CommCareUser.by_domain(domain_name):
@@ -48,7 +48,7 @@ def autogenerate_build_task(app_id, domain, version, comment):
     make_async_build_v2(app_id, domain, version, allow_prune=True, comment=comment)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
+@task(queue='background_queue', ignore_result=True)
 def create_build_files_for_all_app_profiles(domain, build_id):
     app = get_app(domain, build_id)
     build_profiles = app.build_profiles
@@ -61,7 +61,7 @@ def create_build_files_for_all_app_profiles(domain, build_id):
         app.save()
 
 
-@task(serializer='pickle', queue='background_queue')
+@task(queue='background_queue')
 def prune_auto_generated_builds(domain, app_id):
     last_build_id = get_latest_build_id(domain, app_id)
     saved_builds = get_auto_generated_built_apps(domain, app_id)
@@ -77,7 +77,7 @@ def prune_auto_generated_builds(domain, app_id):
         app.save(increment_version=False)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
+@task(queue='background_queue', ignore_result=True)
 def update_linked_app_and_notify_task(domain, app_id, master_app_id, user_id, email):
     from corehq.apps.app_manager.views.utils import update_linked_app_and_notify
     update_linked_app_and_notify(domain, app_id, master_app_id, user_id, email)
