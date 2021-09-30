@@ -376,6 +376,10 @@ def prefix_usercase_properties(properties):
     return {'{}{}'.format(USERCASE_PREFIX, prop) for prop in properties}
 
 
+def module_offers_registry_search(module):
+    return module_offers_search(module) and module.search_config.data_registry
+
+
 def module_offers_search(module):
     from corehq.apps.app_manager.models import AdvancedModule, Module, ShadowModule
 
