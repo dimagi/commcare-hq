@@ -232,7 +232,7 @@ class TestReleaseReport(BaseReleaseManagerTest):
 
         with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
             mock_domain_has_privilege.return_value = False
-            errors = manager._release_report(self.domain_link, model)
+            errors = manager._release_report(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 
         downstream_report = get_downstream_report(self.linked_domain, new_report.get_id)
@@ -256,7 +256,7 @@ class TestReleaseReport(BaseReleaseManagerTest):
 
         with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
             mock_domain_has_privilege.return_value = True
-            errors = manager._release_report(self.domain_link, model)
+            errors = manager._release_report(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 
         downstream_report = get_downstream_report(self.linked_domain, new_report.get_id)
@@ -274,7 +274,7 @@ class TestReleaseReport(BaseReleaseManagerTest):
 
         with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
             mock_domain_has_privilege.return_value = False
-            errors = manager._release_report(self.domain_link, model)
+            errors = manager._release_report(self.domain_link, model, 'test-user')
         self.assertTrue('Could not find report. Please check that the report has been linked.' in errors)
 
     def test_report_pushed_if_not_found_with_privilege_enabled(self):
@@ -288,7 +288,7 @@ class TestReleaseReport(BaseReleaseManagerTest):
 
         with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
             mock_domain_has_privilege.return_value = True
-            errors = manager._release_report(self.domain_link, model)
+            errors = manager._release_report(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 
         downstream_report = get_downstream_report(self.linked_domain, unpushed_report.get_id)
