@@ -12,15 +12,11 @@
 
 ## Safety Assurance
 
-- [ ] Risk label is set correctly
-- [ ] All migrations are backwards compatible and won't block deploy
-- [ ] The set of people pinged as reviewers is appropriate for the level of risk of the change
-- [ ] If QA is part of the safety story, the "Awaiting QA" label is used
-- [ ] I have confidence that this PR will not introduce a regression for the reasons below
-
-## Migrations
-
-- [ ] The migrations in this code can be safely applied first independently of the code
+### Safety story
+<!--
+Describe any other pieces to the safety story including
+local testing, why the change is inherently safe, and/or plans to limit the blast radius of a defect.
+-->
 
 ### Automated test coverage
 
@@ -33,11 +29,12 @@
 - Link to QA Ticket
 -->
 
-### Safety story
-<!--
-Describe any other pieces to the safety story including
-local testing, why the change is inherently safe, and/or plans to limit the blast radius of a defect.
--->
+
+### Migrations
+
+- [ ] The migrations in this code can be safely applied first independently of the code
+
+<!-- Please link to any past code changes that are coordinated with this migration -->
 
 ### Rollback instructions
 
@@ -46,4 +43,11 @@ If this PR follows standards of revertability, check the box below.
 Otherwise replace it with detailed instructions or reasons a rollback is impossible.
 -->
 
-- [ ] This PR can be reverted after deploy with no further considerations 
+- [ ] This PR can be reverted after deploy with no further considerations
+
+### Labels & Review
+- [ ] Risk label is set correctly
+- [ ] The set of people pinged as reviewers is appropriate for the level of risk of the change
+
+## Final self-reflection
+- [ ] My safety story above is convincing and give me confidence that this PR will not introduce a regression
