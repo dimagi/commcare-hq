@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-09-29 19:31+0000\n"
-"PO-Revision-Date: 2021-09-22 19:36+0000\n"
+"POT-Creation-Date: 2021-09-30 23:35+0000\n"
+"PO-Revision-Date: 2021-09-29 19:32+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
 "sw/)\n"
@@ -34,7 +34,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html:13
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html:31
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html:38
-#: corehq/apps/export/templates/export/partials/table.html:37
+#: corehq/apps/export/templates/export/partials/table.html:17
 #: corehq/apps/linked_domain/filters.py:25
 #: corehq/apps/reports/filters/commtrack.py:18
 #: corehq/apps/reports/filters/users.py:497 corehq/apps/sms/filters.py:73
@@ -444,7 +444,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/commtrack_action_table.html:6
 #: corehq/apps/enterprise/enterprise.py:142
 #: corehq/apps/enterprise/enterprise.py:191
-#: corehq/apps/export/templates/export/partials/table.html:11
+#: corehq/apps/export/templates/export/partials/table.html:28
 #: corehq/apps/export/views/incremental.py:50
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html:41
 #: corehq/apps/locations/forms.py:109
@@ -983,13 +983,14 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html:85
 #: corehq/apps/domain/templates/domain/stripe_cards.html:63
 #: corehq/apps/export/templates/export/customize_export_new.html:317
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:87
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html:43
 #: corehq/apps/export/templates/export/incremental_export.html:103
 #: corehq/apps/export/templates/export/incremental_export.html:137
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html:104
 #: corehq/apps/export/templates/export/partials/feed_filter_modal.html:37
-#: corehq/apps/export/templates/export/partials/table.html:433
-#: corehq/apps/export/templates/export/partials/table.html:477
+#: corehq/apps/export/templates/export/partials/table.html:442
+#: corehq/apps/export/templates/export/partials/table.html:486
 #: corehq/apps/groups/templates/groups/group_members.html:254
 #: corehq/apps/groups/templates/groups/group_members.html:330
 #: corehq/apps/groups/templates/groups/group_members.html:374
@@ -2935,10 +2936,10 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html:23
 #: corehq/apps/export/templates/export/incremental_export.html:49
-#: corehq/apps/export/templates/export/partials/table.html:57
-#: corehq/apps/export/templates/export/partials/table.html:574
-#: corehq/apps/export/templates/export/partials/table.html:598
-#: corehq/apps/export/templates/export/partials/table.html:646
+#: corehq/apps/export/templates/export/partials/table.html:56
+#: corehq/apps/export/templates/export/partials/table.html:572
+#: corehq/apps/export/templates/export/partials/table.html:596
+#: corehq/apps/export/templates/export/partials/table.html:644
 #: corehq/apps/export/views/incremental.py:53
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html:76
 #: corehq/apps/locations/templates/locations/manage/location_template.html:29
@@ -3274,8 +3275,8 @@ msgstr ""
 msgid "No matching '{field_name}' field for ordering"
 msgstr ""
 
-#: corehq/apps/api/resources/v0_5.py:1069
-#: corehq/apps/api/resources/v0_5.py:1107
+#: corehq/apps/api/resources/v0_5.py:1070
+#: corehq/apps/api/resources/v0_5.py:1108
 msgid "You do not have permission to view this feed."
 msgstr ""
 
@@ -3450,7 +3451,7 @@ msgstr ""
 msgid "Please log in to the app to check for an update."
 msgstr ""
 
-#: corehq/apps/app_manager/fields.py:83 corehq/apps/export/views/list.py:965
+#: corehq/apps/app_manager/fields.py:83 corehq/apps/export/views/list.py:967
 #: corehq/apps/hqwebapp/doc_info.py:201 corehq/apps/sms/models.py:1024
 #: corehq/apps/sms/models.py:1540 corehq/apps/sms/views.py:673
 msgid "Case"
@@ -3463,7 +3464,7 @@ msgstr ""
 #: corehq/apps/commtrack/templates/commtrack/manage/rebuild_stock_state.html:57
 #: corehq/apps/data_interfaces/interfaces.py:220
 #: corehq/apps/export/templates/export/customize_export_new.html:48
-#: corehq/apps/export/views/list.py:967 corehq/apps/hqwebapp/doc_info.py:186
+#: corehq/apps/export/views/list.py:969 corehq/apps/hqwebapp/doc_info.py:186
 #: corehq/apps/reports/filters/forms.py:587
 #: corehq/apps/reports/standard/inspect.py:187
 #: corehq/apps/reports/templates/reports/reportdata/case_data.html:152
@@ -3553,7 +3554,7 @@ msgstr ""
 #: corehq/apps/app_manager/fields.py:379 corehq/apps/app_manager/fields.py:388
 #: corehq/apps/app_manager/views/app_summary.py:226
 #: corehq/apps/export/models/new.py:1328 corehq/apps/export/models/new.py:1344
-#: corehq/apps/export/templates/export/partials/table.html:695
+#: corehq/apps/export/templates/export/partials/table.html:693
 #: corehq/apps/linked_domain/views.py:546
 #: corehq/apps/reports/standard/deployments.py:317
 #: corehq/apps/reports/standard/deployments.py:361
@@ -4331,7 +4332,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:77
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html:25
-#: corehq/apps/export/templates/export/partials/table.html:552
+#: corehq/apps/export/templates/export/partials/table.html:550
 #: corehq/apps/hqadmin/forms.py:168 corehq/apps/hqadmin/forms.py:216
 msgid "Disable"
 msgstr ""
@@ -4356,7 +4357,7 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py:81
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html:118
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html:23
-#: corehq/apps/export/templates/export/partials/table.html:549
+#: corehq/apps/export/templates/export/partials/table.html:547
 #: corehq/apps/hqadmin/forms.py:216
 msgid "Enable"
 msgstr ""
@@ -4672,7 +4673,7 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html:97
 #: corehq/apps/domain/views/accounting.py:569
 #: corehq/apps/enterprise/views.py:296
-#: corehq/apps/export/templates/export/partials/table.html:43
+#: corehq/apps/export/templates/export/partials/table.html:23
 #: corehq/apps/reports/standard/monitoring.py:1391
 #: corehq/apps/sms/models.py:986 custom/m4change/constants.py:61
 #: custom/m4change/templates/m4change/selectTemplate.html:33
@@ -5922,7 +5923,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html:223
 #: corehq/apps/domain/templates/domain/billing_statements.html:94
 #: corehq/apps/export/templates/export/partials/export_download_progress.html:30
-#: corehq/apps/export/templates/export/partials/table.html:308
+#: corehq/apps/export/templates/export/partials/table.html:317
 #: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html:81
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:325
 #: corehq/apps/sso/forms.py:212 corehq/apps/sso/forms.py:487
@@ -5971,10 +5972,10 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html:11
 #: corehq/apps/export/templates/export/partials/feed_filter_modal.html:11
 #: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html:8
-#: corehq/apps/export/templates/export/partials/table.html:168
-#: corehq/apps/export/templates/export/partials/table.html:215
-#: corehq/apps/export/templates/export/partials/table.html:393
-#: corehq/apps/export/templates/export/partials/table.html:454
+#: corehq/apps/export/templates/export/partials/table.html:177
+#: corehq/apps/export/templates/export/partials/table.html:224
+#: corehq/apps/export/templates/export/partials/table.html:402
+#: corehq/apps/export/templates/export/partials/table.html:463
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html:25
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html:35
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_30_day_trial.html:7
@@ -6650,8 +6651,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/stripe_cards.html:68
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html:41
 #: corehq/apps/export/templates/export/incremental_export.html:82
-#: corehq/apps/export/templates/export/partials/table.html:65
-#: corehq/apps/export/templates/export/partials/table.html:672
+#: corehq/apps/export/templates/export/partials/table.html:64
+#: corehq/apps/export/templates/export/partials/table.html:670
 #: corehq/apps/export/views/incremental.py:54
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html:84
 #: corehq/apps/groups/templates/groups/group_members.html:257
@@ -6743,7 +6744,7 @@ msgstr ""
 #: corehq/apps/export/models/new.py:1322
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html:25
 #: corehq/apps/sms/templates/sms/phone_number_filter.html:30
-#: corehq/apps/userreports/models.py:795
+#: corehq/apps/userreports/models.py:789
 msgid "Cases"
 msgstr ""
 
@@ -6935,7 +6936,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/interfaces.py:73
 #: corehq/apps/data_interfaces/views.py:651
 #: corehq/apps/export/templates/export/customize_export_new.html:46
-#: corehq/apps/export/templates/export/partials/table.html:16
+#: corehq/apps/export/templates/export/partials/table.html:33
 #: corehq/apps/reports/filters/select.py:71
 #: corehq/apps/reports/standard/cases/basic.py:217
 #: corehq/apps/reports/v2/filters/case_report.py:45
@@ -8969,6 +8970,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html:17
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html:56
 #: corehq/apps/data_dictionary/models.py:16
+#: corehq/apps/export/templates/export/partials/table.html:12
 #: corehq/apps/reports/templates/reports/partials/saved_exports.html:12
 #: corehq/motech/repeaters/views/repeat_records.py:209
 msgid "Select"
@@ -9000,7 +9002,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_single_type.html:19
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:44
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html:72
-#: corehq/apps/domain/views/internal.py:456
+#: corehq/apps/domain/views/internal.py:457
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html:9
 msgid "Preview"
 msgstr ""
@@ -13410,7 +13412,7 @@ msgstr ""
 msgid "New owner's CommCare username"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:228 corehq/apps/domain/views/internal.py:307
+#: corehq/apps/domain/forms.py:228 corehq/apps/domain/views/internal.py:308
 msgid "Transfer Project"
 msgstr ""
 
@@ -13700,7 +13702,7 @@ msgstr ""
 msgid "Support Hand-off information"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:997 corehq/apps/domain/views/internal.py:277
+#: corehq/apps/domain/forms.py:997 corehq/apps/domain/views/internal.py:278
 msgid "Project Limits"
 msgstr ""
 
@@ -14251,7 +14253,7 @@ msgid "SMS Pricing"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:15
-#: corehq/apps/userreports/views.py:358
+#: corehq/apps/userreports/views.py:357
 msgid "Pricing"
 msgstr ""
 
@@ -14614,7 +14616,7 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/confirm_subscription_renewal.html:13
+#: corehq/apps/domain/templates/domain/confirm_subscription_renewal.html:12
 #, python-format
 msgid ""
 "\n"
@@ -14622,11 +14624,11 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/confirm_subscription_renewal.html:17
+#: corehq/apps/domain/templates/domain/confirm_subscription_renewal.html:16
 msgid "— which matches your current feature usage."
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/confirm_subscription_renewal.html:20
+#: corehq/apps/domain/templates/domain/confirm_subscription_renewal.html:19
 #, python-format
 msgid ""
 "\n"
@@ -14634,7 +14636,7 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/confirm_subscription_renewal.html:26
+#: corehq/apps/domain/templates/domain/confirm_subscription_renewal.html:25
 #, python-format
 msgid ""
 "\n"
@@ -16394,17 +16396,17 @@ msgstr ""
 msgid "Feature Flags and Privileges"
 msgstr ""
 
-#: corehq/apps/domain/views/internal.py:331
+#: corehq/apps/domain/views/internal.py:332
 #, python-brace-format
 msgid "Resent transfer request for project '{domain}'"
 msgstr ""
 
-#: corehq/apps/domain/views/internal.py:402
+#: corehq/apps/domain/views/internal.py:403
 #, python-brace-format
 msgid "Successfully transferred ownership of project '{domain}'"
 msgstr ""
 
-#: corehq/apps/domain/views/internal.py:434
+#: corehq/apps/domain/views/internal.py:435
 #, python-brace-format
 msgid "Declined ownership of project '{domain}'"
 msgstr ""
@@ -17127,7 +17129,7 @@ msgstr ""
 
 #: corehq/apps/export/models/new.py:1305
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html:24
-#: corehq/apps/userreports/models.py:794
+#: corehq/apps/userreports/models.py:788
 msgid "Forms"
 msgstr ""
 
@@ -17420,7 +17422,7 @@ msgid "Generate a Data Export Tool config file?"
 msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export_new.html:172
-#: corehq/apps/export/templates/export/partials/table.html:522
+#: corehq/apps/export/templates/export/partials/table.html:531
 msgid "Download a Data Export Tool configuration file for this export"
 msgstr ""
 
@@ -17539,6 +17541,68 @@ msgstr ""
 msgid ""
 "There are errors with your configuration. Please fix them before creating "
 "the export."
+msgstr ""
+
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:11
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:68
+msgid ""
+"\n"
+"                Delete <!-- ko text: bulkExportDownloadCount() --><!-- /ko --"
+"> Feeds\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:16
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:73
+msgid "Delete 1 Feed"
+msgstr ""
+
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:21
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:78
+msgid ""
+"\n"
+"                Delete <!-- ko text: bulkExportDownloadCount() --><!-- /ko --"
+"> Exports\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:26
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:83
+msgid "Delete 1 Export"
+msgstr ""
+
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:35
+msgid ""
+"\n"
+"                Are you sure you want to permanently delete these "
+"<strong><!-- ko text: bulkExportDownloadCount() --><!-- /ko --> feeds</"
+"strong>?\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:40
+msgid ""
+"\n"
+"                Are you sure you want to permanently delete this <strong>1 "
+"feed</strong>?\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:47
+msgid ""
+"\n"
+"                Are you sure you want to permanently delete these "
+"<strong><!-- ko text: bulkExportDownloadCount() --><!-- /ko --> exports</"
+"strong>?\n"
+"              "
+msgstr ""
+
+#: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html:52
+msgid ""
+"\n"
+"                Are you sure you want to permanently delete this <strong>1 "
+"export</strong>?\n"
+"              "
 msgstr ""
 
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html:10
@@ -17725,17 +17789,25 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_bulk_notice.html:14
-#: corehq/apps/reports/templates/reports/partials/saved_exports.html:41
-msgid "Bulk Export"
+#: corehq/apps/export/templates/export/partials/delete_bulk_notice.html:13
+msgid "Delete Selected Feeds"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_bulk_notice.html:20
-msgid ""
-"\n"
-"            All of the selected exports will be collected for download\n"
-"            to a single Excel file, with each export as a separate sheet.\n"
-"          "
+#: corehq/apps/export/templates/export/partials/delete_bulk_notice.html:16
+msgid "Delete Selected Feed"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/delete_bulk_notice.html:21
+msgid "Delete Selected Exports"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/delete_bulk_notice.html:24
+msgid "Delete Selected Export"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/export_bulk_notice.html:13
+#: corehq/apps/reports/templates/reports/partials/saved_exports.html:41
+msgid "Bulk Export"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/export_download_prepare.html:19
@@ -17952,7 +18024,23 @@ msgstr ""
 msgid "Loading exports..."
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/loading_exports.html:19
+#: corehq/apps/export/templates/export/partials/loading_exports.html:21
+msgid "Deleting feeds..."
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/loading_exports.html:24
+msgid "Deleting feed..."
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/loading_exports.html:29
+msgid "Deleting exports..."
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/loading_exports.html:32
+msgid "Deleting export..."
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/loading_exports.html:39
 #, python-format
 msgid ""
 "\n"
@@ -17960,7 +18048,7 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/loading_exports.html:23
+#: corehq/apps/export/templates/export/partials/loading_exports.html:43
 #, python-format
 msgid ""
 "\n"
@@ -18109,87 +18197,82 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:23
-msgid "Filters and Files"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/table.html:32
-#, python-format
-msgid "Bulk %(export_type_caps)s"
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/table.html:39
+#: corehq/apps/export/templates/export/partials/table.html:19
 #: corehq/apps/users/templates/users/accept_invite.html:67
 msgid "or"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:49
+#: corehq/apps/export/templates/export/partials/table.html:40
+msgid "Filters and Files"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/table.html:48
 msgid "Enable/Disable"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:55
-#: corehq/apps/export/templates/export/partials/table.html:577
-#: corehq/apps/export/templates/export/partials/table.html:601
-#: corehq/apps/export/templates/export/partials/table.html:649
+#: corehq/apps/export/templates/export/partials/table.html:54
+#: corehq/apps/export/templates/export/partials/table.html:575
+#: corehq/apps/export/templates/export/partials/table.html:599
+#: corehq/apps/export/templates/export/partials/table.html:647
 #: corehq/apps/reports/templates/reports/filters/explorer_columns.html:18
 msgid "Edit Columns"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:59
+#: corehq/apps/export/templates/export/partials/table.html:58
 msgid ""
 "\n"
 "            Copy &amp; Edit Feed\n"
 "          "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:73
+#: corehq/apps/export/templates/export/partials/table.html:72
 msgid "Share"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:76
+#: corehq/apps/export/templates/export/partials/table.html:75
 msgid "Shared By"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:88
+#: corehq/apps/export/templates/export/partials/table.html:97
 msgid "Enter name here"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:93
+#: corehq/apps/export/templates/export/partials/table.html:102
 msgid "De-Identified"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:102
+#: corehq/apps/export/templates/export/partials/table.html:111
 msgid "Form:"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:108
+#: corehq/apps/export/templates/export/partials/table.html:117
 msgid "Enter description here"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:114
+#: corehq/apps/export/templates/export/partials/table.html:123
 msgid ""
 "\n"
 "              This export is filtered to data you don't have access to.\n"
 "            "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:130
+#: corehq/apps/export/templates/export/partials/table.html:139
 msgid "Copy OData Feed Link"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:151
+#: corehq/apps/export/templates/export/partials/table.html:160
 msgid "Show additional feeds for Repeat Group data."
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:154
+#: corehq/apps/export/templates/export/partials/table.html:163
 msgid "Show additional feeds for linking Parent and Child Cases."
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:172
+#: corehq/apps/export/templates/export/partials/table.html:181
 msgid "Additional Feeds"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:178
+#: corehq/apps/export/templates/export/partials/table.html:187
 msgid ""
 "\n"
 "                        Click to copy feeds for <strong>Repeat Group</"
@@ -18197,7 +18280,7 @@ msgid ""
 "                      "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:183
+#: corehq/apps/export/templates/export/partials/table.html:192
 msgid ""
 "\n"
 "                        Click to copy feeds for linking <strong>Parent</"
@@ -18206,7 +18289,7 @@ msgid ""
 "                      "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:227
+#: corehq/apps/export/templates/export/partials/table.html:236
 #, python-format
 msgid ""
 "\n"
@@ -18216,40 +18299,40 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:238
+#: corehq/apps/export/templates/export/partials/table.html:247
 msgid "Size:"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:242
+#: corehq/apps/export/templates/export/partials/table.html:251
 msgid "Last Updated:"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:248
+#: corehq/apps/export/templates/export/partials/table.html:257
 msgid "Just now"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:251
+#: corehq/apps/export/templates/export/partials/table.html:260
 msgid "Last Downloaded:"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:257
+#: corehq/apps/export/templates/export/partials/table.html:266
 msgid "Last Build Duration:"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:273
-#: corehq/apps/export/templates/export/partials/table.html:438
+#: corehq/apps/export/templates/export/partials/table.html:282
+#: corehq/apps/export/templates/export/partials/table.html:447
 msgid "Update Data"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:280
+#: corehq/apps/export/templates/export/partials/table.html:289
 msgid "Updating Data, please wait..."
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:319
+#: corehq/apps/export/templates/export/partials/table.html:328
 msgid "Copy Dashboard Feed Link"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:336
+#: corehq/apps/export/templates/export/partials/table.html:345
 #, python-format
 msgid ""
 "\n"
@@ -18261,15 +18344,15 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:347
+#: corehq/apps/export/templates/export/partials/table.html:356
 msgid "Data update complete"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:355
+#: corehq/apps/export/templates/export/partials/table.html:364
 msgid "Data update failed!"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:357
+#: corehq/apps/export/templates/export/partials/table.html:366
 msgid ""
 "\n"
 "                If this problem persists, please <a href=\"#modalReportIssue"
@@ -18277,14 +18360,14 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:373
+#: corehq/apps/export/templates/export/partials/table.html:382
 msgid ""
 "\n"
 "                  No data is available yet.\n"
 "                "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:378
+#: corehq/apps/export/templates/export/partials/table.html:387
 msgid ""
 "\n"
 "                Please click 'update data' if the automatic scheduler hasn't "
@@ -18292,11 +18375,11 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:397
+#: corehq/apps/export/templates/export/partials/table.html:406
 msgid "Confirm data updates"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:402
+#: corehq/apps/export/templates/export/partials/table.html:411
 msgid ""
 "\n"
 "                      To renew daily updates, click the Update Data button "
@@ -18305,7 +18388,7 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:411
+#: corehq/apps/export/templates/export/partials/table.html:420
 msgid ""
 "\n"
 "                          Once the data is updated, a data refresh should\n"
@@ -18313,7 +18396,7 @@ msgid ""
 "                        "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:418
+#: corehq/apps/export/templates/export/partials/table.html:427
 msgid ""
 "\n"
 "                        To download data now, please click the Export button "
@@ -18321,11 +18404,11 @@ msgid ""
 "                      "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:458
+#: corehq/apps/export/templates/export/partials/table.html:467
 msgid "Confirm data updates."
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:463
+#: corehq/apps/export/templates/export/partials/table.html:472
 msgid ""
 "\n"
 "                        This will enable the daily automatic updates of this "
@@ -18333,7 +18416,7 @@ msgid ""
 "                      "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:468
+#: corehq/apps/export/templates/export/partials/table.html:477
 msgid ""
 "\n"
 "                        This will disable the daily automatic updates of "
@@ -18341,31 +18424,31 @@ msgid ""
 "                      "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:483
+#: corehq/apps/export/templates/export/partials/table.html:492
 msgid "Disable auto update"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:486
+#: corehq/apps/export/templates/export/partials/table.html:495
 msgid "Enable auto update"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:519
+#: corehq/apps/export/templates/export/partials/table.html:528
 msgid "Edit Filters"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:525
+#: corehq/apps/export/templates/export/partials/table.html:534
 msgid "DET Config"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:583
-#: corehq/apps/export/templates/export/partials/table.html:607
+#: corehq/apps/export/templates/export/partials/table.html:581
+#: corehq/apps/export/templates/export/partials/table.html:605
 msgid ""
 "\n"
 "                      Copy &amp; Edit Feed\n"
 "                    "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:618
+#: corehq/apps/export/templates/export/partials/table.html:616
 #: corehq/apps/locations/templates/locations/manage/location_template.html:26
 #: corehq/apps/reports/standard/monitoring.py:1125
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:265
@@ -18375,30 +18458,30 @@ msgstr ""
 msgid "View"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:621
+#: corehq/apps/export/templates/export/partials/table.html:619
 msgid "View Columns"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:627
+#: corehq/apps/export/templates/export/partials/table.html:625
 msgid "View Feed"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:655
+#: corehq/apps/export/templates/export/partials/table.html:653
 msgid ""
 "\n"
 "                    Copy &amp; Edit Feed\n"
 "                  "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:683
+#: corehq/apps/export/templates/export/partials/table.html:681
 msgid "Private"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:686
+#: corehq/apps/export/templates/export/partials/table.html:684
 msgid "Export Only"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/table.html:689
+#: corehq/apps/export/templates/export/partials/table.html:687
 msgid "Edit & Export"
 msgstr ""
 
@@ -18581,19 +18664,19 @@ msgid ""
 "{doc_count} cases have been resent for export '{incremental_export.name}'"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:343
+#: corehq/apps/export/views/list.py:345
 msgid "Select a model to export"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:389
+#: corehq/apps/export/views/list.py:391
 msgid "Select a Form to Export"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:427
+#: corehq/apps/export/views/list.py:429
 msgid "Select a Case Type to Export"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:488
+#: corehq/apps/export/views/list.py:490
 msgid ""
 "\n"
 "        Exports are a way to download data in a variety of formats (CSV, "
@@ -18602,64 +18685,64 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/export/views/list.py:511
+#: corehq/apps/export/views/list.py:513
 #: corehq/apps/reports/templates/reports/partials/saved_exports.html:7
 #: corehq/apps/reports/templates/reports/partials/saved_exports.html:29
 msgid "Export"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:512
+#: corehq/apps/export/views/list.py:514
 msgid "export"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:513
+#: corehq/apps/export/views/list.py:515
 msgid "Exports"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:514
+#: corehq/apps/export/views/list.py:516
 msgid "exports"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:515
+#: corehq/apps/export/views/list.py:517
 msgid "My Exports"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:516
+#: corehq/apps/export/views/list.py:518
 msgid "Exports Shared with Me"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:606
+#: corehq/apps/export/views/list.py:608
 msgid ""
 "This file has more than 256 columns, which is not supported by xls. Please "
 "change the output type to csv or xlsx in the export configuration page to "
 "export this file."
 msgstr ""
 
-#: corehq/apps/export/views/list.py:616
+#: corehq/apps/export/views/list.py:618
 msgid "Daily Saved Exports"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:688
+#: corehq/apps/export/views/list.py:690
 msgid "Problem saving dashboard feed filters: Invalid form"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:695
+#: corehq/apps/export/views/list.py:697
 msgid "Export Form Data"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:701
+#: corehq/apps/export/views/list.py:703
 msgid "Export Case Data"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:706
+#: corehq/apps/export/views/list.py:708
 msgid "Export De-Identified Cases"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:713
+#: corehq/apps/export/views/list.py:715
 msgid "Excel Dashboard Integration"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:715
+#: corehq/apps/export/views/list.py:717
 msgid ""
 "\n"
 "        Excel dashboard feeds allow Excel to directly connect to CommCareHQ "
@@ -18668,67 +18751,67 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/export/views/list.py:725
+#: corehq/apps/export/views/list.py:727
 msgid "Dashboard Feed"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:726
+#: corehq/apps/export/views/list.py:728
 msgid "dashboard feed"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:727
+#: corehq/apps/export/views/list.py:729
 msgid "Dashboard Feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:728
+#: corehq/apps/export/views/list.py:730
 msgid "dashboard feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:729
+#: corehq/apps/export/views/list.py:731
 msgid "My Dashboard Feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:730
+#: corehq/apps/export/views/list.py:732
 msgid "Dashboard Feeds Shared with Me"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:736
+#: corehq/apps/export/views/list.py:738
 msgid "Export De-Identified Form Data"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:743
+#: corehq/apps/export/views/list.py:745
 msgid "Export De-Identified Daily Saved Exports"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:749
+#: corehq/apps/export/views/list.py:751
 msgid "Export De-Identified Dashboard Feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:775
+#: corehq/apps/export/views/list.py:777
 msgid "Export not found"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:870
+#: corehq/apps/export/views/list.py:872
 msgid "The form did not validate."
 msgstr ""
 
-#: corehq/apps/export/views/list.py:959
+#: corehq/apps/export/views/list.py:961
 msgid "Feed Type"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:962
+#: corehq/apps/export/views/list.py:964
 msgid "Select field type"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:980
+#: corehq/apps/export/views/list.py:982
 msgid "Select Feed Type"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1013
+#: corehq/apps/export/views/list.py:1015
 msgid "PowerBi/Tableau Integration"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1017
+#: corehq/apps/export/views/list.py:1019
 #, python-brace-format
 msgid ""
 "\n"
@@ -18747,27 +18830,27 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1034
+#: corehq/apps/export/views/list.py:1036
 msgid "OData Feed"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1035
+#: corehq/apps/export/views/list.py:1037
 msgid "OData feed"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1036
+#: corehq/apps/export/views/list.py:1038
 msgid "OData Feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1037
+#: corehq/apps/export/views/list.py:1039
 msgid "OData feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1038
+#: corehq/apps/export/views/list.py:1040
 msgid "My OData Feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1039
+#: corehq/apps/export/views/list.py:1041
 msgid "OData Feeds Shared with Me"
 msgstr ""
 
@@ -18810,35 +18893,43 @@ msgstr ""
 msgid "Export <strong>{}</strong> saved."
 msgstr ""
 
-#: corehq/apps/export/views/new.py:246
+#: corehq/apps/export/views/new.py:248
 msgid "Create Form Data Export"
 msgstr ""
 
-#: corehq/apps/export/views/new.py:272
+#: corehq/apps/export/views/new.py:274
 msgid "Create Case Data Export"
 msgstr ""
 
-#: corehq/apps/export/views/new.py:297 corehq/apps/export/views/new.py:303
+#: corehq/apps/export/views/new.py:299 corehq/apps/export/views/new.py:305
 msgid "Create Dashboard Feed"
 msgstr ""
 
-#: corehq/apps/export/views/new.py:319
+#: corehq/apps/export/views/new.py:321
 msgid "Create OData Case Feed"
 msgstr ""
 
-#: corehq/apps/export/views/new.py:333
+#: corehq/apps/export/views/new.py:335
 msgid "Create OData Form Feed"
 msgstr ""
 
-#: corehq/apps/export/views/new.py:371
+#: corehq/apps/export/views/new.py:383
+msgid "<strong>{}</strong> {}{} were deleted."
+msgstr ""
+
+#: corehq/apps/export/views/new.py:385
+msgid "<strong>{}</strong> {}{} was deleted."
+msgstr ""
+
+#: corehq/apps/export/views/new.py:397
 msgid "Export <strong>{}</strong> was deleted."
 msgstr ""
 
-#: corehq/apps/export/views/new.py:414
+#: corehq/apps/export/views/new.py:440
 msgid "You can only copy new exports."
 msgstr ""
 
-#: corehq/apps/export/views/new.py:423
+#: corehq/apps/export/views/new.py:449
 msgid "Export <strong>{}</strong> created."
 msgstr ""
 
@@ -32096,7 +32187,7 @@ msgid ""
 "{max} distinct values."
 msgstr ""
 
-#: corehq/apps/userreports/const.py:11
+#: corehq/apps/userreports/const.py:14
 msgid ""
 "Sorry! There was a problem viewing your report. This likely occurred because "
 "the application associated with the report was deleted. In order to view "
@@ -32104,7 +32195,7 @@ msgid ""
 "then build it again. Click below to delete it."
 msgstr ""
 
-#: corehq/apps/userreports/const.py:17
+#: corehq/apps/userreports/const.py:20
 msgid ""
 "Report builder data source doesn't reference an application. It is likely "
 "this report has been customized and it is no longer editable. "
@@ -32175,32 +32266,32 @@ msgstr ""
 msgid "Drop"
 msgstr ""
 
-#: corehq/apps/userreports/models.py:539 corehq/apps/userreports/models.py:651
+#: corehq/apps/userreports/models.py:533 corehq/apps/userreports/models.py:645
 msgid "Report contains invalid referenced_doc_type: {}"
 msgstr ""
 
-#: corehq/apps/userreports/models.py:896 corehq/apps/userreports/models.py:1286
+#: corehq/apps/userreports/models.py:890 corehq/apps/userreports/models.py:1280
 msgid "The data source referenced by this report could not be found."
 msgstr ""
 
-#: corehq/apps/userreports/models.py:975
+#: corehq/apps/userreports/models.py:969
 #, python-format
 msgid ""
 "The data source %(config_id)s referenced by this report could not be found."
 msgstr ""
 
-#: corehq/apps/userreports/models.py:1070
+#: corehq/apps/userreports/models.py:1064
 #, python-format
 msgid ""
 "The report configuration referenced by this report could not be found: "
 "%(report_id)s"
 msgstr ""
 
-#: corehq/apps/userreports/models.py:1090
+#: corehq/apps/userreports/models.py:1084
 msgid "The following report configuration could not be found: {}"
 msgstr ""
 
-#: corehq/apps/userreports/models.py:1101
+#: corehq/apps/userreports/models.py:1095
 msgid "The report configuration referenced by this report could not be found."
 msgstr ""
 
@@ -32379,7 +32470,7 @@ msgstr ""
 msgid "Download Report"
 msgstr ""
 
-#: corehq/apps/userreports/sql/adapter.py:150
+#: corehq/apps/userreports/sql/adapter.py:127
 msgid ""
 "The column \"{}\" does not exist in the report source! Please double check "
 "your report configuration."
@@ -32430,13 +32521,13 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:8
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:24
-#: corehq/apps/userreports/views.py:193
+#: corehq/apps/userreports/views.py:192
 msgid "Configurable Reports"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:15
 #: corehq/apps/userreports/templates/userreports/import_report.html:15
-#: corehq/apps/userreports/views.py:829
+#: corehq/apps/userreports/views.py:828
 msgid "Import Report"
 msgstr ""
 
@@ -32473,7 +32564,7 @@ msgid "Preview Data"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:11
-#: corehq/apps/userreports/views.py:1451
+#: corehq/apps/userreports/views.py:1450
 msgid "Data Source Summary"
 msgstr ""
 
@@ -32656,7 +32747,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/edit_report_button.html:15
-#: corehq/apps/userreports/views.py:286
+#: corehq/apps/userreports/views.py:285
 msgid "Edit Report"
 msgstr ""
 
@@ -32718,7 +32809,7 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/paywall/activating_subscription.html:6
 #: corehq/apps/userreports/templates/userreports/paywall/pricing.html:6
-#: corehq/apps/userreports/views.py:318 corehq/apps/userreports/views.py:343
+#: corehq/apps/userreports/views.py:317 corehq/apps/userreports/views.py:342
 #: corehq/tabs/tabclasses.py:193
 msgid "Report Builder"
 msgstr ""
@@ -32944,12 +33035,12 @@ msgid "Data source from application"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:54
-#: corehq/apps/userreports/views.py:874
+#: corehq/apps/userreports/views.py:873
 msgid "Expression Debugger"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:60
-#: corehq/apps/userreports/views.py:880
+#: corehq/apps/userreports/views.py:879
 msgid "Data Source Debugger"
 msgstr ""
 
@@ -33049,12 +33140,12 @@ msgstr ""
 msgid "Problem with data source spec: {}"
 msgstr ""
 
-#: corehq/apps/userreports/ui/forms.py:276 corehq/apps/userreports/views.py:996
+#: corehq/apps/userreports/ui/forms.py:276 corehq/apps/userreports/views.py:995
 msgid "Create Data Source from Application"
 msgstr ""
 
 #: corehq/apps/userreports/ui/forms.py:281
-#: corehq/apps/userreports/views.py:1123
+#: corehq/apps/userreports/views.py:1122
 msgid "Create Data Source"
 msgstr ""
 
@@ -33123,187 +33214,187 @@ msgid ""
 "above."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:182
+#: corehq/apps/userreports/views.py:181
 msgid ""
 "There was a problem processing your request. If you have recently modified "
 "your report data source please try again in a few minutes.<br><br>Technical "
 "details:<br>{}"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:220
+#: corehq/apps/userreports/views.py:219
 msgid "Reports Home"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:277
+#: corehq/apps/userreports/views.py:276
 msgid "Report \"{}\" saved!"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:291 corehq/apps/userreports/views.py:398
+#: corehq/apps/userreports/views.py:290 corehq/apps/userreports/views.py:397
 msgid "Create Report"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:339
+#: corehq/apps/userreports/views.py:338
 msgid "Subscribe"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:406 corehq/tabs/tabclasses.py:195
+#: corehq/apps/userreports/views.py:405 corehq/tabs/tabclasses.py:195
 msgid "Create New Report"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:464
+#: corehq/apps/userreports/views.py:463
 msgid "Configure Report"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:784
+#: corehq/apps/userreports/views.py:783
 #, python-brace-format
 msgid ""
 "Report \"{name}\" has been deleted. <a href=\"{url}\" class=\"post-link"
 "\">Undo</a>"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:800
+#: corehq/apps/userreports/views.py:799
 msgid ""
 "This report was used in one or more applications. It has been removed from "
 "there too."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:821
+#: corehq/apps/userreports/views.py:820
 #, python-brace-format
 msgid "Successfully restored report \"{name}\""
 msgstr ""
 
-#: corehq/apps/userreports/views.py:824
+#: corehq/apps/userreports/views.py:823
 #, python-brace-format
 msgid "Report \"{name}\" not deleted."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:848
+#: corehq/apps/userreports/views.py:847
 msgid "Report created!"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:853
+#: corehq/apps/userreports/views.py:852
 msgid "Bad report source: {}"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:914 corehq/apps/userreports/views.py:947
+#: corehq/apps/userreports/views.py:913 corehq/apps/userreports/views.py:946
 msgid "Data source with id {} not found in domain {}."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:921
+#: corehq/apps/userreports/views.py:920
 msgid "{} with id {} not found in domain {}."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:928
+#: corehq/apps/userreports/views.py:927
 msgid "Problem with expression: {}"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:964
+#: corehq/apps/userreports/views.py:963
 msgid "No documents found. Check the IDs and try again."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:986
+#: corehq/apps/userreports/views.py:985
 msgid "Datasource table does not exist. Try rebuilding the datasource."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:988
+#: corehq/apps/userreports/views.py:987
 msgid "Error querying database for data."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1012 corehq/apps/userreports/views.py:1018
+#: corehq/apps/userreports/views.py:1011 corehq/apps/userreports/views.py:1017
 msgid "Data source created for '{}'"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1083
+#: corehq/apps/userreports/views.py:1082
 msgid "Data source \"{}\" saved!"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1114
+#: corehq/apps/userreports/views.py:1113
 msgid ""
 "Data source \"{}\" has no associated table.\n"
 "Click \"Rebuild Data Source\" to recreate the table."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1128
+#: corehq/apps/userreports/views.py:1127
 msgid "Edit Data Source"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1152
+#: corehq/apps/userreports/views.py:1151
 #, python-brace-format
 msgid ""
 "Data source \"{name}\" has been deleted. <a href=\"{url}\" class=\"post-link"
 "\">Undo</a>"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1170
+#: corehq/apps/userreports/views.py:1169
 #, python-brace-format
 msgid "Successfully restored data source \"{name}\""
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1173
+#: corehq/apps/userreports/views.py:1172
 #, python-brace-format
 msgid "Data source \"{name}\" not deleted."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1189 corehq/apps/userreports/views.py:1240
+#: corehq/apps/userreports/views.py:1188 corehq/apps/userreports/views.py:1239
 msgid "Table \"{}\" is now being rebuilt. Data should start showing up soon"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1207
+#: corehq/apps/userreports/views.py:1206
 msgid ""
 "Table \"{}\" has already finished building. Rebuild table to start over."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1214
+#: corehq/apps/userreports/views.py:1213
 msgid ""
 "Table \"{}\" did not finish building but resume information is not "
 "available. Unfortunately, this means you need to rebuild the table."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1222
+#: corehq/apps/userreports/views.py:1221
 msgid "Resuming rebuilding table \"{}\"."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1262
+#: corehq/apps/userreports/views.py:1261
 msgid "Preview Data Source"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1295
+#: corehq/apps/userreports/views.py:1294
 msgid "You can only use 'lastndays' on date columns"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1305
+#: corehq/apps/userreports/views.py:1304
 msgid "Ranges must have the format \"start..end\""
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1337
+#: corehq/apps/userreports/views.py:1336
 msgid "No field named {}"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1344
+#: corehq/apps/userreports/views.py:1343
 msgid "Invalid filter parameter: {}"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1372
+#: corehq/apps/userreports/views.py:1371
 msgid "format must be one of the following: {}"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1409
+#: corehq/apps/userreports/views.py:1408
 msgid ""
 "There was a problem executing your query, please make sure your parameters "
 "are valid."
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1420
+#: corehq/apps/userreports/views.py:1419
 msgid "Filter {} not found!"
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1562
+#: corehq/apps/userreports/views.py:1561
 msgid ""
 "Successfully linked and copied {link_info.report.title} to {', '."
 "join(successes)}. "
 msgstr ""
 
-#: corehq/apps/userreports/views.py:1564
+#: corehq/apps/userreports/views.py:1563
 msgid "Due to errors, the report was not copied to {', '.join(failures)}"
 msgstr ""
 
@@ -34177,11 +34268,11 @@ msgstr ""
 msgid "Other Projects"
 msgstr ""
 
-#: corehq/apps/users/templates/users/extra_users_confirm_billing.html:12
+#: corehq/apps/users/templates/users/extra_users_confirm_billing.html:10
 msgid "Notice of Additional Monthly Charges for Mobile Workers"
 msgstr ""
 
-#: corehq/apps/users/templates/users/extra_users_confirm_billing.html:15
+#: corehq/apps/users/templates/users/extra_users_confirm_billing.html:13
 #, python-format
 msgid ""
 "\n"
