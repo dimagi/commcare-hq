@@ -124,7 +124,12 @@ services:
           KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
           KAFKA_BROKER_ID: 1
           KAFKA_ADVERTISED_PORT: 9092
-#          CUSTOM_INIT_SCRIPT: "curl https://raw.githubusercontent.com/vishnubob/wait-for-it/c096cface5fbd9f2d6b037391dfecae6fde1362e/wait-for-it.sh > wait.sh && chmod +x ./wait.sh && ./wait.sh -t 30 zookeeper:2181 || exit 1"
+          CUSTOM_INIT_SCRIPT: |
+            set -e
+            URL="https://raw.githubusercontent.com/vishnubob/wait-for-it/c096cface5fbd9f2d6b037391dfecae6fde1362e/wait-for-it.sh"
+            curl $URL > wait.sh || exit 0  # skip wait if script download fails
+            chmod +x ./wait.sh
+            ./wait.sh -t 30 zookeeper:2181
           KAFKA_ADVERTISED_HOST_NAME: "kafka"
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
