@@ -220,7 +220,7 @@ class BaseUserConfigReportsView(BaseDomainView):
                 get_permission_name(Permissions.edit_ucrs)
             )
         )
-        if allow_access_to_ucrs or not settings.IS_SAAS_ENVIRONMENT:
+        if allow_access_to_ucrs:
             return super().dispatch(*args, **kwargs)
         raise Http404()
 
