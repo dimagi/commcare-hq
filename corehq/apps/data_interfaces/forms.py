@@ -403,6 +403,8 @@ class CaseRuleCriteriaForm(forms.Form):
             )
         )
 
+        self.custom_filters = settings.AVAILABLE_CUSTOM_RULE_CRITERIA.keys()
+
     @property
     @memoized
     def requires_system_admin_to_edit(self):
@@ -655,6 +657,8 @@ class CaseRuleActionsForm(forms.Form):
                 css_id="rule-actions",
             ),
         )
+
+        self.custom_actions = settings.AVAILABLE_CUSTOM_RULE_ACTIONS.keys()
 
     @property
     def constants(self):
