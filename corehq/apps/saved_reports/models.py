@@ -530,6 +530,8 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     uuid = StringProperty()
     start_date = DateProperty(default=None)
 
+    addedToBulk = BooleanProperty(default=False)
+
     @property
     def is_editable(self):
         try:
