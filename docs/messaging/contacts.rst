@@ -46,7 +46,7 @@ be granted two-way phone number status to the case who registers it first.
 
 If a two-way phone number can be granted for the case, a `corehq.apps.sms.models.PhoneNumber <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/models.py>`_
 entry with verified set to True is created for it. This happens automatically by running celery task
-`corehq.apps.sms.tasks.sync_case_phone_number <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/tasks.py>`_
+`run_case_update_rules_on_save <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/data_interfaces/tasks.py#L202>`_
 for a case each time a case is saved.
 
 Future State
