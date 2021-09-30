@@ -110,6 +110,18 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_nodeset_xpath(case_type, filter_xpath='', additional_types=None):
+        return EntriesHelper._get_nodeset_xpath(
+            'casedb', 'casedb', case_type, filter_xpath, additional_types
+        )
+
+    @staticmethod
+    def get_registry_nodeset_xpath(case_type, filter_xpath='', additional_types=None):
+        return EntriesHelper._get_nodeset_xpath(
+            'results', 'results', case_type, filter_xpath, additional_types
+        )
+
+    @staticmethod
+    def _get_nodeset_xpath(instance_name, root_element, case_type, filter_xpath='', additional_types=None):
         if additional_types:
             case_type_filter = " or ".join([
                 "@case_type='{case_type}'".format(case_type=case_type)
@@ -117,10 +129,7 @@ class EntriesHelper(object):
             ])
         else:
             case_type_filter = "@case_type='{case_type}'".format(case_type=case_type)
-        return "instance('casedb')/casedb/case[{case_type_filter}][@status='open']{filter_xpath}".format(
-            case_type_filter=case_type_filter,
-            filter_xpath=filter_xpath,
-        )
+        return f"instance('{instance_name}')/{root_element}/case[{case_type_filter}][@status='open']{filter_xpath}"
 
     @staticmethod
     def get_parent_filter(relationship, parent_id):
@@ -476,12 +485,21 @@ class EntriesHelper(object):
 
             filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
+            instance_name, root_element = "casedb", "casedb"
+            if module_offers_search(detail_module) and module.search_config.data_registry:
+                instance_name, root_element = "results", "results"
+
+            nodeset = EntriesHelper._get_nodeset_xpath(
+                instance_name, root_element,
+                datum['case_type'],
+                filter_xpath=filter_xpath,
+                additional_types=datum['module'].search_config.additional_case_types
+            )
+
             datums.append(FormDatumMeta(
                 datum=SessionDatum(
                     id=datum['session_var'],
-                    nodeset=(EntriesHelper.get_nodeset_xpath(datum['case_type'], filter_xpath=filter_xpath,
-                             additional_types=datum['module'].search_config.additional_case_types)
-                             + parent_filter + fixture_select_filter),
+                    nodeset=nodeset + parent_filter + fixture_select_filter,
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(detail_module, 'case_short'),
                     detail_confirm=(
