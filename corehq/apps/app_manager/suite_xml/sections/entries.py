@@ -418,11 +418,14 @@ class EntriesHelper(object):
         """
         result = []
         for datum in datums:
-            result.append(datum)
             if datum.module_id and datum.case_type:
                 module = self.app.get_module_by_unique_id(datum.module_id)
                 if module_offers_search(module) and module.search_config.data_registry:
-                    result.extend(self.get_data_registry_query_datums(datum, module))
+                    result.append(self.get_data_registry_search_datums(module))
+                    result.append(datum)
+                    result.extend(self.get_data_registry_case_datums(datum, module))
+                else:
+                    result.append(datum)
         return result
 
     def get_datum_meta_module(self, module, use_filter=False):
@@ -518,7 +521,13 @@ class EntriesHelper(object):
 
         return datums
 
-    def get_data_registry_query_datums(self, datum, module):
+    def get_data_registry_search_datums(self, module):
+        from corehq.apps.app_manager.suite_xml.sections.remote_requests import RemoteRequestFactory
+        factory = RemoteRequestFactory(module, [])
+        query = factory.build_remote_request_queries()[0]
+        return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
+
+    def get_data_registry_case_datums(self, datum, module):
         """When a data registry is the source of the search results we can't assume that the case
         the user selected is in the user's casedb so we have to get the data directly from HQ before
         entering the form. This data is then available in the 'registry' instance (``instance('registry')``)

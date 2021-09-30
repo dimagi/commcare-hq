@@ -120,7 +120,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             <data key="commcare_registry" ref="'myregistry'"/>
           </query>
         </partial>"""
-        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[2]")
+        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[3]")
 
         self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
         self.assertXmlDoesNotHaveXpath(suite, "./entry[1]/instance[@id='registry']")
