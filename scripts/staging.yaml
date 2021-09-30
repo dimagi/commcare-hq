@@ -80,4 +80,8 @@ branches:
     - dmr/throttle-system-forms  # Danny Sept 24
     - gh/erm/link-reports-and-keywords-on-push-take2 # Graham Sept 28
     - gh/remove-pickles/sms # Graham Sept 28
+    - ml/remove-pickles-case-search #Minha Sept 30
+    - ml/remove-pickles-case-importer #Minha Sept 30
+    - ml/remove-pickles-locations-app # Minha Sept 30
+    - ml/remove-pickles-registration # Minha Sept 30
 submodules: { }
