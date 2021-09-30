@@ -18,6 +18,10 @@
 - [ ] If QA is part of the safety story, the "Awaiting QA" label is used
 - [ ] I have confidence that this PR will not introduce a regression for the reasons below
 
+## Migrations
+
+- [ ] The migrations in this code can be safely applied first independently of the code
+
 ### Automated test coverage
 
 <!-- Identify the related test coverage and the tests it would catch -->
