@@ -50,4 +50,4 @@ Otherwise replace it with detailed instructions or reasons a rollback is impossi
 - [ ] The set of people pinged as reviewers is appropriate for the level of risk of the change
 
 ## Final self-reflection
-- [ ] My safety story above is convincing and give me confidence that this PR will not introduce a regression
+- [ ] My safety story above is convincing and gives me confidence that this PR will not introduce a regression
