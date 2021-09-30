@@ -84,4 +84,5 @@ branches:
     - ml/remove-pickles-case-importer #Minha Sept 30
     - ml/remove-pickles-locations-app # Minha Sept 30
     - ml/remove-pickles-registration # Minha Sept 30
+    - es/webuser-activity  # Ethan Sept 30
 submodules: { }
