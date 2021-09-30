@@ -1,5 +1,6 @@
 from typing import List
 
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
@@ -65,6 +66,7 @@ class SessionEndpointContributor(SuiteContributorByModule):
 
         return SessionEndpoint(
             id=endpoint_id,
+            command_id=id_strings.form_command(form) if form else id_strings.menu_id(module),
             arguments=[Argument(id=i) for i in argument_ids],
             stack=stack,
         )
