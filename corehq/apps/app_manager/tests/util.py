@@ -49,7 +49,7 @@ class TestXmlMixin(TestFileMixin):
     def _assertXpathHelper(self, element, xpath, message, should_not_exist):
         element = parse_normalize(element, to_string=False)
         if bool(element.xpath(xpath)) == should_not_exist:
-            raise AssertionError(message + lxml.etree.tostring(element, pretty_print=True, encoding='utf-8'))
+            raise AssertionError(message + lxml.etree.tostring(element, pretty_print=True, encoding='unicode'))
 
     def assertHtmlEqual(self, expected, actual, normalize=True):
         if normalize:
