@@ -52,7 +52,7 @@ from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseRuleAction,
@@ -545,12 +545,14 @@ class TestDeleteDomain(TestCase):
         self._assert_queryset_count([
             CaseType.objects.filter(domain=domain_name),
             CaseProperty.objects.filter(case_type__domain=domain_name),
+            CasePropertyAllowedValue.objects.filter(case_property__case_type__domain=domain_name),
         ], count)
 
     def test_data_dictionary(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             case_type = CaseType.objects.create(domain=domain_name, name='case_type')
-            CaseProperty.objects.create(case_type=case_type, name='case_property')
+            prop = CaseProperty.objects.create(case_type=case_type, name='case_property', data_type='select')
+            CasePropertyAllowedValue.objects.create(case_property=prop, allowed_value="True")
             self._assert_data_dictionary_counts(domain_name, 1)
 
         self.domain.delete()

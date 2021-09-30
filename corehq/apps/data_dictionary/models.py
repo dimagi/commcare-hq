@@ -13,7 +13,7 @@ PROPERTY_TYPE_CHOICES = (
     ('date', _('Date')),
     ('plain', _('Plain')),
     ('number', _('Number')),
-    ('select', _('Select')),
+    ('select', _('Multiple Choice')),
     ('barcode', _('Barcode')),
     ('gps', _('GPS')),
     ('phone_number', _('Phone Number')),
@@ -104,3 +104,23 @@ class CaseProperty(models.Model):
                 datetime.strptime(value, ISO_DATE_FORMAT)
             except ValueError:
                 raise exceptions.InvalidDate()
+        elif value and self.data_type == 'select':
+            if not self.allowed_values.filter(allowed_value=value).exists():
+                raise exceptions.InvalidSelectValue()
+
+
+class CasePropertyAllowedValue(models.Model):
+    case_property = models.ForeignKey(
+        CaseProperty,
+        on_delete=models.CASCADE,
+        related_name='allowed_values',
+        related_query_name='allowed_value'
+    )
+    allowed_value = models.CharField(max_length=255, blank=True, default='')
+    description = models.TextField(default='', blank=True)
+
+    class Meta(object):
+        unique_together = ('case_property', 'allowed_value')
+
+    def __str__(self):
+        return f'{self.case_property} valid value: "{self.allowed_value}"'
