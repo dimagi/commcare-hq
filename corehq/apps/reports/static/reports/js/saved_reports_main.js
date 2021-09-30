@@ -26,8 +26,6 @@ hqDefine("reports/js/saved_reports_main", [
             scheduled_reports: initialPageData.get('scheduled_reports'),
             other_scheduled_reports: initialPageData.get('others_scheduled_reports'),
             is_admin: initialPageData.get('is_admin'),
-            user_email: initialPageData.get('user_email'),
-            couch_user: initialPageData.get('couch_user'),
         }));
     });
 });

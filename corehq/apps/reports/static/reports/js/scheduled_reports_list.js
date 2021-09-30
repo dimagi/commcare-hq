@@ -90,6 +90,7 @@ hqDefine("reports/js/scheduled_reports_list", [
         self.bulkAction = ko.observable(false);
         self.isBulkDeleting = ko.observable(false);
         self.isBulkSending = ko.observable(false);
+        self.action = ko.observable();
 
         self.panels = ko.observableArray([]);
         self.panels.push(scheduledReportsPanelModel({
@@ -97,14 +98,12 @@ hqDefine("reports/js/scheduled_reports_list", [
             is_owner: true,
             is_admin: options.is_admin,
             header: gettext("My Scheduled Reports"),
-            couch_user: options.couch_user,
         }));
         self.panels.push(scheduledReportsPanelModel({
             reports: options.other_scheduled_reports,
             is_owner: false,
             is_admin: options.is_admin,
             header: gettext("Other Scheduled Reports"),
-            couch_user: options.couch_user,
         }));
 
         self.reports = ko.computed(function () {
@@ -125,6 +124,14 @@ hqDefine("reports/js/scheduled_reports_list", [
             }
             return false;
         });
+
+        self.sendModal = function() {
+            self.action('send');
+        }
+
+        self.deleteModal = function() {
+            self.action('delete');
+        }
 
         self.bulkSend = function(){
             self.bulkAction(true);

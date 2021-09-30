@@ -99,22 +99,37 @@
         <div id="js-scheduled_reports">
           <div data-bind="if: reports().length">
             <div class="row" style="display: none" data-bind="visible:selectedReportsCount()">
-              <a class="btn btn-primary" style="margin-right: 10px; float: right" data-bind="click: bulkSend">
-                {% trans "Send Selected Reports" %}
-              </a>
+              <div style="margin-right: 10px; float: right">
+                <p>
+                  <a class="btn btn-primary"
+                     data-toggle="modal"
+                     data-bind="attr: { href: '#bulk-modal' },
+                                click: sendModal">
+                    <!-- ko if: isMultiple -->
+                      {% trans "Send Selected Reports" %}
+                    <!-- /ko -->
+                    <!-- ko if: !isMultiple() -->
+                      {% trans "Send Selected Report" %}
+                    <!-- /ko -->
+                  </a>
+                  {% include "reports/partials/bulk_modal.html" %}
+                </p>
+              </div>
               <div style="margin-right: 8px; float: right">
-                <input name="delete_list" type="hidden"/>
                 <p>
                   <a class="btn btn-danger"
                      data-toggle="modal"
-                     data-bind="attr: {
-                                  href: '#bulk-delete-modal'
-                                }">
-                    {% trans "Delete Selected Reports" %}
+                     data-bind="attr: { href: '#bulk-modal' },
+                                click: deleteModal">
+                    <!-- ko if: isMultiple -->
+                      {% trans "Delete Selected Reports" %}
+                    <!-- /ko -->
+                    <!-- ko if: !isMultiple() -->
+                      {% trans "Delete Selected Report" %}
+                    <!-- /ko -->
                   </a>
-                  {% include "reports/partials/bulk_delete_modal.html" %}
+                  {% include "reports/partials/bulk_modal.html" %}
                 </p>
-
               </div>
             </div>
             <div data-bind="foreach: panels()">
