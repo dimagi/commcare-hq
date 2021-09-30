@@ -6,6 +6,7 @@ from corehq.apps.data_interfaces.views import (
     AutomaticUpdateRuleListView,
     CaseGroupCaseManagementView,
     CaseGroupListView,
+    DeduplicationRuleListView,
     EditCaseRuleView,
     ExploreCaseDataView,
     XFormManagementStatusView,
@@ -37,6 +38,7 @@ edit_data_urls = [
         name=AutomaticUpdateRuleListView.urlname),
     url(r'^automatic_updates/add/$', AddCaseRuleView.as_view(), name=AddCaseRuleView.urlname),
     url(r'^automatic_updates/edit/(?P<rule_id>\d+)/$', EditCaseRuleView.as_view(), name=EditCaseRuleView.urlname),
+    url(r'^deduplication_rules/$', DeduplicationRuleListView.as_view(), name=DeduplicationRuleListView.urlname),
     EditDataInterfaceDispatcher.url_pattern(),
 ]
 
