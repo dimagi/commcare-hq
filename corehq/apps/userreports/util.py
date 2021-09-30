@@ -145,7 +145,7 @@ def get_existing_reports(domain):
     existing_reports = ReportConfiguration.by_domain(domain)
     return [
         report for report in existing_reports
-        if not report.title.startswith(TEMP_REPORT_PREFIX)
+        if not (report.title and report.title.startswith(TEMP_REPORT_PREFIX))
     ]
 
 
