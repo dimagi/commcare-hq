@@ -426,6 +426,8 @@ class EntriesHelper(object):
                     result.extend(self.get_data_registry_case_datums(datum, module))
                 else:
                     result.append(datum)
+            else:
+                result.append(datum)
         return result
 
     def get_datum_meta_module(self, module, use_filter=False):

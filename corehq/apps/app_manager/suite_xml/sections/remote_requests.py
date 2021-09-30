@@ -87,6 +87,9 @@ class RemoteRequestFactory(object):
                 ),
             ],
         }
+        relevant = self.get_post_relevant()
+        if relevant:
+            kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def get_post_relevant(self):
@@ -116,6 +119,9 @@ class RemoteRequestFactory(object):
         # need these instances to be available
         xpaths.update(self._get_xpaths_for_module())
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, xpaths)
+
+        # exclude remote instances
+        instances = [instance for instance in instances if 'remote' not in instance.src]
 
         # sorted list to prevent intermittent test failures
         return sorted(set(list(instances) + prompt_select_instances), key=lambda i: i.id)
