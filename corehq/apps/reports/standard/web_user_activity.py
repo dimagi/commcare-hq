@@ -3,13 +3,14 @@ from django.utils.translation import ugettext_noop
 
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
 
 
-class WebUserActivityReport(DatespanMixin, GenericTabularReport, ProjectReport):
+class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
     slug = 'web_user_activity'
     name = ugettext_noop("Web User Activity")
+    ajax_pagination = True
 
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -30,7 +31,7 @@ class WebUserActivityReport(DatespanMixin, GenericTabularReport, ProjectReport):
 
     @property
     def rows(self):
-        events = self._get_navigation_events()
+        events = self._get_queryset()[self.pagination.start:self.pagination.end]
         for event in events:
             yield [
                 event.user,
@@ -42,7 +43,11 @@ class WebUserActivityReport(DatespanMixin, GenericTabularReport, ProjectReport):
                 event.status_code,
             ]
 
-    def _get_navigation_events(self):
+    @property
+    def total_records(self):
+        return self._get_queryset().count()
+
+    def _get_queryset(self):
         username = self.request.GET.get('username')
         return NavigationEventAudit.objects.filter(
             domain=self.domain,
