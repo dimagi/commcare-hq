@@ -27,7 +27,7 @@ from pillowtop.es_utils import (
     REPORT_XFORM_HQ_INDEX_NAME,
     CASE_SEARCH_HQ_INDEX_NAME
 )
-
+from pillowtop.reindexer.reindexer import ReindexerFactory
 
 monkey.patch_all()
 
@@ -61,8 +61,12 @@ def do_reindex(hq_index_name, reset):
     reindex_commands = get_reindex_commands(hq_index_name)
     for reindex_command in reindex_commands:
         if isinstance(reindex_command, str):
-            kwargs = {"reset": True} if reset else {}
-            FACTORIES_BY_SLUG[reindex_command](**kwargs).build().reindex()
+            kwargs = {}
+            factory = FACTORIES_BY_SLUG[reindex_command]
+            reindex_args = ReindexerFactory.resumable_reindexer_args
+            if reset and factory.arg_contributors and reindex_args in factory.arg_contributors:
+                kwargs["reset"] = True
+            factory(**kwargs).build().reindex()
         else:
             reindex_command()
     print("Pillow preindex finished %s" % hq_index_name)
