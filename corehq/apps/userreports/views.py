@@ -247,6 +247,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.report_id
             ),
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
         }
 
     @property
