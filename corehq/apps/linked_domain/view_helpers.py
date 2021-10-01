@@ -28,8 +28,8 @@ from corehq.apps.linked_domain.models import (
 )
 from corehq.apps.linked_domain.util import server_to_user_time, is_keyword_linkable
 from corehq.apps.sms.models import Keyword
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.util import get_existing_reports
 
 
 def build_domain_link_view_model(link, timezone):
@@ -84,7 +84,7 @@ def get_upstream_and_downstream_reports(domain):
     """
     upstream_list = {}
     downstream_list = {}
-    reports = get_report_configs_for_domain(domain)
+    reports = get_existing_reports(domain)
     for report in reports:
         if report.report_meta.master_id:
             downstream_list[report.get_id] = report
