@@ -9,7 +9,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
-from corehq.apps.data_dictionary.views import ExportDataDictionaryView, UploadDataDictionaryView
+from corehq.apps.data_dictionary.views import (
+    ExportDataDictionaryView, UploadDataDictionaryView, ALLOWED_VALUES_SHEET_SUFFIX)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled, TestFileMixin
@@ -132,4 +133,4 @@ class DataDictionaryExportTest(TestCase):
         for i in range(len(self.case_types)):
             name = self.case_types[i].name
             self.assertEqual(name, workbook.sheetnames[i * 2])
-            self.assertEqual(f'{name}-valid-values', workbook.sheetnames[i * 2 + 1])
+            self.assertEqual(f'{name}{ALLOWED_VALUES_SHEET_SUFFIX}', workbook.sheetnames[i * 2 + 1])
