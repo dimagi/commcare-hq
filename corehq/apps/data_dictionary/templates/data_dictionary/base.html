@@ -100,7 +100,7 @@
   {% registerurl 'update_case_property' domain %}
   {% initial_page_data 'typeChoices' question_types %}
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
-  <div data-bind="saveButton: saveButton"></div>
+  <div data-bind="saveButton: saveButton, visible: $root.activeCaseType()"></div>
   <div class="row">
     <div class="col-md-10">
       <h3 data-bind="text: $root.activeCaseType()"></h3>
@@ -133,6 +133,7 @@
         <i class="fa fa-cloud-upload"></i>
         {% trans "Import from Excel" %}
       </a>
+      <div  data-bind="visible: $root.activeCaseType()">
       <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated Properties" %}</button>
       <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default pull-right">{% trans "Hide Deprecated Properties" %}</button>
       <table id="data-dictionary-table" class="table">
@@ -227,6 +228,7 @@
           {% trans "Add Case Property Group" %}
         </button>
       </form>
+      </div>
       <p class="help-block">
         {% url 'generate_data_dictionary' domain as refresh_url %}
         {% blocktrans %}
