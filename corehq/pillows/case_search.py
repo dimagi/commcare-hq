@@ -36,6 +36,7 @@ from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
@@ -52,6 +53,8 @@ from pillowtop.reindexer.reindexer import (
     ReindexerFactory,
     ResumableBulkElasticPillowReindexer,
 )
+
+_assert_string_property = soft_assert(to='{}@{}.com'.format('cellowitz', 'dimagi'), notify_admins=True)
 
 
 @quickcache([], timeout=24 * 60 * 60, memoize_timeout=60)
@@ -79,8 +82,18 @@ def transform_case_for_elasticsearch(doc_dict):
     return doc
 
 
+def _format_property(key, value, case_id):
+    if not isinstance(value, str):
+        value = str(value)
+        _assert_string_property(False, f'Case {case_id} has property {key} saved in unexpected format')
+    return {
+        "key": key,
+        VALUE: value
+    }
+
 def _get_case_properties(doc_dict):
     domain = doc_dict.get('domain')
+    case_id = doc_dict.get('_id')
     assert domain
     base_case_properties = [
         {'key': base_case_property.key, 'value': base_case_property.value_getter(doc_dict)}
@@ -88,7 +101,7 @@ def _get_case_properties(doc_dict):
     ]
     dynamic_case_properties = dict(doc_dict['case_json'])
 
-    dynamic_mapping = [{'key': key, VALUE: value} for key, value in dynamic_case_properties.items()]
+    dynamic_mapping = [_format_property(key, value, case_id) for key, value in dynamic_case_properties.items()]
 
     return base_case_properties + dynamic_mapping
 

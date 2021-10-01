@@ -73,6 +73,7 @@ from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
 )
+from corehq.apps.userreports.util import get_configurable_and_static_reports
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
@@ -847,7 +848,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        return ReportConfiguration.by_domain(domain)
+        return get_configurable_and_static_reports(domain)
 
     def detail_uri_kwargs(self, bundle_or_obj):
         return {
