@@ -4,6 +4,8 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% requirejs_main "locations/js/widgets" %}
+
 {% block page_content %}
   {% if has_untrusted_identity_provider %}
     <div class="alert alert-setting">
