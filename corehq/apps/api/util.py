@@ -3,7 +3,6 @@ import datetime
 from dateutil.parser import parse
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext as _
-from django.http import Http404
 
 from couchdbkit.exceptions import ResourceNotFound
 from tastypie.bundle import Bundle
