@@ -45,7 +45,7 @@ from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
-ALLOWED_VALUES_SHEET_SUFFIX = "-valid-values"
+ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
 
 data_dictionary_rebuild_rate_limiter = RateLimiter(
     feature_key='data_dictionary_rebuilds_per_user',
