@@ -679,6 +679,7 @@ class ListRolesView(BaseRoleAccessView):
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
 
+
 @always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
