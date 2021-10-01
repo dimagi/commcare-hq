@@ -239,6 +239,27 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.removefhirResourceType(false);
         };
 
+        // CREATE workflow
+        self.name = ko.observable("").extend({
+            rateLimit: { method: "notifyWhenChangesStop", timeout: 400, }
+        });
+
+        self.nameValid = ko.observable(false);
+        self.nameChecked = ko.observable(false);
+        self.name.subscribe((value) => {
+            let existing = _.find(self.caseTypes(), function (prop) {
+                return prop.name === value;
+            });
+            self.nameValid(!existing);
+            self.nameChecked(true);
+        });
+
+        self.formCreateCaseTypeSent = ko.observable(false);
+        self.submitCreate = function () {
+            self.formCreateCaseTypeSent(true);
+            return true;
+        };
+
         return self;
     };
 
