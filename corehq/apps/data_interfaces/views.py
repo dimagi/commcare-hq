@@ -1,3 +1,4 @@
+import json
 import uuid
 
 from django.contrib import messages
@@ -5,6 +6,7 @@ from django.core.cache import cache
 from django.db import transaction
 from django.http import (
     Http404,
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
     HttpResponseServerError,
@@ -18,6 +20,7 @@ from django.views.decorators.http import require_GET
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
+from no_exceptions.exceptions import Http403
 
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -41,13 +44,16 @@ from corehq.apps.data_interfaces.forms import (
     CaseUpdateRuleForm,
     UpdateCaseGroupForm,
 )
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    CaseDeduplicationActionDefinition,
+)
 from corehq.apps.data_interfaces.tasks import (
     bulk_form_management_async,
     bulk_upload_cases_to_group,
 )
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
@@ -60,6 +66,7 @@ from corehq.apps.hqwebapp.views import (
 )
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.reports.v2.reports.explore_case_data import (
     ExploreCaseDataReport,
 )
@@ -70,7 +77,6 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
-from no_exceptions.exceptions import Http403
 
 from .dispatcher import require_form_management_privilege
 from .interfaces import BulkFormManagementInterface, FormManagementMode
@@ -86,14 +92,20 @@ def default(request, domain):
 
 
 def default_data_view_url(request, domain):
+    from corehq.apps.data_interfaces.interfaces import (
+        CaseReassignmentInterface,
+    )
     from corehq.apps.export.views.list import (
         CaseExportListView,
-        FormExportListView,
         DeIdFormExportListView,
+        FormExportListView,
     )
-    from corehq.apps.export.views.utils import (DataFileDownloadList, user_can_view_deid_exports,
-        can_view_form_exports, can_view_case_exports)
-    from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
+    from corehq.apps.export.views.utils import (
+        DataFileDownloadList,
+        can_view_case_exports,
+        can_view_form_exports,
+        user_can_view_deid_exports,
+    )
 
     if can_view_form_exports(request.couch_user, domain):
         return reverse(FormExportListView.urlname, args=[domain])
@@ -496,9 +508,12 @@ class XFormManagementView(DataInterfaceSection):
         if 'select_all' in self.request.POST:
             # Altough evaluating form_ids and sending to task would be cleaner,
             # heavier calls should be in an async task instead
-            import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
+            import six.moves.urllib.error
+            import six.moves.urllib.parse
+            import six.moves.urllib.request
             form_query_string = six.moves.urllib.parse.unquote(self.request.POST.get('select_all'))
             from django.http import HttpRequest, QueryDict
+
             from django_otp.middleware import OTPMiddleware
 
             _request = HttpRequest()
@@ -580,7 +595,10 @@ def xform_management_job_poll(request, domain, download_id,
 @login_and_domain_required
 @require_GET
 def find_by_id(request, domain):
-    from corehq.apps.export.views.utils import can_view_form_exports, can_view_case_exports
+    from corehq.apps.export.views.utils import (
+        can_view_case_exports,
+        can_view_form_exports,
+    )
     can_view_cases = can_view_case_exports(request.couch_user, domain)
     can_view_forms = can_view_form_exports(request.couch_user, domain)
 
@@ -885,8 +903,58 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
 
     rule_workflow = AutomaticUpdateRule.WORKFLOW_DEDUPLICATE
 
+    # TODO: make this
+    # @property
+    # def edit_url_name(self):
+    #     return DeduplicationRuleEditView.urlname
+
+
+class DeduplicationRuleCreateView(DataInterfaceSection):
+    template_name = "data_interfaces/edit_deduplication_rule.html"
+    urlname = 'add_deduplication_rule'
+
     @property
-    def edit_url_name(self):
-        return DeduplicationRuleEditView.urlname
+    def page_context(self):
+        context = super().page_context
+        context['case_types'] = sorted(list(get_case_types_for_domain(self.domain)))
+        return context
 
+    def post(self, request, *args, **kwargs):
+        name = request.POST.get("name")
+        case_type = request.POST.get("case_type")
+        match_type = request.POST.get("match_type")
+        case_properties = [
+            prop['name'].strip()
+            for prop in json.loads(request.POST.get("case_properties"))
+            if prop
+        ]
+        include_closed = request.POST.get("include_closed") == "on"
+        properties_to_update = [
+            {"name": prop["name"], "value_type": prop["valueType"], "value": prop["value"]}
+            for prop in json.loads(request.POST.get("properties_to_update"))
+        ]
 
+        with transaction.atomic():
+            rule = self._create_rule(request.domain, name, case_type)
+            action, action_definition = rule.add_action(
+                CaseDeduplicationActionDefinition,
+                match_type=match_type,
+                case_properties=case_properties,
+                include_closed=include_closed,
+                properties_to_update=properties_to_update,
+            )
+
+        messages.success(request, _("Successfully created deduplication rule: {}").format(name))
+        return HttpResponseRedirect(reverse(DeduplicationRuleListView.urlname, args=[self.domain]))
+
+    def _create_rule(self, domain, name, case_type):
+        return AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name=name,
+            case_type=case_type,
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )
