@@ -25,12 +25,12 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">
+          <button type="button" class="close" data-dismiss="modal" data-bind="click: clearForm">
             <span aria-hidden="true">&times;</span>
           </button>
           <h4 class="modal-title">{% trans "Create a new Case Type" %}</h4>
         </div>
-        <form class="form-horizontal"
+        <form class="form-horizontal" id="create-case-type-form"
                 style="margin: 0; padding: 0"
                 action="{% url "create_case_type" domain %}"
                 method="post"
@@ -52,7 +52,7 @@
                          'text-danger': !nameValid(),
                      }
                   "></i>
-                  <div class="col-xs-12 col-sm-8 col-md-8 col-lg-8 controls">
+                  <div class="col-xs-12 col-sm-6 col-md-6 col-lg-8 controls">
                     <input type="text" name="name" class="form-control" required data-bind="textInput: name"/>
                     <span class='help-block' data-bind="visible: nameChecked() && !nameValid()">
                       {% trans "A case type with this name already exists." %}
@@ -63,7 +63,7 @@
                   <label for="description" class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
                       {% trans "Description" %}
                   </label>
-                  <div class="col-xs-12 col-sm-8 col-md-8 col-lg-8 controls">
+                  <div class="col-xs-12 col-sm-6 col-md-6 col-lg-8 controls">
                     <textarea name="description" class="form-control"></textarea>
                   </div>
                 </div>
@@ -71,6 +71,7 @@
             </div>
             <div class="modal-footer">
               <a href="#" data-dismiss="modal" class="btn btn-default" data-bind="
+                click: clearForm,
                 css: {disabled: formCreateCaseTypeSent()},
                 attr: {disabled: formCreateCaseTypeSent()}
               ">{% trans 'Cancel' %}</a>
