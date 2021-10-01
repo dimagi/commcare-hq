@@ -1,11 +1,11 @@
 from corehq.apps.integration.models import HmacCalloutSettings
 
 from corehq.apps.linked_domain.local_accessors import get_hmac_callout_settings
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
+from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_hmac_callout_settings
 
 
-class TestUpdateHmacCalloutSettings(BaseLinkedAppsTest):
+class TestUpdateHmacCalloutSettings(BaseLinkedDomainTest):
     def setUp(self):
         self.hmac_setup = HmacCalloutSettings(domain=self.domain,
                                               destination_url='a1b2c3',

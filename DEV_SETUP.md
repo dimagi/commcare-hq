@@ -44,13 +44,28 @@ Save those backups to somewhere you'll be able to access from the new environmen
     ```sh
     sudo apt install git
     ```
-
+- If you have a Mac with the M1 chip and thus the new ARM64 architecture, install Rosetta: 
+    ```sh
+    softwareupdate --install-rosetta
+    ```
+    This allows you to install and run Brew services in x86 fashion. 
+    "Rosetta 2 is an emulator designed to bridge the transition between Intel and Apple processors. In short, it translates apps built for Intel so they will run on Apple Silicon." [Link](https://www.computerworld.com/article/3597949/everything-you-need-to-know-about-rosetta-2-on-apple-silicon-macs.html).
+    While reading through this document, be careful to watch out for specific reccomendations regarding your architecture.
+    
 - [Python 3.6](https://www.python.org/downloads/) and `python-dev`. In Ubuntu
   you will also need to install the modules for pip and venv explicitly.
 
     ```sh
     sudo apt install python3.6-dev python3-pip python3-venv
     ```
+    
+    - If you have a Mac with an M1 chip, you can try installing Python 3.8.12 instead using the Rosetta-enabled homebrew (make sure you have enabled the ibrew command using the MacOS notes below):
+    
+        ```sh
+        ibrew install python@3.8
+        ```
+        
+        Then make sure you are using this version of python when setting up your python environment.
 
 - [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
@@ -71,6 +86,8 @@ Save those backups to somewhere you'll be able to access from the new environmen
     ```sh
     brew install libmagic libxmlsec1 libxml2 libxslt
     ```
+    
+    If you're using the Rosetta-enabled Homebrew (for Mac M1 chip users), remember to use the command "ibrew" instead.
 
 - Java (JDK 8)
 
@@ -90,6 +107,12 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
           ```sh
           brew install jenv
+          ```
+          
+          For M1 users:
+          
+          ```sh
+          ibrew install jenv
           ```
 
       3. Configure your shell (Bash folks use `~/.bashrc` instead of `~/.zshrc` below):
@@ -134,6 +157,11 @@ Save those backups to somewhere you'll be able to access from the new environmen
     ```sh
     brew install postgresql
     ```
+    
+    If you're using Rosetta-enabled Homebrew:
+    ```sh
+    ibrew install postgresql
+    ```
 
     Possible alternative to installing postgres (from [this SO answer](https://stackoverflow.com/a/39800677)).
     Prior to `pip install` commands (outlined later in this doc):
@@ -142,11 +170,21 @@ Save those backups to somewhere you'll be able to access from the new environmen
     xcode-select --install
     export LDFLAGS="-I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib"
     ```
-
+    
+    If you have an M1 chip and are using a Rosetta-based install of Postgres and run into problems with psycopg2, see [this solution](https://github.com/psycopg/psycopg2/issues/1216#issuecomment-767892042).
 
 ##### macOS Notes
 
 - [Homebrew](https://brew.sh) (this doc depends heavily on it).
+    
+    - If you have the M1 chip, install Homebrew using Rosetta: 
+        ```sh
+        arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+        ```
+        And let's call this Rosetta-enabled Homebrew "ibrew" for short by adding this to your .zshrc:
+        ```sh
+        alias ibrew="arch -x86_64 /usr/local/bin/brew"
+        ```
 
 - Install pip:
 
@@ -264,6 +302,15 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     # customize requirements/local.in as desired
     pip install -r requirements/local.in
     ```
+    
+    If you have problems installing pip dependencies related to a missing wheel package, try installing wheel and upgrade pip before attempting to install dependencies.
+    
+    - If you have ARM64 architecture (Apple M1 chip) and you're having trouble installing ReportLab:
+        ```sh
+        CFLAGS="-Wno-error=implicit-function-declaration" pip install -r requirements/local.in
+        ```
+        [Source](https://stackoverflow.com/questions/64871133/reportlab-installation-failed-after-upgrading-to-macos-big-sur)
+        
 
   - For production environments
 
@@ -288,7 +335,6 @@ will update all code and do a few more tasks like run migrations and update
 libraries, so it's good to run once a month or so, or when you pull code and
 then immediately hit an error.
 
-
 #### Setup localsettings
 
 First create your `localsettings.py` file:
@@ -297,13 +343,9 @@ First create your `localsettings.py` file:
 cp localsettings.example.py localsettings.py
 ```
 
-Open `localsettings.py` and do the following:
+#### Create the shared directory
 
-- Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories
-  for both exist and are writeable. If they do not exist, create them.
-
-Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
-run:
+If you have not modified `SHARED_DRIVE_ROOT`, then run:
 
 ```sh
 mkdir sharedfiles
@@ -424,12 +466,44 @@ that to the new install.
     directory into the HQ root, otherwise do so into the `SHARED_DRIVE_ROOT`
     directory referenced in `localsettings.py`
 
+### Getting all your services running properly (ARM64 arch users)
 
+Devs using computers with the ARM64 architecture (often Apple computers with the M1 chip) have run into trouble setting up all their services on Docker. See these reccomendations for the following services if they are not working properly:
+
+- Postgres
+
+    In your hq-compose.yml, try updating the following:
+        ```sh
+        image: dimagi/docker-postgresql
+        ```
+        to
+        ```sh
+        image: arm64v8/postgres
+        ```
+        So that you are using a Postgres image built for ARM64 archtecture. Now your Docker service may run properly.
+        
+- Elasticsearch
+    
+    Download the TAR for ES 2.4.2 from [here](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-2![image](https://user-images.githubusercontent.com/6729291/134395887-66c3a63a-0d6c-41fd-afc0-527993810126.png). Open it, and move it somewhere you can reliably remember, maybe your root directory. In a new tab/window:
+    ```sh
+    cd ~/Downloads
+    mv elasticsearch-2.4.2 ~/
+    ```
+    Then go into that folder:
+    ```sh
+    cd ~/elasticsearch-2.4.2
+    ```
+    And start Elastic search:
+    ```sh
+    ./bin/elasticsearch
+    ```
+- Formplayer
+    If you are having trouble with Formplayer, try starting it outside of Docker (instructions for this farther down).
 
 ### Initial Database Population
 
 Before running any of the commands below, you should have all of the following
-running: CouchDB, Redis, and Elasticsearch.
+running: Postgres, CouchDB, Redis, and Elasticsearch.
 The easiest way to do this is using the Docker instructions above.
 
 Populate your database:
@@ -482,6 +556,11 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
 - If you encounter an authorization error related to CouchDB, try going to your
   `localsettings.py` file and change `COUCH_PASSWORD` to an empty string.
 
+- If you get errors saying "Segmentation fault (core dumped)", with a warning like
+  "RuntimeWarning: greenlet.greenlet size changed, may indicate binary incompatibility.
+  Expected 144 from C header, got 152 from PyObject" check that your Python version is correct (3.6).
+  Alternatively, you can try upgrading `gevent` (`pip install --upgrade gevent`) to fix this error
+  on Python 3.8, but you may run into other issues!
 
 ### ElasticSearch Setup
 
@@ -659,37 +738,82 @@ Elasticsearch).
 Some of the services listed there aren't necessary for very basic operation, but
 it can give you a good idea of what's broken.
 
-Then run the following separately:
+Then run the django server with the following command:
 
 ```sh
-# run the Django server
 ./manage.py runserver 0.0.0.0:8000
+```
 
-# Keeps elasticsearch index in sync
-# You can also skip this and run `./manage.py ptop_reindexer_v2` to manually sync ES indices when needed.
+You should now be able to load CommCare HQ in a browser at [http://localhost:8000](http://localhost:8000).
+
+### Troubleshooting
+
+If you can load the page, but either the styling is missing or you get JavaScript console errors trying to create an account,
+try running the JavaScript set up steps again. In particular you may need to run:
+
+```sh
+yarn install --frozen-lockfile
+./manage.py compilejsi18n
+./manage.py fix_less_imports_collectstatic
+```
+
+## Create a superuser
+
+Once your application is online, you'll want to create a superuser, which you can do by running:
+
+```sh
+./manage.py make_superuser <email>
+```
+
+This can also be used to promote a user created by signing up to a superuser.
+
+## Running CommCare HQ's supporting jobs
+
+The following additional processes are required for certain parts of the application to work.
+They can each be run in separate terminals:
+
+### Pillowtop
+
+Pillowtop is used to keep elasticsearch indices and configurable reports in sync.
+
+It can be run as follows:
+
+```sh
 ./manage.py run_ptop --all --processor-chunk-size=1
+```
 
-# You can also run individual pillows with the following.
-# Pillow names can be found in settings.py
+You can also run individual pillows with the following command
+(Pillow names can be found in `settings.py`):
+
+```sh
 ./manage.py run_ptop --pillow-name=CaseSearchToElasticsearchPillow --processor-chunk-size=1
+```
 
-# Setting up the asynchronous task scheduler (only required if you have CELERY_TASK_ALWAYS_EAGER=False in settings)
+Alternatively, you can not run pillowtop and instead manually sync ES indices when needed, by calling the `ptop_reindexer_v2` command.
+See the command help for details, but it can be used to sync individual indices like this:
+
+```sh
+./manage.py ptop_reindexer_v2 user --reset
+```
+
+### Celery
+
+Celery is used for background jobs and scheduled tasks.
+You can avoid running it by setting `CELERY_TASK_ALWAYS_EAGER=False` in your `localsettings.py`,
+though some parts of HQ (especially those involving file uploads and exports) require running it.
+
+This can be done using:
+
+```sh
 celery -A corehq worker -l info
 ```
 
-For celery, you may need to add a `-Q` argument based on the queue you want to
-listen to.
+You may need to add a `-Q` argument based on the queue you want to listen to.
 
 For example, to use case importer with celery locally you need to run:
 
 ```sh
 celery -A corehq worker -l info -Q case_import_queue
-```
-
-Create a superuser for your local environment
-
-```sh
-./manage.py make_superuser <email>
 ```
 
 
@@ -813,10 +937,22 @@ You can run all tests with a certain tag as follows:
 
 Available tags:
 
-- all_backends: all tests decorated with `run_with_all_backeds`
+- slow: especially slow tests
+- sharded: tests that should get run on the sharded test runner
+- es_test: Elasticsearch tests
 
 See http://nose.readthedocs.io/en/latest/plugins/attrib.html for more details.
 
+
+### Running on DB tests or Non-DB tests
+
+```sh
+# only run tests that extend TestCase
+./manage.py test --db=only
+
+# skip all tests that extend TestCase but run everything else
+./manage.py test --db=skip
+```
 
 ### Running only failed tests
 

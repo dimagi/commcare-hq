@@ -16,7 +16,7 @@ from corehq.util.quickcache import quickcache
 @quickcache(['domain'], timeout=60 * 60)
 def get_upstream_domain_link(domain):
     """
-    :returns: ``DomainLink`` object linking this domain to it's master
+    :returns: ``DomainLink`` object linking this domain to its upstream
     or None if no link exists
     """
     return DomainLink.objects.filter(linked_domain=domain).first()
@@ -40,11 +40,6 @@ def get_linked_domains(domain, include_deleted=False):
     """
     manager = DomainLink.all_objects if include_deleted else DomainLink.objects
     return list(manager.filter(master_domain=domain).all())
-
-
-@quickcache(['domain'], timeout=60 * 60)
-def is_master_linked_domain(domain):
-    return DomainLink.objects.filter(master_domain=domain).exists()
 
 
 def get_actions_in_domain_link_history(link):

@@ -246,7 +246,6 @@ HQ_APPS = (
     'casexml.apps.stock',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
-    'corehq.apps.couch_sql_migration',
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
@@ -266,11 +265,10 @@ HQ_APPS = (
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.programs',
-    'corehq.apps.registry',
+    'corehq.apps.registry.app_config.RegistryAppConfig',
     'corehq.project_limits',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
-    'corehq.apps.tzmigration',
     'corehq.celery_monitoring.app_config.CeleryMonitoringAppConfig',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
     'corehq.sql_db.app_config.SqlDbAppConfig',
@@ -538,6 +536,7 @@ FIXTURE_GENERATORS = [
     "corehq.apps.app_manager.fixtures.report_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
+    "corehq.apps.registry.fixtures.registry_fixture_generator",
 ]
 
 ### Shared drive settings ###
@@ -724,9 +723,12 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'HOST_CASE_OWNER_LOCATION_PARENT':
         ['corehq.apps.reminders.custom_recipients.host_case_owner_location_parent',
          "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
-    'CASE_OWNER_LOCATION_PARENT':
-        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_old_framework',
+    'MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_mobile_worker_case_owner_location_parent_old_framework',
          "Abt: The case owner's location's parent location"],
+    'LOCATION_CASE_OWNER_PARENT_LOCATION':
+        ['custom.abt.messaging.custom_recipients.abt_location_case_owner_parent_location_old_framework',
+         "Abt: The case owner location's parent location"],
 }
 
 
@@ -739,16 +741,23 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'HOST_CASE_OWNER_LOCATION_PARENT':
         ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location_parent',
          "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
-    'CASE_OWNER_LOCATION_PARENT':
-        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
+    'MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_mobile_worker_case_owner_location_parent_new_framework',
          "Abt: The case owner's location's parent location"],
+    'LOCATION_CASE_OWNER_PARENT_LOCATION':
+        ['custom.abt.messaging.custom_recipients.abt_location_case_owner_parent_location_new_framework',
+         "Abt: The case owner location's parent location"],
 }
 
 LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA = {}
-AVAILABLE_CUSTOM_RULE_CRITERIA = {}
+AVAILABLE_CUSTOM_RULE_CRITERIA = {
+    'COVID_US_ASSOCIATED_USER_CASES': 'custom.covid.rules.custom_criteria.associated_usercase_closed'
+}
 
 LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
-AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+AVAILABLE_CUSTOM_RULE_ACTIONS = {
+    'COVID_US_CLOSE_CASES_ASSIGNED_CHECKIN': 'custom.covid.rules.custom_actions.close_cases_assigned_to_checkin'
+}
 
 ####### auditcare parameters #######
 AUDIT_ALL_VIEWS = False
@@ -801,6 +810,7 @@ REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.CreateCaseRepeater',
     'corehq.motech.repeaters.models.UpdateCaseRepeater',
     'corehq.motech.repeaters.models.ReferCaseRepeater',
+    'corehq.motech.repeaters.models.DataRegistryCaseUpdateRepeater',
     'corehq.motech.repeaters.models.ShortFormRepeater',
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
@@ -1688,8 +1698,6 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 # These are custom templates which can wrap default the sms/chat.html template
 CUSTOM_CHAT_TEMPLATES = {}
 
-CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
-
 PILLOWTOPS = {
     'core': [
         {
@@ -1846,7 +1854,6 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.m4change.models.M4ChangeFormFluffPillow',
-        'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],

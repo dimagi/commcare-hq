@@ -84,6 +84,7 @@ from corehq.apps.userreports.const import (
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
     REPORT_BUILDER_EVENTS_KEY,
+    TEMP_REPORT_PREFIX,
 )
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -123,7 +124,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.util import report_has_location_filter
-from corehq.apps.userreports.reports.view import ConfigurableReportView
+from corehq.apps.userreports.reports.view import ConfigurableReportView, delete_report_config
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
@@ -151,8 +152,6 @@ from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
-
-TEMP_REPORT_PREFIX = '__tmp'
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -697,7 +696,7 @@ def _get_form_type(report_type):
     if report_type == "list" or report_type is None:
         return ConfigureListReportForm
     if report_type == "table":
-            return ConfigureTableReportForm
+        return ConfigureTableReportForm
     if report_type == "map":
         return ConfigureMapReportForm
 
@@ -736,7 +735,8 @@ class ReportPreview(BaseDomainView):
         if bound_form.is_valid():
             try:
                 temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
-                response_data = ConfigurableReportView.report_preview_data(self.domain, temp_report)
+                with delete_report_config(temp_report) as report_config:
+                    response_data = ConfigurableReportView.report_preview_data(self.domain, report_config)
                 if response_data:
                     return json_response(response_data)
             except BadBuilderConfigError as e:

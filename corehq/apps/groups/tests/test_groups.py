@@ -110,8 +110,10 @@ class GroupTest(TestCase):
         )
         group.save()
 
-        group.set_user_ids([self.inactive_user._id, self.deleted_user._id])
+        users_added_ids, users_removed_ids = group.set_user_ids([self.inactive_user._id, self.deleted_user._id])
 
+        self.assertEqual({self.deleted_user.get_id}, users_added_ids)
+        self.assertEqual({self.active_user.get_id}, users_removed_ids)
         self.assertEqual(set(group.users), {self.inactive_user._id, self.deleted_user._id})
         self.assertEqual(set(group.removed_users), {self.active_user._id})
 

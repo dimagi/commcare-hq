@@ -45,7 +45,6 @@ class TestLinkedKeywords(BaseLinkedAppsTest):
 
     def test_update_keyword_link(self):
         new_keyword_id = create_linked_keyword(self.domain_link, self.keyword.id)
-
         self.keyword.keyword = "foo"
         self.keyword.save()
         keyword_action = self.keyword.keywordaction_set.first()

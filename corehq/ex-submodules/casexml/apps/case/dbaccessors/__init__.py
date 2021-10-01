@@ -1,2 +1,1 @@
-from .open_cases import *
-from .related import *
+from .related import *  # noqa: F401

@@ -7,8 +7,6 @@ from django.test.testcases import SimpleTestCase, TestCase
 from couchdbkit import ResourceConflict
 from mock import patch
 
-from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
-    clear_local_domain_sql_backend_override
 from dimagi.utils.parsing import string_to_utc_datetime
 from pillow_retry.models import PillowError
 
@@ -18,10 +16,7 @@ from corehq.apps.users.tasks import process_reporting_metadata_staging
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    run_with_all_backends,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
@@ -73,7 +68,6 @@ class XFormPillowTest(TestCase):
         cls.user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
 
-    @run_with_all_backends
     def test_xform_pillow(self):
         form, metadata = self._create_form_and_sync_to_es()
 
@@ -86,19 +80,6 @@ class XFormPillowTest(TestCase):
         self.assertEqual(metadata.xmlns, form_doc['xmlns'])
         self.assertEqual('XFormInstance', form_doc['doc_type'])
 
-    def test_xform_pillow_couch_to_sql(self):
-        self.process_form_changes.__enter__()
-        form = self._create_form()
-        self.assertTrue(hasattr(form, "_rev"))  # make sure it's a couch form
-
-        set_local_domain_sql_backend_override(self.domain)
-        self.addCleanup(clear_local_domain_sql_backend_override, self.domain)
-
-        self.process_form_changes.__exit__(None, None, None)
-        results = FormES().run()
-        self.assertEqual(0, results.total)
-
-    @run_with_all_backends
     def test_form_soft_deletion(self):
         form, metadata = self._create_form_and_sync_to_es()
 
@@ -115,7 +96,6 @@ class XFormPillowTest(TestCase):
         results = FormES().run()
         self.assertEqual(0, results.total)
 
-    @run_with_all_backends
     @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=False)
     def test_app_metadata_tracker_non_batch(self):
         form, metadata = self._create_form_and_sync_to_es()
@@ -129,7 +109,6 @@ class XFormPillowTest(TestCase):
         )
         self.assertEqual(last_submission.app_id, self.metadata.app_id)
 
-    @run_with_all_backends
     @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=True)
     def test_app_metadata_tracker(self):
         form, metadata = self._create_form_and_sync_to_es()
@@ -154,7 +133,6 @@ class XFormPillowTest(TestCase):
         )
         self.assertEqual(last_submission.app_id, self.metadata.app_id)
 
-    @run_with_all_backends
     @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=True)
     def test_app_metadata_tracker_synclog_processed(self):
         UserReportingMetadataStaging.add_sync(
@@ -206,7 +184,6 @@ class XFormPillowTest(TestCase):
     def test_app_metadata_tracker_heartbeat_processed(self):
         self._test_heartbeat(0)
 
-    @run_with_all_backends
     @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=True)
     def test_app_metadata_tracker_heartbeat_processed_with_sync_prior(self):
         UserReportingMetadataStaging.add_sync(
@@ -217,7 +194,6 @@ class XFormPillowTest(TestCase):
         # existing row should get updated, no new row should be added
         self._test_heartbeat(1)
 
-    @run_with_all_backends
     def test_form_pillow_error_in_form_metadata(self):
         self.assertEqual(0, PillowError.objects.filter(pillow=self.pillow_id).count())
         with patch('pillowtop.processors.form.mark_latest_submission') as mark_latest_submission:

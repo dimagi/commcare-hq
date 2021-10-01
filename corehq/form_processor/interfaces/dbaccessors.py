@@ -11,7 +11,6 @@ from dimagi.utils.chunked import chunked
 from memoized import memoized
 
 from ..system_action import system_action
-from ..utils import should_use_sql_backend
 
 
 CaseIndexInfo = namedtuple(
@@ -133,12 +132,8 @@ class FormAccessors(object):
     @property
     @memoized
     def db_accessor(self):
-        from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        if should_use_sql_backend(self.domain):
-            return FormAccessorSQL
-        else:
-            return FormAccessorCouch
+        return FormAccessorSQL
 
     def get_form(self, form_id):
         return self.db_accessor.get_form(form_id)
@@ -311,11 +306,6 @@ class AbstractCaseAccessor(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def get_open_case_ids(case_ids):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
     def get_related_indices(case_ids, exclude_indices):
         raise NotImplementedError
 
@@ -401,11 +391,7 @@ class CaseAccessors(object):
     @memoized
     def db_accessor(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
-        if should_use_sql_backend(self.domain):
-            return CaseAccessorSQL
-        else:
-            return CaseAccessorCouch
+        return CaseAccessorSQL
 
     def get_case(self, case_id):
         if not case_id:
@@ -581,10 +567,10 @@ class AbstractLedgerAccessor(metaclass=ABCMeta):
         """
         Given a list of case IDs return a dict of all current ledger data of the following format:
         {
-            "case_id": {
-                "section_id": {
-                     "product_id": StockState,
-                     "product_id": StockState,
+            case_id: {
+                section_id: {
+                     product_id: <LedgerValue>,
+                     product_id: <LedgerValue>,
                      ...
                 },
                 ...
@@ -612,11 +598,7 @@ class LedgerAccessors(object):
     @memoized
     def db_accessor(self):
         from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-        from corehq.form_processor.backends.couch.dbaccessors import LedgerAccessorCouch
-        if should_use_sql_backend(self.domain):
-            return LedgerAccessorSQL
-        else:
-            return LedgerAccessorCouch
+        return LedgerAccessorSQL
 
     def get_transactions_for_consumption(self, case_id, product_id, section_id, window_start, window_end):
         return self.db_accessor.get_transactions_for_consumption(

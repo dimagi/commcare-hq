@@ -130,9 +130,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         var activeCaseType = self.getActiveCaseType();
                         activeCaseType.properties(self.casePropertyList());
                     },
-                    error: function () {
-                        throw gettext("There was an error saving");
-                    },
+                    // Error handling is managed by SaveButton logic in main.js
                 });
             },
         });

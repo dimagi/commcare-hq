@@ -52,6 +52,45 @@ def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=
     return datasources
 
 
+def get_registry_data_sources_by_domain(domain):
+    from corehq.apps.userreports.models import RegistryDataSourceConfiguration
+    return sorted(
+        RegistryDataSourceConfiguration.view(
+            'registry_data_sources/view',
+            startkey=[domain],
+            endkey=[domain, {}],
+            reduce=False,
+            include_docs=True,
+        ),
+        key=lambda config: config.display_name or ''
+    )
+
+
+def get_all_registry_data_source_ids(is_active=None, globally_accessible=None):
+    from corehq.apps.userreports.models import RegistryDataSourceConfiguration
+    rows = RegistryDataSourceConfiguration.view(
+        'registry_data_sources/view',
+        reduce=False,
+        include_docs=False,
+    )
+    return [
+        row["id"] for row in rows
+        if (is_active is None or row["value"]["is_deactivated"] != is_active)
+        and (globally_accessible is None or row["value"]["globally_accessible"] == globally_accessible)
+    ]
+
+
+def get_registry_data_sources_modified_since(timestamp):
+    from corehq.apps.userreports.models import RegistryDataSourceConfiguration
+    return RegistryDataSourceConfiguration.view(
+        'registry_data_sources_by_last_modified/view',
+        startkey=[timestamp.isoformat()],
+        endkey=[{}],
+        reduce=False,
+        include_docs=True
+    ).all()
+
+
 @unit_testing_only
 def get_all_report_configs():
     all_domains = Domain.get_all()

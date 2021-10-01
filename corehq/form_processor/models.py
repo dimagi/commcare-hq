@@ -29,7 +29,6 @@ from corehq.blobs.util import get_content_md5
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import UnknownActionType, MissingFormXml
 from corehq.form_processor.track_related import TrackRelatedChanges
-from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.models import TruncatingCharField
@@ -499,9 +498,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             form_json = convert_xform_to_json(xml)
         except XMLSyntaxError:
             return {}
-        # we can assume all sql domains are new timezone domains
-        with force_phone_timezones_should_be_processed():
-            adjust_datetimes(form_json)
+        adjust_datetimes(form_json)
 
         scrub_form_meta(self.form_id, form_json)
         return form_json
@@ -695,29 +692,9 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
             return LooseVersion(version_text)
 
 
-class SupplyPointCaseMixin(object):
-    CASE_TYPE = 'supply-point'
-
-    @property
-    @memoized
-    def location(self):
-        from corehq.apps.locations.models import SQLLocation
-        if self.location_id is None:
-            return None
-        try:
-            return self.sql_location
-        except SQLLocation.DoesNotExist:
-            return None
-
-    @property
-    def sql_location(self):
-        from corehq.apps.locations.models import SQLLocation
-        return SQLLocation.objects.get(location_id=self.location_id)
-
-
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
-                      SupplyPointCaseMixin, MessagingCaseContactMixin):
+                      MessagingCaseContactMixin):
     partition_attr = 'case_id'
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -771,6 +748,27 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     @memoized
     def xform_ids(self):
         return [t.form_id for t in self.transactions if not t.revoked and t.is_form_transaction]
+
+    @property
+    @memoized
+    def location(self):
+        """Get supply point location or `None` if it does not exist."""
+        from corehq.apps.locations.models import SQLLocation
+        if self.location_id is None:
+            return None
+        try:
+            return self.sql_location
+        except SQLLocation.DoesNotExist:
+            return None
+
+    @property
+    def sql_location(self):
+        """Get supply point location
+
+        Raises `SQLLocation.DoesNotExist` if not found.
+        """
+        from corehq.apps.locations.models import SQLLocation
+        return SQLLocation.objects.get(location_id=self.location_id)
 
     @property
     def user_id(self):
@@ -1215,11 +1213,11 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
 
     def __eq__(self, other):
         return isinstance(other, CommCareCaseIndexSQL) and (
-            self.case_id == other.case_id and
-            self.identifier == other.identifier,
-            self.referenced_id == other.referenced_id,
-            self.referenced_type == other.referenced_type,
-            self.relationship_id == other.relationship_id,
+            self.case_id == other.case_id
+            and self.identifier == other.identifier
+            and self.referenced_id == other.referenced_id
+            and self.referenced_type == other.referenced_type
+            and self.relationship_id == other.relationship_id
         )
 
     def __hash__(self):
@@ -1560,7 +1558,7 @@ class FormReprocessRebuild(CaseTransactionDetail):
 
 class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedChanges):
     """
-    Represents the current state of a ledger. Supercedes StockState
+    Represents the current state of a ledger.
     """
     partition_attr = 'case_id'
 

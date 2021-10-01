@@ -5,7 +5,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.case.xform import process_cases_with_casedb
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 
 
 CASE_ID = 'a0cd5e6c5fb84695a4f729d3b1996a93'
@@ -24,6 +24,7 @@ CASE_BLOCK = """
 """.format(case_id=CASE_ID)
 
 
+@sharded
 class StrictDatetimesTest(TestCase):
 
     @classmethod
@@ -39,11 +40,6 @@ class StrictDatetimesTest(TestCase):
             with self.interface.casedb_cache(domain=self.domain) as case_db:
                 with self.assertRaises(PhoneDateValueError):
                     process_cases_with_casedb(xforms, case_db)
-
-
-@use_sql_backend
-class StrictDatetimesTestSQL(StrictDatetimesTest):
-    pass
 
 
 def _make_form_from_case_blocks(case_blocks):

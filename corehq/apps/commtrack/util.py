@@ -3,15 +3,11 @@ import uuid
 from calendar import monthrange
 from collections import namedtuple
 from datetime import date, timedelta
-from xml.etree import cElementTree as ElementTree
 
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 
 from text_unidecode import unidecode
-
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 
 from corehq import feature_previews, toggles
 from corehq.apps.commtrack import const
@@ -22,13 +18,10 @@ from corehq.apps.commtrack.models import (
     ConsumptionConfig,
     StockLevelsConfig,
     StockRestoreConfig,
-    SupplyPointCase,
 )
-from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
-from corehq.form_processor.utils.general import should_use_sql_backend
 
 CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 
@@ -174,11 +167,9 @@ def due_date_monthly(day, from_end=False, past_period=0):
 
 
 def location_map_case_id(user):
-    if should_use_sql_backend(user.domain):
-        user_id = user.user_id
-        case_id = uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user_id).hex
-        return case_id
-    return 'user-owner-mapping-' + user.user_id
+    user_id = user.user_id
+    case_id = uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user_id).hex
+    return case_id
 
 
 def get_commtrack_location_id(user, domain):
@@ -191,12 +182,6 @@ def get_commtrack_location_id(user, domain):
         return user.get_domain_membership(domain.name).location_id
     else:
         return None
-
-
-def get_case_wrapper(data):
-    return {
-        const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
-    }.get(data.get('type'), CommCareCase)
 
 
 def unicode_slug(text):

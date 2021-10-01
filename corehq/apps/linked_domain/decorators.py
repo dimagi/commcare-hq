@@ -2,8 +2,6 @@ from functools import wraps
 
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 
-from no_exceptions.exceptions import Http403
-
 from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
 from corehq.apps.linked_domain.util import can_access_linked_domains
 
@@ -20,7 +18,7 @@ def require_access_to_linked_domains(view_func):
         if can_access_linked_domains(user, domain):
             return call_view()
         else:
-            raise Http403()
+            return HttpResponseForbidden()
 
     return _inner
 

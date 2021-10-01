@@ -7,7 +7,6 @@ from corehq.apps.reports.util import make_form_couch_key
 from corehq.util.dates import iso_string_to_datetime
 
 from couchforms.models import XFormInstance
-from pact.reports.chw import PactCHWProfileReport
 
 
 class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, CustomProjectReport):
@@ -23,19 +22,8 @@ class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, Custo
             DataTablesColumn("Username"),
             DataTablesColumn("Last Submit"),
             DataTablesColumn("Total Submits"),
-            DataTablesColumn("", sortable=False),
         )
         return headers
-
-    def _chw_profile_link(self, user_id):
-        try:
-            return format_html(
-                "<a class='ajax_dialog' href='{}'>{}</a>",
-                PactCHWProfileReport.get_url(self.domain) + "?chw_id=%s" % user_id,
-                "View Profile",
-            )
-        except NoReverseMatch:
-            return "Unknown User ID"
 
     @property
     def rows(self):
@@ -74,7 +62,5 @@ class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, Custo
                 user['raw_username'],
                 last_submit_time(user['user_id']),
                 form_count(user['user_id']),
-                self._chw_profile_link(user['user_id'])
             ])
         return rows
-

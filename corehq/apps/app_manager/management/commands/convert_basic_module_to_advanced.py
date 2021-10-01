@@ -42,7 +42,6 @@ class Command(BaseCommand):
 
         latest_build = get_latest_build_version(domain, app_id)
         if latest_build != app.version:
-            app.validate_app()
             copy = app.make_build(
                 comment="Build before moving {} to an advanced module".format(module.name),
             )

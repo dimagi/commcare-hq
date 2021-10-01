@@ -341,6 +341,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 @require_enterprise_admin
 def enterprise_permissions(request, domain):
     config = EnterprisePermissions.get_by_domain(domain)
+    if not config.id:
+        config.save()
     all_domains = set(config.account.get_domains())
     ignored_domains = all_domains - set(config.domains) - {config.source_domain}
 
@@ -382,7 +384,7 @@ def add_enterprise_permissions_domain(request, domain, target_domain):
 
     redirect = reverse("enterprise_permissions", args=[domain])
     if target_domain not in config.account.get_domains():
-        messages.error(request, _("Could not add {}}.").format(target_domain))
+        messages.error(request, _("Could not add {}.").format(target_domain))
         return HttpResponseRedirect(redirect)
 
     if target_domain not in config.domains:

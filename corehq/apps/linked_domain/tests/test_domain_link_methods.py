@@ -49,5 +49,5 @@ class DomainLinkUrlsTest(TestCase):
         domain_link.save()
         self.addCleanup(domain_link.delete)
 
-        expected_downstream_url = 'test.base.url/a/downstream-domain/'
+        expected_downstream_url = self.downstream.name  # remote downstream urls are equal to the name
         self.assertEqual(expected_downstream_url, domain_link.downstream_url)

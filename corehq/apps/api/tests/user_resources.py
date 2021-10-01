@@ -8,22 +8,26 @@ from flaky import flaky
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
-    PROFILE_SLUG,
 )
-from corehq.apps.groups.models import Group
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import (
     CommCareUser,
-    WebUser,
+    UserHistory,
+    UserRole,
     UserRolePresets,
-    SQLUserRole
+    WebUser,
 )
 from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.const import USER_CHANGE_VIA_API
 from corehq.elastic import send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
@@ -167,7 +171,7 @@ class TestCommCareUserResource(APIResourceTest):
     def test_update(self):
 
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None)
+                                   created_by=None, created_via=None, phone_number="50253311398")
         group = Group({"name": "test"})
         group.save()
 
@@ -189,7 +193,8 @@ class TestCommCareUserResource(APIResourceTest):
             "user_data": {
                 PROFILE_SLUG: self.profile.id,
                 "chw_id": "13/43/DFA"
-            }
+            },
+            "password": "qwerty1234"
         }
 
         backend_id = user._id
@@ -210,6 +215,36 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(modified.metadata[PROFILE_SLUG], self.profile.id)
         self.assertEqual(modified.metadata["imaginary"], "yes")
         self.assertEqual(modified.default_phone_number, "50253311399")
+
+        # test user history audit
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=user._id)
+        self.assertDictEqual(
+            user_history.changes,
+            {
+                'email': 'tlast@example.org',
+                'language': 'pol',
+                'last_name': 'last',
+                'first_name': 'test',
+                'user_data': {
+                    'chw_id': '13/43/DFA',
+                    'commcare_profile': self.profile.id,
+                    'commcare_project': 'qwerty'
+                }
+            }
+        )
+        self.assertTrue("50253311398" in
+                        user_history.change_messages['phone_numbers']['remove_phone_numbers']['phone_numbers'])
+        self.assertTrue("50253311399" in
+                        user_history.change_messages['phone_numbers']['add_phone_numbers']['phone_numbers'])
+        self.assertTrue("50253314588" in
+                        user_history.change_messages['phone_numbers']['add_phone_numbers']['phone_numbers'])
+        self.assertEqual(
+            user_history.change_messages['groups'],
+            UserChangeMessage.groups_info([group])['groups']
+        )
+        self.assertEqual(user_history.change_messages['password'], UserChangeMessage.password_reset()['password'])
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_API)
 
     def test_update_profile_conflict(self):
 
@@ -316,7 +351,7 @@ class TestWebUserResource(APIResourceTest):
         self._check_user_data(self.user, api_users[0])
 
         another_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
-        role = SQLUserRole.objects.get(domain=self.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
+        role = UserRole.objects.get(domain=self.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
         another_user.set_role(self.domain.name, role.get_qualified_id())
         another_user.save()
         self.addCleanup(another_user.delete, self.domain.name, deleted_by=None)
@@ -388,7 +423,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user_back.get_role(self.domain.name).name, 'Field Implementer')
 
     def test_create_with_preset_role_deleted(self):
-        SQLUserRole.objects.filter(domain=self.domain, name=UserRolePresets.APP_EDITOR).delete()
+        UserRole.objects.filter(domain=self.domain, name=UserRolePresets.APP_EDITOR).delete()
         user_json = deepcopy(self.default_user_json)
         user_json["role"] = UserRolePresets.APP_EDITOR
         user_json["is_admin"] = False
@@ -400,7 +435,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.content.decode('utf-8'), '{"error": "Invalid User Role \'App Editor\'"}')
 
     def test_create_with_custom_role(self):
-        new_user_role = SQLUserRole.create(self.domain.name, 'awesomeness')
+        new_user_role = UserRole.create(self.domain.name, 'awesomeness')
         user_json = deepcopy(self.default_user_json)
         user_json["role"] = new_user_role.name
         user_json["is_admin"] = False
@@ -439,7 +474,10 @@ class TestWebUserResource(APIResourceTest):
         user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234",
                               created_by=None, created_via=None)
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user.add_phone_number("9799999999")
+        user.save()
         user_json = deepcopy(self.default_user_json)
+        user_json["phone_numbers"] = ["9999999999", "9899999999"]
         user_json.pop('username')
         backend_id = user._id
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
@@ -452,6 +490,46 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(modified.first_name, "Joe")
         self.assertEqual(modified.last_name, "Admin")
         self.assertEqual(modified.email, "admin@example.com")
+        self.assertEqual(modified.phone_numbers, ["9999999999", "9899999999"])
+        self.assertEqual(modified.default_phone_number, "9999999999")
+
+        # role is ignored
+        self.assertEqual(modified.get_role(self.domain.name), None)
+
+        # is_admin, permissions are simply set on user but have no visible effect
+        self.assertTrue(modified.is_admin)
+        self.assertFalse(modified.is_domain_admin(self.domain.name))
+        self.assertFalse(modified.is_global_admin())
+
+        self.assertEqual(
+            modified.permissions,
+            {
+                'edit_apps': True, 'edit_data': True, 'view_apps': True, 'view_roles': True,
+                'edit_groups': True, 'view_groups': True, 'edit_reports': True, 'view_reports': True,
+                'edit_locations': True, 'edit_web_users': True, 'view_locations': True,
+                'view_web_users': True, 'edit_commcare_users': True, 'view_commcare_users': True,
+                'edit_users_in_groups': True, 'edit_users_in_locations': True
+            }
+        )
+
+        # test user history audit
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=user._id)
+        self.assertDictEqual(
+            user_history.changes,
+            {
+                'email': 'admin@example.com',
+                'last_name': 'Admin',
+                'first_name': 'Joe'
+            }
+        )
+        self.assertTrue("9799999999" in
+                        user_history.change_messages['phone_numbers']['remove_phone_numbers']['phone_numbers'])
+        self.assertTrue("9999999999" in
+                        user_history.change_messages['phone_numbers']['add_phone_numbers']['phone_numbers'])
+        self.assertTrue("9899999999" in
+                        user_history.change_messages['phone_numbers']['add_phone_numbers']['phone_numbers'])
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_API)
 
     def _delete_user(self, username):
         user = WebUser.get_by_username(username)
