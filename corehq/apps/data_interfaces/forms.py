@@ -464,8 +464,6 @@ class CaseRuleCriteriaForm(forms.Form):
                 self._json_fail_hard()
 
             name = obj['name'].strip()
-            if not name or name not in settings.AVAILABLE_CUSTOM_RULE_CRITERIA:
-                raise ValidationError(_("Invalid custom filter id reference"))
 
             result.append({
                 'name': name
@@ -750,8 +748,6 @@ class CaseRuleActionsForm(forms.Form):
                 self._json_fail_hard()
 
             name = obj['name'].strip()
-            if not name or name not in settings.AVAILABLE_CUSTOM_RULE_ACTIONS:
-                raise ValidationError(_("Invalid custom action ID reference"))
 
             result.append({
                 'name': name
