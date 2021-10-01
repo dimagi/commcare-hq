@@ -262,6 +262,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return true;
         };
 
+        self.clearForm = function () {
+            self.name("");
+            self.nameValid(false);
+            self.nameChecked(false);
+            $("#create-case-type-form").trigger("reset");
+            return true;
+        }
+
         return self;
     };
 
