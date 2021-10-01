@@ -191,11 +191,14 @@ class SumoLogicLog(object):
         self.xform = xform
 
     def send_data(self, url):
-        send_device_log_to_sumologic.delay(url, self.log_subreport(), self._get_header('log'))
-        send_device_log_to_sumologic.delay(url, self.user_error_subreport(), self._get_header('user_error'))
-        send_device_log_to_sumologic.delay(url, self.force_close_subreport(), self._get_header('force_close'))
+        send_device_log_to_sumologic.delay(url, self.log_subreport().decode('utf-8'),
+                                           self._get_header('log', True))
+        send_device_log_to_sumologic.delay(url, self.user_error_subreport().decode('utf-8'),
+                                           self._get_header('user_error', True))
+        send_device_log_to_sumologic.delay(url, self.force_close_subreport().decode('utf-8'),
+                                           self._get_header('force_close', True))
 
-    def _get_header(self, fmt):
+    def _get_header(self, fmt, isTask=False):
         """
         https://docs.google.com/document/d/18sSwv2GRGepOIHthC6lxQAh_aUYgDcTou6w9jL2976o/edit#bookmark=id.ao4j7x5tjvt7
         """
@@ -207,11 +210,11 @@ class SumoLogicLog(object):
         if settings.SERVER_ENVIRONMENT == 'production':
             environment = 'prod'
 
-        return {b"X-Sumo-Category": "{env}/{domain}/{fmt}".format(
-            env=environment,
-            domain=self.domain,
-            fmt=fmt,
-        ).encode('utf-8')}
+        header = "{env}/{domain}/{fmt}".format(env=environment, domain=self.domain, fmt=fmt)
+
+        if isTask:
+            return header
+        return {b"X-Sumo-Category": header.encode('utf-8')}
 
     def _fill_base_template(self, log):
         from corehq.apps.receiverwrapper.util import (
