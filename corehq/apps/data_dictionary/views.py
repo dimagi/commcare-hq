@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -123,7 +123,8 @@ def create_case_type(request, domain):
         "description": description,
         "fully_generated": True
     })
-    return redirect(DataDictionaryView.urlname, domain=domain)
+    url = reverse(DataDictionaryView.urlname, args=[domain])
+    return HttpResponseRedirect(f"{url}#{name}")
 
 
 # atomic decorator is a performance optimization for looped saves

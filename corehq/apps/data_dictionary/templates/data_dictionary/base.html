@@ -9,7 +9,8 @@
   <ul class="nav nav-hq-sidebar">
     <!-- ko foreach: caseTypes -->
     <li data-bind="css: { active: $data.name == $root.activeCaseType() }">
-      <a href="#" data-bind="text: $data.name, click: $root.goToCaseType"></a>
+      {# navigation handle by URL hash #}
+      <a data-bind="text: $data.name, attr: {href: $data.url}"></a>
     </li>
     <!-- /ko -->
     <li>
