@@ -11,7 +11,7 @@ from django.http import (
     HttpResponseRedirect,
     HttpResponseServerError,
 )
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
@@ -903,10 +903,9 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
 
     rule_workflow = AutomaticUpdateRule.WORKFLOW_DEDUPLICATE
 
-    # TODO: make this
-    # @property
-    # def edit_url_name(self):
-    #     return DeduplicationRuleEditView.urlname
+    @property
+    def edit_url_name(self):
+        return DeduplicationRuleEditView.urlname
 
 
 class DeduplicationRuleCreateView(DataInterfaceSection):
@@ -920,32 +919,36 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         return context
 
     def post(self, request, *args, **kwargs):
-        name = request.POST.get("name")
-        case_type = request.POST.get("case_type")
-        match_type = request.POST.get("match_type")
-        case_properties = [
-            prop['name'].strip()
-            for prop in json.loads(request.POST.get("case_properties"))
-            if prop
-        ]
-        include_closed = request.POST.get("include_closed") == "on"
-        properties_to_update = [
-            {"name": prop["name"], "value_type": prop["valueType"], "value": prop["value"]}
-            for prop in json.loads(request.POST.get("properties_to_update"))
-        ]
-
+        rule_params, action_params = self.parse_params(request)
         with transaction.atomic():
-            rule = self._create_rule(request.domain, name, case_type)
+            rule = self._create_rule(request.domain, **rule_params)
             action, action_definition = rule.add_action(
                 CaseDeduplicationActionDefinition,
-                match_type=match_type,
-                case_properties=case_properties,
-                include_closed=include_closed,
-                properties_to_update=properties_to_update,
+                **action_params
             )
 
-        messages.success(request, _("Successfully created deduplication rule: {}").format(name))
+        messages.success(request, _("Successfully created deduplication rule: {}").format(rule.name))
         return HttpResponseRedirect(reverse(DeduplicationRuleListView.urlname, args=[self.domain]))
+
+    def parse_params(self, request):
+        rule_params = {
+            "name": request.POST.get("name"),
+            "case_type": request.POST.get("case_type"),
+        }
+        action_params = {
+            "match_type": request.POST.get("match_type"),
+            "case_properties": [
+                prop['name'].strip()
+                for prop in json.loads(request.POST.get("case_properties"))
+                if prop
+            ],
+            "include_closed": request.POST.get("include_closed") == "on",
+            "properties_to_update": [
+                {"name": prop["name"], "value_type": prop["valueType"], "value": prop["value"]}
+                for prop in json.loads(request.POST.get("properties_to_update"))
+            ],
+        }
+        return rule_params, action_params
 
     def _create_rule(self, domain, name, case_type):
         return AutomaticUpdateRule.objects.create(
@@ -958,3 +961,60 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             server_modified_boundary=None,
             workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
         )
+
+
+class DeduplicationRuleEditView(DeduplicationRuleCreateView):
+    urlname = 'edit_deduplication_rule'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.rule_id])
+
+    @property
+    def rule_id(self):
+        return self.kwargs.get('rule_id')
+
+    @property
+    @memoized
+    def rule(self):
+        return get_object_or_404(
+            AutomaticUpdateRule,
+            id=self.rule_id,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            domain=self.domain,
+            deleted=False,
+        )
+
+    @property
+    @memoized
+    def dedupe_action(self):
+        return self.rule.memoized_actions[0].definition
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            "name": self.rule.name,
+            "case_type": self.rule.case_type,
+            "match_type": self.dedupe_action.match_type,
+            "case_properties": self.dedupe_action.case_properties,
+            "include_closed": self.dedupe_action.include_closed,
+            "properties_to_update": self.dedupe_action.properties_to_update,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        rule_params, action_params = self.parse_params(request)
+        self._update_model_instance(self.rule, rule_params)
+        self._update_model_instance(self.dedupe_action, action_params)
+        messages.success(request, _('Rule {name} was updated').format(name=self.rule.name))
+        return HttpResponseRedirect(reverse(DeduplicationRuleListView.urlname, args=[self.domain]))
+
+    def _update_model_instance(self, model, params):
+        to_save = False
+        for key, value in params.items():
+            if getattr(model, key) != value:
+                setattr(model, key, value)
+                to_save = True
+        if to_save:
+            model.save()
