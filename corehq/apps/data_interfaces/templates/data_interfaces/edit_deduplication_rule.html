@@ -6,6 +6,12 @@
 
 {% block page_content %}
   {% initial_page_data 'case_types' case_types %}
+  {% initial_page_data 'name' name %}
+  {% initial_page_data 'case_type' case_type %}
+  {% initial_page_data 'match_type' match_type %}
+  {% initial_page_data 'case_properties' case_properties %}
+  {% initial_page_data 'include_closed' include_closed %}
+  {% initial_page_data 'properties_to_update' properties_to_update %}
   <div id="case-dedupe-rule-definition">
     <form id="rule-definition-form" class="form form-horizontal main-form" method="POST" action="#">
       {% csrf_token %}
