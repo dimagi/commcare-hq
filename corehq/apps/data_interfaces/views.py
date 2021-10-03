@@ -6,7 +6,6 @@ from django.core.cache import cache
 from django.db import transaction
 from django.http import (
     Http404,
-    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
     HttpResponseServerError,
@@ -32,6 +31,7 @@ from corehq.apps.casegroups.dbaccessors import (
     get_number_of_case_groups_in_domain,
 )
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.data_interfaces.deduplication import reset_and_backfill_deduplicate_rule
 from corehq.apps.data_interfaces.dispatcher import (
     EditDataInterfaceDispatcher,
     require_can_edit_data,
@@ -74,6 +74,7 @@ from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.permissions import can_download_data_files
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
@@ -911,6 +912,7 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
 class DeduplicationRuleCreateView(DataInterfaceSection):
     template_name = "data_interfaces/edit_deduplication_rule.html"
     urlname = 'add_deduplication_rule'
+    page_title = ugettext_lazy("Create Deduplication Rule")
 
     @property
     def page_context(self):
@@ -927,8 +929,11 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
                 **action_params
             )
 
+        reset_and_backfill_deduplicate_rule(rule)
         messages.success(request, _("Successfully created deduplication rule: {}").format(rule.name))
-        return HttpResponseRedirect(reverse(DeduplicationRuleListView.urlname, args=[self.domain]))
+        return HttpResponseRedirect(
+            reverse(DeduplicationRuleEditView.urlname, kwargs={"domain": self.domain, "rule_id": rule.id})
+        )
 
     def parse_params(self, request):
         rule_params = {
@@ -965,6 +970,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
 class DeduplicationRuleEditView(DeduplicationRuleCreateView):
     urlname = 'edit_deduplication_rule'
+    page_title = ugettext_lazy("Edit Deduplication Rule")
 
     @property
     def page_url(self):
@@ -993,22 +999,52 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
     @property
     def page_context(self):
         context = super().page_context
+
         context.update({
             "name": self.rule.name,
             "case_type": self.rule.case_type,
             "match_type": self.dedupe_action.match_type,
             "case_properties": self.dedupe_action.case_properties,
             "include_closed": self.dedupe_action.include_closed,
-            "properties_to_update": self.dedupe_action.properties_to_update,
+            "properties_to_update": [
+                {"name": prop["name"], "valueType": prop["value_type"], "value": prop["value"]}
+                for prop in self.dedupe_action.properties_to_update
+            ],
+            "readonly": self.rule.locked_for_editing,
         })
+
+        if self.rule.locked_for_editing:
+            progress_helper = MessagingRuleProgressHelper(self.rule_id)
+            context.update({
+                "progress": progress_helper.get_progress_pct(),
+                "complete": progress_helper.client.get(progress_helper.current_key),
+                "total": progress_helper.client.get(progress_helper.total_key),
+            })
         return context
 
     def post(self, request, *args, **kwargs):
         rule_params, action_params = self.parse_params(request)
-        self._update_model_instance(self.rule, rule_params)
-        self._update_model_instance(self.dedupe_action, action_params)
-        messages.success(request, _('Rule {name} was updated').format(name=self.rule.name))
-        return HttpResponseRedirect(reverse(DeduplicationRuleListView.urlname, args=[self.domain]))
+        rule_modified = self._update_model_instance(self.rule, rule_params)
+        action_modified = self._update_model_instance(self.dedupe_action, action_params)
+
+        if rule_modified or action_modified:
+            reset_and_backfill_deduplicate_rule(self.rule)
+            messages.success(
+                request,
+                _('Rule {name} was updated, and has been queued for backfilling').format(name=self.rule.name)
+            )
+        else:
+            messages.info(
+                request,
+                _('Rule {name} was not updated, since nothing changed').format(name=self.rule.name)
+            )
+
+        return HttpResponseRedirect(
+            reverse(DeduplicationRuleEditView.urlname, kwargs={
+                "domain": self.domain,
+                "rule_id": self.rule.id
+            })
+        )
 
     def _update_model_instance(self, model, params):
         to_save = False
@@ -1018,3 +1054,5 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
                 to_save = True
         if to_save:
             model.save()
+
+        return to_save

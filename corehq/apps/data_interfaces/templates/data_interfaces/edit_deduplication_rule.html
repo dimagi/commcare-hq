@@ -13,9 +13,16 @@
   {% initial_page_data 'include_closed' include_closed %}
   {% initial_page_data 'properties_to_update' properties_to_update %}
   <div id="case-dedupe-rule-definition">
+    {% if readonly %}
+      <p class="help-block alert alert-info"><i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+          This deduplication rule is currently backfilling. You will be able to edit it once it has completed. <strong>{{ progress }}%</strong> ({{ complete }} / {{ total }}) cases processed.
+        {% endblocktrans %}
+      </p>
+    {% endif %}
     <form id="rule-definition-form" class="form form-horizontal main-form" method="POST" action="#">
       {% csrf_token %}
-      <fieldset>
+      <fieldset {% if readonly %} disabled="disabled" {% endif %}>
         <legend>{% trans "Basic Information" %}</legend>
         <div class="form-group">
           <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2 requiredField">
@@ -27,7 +34,7 @@
           </div>
         </div>
       </fieldset>
-      <fieldset>
+      <fieldset {% if readonly %} disabled="disabled" {% endif %}>
         <legend>{% trans "Rule Criteria" %}</legend>
         <div class="form-group">
           <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
@@ -35,7 +42,7 @@
             <span class="asteriskField">*</span>
           </label>
           <div class="controls col-xs-12 col-sm-8 col-md-8 col-lg-6">
-            <select name="case_type" class="hqwebapp-select2 form-control" data-bind="value: caseType, options: caseTypeOptions" required="true">
+            <select name="case_type" class="hqwebapp-select2 form-control" data-bind="value: caseType, options: caseTypeOptions" required="true" {% if readonly %} disabled="disabled" {% endif %}>
             </select>
           </div>
         </div>
@@ -71,7 +78,7 @@
           <input type="checkbox" data-bind="checked: includeClosed" name="include_closed" />
         </div>
       </fieldset>
-      <fieldset>
+      <fieldset {% if readonly %} disabled="disabled" {% endif %}>
         <legend>{% trans "Actions" %}</legend>
         <div class="form-group">
           <div data-bind="template: {name: 'update-case-property-action', foreach: propertiesToUpdate, as: 'propertyToUpdate'} "></div>
@@ -85,11 +92,13 @@
           <input type="text" hidden name="properties_to_update" data-bind="value: serializedPropertiesToUpdate" />
         </div>
       </fieldset>
-      <div class="form-actions">
-        <div class="col-xs-1">
-          <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+      {% if not readonly %}
+        <div class="form-actions">
+          <div class="col-xs-1">
+            <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+          </div>
         </div>
-      </div>
+      {% endif %}
     </form>
   </div>
 
