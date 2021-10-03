@@ -30,3 +30,23 @@ def find_duplicate_cases(domain, case, case_properties, include_closed=False, ma
             clause
         )
     return [CommCareCase.wrap(flatten_result(hit)) for hit in es.run().hits]
+
+
+def reset_and_backfill_deduplicate_rule(rule):
+    from corehq.apps.data_interfaces.models import (
+        AutomaticUpdateRule,
+        CaseDeduplicationActionDefinition,
+        CaseDuplicate,
+    )
+    from corehq.messaging.tasks import initiate_rule_run
+
+    if rule.workflow != AutomaticUpdateRule.WORKFLOW_DEDUPLICATE:
+        raise AttributeError
+
+    deduplicate_action = rule.memoized_actions[0].definition
+    if not isinstance(deduplicate_action, CaseDeduplicationActionDefinition):
+        raise AttributeError
+
+    AutomaticUpdateRule.clear_caches(rule.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+    CaseDuplicate.objects.filter(action=deduplicate_action).delete()
+    initiate_rule_run(rule)
