@@ -1,0 +1,99 @@
+{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main 'data_interfaces/js/list_automatic_update_rules' %}
+
+{% block pagination_header %}
+  <div class="row">
+    <div class="col-sm-8">
+      <p class="lead">
+        {% blocktrans %}
+          Automatically find and update duplicate cases
+        {% endblocktrans %}
+      </p>
+      <p>
+        {% blocktrans %}
+          Create rules for finding and updating duplicate cases.
+          Rules are run on each form submission.
+          When rules are created or edited the rule will be locked for further changes and a backfill process will be run.
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
+  <div class="btn-toolbar">
+    <!-- TODO: create rules -->
+    <a href="{% url "add_deduplication_rule" domain %}">
+      <button type="button" class="btn btn-primary" id="add-new">
+        <i class="fa fa-plus"></i> {% trans "Add Deduplication Rule" %}
+      </button>
+    </a>
+  </div>
+{% endblock pagination_header %}
+
+{% block pagination_templates %}
+  <script type="text/html" id="base-rule-template">
+    <td>
+      <a data-bind="attr: {href: edit_url}">
+        <strong data-bind="text: name"></strong>
+      </a>
+    </td>
+    <td data-bind="text: case_type"></td>
+    <td>
+      <span class="label label-success" data-bind="visible: active">{% trans "Active" %}</span>
+      <span class="label label-danger" data-bind="visible: !active">{% trans "Inactive" %}</span>
+    </td>
+    <td data-bind="text: last_run"></td>
+    <td data-bind="css: {'has-error': action_error}">
+      <button type="button" class="btn btn-default" data-action="activate" data-bind="visible: !active">
+        {% trans "Activate" %}
+      </button>
+      <button type="button" class="btn btn-default" data-action="deactivate" data-bind="visible: active">
+        {% trans "Deactivate" %}
+      </button>
+      <button type="button" data-toggle="modal" class="btn btn-danger"
+              data-bind="attr: { 'data-target': '#delete-rule-' + id }">
+        <i class="fa fa-remove"></i>
+        {% trans "Delete" %}
+      </button>
+      <div class="modal fade" data-bind="attr: { id: 'delete-rule-' + id }">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h3>{% trans "Delete this rule?" %}</h3>
+            </div>
+            <div class="modal-body">
+              <p class="lead">
+                {% blocktrans %}
+                  Are you sure you want to <strong>delete</strong> this rule?
+                {% endblocktrans %}
+              </p>
+              <p class="lead"><strong data-bind="text: name"></strong></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">
+                {% trans "Cancel" %}
+              </button>
+              <button type="button" class="btn btn-danger delete-item-confirm"
+                      data-loading-text="Deleting Rule...">
+                <i class="fa fa-remove"></i>
+                {% trans "Delete Rule" %}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="help-block" data-bind="visible: action_error">
+        <i class="fa fa-exclamation-triangle"></i>
+        <span data-bind="text: action_error"></span>
+      </p>
+    </td>
+  </script>
+  <script type="text/html" id="rule-deleted-template">
+    <td colspan="5">
+      <span data-bind="text: name"></span>
+      <span class="label label-default">{% trans 'Removed' %}</span>
+    </td>
+  </script>
+{% endblock pagination_templates %}
