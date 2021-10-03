@@ -1024,8 +1024,9 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
 
     def post(self, request, *args, **kwargs):
         rule_params, action_params = self.parse_params(request)
-        rule_modified = self._update_model_instance(self.rule, rule_params)
-        action_modified = self._update_model_instance(self.dedupe_action, action_params)
+        with transaction.atomic():
+            rule_modified = self._update_model_instance(self.rule, rule_params)
+            action_modified = self._update_model_instance(self.dedupe_action, action_params)
 
         if rule_modified or action_modified:
             reset_and_backfill_deduplicate_rule(self.rule)
