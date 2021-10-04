@@ -142,7 +142,7 @@ def _deactivate_schedules(domain, survey_only=False):
     we need to make sure any celery tasks only get started after the
     transaction commits.
     """
-    from corehq.messaging.tasks import initiate_messaging_rule_run
+    from corehq.messaging.tasks import initiate_rule_run
 
     for broadcast in _get_active_immediate_broadcasts(domain, survey_only=survey_only):
         AlertSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=False)
@@ -171,7 +171,7 @@ def _deactivate_schedules(domain, survey_only=False):
             else:
                 raise TypeError("Expected AlertSchedule or TimedSchedule")
 
-            initiate_messaging_rule_run(rule)
+            initiate_rule_run(rule)
 
 
 class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
