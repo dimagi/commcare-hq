@@ -595,7 +595,8 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         from corehq.apps.linked_domain.applications import get_downstream_app_id_map
         id_map = get_downstream_app_id_map(domain)
         if app_id in id_map:
-            build = _fetch_build(domain, request.couch_user.username, id_map[app_id])
+            if len(id_map[app_id]) == 1:
+                build = _fetch_build(domain, request.couch_user.username, id_map[app_id][0])
         if not build:
             return _fail(_("Could not find application."))
     build = wrap_app(build)
