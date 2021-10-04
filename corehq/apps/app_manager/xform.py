@@ -1570,7 +1570,6 @@ class XForm(WrappedNode):
         if not actions or (form.requires == 'none' and 'open_case' not in actions):
             case_block = None
         else:
-            extra_updates = {}
             case_block = XFormCaseBlock(self)
             module = form.get_module()
             if form.requires != 'none':
@@ -1612,18 +1611,17 @@ class XForm(WrappedNode):
                     case_id=case_id_xpath
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
-                    extra_updates['external_id'] = actions['open_case'].external_id
+                    case_block.add_case_updates({'external_id': actions['open_case'].external_id})
             else:
                 self.add_bind(
                     nodeset="case/@case_id",
                     calculate=case_id_xpath,
                 )
 
-            if 'update_case' in actions or extra_updates:
+            if 'update_case' in actions:
                 self._add_case_updates(
                     case_block,
                     getattr(actions.get('update_case'), 'update', {}),
-                    extra_updates=extra_updates,
                     # case_id_xpath is set based on an assumption about the way suite_xml.py determines the
                     # case_id. If suite_xml changes the way it sets case_id for case updates, this will break.
                     case_id_xpath=case_id_xpath
@@ -1985,7 +1983,7 @@ class XForm(WrappedNode):
             self.add_instance('casedb', src='jr://instance/casedb')
             self.has_casedb = True
 
-    def _add_case_updates(self, case_block, updates, extra_updates=None, base_node_path=None, case_id_xpath=None):
+    def _add_case_updates(self, case_block, updates, base_node_path=None, case_id_xpath=None):
         from corehq.apps.app_manager.util import split_path
 
         def group_updates_by_case(updates):
@@ -2001,8 +1999,6 @@ class XForm(WrappedNode):
             return updates_by_case
 
         updates_by_case = group_updates_by_case(updates)
-        if extra_updates:
-            updates_by_case[''].update(extra_updates)
         if '' in updates_by_case:
             # 90% use-case
             basic_updates = updates_by_case.pop('')
