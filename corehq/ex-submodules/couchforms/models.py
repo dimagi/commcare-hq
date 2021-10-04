@@ -48,7 +48,7 @@ def doc_types():
     """
     return {
         'XFormInstance': XFormInstance,
-        'XFormArchived': XFormArchived,
+        'XFormArchived': XFormInstance,
         'XFormDeprecated': XFormDeprecated,
         'XFormDuplicate': XFormDuplicate,
         'XFormError': XFormError,
@@ -423,21 +423,6 @@ class XFormDeprecated(XFormError):
 
     @property
     def is_deprecated(self):
-        return True
-
-
-class XFormArchived(XFormError):
-    """
-    Archived forms don't show up in reports
-    """
-
-    def save(self, *args, **kwargs):
-        # force set the doc type and call the right superclass
-        self["doc_type"] = "XFormArchived"
-        XFormInstance.save(self, *args, **kwargs)
-
-    @property
-    def is_archived(self):
         return True
 
 
