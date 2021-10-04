@@ -12,7 +12,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         initialMatchType,
         initialCaseProperties,
         initialIncludeClosed,
-        initialPropertiesToUpdate,
+        initialPropertiesToUpdate
     ) {
         var self = {};
         self.name = ko.observable(initialName);
@@ -90,7 +90,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
                 initialPageData.get('match_type'),
                 initialPageData.get('case_properties'),
                 initialPageData.get('include_closed'),
-                initialPageData.get('properties_to_update'),
+                initialPageData.get('properties_to_update')
             )
         );
     });
