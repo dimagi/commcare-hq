@@ -103,6 +103,7 @@ class ApplicationDataSourceUIHelper(object):
                                                      required=False)
         if enable_registry:
             self.registry_slug_field.widget = forms.Select()
+            self.application_field.required = False
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
@@ -112,6 +113,8 @@ class ApplicationDataSourceUIHelper(object):
         )
         if self.enable_registry:
             self.all_sources.update(get_registry_case_sources(domain))
+            self.application_field.choices += [('', '--------')]
+            self.all_sources.update({'': {"name": '', "case": [], "form": []}})
 
         self.source_field.choices = []
 
@@ -143,11 +146,13 @@ class ApplicationDataSourceUIHelper(object):
                                            for ds in available_data_sources]
         self.registry_slug_field.choices = sort_tuple_field_choices_by_name(
             [(registry["slug"], registry["name"]) for registry in get_data_registry_dropdown_options(domain)],
-        )
+        ) + [('', '--------')]
 
         # NOTE: This corresponds to a view-model that must be initialized in your template.
         # See the doc string of this class for more information.
         self.application_field.widget.attrs = {'data-bind': 'value: application'}
+        if self.enable_registry:
+            self.application_field.widget.attrs['data-bind'] += ", disable: registrySlug() != ''"
         self.source_type_field.widget.attrs = {'data-bind': 'value: sourceType'}
         self.source_field.widget.attrs = {'data-bind': '''
             options: _.union(sourcesMap[application()][sourceType()], sourcesMap[registrySlug()][sourceType()]),
@@ -156,7 +161,7 @@ class ApplicationDataSourceUIHelper(object):
             value: sourceId
         '''}
         self.registry_slug_field.widget.attrs = {'data-bind': '''
-            disable: sourceType() != 'case',
+            disable: sourceType() != 'case' || application() != '',
             options: registriesMap[sourceId()],
             optionsText: function(item){return item.text},
             optionsValue: function(item){return item.value},
