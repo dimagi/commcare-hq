@@ -51,7 +51,7 @@
             <!-- /ko -->
           <!-- /ko -->
           <br>
-          <ul data-bind="foreach: selectedReports()">
+          <ul data-bind="foreach: selectedReports()" style="word-wrap: break-word">
             <div data-bind="if: !configMany()">
               <li data-bind="with: firstConfig()">
                 <!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)

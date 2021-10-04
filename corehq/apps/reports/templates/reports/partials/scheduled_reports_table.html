@@ -154,10 +154,15 @@
               </div>
               <form name="delete_scheduled_report" data-bind="attr: {action: deleteUrl}" method="post">
                 {% csrf_token %}
-                <div class="modal-body">
+                <div class="modal-body" style="word-wrap: break-word">
                   <p>{% trans "Are you sure you want to stop sending this report?" %}</p>
-                  <div data-bind="foreach: configs">
-                    <!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)</div>
+                  <div data-bind="with: firstConfig()">
+                    <!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)
+                    <ul data-bind="if: $parent.configMany">
+                      <div data-bind="foreach: $parent.configs().slice(1, $parent.configs().length)" >
+                        <li><!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)</li>
+                      </div>
+                    </ul>
                   </div>
                 </div>
                 <div class="modal-footer">

@@ -871,27 +871,27 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
             for report in scheduled_reports:
                 if not _can_delete_scheduled_report(report, user, domain):
                     raise Http404()
+
+            for report in scheduled_reports:
+                report.delete()
+            if int(delete_count) > 1:
+                plural = "s were"
+            else:
+                plural = " was"
+            messages.success(
+                request,
+                format_html(_("<strong>{}</strong> Scheduled report{} deleted!"), delete_count, plural)
+            )
+            # not necessary since it just refreshes from the js
+            return HttpResponse(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
         else:
             if not _can_delete_scheduled_report(scheduled_report, user, domain):
                 raise Http404()
 
-    if delete_count:
-        for report in scheduled_reports:
-            report.delete()
-        if int(delete_count) > 1:
-            plural = "s were"
-        else:
-            plural = " was"
-        messages.success(
-            request,
-            format_html(_("<strong>{}</strong> Scheduled report{} deleted!"), delete_count, plural)
-        )
-        #not necessary since it just refreshes from the js
-        return HttpResponse(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
-    else:
-        scheduled_report.delete()
-        messages.success(request, "Scheduled report deleted!")
-        return HttpResponseRedirect(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
+            scheduled_report.delete()
+            messages.success(request, "Scheduled report deleted!")
+
+    return HttpResponseRedirect(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
 
 
 def _can_delete_scheduled_report(report, user, domain):
