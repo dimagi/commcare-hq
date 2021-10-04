@@ -181,6 +181,8 @@ class CaseSearchCriteria:
         elif key == CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY:
             if value:
                 return case_search.blacklist_owner_id(value.split(' ')), False
+        elif key == COMMCARE_PROJECT:
+            return filters.domain(value), False
         elif key not in UNSEARCHABLE_KEYS and not key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
             return self._get_case_property_query(key, value), True
         return None, None
