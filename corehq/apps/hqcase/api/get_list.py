@@ -8,13 +8,15 @@ from corehq.apps.case_search.filter_dsl import (
     CaseFilterError,
     build_filter_from_xpath,
 )
-from corehq.apps.es import case_search
+from corehq.apps.es import case_search, filters
 from corehq.apps.es import cases as case_es
 from dimagi.utils.parsing import FALSE_STRINGS
 from .core import UserError, serialize_es_case
 
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
+INDEXED_AFTER = 'indexed_on.gte'
+LAST_CASE_ID = 'last_case_id'
 
 
 def _to_boolean(val):
@@ -70,8 +72,12 @@ def get_list(domain, params):
     if 'cursor' in params:
         params_string = b64decode(params['cursor']).decode('utf-8')
         params = QueryDict(params_string).dict()
+        last_date = params.pop(INDEXED_AFTER, None)
+        last_id = params.pop(LAST_CASE_ID, None)
+        query = _get_cursor_query(domain, params, last_date, last_id)
+    else:
+        query = _get_query(domain, params)
 
-    query = _get_query(domain, params)
     es_result = query.run()
     hits = es_result.hits
     ret = {
@@ -88,6 +94,19 @@ def get_list(domain, params):
         ret['next'] = {'cursor': b64encode(cursor.encode('utf-8'))}
 
     return ret
+
+
+def _get_cursor_query(domain, params, last_date, last_id):
+    query = _get_query(domain, params)
+    return query.filter(
+        filters.OR(
+            filters.AND(
+                filters.term('@indexed_on', last_date),
+                filters.range_filter('_id', gt=last_id),
+            ),
+            case_search.indexed_on(gt=last_date),
+        )
+    )
 
 
 def _get_query(domain, params):
