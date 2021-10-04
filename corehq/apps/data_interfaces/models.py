@@ -27,7 +27,7 @@ from dimagi.utils.modules import to_function
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
-from corehq.apps.data_interfaces.deduplication import find_duplicate_cases
+from corehq.apps.data_interfaces.deduplication import find_duplicate_case_ids
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
 from corehq.apps.hqcase.utils import bulk_update_cases, update_case
@@ -936,26 +936,20 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
 
     def when_case_matches(self, case, rule):
         domain = case.domain
-        duplicate_cases = find_duplicate_cases(
+        new_duplicate_case_ids = set(find_duplicate_case_ids(
             domain, case, self.case_properties, self.include_closed, self.match_type
-        )
-
-        new_duplicate_case_ids = {
-            duplicate_case.case_id for duplicate_case in duplicate_cases
-        }  # The duplicates that should now be tracked in the system
-
-        if case.case_id not in new_duplicate_case_ids:
-            # This can happen if the case being searched isn't in the case search index
-            # (e.g. if this is a case create, and the pillows are racing each other.)
-            duplicate_cases.append(case)
-            new_duplicate_case_ids.add(case.case_id)
+        ))
+        # If the case being searched isn't in the case search index
+        # (e.g. if this is a case create, and the pillows are racing each other.)
+        # Add it to the list
+        new_duplicate_case_ids.add(case.case_id)
 
         with transaction.atomic():
             if self._handle_existing_duplicates(case.case_id, new_duplicate_case_ids):
                 return CaseRuleActionResult(num_updates=0)
-            CaseDuplicate.bulk_create_duplicate_relationships(self, case, duplicate_cases)
+            CaseDuplicate.bulk_create_duplicate_relationships(self, case, new_duplicate_case_ids)
 
-        num_updates = self._update_cases(domain, rule, duplicate_cases)
+        num_updates = self._update_cases(domain, rule, new_duplicate_case_ids)
         return CaseRuleActionResult(num_updates=num_updates)
 
     def _handle_existing_duplicates(self, case_id, new_duplicate_case_ids):
@@ -992,9 +986,10 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         CaseDuplicate.objects.filter(action=self, case_id=case_id).delete()
         return False
 
-    def _update_cases(self, domain, rule, duplicate_cases):
+    def _update_cases(self, domain, rule, duplicate_case_ids):
         """Updates all the duplicate cases according to the rule
         """
+        duplicate_cases = CaseAccessors(domain).get_cases(list(duplicate_case_ids))
         case_updates = self._get_case_updates(duplicate_cases)
         for case_update_batch in chunked(case_updates, 100):
             result = bulk_update_cases(
@@ -1041,14 +1036,13 @@ class CaseDuplicate(models.Model):
         )
 
     @classmethod
-    def bulk_create_duplicate_relationships(cls, action, initial_case, duplicate_cases):
-        case_ids = [case.case_id for case in duplicate_cases]
-        existing_case_duplicates = CaseDuplicate.objects.filter(case_id__in=case_ids, action=action)
+    def bulk_create_duplicate_relationships(cls, action, initial_case, duplicate_case_ids):
+        existing_case_duplicates = CaseDuplicate.objects.filter(case_id__in=duplicate_case_ids, action=action)
         existing_case_duplicate_case_ids = [case.case_id for case in existing_case_duplicates]
         case_duplicates = cls.objects.bulk_create([
-            cls(case_id=duplicate_case.case_id, action=action)
-            for duplicate_case in duplicate_cases
-            if duplicate_case.case_id not in existing_case_duplicate_case_ids
+            cls(case_id=duplicate_case_id, action=action)
+            for duplicate_case_id in duplicate_case_ids
+            if duplicate_case_id not in existing_case_duplicate_case_ids
         ])
         case_duplicates += existing_case_duplicates
         initial_case_duplicate = next(

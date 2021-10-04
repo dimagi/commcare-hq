@@ -277,6 +277,24 @@ class CaseDeduplicationActionTest(TestCase):
             )
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
+    @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
+    def test_updates_a_duplicate_only_once(self, find_duplicates_mock):
+        """Ensure that all duplicates are only updated once per change
+        """
+
+        duplicates, uniques = self._create_cases()
+        find_duplicates_mock.return_value = [duplicate.case_id for duplicate in duplicates]
+
+        self.rule.run_actions_when_case_matches(duplicates[0])
+        self.rule.run_actions_when_case_matches(duplicates[1])
+
+        # duplicates[1] should already have been updated by the first action.
+        # It should only have two transactions (create and the initial
+        # duplicate update). This prevents a situation where there are many
+        # duplicates of the same case that get updated N times
+        form_transactions = CaseAccessors(self.domain).get_case(duplicates[1].case_id).get_form_transactions()
+        self.assertEqual(2, len(form_transactions))
+
     def test_unique_not_updated(self, find_duplicates_mock):
         """Ensure that new unique cases are not updated
         """

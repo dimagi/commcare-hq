@@ -1,13 +1,11 @@
-from casexml.apps.case.models import CommCareCase
-
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.es import queries
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.es.case_search import CaseSearchES
 
 DUPLICATE_LIMIT = 1000
 
 
-def find_duplicate_cases(domain, case, case_properties, include_closed=False, match_type="ALL"):
+def find_duplicate_case_ids(domain, case, case_properties, include_closed=False, match_type="ALL"):
     es = CaseSearchES().domain(domain).size(DUPLICATE_LIMIT).case_type(case.type)
 
     if not include_closed:
@@ -29,4 +27,4 @@ def find_duplicate_cases(domain, case, case_properties, include_closed=False, ma
             case_property_value or '',
             clause
         )
-    return [CommCareCase.wrap(flatten_result(hit)) for hit in es.run().hits]
+    return es.get_ids()
