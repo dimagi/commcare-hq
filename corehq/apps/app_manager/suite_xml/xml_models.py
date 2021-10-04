@@ -519,6 +519,8 @@ class Entry(OrderedXmlObject, XmlObject):
     def require_instances(self, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in self.instances}
         for instance in instances:
+            if 'remote' in instance.src:
+                continue
             if (instance.id, instance.src) not in used:
                 self.instances.append(
                     # it's important to make a copy,

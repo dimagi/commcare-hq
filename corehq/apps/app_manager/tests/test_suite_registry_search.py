@@ -61,28 +61,46 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         expected_entry_query = """
         <partial>
-          <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/"
+          <session>
+            <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results"
+                template="case" default_search="false">
+              <data key="case_type" ref="'case'"/>
+              <data key="commcare_registry" ref="'myregistry'"/>
+              <prompt key="name">
+                <display>
+                  <text>
+                    <locale id="search_property.m0.name"/>
+                  </text>
+                </display>
+              </prompt>
+              <prompt key="dob">
+                <display>
+                  <text>
+                    <locale id="search_property.m0.dob"/>
+                  </text>
+                </display>
+              </prompt>
+            </query>
+            <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open']"
+                value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+            <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/"
                 storage-instance="registry" template="case" default_search="true">
-            <data key="case_type" ref="'case'"/>
-            <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
-            <data key="commcare_registry" ref="'myregistry'"/>
-          </query>
+              <data key="case_type" ref="'case'"/>
+              <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+              <data key="commcare_registry" ref="'myregistry'"/>
+            </query>
+          </session>
         </partial>"""
-        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query")
+        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session")
 
         # assert that session instance is added to the entry
         self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
 
-        # assert post is disabled
-        self.assertXmlHasXpath(suite, "./remote-request[1]/post[@relevant='false()']")
-
-        expected_data = """
-        <partial>
-          <data key="commcare_registry" ref="'myregistry'"/>
-        </partial>
-        """
-        self.assertXmlPartialEqual(
-            expected_data, suite, "./remote-request[1]/session/query/data[@key='commcare_registry']")
+        # assert remote request is not added
+        self.assertXmlDoesNotHaveXpath(suite, "./remote-request")
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_case_short']/action")
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_short']")
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_search_data_registry_additional_registry_query(self, *args):
@@ -105,11 +123,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             <data key="commcare_registry" ref="'myregistry'"/>
           </query>
         </partial>"""
-        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[2]")
+        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[3]")
 
-        # assert that session and registry instances are added to the entry
         self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
-        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='registry']")
+        self.assertXmlDoesNotHaveXpath(suite, "./entry[1]/instance[@id='registry']")
 
     def test_form_linking_with_registry_module(self, *args):
         self.form.post_form_workflow = WORKFLOW_FORM
