@@ -71,7 +71,8 @@ def get_list(domain, params):
         params_string = b64decode(params['cursor']).decode('utf-8')
         params = QueryDict(params_string).dict()
 
-    es_result = _run_query(domain, params)
+    query = _get_query(domain, params)
+    es_result = query.run()
     hits = es_result.hits
     ret = {
         "matching_records": es_result.total,
@@ -80,35 +81,41 @@ def get_list(domain, params):
 
     cases_in_result = len(hits)
     if cases_in_result and es_result.total > cases_in_result:
-        cursor = urlencode({**params, **{'indexed_on.gte': hits[-1]["@indexed_on"]}})
+        cursor = urlencode({**params, **{
+            INDEXED_AFTER: hits[-1]["@indexed_on"],
+            LAST_CASE_ID: hits[-1]["_id"],
+        }})
         ret['next'] = {'cursor': b64encode(cursor.encode('utf-8'))}
 
     return ret
 
 
-def _run_query(domain, params):
-    params = params.copy()
-    page_size = _to_int(params.pop('limit', DEFAULT_PAGE_SIZE), 'limit')
+def _get_query(domain, params):
+    page_size = _to_int(params.get('limit', DEFAULT_PAGE_SIZE), 'limit')
     if page_size > MAX_PAGE_SIZE:
         raise UserError(f"You cannot request more than {MAX_PAGE_SIZE} cases per request.")
-
     query = (case_search.CaseSearchES()
              .domain(domain)
              .size(page_size)
-             .sort("@indexed_on"))
-
+             .sort("@indexed_on")
+             .sort("_id", reset_sort=False))
     for key, val in params.items():
-        if key == 'xpath':
-            query = query.filter(_get_xpath_filter(domain, val))
-        elif key in SIMPLE_FILTERS:
-            query = query.filter(SIMPLE_FILTERS[key](val))
-        elif '.' in key and key.split(".")[0] in COMPOUND_FILTERS:
-            prefix, qualifier = key.split(".", maxsplit=1)
-            query = query.filter(COMPOUND_FILTERS[prefix](qualifier, val))
-        else:
-            raise UserError(f"'{key}' is not a valid parameter.")
+        query = query.filter(_get_filter(domain, key, val))
+    return query
 
-    return query.run()
+
+def _get_filter(domain, key, val):
+    if key == 'limit':
+        pass
+    elif key == 'xpath':
+        return _get_xpath_filter(domain, val)
+    elif key in SIMPLE_FILTERS:
+        return SIMPLE_FILTERS[key](val)
+    elif '.' in key and key.split(".")[0] in COMPOUND_FILTERS:
+        prefix, qualifier = key.split(".", maxsplit=1)
+        return COMPOUND_FILTERS[prefix](qualifier, val)
+    else:
+        raise UserError(f"'{key}' is not a valid parameter.")
 
 
 def _get_xpath_filter(domain, xpath):
