@@ -59,8 +59,8 @@ hqDefine('case_importer/js/excel_fields', [
             row.hasNonDiscoverableField = ko.computed(function () {
                 return row.caseFieldSpec().description && !row.caseFieldSpec().discoverable;
             });
-            row.valuesHint = ko.computed(function () {
-                return row.caseFieldSpec().values_hint || [];
+            row.valuesHints = ko.computed(function () {
+                return row.caseFieldSpec().values_hints || [];
             });
 
             row.reset = function () {

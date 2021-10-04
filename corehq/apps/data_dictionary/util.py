@@ -127,16 +127,16 @@ def get_case_property_description_dict(domain):
     return descriptions_dict
 
 
-def get_values_hint_dict(domain, case_type_name):
-    values_hint_dict = defaultdict(list)
+def get_values_hints_dict(domain, case_type_name):
+    values_hints_dict = defaultdict(list)
     case_type = CaseType.objects.filter(domain=domain, name=case_type_name).first()
     if case_type:
         for prop in case_type.properties.all():
             if prop.data_type == 'date':
-                values_hint_dict[prop.name] = [ugettext('YYYY-MM-DD')]
+                values_hints_dict[prop.name] = [ugettext('YYYY-MM-DD')]
             elif prop.data_type == 'select':
-                values_hint_dict[prop.name] = [av.allowed_value for av in prop.allowed_values.all()]
-    return values_hint_dict
+                values_hints_dict[prop.name] = [av.allowed_value for av in prop.allowed_values.all()]
+    return values_hints_dict
 
 
 def save_case_property(name, case_type, domain=None, data_type=None,

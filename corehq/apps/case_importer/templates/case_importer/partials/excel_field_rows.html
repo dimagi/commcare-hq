@@ -75,11 +75,9 @@
   </td>
 
   <td>
-    <!--ko if: valuesHint().length-->
-      <ul class="list-unstyled">
-        <!--ko foreach: valuesHint--><li data-bind="text: $data"></li><!--/ko-->
+      <ul class="list-unstyled" data-bind="visible: valuesHints().length, foreach: valuesHints">
+        <li data-bind="text: $data"></li>
       </ul>
-    <!--/ko-->
   </td>
 
 </tr>
