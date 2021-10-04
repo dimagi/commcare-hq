@@ -22,7 +22,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
 
         self.matchType = ko.observable(initialMatchType);
         self.matchTypeText = ko.computed(function () {
-            if (self.matchType() == "ANY") {
+            if (self.matchType() === "ANY") {
                 return gettext("OR");
             }
             return gettext("AND");
@@ -49,10 +49,10 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         self.addCaseProperty = function () {
             self.caseProperties.push(caseProperty(''));
         };
-        if (self.caseProperties().length == 0) {
+        if (self.caseProperties().length === 0) {
             self.addCaseProperty();
         }
-        self.serializedCaseProperties = ko.computed(function (){
+        self.serializedCaseProperties = ko.computed(function () {
             return ko.toJSON(self.caseProperties);
         });
 
@@ -71,7 +71,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         self.removePropertyToUpdate = function (item) {
             self.propertiesToUpdate.remove(item);
         };
-        self.addPropertyToUpdate = function (item) {
+        self.addPropertyToUpdate = function () {
             self.propertiesToUpdate.push(propertyToUpdate('', 'EXACT', ''));
         };
         self.serializedPropertiesToUpdate = ko.computed(function () {
@@ -81,7 +81,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         return self;
     };
 
-    $(function() {
+    $(function () {
         $("#case-dedupe-rule-definition").koApplyBindings(
             caseDedupe(
                 initialPageData.get('name'),
