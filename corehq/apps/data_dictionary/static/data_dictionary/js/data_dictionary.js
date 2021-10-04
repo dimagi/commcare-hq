@@ -270,6 +270,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return true;
         };
 
+        $(document).on('hide.bs.modal',  () => {
+            return self.clearForm();
+        });
+
         return self;
     };
 
