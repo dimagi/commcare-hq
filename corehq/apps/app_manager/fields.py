@@ -15,6 +15,7 @@ from couchforms.analytics import get_exports_by_form
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reports.analytics.esaccessors import (
@@ -82,6 +83,7 @@ class ApplicationDataSourceUIHelper(object):
         self.all_sources = {}
         self.registry_sources = {}
         self.enable_raw = enable_raw
+        self.enable_registry = enable_registry
         source_choices = [
             (DATA_SOURCE_TYPE_CASE, _("Case")),
             (DATA_SOURCE_TYPE_FORM, _("Form"))
@@ -108,6 +110,9 @@ class ApplicationDataSourceUIHelper(object):
         self.application_field.choices = sort_tuple_field_choices_by_name(
             [(app_id, source['name']) for app_id, source in self.all_sources.items()]
         )
+        if self.enable_registry:
+            self.all_sources.update(get_registry_case_sources(domain))
+
         self.source_field.choices = []
 
         def _add_choices(field, choices):
@@ -145,7 +150,7 @@ class ApplicationDataSourceUIHelper(object):
         self.application_field.widget.attrs = {'data-bind': 'value: application'}
         self.source_type_field.widget.attrs = {'data-bind': 'value: sourceType'}
         self.source_field.widget.attrs = {'data-bind': '''
-            options: sourcesMap[application()][sourceType()],
+            options: _.union(sourcesMap[application()][sourceType()], sourcesMap[registrySlug()][sourceType()]),
             optionsText: function(item){return item.text},
             optionsValue: function(item){return item.value},
             value: sourceId
@@ -173,8 +178,8 @@ class ApplicationDataSourceUIHelper(object):
                 "<strong>Case</strong>: Display data from your cases. You must be using case management for this "
                 "option."),
             "application": _("Which application should the data come from?"),
+            "registry_slug": _("Select the data registry containing the data you wish to access in the report"),
             "source": _("Choose the case type or form from which to retrieve data for this report."),
-            "registry_slug": _("Select the data registry containing the data you wish to access in the report")
         }
         return [
             hqcrispy.FieldWithHelpBubble(name, help_bubble_text=help_text)
@@ -200,6 +205,17 @@ def get_app_sources(domain):
             ]
         }
         for app in apps
+    }
+
+
+def get_registry_case_sources(domain):
+    return {
+        registry.name: {
+            "name": registry.name,
+            "case": [{"text": t, "value": t} for t in registry.wrapped_schema.case_types],
+            "form": []
+        }
+        for registry in DataRegistry.objects.visible_to_domain(domain)
     }
 
 
