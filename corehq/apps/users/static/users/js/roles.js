@@ -249,7 +249,7 @@ hqDefine('users/js/roles',[
                         showOption: true,
                         editPermission: self.permissions.edit_messaging,
                         viewPermission: null,
-                        text: gettext("<strong>Messaging</strong> &mdash; configure and send SMS messaging."),
+                        text: gettext("<strong>Messaging</strong> &mdash; configure and send conditional alerts"),
                         showEditCheckbox: true,
                         editCheckboxLabel: "edit-messaging-checkbox",
                         showViewCheckbox: false,
