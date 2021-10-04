@@ -52,7 +52,7 @@ def doc_types():
         'XFormDeprecated': XFormDeprecated,
         'XFormDuplicate': XFormDuplicate,
         'XFormError': XFormError,
-        'SubmissionErrorLog': SubmissionErrorLog,
+        'SubmissionErrorLog': XFormInstance,
     }
 
 
@@ -439,43 +439,6 @@ class XFormArchived(XFormError):
     @property
     def is_archived(self):
         return True
-
-
-class SubmissionErrorLog(XFormError):
-    """
-    When a hard submission error (typically bad XML) is received we save it
-    here.
-    """
-    md5 = StringProperty()
-
-    def __str__(self):
-        return "Doc id: %s, Error %s" % (self.get_id, self.problem)
-
-    def get_xml(self):
-        return self.fetch_attachment(ATTACHMENT_NAME)
-
-    def save(self, *args, **kwargs):
-        # we have to override this because XFormError does too
-        self["doc_type"] = "SubmissionErrorLog"
-        # and we can't use super for the same reasons XFormError
-        XFormInstance.save(self, *args, **kwargs)
-
-    @property
-    def is_submission_error_log(self):
-        return True
-
-    @classmethod
-    def from_instance(cls, instance, message):
-        """
-        Create an instance of this record from a submission body
-        """
-        log = SubmissionErrorLog(
-            received_on=datetime.datetime.utcnow(),
-            md5=hashlib.md5(instance).hexdigest(),
-            problem=message,
-        )
-        log.deferred_put_attachment(instance, ATTACHMENT_NAME, content_type="text/xml")
-        return log
 
 
 class DefaultAuthContext(DocumentSchema):

@@ -26,7 +26,7 @@ from corehq.util.doc_processor.sql import SqlDocumentProvider
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
-    XFormDuplicate, SubmissionErrorLog
+    XFormDuplicate
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
@@ -267,7 +267,6 @@ class CouchFormReindexerFactory(ReindexerFactory):
             XFormDuplicate,
             ('XFormInstance-Deleted', XFormInstance),
             ('HQSubmission', XFormInstance),
-            SubmissionErrorLog,
         ])
         return ResumableBulkElasticPillowReindexer(
             doc_provider,

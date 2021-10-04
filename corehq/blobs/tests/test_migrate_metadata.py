@@ -38,7 +38,6 @@ class TestMigrateBackend(TestCase):
         "XFormDeprecated": mod.xform.XFormDeprecated,
         "XFormDuplicate": mod.xform.XFormDuplicate,
         "XFormError": mod.xform.XFormError,
-        "SubmissionErrorLog": mod.xform.SubmissionErrorLog,
         "HQSubmission": mod.xform.XFormInstance,
         "CommCareCase": mod.cases.CommCareCase,
         'CommCareCase-deleted': mod.cases.CommCareCase,
