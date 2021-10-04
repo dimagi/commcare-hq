@@ -17,7 +17,7 @@
     </div>
 
     <!-- Debugger content -->
-    <div class="debugger-container">
+    <div data-bind="attr: {'aria-hidden': isMinimized() ? true : false}" class="debugger-container">
       <!-- navigation tabs -->
 
       <nav class="navbar navbar-default debugger-navbar">
