@@ -89,6 +89,11 @@ def run_auto_update_rules_for_case(case):
 def _get_cached_rule(domain, rule_id):
     rules = AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
     rules = [rule for rule in rules if rule.pk == rule_id]
+    if len(rules) == 1:
+        return rules[0]
+
+    deduplicate_rules = AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+    rules = [rule for rule in deduplicate_rules if rule.pk == rule_id]
     return rules[0] if len(rules) == 1 else None
 
 
