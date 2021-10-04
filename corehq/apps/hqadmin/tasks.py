@@ -164,13 +164,6 @@ def _mass_email_attachment(name, rows):
     return attachment
 
 
-@periodic_task_when_true(settings.IS_SAAS_ENVIRONMENT, run_every=crontab(minute="0", hour="*/4"),
-                         queue='background_queue')
-def cleanup_stale_es_on_couch_domains_task():
-    from corehq.apps.hqadmin.couch_domain_utils import cleanup_stale_es_on_couch_domains
-    cleanup_stale_es_on_couch_domains()
-
-
 @periodic_task(queue='background_queue', run_every=crontab(minute="*/5"))
 def track_es_doc_counts():
     es = get_es_new()
