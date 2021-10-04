@@ -83,5 +83,4 @@ branches:
     - ml/remove-pickles-case-importer #Minha Sept 30
     - es/webuser-activity  # Ethan Sept 30
     - sk/registry-case-management  # Simon Oct 4
-    - jls/entry-prompt-instances # Jenny Oct 4
 submodules: { }
