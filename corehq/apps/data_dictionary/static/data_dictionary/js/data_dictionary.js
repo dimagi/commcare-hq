@@ -249,6 +249,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.nameValid = ko.observable(false);
         self.nameChecked = ko.observable(false);
         self.name.subscribe((value) => {
+            if (!value) {
+                return;
+            }
             let existing = _.find(self.caseTypes(), function (prop) {
                 return prop.name === value;
             });
@@ -263,10 +266,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.clearForm = function () {
+            $("#create-case-type-form").trigger("reset");
             self.name("");
             self.nameValid(false);
             self.nameChecked(false);
-            $("#create-case-type-form").trigger("reset");
             return true;
         };
 
