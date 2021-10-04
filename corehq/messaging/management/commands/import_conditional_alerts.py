@@ -17,7 +17,7 @@ from corehq.messaging.scheduling.models import (
     TimedEvent,
     SMSContent,
 )
-from corehq.messaging.tasks import initiate_messaging_rule_run
+from corehq.messaging.tasks import initiate_rule_run
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 import json
@@ -109,6 +109,6 @@ class Command(BaseCommand):
         print("Import complete. Starting instance refresh tasks...")
 
         for rule in rules:
-            initiate_messaging_rule_run(rule)
+            initiate_rule_run(rule)
 
         print("Done.")
