@@ -1567,12 +1567,13 @@ class XForm(WrappedNode):
         if form.requires == 'none' and not form_opens_case and 'update_case' in actions:
             raise CaseError("To update a case you must either open a case or require a case to begin with")
 
+        module = form.get_module()
+        is_registry_case = _module_offers_registry_search(module) and not form_opens_case
         delegation_case_block = None
         if not actions or (form.requires == 'none' and not form_opens_case):
             case_block = None
         else:
-            case_block = XFormCaseBlock(self)
-            module = form.get_module()
+            case_block = XFormCaseBlock(self) if not is_registry_case else None
             if form.requires != 'none':
                 def make_delegation_stub_case_block():
                     path = 'cc_delegation_stub/'
@@ -1613,13 +1614,13 @@ class XForm(WrappedNode):
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     case_block.add_case_updates({'external_id': actions['open_case'].external_id})
-            else:
+            elif not is_registry_case:
                 self.add_bind(
                     nodeset="case/@case_id",
                     calculate=case_id_xpath,
                 )
 
-            if 'update_case' in actions:
+            if 'update_case' in actions and not is_registry_case:
                 self._add_case_updates(
                     case_block,
                     getattr(actions.get('update_case'), 'update', {}),
@@ -1628,7 +1629,7 @@ class XForm(WrappedNode):
                     case_id_xpath=case_id_xpath
                 )
 
-            if 'close_case' in actions:
+            if 'close_case' in actions and not is_registry_case:
                 case_block.add_close_block(self.action_relevance(actions['close_case'].condition))
 
             if 'case_preload' in actions:
@@ -1639,7 +1640,7 @@ class XForm(WrappedNode):
                     case_id_xpath=case_id_xpath
                 )
 
-        if 'subcases' in actions:
+        if 'subcases' in actions and not is_registry_case:
             subcases = actions['subcases']
 
             repeat_context_count = form.actions.count_subcases_per_repeat_context()
@@ -2239,3 +2240,9 @@ def _infer_vellum_type(control, bind):
         })
         return None
     return result['name']
+
+
+def _module_offers_registry_search(module):
+    """Local function to allow mocking in tests"""
+    from .util import module_offers_registry_search
+    return module_offers_registry_search(module)
