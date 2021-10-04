@@ -268,7 +268,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.nameChecked(false);
             $("#create-case-type-form").trigger("reset");
             return true;
-        }
+        };
 
         return self;
     };
