@@ -5,6 +5,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/main",
     "analytix/js/google",
+    "hqwebapp/js/ui_elements/ui-element-key-val-list",
     "hqwebapp/js/knockout_bindings.ko",
 ], function (
     $,
@@ -12,7 +13,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
     _,
     initialPageData,
     hqMain,
-    googleAnalytics
+    googleAnalytics,
+    uiElementKeyValueList
 ) {
     var caseType = function (name, fhirResourceType) {
         var self = {};
@@ -27,13 +29,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 self.properties.push(groupObj);
                 _.each(properties, function (prop) {
                     var propObj = propertyListItem(prop.name, false, prop.group, self.name, prop.data_type,
-                        prop.description, prop.fhir_resource_prop_path, prop.deprecated,
+                        prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
                         prop.removeFHIRResourcePropertyPath);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
                     propObj.dataType.subscribe(changeSaveButton);
                     propObj.deprecated.subscribe(changeSaveButton);
                     propObj.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
+                    propObj.allowedValues.on('change', changeSaveButton);
                     self.properties.push(propObj);
                 });
             });
@@ -42,7 +45,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description,
+    var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description, allowedValues,
         fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath) {
         var self = {};
         self.name = name;
@@ -56,6 +59,15 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
+        self.allowedValues = uiElementKeyValueList.new(
+            String(Math.random()).slice(2), /* guid */
+            interpolate('Edit valid values for "%s"', [name]), /* modalTitle */
+            gettext("When importing case data, CommCare will warn if rows don't match valid values"), /* subTitle */
+            {"key": gettext("valid value"), "value": gettext("description")}, /* placeholders */
+            10 /* maxDisplay */
+        );
+        self.allowedValues.val(allowedValues);
+        self.$allowedValues = self.allowedValues.ui;
 
         self.toggle = function () {
             self.expanded(!self.expanded());
@@ -78,6 +90,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.restorePath = function () {
             self.removeFHIRResourcePropertyPath(false);
         };
+
+        self.canHaveAllowedValues = ko.computed(function () {
+            return self.dataType() === 'select';
+        });
 
         return self;
     };
@@ -111,6 +127,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
                             'deprecated': element.deprecated(),
                             'removeFHIRResourcePropertyPath': element.removeFHIRResourcePropertyPath(),
+                            'allowed_values': element.allowedValues.val(),
                         };
                         postProperties.push(data);
                     } else {
@@ -192,12 +209,13 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName())) {
-                var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
+                var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType(), '', '', {});
                 prop.dataType.subscribe(changeSaveButton);
                 prop.description.subscribe(changeSaveButton);
                 prop.fhirResourcePropPath.subscribe(changeSaveButton);
                 prop.deprecated.subscribe(changeSaveButton);
                 prop.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
+                prop.allowedValues.on('change', changeSaveButton);
                 self.newPropertyName(undefined);
                 self.casePropertyList.push(prop);
             }
