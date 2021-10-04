@@ -1563,11 +1563,12 @@ class XForm(WrappedNode):
     def _create_casexml_2(self, form):
         actions = form.active_actions()
 
-        if form.requires == 'none' and 'open_case' not in actions and 'update_case' in actions:
+        form_opens_case = 'open_case' in actions
+        if form.requires == 'none' and not form_opens_case and 'update_case' in actions:
             raise CaseError("To update a case you must either open a case or require a case to begin with")
 
         delegation_case_block = None
-        if not actions or (form.requires == 'none' and 'open_case' not in actions):
+        if not actions or (form.requires == 'none' and not form_opens_case):
             case_block = None
         else:
             case_block = XFormCaseBlock(self)
@@ -1600,7 +1601,7 @@ class XForm(WrappedNode):
                     delegation_case_block = make_delegation_stub_case_block()
 
             case_id_xpath = get_add_case_preloads_case_id_xpath(module, form)
-            if 'open_case' in actions:
+            if form_opens_case:
                 open_case_action = actions['open_case']
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
