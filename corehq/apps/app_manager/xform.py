@@ -468,7 +468,7 @@ class XFormCaseBlock(object):
         self.elem.append(update_block)
         return update_block
 
-    def add_update_block(self, updates, make_relative=False):
+    def add_case_updates(self, updates, make_relative=False):
         update_block = self.update_block
         if not updates:
             return
@@ -1396,7 +1396,7 @@ class XForm(WrappedNode):
             self._add_usercase_bind(usercase_path)
             usercase_block = _make_elem('{x}commcare_usercase')
             case_block = XFormCaseBlock(self, usercase_path)
-            case_block.add_update_block(actions['usercase_update'].update)
+            case_block.add_case_updates(actions['usercase_update'].update)
             usercase_block.append(case_block.elem)
             self.data_node.append(usercase_block)
 
@@ -1682,7 +1682,7 @@ class XForm(WrappedNode):
                     case_id=case_id
                 )
 
-                subcase_block.add_update_block(subcase.case_properties)
+                subcase_block.add_case_updates(subcase.case_properties)
 
                 if subcase.close_condition.is_active():
                     subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
@@ -1947,7 +1947,7 @@ class XForm(WrappedNode):
             )
 
             if action.case_properties:
-                open_case_block.add_update_block(action.case_properties)
+                open_case_block.add_case_updates(action.case_properties)
 
             for case_index in action.case_indices:
                 parent_meta = form.actions.actions_meta_by_tag.get(case_index.tag)
@@ -2007,7 +2007,7 @@ class XForm(WrappedNode):
             # 90% use-case
             basic_updates = updates_by_case.pop('')
             if basic_updates:
-                case_block.add_update_block(basic_updates)
+                case_block.add_case_updates(basic_updates)
         if updates_by_case:
             self.add_casedb()
 
@@ -2038,7 +2038,7 @@ class XForm(WrappedNode):
                     node_path,
                     parent_path,
                     case_id_xpath=case_id_xpath)
-                parent_case_block.add_update_block(updates)
+                parent_case_block.add_case_updates(updates)
                 node.append(parent_case_block.elem)
 
     def get_scheduler_case_updates(self):
