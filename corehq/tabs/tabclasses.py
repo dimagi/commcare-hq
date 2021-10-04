@@ -160,8 +160,6 @@ class ProjectReportsTab(UITab):
             'show_in_dropdown': True,
         }]
         from corehq.apps.users.models import Permissions
-        # For SaaS envs, if we want to display the tab only if Feature Flag is
-        # enabled on domain and the role has the permission to edit_ucrs
         is_ucr_toggle_enabled = (
             toggles.USER_CONFIGURABLE_REPORTS.enabled(
                 self.domain, namespace=toggles.NAMESPACE_DOMAIN
