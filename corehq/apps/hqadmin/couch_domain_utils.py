@@ -11,9 +11,6 @@ from corehq.apps.es import FormES
 from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.couch import bulk_get_revs
-from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
-    create_form_change_meta,
-)
 
 
 def cleanup_stale_es_on_couch_domains(
