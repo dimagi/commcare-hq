@@ -26,10 +26,10 @@ from corehq.apps.linked_domain.models import (
     KeywordLinkDetail,
     ReportLinkDetail,
 )
-from corehq.apps.linked_domain.util import server_to_user_time
+from corehq.apps.linked_domain.util import server_to_user_time, is_keyword_linkable
 from corehq.apps.sms.models import Keyword
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.util import get_existing_reports
 
 
 def build_domain_link_view_model(link, timezone):
@@ -84,7 +84,7 @@ def get_upstream_and_downstream_reports(domain):
     """
     upstream_list = {}
     downstream_list = {}
-    reports = get_report_configs_for_domain(domain)
+    reports = get_existing_reports(domain)
     for report in reports:
         if report.report_meta.master_id:
             downstream_list[report.get_id] = report
@@ -156,6 +156,7 @@ def build_keyword_view_model(keyword, last_update=None):
         name=f"{LINKED_MODELS_MAP[MODEL_KEYWORD]} ({keyword.keyword})",
         detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json(),
         last_update=last_update,
+        is_linkable=is_keyword_linkable(keyword),
     )
 
 
@@ -213,13 +214,14 @@ def build_superuser_view_models(ignore_models=None):
     return view_models
 
 
-def build_linked_data_view_model(model_type, name, detail, last_update=None, can_update=True):
+def build_linked_data_view_model(model_type, name, detail, last_update=None, can_update=True, is_linkable=True):
     return {
         'type': model_type,
         'name': name,
         'detail': detail,
         'last_update': last_update,
-        'can_update': can_update
+        'can_update': can_update,
+        'is_linkable': is_linkable,
     }
 
 
@@ -289,10 +291,13 @@ def pop_report_for_action(action, reports):
     try:
         report = reports.get(report_id)
         del reports[report_id]
+        return report
     except KeyError:
         report = ReportConfiguration.get(report_id)
-
-    return report
+        if report.doc_type == "ReportConfiguration-Deleted":
+            return None
+        else:
+            return report
 
 
 def pop_keyword_for_action(action, keywords):
