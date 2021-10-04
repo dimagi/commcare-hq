@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
-
+from corehq.apps.users.decorators import get_permission_name
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
@@ -159,10 +159,22 @@ class ProjectReportsTab(UITab):
             'icon': 'icon-tasks fa fa-tasks',
             'show_in_dropdown': True,
         }]
-        if toggles.USER_CONFIGURABLE_REPORTS.enabled(self.couch_user.username):
-            # Only show for **users** with the flag. This flag is also available for domains
-            # but should not be granted by domain, as the feature is too advanced to turn
-            # on for all of a domain's users.
+        from corehq.apps.users.models import Permissions
+        is_ucr_toggle_enabled = (
+            toggles.USER_CONFIGURABLE_REPORTS.enabled(
+                self.domain, namespace=toggles.NAMESPACE_DOMAIN
+            )
+            or toggles.USER_CONFIGURABLE_REPORTS.enabled(
+                self.couch_user.username, namespace=toggles.NAMESPACE_USER
+            )
+        )
+        has_ucr_permissions = self.couch_user.has_permission(
+            self.domain,
+            get_permission_name(Permissions.edit_ucrs)
+        )
+
+        if is_ucr_toggle_enabled and has_ucr_permissions:
+
             from corehq.apps.userreports.views import UserConfigReportsHomeView
             tools.append({
                 'title': _(UserConfigReportsHomeView.section_name),
