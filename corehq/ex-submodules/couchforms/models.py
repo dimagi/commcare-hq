@@ -4,7 +4,6 @@ import datetime
 import hashlib
 import logging
 import time
-import uuid
 
 from django.db import models
 
@@ -51,7 +50,7 @@ def doc_types():
         'XFormArchived': XFormInstance,
         'XFormDeprecated': XFormInstance,
         'XFormDuplicate': XFormInstance,
-        'XFormError': XFormError,
+        'XFormError': XFormInstance,
         'SubmissionErrorLog': XFormInstance,
     }
 
@@ -352,41 +351,6 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
     def unarchive(self, user_id=None, trigger_signals=True):
         if self.is_archived:
             FormAccessors.do_archive(self, False, user_id, trigger_signals)
-
-
-class XFormError(XFormInstance):
-    """
-    Instances that have errors go here.
-    """
-    problem = StringProperty()
-    orig_id = StringProperty()
-
-    @classmethod
-    def from_xform_instance(cls, instance, error_message, with_new_id=False):
-        instance.__class__ = XFormError
-        instance.doc_type = 'XFormError'
-        instance.problem = error_message
-        instance.orig_id = None
-
-        if with_new_id:
-            new_id = uuid.uuid4().hex
-            instance.orig_id = instance._id
-            instance._id = new_id
-            if '_rev' in instance:
-                # clear the rev since we want to make a new doc
-                del instance['_rev']
-
-        return instance
-
-    def save(self, *args, **kwargs):
-        # we put this here, in case the doc hasn't been modified from an original
-        # XFormInstance we'll force the doc_type to change.
-        self["doc_type"] = "XFormError"
-        super(XFormError, self).save(*args, **kwargs)
-
-    @property
-    def is_error(self):
-        return True
 
 
 class DefaultAuthContext(DocumentSchema):
