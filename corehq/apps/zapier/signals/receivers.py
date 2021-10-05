@@ -38,7 +38,9 @@ def zapier_subscription_pre_save(sender, instance, *args, **kwargs):
             HttpBadRequest('The passed event type is not valid.')
         )
 
+    print("HOLA")
     repeater.save()
+    print(repeater._id)
     instance.repeater_id = repeater.get_id
 
 

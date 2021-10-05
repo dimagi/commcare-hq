@@ -198,6 +198,8 @@ class TestDeleteDomain(TestCase):
 
     def setUp(self):
         super(TestDeleteDomain, self).setUp()
+        from corehq.apps.domain.tests.test_utils import delete_all_domains
+        delete_all_domains()
         self.domain = Domain(name="test", is_active=True)
         self.domain.save()
         self.domain.convert_to_commtrack()
