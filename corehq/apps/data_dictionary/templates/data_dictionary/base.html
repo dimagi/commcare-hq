@@ -154,14 +154,7 @@
         {% if fhir_integration_enabled %}
           <th>{% trans "FHIR Resource Property Path" %}</th>
         {% endif %}
-        <th>
-          {% trans "Valid Values &amp; Formats" %}
-          <span
-            class="hq-help-template"
-            data-title="{% trans 'Valid values or format' %}"
-            data-content="{% trans 'Only import rows with cells that match the listed values or formats' %}">
-          </span>
-        </th>
+        <th>{% include "data_dictionary/partials/valid_values_th_content.html" %}</th>
         <th></th>
         </thead>
         <tbody data-bind="sortable: casePropertyList">
