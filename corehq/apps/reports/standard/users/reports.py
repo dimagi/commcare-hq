@@ -195,7 +195,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             cached_user_id_to_username(record.changed_by),
             _get_action_display(record.action),
             record.changed_via,
-            list(get_messages(record.change_messages)),
+            self._html_list(list(get_messages(record.change_messages))),
             self._user_history_details_cell(record.changes, domain),
             ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
         ]
@@ -204,15 +204,17 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         items = []
         if changes is None:
             return None
-        for key, value in changes.items():
-            if isinstance(value, dict):
-                value = self._html_list(value, unstyled=unstyled)
-            elif isinstance(value, list):
-                value = format_html(", ".join(value))
-            else:
-                value = format_html(str(value))
-            items.append("<li>{}: {}</li>".format(key, value))
-
+        if isinstance(changes, dict):
+            for key, value in changes.items():
+                if isinstance(value, dict):
+                    value = self._html_list(value, unstyled=unstyled)
+                elif isinstance(value, list):
+                    value = format_html(", ".join(value))
+                else:
+                    value = format_html(str(value))
+                items.append("<li>{}: {}</li>".format(key, value))
+        elif isinstance(changes, list):
+            items = ["<li>{}</li>".format(format_html(change)) for change in changes]
         class_attr = "class='list-unstyled'" if unstyled else ""
         return mark_safe(f"<ul {class_attr}>{''.join(items)}</ul>")
 
