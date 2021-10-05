@@ -103,10 +103,16 @@ class CaseProperty(models.Model):
             try:
                 datetime.strptime(value, ISO_DATE_FORMAT)
             except ValueError:
-                raise exceptions.InvalidDate()
-        elif value and self.data_type == 'select':
+                raise exceptions.InvalidDate(sample=value)
+        elif value and self.data_type == 'select' and self.allowed_values.exists():
             if not self.allowed_values.filter(allowed_value=value).exists():
-                raise exceptions.InvalidSelectValue()
+                raise exceptions.InvalidSelectValue(sample=value, message=self.valid_values_message)
+
+    @property
+    def valid_values_message(self):
+        allowed_values = self.allowed_values.values_list('allowed_value', flat=True)
+        allowed_string = ', '.join(f'"{av}"' for av in allowed_values)
+        return _("Valid values: %s") % allowed_string
 
 
 class CasePropertyAllowedValue(models.Model):
