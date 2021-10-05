@@ -8,6 +8,7 @@ from collections import OrderedDict, namedtuple
 
 from django.conf import settings
 from django.contrib import messages
+from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404, JsonResponse
 from django.utils.decorators import method_decorator
@@ -81,6 +82,7 @@ from corehq.apps.userreports.app_manager.helpers import (
 from corehq.apps.userreports.const import (
     DATA_SOURCE_MISSING_APP_ERROR_MESSAGE,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    DATA_SOURCE_REBUILD_CACHE_PREFIX,
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
     REPORT_BUILDER_EVENTS_KEY,
@@ -1050,7 +1052,13 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'data_source': self.config,
             'read_only': self.read_only,
             'used_by_reports': self.get_reports(),
+            'is_rebuilding': self.is_rebuilding,
         }
+
+    @property
+    def is_rebuilding(self):
+        key = DATA_SOURCE_REBUILD_CACHE_PREFIX + self.config_id
+        return bool(cache.get(key))
 
     @property
     def page_url(self):
