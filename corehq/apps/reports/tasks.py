@@ -211,18 +211,18 @@ def _store_excel_in_blobdb(report_class, file, domain, report_slug):
     return key
 
 
-@task(serializer='pickle')
+@task
 def build_form_multimedia_zipfile(
         domain,
         export_id,
-        es_filters,
+        filters,
         download_id,
         owner_id,
 ):
     from corehq.apps.export.models import FormExportInstance
     from corehq.apps.export.export import get_export_query
     export = FormExportInstance.get(export_id)
-    es_query = get_export_query(export, es_filters)
+    es_query = get_export_query(export, filters, are_filters_es_formatted=True)
     form_ids = get_form_ids_with_multimedia(es_query)
     _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id,
                                       build_form_multimedia_zipfile)
