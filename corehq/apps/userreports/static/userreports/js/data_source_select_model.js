@@ -9,7 +9,6 @@ hqDefine("userreports/js/data_source_select_model", function () {
             'data_source': gettext('Data Source'),
         },
         sourceId: ko.observable(""),
-        registriesMap: hqImport("hqwebapp/js/initial_page_data").get("registries_map"),
         registrySlug: ko.observable(""),
     };
 });

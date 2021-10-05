@@ -81,7 +81,6 @@ class ApplicationDataSourceUIHelper(object):
 
     def __init__(self, enable_raw=False, enable_registry=False):
         self.all_sources = {}
-        self.registry_sources = {}
         self.enable_raw = enable_raw
         self.enable_registry = enable_registry
         source_choices = [
@@ -107,7 +106,6 @@ class ApplicationDataSourceUIHelper(object):
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
-        self.registry_sources = get_registry_sources(self.all_sources.values(), domain)
         self.application_field.choices = sort_tuple_field_choices_by_name(
             [(app_id, source['name']) for app_id, source in self.all_sources.items()]
         )
@@ -162,7 +160,6 @@ class ApplicationDataSourceUIHelper(object):
             self.application_field.widget.attrs['data-bind'] += ", disable: registrySlug() != ''"
             self.registry_slug_field.widget.attrs = {'data-bind': '''
                 disable: sourceType() != 'case' || application() != '',
-                options: registriesMap[sourceId()],
                 optionsText: function(item){return item.text},
                 optionsValue: function(item){return item.value},
                 value: registrySlug
@@ -226,18 +223,6 @@ def get_registry_case_sources(domain):
             "form": []
         }
         for registry in DataRegistry.objects.visible_to_domain(domain)
-    }
-
-
-def get_registry_sources(values, domain):  # TODO: refactor
-    case_types = [ct['value'] for app in values for ct in app['case']]
-    blank_value = [{"text": '', "value": ''}]
-    return {
-        case_type:
-            blank_value + [{"text": registry["name"], "value": registry["slug"]}
-                           for registry in get_data_registry_dropdown_options(domain,
-                                                                              required_case_types=set([case_type]))]
-        for case_type in case_types
     }
 
 
