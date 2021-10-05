@@ -16,8 +16,8 @@ def get_casedb_schema(form):
     app = form.get_app()
 
     subsets = []
-    if not form.get_module().search_config.data_registry:
-        subsets.extend(_get_case_schema_subsets(app, form))
+    if form.requires_case() and not form.get_module().search_config.data_registry:
+        subsets.extend(_get_case_schema_subsets(app, form.get_module().case_type))
 
     if is_usercase_in_use(app.domain):
         subsets.append({
@@ -46,8 +46,8 @@ def get_registry_schema(form):
     data_registry = form.get_module().search_config.data_registry
 
     subsets = []
-    if data_registry:
-        subsets.extend(_get_case_schema_subsets(app, form, hashtag='#registry_case/'))
+    if form.requires_case() and data_registry:
+        subsets.extend(_get_case_schema_subsets(app, form.get_module().case_type, hashtag='#registry_case/'))
 
     return {
         "id": "registry",
@@ -59,32 +59,28 @@ def get_registry_schema(form):
     }
 
 
-def _get_case_schema_subsets(app, form, hashtag='#case/'):
-    base_case_type = form.get_module().case_type if form.requires_case() else None
+def _get_case_schema_subsets(app, base_case_type, hashtag='#case/'):
     builder = ParentCasePropertyBuilder.for_app(app, ['case_name'], include_parent_properties=False)
     related = builder.get_parent_type_map(None)
     map = builder.get_properties_by_case_type()
     descriptions_dict = get_case_property_description_dict(app.domain)
 
-    if base_case_type:
-        # Generate hierarchy of case types, represented as a list of lists of strings:
-        # [[base_case_type], [parent_type1, parent_type2...], [grandparent_type1, grandparent_type2...]]
-        # Vellum case management only supports three levels
-        generation_names = ['case', 'parent', 'grandparent']
-        generations = [[] for g in generation_names]
+    # Generate hierarchy of case types, represented as a list of lists of strings:
+    # [[base_case_type], [parent_type1, parent_type2...], [grandparent_type1, grandparent_type2...]]
+    # Vellum case management only supports three levels
+    generation_names = ['case', 'parent', 'grandparent']
+    generations = [[] for g in generation_names]
 
-        def _add_ancestors(ctype, generation):
-            if generation < len(generation_names):
-                generations[generation].append(ctype)
-                for parent in related.get(ctype, {}).get('parent', []):
-                    _add_ancestors(parent, generation + 1)
+    def _add_ancestors(ctype, generation):
+        if generation < len(generation_names):
+            generations[generation].append(ctype)
+            for parent in related.get(ctype, {}).get('parent', []):
+                _add_ancestors(parent, generation + 1)
 
-        _add_ancestors(base_case_type, 0)
+    _add_ancestors(base_case_type, 0)
 
-        # Remove any duplicate types or empty generations
-        generations = [set(g) for g in generations if len(g)]
-    else:
-        generations = []
+    # Remove any duplicate types or empty generations
+    generations = [set(g) for g in generations if len(g)]
 
     return [{
         "id": generation_names[i],
