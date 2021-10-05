@@ -391,6 +391,8 @@ class MySavedReportsView(BaseProjectReportSectionView):
         if user_email and context_secret:
             details['unsubscribeUrl'] = reverse(ReportNotificationUnsubscribeView.urlname,
                                                 args=(report.get_id, user_email, context_secret))
+        else:
+            details['unsubscribeUrl'] = ''
 
         return details
 

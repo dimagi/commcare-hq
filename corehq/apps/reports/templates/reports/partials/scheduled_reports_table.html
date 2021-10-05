@@ -49,7 +49,7 @@
       {% endif %}
 
       <td>
-        <div data-bind="if: !configMany()">
+        <div data-bind="if: !configMany">
           <div data-bind="foreach: configs">
             <a data-bind="attr: {href: url}"><!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)</a>
           </div>

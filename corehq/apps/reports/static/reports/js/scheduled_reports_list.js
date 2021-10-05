@@ -10,28 +10,48 @@ hqDefine("reports/js/scheduled_reports_list", [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/components.ko', // pagination & feedback widget
-
+    'hqwebapp/js/assert_properties',
+    'hqwebapp/js/components.ko' // pagination & feedback widget
 ], function (
     $,
     ko,
     _,
+    assertProperties
 ) {
+    "use strict";
+    var scheduledReportModel = function (report, isOwner, isAdmin) {
+        assertProperties.assert(report, [
+            'id',
+            'addedToBulk',
+            'domain',
+            'owner_id',
+            'recipient_emails',
+            'config_ids',
+            'send_to_owner',
+            'hour',
+            'minute',
+            'day',
+            'uuid',
+            'start_date',
+            'configs',
+            'is_editable',
+            'owner_email',
+            'day_name',
+            'editUrl',
+            'viewUrl',
+            'sendUrl',
+            'deleteUrl',
+            'unsubscribeUrl'
+        ]);
 
-    var scheduledReportModel = function (data, isOwner, isAdmin) {
+        var self = ko.mapping.fromJS(report);
 
-        var self = ko.mapping.fromJS(data);
-
-        self.configMany = ko.computed(function() {
-            if (data.configs.length === 1){
-                return false;
+        self.configMany = true;
+        if (report.configs.length === 1){
+                self.configMany = false;
             };
-            return true;
-        });
 
-        self.recipient_email_count = ko.computed(function() {
-            return self.recipient_emails().length;
-        });
+        self.recipient_email_count = self.recipient_emails().length;
 
         self.deleteScheduledReport = function(observable, event){
             $(event.currentTarget).closest('form').submit();
@@ -39,21 +59,20 @@ hqDefine("reports/js/scheduled_reports_list", [
 
         self.is_owner = isOwner;
         self.is_admin = isAdmin
-        self.firstConfig = ko.observable(data.configs[0]);
+        self.firstConfig = ko.observable(report.configs[0]);
 
         return self;
     };
 
     var scheduledReportsPanelModel = function (options) {
-        var self = {};
+        assertProperties.assert(options, ['reports', 'is_owner', 'is_admin', 'header']);
+
+        var self = _.extend({}, options);
 
         self.scheduledReports = ko.observableArray();
         self.items = ko.observableArray();
         self.isLoadingPanel = ko.observable(true);
         self.perPage = ko.observable();
-        self.header = options.header;
-        self.is_owner = options.is_owner;
-        self.is_admin = options.is_admin;
 
         self.scheduledReports(ko.utils.arrayMap(options.reports, function (report) {
             return scheduledReportModel(report, self.is_owner, self.is_admin);
@@ -83,6 +102,7 @@ hqDefine("reports/js/scheduled_reports_list", [
     }
 
     var scheduledReportListModel = function (options) {
+        assertProperties.assert(options, ['scheduled_reports', 'other_scheduled_reports', 'is_admin']);
 
         var self = {};
         window.scrollTo(0, 0);
@@ -136,8 +156,8 @@ hqDefine("reports/js/scheduled_reports_list", [
         self.bulkSend = function(){
             self.bulkAction(true);
             self.isBulkSending(true);
-            sendList = _.filter(self.reports(), function (e) {return e.addedToBulk()});
-            ids = []
+            var sendList = _.filter(self.reports(), function (e) {return e.addedToBulk()});
+            var ids = []
             for (let i = 0; i < sendList.length; i++) {
                 ids.push(sendList[i].id())
             }
@@ -156,8 +176,8 @@ hqDefine("reports/js/scheduled_reports_list", [
         self.bulkDelete = function(){
             self.bulkAction(true);
             self.isBulkDeleting(true);
-            deleteList = _.filter(self.reports(), function (e) {return e.addedToBulk()});
-            ids = []
+            var deleteList = _.filter(self.reports(), function (e) {return e.addedToBulk()});
+            var ids = []
             for (let i = 0; i < deleteList.length; i++) {
                 ids.push(deleteList[i].id())
             }
