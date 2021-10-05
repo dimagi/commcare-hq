@@ -5,6 +5,7 @@ from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
     CaseSearchProperty,
+    Itemset,
     Module,
     AdditionalRegistryQuery, DetailColumn, FormLink, DetailTab,
 )
@@ -44,7 +45,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.module.search_config = CaseSearch(
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
-                CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
+                CaseSearchProperty(name='favorite_color', label={'en': 'Favorite Color'}, itemset=Itemset(
+                    instance_id='colors', instance_uri='jr://fixture/item-list:colors',
+                    nodeset="instance('colors')/colors_list/colors", label='name', sort='name', value='value'),
+                )
             ],
             data_registry="myregistry"
         )
@@ -73,12 +77,17 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                   </text>
                 </display>
               </prompt>
-              <prompt key="dob">
+              <prompt key="favorite_color">
                 <display>
                   <text>
-                    <locale id="search_property.m0.dob"/>
+                    <locale id="search_property.m0.favorite_color"/>
                   </text>
                 </display>
+                <itemset nodeset="instance('colors')/colors_list/colors">
+                  <label ref="name"/>
+                  <value ref="value"/>
+                  <sort ref="name"/>
+                </itemset>
               </prompt>
             </query>
             <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open']"
