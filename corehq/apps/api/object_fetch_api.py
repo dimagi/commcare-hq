@@ -26,10 +26,11 @@ from corehq.apps.reports.views import (
     require_form_view_permission,
     safely_get_form,
 )
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
+    AttachmentContent,
     CaseAccessors,
-    FormAccessors,
     get_cached_case_attachment,
 )
 
@@ -148,9 +149,17 @@ class FormAttachmentAPI(View):
         safely_get_form(request, domain, form_id)
 
         try:
-            content = FormAccessors(domain).get_attachment_content(form_id, attachment_id)
+            meta = FormAccessorSQL.get_attachment_by_name(form_id, attachment_id)
         except AttachmentNotFound:
             raise Http404
+
+        content = AttachmentContent(meta.content_type, meta.open())
+        if meta.is_audio:
+            content_body = content.content_body
+            content_type = content.content_type
+            response = HttpResponse(content_body, content_type=content_type)
+            response['Content-Disposition'] = 'inline'
+            return response
 
         return StreamingHttpResponse(
             streaming_content=FileWrapper(content.content_stream),

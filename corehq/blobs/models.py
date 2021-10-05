@@ -94,6 +94,11 @@ class BlobMeta(PartitionedModel, Model):
         return (self.content_type or "").startswith("image/")
 
     @property
+    def is_audio(self):
+        """Use content type to check if blob is an audio"""
+        return self.name.endswith(('mp3', 'mp4'))
+
+    @property
     def is_compressed(self):
         return self.compressed_length is not None
 
