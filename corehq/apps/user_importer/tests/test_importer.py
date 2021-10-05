@@ -1067,12 +1067,9 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
 
-        change_messages = {"phone_numbers": {}}
-        change_messages["phone_numbers"].update(
-            UserChangeMessage.phone_numbers_added([number1, number2])['phone_numbers']
-        )
-        change_messages["phone_numbers"].update(
-            UserChangeMessage.phone_numbers_removed([initial_default_number])['phone_numbers']
+        change_messages = UserChangeMessage.phone_numbers_updated(
+            added=[number1, number2],
+            removed=[initial_default_number]
         )
         self.assertEqual(
             set(user_history.change_messages["phone_numbers"]["add_phone_numbers"]["phone_numbers"]),
@@ -1110,12 +1107,9 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
 
-        change_messages = {"phone_numbers": {}}
-        change_messages["phone_numbers"].update(
-            UserChangeMessage.phone_numbers_added([number2])["phone_numbers"]
-        )
-        change_messages["phone_numbers"].update(
-            UserChangeMessage.phone_numbers_removed([initial_default_number])["phone_numbers"]
+        change_messages = UserChangeMessage.phone_numbers_updated(
+            added=[number2],
+            removed=[initial_default_number]
         )
         change_messages.update(UserChangeMessage.password_reset())
         self.assertDictEqual(user_history.change_messages, change_messages)
@@ -1146,12 +1140,9 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
 
-        change_messages = {"phone_numbers": {}}
-        change_messages["phone_numbers"].update(
-            UserChangeMessage.phone_numbers_added([number1])["phone_numbers"]
-        )
-        change_messages["phone_numbers"].update(
-            UserChangeMessage.phone_numbers_removed(["12345678912"])["phone_numbers"]
+        change_messages = UserChangeMessage.phone_numbers_updated(
+            added=[number1],
+            removed=['12345678912']
         )
         change_messages.update(UserChangeMessage.password_reset())
         self.assertDictEqual(user_history.change_messages, change_messages)

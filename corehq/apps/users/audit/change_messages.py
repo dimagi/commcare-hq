@@ -96,6 +96,19 @@ class UserChangeMessage(object):
         }
 
     @staticmethod
+    def phone_numbers_updated(added=None, removed=None):
+        change_messages = {}
+        if added:
+            change_messages[ADD_PHONE_NUMBERS] = {"phone_numbers": added}
+        if removed:
+            change_messages[REMOVE_PHONE_NUMBERS] = {"phone_numbers": removed}
+        if change_messages:
+            return {
+                PHONE_NUMBERS_FIELD: change_messages
+            }
+        return {}
+
+    @staticmethod
     def phone_numbers_added(phone_numbers):
         return {
             PHONE_NUMBERS_FIELD: {
