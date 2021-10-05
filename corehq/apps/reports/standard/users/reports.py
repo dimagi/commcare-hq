@@ -223,9 +223,11 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         all_changes = {}
 
         for key, value in changes.items():
-            if key in properties:
-                if key == 'location_id':
-                    value = self._get_location_name(value)
+            if key == 'location_id':
+                value = self._get_location_name(value)
+                primary_changes[properties[LOCATION_FIELD]] = value
+                all_changes[properties[LOCATION_FIELD]] = value
+            elif key in properties:
                 primary_changes[properties[key]] = value
                 all_changes[properties[key]] = value
             if key == 'user_data':
