@@ -200,14 +200,14 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
         ]
 
-    def _html_list(self, changes=None, unstyled=True):
+    def _html_list(self, changes=None):
         items = []
         if changes is None:
             return None
         if isinstance(changes, dict):
             for key, value in changes.items():
                 if isinstance(value, dict):
-                    value = self._html_list(value, unstyled=unstyled)
+                    value = self._html_list(value)
                 elif isinstance(value, list):
                     value = format_html(", ".join(value))
                 else:
@@ -215,8 +215,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
                 items.append("<li>{}: {}</li>".format(key, value))
         elif isinstance(changes, list):
             items = ["<li>{}</li>".format(format_html(change)) for change in changes]
-        class_attr = "class='list-unstyled'" if unstyled else ""
-        return mark_safe(f"<ul {class_attr}>{''.join(items)}</ul>")
+        return mark_safe(f"<ul class='list-unstyled'>{''.join(items)}</ul>")
 
     def _user_history_details_cell(self, changes, domain):
         properties = UserHistoryReport.get_primary_properties(domain)
