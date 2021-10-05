@@ -22,8 +22,13 @@ from corehq.apps.reports.filters.users import \
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
 from corehq.apps.users.audit.change_messages import (
+    ASSIGNED_LOCATIONS_FIELD,
     CHANGE_MESSAGES_FIELDS,
+    DOMAIN_FIELD,
     LOCATION_FIELD,
+    PHONE_NUMBERS_FIELD,
+    ROLE_FIELD,
+    TWO_FACTOR_FIELD,
     get_messages,
 )
 from corehq.apps.users.models import UserHistory
@@ -66,16 +71,16 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             user_data_label = _("user data")
         return {
             "username": _("username"),
-            "role": _("role"),
+            ROLE_FIELD: _("role"),
             "email": _("email"),
-            "domain": _("project"),
+            DOMAIN_FIELD: _("project"),
             "is_active": _("is active"),
             "language": _("language"),
-            "phone_numbers": _("phone numbers"),
-            "location": _("primary location"),
+            PHONE_NUMBERS_FIELD: _("phone numbers"),
+            LOCATION_FIELD: _("primary location"),
             "user_data": user_data_label,
-            "two_factor": _("two factor authentication disabled"),
-            "assigned_locations": _("assigned locations"),
+            TWO_FACTOR_FIELD: _("two factor authentication disabled"),
+            ASSIGNED_LOCATIONS_FIELD: _("assigned locations"),
         }
 
     @property
