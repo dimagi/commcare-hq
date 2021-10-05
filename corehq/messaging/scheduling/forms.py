@@ -1761,6 +1761,23 @@ class ScheduleForm(Form):
                 style="width: 100%;"
             ),
             crispy.Div(
+                crispy.HTML(
+                    """
+                        <p id="parent-case-type-warning" class="help-block alert alert-info">
+                        <i class="fa fa-info-circle"></i>
+                            %s
+                        </p>
+                    """
+                    % ugettext_lazy(
+                        """
+                            The "Case's Parent Case" Recipient setting only works for Parent / Child relationships,
+                            not Parent / Host or Host / Extension relationships.
+                        """
+                    )),
+                data_bind=("visible: recipientTypeSelected('%s')"
+                    % CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE)
+            ),
+            crispy.Div(
                 crispy.Field(
                     'user_recipients',
                     data_bind='value: user_recipients.value',
