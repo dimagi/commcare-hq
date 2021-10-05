@@ -151,22 +151,27 @@ class ApplicationDataSourceUIHelper(object):
         # NOTE: This corresponds to a view-model that must be initialized in your template.
         # See the doc string of this class for more information.
         self.application_field.widget.attrs = {'data-bind': 'value: application'}
-        if self.enable_registry:
-            self.application_field.widget.attrs['data-bind'] += ", disable: registrySlug() != ''"
         self.source_type_field.widget.attrs = {'data-bind': 'value: sourceType'}
         self.source_field.widget.attrs = {'data-bind': '''
-            options: _.union(sourcesMap[application()][sourceType()], sourcesMap[registrySlug()][sourceType()]),
             optionsText: function(item){return item.text},
             optionsValue: function(item){return item.value},
             value: sourceId
         '''}
-        self.registry_slug_field.widget.attrs = {'data-bind': '''
-            disable: sourceType() != 'case' || application() != '',
-            options: registriesMap[sourceId()],
-            optionsText: function(item){return item.text},
-            optionsValue: function(item){return item.value},
-            value: registrySlug
-        '''}
+
+        if self.enable_registry:
+            self.application_field.widget.attrs['data-bind'] += ", disable: registrySlug() != ''"
+            self.registry_slug_field.widget.attrs = {'data-bind': '''
+                disable: sourceType() != 'case' || application() != '',
+                options: registriesMap[sourceId()],
+                optionsText: function(item){return item.text},
+                optionsValue: function(item){return item.value},
+                value: registrySlug
+            '''}
+            self.source_field.widget.attrs['data-bind'] += ", options: _.union(" \
+                                                           "sourcesMap[application()][sourceType()], " \
+                                                           "sourcesMap[registrySlug()][sourceType()])"
+        else:
+            self.source_field.widget.attrs['data-bind'] += ", options: sourcesMap[application()][sourceType()]"
 
     def get_fields(self):
         fields = collections.OrderedDict()
