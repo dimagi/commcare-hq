@@ -611,3 +611,32 @@ event="xforms-revalidate"/>""" in
             self.form.render_xform().decode('utf-8')
         )
         self.assertTrue("<orx:drift/>" in self.form.render_xform().decode('utf-8'))
+
+
+@patch("corehq.apps.app_manager.xform._module_offers_registry_search", new=lambda x: True)
+class FormPreparationV2TestDataRegistry(SimpleTestCase, TestXmlMixin):
+    file_path = 'data', 'form_preparation_v2'
+
+    def setUp(self):
+        self.domain = 'domain'
+        self.app = Application.new_app(self.domain, 'New App')
+        self.app.version = 3
+        self.module = self.app.add_module(Module.new_module('New Module', lang='en'))
+        self.form = self.app.new_form(0, 'New Form', lang='en')
+        self.module.case_type = 'test_case_type'
+        self.form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
+
+    def test_open_case(self):
+        """Opening cases still works with registry search"""
+        self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
+        self.form.actions.open_case.condition.type = 'always'
+        self.form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        self.form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('open_update_case'), self.form.render_xform())
+
+    def test_update_case(self):
+        """Case updates are not permitted"""
+        self.form.requires = 'case'
+        self.form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        self.form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('no_actions'), self.form.render_xform())
