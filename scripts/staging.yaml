@@ -65,7 +65,6 @@ branches:
     - bmb/sso-login-v2  # Biyeun July 26
     - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
     - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
-    - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
     - ml/add-bulk-action-scheduled-reports # Minha Aug 30
     - gh/remove-pickles-from-accounting # Graham Sep 3
@@ -75,7 +74,6 @@ branches:
     - fr/dedupe  # Farid Sept 17
     - fr/dedupe-ui-1  # Farid October 3
     #- jm/remove-es-scan  # Joel Sep 17 [QA]
-    - ap/add-permission-to-edit-ucrs # Amit Sept 21
     - jls/smart-linking-in-web-apps # Jenny Sept 22
     - dmr/throttle-system-forms  # Danny Sept 24
     - gh/erm/link-reports-and-keywords-on-push-take2 # Graham Sept 28
