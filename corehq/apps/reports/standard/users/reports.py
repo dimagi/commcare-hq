@@ -200,23 +200,23 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
         ]
 
+    def _html_list(self, changes=None, unstyled=True):
+        items = []
+        if changes is None:
+            return None
+        for key, value in changes.items():
+            if isinstance(value, dict):
+                value = self._html_list(value, unstyled=unstyled)
+            elif isinstance(value, list):
+                value = format_html(", ".join(value))
+            else:
+                value = format_html(str(value))
+            items.append("<li>{}: {}</li>".format(key, value))
+
+        class_attr = "class='list-unstyled'" if unstyled else ""
+        return mark_safe(f"<ul {class_attr}>{''.join(items)}</ul>")
+
     def _user_history_details_cell(self, changes, domain):
-        def _html_list(changes=None, unstyled=True):
-            items = []
-            if changes is None:
-                return None
-            for key, value in changes.items():
-                if isinstance(value, dict):
-                    value = _html_list(value, unstyled=unstyled)
-                elif isinstance(value, list):
-                    value = format_html(", ".join(value))
-                else:
-                    value = format_html(str(value))
-                items.append("<li>{}: {}</li>".format(key, value))
-
-            class_attr = "class='list-unstyled'" if unstyled else ""
-            return mark_safe(f"<ul {class_attr}>{''.join(items)}</ul>")
-
         properties = UserHistoryReport.get_primary_properties(domain)
         properties.pop("user_data", None)
         primary_changes = {}
@@ -235,8 +235,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
                 all_changes[properties[key]] = value
         more_count = len(all_changes) - len(primary_changes)
         return render_to_string("reports/standard/partials/user_history_changes.html", {
-            "primary_changes": _html_list(primary_changes),
-            "all_changes": _html_list(all_changes),
+            "primary_changes": self._html_list(primary_changes),
+            "all_changes": self._html_list(all_changes),
             "more_count": more_count,
         })
 
