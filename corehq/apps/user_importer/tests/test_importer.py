@@ -7,7 +7,6 @@ from mock import mock, patch
 
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
-from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
     CustomDataFieldsDefinition,
@@ -15,23 +14,24 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.user_importer.exceptions import UserUploadError
-from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.user_importer.importer import (
     create_or_update_commcare_users_and_groups,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.audit.logger import UserChangeLogger
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import (
     CommCareUser,
     Invitation,
-    UserRole,
     UserHistory,
+    UserRole,
     WebUser,
 )
-from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions

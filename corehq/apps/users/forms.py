@@ -25,7 +25,10 @@ from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import PROFILE_SLUG, CustomDataFieldsProfile
+from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
+    CustomDataFieldsProfile,
+)
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
@@ -40,8 +43,8 @@ from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
-from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.audit.logger import UserChangeLogger
 from corehq.apps.users.dbaccessors import user_exists
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.util import (

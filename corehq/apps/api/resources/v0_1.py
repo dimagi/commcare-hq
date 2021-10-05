@@ -15,7 +15,7 @@ from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
-from corehq.apps.user_importer.helpers import UserChangeLogger
+from corehq.apps.users.audit.logger import UserChangeLogger
 from corehq.apps.users.models import CommCareUser, Permissions, WebUser
 from corehq.const import USER_CHANGE_VIA_API
 
