@@ -200,10 +200,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
         ]
 
-    def _html_list(self, changes=None):
+    def _html_list(self, changes):
         items = []
-        if changes is None:
-            return None
         if isinstance(changes, dict):
             for key, value in changes.items():
                 if isinstance(value, dict):
