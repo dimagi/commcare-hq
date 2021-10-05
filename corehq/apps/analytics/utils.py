@@ -28,14 +28,6 @@ def analytics_enabled_for_email(email_address):
     return user.analytics_enabled if user else True
 
 
-def is_email_blocked_from_hubspot(email_address):
-    email_domain = email_address.split('@')[-1]
-    return BillingAccount.objects.filter(
-        is_active=True,
-        block_email_domains_from_hubspot__contains=[email_domain],
-    ).exists()
-
-
 def is_domain_blocked_from_hubspot(domain):
     return Subscription.visible_objects.filter(
         is_active=True,
@@ -52,8 +44,6 @@ def hubspot_enabled_for_user(user):
     :param user: CouchUser or WebUser
     :return: Boolean (True if hubspot is enabled/allowed)
     """
-    if is_email_blocked_from_hubspot(user.username):
-        return False
     if isinstance(user, WebUser):
         web_user = user
     else:
@@ -86,25 +76,6 @@ def get_blocked_hubspot_domains():
         is_active=True,
         account__is_active=True,
     ).values_list('subscriber__domain', flat=True))
-
-
-def get_blocked_hubspot_email_domains():
-    """
-    Get the list of email domains (everything after the @ in an email address)
-    that have been blocked from Hubspot by BillingAccounts (excluding gmail.com)
-    :return: list
-    """
-    email_domains = {_email for email_list in BillingAccount.objects.filter(
-        is_active=True,
-    ).exclude(
-        block_email_domains_from_hubspot=[],
-    ).values_list(
-        'block_email_domains_from_hubspot',
-        flat=True,
-    ) for _email in email_list}
-    # we want to ensure that gmail.com is never a part of this list
-    email_domains.difference_update(['gmail.com'])
-    return list(email_domains)
 
 
 def get_blocked_hubspot_accounts():
@@ -236,29 +207,6 @@ def _get_contact_ids_for_email_domain(email_domain, retry_num=0):
         else:
             return [contact.get('vid') for contact in req.json().get('contacts')]
     return []
-
-
-def remove_blocked_email_domains_from_hubspot(stdout=None):
-    """
-    Removes contacts from Hubspot that emails matching our list of
-    blocked email domains.
-    :param stdout: the stdout of a management command (if applicable)
-    """
-    blocked_email_domains = get_blocked_hubspot_email_domains()
-    for email_domain in blocked_email_domains:
-        ids_to_delete = _get_contact_ids_for_email_domain(email_domain)
-        if stdout:
-            stdout.write(f"\n\nChecking EMAIL DOMAIN {email_domain}")
-            stdout.write(f"Found {len(ids_to_delete)} id(s) to delete.")
-        num_deleted = sum(_delete_hubspot_contact(vid) for vid in ids_to_delete)
-        metrics_gauge(
-            'commcare.hubspot_data.deleted_user.blocked_email_domain',
-            num_deleted,
-            tags={
-                'email_domain': email_domain,
-                'ids_deleted': ids_to_delete,
-            }
-        )
 
 
 def remove_blocked_domain_contacts_from_hubspot(stdout=None):

@@ -1,7 +1,9 @@
+from corehq.util.urlvalidate.test.mockipinfo import unresolvable_hostname
+from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from random import sample
 
 from corehq.util.validation import is_url_or_host_banned
-from django.test import TestCase
+from django.test import SimpleTestCase
 
 
 def sample_range(start, stop):
@@ -12,7 +14,7 @@ def sample_range(start, stop):
     yield stop
 
 
-class ValidationTestCase(TestCase):
+class ValidationTestCase(SimpleTestCase):
 
     def testBannedHosts(self):
         self.assertTrue(is_url_or_host_banned('anything.commcarehq.org'))
@@ -34,3 +36,20 @@ class ValidationTestCase(TestCase):
         self.assertTrue(is_url_or_host_banned('127.0.0.1'))
         self.assertTrue(is_url_or_host_banned('localhost'))
         self.assertFalse(is_url_or_host_banned('dimagi.com'))
+
+    def test_rejects_localhost(self):
+        self.assertTrue(is_url_or_host_banned('http://localhost'))
+
+    def test_rejects_ipv6_localhost(self):
+        self.assertTrue(is_url_or_host_banned('http://[::1]'))
+
+    def test_accepts_host_without_scheme(self):
+        self.assertFalse(is_url_or_host_banned('google.com'))
+
+    def test_rejects_localhost_without_schema(self):
+        self.assertTrue(is_url_or_host_banned('localhost'))
+
+    def test_unresolvable_address_raises_error(self):
+        with unresolvable_hostname('not.a.real.address'):
+            with self.assertRaises(CannotResolveHost):
+                is_url_or_host_banned('http://not.a.real.address')

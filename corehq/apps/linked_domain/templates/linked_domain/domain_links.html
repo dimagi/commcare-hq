@@ -75,7 +75,11 @@
         <div class="modal-body">
           <div class="ko-model">
             <label >{% trans 'Project Space:' %}</label>
-            <select class="form-control" data-bind="select2: availableDomains, value: value"></select>
+            {% if is_superuser %}
+              <select class="form-control" data-bind="autocompleteSelect2: availableDomains, value: domainToAdd"></select>
+            {% else %}
+              <select class="form-control" data-bind="select2: availableDomains, value: domainToAdd"></select>
+            {% endif %}
           </div>
         </div>
         <div class="modal-footer">

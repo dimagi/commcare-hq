@@ -3,7 +3,7 @@ from lxml.builder import E
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.util import module_offers_search
+from corehq.apps.app_manager.util import module_offers_registry_search
 from corehq.apps.domain.models import Domain
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import DataRegistry
@@ -23,7 +23,7 @@ class RegistryFixtureProvider(FixtureProvider):
             module.search_config.data_registry
             for app in apps
             for module in app.get_modules()
-            if module_offers_search(module) and module.search_config.data_registry
+            if module_offers_registry_search(module)
         }
         if not registry_slugs:
             return []
