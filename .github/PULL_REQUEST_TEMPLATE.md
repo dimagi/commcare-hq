@@ -14,7 +14,7 @@
 
 ### Safety story
 <!--
-Describe any other pieces to the safety story including
+Describe how you became confident in this change, such as
 local testing, why the change is inherently safe, and/or plans to limit the blast radius of a defect.
 -->
 
@@ -31,7 +31,7 @@ local testing, why the change is inherently safe, and/or plans to limit the blas
 
 
 ### Migrations
-
+<!-- Delete this section if the PR does not contain any migrations -->
 - [ ] The migrations in this code can be safely applied first independently of the code
 
 <!-- Please link to any past code changes that are coordinated with this migration -->
