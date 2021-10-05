@@ -227,12 +227,12 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
                 value = self._get_location_name(value)
                 primary_changes[properties[LOCATION_FIELD]] = value
                 all_changes[properties[LOCATION_FIELD]] = value
+            elif key == 'user_data':
+                for user_data_key, user_data_value in changes['user_data'].items():
+                    all_changes[f"user data: {user_data_key}"] = user_data_value
             elif key in properties:
                 primary_changes[properties[key]] = value
                 all_changes[properties[key]] = value
-            if key == 'user_data':
-                for key, value in changes['user_data'].items():
-                    all_changes[f"user data: {key}"] = value
         more_count = len(all_changes) - len(primary_changes)
         return render_to_string("reports/standard/partials/user_history_changes.html", {
             "primary_changes": _html_list(primary_changes),
