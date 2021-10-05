@@ -10,7 +10,7 @@ hqDefine("reports/js/saved_reports_main", [
     ko,
     initialPageData,
     reportConfigModels,
-    scheduledReports,
+    scheduledReports
 ) {
     $(function () {
 
@@ -20,7 +20,7 @@ hqDefine("reports/js/saved_reports_main", [
                 items: initialPageData.get('configs'),
                 saveUrl: initialPageData.reverse("add_report_config"),
             }));
-        };
+        }
 
         $("#js-scheduled_reports").koApplyBindings(scheduledReports.scheduledReportListModel({
             scheduled_reports: initialPageData.get('scheduled_reports'),

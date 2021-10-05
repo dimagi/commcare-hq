@@ -11,7 +11,7 @@ hqDefine("reports/js/scheduled_reports_list", [
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
-    'hqwebapp/js/components.ko' // pagination & feedback widget
+    'hqwebapp/js/components.ko', // pagination & feedback widget
 ], function (
     $,
     ko,
@@ -41,24 +41,24 @@ hqDefine("reports/js/scheduled_reports_list", [
             'viewUrl',
             'sendUrl',
             'deleteUrl',
-            'unsubscribeUrl'
+            'unsubscribeUrl',
         ]);
 
         var self = ko.mapping.fromJS(report);
 
         self.configMany = true;
-        if (report.configs.length === 1){
-                self.configMany = false;
-            };
+        if (report.configs.length === 1) {
+            self.configMany = false;
+        }
 
         self.recipient_email_count = self.recipient_emails().length;
 
-        self.deleteScheduledReport = function(observable, event){
+        self.deleteScheduledReport = function (observable, event) {
             $(event.currentTarget).closest('form').submit();
         };
 
         self.is_owner = isOwner;
-        self.is_admin = isAdmin
+        self.is_admin = isAdmin;
         self.firstConfig = ko.observable(report.configs[0]);
 
         return self;
@@ -78,11 +78,11 @@ hqDefine("reports/js/scheduled_reports_list", [
             return scheduledReportModel(report, self.is_owner, self.is_admin);
         }));
 
-        self.goToPage = function(page) {
+        self.goToPage = function (page) {
             self.isLoadingPanel(true);
             self.items(self.scheduledReports.slice(self.perPage() * (page - 1), self.perPage() * page));
             self.isLoadingPanel(false);
-        }
+        };
 
         self.selectAll = function () {
             _.each(self.items(), function (e) { e.addedToBulk(true); });
@@ -90,7 +90,7 @@ hqDefine("reports/js/scheduled_reports_list", [
 
         self.selectNone = function () {
             _.each(self.items(), function (e) { e.addedToBulk(false); });
-        }
+        };
 
         self.totalItems = ko.observable(self.scheduledReports().length);
 
@@ -99,7 +99,7 @@ hqDefine("reports/js/scheduled_reports_list", [
         };
 
         return self;
-    }
+    };
 
     var scheduledReportListModel = function (options) {
         assertProperties.assert(options, ['scheduled_reports', 'other_scheduled_reports', 'is_admin']);
@@ -145,53 +145,53 @@ hqDefine("reports/js/scheduled_reports_list", [
             return false;
         });
 
-        self.sendModal = function() {
+        self.sendModal = function () {
             self.action('send');
-        }
+        };
 
-        self.deleteModal = function() {
+        self.deleteModal = function () {
             self.action('delete');
-        }
+        };
 
-        self.bulkSend = function(){
+        self.bulkSend = function () {
             self.bulkAction(true);
             self.isBulkSending(true);
-            var sendList = _.filter(self.reports(), function (e) {return e.addedToBulk()});
-            var ids = []
+            var sendList = _.filter(self.reports(), function (e) {return e.addedToBulk();});
+            var ids = [];
             for (let i = 0; i < sendList.length; i++) {
-                ids.push(sendList[i].id())
+                ids.push(sendList[i].id());
             }
             ids = JSON.stringify(ids);
-            $.ajax ({
+            $.ajax({
                 method: 'POST',
                 url: sendList[0].sendUrl(),
                 data: {"sendList": ids,
-                       "bulk_send_count": sendList.length},
-                success: function (url) {
-                    location.reload()
-                }
+                    "bulk_send_count": sendList.length},
+                success: function () {
+                    location.reload();
+                },
             });
-        }
+        };
 
-        self.bulkDelete = function(){
+        self.bulkDelete = function () {
             self.bulkAction(true);
             self.isBulkDeleting(true);
-            var deleteList = _.filter(self.reports(), function (e) {return e.addedToBulk()});
-            var ids = []
+            var deleteList = _.filter(self.reports(), function (e) {return e.addedToBulk();});
+            var ids = [];
             for (let i = 0; i < deleteList.length; i++) {
-                ids.push(deleteList[i].id())
+                ids.push(deleteList[i].id());
             }
             ids = JSON.stringify(ids);
-            $.ajax ({
+            $.ajax({
                 method: 'POST',
                 url: deleteList[0].deleteUrl(),
                 data: {"deleteList": ids,
-                       "bulk_delete_count": deleteList.length},
+                    "bulk_delete_count": deleteList.length},
                 success: function () {
-                    location.reload()
-                }
+                    location.reload();
+                },
             });
-        }
+        };
 
         return self;
     };
