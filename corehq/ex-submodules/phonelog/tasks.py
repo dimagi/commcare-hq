@@ -26,10 +26,11 @@ def purge_old_device_report_entries():
 
 @no_result_task(queue='sumologic_logs_queue', default_retry_delay=10 * 60, max_retries=3, bind=True)
 def send_device_log_to_sumologic(self, url, data, headers):
+    encoded_headers = {key.encode('utf-8'): header.encode('utf-8') for key, header in headers.items()}
     with Session() as s:
         s.mount(url, HTTPAdapter(max_retries=5))
         try:
             s.post(url, data=data.encode('utf-8'),
-                   headers={b"X-Sumo-Category": headers.encode('utf-8')}, timeout=5)
+                   headers=encoded_headers, timeout=5)
         except RequestException as e:
             self.retry(exc=e)

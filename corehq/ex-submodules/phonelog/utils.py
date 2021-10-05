@@ -191,14 +191,14 @@ class SumoLogicLog(object):
         self.xform = xform
 
     def send_data(self, url):
-        send_device_log_to_sumologic.delay(url, self.log_subreport().decode('utf-8'),
-                                           self._get_header('log', True))
-        send_device_log_to_sumologic.delay(url, self.user_error_subreport().decode('utf-8'),
-                                           self._get_header('user_error', True))
-        send_device_log_to_sumologic.delay(url, self.force_close_subreport().decode('utf-8'),
-                                           self._get_header('force_close', True))
+        send_device_log_to_sumologic.delay(url, self.log_subreport(should_encode=False),
+                                           self._get_header('log', False))
+        send_device_log_to_sumologic.delay(url, self.user_error_subreport(should_encode=False),
+                                           self._get_header('user_error', False))
+        send_device_log_to_sumologic.delay(url, self.force_close_subreport(should_encode=False),
+                                           self._get_header('force_close', False))
 
-    def _get_header(self, fmt, isTask=False):
+    def _get_header(self, fmt, should_encode=True):
         """
         https://docs.google.com/document/d/18sSwv2GRGepOIHthC6lxQAh_aUYgDcTou6w9jL2976o/edit#bookmark=id.ao4j7x5tjvt7
         """
@@ -212,9 +212,9 @@ class SumoLogicLog(object):
 
         header = "{env}/{domain}/{fmt}".format(env=environment, domain=self.domain, fmt=fmt)
 
-        if isTask:
-            return header
-        return {b"X-Sumo-Category": header.encode('utf-8')}
+        if should_encode:
+            return {b"X-Sumo-Category": header.encode('utf-8')}
+        return {"X-Sumo-Category": header}
 
     def _fill_base_template(self, log):
         from corehq.apps.receiverwrapper.util import (
@@ -258,40 +258,48 @@ class SumoLogicLog(object):
                 user_id = user_subreport[0].get('user_id')
             return username, user_id
 
-    def log_subreport(self):
+    def log_subreport(self, should_encode=True):
         logs = _get_logs(self.xform.form_data, 'log_subreport', 'log')
-        return ("\n"
-                .join([self._fill_base_template(log) for log in logs if log.get('type') != 'forceclose'])
-                .encode('utf-8'))
+        data = ("\n".join([self._fill_base_template(log) for log in logs if log.get('type') != 'forceclose']))
+        if should_encode:
+            return data.encode('utf-8')
+        return data
 
-    def user_error_subreport(self):
+    def user_error_subreport(self, should_encode=True):
         logs = _get_logs(self.xform.form_data, 'user_error_subreport', 'user_error')
         log_additions_template = " [app_id={app_id}] [user_id={user_id}] [session={session}] [expr={expr}]"
 
-        return ("\n".join(
+        data = ("\n".join(
             self._fill_base_template(log) + log_additions_template.format(
                 app_id=log.get('app_id'),
                 user_id=log.get('user_id'),
                 session=log.get('session'),
                 expr=log.get('expr'),
             ) for log in logs
-        ).encode('utf-8'))
+        ))
 
-    def force_close_subreport(self):
+        if should_encode:
+            return data.encode('utf-8')
+        return data
+
+    def force_close_subreport(self, should_encode=True):
         logs = _get_logs(self.xform.form_data, 'force_close_subreport', 'force_close')
         log_additions_template = (
             " [app_id={app_id}] [user_id={user_id}] [session={session}] "
             "[device_model={device_model}]"
         )
-        return ("\n".join(
+        data = ("\n".join(
             self._fill_base_template(log) + log_additions_template.format(
                 app_id=log.get('app_id'),
                 user_id=log.get('user_id'),
                 session=log.get('session_readable'),
                 device_model=log.get('device_model'),
             ) for log in logs
-        ).encode('utf-8'))
+        ))
 
+        if should_encode:
+            return data.encode('utf-8')
+        return data
 
 def clear_device_log_request(domain, xform):
     from corehq.apps.ota.models import DeviceLogRequest
