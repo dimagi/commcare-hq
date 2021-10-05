@@ -1,13 +1,8 @@
-import json
-
 from mock import patch
 
 from dimagi.utils.couch.undo import is_deleted, soft_delete
 
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.linked_domain.applications import link_app
-from corehq.apps.linked_domain.decorators import REMOTE_REQUESTER_HEADER
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.ucr import create_linked_ucr, update_linked_ucr
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
@@ -19,9 +14,6 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_data_source,
     get_sample_report_config,
 )
-from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import HQApiKey, WebUser
-from corehq.util import reverse
 
 
 class TestLinkedUCR(BaseLinkedAppsTest):

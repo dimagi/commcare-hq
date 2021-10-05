@@ -160,7 +160,7 @@ class TelerivetSetupView(BaseMessagingSectionView):
 
 
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@require_permission(Permissions.edit_data)
+@require_permission(Permissions.edit_messaging)
 @login_and_domain_required
 @require_GET
 def get_last_inbound_sms(request, domain):
@@ -186,7 +186,7 @@ def get_last_inbound_sms(request, domain):
 
 
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@require_permission(Permissions.edit_data)
+@require_permission(Permissions.edit_messaging)
 @login_and_domain_required
 @require_POST
 def send_sample_sms(request, domain):
@@ -236,7 +236,7 @@ def send_sample_sms(request, domain):
 
 
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@require_permission(Permissions.edit_data)
+@require_permission(Permissions.edit_messaging)
 @login_and_domain_required
 @require_POST
 def create_backend(request, domain):

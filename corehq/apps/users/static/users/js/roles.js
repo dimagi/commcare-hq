@@ -27,11 +27,11 @@ hqDefine('users/js/roles',[
             accessSelectedText: gettext("Access Selected"),
             listHeading: gettext("Select which items the role can access:"),
         });
-        const [none, all, selected] = ["none", "all", "selected"];
+        const [NONE, ALL, SELECTED] = ["none", "all", "selected"];
         const selectOptions = [
-            {text: text.accessNoneText, value: none},
-            {text: text.accessAllText, value: all},
-            {text: text.accessSelectedText, value: selected},
+            {text: text.accessNoneText, value: NONE},
+            {text: text.accessAllText, value: ALL},
+            {text: text.accessSelectedText, value: SELECTED},
         ];
         let self = {
             id: id,
@@ -43,29 +43,33 @@ hqDefine('users/js/roles',[
             specific: permissionModel.specific,
         };
         self.showItems = ko.pureComputed(() =>{
-            return self.selection() === selected;
+            return self.selection() === SELECTED;
         });
 
         // set value of selection based on initial data
         if (self.all()) {
-            self.selection(all);
+            self.selection(ALL);
         } else if (_.find(permissionModel.specific(), item => item.value())) {
-            self.selection(selected)
+            self.selection(SELECTED)
         } else {
-            self.selection(none);
+            self.selection(NONE);
         }
 
         self.selection.subscribe(() => {
             // update permission data based on selection
-            if (self.selection() === all) {
+            if (self.selection() === ALL) {
                 self.all(true);
                 self.specific().forEach(item => item.value(false));
                 return;
             }
             self.all(false);
-            if (self.selection() === none) {
+            if (self.selection() === NONE) {
                 self.specific().forEach(item => item.value(false));
             }
+        });
+
+        self.hasError = ko.pureComputed(() => {
+            return self.selection() === SELECTED && permissionModel.filteredSpecific().length == 0;
         });
         return self;
     };
@@ -243,6 +247,22 @@ hqDefine('users/js/roles',[
                     },
                     {
                         showOption: true,
+                        editPermission: self.permissions.edit_messaging,
+                        viewPermission: null,
+                        text: gettext("<strong>Messaging</strong> &mdash; configure and send conditional alerts"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-messaging-checkbox",
+                        showViewCheckbox: false,
+                        viewCheckboxLabel: "view-messaging-checkbox",
+                        screenReaderEditAndViewText: gettext("Access Messaging"),
+                        screenReaderViewOnlyText: null,
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
+                    },
+                    {
+                        showOption: true,
                         editPermission: self.permissions.access_api,
                         viewPermission: null,
                         text: gettext("<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update data. Specific APIs may require additional permissions."),
@@ -337,6 +357,13 @@ hqDefine('users/js/roles',[
                         checkboxPermission: self.reportPermissions.all,
                         checkboxText: gettext("Allow role to access all reports."),
                     }];
+                self.ucrs = [{
+                    visibilityRestraint: self.permissions.access_all_locations,
+                    text: gettext("Create and Edit Configurable Reports"),
+                    checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                    checkboxPermission: self.permissions.edit_ucrs,
+                    checkboxText: gettext("Allow role to create and edit configurable reports."),
+                }];
 
                 self.registryPermissions = [
                     selectPermissionModel(
@@ -356,6 +383,17 @@ hqDefine('users/js/roles',[
                         }
                     ),
                 ];
+
+                self.validate = function () {
+                    self.registryPermissions.forEach((perm) => {
+                        if (perm.hasError()) {
+                            throw interpolate(
+                                gettext('Select at least one item from the list for "%s"'),
+                                [perm.text]
+                            );
+                        }
+                    });
+                };
 
                 return self;
             },
@@ -483,7 +521,9 @@ hqDefine('users/js/roles',[
         self.roleError = ko.observable("");
         self.setRoleError = function (form, error) {
             self.roleError(error);
-            $(form).find('[type="submit"]').enableButton();
+            setTimeout(() => {
+                $(form).find('[type="submit"]').enableButton();
+            }, 100);
         };
         self.clearRoleError = function () {
             self.roleError("");
@@ -494,6 +534,12 @@ hqDefine('users/js/roles',[
         };
         self.submitNewRole = function (form) {
             self.clearRoleError();
+            try {
+                self.roleBeingEdited().validate();
+            } catch (e) {
+                self.setRoleError(form, e);
+                return;
+            }
             $.ajax({
                 method: 'POST',
                 url: o.saveUrl,

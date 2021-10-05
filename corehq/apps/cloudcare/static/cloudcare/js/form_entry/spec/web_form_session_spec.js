@@ -176,13 +176,24 @@ describe('WebForm', function () {
         it('Should not block requests', function () {
             var sess = WebFormSession(params);
 
+            var question = {
+                answer: sinon.spy(),
+                form: function () {
+                    return {
+                        erroredLabels: function () {
+                            return [];
+                        },
+                    };
+                },
+            };
+
             // First blocking request
-            $.publish('formplayer.' + Const.ANSWER, { answer: sinon.spy() });
+            $.publish('formplayer.' + Const.ANSWER, question);
 
             assert.equal(sess.blockingStatus, Const.BLOCK_SUBMIT);
 
             // Attempt another request
-            $.publish('formplayer.' + Const.ANSWER, { answer: sinon.spy() });
+            $.publish('formplayer.' + Const.ANSWER, question);
 
             server.respond();
 

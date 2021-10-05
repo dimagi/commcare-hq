@@ -19,6 +19,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     var caseType = function (name, fhirResourceType) {
         var self = {};
         self.name = name || gettext("No Name");
+        self.url = "#" + name;
         self.fhirResourceType = ko.observable(fhirResourceType);
         self.properties = ko.observableArray();
 
@@ -156,7 +157,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.saveButton.fire('change');
         };
 
-        self.init = function () {
+        self.init = function (callback) {
             $.getJSON(dataUrl)
                 .done(function (data) {
                     _.each(data.case_types, function (caseTypeData) {
@@ -171,6 +172,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     self.casePropertyList.subscribe(changeSaveButton);
                     self.fhirResourceType.subscribe(changeSaveButton);
                     self.removefhirResourceType.subscribe(changeSaveButton);
+                    callback();
                 });
         };
 
@@ -257,6 +259,42 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.removefhirResourceType(false);
         };
 
+        // CREATE workflow
+        self.name = ko.observable("").extend({
+            rateLimit: { method: "notifyWhenChangesStop", timeout: 400, }
+        });
+
+        self.nameValid = ko.observable(false);
+        self.nameChecked = ko.observable(false);
+        self.name.subscribe((value) => {
+            if (!value) {
+                return;
+            }
+            let existing = _.find(self.caseTypes(), function (prop) {
+                return prop.name === value;
+            });
+            self.nameValid(!existing);
+            self.nameChecked(true);
+        });
+
+        self.formCreateCaseTypeSent = ko.observable(false);
+        self.submitCreate = function () {
+            self.formCreateCaseTypeSent(true);
+            return true;
+        };
+
+        self.clearForm = function () {
+            $("#create-case-type-form").trigger("reset");
+            self.name("");
+            self.nameValid(false);
+            self.nameChecked(false);
+            return true;
+        };
+
+        $(document).on('hide.bs.modal',  () => {
+            return self.clearForm();
+        });
+
         return self;
     };
 
@@ -266,7 +304,21 @@ hqDefine("data_dictionary/js/data_dictionary", [
             typeChoices = initialPageData.get('typeChoices'),
             fhirResourceTypes = initialPageData.get('fhirResourceTypes'),
             viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes);
-        viewModel.init();
+
+        function doHashNavigation() {
+            let fullHash = window.location.hash.split('?')[0],
+                hash = fullHash.substring(1);
+            let caseType = _.find(viewModel.caseTypes(), function (prop) {
+                return prop.name === hash;
+            });
+            if (caseType) {
+                viewModel.goToCaseType(caseType);
+            }
+        }
+
+        window.onhashchange = doHashNavigation;
+
+        viewModel.init(doHashNavigation);
         $('#hq-content').parent().koApplyBindings(viewModel);
         $('#download-dict').click(function () {
             googleAnalytics.track.event('Data Dictionary', 'downloaded data dictionary');

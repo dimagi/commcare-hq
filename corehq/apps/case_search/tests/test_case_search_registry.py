@@ -1,33 +1,34 @@
 import uuid
 
+import mock
 from django.test import TestCase
 
-import mock
-
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
-
 from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchProperty,
     DetailColumn,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.models import (
     CASE_SEARCH_REGISTRY_ID_KEY,
     CaseSearchConfig,
 )
-from corehq.apps.case_search.utils import get_case_search_results
+from corehq.apps.case_search.utils import get_case_search_results, _get_registry_visible_domains
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
     case_search_es_teardown,
     es_test,
 )
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.tests.utils import (
     Grant,
     Invitation,
     create_registry_for_test,
 )
+from corehq.apps.users.models import Permissions
 
 
 def case(name, type_, properties):
@@ -81,6 +82,7 @@ patch_get_app_cached = mock.patch('corehq.apps.case_search.utils.get_app_cached'
 
 
 @es_test
+@mock.patch.object(DataRegistryHelper, '_check_user_has_access', new=mock.Mock())
 class TestCaseSearchRegistry(TestCase):
 
     @classmethod
@@ -234,7 +236,6 @@ class TestCaseSearchRegistry(TestCase):
     def test_access_related_case_type_not_in_registry(self):
         # "creative_work" case types are in the registry, but not their parents - "creator"
         # domain 1 can access a domain 2 case even while referencing an inaccessible case type property
-        # TODO is this the correct behavior?  Same question for xpath queries
         results = self._run_query(
             self.domain_1,
             ['creative_work'],
@@ -244,6 +245,30 @@ class TestCaseSearchRegistry(TestCase):
         self.assertItemsEqual([
             ("Jane Eyre", self.domain_2),
         ], results)
+
+    def test_search_commcare_project(self):
+        results = self._run_query(
+            self.domain_1,
+            ["person"],
+            {"name": "Jane", COMMCARE_PROJECT: [self.domain_2, self.domain_3]},
+            self.registry_slug,
+        )
+        self.assertItemsEqual([
+            ("Jane", self.domain_2),
+            ("Jane", self.domain_3),
+        ], results)
+
+    def test_commcare_project_field_doesnt_expand_access(self):
+        # Domain 3 has access only to its own cases and can't get results from
+        # domain 1, even by specifying it manually
+        results = self._run_query(
+            self.domain_3,
+            ['person'],
+            {"name": "Jane", COMMCARE_PROJECT: self.domain_1},
+            self.registry_slug,
+        )
+        self.assertItemsEqual([], results)
+
 
     def test_includes_project_property(self):
         results = get_case_search_results(
@@ -278,3 +303,43 @@ class TestCaseSearchRegistry(TestCase):
             (case.name, case.type, case.domain)
             for case in results
         ])
+
+
+class TestCaseSearchRegistryPermissions(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'registry-permissions'
+        cls.user = create_user('admin', '123')
+
+        cls.registry_slug = create_registry_for_test(
+            cls.user,
+            cls.domain,
+            invitations=[Invitation("A"), Invitation("B")],
+            grants=[
+                Grant("A", [cls.domain]),
+                Grant("B", [cls.domain]),
+            ],
+            name="reg1",
+            case_types=["herb"]
+        ).slug
+
+    def test_user_without_permission_cannot_access_all_domains(self):
+        domains = self._get_registry_visible_domains(Permissions(view_data_registry_contents=False))
+        self.assertEqual(domains, {self.domain})
+
+    def test_user_with_permission_can_access_all_domains(self):
+        domains = self._get_registry_visible_domains(Permissions(view_data_registry_contents=True))
+        self.assertEqual(domains, {self.domain, "A", "B"})
+
+    def _get_registry_visible_domains(self, permissions):
+        mock_role = mock.Mock(permissions=permissions)
+        mock_user = mock.Mock(get_role=mock.Mock(return_value=mock_role))
+        return set(
+            _get_registry_visible_domains(
+                mock_user,
+                self.domain,
+                ["herb"],
+                self.registry_slug,
+            )
+        )

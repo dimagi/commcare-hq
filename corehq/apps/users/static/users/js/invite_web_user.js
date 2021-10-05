@@ -4,6 +4,7 @@ hqDefine('users/js/invite_web_user',[
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'hqwebapp/js/validators.ko',
+    'locations/js/widgets',
 ], function (
     $,
     ko,
