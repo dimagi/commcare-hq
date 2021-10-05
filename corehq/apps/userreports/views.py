@@ -1209,6 +1209,7 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
+    _set_ucr_cache_key(config_id)
     rebuild_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
@@ -1239,6 +1240,7 @@ def resume_building_data_source(request, domain, config_id):
             request,
             _('Resuming rebuilding table "{}".').format(config.display_name)
         )
+        _set_ucr_cache_key(config_id)
         resume_building_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
@@ -1259,11 +1261,17 @@ def build_data_source_in_place(request, domain, config_id):
             config.display_name
         )
     )
-
+    _set_ucr_cache_key(config_id)
     rebuild_indicators_in_place.delay(config_id, request.user.username, source='edit_data_source_build_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
+
+
+def _set_ucr_cache_key(config_id):
+    key = DATA_SOURCE_REBUILD_CACHE_PREFIX + config_id
+    CACHE_TTL = 24 * 60 * 60
+    cache.set(key, True, CACHE_TTL)
 
 
 @login_and_domain_required
