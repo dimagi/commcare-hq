@@ -238,7 +238,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             "primary_changes": _html_list(primary_changes),
             "all_changes": _html_list(all_changes),
             "more_count": more_count,
-    })
+        })
 
 
 def _get_action_display(logged_action):
