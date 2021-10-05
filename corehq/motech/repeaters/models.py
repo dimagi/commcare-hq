@@ -662,7 +662,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         conn.plaintext_password = self.plaintext_password
         conn.save()
         self.connection_settings_id = conn.id
-        self.save()
+        self.save(sync_to_sql=False)
         return conn
 
 

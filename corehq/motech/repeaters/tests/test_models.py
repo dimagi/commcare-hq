@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from datetime import timedelta
 from uuid import uuid4
 
@@ -12,6 +11,7 @@ from nose.tools import assert_in
 
 from corehq.motech.const import ALGO_AES, BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from corehq.motech.utils import b64_aes_encrypt
 
 from ..const import (
@@ -26,8 +26,8 @@ from ..const import (
 from ..models import (
     CaseRepeater,
     FormRepeater,
-    SQLRepeater,
     SQLCaseRepeater,
+    SQLRepeater,
     are_repeat_records_migrated,
     format_response,
     get_all_repeater_types,
@@ -496,3 +496,21 @@ class TestSQLRepeaterConnectionSettings(RepeaterTestCase):
     def test_used_connection_setting_cannot_be_deleted(self):
         with self.assertRaises(ProtectedError):
             self.sql_repeater.connection_settings.delete()
+
+
+class TestSQLCaseRepeater(TestCase):
+
+    def test_save(self):
+        repeater = CaseRepeater(
+            domain='test-domain',
+            url='https://example.com/create-case/',
+            format='case_json',
+            white_listed_case_types=['test_case_type'],
+        )
+        self.addCleanup(repeater.delete)
+        repeater.save()
+
+        num_case_repeaters = SQLCaseRepeater.objects.filter(repeater_id=repeater._id).count()
+        self.assertEqual(num_case_repeaters, 1)
+        num_repeaters = SQLRepeater.objects.filter(repeater_id=repeater._id).count()
+        self.assertEqual(num_repeaters, 1)
