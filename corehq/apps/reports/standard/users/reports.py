@@ -23,6 +23,7 @@ from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
 from corehq.apps.users.audit.change_messages import (
     CHANGE_MESSAGES_FIELDS,
+    LOCATION_FIELD,
     get_messages,
 )
 from corehq.apps.users.models import UserHistory
@@ -136,10 +137,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             filters = filters & Q(changed_by__in=changed_by_user_ids)
 
         if user_property:
-            if user_property in CHANGE_MESSAGES_FIELDS:
-                filters = filters & Q(**{"change_messages__has_key": user_property})
-            else:
-                filters = filters & Q(**{"changes__has_key": user_property})
+            filters = filters & self._get_property_filters(user_property)
 
         if actions and ChangeActionFilter.ALL not in actions:
             filters = filters & Q(action__in=actions)
@@ -154,6 +152,18 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     def _for_domains(self):
         return BillingAccount.get_account_by_domain(self.domain).get_domains()
+
+    @staticmethod
+    def _get_property_filters(user_property):
+        if user_property in CHANGE_MESSAGES_FIELDS:
+            query_filters = Q(change_messages__has_key=user_property)
+            # to include CommCareUser creation from UI where a location can be assigned as a part of user creation
+            # which is tracked only under "changes" and not "change messages"
+            if user_property == LOCATION_FIELD:
+                query_filters = query_filters | Q(changes__has_key='location_id')
+        else:
+            query_filters = Q(changes__has_key=user_property)
+        return query_filters
 
     @property
     def rows(self):
