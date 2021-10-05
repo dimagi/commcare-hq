@@ -2,14 +2,13 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
     change_meta_from_doc_meta_and_document
-from corehq.apps.change_feed.data_sources import FORM_SQL, SOURCE_COUCH
+from corehq.apps.change_feed.data_sources import FORM_SQL
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.reports.analytics.esaccessors import get_last_forms_by_app
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from couchforms.models import XFormInstance
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
@@ -106,23 +105,6 @@ class AppFormSubmissionReindexer(Reindexer):
             chunk_size=self.chunk_size,
         )
         processor.run()
-
-
-class CouchAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
-    slug = 'couch-app-form-submission'
-    arg_contributors = [
-        ReindexerFactory.resumable_reindexer_args,
-    ]
-
-    def build(self):
-        iteration_key = "CouchAppFormSubmissionTrackerPillow_reindexer"
-        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-            XFormInstance,
-            ('HQSubmission', XFormInstance),
-        ])
-        return AppFormSubmissionReindexer(
-            doc_provider, SOURCE_COUCH, XFormInstance.get_db().dbname, **self.options
-        )
 
 
 class SqlAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):

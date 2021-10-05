@@ -21,11 +21,9 @@ from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.user import UnknownUsersProcessor
 from corehq.pillows.utils import get_user_type, format_form_meta_for_es
-from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
-from couchforms.models import XFormInstance
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
@@ -247,31 +245,6 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         process_num=process_num,
         is_dedicated_migration_process=dedicated_migration_process and (process_num == 0)
     )
-
-
-class CouchFormReindexerFactory(ReindexerFactory):
-    slug = 'form'
-    arg_contributors = [
-        ReindexerFactory.resumable_reindexer_args,
-        ReindexerFactory.elastic_reindexer_args,
-    ]
-
-    def build(self):
-        iteration_key = "CouchXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
-        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-            XFormInstance,
-            ('XFormInstance-Deleted', XFormInstance),
-            ('HQSubmission', XFormInstance),
-        ])
-        return ResumableBulkElasticPillowReindexer(
-            doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=XFORM_INDEX_INFO,
-            doc_filter=xform_pillow_filter,
-            pillow=get_xform_to_elasticsearch_pillow(),
-            doc_transform=transform_xform_for_elasticsearch,
-            **self.options
-        )
 
 
 class SqlFormReindexerFactory(ReindexerFactory):
