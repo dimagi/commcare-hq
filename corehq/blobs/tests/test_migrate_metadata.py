@@ -34,7 +34,6 @@ class TestMigrateBackend(TestCase):
         "CommCareMultimedia": mod.hqmedia.CommCareMultimedia,
         "XFormInstance": mod.xform.XFormInstance,
         "XFormInstance-Deleted": mod.xform.XFormInstance,
-        "XFormDuplicate": mod.xform.XFormDuplicate,
         "XFormError": mod.xform.XFormError,
         "HQSubmission": mod.xform.XFormInstance,
         "CommCareCase": mod.cases.CommCareCase,

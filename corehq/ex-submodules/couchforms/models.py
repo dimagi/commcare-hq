@@ -50,7 +50,7 @@ def doc_types():
         'XFormInstance': XFormInstance,
         'XFormArchived': XFormInstance,
         'XFormDeprecated': XFormInstance,
-        'XFormDuplicate': XFormDuplicate,
+        'XFormDuplicate': XFormInstance,
         'XFormError': XFormError,
         'SubmissionErrorLog': XFormInstance,
     }
@@ -386,23 +386,6 @@ class XFormError(XFormInstance):
 
     @property
     def is_error(self):
-        return True
-
-
-class XFormDuplicate(XFormError):
-    """
-    Duplicates of instances go here.
-    """
-
-    def save(self, *args, **kwargs):
-        # we put this here, in case the doc hasn't been modified from an original
-        # XFormInstance we'll force the doc_type to change.
-        self["doc_type"] = "XFormDuplicate"
-        # we can't use super because XFormError also sets the doc type
-        XFormInstance.save(self, *args, **kwargs)
-
-    @property
-    def is_duplicate(self):
         return True
 
 
