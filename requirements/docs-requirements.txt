@@ -6,7 +6,7 @@
 #
 alabaster==0.7.12
     # via sphinx
-alembic==1.4.3
+alembic==1.7.3
     # via -r base-requirements.in
 amqp==2.6.1
     # via kombu
@@ -214,7 +214,11 @@ idna==2.10
 imagesize==1.2.0
     # via sphinx
 importlib-metadata==3.4.0
-    # via jsonschema
+    # via
+    #   alembic
+    #   jsonschema
+importlib-resources==5.2.2
+    # via alembic
 intervaltree==3.1.0
     # via ddtrace
 iso8601==0.1.13
@@ -340,12 +344,9 @@ pysocks==1.7.1
 python-dateutil==2.8.1
     # via
     #   -r base-requirements.in
-    #   alembic
     #   botocore
     #   django-tastypie
     #   faker
-python-editor==1.0.4
-    # via alembic
 python-imap==1.0.0
     # via -r base-requirements.in
 python-magic==0.4.22
@@ -525,7 +526,9 @@ xlrd==1.0.0
 xlwt==1.3.0
     # via -r base-requirements.in
 zipp==3.4.0
-    # via importlib-metadata
+    # via
+    #   importlib-metadata
+    #   importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
 setuptools==53.0.0

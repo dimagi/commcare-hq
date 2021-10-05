@@ -6,7 +6,7 @@
 #
 alabaster==0.7.12
     # via sphinx
-alembic==1.4.3
+alembic==1.7.3
     # via -r base-requirements.in
 amqp==2.6.1
     # via kombu
@@ -256,9 +256,12 @@ imagesize==1.2.0
     # via sphinx
 importlib-metadata==2.0.0
     # via
+    #   alembic
     #   flake8
     #   jsonschema
     #   pep517
+importlib-resources==5.2.2
+    # via alembic
 intervaltree==3.1.0
     # via ddtrace
 ipython==7.16.1
@@ -423,13 +426,10 @@ pysocks==1.7.1
 python-dateutil==2.8.1
     # via
     #   -r base-requirements.in
-    #   alembic
     #   botocore
     #   django-tastypie
     #   faker
     #   freezegun
-python-editor==1.0.4
-    # via alembic
 python-imap==1.0.0
     # via -r base-requirements.in
 python-magic==0.4.22
@@ -658,6 +658,7 @@ yapf==0.31.0
 zipp==3.2.0
     # via
     #   importlib-metadata
+    #   importlib-resources
     #   pep517
 
 # The following packages are considered to be unsafe in a requirements file:
