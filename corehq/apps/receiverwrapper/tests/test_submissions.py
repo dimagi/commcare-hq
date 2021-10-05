@@ -318,20 +318,12 @@ class SubmitFormLocallyRateLimitTest(TestCase, TestFileMixin):
     file_path = ('data',)
     domain = 'test-domain'
 
-    @flag_enabled('THROTTLE_SYSTEM_FORMS')
     def test_rate_limiting(self, allow_usage):
         form_xml = self.get_xml('simple_form')
         submit_form_locally(form_xml, domain=self.domain)
         allow_usage.assert_called()
 
-    @flag_enabled('THROTTLE_SYSTEM_FORMS')
     def test_no_rate_limiting(self, allow_usage):
         form_xml = self.get_xml('simple_form')
         submit_form_locally(form_xml, domain=self.domain, max_wait=None)
-        allow_usage.assert_not_called()
-
-    @flag_disabled('THROTTLE_SYSTEM_FORMS')
-    def test_no_rate_limiting_with_flag_disabled(self, allow_usage):
-        form_xml = self.get_xml('simple_form')
-        submit_form_locally(form_xml, domain=self.domain)
         allow_usage.assert_not_called()
