@@ -11,10 +11,10 @@ class UserChangeLogger(object):
         - useful info for changes to associated data models like role/locations
     """
 
-    def __init__(self, upload_domain, user_domain, user, is_new_user, changed_by_user, changed_via,
+    def __init__(self, by_domain, for_domain, user, is_new_user, changed_by_user, changed_via,
                  upload_record_id, user_domain_required_for_log=True):
-        self.upload_domain = upload_domain
-        self.user_domain = user_domain
+        self.by_domain = by_domain
+        self.for_domain = for_domain
         self.user = user
         self.is_new_user = is_new_user
         self.changed_by_user = changed_by_user
@@ -74,8 +74,8 @@ class UserChangeLogger(object):
             action = UserModelAction.CREATE if self.is_new_user else UserModelAction.UPDATE
             fields_changed = None if self.is_new_user else self.fields_changed
             log_user_change(
-                by_domain=self.upload_domain,
-                for_domain=self.user_domain,
+                by_domain=self.by_domain,
+                for_domain=self.for_domain,
                 couch_user=self.user,
                 changed_by_user=self.changed_by_user,
                 changed_via=self.changed_via,

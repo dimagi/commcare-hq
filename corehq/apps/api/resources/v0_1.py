@@ -45,8 +45,8 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
     def _get_user_change_logger(bundle):
         for_domain = bundle.obj.domain if bundle.obj.is_commcare_user() else None
         return UserChangeLogger(
-            upload_domain=bundle.request.domain,
-            user_domain=for_domain,
+            by_domain=bundle.request.domain,
+            for_domain=for_domain,
             user=bundle.obj,
             is_new_user=False,  # only used for tracking updates, creation already tracked by model's create method
             changed_by_user=bundle.request.couch_user,

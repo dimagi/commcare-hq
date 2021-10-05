@@ -991,8 +991,8 @@ class CommtrackUserForm(forms.Form):
     def save(self, user):
         # todo: Avoid multiple user.save
         user_change_logger = UserChangeLogger(
-            upload_domain=self.domain,
-            user_domain=self.domain,
+            by_domain=self.domain,
+            for_domain=self.domain,
             user=user,
             is_new_user=False,
             changed_by_user=self.request.couch_user,

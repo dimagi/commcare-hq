@@ -36,7 +36,7 @@ class BaseUserImporter(object):
         self.user_domain = user_domain
         self.user = user
         self.upload_user = upload_user
-        self.logger = UserChangeLogger(upload_domain=upload_domain, user_domain=user_domain, user=user,
+        self.logger = UserChangeLogger(by_domain=upload_domain, for_domain=user_domain, user=user,
                                        is_new_user=is_new_user,
                                        changed_by_user=upload_user, changed_via=via,
                                        upload_record_id=upload_record_id)

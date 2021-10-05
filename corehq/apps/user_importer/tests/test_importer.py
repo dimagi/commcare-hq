@@ -1755,8 +1755,8 @@ class TestUserChangeLogger(SimpleTestCase):
     def test_add_change_message_duplicate_slug_entry(self):
         user = CommCareUser()
         user_change_logger = UserChangeLogger(
-            upload_domain=self.domain_name,
-            user_domain=self.domain_name,
+            by_domain=self.domain_name,
+            for_domain=self.domain_name,
             user=user,
             is_new_user=True,
             changed_by_user=self.uploading_user,
@@ -1772,8 +1772,8 @@ class TestUserChangeLogger(SimpleTestCase):
         user_change_logger.add_change_message(UserChangeMessage.password_reset())
 
         user_change_logger = UserChangeLogger(
-            upload_domain=self.domain_name,
-            user_domain=self.domain_name,
+            by_domain=self.domain_name,
+            for_domain=self.domain_name,
             user=user,
             is_new_user=False,
             changed_by_user=self.uploading_user,
@@ -1790,8 +1790,8 @@ class TestUserChangeLogger(SimpleTestCase):
     def test_add_info_duplicate_slug_entry(self):
         user = CommCareUser()
         user_change_logger = UserChangeLogger(
-            upload_domain=self.domain_name,
-            user_domain=self.domain_name,
+            by_domain=self.domain_name,
+            for_domain=self.domain_name,
             user=user,
             is_new_user=True,
             changed_by_user=self.uploading_user,
@@ -1806,8 +1806,8 @@ class TestUserChangeLogger(SimpleTestCase):
             user_change_logger.add_info(UserChangeMessage.program_change(None))
 
         user_change_logger = UserChangeLogger(
-            upload_domain=self.domain_name,
-            user_domain=self.domain_name,
+            by_domain=self.domain_name,
+            for_domain=self.domain_name,
             user=user,
             is_new_user=False,
             changed_by_user=self.uploading_user,
