@@ -10,7 +10,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO, USER_INDEX
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.testing import sync_users_to_es
 from pillowtop.es_utils import initialize_index_and_mapping
-
+from corehq.apps.domain.models import Domain
 
 from ..analytics import users_have_locations
 from ..dbaccessors import (
@@ -26,7 +26,7 @@ from ..dbaccessors import (
     get_user_ids_from_assigned_location_ids,
     get_user_ids_from_primary_location_ids
 )
-from .util import make_loc
+from .util import make_loc, delete_all_locations
 
 
 class TestUsersByLocation(TestCase):
@@ -148,3 +148,51 @@ class TestUsersByLocation(TestCase):
             mobile_user_ids_at_locations([self.meereen._id]),
             [self.daenerys._id, self.tyrion._id]
         )
+
+
+class TestFilteredLocationsCount(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.ccdomain = Domain(name='cc_user_domain')
+        cls.ccdomain.save()
+
+        bootstrap_location_types(cls.ccdomain.name)
+        cls.loc1 = make_loc('spain', domain=cls.ccdomain.name, type='state')
+        cls.loc2 = make_loc('madagascar', domain=cls.ccdomain.name, parent=cls.loc1, type='district')
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_locations()
+        cls.ccdomain.delete()
+        super().tearDownClass()
+
+    def test_location_filters(self):
+        from ..dbaccessors import get_filtered_locations_count
+        # can filter by location_id (pseudo root)
+        filters = {}
+        self.assertEqual(get_filtered_locations_count(
+            self.ccdomain.name,
+            root_location_id=self.loc1._id,
+            **filters), 2)
+
+        filters = {}
+        self.assertEqual(get_filtered_locations_count(
+            self.ccdomain.name,
+            root_location_id=self.loc2._id,
+            **filters), 1)
+
+        # can filter by location active status
+        filters = {'is_archived': True}
+        self.assertEqual(get_filtered_locations_count(self.ccdomain.name, **filters), 0)
+
+        self.loc2.archive()
+        filters = {'is_archived': False}
+        self.assertEqual(get_filtered_locations_count(
+            self.ccdomain.name,
+            root_location_id=self.loc1._id,
+            **filters), 1)
+
+        filters = {'is_archived': True}
+        self.assertEqual(get_filtered_locations_count(self.ccdomain.name, **filters), 1)
