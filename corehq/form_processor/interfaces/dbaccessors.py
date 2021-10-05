@@ -398,7 +398,7 @@ class CaseAccessors(object):
             raise CaseNotFound
         case = self.db_accessor.get_case(case_id)
         if case.domain != self.domain:
-            raise CaseNotFound
+            raise CaseNotFound(case_id)
         return case
 
     def get_cases(self, case_ids, ordered=False, prefetched_indices=None):
