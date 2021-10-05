@@ -49,7 +49,7 @@ def doc_types():
     return {
         'XFormInstance': XFormInstance,
         'XFormArchived': XFormInstance,
-        'XFormDeprecated': XFormDeprecated,
+        'XFormDeprecated': XFormInstance,
         'XFormDuplicate': XFormDuplicate,
         'XFormError': XFormError,
         'SubmissionErrorLog': XFormInstance,
@@ -403,26 +403,6 @@ class XFormDuplicate(XFormError):
 
     @property
     def is_duplicate(self):
-        return True
-
-
-class XFormDeprecated(XFormError):
-    """
-    After an edit, the old versions go here.
-    """
-    deprecated_date = DateTimeProperty(default=datetime.datetime.utcnow)
-    orig_id = StringProperty()
-
-    def save(self, *args, **kwargs):
-        # we put this here, in case the doc hasn't been modified from an original
-        # XFormInstance we'll force the doc_type to change.
-        self["doc_type"] = "XFormDeprecated"
-        # we can't use super because XFormError also sets the doc type
-        XFormInstance.save(self, *args, **kwargs)
-        # should raise a signal saying that this thing got deprecated
-
-    @property
-    def is_deprecated(self):
         return True
 
 

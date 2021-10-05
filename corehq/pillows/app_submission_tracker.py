@@ -9,7 +9,7 @@ from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from couchforms.models import XFormInstance, XFormError, XFormDeprecated, XFormDuplicate
+from couchforms.models import XFormInstance, XFormError, XFormDuplicate
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
@@ -119,7 +119,6 @@ class CouchAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
         doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
             XFormInstance,
             XFormError,
-            XFormDeprecated,
             XFormDuplicate,
             ('HQSubmission', XFormInstance),
         ])

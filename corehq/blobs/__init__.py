@@ -64,8 +64,7 @@ class CODES:
 
     tempfile = 1
 
-    # SQL forms + XFormInstance, XFormDeprecated,
-    # XFormDuplicate, XFormInstance-Deleted
+    # SQL forms + XFormInstance, XFormDuplicate, XFormInstance-Deleted
     form_xml = 2
     form_attachment = 3
 
