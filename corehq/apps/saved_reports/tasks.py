@@ -11,7 +11,6 @@ from celery.task import periodic_task, task
 
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_request
 
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.saved_reports.exceptions import (
@@ -174,12 +173,17 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
         if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
             # If the email doesn't work because it is too large to fit in the HTML body,
             # send it as an excel attachment.
-            report_state = {
-                'request': request_data,
-                'request_params': json_request(request_data['GET']),
-                'domain': domain,
-                'context': {},
-            }
-            export_all_rows_task(config.report, report_state, recipient_list=recipient_emails)
+
+            report = config.report
+            export_all_rows_task(
+                report.request.GET.get('couch_user'),
+                report.__class__.__module__ + '.' + self.__class__.__name__,
+                report.domain,
+                report.slug,
+                report.name,
+                report.export_format,
+                report.export_table,
+                recipient_list=recipient_emails
+            )
         else:
             self.retry(exc=er)
