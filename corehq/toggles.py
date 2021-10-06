@@ -1508,20 +1508,12 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
     """
         Bulk user management features:
-        For mobile users, enables filtered download page, bulk deletion page, and bulk lookup page.
+        For mobile users, enables bulk deletion page and bulk lookup page.
         For web users, enables filtered download page.
     """,
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Bulk+User+Management',
-)
-
-FILTERED_LOCATION_DOWNLOAD = StaticToggle(
-    'filtered_location_download',
-    "Ability to filter location download to include only a specified location and its descendants.",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Filtered+Locations+Download',
 )
 
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
