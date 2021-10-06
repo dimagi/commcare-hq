@@ -88,32 +88,28 @@ def backfill_deduplication_rule(domain, rule_id):
     progress_helper = MessagingRuleProgressHelper(rule_id)
     total_cases_count = CaseES().domain(domain).case_type(rule.case_type).count()
     progress_helper.set_total_cases_to_be_processed(total_cases_count)
+    now = datetime.utcnow()
 
-    case_update_result = CaseRuleActionResult()
     run_record = DomainCaseRuleRun.objects.create(
         domain=domain,
-        started_on=datetime.utcnow(),
+        started_on=now,
         status=DomainCaseRuleRun.STATUS_RUNNING,
         case_type=rule.case_type,
     )
-    cases_checked = 0
-    for case in AutomaticUpdateRule.iter_cases(domain, rule.case_type):
-        case_update_result.add_result(
-            rule.run_rule(case, datetime.utcnow())
-        )
-        cases_checked += 1
-        progress_helper.increment_current_case_count()
-
-    progress_helper.set_rule_complete()
-    DomainCaseRuleRun.done(
+    case_iterator = AutomaticUpdateRule.iter_cases(domain, rule.case_type)
+    _iter_cases_and_run_rules(
+        domain,
+        case_iterator,
+        [rule],
+        now,
         run_record.id,
-        DomainCaseRuleRun.STATUS_FINISHED,
-        cases_checked,
-        case_update_result,
+        rule.case_type,
+        progress_helper=progress_helper,
     )
+    progress_helper.set_rule_complete()
     AutomaticUpdateRule.objects.filter(pk=rule.pk).update(
         locked_for_editing=False,
-        last_run=datetime.utcnow()
+        last_run=now,
     )
 
 
@@ -218,44 +214,50 @@ def run_case_update_rules_for_domain(domain, now=None):
     queue='case_rule_queue',
 )
 def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=None):
-    domain_obj = Domain.get_by_name(domain)
-    max_allowed_updates = domain_obj.auto_case_update_limit or settings.MAX_RULE_UPDATES_IN_ONE_RUN
-    start_run = datetime.utcnow()
-
-    last_migration_check_time = None
-    cases_checked = 0
-    case_update_result = CaseRuleActionResult()
-
     all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
     rules = list(all_rules.filter(case_type=case_type))
 
     boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-    for case in AutomaticUpdateRule.iter_cases(domain, case_type, boundary_date, db=db):
-        migration_in_progress, last_migration_check_time = check_data_migration_in_progress(
-            domain,
-            last_migration_check_time
-        )
-
-        time_elapsed = datetime.utcnow() - start_run
-        if (
-            time_elapsed.seconds > HALT_AFTER or
-            case_update_result.total_updates >= max_allowed_updates or
-            migration_in_progress
-        ):
-            DomainCaseRuleRun.done(run_id, DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result,
-                                   db=db)
-            notify_error("Halting rule run for domain %s and case type %s." % (domain, case_type))
-            return
-
-        case_update_result.add_result(run_rules_for_case(case, rules, now))
-        cases_checked += 1
-
-    run = DomainCaseRuleRun.done(run_id, DomainCaseRuleRun.STATUS_FINISHED, cases_checked, case_update_result,
-                                 db=db)
+    iterator = AutomaticUpdateRule.iter_cases(domain, case_type, boundary_date, db=db)
+    run = _iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db)
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:
         for rule in rules:
             AutomaticUpdateRule.objects.filter(pk=rule.pk).update(last_run=now)
+
+
+def _iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_type, db=None, progress_helper=None):
+    domain_obj = Domain.get_by_name(domain)
+    max_allowed_updates = domain_obj.auto_case_update_limit or settings.MAX_RULE_UPDATES_IN_ONE_RUN
+    start_run = datetime.utcnow()
+    case_update_result = CaseRuleActionResult()
+
+    cases_checked = 0
+    last_migration_check_time = None
+
+    for case in case_iterator:
+        migration_in_progress, last_migration_check_time = check_data_migration_in_progress(
+            domain, last_migration_check_time
+        )
+
+        time_elapsed = datetime.utcnow() - start_run
+        if (
+            time_elapsed.seconds > HALT_AFTER or case_update_result.total_updates >= max_allowed_updates
+            or migration_in_progress
+        ):
+            notify_error("Halting rule run for domain %s and case type %s." % (domain, case_type))
+
+            return DomainCaseRuleRun.done(
+                run_id, DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result, db=db
+            )
+
+        case_update_result.add_result(run_rules_for_case(case, rules, now))
+        if progress_helper is not None:
+            progress_helper.increment_current_case_count()
+        cases_checked += 1
+    return DomainCaseRuleRun.done(
+        run_id, DomainCaseRuleRun.STATUS_FINISHED, cases_checked, case_update_result, db=db
+    )
 
 
 @task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)
