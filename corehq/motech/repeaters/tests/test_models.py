@@ -25,8 +25,10 @@ from ..const import (
 )
 from ..models import (
     CaseRepeater,
+    CreateCaseRepeater,
     FormRepeater,
     SQLCaseRepeater,
+    SQLCreateCaseRepeater,
     SQLRepeater,
     are_repeat_records_migrated,
     format_response,
@@ -510,6 +512,26 @@ class TestSQLCaseRepeater(TestCase):
         self.addCleanup(repeater.delete)
         repeater.save()
 
+        num_case_repeaters = SQLCaseRepeater.objects.filter(repeater_id=repeater._id).count()
+        self.assertEqual(num_case_repeaters, 1)
+        num_repeaters = SQLRepeater.objects.filter(repeater_id=repeater._id).count()
+        self.assertEqual(num_repeaters, 1)
+
+
+class TestSQLCreateCaseRepeater(TestCase):
+
+    def test_save(self):
+        repeater = CreateCaseRepeater(
+            domain='test-domain',
+            url='https://example.com/create-case/',
+            format='case_json',
+            white_listed_case_types=['test_case_type'],
+        )
+        self.addCleanup(repeater.delete)
+        repeater.save()
+
+        num_create_case_repeaters = SQLCreateCaseRepeater.objects.filter(repeater_id=repeater._id).count()
+        self.assertEqual(num_create_case_repeaters, 1)
         num_case_repeaters = SQLCaseRepeater.objects.filter(repeater_id=repeater._id).count()
         self.assertEqual(num_case_repeaters, 1)
         num_repeaters = SQLRepeater.objects.filter(repeater_id=repeater._id).count()

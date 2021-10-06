@@ -257,6 +257,17 @@ class SQLRepeater(models.Model):
             self.save()
 
 
+# TODO: Implement SQL subclasses for all CaseRepeater subclasses:
+#   [✓] SQLCreateCaseRepeater
+#   [ ] ↳ SQLReferCaseRepeater
+#   [ ] ↳ SQLDataRegistryCaseUpdateRepeater
+#   [ ] SQLUpdateCaseRepeater
+#   [ ] SQLDhis2EntityRepeater
+#   [ ] SQLFHIRRepeater
+#   [ ] SQLOpenmrsRepeater
+#   [ ] SQLBaseCOWINRepeater
+#   [ ] ↳ SQLBeneficiaryRegistrationRepeater
+#   [ ] ↳ SQLBeneficiaryVaccinationRepeater
 class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater):
     """
     Record that cases should be repeated to a new url
@@ -718,6 +729,18 @@ class FormRepeater(Repeater):
         return headers
 
 
+# TODO: Implement SyncCouchToSQLMixin methods for all CaseRepeater
+#       subclasses:
+#   [✓] CreateCaseRepeater
+#   [ ] ↳ ReferCaseRepeater
+#   [ ] ↳ DataRegistryCaseUpdateRepeater
+#   [ ] UpdateCaseRepeater
+#   [ ] Dhis2EntityRepeater
+#   [ ] FHIRRepeater
+#   [ ] OpenmrsRepeater
+#   [ ] BaseCOWINRepeater
+#   [ ] ↳ BeneficiaryRegistrationRepeater
+#   [ ] ↳ BeneficiaryVaccinationRepeater
 class CaseRepeater(SyncCouchToSQLMixin, Repeater):
     """
     Record that cases should be repeated to a new url
@@ -790,6 +813,20 @@ class CreateCaseRepeater(CaseRepeater):
     def allowed_to_forward(self, payload):
         # assume if there's exactly 1 xform_id that modified the case it's being created
         return super(CreateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) == 1
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLCreateCaseRepeater
+
+
+class SQLCreateCaseRepeater(SQLCaseRepeater):
+
+    class Meta:
+        db_table = 'repeaters_createcaserepeater'
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return CreateCaseRepeater
 
 
 class UpdateCaseRepeater(CaseRepeater):
