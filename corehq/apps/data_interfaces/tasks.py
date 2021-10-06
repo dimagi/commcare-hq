@@ -61,7 +61,7 @@ def _get_upload_progress_tracker(upload_id):
     return _progress_tracker
 
 
-@no_result_task(queue=settings.CELERY_DEDUPE_BULK_QUEUE, acks_late=True,
+@no_result_task(queue='case_rule_queue', acks_late=True,
                 soft_time_limit=15 * settings.CELERY_TASK_SOFT_TIME_LIMIT)
 def backfill_deduplication_rule(domain, rule_id):
     if not CASE_DEDUPE.enabled(domain):
