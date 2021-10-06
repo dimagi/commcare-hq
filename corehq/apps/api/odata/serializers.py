@@ -29,9 +29,25 @@ class ODataBaseSerializer(Serializer):
         self.offset = data.get('meta', {}).get('offset', 0)
 
         # Convert bundled objects to JSON
-        data['objects'] = [
-            bundle.obj for bundle in data['objects']
-        ]
+        try:
+            data['objects'] = [
+                bundle.obj for bundle in data['objects']
+            ]
+
+        except KeyError:
+            error_message = {"error": {
+                "code": "404",
+                "message": "The oData link does not exist",
+                "target": "query",
+                "details": [
+                    {
+                        "code": "404",
+                        "target": "$search",
+                        "message": "$search function could not find resource"
+                    }
+                ]
+            }}
+            return json.dumps(error_message, cls=DjangoJSONEncoder)
 
         domain = data.pop('domain', None)
         config_id = data.pop('config_id', None)
