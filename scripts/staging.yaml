@@ -84,4 +84,5 @@ branches:
     - rc/data-preview-accessibility # Robert Oct 5
     - dependabot/npm_and_yarn/datatables.net-1.11.3 # Amit Oct 6
     - ap/update-ansi-regex # Amit Oct 6
+    - ml/modify-case-accessors # Minha Oct 6 [QA]
 submodules: { }
