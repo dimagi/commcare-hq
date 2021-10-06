@@ -71,7 +71,7 @@ def update_messaging_for_case(domain, case_id, case):
     if case is None or case.is_deleted:
         clear_messaging_for_case(domain, case_id)
     elif settings.USE_PHONE_ENTRIES:
-        sms_tasks._sync_case_phone_number(case)
+        sms_tasks.sync_case_phone_number(case)
 
 
 def clear_messaging_for_case(domain, case_id):
