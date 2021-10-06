@@ -251,10 +251,7 @@ class StaticToggle(object):
         except ResourceNotFound:
             return []
 
-        users = {user for user in toggle.enabled_users if not user.startswith("domain:")}
-        users |= self.always_enabled
-        users -= self.always_disabled
-        return list(users)
+        return [user for user in toggle.enabled_users if not user.startswith("domain:")]
 
 
 def was_domain_created_after(domain, checkpoint):
