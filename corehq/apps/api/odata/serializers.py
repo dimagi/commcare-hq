@@ -11,6 +11,7 @@ from corehq.apps.api.odata.views import (
     ODataFormMetadataView,
 )
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
+from corehq.apps.export.exceptions import InvalidODataFeedException
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -24,60 +25,53 @@ class ODataBaseSerializer(Serializer):
         raise NotImplementedError("implement get_config")
 
     def to_json(self, data, options=None):
-
         # get current object offset for use in row number
-        self.offset = data.get('meta', {}).get('offset', 0)
-
-        # Convert bundled objects to JSON
         try:
+            self.offset = data.get('meta', {}).get('offset', 0)
+
+            if 'objects' not in data.keys():
+                raise InvalidODataFeedException
+            # Convert bundled objects to JSON
             data['objects'] = [
                 bundle.obj for bundle in data['objects']
             ]
 
-        except KeyError:
+            domain = data.pop('domain', None)
+            config_id = data.pop('config_id', None)
+            api_path = data.pop('api_path', None)
+            table_id = data.pop('table_id', None)
+
+            assert all([domain, config_id, api_path]), [domain, config_id, api_path]
+
+            context_urlname = self.metadata_url
+            context_url_args = [domain, config_id]
+            if table_id > 0:
+                context_urlname = self.table_metadata_url
+                context_url_args.append(table_id)
+
+            data['@odata.context'] = '{}#{}'.format(
+                absolute_reverse(context_urlname, args=context_url_args),
+                'feed'
+            )
+
+            next_link = self.get_next_url(data.pop('meta'), api_path)
+            if next_link:
+                data['@odata.nextLink'] = next_link
+
+            config = self.get_config(config_id)
+            data['value'] = self.serialize_documents_using_config(
+                data.pop('objects'),
+                config,
+                table_id
+            )
+            return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
+        except InvalidODataFeedException:
             error_message = {"error": {
                 "code": "404",
-                "message": "The oData link does not exist",
+                "message": "This oData feed does not exist",
                 "target": "query",
-                "details": [
-                    {
-                        "code": "404",
-                        "target": "$search",
-                        "message": "$search function could not find resource"
-                    }
-                ]
             }}
             return json.dumps(error_message, cls=DjangoJSONEncoder)
-
-        domain = data.pop('domain', None)
-        config_id = data.pop('config_id', None)
-        api_path = data.pop('api_path', None)
-        table_id = data.pop('table_id', None)
-
-        assert all([domain, config_id, api_path]), [domain, config_id, api_path]
-
-        context_urlname = self.metadata_url
-        context_url_args = [domain, config_id]
-        if table_id > 0:
-            context_urlname = self.table_metadata_url
-            context_url_args.append(table_id)
-
-        data['@odata.context'] = '{}#{}'.format(
-            absolute_reverse(context_urlname, args=context_url_args),
-            'feed'
-        )
-
-        next_link = self.get_next_url(data.pop('meta'), api_path)
-        if next_link:
-            data['@odata.nextLink'] = next_link
-
-        config = self.get_config(config_id)
-        data['value'] = self.serialize_documents_using_config(
-            data.pop('objects'),
-            config,
-            table_id
-        )
-        return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
 
     @staticmethod
     def get_next_url(meta, api_path):
