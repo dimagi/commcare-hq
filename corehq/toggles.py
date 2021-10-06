@@ -827,7 +827,7 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
         "search first", "see more", and "skip to default case search results", Geocoder
         and other options in Webapps Case Search.
     ''',
-    TAG_INTERNAL,
+    TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
     namespaces=[NAMESPACE_DOMAIN]
 )
