@@ -85,4 +85,5 @@ branches:
     - dependabot/npm_and_yarn/datatables.net-1.11.3 # Amit Oct 6
     - ap/update-ansi-regex # Amit Oct 6
     - ml/modify-case-accessors # Minha Oct 6 [QA]
+    - smh/remove-extra-spinner-icons # Steph Oct 6
 submodules: { }
