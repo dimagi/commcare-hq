@@ -1,0 +1,148 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main 'data_interfaces/js/case_dedupe_main' %}
+
+{% block page_content %}
+  {% initial_page_data 'case_types' case_types %}
+  {% initial_page_data 'name' name %}
+  {% initial_page_data 'case_type' case_type %}
+  {% initial_page_data 'match_type' match_type %}
+  {% initial_page_data 'case_properties' case_properties %}
+  {% initial_page_data 'include_closed' include_closed %}
+  {% initial_page_data 'properties_to_update' properties_to_update %}
+  <div id="case-dedupe-rule-definition">
+    {% if readonly %}
+      <p class="help-block alert alert-info"><i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+          This deduplication rule is currently backfilling. You will be able to edit it once it has completed. <strong>{{ progress }}%</strong> ({{ complete }} / {{ total }}) cases processed.
+        {% endblocktrans %}
+      </p>
+    {% endif %}
+    <form id="rule-definition-form" class="form form-horizontal main-form" method="POST" action="#">
+      {% csrf_token %}
+      <fieldset {% if readonly %} disabled="disabled" {% endif %}>
+        <legend>{% trans "Basic Information" %}</legend>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2 requiredField">
+            {% trans "Name" %}
+            <span class="asteriskField">*</span>
+          </label>
+          <div class="controls col-xs-12 col-sm-8 col-md-8 col-lg-6">
+            <input type="text" name="name" class="textinput textInput form-control" required="true" data-bind="value:name" />
+          </div>
+        </div>
+      </fieldset>
+      <fieldset {% if readonly %} disabled="disabled" {% endif %}>
+        <legend>{% trans "Rule Criteria" %}</legend>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
+            {% trans "Case Type" %}
+            <span class="asteriskField">*</span>
+          </label>
+          <div class="controls col-xs-12 col-sm-8 col-md-8 col-lg-6">
+            <select name="case_type" class="hqwebapp-select2 form-control" data-bind="value: caseType, options: caseTypeOptions" required="true" {% if readonly %} disabled="disabled" {% endif %}>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
+            {% trans "Match Type" %}
+            <span class="asteriskField">*</span>
+          </label>
+          <div class="controls col-xs-12 col-sm-8 col-md-8 col-lg-6">
+            <select name="match_type" class="form-control" required="true" data-bind="
+              value: matchType,
+              options: matchTypeOptions,
+              optionsText: matchTypeOptionsText
+              " >
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <div data-bind="template: {name: 'dedupe-case-property', foreach: caseProperties, as: 'caseProperty'} "></div>
+          <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
+            {% trans "Add Filter" %}
+          </label>
+          <button class="btn btn-default" type="button" data-bind="click: addCaseProperty">
+            <i class="fa fa-plus"></i>
+            {% trans "Add Case Property" %}
+          </button>
+          <input type="text" required hidden name="case_properties" data-bind="value: serializedCaseProperties" />
+        </div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
+            {% trans "Include Closed Cases" %}
+          </label>
+          <input type="checkbox" data-bind="checked: includeClosed" name="include_closed" />
+        </div>
+      </fieldset>
+      <fieldset {% if readonly %} disabled="disabled" {% endif %}>
+        <legend>{% trans "Actions" %}</legend>
+        <div class="form-group">
+          <div data-bind="template: {name: 'update-case-property-action', foreach: propertiesToUpdate, as: 'propertyToUpdate'} "></div>
+          <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
+            {% trans "Add Action" %}
+          </label>
+          <button class="btn btn-default" type="button" data-bind="click: addPropertyToUpdate">
+            <i class="fa fa-plus"></i>
+            {% trans "Add Update Case Property" %}
+          </button>
+          <input type="text" hidden name="properties_to_update" data-bind="value: serializedPropertiesToUpdate" />
+        </div>
+      </fieldset>
+      {% if not readonly %}
+        <div class="form-actions">
+          <div class="col-xs-1">
+            <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+          </div>
+        </div>
+      {% endif %}
+    </form>
+  </div>
+
+  <script type="text/html" id="dedupe-case-property">
+    <div class="form-group well">
+      <div class="col-xs-1">
+        <div class="row">
+          <div class="col-xs-6 text-center">
+            <button type="button" class="btn btn-danger" data-bind="click: $parent.removeCaseProperty, visible:$parent.caseProperties().length > 1">
+              <i class="fa fa-close"></i>
+            </button>
+          </div>
+          <div class="col-xs-6 text-center">
+            <label class="control-label" data-bind="text: $parent.matchTypeText "></label>
+          </div>
+        </div>
+      </div>
+      <label class="control-label col-xs-2">{% trans "Case property" %}</label>
+      <div class="controls col-xs-2">
+        <input type="text" class="textinput form-control" data-bind="textInput: caseProperty.name" required placeholder="{% trans 'case property name' %}" />
+      </div>
+    </div>
+  </script>
+
+  <script type="text/html" id="update-case-property-action">
+    <div class="form-group">
+      <button type="button" class="btn btn-danger" data-bind="click: $parent.removePropertyToUpdate">
+        <i class="fa fa-close"></i>
+      </button>
+      <label class="control-label col-xs-2">{% trans "Set case property" %}</label>
+      <div class="controls col-xs-2">
+        <input type="text" data-bind="value: name" class="textinput form-control" required placeholder="{% trans 'case property name' %}" />
+      </div>
+      <div class="controls col-xs-2">
+        <select class="select form-control" data-bind="value: valueType" required>
+          <option value="EXACT">{% trans 'to the exact value' %}</option>
+          <option value="CASE_PROPERTY">{% trans 'to the value from other case property' %}</option>
+        </select>
+      </div>
+      <div class="controls col-xs-2">
+        <input type="text" class="textinput form-control" data-bind="value: value" required />
+      </div>
+    </div>
+  </script>
+
+
+{% endblock %}

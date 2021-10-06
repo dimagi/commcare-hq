@@ -382,7 +382,7 @@ class DeactivateScheduleTest(TransactionTestCase):
 
         with patch('corehq.apps.accounting.subscription_changes.refresh_timed_schedule_instances.delay') as p1,\
                 patch('corehq.apps.accounting.subscription_changes.refresh_alert_schedule_instances.delay') as p2,\
-                patch('corehq.messaging.tasks.initiate_messaging_rule_run') as p3:
+                patch('corehq.messaging.tasks.initiate_rule_run') as p3:
 
             _deactivate_schedules(self.domain_obj_1)
 
@@ -426,7 +426,7 @@ class DeactivateScheduleTest(TransactionTestCase):
 
         with patch('corehq.apps.accounting.subscription_changes.refresh_timed_schedule_instances.delay') as p1,\
                 patch('corehq.apps.accounting.subscription_changes.refresh_alert_schedule_instances.delay') as p2,\
-                patch('corehq.messaging.tasks.initiate_messaging_rule_run') as p3:
+                patch('corehq.messaging.tasks.initiate_rule_run') as p3:
 
             _deactivate_schedules(self.domain_obj_1, survey_only=True)
 
