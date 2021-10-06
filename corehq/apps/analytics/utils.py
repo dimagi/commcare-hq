@@ -169,44 +169,6 @@ def _get_contact_ids_for_emails(list_of_emails, retry_num=0):
     return []
 
 
-def _get_contact_ids_for_email_domain(email_domain, retry_num=0):
-    """
-    Searches Hubspot for an email domain and returns the list of matching
-    contact IDs for that email domain.
-    :param email_domain:
-    :param retry_num: the number of the current retry attempt
-    :return: list of matching contact IDs
-    """
-    if retry_num > 0:
-        time.sleep(10)  # wait 10 seconds if this is another retry attempt
-
-    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key:
-        try:
-            req = requests.get(
-                "https://api.hubapi.com/contacts/v1/search/query",
-                params={
-                    'hapikey': api_key,
-                    'q': f'@{email_domain}',
-                },
-            )
-            if req.status_code == 404:
-                return []
-            req.raise_for_status()
-        except (ConnectionError, requests.exceptions.HTTPError) as e:
-            metrics_counter(
-                'commcare.hubspot_data.retry.get_contact_ids_for_email_domain'
-            )
-            if retry_num <= MAX_API_RETRIES:
-                return _get_contact_ids_for_email_domain(email_domain, retry_num + 1)
-            else:
-                logger.error(f"Failed to get Hubspot contact ids for email "
-                             f"domain {email_domain} due to {str(e)}.")
-        else:
-            return [contact.get('vid') for contact in req.json().get('contacts')]
-    return []
-
-
 def remove_blocked_domain_contacts_from_hubspot(stdout=None):
     """
     Removes contacts from Hubspot that are members of blocked domains.
