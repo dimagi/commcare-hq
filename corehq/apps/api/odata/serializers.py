@@ -1,7 +1,6 @@
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http.response import Http404
 
 from tastypie.serializers import Serializer
 
@@ -35,54 +34,50 @@ class ODataBaseSerializer(Serializer):
                 bundle.obj for bundle in data['objects']
             ]
 
-            domain = data.pop('domain', None)
-            config_id = data.pop('config_id', None)
-            api_path = data.pop('api_path', None)
-            table_id = data.pop('table_id', None)
-
-            assert all([domain, config_id, api_path]), [domain, config_id, api_path]
-
-            context_urlname = self.metadata_url
-            context_url_args = [domain, config_id]
-            if table_id > 0:
-                context_urlname = self.table_metadata_url
-                context_url_args.append(table_id)
-
-            data['@odata.context'] = '{}#{}'.format(
-                absolute_reverse(context_urlname, args=context_url_args),
-                'feed'
-            )
-
-            next_link = self.get_next_url(data.pop('meta'), api_path)
-            if next_link:
-                data['@odata.nextLink'] = next_link
-
-            config = self.get_config(config_id)
-            data['value'] = self.serialize_documents_using_config(
-                data.pop('objects'),
-                config,
-                table_id
-            )
-            return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
-
-        except KeyError as e:
+        except KeyError:
             error_message = {"error": {
-                "code": "500",
-                "message": e,
+                "code": "404",
+                "message": "The oData link does not exist",
                 "target": "query",
                 "details": [
                     {
-                        "code": "500",
+                        "code": "404",
                         "target": "$search",
-                        "message": "$search function not supported"
+                        "message": "$search function could not find resource"
                     }
-                ],
-                "innererror": {
-                    "trace": e.__traceback__,
-                    "context": e.__context__
-                }
+                ]
             }}
             return json.dumps(error_message, cls=DjangoJSONEncoder)
+
+        domain = data.pop('domain', None)
+        config_id = data.pop('config_id', None)
+        api_path = data.pop('api_path', None)
+        table_id = data.pop('table_id', None)
+
+        assert all([domain, config_id, api_path]), [domain, config_id, api_path]
+
+        context_urlname = self.metadata_url
+        context_url_args = [domain, config_id]
+        if table_id > 0:
+            context_urlname = self.table_metadata_url
+            context_url_args.append(table_id)
+
+        data['@odata.context'] = '{}#{}'.format(
+            absolute_reverse(context_urlname, args=context_url_args),
+            'feed'
+        )
+
+        next_link = self.get_next_url(data.pop('meta'), api_path)
+        if next_link:
+            data['@odata.nextLink'] = next_link
+
+        config = self.get_config(config_id)
+        data['value'] = self.serialize_documents_using_config(
+            data.pop('objects'),
+            config,
+            table_id
+        )
+        return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
 
     @staticmethod
     def get_next_url(meta, api_path):
