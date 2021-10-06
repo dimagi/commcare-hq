@@ -198,7 +198,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
     def testOTARestoreSingle(self):
         _, case = self._doCreateCaseWithMultimedia()
         restore_attachments = ['fruity_file']
-        self._validateOTARestore(case.case_id, restore_attachments)
+        self._validateOTARestore(case.domain, case.case_id, restore_attachments)
 
     @flag_enabled('MM_CASE_PROPERTIES')
     def testOTARestoreMultiple(self):
@@ -207,10 +207,10 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         removes = ['fruity_file']
         _, case = self._doSubmitUpdateWithMultimedia(new_attachments=restore_attachments, removes=removes)
 
-        self._validateOTARestore(case.case_id, restore_attachments)
+        self._validateOTARestore(case.domain, case.case_id, restore_attachments)
 
-    def _validateOTARestore(self, case_id, restore_attachments):
-        case_xml = CaseAccessors().get_case(case_id).to_xml(V2)
+    def _validateOTARestore(self, domain, case_id, restore_attachments):
+        case_xml = CaseAccessors(domain).get_case(case_id).to_xml(V2)
         root_node = lxml.etree.fromstring(case_xml)
         attaches = root_node.find('{http://commcarehq.org/case/transaction/v2}attachment')
         self.assertEqual(len(restore_attachments), len(attaches))
