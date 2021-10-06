@@ -35,8 +35,9 @@ class Command(BaseCommand):
         if rule.domain != domain:
             raise CommandError("Domain '%s' does not match rule's domain '%s'" % (domain, rule.domain))
 
-        if rule.workflow != AutomaticUpdateRule.WORKFLOW_SCHEDULING:
-            raise CommandError("Expected the rule to be a messaging rule")
+        if rule.workflow not in [
+                AutomaticUpdateRule.WORKFLOW_SCHEDULING, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE]:
+            raise CommandError("Expected the rule to be a messaging or deduplicate rule")
 
         return rule
 
