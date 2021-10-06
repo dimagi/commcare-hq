@@ -14,10 +14,12 @@ from dimagi.utils.logging import notify_error
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.es import CaseES
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
+from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.motech.repeaters.dbaccessors import (
     get_couch_repeat_record_ids_by_payload_id,
     get_sql_repeat_records_by_payload_id,
@@ -25,13 +27,15 @@ from corehq.motech.repeaters.dbaccessors import (
 )
 from corehq.motech.repeaters.models import SQLRepeatRecord
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
+from corehq.toggles import CASE_DEDUPE, DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
+from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
 
 from .interfaces import FormManagementMode
 from .models import (
     AUTO_UPDATE_XMLNS,
     AutomaticUpdateRule,
+    CaseDuplicate,
     CaseRuleActionResult,
     CaseRuleSubmission,
     DomainCaseRuleRun,
@@ -55,6 +59,62 @@ def _get_upload_progress_tracker(upload_id):
             'total': total,
         }, ONE_HOUR)
     return _progress_tracker
+
+
+@no_result_task(queue=settings.CELERY_DEDUPE_BULK_QUEUE, acks_late=True,
+                soft_time_limit=15 * settings.CELERY_TASK_SOFT_TIME_LIMIT)
+def backfill_deduplication_rule(domain, rule_id):
+    if not CASE_DEDUPE.enabled(domain):
+        return
+
+    try:
+        rule = AutomaticUpdateRule.objects.get(
+            id=rule_id,
+            domain=domain,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE
+        )
+    except AutomaticUpdateRule.DoesNotExist:
+        return
+
+    if not rule.active:
+        return
+    AutomaticUpdateRule.clear_caches(rule.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+    deduplicate_action = rule.memoized_actions[0].definition
+    CaseDuplicate.objects.filter(action=deduplicate_action).delete()
+
+    rule.locked_for_editing = True
+    rule.save()
+
+    progress_helper = MessagingRuleProgressHelper(rule_id)
+    total_cases_count = CaseES().domain(domain).case_type(rule.case_type).count()
+    progress_helper.set_total_cases_to_be_processed(total_cases_count)
+
+    case_update_result = CaseRuleActionResult()
+    run_record = DomainCaseRuleRun.objects.create(
+        domain=domain,
+        started_on=datetime.utcnow(),
+        status=DomainCaseRuleRun.STATUS_RUNNING,
+        case_type=rule.case_type,
+    )
+    cases_checked = 0
+    for case in AutomaticUpdateRule.iter_cases(domain, rule.case_type):
+        case_update_result.add_result(
+            rule.run_rule(case, datetime.utcnow())
+        )
+        cases_checked += 1
+        progress_helper.increment_current_case_count()
+
+    progress_helper.set_rule_complete()
+    DomainCaseRuleRun.done(
+        run_record.id,
+        DomainCaseRuleRun.STATUS_FINISHED,
+        cases_checked,
+        case_update_result,
+    )
+    AutomaticUpdateRule.objects.filter(pk=rule.pk).update(
+        locked_for_editing=False,
+        last_run=datetime.utcnow()
+    )
 
 
 @task(serializer='pickle', ignore_result=True)

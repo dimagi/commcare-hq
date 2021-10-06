@@ -1017,12 +1017,24 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
             progress_helper = MessagingRuleProgressHelper(self.rule_id)
             context.update({
                 "progress": progress_helper.get_progress_pct(),
-                "complete": progress_helper.client.get(progress_helper.current_key),
-                "total": progress_helper.client.get(progress_helper.total_key),
+                "complete": progress_helper.get_cases_processed(),
+                "total": progress_helper.get_total_cases_to_process(),
             })
         return context
 
     def post(self, request, *args, **kwargs):
+        if self.rule.locked_for_editing:
+            messages.error(
+                request,
+                _("Rule {name} is currently backfilling and cannot be edited").format(name=self.rule.name)
+            )
+            return HttpResponseRedirect(
+                reverse(DeduplicationRuleEditView.urlname, kwargs={
+                    "domain": self.domain,
+                    "rule_id": self.rule.id
+                })
+            )
+
         rule_params, action_params = self.parse_params(request)
         with transaction.atomic():
             rule_modified = self._update_model_instance(self.rule, rule_params)

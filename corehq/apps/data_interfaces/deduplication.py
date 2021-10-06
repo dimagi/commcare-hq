@@ -34,9 +34,11 @@ def reset_and_backfill_deduplicate_rule(rule):
     from corehq.apps.data_interfaces.models import (
         AutomaticUpdateRule,
         CaseDeduplicationActionDefinition,
-        CaseDuplicate,
     )
-    from corehq.messaging.tasks import initiate_rule_run
+    from corehq.apps.data_interfaces.tasks import backfill_deduplication_rule
+
+    if not rule.active:
+        return
 
     if rule.workflow != AutomaticUpdateRule.WORKFLOW_DEDUPLICATE:
         raise AttributeError
@@ -45,6 +47,4 @@ def reset_and_backfill_deduplicate_rule(rule):
     if not isinstance(deduplicate_action, CaseDeduplicationActionDefinition):
         raise AttributeError
 
-    AutomaticUpdateRule.clear_caches(rule.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
-    CaseDuplicate.objects.filter(action=deduplicate_action).delete()
-    initiate_rule_run(rule)
+    backfill_deduplication_rule.delay(rule.domain, rule.pk)
