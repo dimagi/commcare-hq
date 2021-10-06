@@ -82,4 +82,5 @@ branches:
     - es/webuser-activity  # Ethan Sept 30
     - sk/session-schema  # Simon Oct 5
     - rc/data-preview-accessibility # Robert Oct 5
+    - dependabot/npm_and_yarn/datatables.net-1.11.3 # Amit Oct 6
 submodules: { }
