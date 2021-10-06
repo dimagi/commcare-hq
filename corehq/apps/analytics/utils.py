@@ -5,7 +5,7 @@ import logging
 
 from django.conf import settings
 
-from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics import metrics_gauge, metrics_counter
 from corehq.apps.accounting.models import Subscription, BillingAccount
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -156,9 +156,8 @@ def _get_contact_ids_for_emails(list_of_emails, retry_num=0):
                 return []
             req.raise_for_status()
         except (ConnectionError, requests.exceptions.HTTPError) as e:
-            metrics_gauge(
-                'commcare.hubspot_data.retry.get_contact_ids_for_emails',
-                1
+            metrics_counter(
+                'commcare.hubspot_data.retry.get_contact_ids_for_emails'
             )
             if retry_num <= MAX_API_RETRIES:
                 return _get_contact_ids_for_emails(list_of_emails, retry_num + 1)
@@ -195,9 +194,8 @@ def _get_contact_ids_for_email_domain(email_domain, retry_num=0):
                 return []
             req.raise_for_status()
         except (ConnectionError, requests.exceptions.HTTPError) as e:
-            metrics_gauge(
-                'commcare.hubspot_data.retry.get_contact_ids_for_email_domain',
-                1
+            metrics_counter(
+                'commcare.hubspot_data.retry.get_contact_ids_for_email_domain'
             )
             if retry_num <= MAX_API_RETRIES:
                 return _get_contact_ids_for_email_domain(email_domain, retry_num + 1)
