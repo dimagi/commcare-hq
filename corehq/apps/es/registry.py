@@ -43,6 +43,7 @@ def register(info, cname=None):
         _ALIAS_REF_COUNTS[alias] += 1
     else:
         _ALIAS_REF_COUNTS[alias] = 1
+    return cname
 
 
 @unit_testing_only

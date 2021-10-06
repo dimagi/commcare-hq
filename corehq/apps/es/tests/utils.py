@@ -1,5 +1,7 @@
 import json
+from functools import wraps
 from datetime import datetime
+from inspect import isclass
 
 from nose.plugins.attrib import attr
 from nose.tools import nottest
@@ -93,12 +95,114 @@ class ElasticTestMixin(object):
 
 
 @nottest
-def es_test(test):
-    """Decorator for tagging ElasticSearch tests
+def es_test(test=None, index=None, indices=[], setup_class=False):
+    """Decorator for Elasticsearch tests.
+    The decorator sets the `es_test` nose attribute and optionally performs
+    index registry setup/teardown before and after the test(s).
 
-    :param test: A test class, method, or function.
+    :param test: A test class, method, or function (only used via the @decorator
+                 syntax).
+    :param index: Index info object or `(info_obj, cname)` tuple of an index to
+                  be registered for the test, mutually exclusive with the
+                  `indices` param (raises ValueError if both provided).
+    :param indices: A list of index info objects (or tuples, see above) of
+                    indices to be registered for the test, mutually exclusive
+                    with the the `index` param (raises ValueError).
+    :param setup_class: Set to `True` to perform registry setup/teardown in the
+                        `setUpClass` and `tearDownClass` (instead of the default
+                        `setUp` and `tearDown`) methods. Invalid if true when
+                        decorating non-class objects (raises ValueError).
+    :raises: ValueError
+
+    See test_test_utils.py for examples.
     """
-    return attr(es_test=True)(test)
+    if test is None:
+        def es_test_decorator(test):
+            return es_test(test, index, indices, setup_class)
+        return es_test_decorator
+
+    nose_attr_wrapper = attr(es_test=True)
+
+    if not (index or indices):
+        return nose_attr_wrapper(test)
+
+    if index is None:
+        _registration_info = list(indices)
+    elif not indices:
+        _registration_info = [index]
+    else:
+        raise ValueError(f"index and indices are mutually exclusive {(index, indices)}")
+
+    def registry_setup():
+        reg = {}
+        for info in _registration_info:
+            if isinstance(info, tuple):
+                info, cname = info
+            else:
+                cname = None
+            reg[register(info, cname)] = info
+        return reg
+
+    def registry_teardown():
+        for dereg in _registration_info:
+            if isinstance(dereg, tuple):
+                info, dereg = dereg
+            deregister(dereg)
+
+    if isclass(test):
+        test = _decorate_es_methods(test, setup_class, registry_setup, registry_teardown)
+    else:
+        if setup_class:
+            raise ValueError(f"keyword 'setup_class' is for class decorators, test={test}")
+        test = _decorate_es_function(test, registry_setup, registry_teardown)
+    return nose_attr_wrapper(test)
+
+
+def _decorate_es_function(test, registry_setup, registry_teardown):
+
+    @wraps(test)
+    def wrapper(*args, **kw):
+        registry_setup()
+        try:
+            return test(*args, **kw)
+        finally:
+            registry_teardown()
+
+    return wrapper
+
+
+def _decorate_es_methods(test, setup_class, registry_setup, registry_teardown):
+
+    def setup_decorator(setup):
+        @wraps(setup)
+        def wrapper(self, *args, **kw):
+            self._indices = registry_setup()
+            if setup is not None:
+                return setup(self, *args, **kw)
+        return wrapper
+
+    def teardown_decorator(teardown):
+        @wraps(teardown)
+        def wrapper(*args, **kw):
+            try:
+                if teardown is not None:
+                    return teardown(*args, **kw)
+            finally:
+                registry_teardown()
+        return wrapper
+
+    def decorate(name, decorator):
+        func_name = f"{name}Class" if setup_class else name
+        func = getattr(test, func_name, None)
+        if setup_class:
+            decorated = classmethod(decorator(func.__func__))
+        else:
+            decorated = decorator(func)
+        setattr(test, func_name, decorated)
+
+    decorate("setUp", setup_decorator)
+    decorate("tearDown", teardown_decorator)
+    return test
 
 
 def populate_es_index(models, index_cname, doc_prep_fn=lambda doc: doc):
