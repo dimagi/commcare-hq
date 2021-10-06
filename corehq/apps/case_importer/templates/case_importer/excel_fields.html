@@ -28,7 +28,8 @@
         <th>{% trans "Excel Field" %}</th>
         <th></th>
         <th>{% trans "Case Property" %}<button type="button" class="btn btn-default btn-xs pull-right" id="autofill">{% trans "Set to default" %}</button></th>
-        <th></th>
+        <th class="col-md-1">{% trans "Create new property" %}</th>
+        <th>{% include "data_dictionary/partials/valid_values_th_content.html" %}</th>
         </thead>
         <tbody id="excel-field-rows" class="ko-template">
         {% include "case_importer/partials/excel_field_rows.html" %}
