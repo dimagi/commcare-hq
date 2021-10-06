@@ -1,9 +1,7 @@
-from datetime import datetime
 from itertools import chain
 
 from django.test import TestCase, override_settings
 
-from dateutil.relativedelta import relativedelta
 from faker import Faker
 from mock import patch
 
