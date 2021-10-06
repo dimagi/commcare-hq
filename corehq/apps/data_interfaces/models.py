@@ -328,11 +328,6 @@ class AutomaticUpdateRule(models.Model):
                 (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))):
             return False
 
-        if (self.workflow == AutomaticUpdateRule.WORKFLOW_DEDUPLICATE
-                and self.last_run
-                and not case.server_modified_on >= self.last_run):
-            return False
-
         for criteria in self.memoized_criteria:
             try:
                 result = criteria.definition.matches(case, now)
