@@ -110,7 +110,7 @@ def _sync_case_for_messaging_rule(domain, case_id, rule_id):
         MessagingRuleProgressHelper(rule_id).increment_current_case_count()
 
 
-def initiate_messaging_rule_run(rule):
+def initiate_rule_run(rule):
     if not rule.active:
         return
     AutomaticUpdateRule.objects.filter(pk=rule.pk).update(locked_for_editing=True)
