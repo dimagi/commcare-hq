@@ -9,7 +9,6 @@ from couchdbkit import ResourceNotFound
 
 import couchforms
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
-from corehq.toggles import THROTTLE_SYSTEM_FORMS, NAMESPACE_DOMAIN
 from couchforms.models import DefaultAuthContext
 
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -41,7 +40,7 @@ def submit_form_locally(instance, domain, max_wait=..., **kwargs):
     """
 
     if max_wait is ...:
-        max_wait = 0.1 if THROTTLE_SYSTEM_FORMS.enabled(domain, namespace=NAMESPACE_DOMAIN) else None
+        max_wait = 0.1
     if max_wait is not None:
         rate_limit_submission(domain, delay_rather_than_reject=True, max_wait=max_wait)
     # intentionally leave these unauth'd for now
