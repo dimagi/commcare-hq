@@ -221,7 +221,7 @@ class CaseRebuildTest(TestCase):
             [update_block.as_xml()], form_extras={'received_on': earlier}
         )
 
-        case_accessors = CaseAccessors(REBUILD_TEST_DOMAIN)
+        case_accessors = CaseAccessors('test-domain')
         case = case_accessors.get_case(case_id)
         self.assertEqual(earlier, case.modified_on)
 
@@ -262,7 +262,7 @@ class CaseRebuildTest(TestCase):
             CaseBlock.deprecated_init(child_case_id, index={'mom': ('mother', parent_case_id)}).as_xml()
         ])
 
-        case_accessors = CaseAccessors(REBUILD_TEST_DOMAIN)
+        case_accessors = CaseAccessors('test-domain')
         case = case_accessors.get_case(child_case_id)
         self.assertEqual(1, len(case.indices))
 
