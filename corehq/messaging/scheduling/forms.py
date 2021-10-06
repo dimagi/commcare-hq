@@ -62,6 +62,7 @@ from corehq.messaging.scheduling.models import (
     SMSCallbackContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from couchdbkit import ResourceNotFound
 from langcodes import get_name as get_language_name
 
@@ -1774,8 +1775,9 @@ class ScheduleForm(Form):
                             not Parent / Extension or Host / Extension relationships.
                         """
                     )),
-                data_bind=("visible: recipientTypeSelected('%s')"
-                    % CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE)
+                data_bind="visible: (recipientTypeSelected('{parentCase}') && {extensionFlagEnabled})".format(
+                    parentCase=CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE,
+                    extensionFlagEnabled="true" if EXTENSION_CASES_SYNC_ENABLED.enabled(self.domain) else "false")
             ),
             crispy.Div(
                 crispy.Field(
