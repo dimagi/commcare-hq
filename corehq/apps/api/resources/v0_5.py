@@ -17,7 +17,6 @@ from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
-from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.bulk import get_docs
 from phonelog.models import DeviceReportEntry
 
@@ -74,6 +73,7 @@ from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
 )
+from corehq.apps.userreports.util import get_configurable_and_static_reports
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
@@ -666,39 +666,6 @@ class DeviceReportResource(HqBaseResource, ModelResource):
         }
 
 
-class StockTransactionResource(HqBaseResource, ModelResource):
-
-    class Meta(object):
-        queryset = StockTransaction.objects.all()
-        list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
-        resource_name = 'stock_transaction'
-        authentication = RequirePermissionAuthentication(Permissions.view_reports)
-        paginator_class = NoCountingPaginator
-        authorization = DomainAuthorization(domain_key='report__domain')
-
-        filtering = {
-            "case_id": ('exact',),
-            "section_id": ('exact'),
-        }
-
-        fields = ['case_id', 'product_id', 'type', 'section_id', 'quantity', 'stock_on_hand']
-        include_resource_uri = False
-
-    def build_filters(self, filters=None):
-        orm_filters = super(StockTransactionResource, self).build_filters(filters)
-        if 'start_date' in filters:
-            orm_filters['report__date__gte'] = filters['start_date']
-        if 'end_date' in filters:
-            orm_filters['report__date__lte'] = filters['end_date']
-        return orm_filters
-
-    def dehydrate(self, bundle):
-        bundle.data['product_name'] = bundle.obj.sql_product.name
-        bundle.data['transaction_date'] = bundle.obj.report.date
-        return bundle
-
-
 ConfigurableReportData = namedtuple("ConfigurableReportData", [
     "data", "columns", "id", "domain", "total_records", "get_params", "next_page"
 ])
@@ -881,7 +848,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        return ReportConfiguration.by_domain(domain)
+        return get_configurable_and_static_reports(domain)
 
     def detail_uri_kwargs(self, bundle_or_obj):
         return {

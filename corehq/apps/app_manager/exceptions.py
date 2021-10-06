@@ -181,3 +181,8 @@ class BuildNotFoundException(AppManagerException):
 
 class BuildConflictException(Exception):
     pass
+
+
+class AppValidationError(AppManagerException):
+    def __init__(self, errors):
+        self.errors = errors

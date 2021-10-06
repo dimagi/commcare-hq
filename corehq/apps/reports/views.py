@@ -52,7 +52,6 @@ from casexml.apps.case.util import (
 from casexml.apps.case.views import get_wrapped_case
 from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 from casexml.apps.case.xml import V2
-from casexml.apps.stock.models import StockTransaction
 from couchexport.export import Format, export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.datespan import datespan_in_request
@@ -1432,21 +1431,23 @@ def export_case_transactions(request, domain, case_id):
             transaction.case_id,
             case.name,
             transaction.section_id,
-            transaction.report.date if transaction.report_id else '',
-            transaction.product_id,
-            products_by_id.get(transaction.product_id, _('unknown product')),
-            transaction.quantity,
+            transaction.report_date or '',
+            transaction.entry_id,
+            products_by_id.get(transaction.entry_id, _('unknown product')),
+            transaction.delta,
             transaction.type,
             transaction.stock_on_hand,
         ]
 
-    query_set = StockTransaction.objects.select_related('report')\
-        .filter(case_id=case_id).order_by('section_id', 'report__date')
+    transactions = sorted(
+        LedgerAccessors.get_ledger_transactions_for_case(case_id),
+        key=lambda tx: (tx.section_id, tx.report_date)
+    )
 
     formatted_table = [
         [
-            'stock transactions',
-            [headers] + [_make_row(txn) for txn in query_set]
+            'ledger transactions',
+            [headers] + [_make_row(txn) for txn in transactions]
         ]
     ]
     tmp = io.StringIO()

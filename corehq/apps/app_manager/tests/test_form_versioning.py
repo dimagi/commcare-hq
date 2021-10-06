@@ -10,36 +10,9 @@ from corehq.apps.app_manager.models import (
     import_app,
 )
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
-from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import add_build, patch_default_builds, get_simple_form
 from corehq.apps.builds.models import BuildSpec
-
-BLANK_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
-<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
-    <h:head>
-        <h:title>New Form</h:title>
-        <model>
-            <instance>
-                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="{xmlns}" uiVersion="1" version="1" name="New Form">
-                    <question1 />
-                </data>
-            </instance>
-            <bind nodeset="/data/question1" type="xsd:string" />
-            <itext>
-                <translation lang="en" default="">
-                    <text id="question1-label">
-                        <value>question1</value>
-                    </text>
-                </translation>
-            </itext>
-        </model>
-    </h:head>
-    <h:body>
-        <input ref="/data/question1">
-            <label ref="jr:itext('question1-label')" />
-        </input>
-    </h:body>
-</h:html>
-"""
 
 INVALID_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
@@ -81,11 +54,13 @@ class FormVersioningTest(TestCase):
         domain = 'form-versioning-test'
 
         # set up inital app
-        app = Application.new_app(domain, 'Foo')
-        app.modules.append(Module(forms=[Form(), Form()]))
+        factory = AppFactory(domain, 'Foo')
+        m0, f0 = factory.new_basic_module("bar", "bar")
+        f0.source = get_simple_form(xmlns='xmlns-0.0')
+        f1 = factory.new_form(m0)
+        f1.source = get_simple_form(xmlns='xmlns-1')
+        app = factory.app
         app.build_spec = BuildSpec.from_string('2.7.0/latest')
-        app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.0')
-        app.get_module(0).get_form(1).source = BLANK_TEMPLATE.format(xmlns='xmlns-1')
         app.save()
 
         # make a build
@@ -93,7 +68,7 @@ class FormVersioningTest(TestCase):
         build1.save()
 
         # modify first form
-        app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.1')
+        app.get_module(0).get_form(0).source = get_simple_form(xmlns='xmlns-0.1')
         app.save()
 
         # make second build
@@ -101,7 +76,7 @@ class FormVersioningTest(TestCase):
         build2.save()
 
         # modify first form
-        app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.2')
+        app.get_module(0).get_form(0).source = get_simple_form(xmlns='xmlns-0.2')
         app.save()
         app.save()
         app.save()
@@ -132,7 +107,7 @@ class FormVersioningTest(TestCase):
         xxx_build1.save()
 
         # modify first form of copy app
-        xxx_app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.xxx.0')
+        xxx_app.get_module(0).get_form(0).source = get_simple_form(xmlns='xmlns-0.xxx.0')
         xxx_app.save()
 
         # make second build of copy
@@ -159,8 +134,8 @@ class FormIdTest(SimpleTestCase):
         app.modules.append(Module(forms=[Form()]))
         app.modules.append(Module(forms=[Form()]))
         app.build_spec = BuildSpec.from_string('2.7.0/latest')
-        app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.0')
-        app.get_module(1).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-1')
+        app.get_module(0).get_form(0).source = get_simple_form(xmlns='xmlns-0.0')
+        app.get_module(1).get_form(0).source = get_simple_form(xmlns='xmlns-1')
 
         original_form_id = app.get_module(1).get_form(0).unique_id
         app.get_module(0).case_list_form.form_id = original_form_id
@@ -175,8 +150,8 @@ class FormIdTest(SimpleTestCase):
         app.modules.append(Module(forms=[Form()]))
         app.modules.append(Module(forms=[Form(), Form()]))
         app.build_spec = BuildSpec.from_string('2.7.0/latest')
-        app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.0')
-        app.get_module(1).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-1')
+        app.get_module(0).get_form(0).source = get_simple_form(xmlns='xmlns-0.0')
+        app.get_module(1).get_form(0).source = get_simple_form(xmlns='xmlns-1')
 
         original_form_id1 = app.get_module(1).get_form(0).unique_id
         original_form_id2 = app.get_module(1).get_form(1).unique_id

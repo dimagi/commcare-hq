@@ -1,14 +1,10 @@
 import os
 
-from copy import deepcopy
-
 import settingshelper as helper
-from settings import *
+from settings import *  # noqa: F403
 
 if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
-
-USING_CITUS = any(db.get('ROLE') == 'citus_master' for db in DATABASES.values())
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
@@ -18,18 +14,7 @@ INSTALLED_APPS = (
     'django_nose',
     'testapps.test_elasticsearch',
     'testapps.test_pillowtop',
-) + tuple(INSTALLED_APPS)
-
-if USING_CITUS:
-    if 'testapps.citus_master' not in INSTALLED_APPS:
-        INSTALLED_APPS = (
-            'testapps.citus_master',
-            'testapps.citus_worker',
-        ) + tuple(INSTALLED_APPS)
-
-    if 'testapps.citus_master.citus_router.CitusDBRouter' not in DATABASE_ROUTERS:
-        # this router must go first
-        DATABASE_ROUTERS = ['testapps.citus_master.citus_router.CitusDBRouter'] + DATABASE_ROUTERS
+) + tuple(INSTALLED_APPS)  # noqa: F405
 
 TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [

@@ -28,6 +28,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ngettext, ugettext_lazy, ugettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
+from dimagi.utils.couch import CriticalSection
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
@@ -296,12 +297,15 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     def backup_token(self):
         if Domain.get_by_name(self.request.domain).two_factor_auth:
-            device = self.editable_user.get_django_user().staticdevice_set.get_or_create(name='backup')[0]
-            token = device.token_set.first()
-            if token:
-                return device.token_set.first().token
-            else:
-                return device.token_set.create(token=StaticToken.random_token()).token
+            with CriticalSection([f"backup-token-{self.editable_user._id}"]):
+                device = (self.editable_user.get_django_user()
+                          .staticdevice_set
+                          .get_or_create(name='backup')[0])
+                token = device.token_set.first()
+                if token:
+                    return device.token_set.first().token
+                else:
+                    return device.token_set.create(token=StaticToken.random_token()).token
         return None
 
     @property
@@ -674,6 +678,7 @@ class ListRolesView(BaseRoleAccessView):
             'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
+
 
 @always_allow_project_access
 @require_can_edit_or_view_web_users

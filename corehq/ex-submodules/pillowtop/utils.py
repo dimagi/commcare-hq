@@ -224,16 +224,17 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
     """
     Builds bulk payload json to be called via Elasticsearch Bulk API
     """
+    from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+
     doc_transform = doc_transform or (lambda x: x)
     payload = []
 
     def _is_deleted(change):
-        if change.deleted:
-            return bool(change.id)
-
         doc = change.get_document()
         if doc and doc.get('doc_type'):
-            return doc['doc_type'].endswith(DELETED_SUFFIX)
+            return get_doc_meta_object_from_document(doc).is_deletion
+        elif change.deleted:
+            return bool(change.id)
 
     for change in changes:
         action = {

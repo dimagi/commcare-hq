@@ -77,6 +77,10 @@ class TestCaseSearchEndpoint(TestCase):
             case.name for case in res
         ])
 
+    def test_dynamic_property(self):
+        res = get_case_search_results(self.domain, {'case_type': 'person', 'family': 'Ramos'})
+        self.assertItemsEqual(["Jane"], [case.name for case in res])
+
     def test_app_aware_related_cases(self):
         with mock.patch('corehq.apps.case_search.utils.get_app_cached', new=lambda _, __: self.factory.app):
             res = get_case_search_results(self.domain, {'case_type': 'person'}, 'fake_app_id')

@@ -150,6 +150,8 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         return report_configuration
 
     @classmethod
+    @flag_enabled('MOBILE_UCR')
+    @flag_enabled('ADD_ROW_INDEX_TO_MOBILE_UCRS')
     def setUpClass(cls):
         super(ReportFiltersSuiteTest, cls).setUpClass()
         delete_all_users()
@@ -161,9 +163,6 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             domain=cls.domain,
             username='ralph',
         )
-        MOBILE_UCR.set(cls.domain, True, NAMESPACE_DOMAIN)
-        ADD_ROW_INDEX_TO_MOBILE_UCRS.set(cls.domain, True, NAMESPACE_DOMAIN)
-
         report_configuration = cls.make_report_config(cls.domain, cls.report_id)
 
         # also make a report with a hidden column

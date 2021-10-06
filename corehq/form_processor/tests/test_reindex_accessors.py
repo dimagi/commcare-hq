@@ -30,7 +30,7 @@ class BaseReindexAccessorTest(object):
         cls.other_domain = uuid.uuid4().hex
         # since this test depends on the global form list just wipe everything
         FormProcessorTestUtils.delete_all_sql_forms()
-        FormProcessorTestUtils.delete_all_v2_ledgers()
+        FormProcessorTestUtils.delete_all_ledgers()
         FormProcessorTestUtils.delete_all_sql_cases()
 
     @classmethod
@@ -60,7 +60,7 @@ class BaseReindexAccessorTest(object):
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_sql_forms()
-        FormProcessorTestUtils.delete_all_v2_ledgers()
+        FormProcessorTestUtils.delete_all_ledgers()
         FormProcessorTestUtils.delete_all_sql_cases()
         super(BaseReindexAccessorTest, cls).tearDownClass()
 
