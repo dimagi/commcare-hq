@@ -1238,6 +1238,13 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+CASE_DEDUPE = StaticToggle(
+    'case_dedupe',
+    'Case deduplication feature',
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN],
+)
+
 LEGACY_SYNC_SUPPORT = StaticToggle(
     'legacy_sync_support',
     "Support mobile sync bugs in older projects (2.9 and below).",
