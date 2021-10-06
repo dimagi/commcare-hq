@@ -150,7 +150,7 @@ class WebUserResource(UserResource):
         username = bundle.request.GET.get('web_username')
         if username:
             user = WebUser.get_by_username(username)
-            if not user.is_member_of(domain):
+            if not (user and user.is_member_of(domain)):
                 user = None
             return [user] if user else []
         return list(WebUser.by_domain(domain))
