@@ -1,5 +1,7 @@
 from typing import List
 
+from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
@@ -16,6 +18,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Stack,
     StackDatum,
 )
+from corehq.apps.app_manager.util import module_offers_search
 from corehq.util.timer import time_method
 
 
@@ -63,11 +66,15 @@ class SessionEndpointContributor(SuiteContributorByModule):
             elif child.id in argument_ids:
                 self._add_datum_for_arg(frame, child.id)
 
-        return SessionEndpoint(
-            id=endpoint_id,
-            arguments=[Argument(id=i) for i in argument_ids],
-            stack=stack,
-        )
+        kwargs = {
+            "id": endpoint_id,
+            "arguments": [Argument(id=i) for i in argument_ids],
+            "stack": stack,
+        }
+        if module_offers_search(module):
+            if module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_SMART_LINK:
+                kwargs["command_id"] = id_strings.form_command(form) if form else id_strings.menu_id(module)
+        return SessionEndpoint(**kwargs)
 
     def _get_argument_ids(self, frame_children):
         return [
