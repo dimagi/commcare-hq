@@ -245,6 +245,14 @@ class StaticToggle(object):
         domains -= self.always_disabled
         return list(domains)
 
+    def get_enabled_users(self):
+        try:
+            toggle = Toggle.get(self.slug)
+        except ResourceNotFound:
+            return []
+
+        return [user for user in toggle.enabled_users if not user.startswith("domain:")]
+
 
 def was_domain_created_after(domain, checkpoint):
     """
