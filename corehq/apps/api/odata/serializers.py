@@ -66,7 +66,23 @@ class ODataBaseSerializer(Serializer):
             return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
 
         except KeyError as e:
-            raise Http404(e)
+            error_message = {"error": {
+                "code": "500",
+                "message": e,
+                "target": "query",
+                "details": [
+                    {
+                        "code": "500",
+                        "target": "$search",
+                        "message": "$search function not supported"
+                    }
+                ],
+                "innererror": {
+                    "trace": e.__traceback__,
+                    "context": e.__context__
+                }
+            }}
+            return json.dumps(error_message, cls=DjangoJSONEncoder)
 
     @staticmethod
     def get_next_url(meta, api_path):
