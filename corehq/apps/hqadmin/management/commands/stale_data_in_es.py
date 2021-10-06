@@ -193,7 +193,7 @@ class CaseHelper:
             # if the doc is newer in ES than sql, refetch from sql to get newest
             if es_modified_on is not None and es_modified_on > modified_on:
                 refreshed = CaseAccessors(domain).get_case(case_id)
-                return _check_stale(case_id, case_type, refreshed.server_modified_on,
+                return CaseHelper._check_stale(case_id, case_type, refreshed.server_modified_on,
                                     refreshed.domain, es_modified_on_by_ids, case_search_es_modified_on_by_ids)
             else:
                 return True, DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
@@ -204,7 +204,7 @@ class CaseHelper:
                 # if the doc is newer in ES than sql, refetch from sql to get newest
                 if es_modified_on is not None and es_modified_on > modified_on:
                     refreshed = CaseAccessors(domain).get_case(case_id)
-                    return _check_stale(case_id, case_type, refreshed.server_modified_on,
+                    return CaseHelper._check_stale(case_id, case_type, refreshed.server_modified_on,
                                         refreshed.domain, es_modified_on_by_ids, case_search_es_modified_on_by_ids)
                 else:
                     return True, DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
