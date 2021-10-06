@@ -574,6 +574,7 @@ CELERY_PERIODIC_QUEUE = 'celery_periodic'
 CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
 CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
 CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE = 'reminder_rule_queue'  # override in localsettings
+CELERY_DEDUPE_BULK_QUEUE = 'dedupe_rule_queue'
 CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
 CELERY_LOCATION_REASSIGNMENT_QUEUE = 'celery'
 
@@ -797,6 +798,7 @@ LOCAL_PILLOWTOPS = {}
 RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
+RUN_DEDUPLICATION_PILLOW = True
 
 # Set to True to remove the `actions` and `xform_id` fields from the
 # ES Case index. These fields contribute high load to the shard
