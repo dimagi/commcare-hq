@@ -228,24 +228,6 @@ def build_form_multimedia_zipfile(
                                       build_form_multimedia_zipfile)
 
 
-# ToDo: Remove post build_form_multimedia_zipfile rollout
-@task(serializer='pickle')
-def build_form_multimedia_zip(
-        domain,
-        export_id,
-        datespan,
-        user_types,
-        download_id,
-        owner_id,
-):
-    from corehq.apps.export.models import FormExportInstance
-    export = FormExportInstance.get(export_id)
-    form_ids = get_form_ids_having_multimedia(
-        domain, export.app_id, export.xmlns, datespan, user_types
-    )
-    _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id, build_form_multimedia_zip)
-
-
 def _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id, task_name):
     forms_info = _get_form_attachment_info(domain, form_ids, export)
 
@@ -319,7 +301,7 @@ def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
                         attachment['name']),
                         zipfile.ZIP_STORED
                     )
-                DownloadBase.set_progress(build_form_multimedia_zip, form_number, num_forms)
+                DownloadBase.set_progress(build_form_multimedia_zipfile, form_number, num_forms)
 
 
 def _save_and_expose_zip(f, zip_name, domain, download_id, owner_id):
