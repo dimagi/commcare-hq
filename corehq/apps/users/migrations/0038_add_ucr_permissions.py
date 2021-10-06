@@ -1,7 +1,7 @@
 from django.db import migrations
 
 from corehq.apps.users.models import CouchUser
-from corehq.toggles import USER_CONFIGURABLE_REPORTS, Toggle
+from corehq.toggles import USER_CONFIGURABLE_REPORTS
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
