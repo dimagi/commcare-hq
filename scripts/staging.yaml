@@ -72,7 +72,6 @@ branches:
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
     - rp/improve-deleted-odata-feed-error-message # Rynhard Sept 15
     - fr/dedupe  # Farid Sept 17
-    - fr/dedupe-ui-1  # Farid October 3
     #- jm/remove-es-scan  # Joel Sep 17 [QA]
     - jls/smart-linking-in-web-apps # Jenny Sept 22
     - dmr/throttle-system-forms  # Danny Sept 24
