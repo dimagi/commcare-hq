@@ -1,3 +1,4 @@
+from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
 
@@ -8,7 +9,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
 )
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
@@ -126,9 +127,22 @@ def get_case_property_description_dict(domain):
     return descriptions_dict
 
 
+def get_values_hints_dict(domain, case_type_name):
+    values_hints_dict = defaultdict(list)
+    case_type = CaseType.objects.filter(domain=domain, name=case_type_name).first()
+    if case_type:
+        for prop in case_type.properties.all():
+            if prop.data_type == 'date':
+                values_hints_dict[prop.name] = [ugettext('YYYY-MM-DD')]
+            elif prop.data_type == 'select':
+                values_hints_dict[prop.name] = [av.allowed_value for av in prop.allowed_values.all()]
+    return values_hints_dict
+
+
 def save_case_property(name, case_type, domain=None, data_type=None,
                        description=None, group=None, deprecated=None,
-                       fhir_resource_prop_path=None, fhir_resource_type=None, remove_path=False):
+                       fhir_resource_prop_path=None, fhir_resource_type=None, remove_path=False,
+                       allowed_values=None):
     """
     Takes a case property to update and returns an error if there was one
     """
@@ -154,6 +168,27 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     if fhir_resource_type and fhir_resource_prop_path:
         update_fhir_resource_property(prop, fhir_resource_type, fhir_resource_prop_path, remove_path)
     prop.save()
+
+    # If caller has supplied non-None value for allowed_values, then
+    # synchronize the supplied dict (key=allowed_value, value=description)
+    # with the database stored values for this property.
+    err_cnt = 0
+    max_len = CasePropertyAllowedValue._meta.get_field('allowed_value').max_length
+    if allowed_values is not None:
+        obj_pks = []
+        for allowed_value, av_desc in allowed_values.items():
+            if len(allowed_value) > max_len:
+                err_cnt += 1
+            else:
+                av_obj, _ = CasePropertyAllowedValue.objects.update_or_create(
+                    case_property=prop, allowed_value=allowed_value, defaults={"description": av_desc})
+                obj_pks.append(av_obj.pk)
+        # Delete any database-resident allowed values that were not found in
+        # the set supplied by caller.
+        prop.allowed_values.exclude(pk__in=obj_pks).delete()
+
+    if err_cnt:
+        return ugettext('Unable to save valid values longer than {} characters').format(max_len)
 
 
 @quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
