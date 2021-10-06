@@ -105,7 +105,7 @@ class CaseFactoryTest(TestCase):
     def test_simple_create(self):
         factory = CaseFactory()
         case = factory.create_case()
-        self.assertIsNotNone(CaseAccessors().get_case(case.case_id))
+        self.assertIsNotNone(CaseAccessors(case.domain).get_case(case.case_id))
 
     def test_create_overrides(self):
         factory = CaseFactory()
