@@ -23,7 +23,7 @@ class Command(BaseCommand):
 
         blocked_domains = get_blocked_hubspot_domains()
         for domain in blocked_domains:
-            users_not_blocked = []
+            users_not_blocked = {}
             user_query = UserES().domain(domain).source(['email', 'username'])
 
             total_users = user_query.count()
@@ -43,8 +43,8 @@ class Command(BaseCommand):
                     blocked_emails.append(username)
                     if user_email and user_email != username:
                         blocked_emails.append(user_email)
-                    users_not_blocked.extend(self.get_blocked_status_for_emails(
-                        blocked_emails
+                    users_not_blocked.update(self.get_blocked_status_for_emails(
+                        list(set(blocked_emails))
                     ))
             if users_not_blocked:
                 self.stdout.write(self.style.ERROR(
@@ -53,8 +53,8 @@ class Command(BaseCommand):
                     f"that is blocking HubSpot data:"
                 ))
                 self.stdout.write("\nEmail\tFirst Conversion")
-                for summary in users_not_blocked:
-                    self.stdout.write(f"{summary[0]}\t{summary[1]}")
+                for user, status in users_not_blocked:
+                    self.stdout.write(f"{user}\t{status}")
             else:
                 self.stdout.write(self.style.SUCCESS(
                     f"All users in project {domain} are absent on HubSpot."
@@ -70,7 +70,7 @@ class Command(BaseCommand):
                 },
             )
             if req.status_code == 404:
-                return []
+                return {}
             req.raise_for_status()
         except (ConnectionError, requests.exceptions.HTTPError) as e:
             if retry_num <= MAX_API_RETRIES:
@@ -81,7 +81,7 @@ class Command(BaseCommand):
                     f"{list_of_emails.join(',')}."
                 ))
         else:
-            status_summary = []
+            status_summary = {}
             for contact_id, data in req.json().items():
                 first_conversion_status = data.get(
                     'properties', {}
@@ -89,6 +89,6 @@ class Command(BaseCommand):
                 email = data.get(
                     'properties', {}
                 ).get('email', {}).get('value')
-                status_summary.append((email, first_conversion_status))
+                status_summary[email] = first_conversion_status
             return status_summary
-        return []
+        return {}
