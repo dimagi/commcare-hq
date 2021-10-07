@@ -24,7 +24,7 @@ class Command(BaseCommand):
             help='Skip to this domain name and check domains from there.',
         )
         parser.add_argument(
-            '-s',
+            '-d',
             '--domain',
             action='store',
             dest='domain',
