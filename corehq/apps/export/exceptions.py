@@ -22,9 +22,5 @@ class ExportODataDuplicateLabelException(Exception):
     pass
 
 
-class InvalidODataFeedException(Exception):
-    pass
-
-
 class RejectedStaleExport(Exception):
     pass
