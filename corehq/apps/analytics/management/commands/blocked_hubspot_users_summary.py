@@ -16,9 +16,6 @@ class Command(BaseCommand):
     api_key = None
 
     def handle(self, **options):
-        if not settings.HUBSPOT_ENABLED:
-            self.stdout.write("HubSpot is not enabled for this environment.")
-
         self.api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
 
         if not self.api_key:
