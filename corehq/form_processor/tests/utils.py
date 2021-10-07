@@ -26,6 +26,8 @@ from corehq.util.test_utils import unit_testing_only
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.couch.database import safe_delete
 
+from .json2xml import convert_form_to_xml
+
 logger = logging.getLogger(__name__)
 
 
@@ -268,8 +270,19 @@ def patch_shard_db_transactions(cls):
 
 @nottest
 def create_form_for_test(
-        domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL,
-        received_on=None, user_id='user1', edited_on=None):
+    domain,
+    case_id=None,
+    attachments=None,
+    save=True,
+    state=XFormInstanceSQL.NORMAL,
+    received_on=None,
+    user_id=None,
+    edited_on=None,
+    *,
+    form_id=None,
+    form_data=None,
+    **kwargs,
+):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
@@ -280,19 +293,27 @@ def create_form_for_test(
     """
     from corehq.form_processor.utils import get_simple_form_xml
 
-    form_id = uuid4().hex
+    form_id = form_id or uuid4().hex
     utcnow = received_on or datetime.utcnow()
+    kwargs.setdefault('xmlns', 'http://openrosa.org/formdesigner/form-processor')
 
-    form_xml = get_simple_form_xml(form_id, case_id)
+    if form_data is not None:
+        form_xml = convert_form_to_xml(form_data)
+        if user_id is None and form_data.get('meta'):
+            user_id = form_data['meta'].get('userID', user_id)
+    else:
+        form_xml = get_simple_form_xml(form_id, case_id)
+    if user_id is None:
+        user_id = 'user1'
 
     form = XFormInstanceSQL(
         form_id=form_id,
-        xmlns='http://openrosa.org/formdesigner/form-processor',
         received_on=utcnow,
         user_id=user_id,
         domain=domain,
         state=state,
         edited_on=edited_on,
+        **kwargs,
     )
 
     attachments = attachments or {}
