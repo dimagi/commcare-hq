@@ -82,8 +82,8 @@ class CacheInvalidateProcessor(PillowProcessor):
 
 
 def get_main_cache_invalidation_pillow(pillow_id, **kwargs):
-    from couchforms.models import XFormInstance
-    return _get_cache_invalidation_pillow(pillow_id, XFormInstance.get_db(), couch_filter="hqadmin/not_case_form")
+    from toggle.models import Toggle  # arbitrary model in main db
+    return _get_cache_invalidation_pillow(pillow_id, Toggle.get_db(), couch_filter="hqadmin/not_case_form")
 
 
 def get_user_groups_cache_invalidation_pillow(pillow_id, **kwargs):
