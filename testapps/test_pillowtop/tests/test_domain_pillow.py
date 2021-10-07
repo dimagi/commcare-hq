@@ -52,6 +52,7 @@ class DomainPillowTest(TestCase):
         self.test_kafka_domain_pillow()
         domain_obj = Domain.get_by_name('domain-pillowtest-kafka')
         domain_obj.doc_type = 'Domain-DUPLICATE'
+        domain_obj.save()
 
         # send to kafka
         since = get_topic_offset(topics.DOMAIN)
@@ -64,6 +65,44 @@ class DomainPillowTest(TestCase):
 
         # ensure removed from ES
         self.assertEqual(0, DomainES().run().total)
+
+    def test_reverted_domain_pillow_deletion(self):
+        domain_name = 'domain-pillow-delete'
+        with drop_connected_signals(commcare_domain_post_save):
+            domain = create_domain(domain_name)
+
+        # send to kafka
+        since = get_topic_offset(topics.DOMAIN)
+        publish_domain_saved(domain)
+
+        # send to elasticsearch
+        pillow = get_domain_kafka_to_elasticsearch_pillow()
+        pillow.process_changes(since=since, forever=False)
+        self.elasticsearch.indices.refresh(self.index_info.index)
+
+        # verify there
+        self._verify_domain_in_es(domain_name)
+
+        domain_obj = Domain.get_by_name(domain_name)
+        domain_obj.doc_type = 'Domain-DUPLICATE'
+        domain_obj.save()
+
+        # send to kafka
+        since = get_topic_offset(topics.DOMAIN)
+        publish_domain_saved(domain_obj)
+
+        # undelete
+        domain_obj = Domain.get_by_name(domain_name)
+        domain_obj.doc_type = 'Domain'
+        domain_obj.save()
+
+        # process pillow changes
+        pillow = get_domain_kafka_to_elasticsearch_pillow()
+        pillow.process_changes(since=since, forever=False)
+        self.elasticsearch.indices.refresh(self.index_info.index)
+
+        # confirm domain still exists
+        self._verify_domain_in_es(domain_name)
 
     def _verify_domain_in_es(self, domain_name):
         results = DomainES().run()

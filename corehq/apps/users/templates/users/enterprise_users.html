@@ -43,11 +43,22 @@
              data-bind="visible: showUsers">
         <thead>
           <tr>
-            <th>{% trans "Username" %}</th>
-            <th>{% trans "Name" %}</th>
-            <th>{% trans "Role" %}</th>
+            <th >
+              <i class="sort-icon clickable glyphicon glyphicon-sort" data-name="username" data-bind="event: { click: sortByColumn }"></i>
+              {% trans "Username" %}
+            </th>
+            <th>
+              <i class="sort-icon clickable glyphicon glyphicon-sort" data-name="name" data-bind="event: { click: sortByColumn }"></i>
+              {% trans "Name" %}
+            </th>
+            <th>
+              {% trans "Role" %}
+            </th>
             {% if show_profile_column %}
-              <th>{% trans "Profile" %}</th>
+              <th>
+                <i class="sort-icon clickable glyphicon glyphicon-sort" data-name="profile" data-bind="event: { click: sortByColumn }"></i>
+                {% trans "Profile" %}
+              </th>
             {% endif %}
             <th class="col-sm-4">{% trans "Other Projects" %}</th>
           </tr>

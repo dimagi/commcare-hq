@@ -124,14 +124,6 @@ def system_ajax(request):
     elif type == 'pillowtop':
         pillow_meta = get_all_pillows_json()
         return JsonResponse(sorted(pillow_meta, key=lambda m: m['name'].lower()), safe=False)
-    elif type == 'stale_pillows':
-        es_index_status = [
-            escheck.check_case_es_index(interval=3),
-            escheck.check_xform_es_index(interval=3),
-            escheck.check_reportcase_es_index(interval=3),
-            escheck.check_reportxform_es_index(interval=3)
-        ]
-        return JsonResponse(es_index_status, safe=False)
 
     if celery_monitoring:
         if type == "flower_poll":

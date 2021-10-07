@@ -8,6 +8,7 @@ from django.http import Http404
 from couchdbkit import ResourceNotFound
 
 import couchforms
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from couchforms.models import DefaultAuthContext
 
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -27,7 +28,21 @@ def get_submit_url(domain, app_id=None):
         return "/a/{domain}/receiver/".format(domain=domain)
 
 
-def submit_form_locally(instance, domain, **kwargs):
+def submit_form_locally(instance, domain, max_wait=..., **kwargs):
+    """
+    :param instance: XML instance (as a string) to submit
+    :param domain: The domain to submit the form to
+    :param max_wait: Maximum time (in seconds) to allow the process to be delayed if
+    the project is over its submission rate limit.
+    The value None means "do not throttle".
+    The special value ... (Ellipsis) means "The caller did not pass in a value".
+    (This was chosen because of the special meaning already assumed by None.)
+    """
+
+    if max_wait is ...:
+        max_wait = 0.1
+    if max_wait is not None:
+        rate_limit_submission(domain, delay_rather_than_reject=True, max_wait=max_wait)
     # intentionally leave these unauth'd for now
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
     result = SubmissionPost(

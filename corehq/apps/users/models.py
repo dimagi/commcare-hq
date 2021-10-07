@@ -12,6 +12,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField, JSONField
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -175,11 +176,13 @@ class Permissions(DocumentSchema):
     access_all_locations = BooleanProperty(default=True)
     access_api = BooleanProperty(default=True)
     access_web_apps = BooleanProperty(default=False)
+    edit_messaging = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
     download_reports = BooleanProperty(default=True)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
+    edit_ucrs = BooleanProperty(default=False)
 
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
@@ -2770,6 +2773,9 @@ class AnonymousCouchUser(object):
     def can_edit_data(self):
         return False
 
+    def can_edit_messgaing(self):
+        return False
+
     def can_edit_apps(self):
         return False
 
@@ -3080,7 +3086,7 @@ class UserHistory(models.Model):
     changed_via = models.CharField(max_length=255, blank=True)
     # same as the deprecated details.changes
     # a dict of CouchUser attributes that changed and their new values
-    changes = JSONField(default=dict)
+    changes = JSONField(default=dict, encoder=DjangoJSONEncoder)
 
     class Meta:
         indexes = [

@@ -6,11 +6,11 @@ from corehq.pillows.case_search import (
 )
 
 
-@task(serializer='pickle')
+@task
 def reindex_case_search_for_domain(domain):
     CaseSearchReindexerFactory(domain=domain).build().reindex()
 
 
-@task(serializer='pickle')
+@task
 def delete_case_search_cases_for_domain(domain):
     delete_case_search_cases(domain)
