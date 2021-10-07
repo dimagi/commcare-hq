@@ -303,11 +303,13 @@ def create_form_for_test(
             user_id = form_data['meta'].get('userID', user_id)
     else:
         form_xml = get_simple_form_xml(form_id, case_id)
+    if user_id is None:
+        user_id = 'user1'
 
     form = XFormInstanceSQL(
         form_id=form_id,
         received_on=utcnow,
-        user_id=user_id or 'user1',
+        user_id=user_id,
         domain=domain,
         state=state,
         edited_on=edited_on,
