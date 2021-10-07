@@ -23,7 +23,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change, ChangeMeta
 from pillowtop.pillow.interface import PillowBase
 from pillowtop.processors.elastic import BulkElasticProcessor
-from pillowtop.tests.utils import TEST_INDEX_INFO, deregister_pt_test_meta, register_pt_test_meta
+from pillowtop.tests.utils import TEST_INDEX_INFO
 from pillowtop.utils import bulk_fetch_changes_docs, get_errors_with_ids
 
 
@@ -53,7 +53,7 @@ class BulkTest(SimpleTestCase):
 
 
 @sharded
-@es_test
+@es_test(index=TEST_INDEX_INFO)
 class TestBulkDocOperations(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -70,7 +70,6 @@ class TestBulkDocOperations(TestCase):
         cls.es_interface = ElasticsearchInterface(cls.es)
         cls.index = TEST_INDEX_INFO.index
         cls.es_alias = TEST_INDEX_INFO.alias
-        register_pt_test_meta()
 
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(cls.index)
@@ -80,7 +79,6 @@ class TestBulkDocOperations(TestCase):
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         ensure_index_deleted(cls.index)
-        deregister_pt_test_meta()
         super().tearDownClass()
 
     def _changes_from_ids(self, case_ids):
@@ -144,7 +142,9 @@ class TestBulkDocOperations(TestCase):
         )
 
 
+@es_test(index=TEST_INDEX_INFO)
 class TestBulkOperationsCaseToSQL(TestCase):
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -152,7 +152,6 @@ class TestBulkOperationsCaseToSQL(TestCase):
         cls.es_interface = ElasticsearchInterface(cls.es)
         cls.index = TEST_INDEX_INFO.index
         cls.es_alias = TEST_INDEX_INFO.alias
-        register_pt_test_meta()
 
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(cls.index)
@@ -170,7 +169,6 @@ class TestBulkOperationsCaseToSQL(TestCase):
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         ensure_index_deleted(cls.index)
-        deregister_pt_test_meta()
         super().tearDownClass()
 
     def _changes_from_ids(self, case_ids):

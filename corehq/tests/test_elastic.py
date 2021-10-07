@@ -4,26 +4,22 @@ from contextlib import contextmanager
 from django.test import SimpleTestCase
 
 from corehq.apps.es.tests.utils import (
-    TEST_ES_ALIAS,
+    TEST_ES_INFO,
     TEST_ES_MAPPING,
-    TEST_ES_TYPE,
     es_test,
-    deregister_test_meta,
-    register_test_meta,
 )
 from corehq.elastic import get_es_new, scroll_query
 from corehq.util.es.interface import ElasticsearchInterface
 
 
-@es_test
+@es_test(index=TEST_ES_INFO, setup_class=True)
 class TestElastic(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        register_test_meta()
-        cls.index = TEST_ES_ALIAS
-        cls.doc_type = TEST_ES_TYPE
+        cls.index = TEST_ES_INFO.alias
+        cls.doc_type = TEST_ES_INFO.type
         cls.es = get_es_new()
         meta = {"mapping": TEST_ES_MAPPING}
         if not cls.es.indices.exists(cls.index):
@@ -33,7 +29,6 @@ class TestElastic(SimpleTestCase):
     def tearDownClass(cls):
         super().tearDownClass()
         cls.es.indices.delete(cls.index)
-        deregister_test_meta()
 
     def test_scroll_query(self):
         docs = [

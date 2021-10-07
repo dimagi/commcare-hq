@@ -8,7 +8,6 @@ from django.test import SimpleTestCase
 
 from corehq.util.es.elasticsearch import ConnectionError, RequestError
 
-from corehq.apps.es.registry import register, deregister
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.views.data import lookup_doc_in_es
 from corehq.elastic import get_es_new
@@ -30,18 +29,15 @@ from .utils import (
     TEST_INDEX_INFO,
     get_doc_count,
     get_index_mapping,
-    register_pt_test_meta,
-    deregister_pt_test_meta,
 )
 
 
-@es_test
+@es_test(index=TEST_INDEX_INFO)
 class ElasticPillowTest(SimpleTestCase):
 
     def setUp(self):
         self.index = TEST_INDEX_INFO.index
         self.es_alias = TEST_INDEX_INFO.alias
-        register_pt_test_meta()
         self.es = get_es_new()
         self.es_interface = ElasticsearchInterface(self.es)
         with trap_extra_setup(ConnectionError):
@@ -49,7 +45,6 @@ class ElasticPillowTest(SimpleTestCase):
 
     def tearDown(self):
         ensure_index_deleted(self.index)
-        deregister_pt_test_meta()
 
     def test_create_index(self):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
@@ -173,7 +168,7 @@ class ElasticPillowTest(SimpleTestCase):
                 .format(disallowed_setting))
 
 
-@es_test
+@es_test(index=TEST_INDEX_INFO)
 class TestSendToElasticsearch(SimpleTestCase):
 
     def setUp(self):
@@ -181,7 +176,6 @@ class TestSendToElasticsearch(SimpleTestCase):
         self.es_interface = ElasticsearchInterface(self.es)
         self.index = TEST_INDEX_INFO.index
         self.es_alias = TEST_INDEX_INFO.alias
-        register(TEST_INDEX_INFO)
 
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(self.index)
@@ -189,7 +183,6 @@ class TestSendToElasticsearch(SimpleTestCase):
 
     def tearDown(self):
         ensure_index_deleted(self.index)
-        deregister(TEST_INDEX_INFO)
 
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}

@@ -5,26 +5,22 @@ from django.test import SimpleTestCase
 from mock import patch
 
 from corehq.apps.es.tests.utils import (
-    TEST_ES_ALIAS,
+    TEST_ES_INFO,
     TEST_ES_MAPPING,
-    TEST_ES_TYPE,
-    deregister_test_meta,
-    register_test_meta,
     es_test,
 )
 from corehq.elastic import get_es_new
 from corehq.util.es.interface import ElasticsearchInterface
 
 
-@es_test
+@es_test(index=TEST_ES_INFO, setup_class=True)
 class TestESInterface(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        register_test_meta()
-        cls.index = TEST_ES_ALIAS
-        cls.doc_type = TEST_ES_TYPE
+        cls.index = TEST_ES_INFO.alias
+        cls.doc_type = TEST_ES_INFO.type
         cls.es = get_es_new()
         meta = {"mapping": TEST_ES_MAPPING}
         if not cls.es.indices.exists(cls.index):
@@ -34,7 +30,6 @@ class TestESInterface(SimpleTestCase):
     def tearDownClass(cls):
         super().tearDownClass()
         cls.es.indices.delete(cls.index)
-        deregister_test_meta()
 
     def _validate_es_scroll_search_params(self, scroll_query, search_query):
         """Call ElasticsearchInterface.iter_scroll() and test that the resulting
@@ -87,10 +82,9 @@ class TestESInterface(SimpleTestCase):
                     for hit in results["hits"]["hits"]:
                         yield hit
 
-            interface = ElasticsearchInterface(self.es)
-            for results_getter in [search_query, scroll_query]:
+            def test_compare_queried_docs(docs_getter):
                 results = {}
-                for hit in results_getter():
+                for hit in docs_getter():
                     results[hit["_id"]] = hit
                 self.assertEqual(len(indexed), len(results))
                 for doc_id, doc in indexed.items():
@@ -98,6 +92,10 @@ class TestESInterface(SimpleTestCase):
                     self.assertEqual(self.doc_type, results[doc_id]["_type"])
                     for attr in doc:
                         self.assertEqual(doc[attr], results[doc_id]["_source"][attr])
+
+            interface = ElasticsearchInterface(self.es)
+            yield test_compare_queried_docs(search_query),
+            yield test_compare_queried_docs(scroll_query),
 
     @contextmanager
     def _index_test_docs(self, index, doc_type, docs):

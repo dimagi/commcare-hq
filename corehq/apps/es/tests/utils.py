@@ -43,16 +43,6 @@ class TEST_ES_INFO:
     type = TEST_ES_TYPE
 
 
-@nottest
-def register_test_meta():
-    register(TEST_ES_INFO)
-
-
-@nottest
-def deregister_test_meta():
-    deregister(TEST_ES_INFO)
-
-
 class ElasticTestMixin(object):
 
     @classmethod

@@ -2,11 +2,8 @@ import uuid
 
 from django.test import TestCase
 
-from mock import patch
-
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.es.registry import register, deregister
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
 from corehq.elastic import get_es_new
@@ -25,20 +22,17 @@ class ESAccessorsTest(TestCase):
 
     def setUp(self):
         super(ESAccessorsTest, self).setUp()
-        register(CASE_INDEX_INFO)
         with trap_extra_setup(ConnectionError):
             self.elasticsearch = get_es_new()
             initialize_index_and_mapping(self.elasticsearch, CASE_INDEX_INFO)
             initialize_index_and_mapping(self.elasticsearch, DOMAIN_INDEX_INFO)
 
     def tearDown(self):
-        ensure_index_deleted(CASE_INDEX_INFO.index)
-        ensure_index_deleted(DOMAIN_INDEX_INFO.index)
+        ensure_index_deleted(CASE_INDEX_INFO.alias)
+        ensure_index_deleted(DOMAIN_INDEX_INFO.alias)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
-        deregister(CASE_INDEX_INFO)
         super(ESAccessorsTest, self).tearDown()
 
-    @patch('corehq.apps.hqcase.analytics.CaseES.index', CASE_INDEX_INFO.index)
     def test_get_number_of_cases_in_domain(self):
         cases = [self._create_case_and_sync_to_es() for _ in range(4)]
         self.assertEqual(
@@ -52,5 +46,5 @@ class ESAccessorsTest(TestCase):
         with process_pillow_changes('case-pillow', {'skip_ucr': True}):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 create_and_save_a_case(self.domain, case_id, case_name)
-        self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
+        self.elasticsearch.indices.refresh(CASE_INDEX_INFO.alias)
         return case_id, case_name
