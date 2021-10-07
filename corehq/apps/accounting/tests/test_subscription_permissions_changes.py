@@ -152,13 +152,13 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         builder_report_data_source = DataSourceConfiguration(
             domain=self.project.name,
             is_deactivated=False,
-            referenced_doc_type="Location",
+            referenced_doc_type="XFormInstance",
             table_id="foo",
         )
         other_data_source = DataSourceConfiguration(
             domain=self.project.name,
             is_deactivated=False,
-            referenced_doc_type="Location",
+            referenced_doc_type="XFormInstance",
             table_id="bar",
         )
         builder_report_data_source.save()
