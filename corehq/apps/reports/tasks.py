@@ -2,6 +2,7 @@ import os
 import uuid
 import zipfile
 from datetime import datetime, timedelta
+from math import ceil
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -34,6 +35,7 @@ from .analytics.esaccessors import (
     get_form_ids_with_multimedia,
     scroll_case_names,
 )
+from .const import DOMAIN_STATS_PARTITION_COUNT
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
@@ -43,8 +45,13 @@ _calc_props_soft_assert = soft_assert(to='{}@{}'.format('dmore', 'dimagi.com'), 
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
+    domains_to_update = DomainES().filter(
+        get_domains_to_update_es_filter()
+    ).fields(["name"]).run().hits
+
     try:
-        _update_calculated_properties()
+        for partition in partition_domains(domains_to_update, DOMAIN_STATS_PARTITION_COUNT):
+            update_calculated_properties_in_partition.delay(partition)
     except Exception:
         _calc_props_soft_assert(
             False,
@@ -55,27 +62,50 @@ def update_calculated_properties():
             None,
             message="update_calculated_properties task has errored",
         )
-    else:
-        _calc_props_soft_assert(False, "Calculated properties report task was successful")
 
 
-def _update_calculated_properties():
-    results = DomainES().filter(
-        get_domains_to_update_es_filter()
-    ).fields(["name", "_id"]).run().hits
+def partition_domains(all_domains, partition_count):
+    partition_size = ceil(len(all_domains) / partition_count)
+    partitions = []
+    current_index = 0
+    while current_index < len(all_domains):
+        start = all_domains[current_index]
+        current_index += partition_size - 1
+        end = all_domains[partition_size - 1]
+        current_index += 1
+        partitions.append({
+            'start': start['name'],
+            'end': end['name']
+        })
 
+    return partitions
+
+
+@task(queue='background_queue')
+def update_calculated_properties_in_partition(partition):
+    start_domain = partition['start']
+    end_domain = partition['end']
+    domains = [result['name'] for result in Domain.get_db().view(
+        'domain/domains',
+        startkey=[start_domain],
+        endkey=[end_domain],
+        reduce=False,
+        include_docs=False,
+    ).all()]
+
+    # relying on caching for efficiency
     all_stats = all_domain_stats()
 
     active_users_by_domain = {}
-    for r in results:
-        dom = r["name"]
-        domain_obj = Domain.get_by_name(dom)
+    for domain in domains:
+        domain_obj = Domain.get_by_name(domain)
         if not domain_obj:
-            send_to_elasticsearch("domains", r, delete=True)
+            es_result_to_delete = DomainES().in_domains([domain]).size(1).fields(["name", "_id"]).run().hits[0]
+            send_to_elasticsearch("domains", es_result_to_delete, delete=True)
             continue
         try:
-            props = calced_props(domain_obj, r["_id"], all_stats)
-            active_users_by_domain[dom] = props['cp_n_active_cc_users']
+            props = calced_props(domain_obj, domain_obj._id, all_stats)
+            active_users_by_domain[domain] = props['cp_n_active_cc_users']
             if props['cp_first_form'] is None:
                 del props['cp_first_form']
             if props['cp_last_form'] is None:
@@ -84,7 +114,7 @@ def _update_calculated_properties():
                 del props['cp_300th_form']
             send_to_elasticsearch("domains", props, es_merge_update=True)
         except Exception as e:
-            notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
+            notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(domain, e))
 
     datadog_report_user_stats('commcare.active_mobile_workers.count', active_users_by_domain)
 
