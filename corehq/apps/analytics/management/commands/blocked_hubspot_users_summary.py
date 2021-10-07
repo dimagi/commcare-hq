@@ -55,6 +55,10 @@ class Command(BaseCommand):
                 self.stdout.write("\nEmail\tFirst Conversion")
                 for summary in users_not_blocked:
                     self.stdout.write(f"{summary[0]}\t{summary[1]}")
+            else:
+                self.stdout.write(self.style.SUCCESS(
+                    f"All users in project {domain} are absent on HubSpot."
+                ))
 
     def get_blocked_status_for_emails(self, list_of_emails, retry_num=0):
         try:
