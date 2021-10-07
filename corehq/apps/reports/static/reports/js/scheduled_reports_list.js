@@ -165,8 +165,10 @@ hqDefine("reports/js/scheduled_reports_list", [
             $.ajax({
                 method: 'POST',
                 url: sendList[0].sendUrl(),
-                data: {"sendList": ids,
-                    "bulk_send_count": sendList.length},
+                data: {
+                    "sendList": ids,
+                    "bulkSendCount": sendList.length,
+                },
                 success: function () {
                     location.reload();
                 },
@@ -185,8 +187,10 @@ hqDefine("reports/js/scheduled_reports_list", [
             $.ajax({
                 method: 'POST',
                 url: deleteList[0].deleteUrl(),
-                data: {"deleteList": ids,
-                    "bulk_delete_count": deleteList.length},
+                data: {
+                    "deleteList": ids,
+                    "bulkDeleteCount": deleteList.length,
+                },
                 success: function () {
                     location.reload();
                 },

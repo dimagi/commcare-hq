@@ -857,7 +857,7 @@ class ReportNotificationUnsubscribeView(TemplateView):
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
     user = request.couch_user
-    delete_count = request.POST.get("bulk_delete_count")
+    delete_count = request.POST.get("bulkDeleteCount")
 
     try:
         if delete_count:
@@ -907,7 +907,7 @@ def _can_delete_scheduled_report(report, user, domain):
 def send_test_scheduled_report(request, domain, scheduled_report_id):
     if not _can_send_test_report(scheduled_report_id, request.couch_user, domain):
         raise Http404()
-    send_count = request.POST.get("bulk_send_count")
+    send_count = request.POST.get("bulkSendCount")
 
     try:
         if send_count:
