@@ -47,9 +47,11 @@ class Command(BaseCommand):
                         blocked_emails
                     ))
             if users_not_blocked:
-                self.stdout.write(f"\n\nFound {len(users_not_blocked)} users in "
-                            f"HubSpot who are members of the project {domain} "
-                            f"that is blocking HubSpot data:")
+                self.stdout.write(self.style.ERROR(
+                    f"\n\nFound {len(users_not_blocked)} users in "
+                    f"HubSpot who are members of the project {domain} "
+                    f"that is blocking HubSpot data:"
+                ))
                 self.stdout.write("\nEmail\tFirst Conversion")
                 for summary in users_not_blocked:
                     self.stdout.write(f"{summary[0]}\t{summary[1]}")
@@ -70,8 +72,10 @@ class Command(BaseCommand):
             if retry_num <= MAX_API_RETRIES:
                 return self.get_blocked_status_for_emails(list_of_emails, retry_num + 1)
             else:
-                self.stdout.write(f"Failed to get data from hubspot for "
-                                  f"{list_of_emails.join(',')}.")
+                self.stdout.write(self.style.ERROR(
+                    f"Failed to get data from hubspot for "
+                    f"{list_of_emails.join(',')}."
+                ))
         else:
             status_summary = []
             for contact_id, data in req.json().items():
