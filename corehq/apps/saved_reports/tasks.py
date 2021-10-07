@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.http import HttpRequest
+from django.http.request import QueryDict, MultiValueDict
 from django.utils.translation import ugettext as _
 
 import six
@@ -22,6 +23,7 @@ from corehq.apps.saved_reports.scheduled import (
 )
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import ESError
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 
@@ -45,7 +47,7 @@ def send_delayed_report(report_id):
         send_report.delay(report_id)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
+@task(queue='background_queue', ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
 
@@ -59,7 +61,7 @@ def send_report(notification_id):
         pass
 
 
-@task(serializer='pickle', queue='send_report_throttled', ignore_result=True)
+@task(queue='send_report_throttled', ignore_result=True)
 def send_report_throttled(notification_id):
     send_report(notification_id)
 
@@ -88,7 +90,7 @@ def queue_scheduled_reports():
         send_delayed_report(report_id)
 
 
-@task(serializer='pickle', bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
+@task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                       request_data, once, cleaned_data):
     """
@@ -117,8 +119,11 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     couch_user = CouchUser.get_by_user_id(user_id)
     mock_request = HttpRequest()
 
+    GET_data = QueryDict('', mutable=True)
+    GET_data.update(MultiValueDict(request_data['GET']))
+
     mock_request.method = 'GET'
-    mock_request.GET = request_data['GET']
+    mock_request.GET = GET_data
 
     config = ReportConfig()
 
@@ -130,14 +135,14 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     config.owner_id = user_id
     config.domain = domain
 
-    config.start_date = request_data['datespan'].startdate.date()
-    if request_data['datespan'].enddate:
+    config.start_date = iso_string_to_datetime(request_data['startdate']).date()
+    if request_data['enddate']:
         config.date_range = 'range'
-        config.end_date = request_data['datespan'].enddate.date()
+        config.end_date = iso_string_to_datetime(request_data['enddate']).date()
     else:
         config.date_range = 'since'
 
-    GET = dict(six.iterlists(request_data['GET']))
+    GET = dict(six.iterlists(GET_data))
     exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
     filters = {}
     for field in GET:
