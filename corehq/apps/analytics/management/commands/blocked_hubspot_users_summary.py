@@ -91,7 +91,7 @@ class Command(BaseCommand):
                 f"that is blocking HubSpot data:"
             ))
             self.stdout.write("\nEmail\tFirst Conversion")
-            for user, status in users_not_blocked:
+            for user, status in users_not_blocked.items():
                 self.stdout.write(f"{user}\t{status}")
             self.stdout.write('\n\n')
         else:
