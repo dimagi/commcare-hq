@@ -9,7 +9,7 @@ from corehq.util.django_migrations import skip_on_fresh_install
 @skip_on_fresh_install
 def migrate_edit_migrations_permissions(apps, schema_editor):
     permission, created = SQLPermission.objects.get_or_create(value='edit_messaging')
-    edit_data_permission = SQLPermission.objects.get_or_create(value='edit_data')
+    edit_data_permission, created = SQLPermission.objects.get_or_create(value='edit_data')
     role_ids_with_edit_data = set(UserRole.objects.filter(rolepermission__permission_fk_id=edit_data_permission.id)
                                   .values_list("id", flat=True))
     for chunk in chunked(role_ids_with_edit_data, 50):

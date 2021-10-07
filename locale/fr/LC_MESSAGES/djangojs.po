@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-09-30 23:35+0000\n"
+"POT-Creation-Date: 2021-10-06 19:18+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2903,11 +2903,11 @@ msgstr ""
 msgid "No Name"
 msgstr ""
 
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:97
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:98
 msgid "You have unsaved changes to your data dictionary."
 msgstr ""
 
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:179
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:181
 msgid ""
 "You have unsaved changes to this case type. Are you sure you would like to "
 "continue?"
@@ -3477,7 +3477,7 @@ msgid "Please enter your name."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js:100
-#: corehq/apps/users/static/users/js/invite_web_user.js:22
+#: corehq/apps/users/static/users/js/invite_web_user.js:23
 msgid "Please specify an email."
 msgstr ""
 
@@ -4133,7 +4133,8 @@ msgid "Access Web Apps"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:252
-msgid "<strong>Messaging</strong> &mdash; configure and send SMS messaging."
+msgid ""
+"<strong>Messaging</strong> &mdash; configure and send conditional alerts"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:257
@@ -4210,48 +4211,56 @@ msgstr ""
 msgid "Allow role to access all reports."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:366
+#: corehq/apps/users/static/users/js/roles.js:362
+msgid "Create and Edit Configurable Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:365
+msgid "Allow role to create and edit configurable reports."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:373
 msgid "Manage Registries"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:367
+#: corehq/apps/users/static/users/js/roles.js:374
 msgid "Select which registries the role can manage:"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:374
+#: corehq/apps/users/static/users/js/roles.js:381
 msgid "View Registry Data"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:375
+#: corehq/apps/users/static/users/js/roles.js:382
 msgid "Select which registry data the role can view:"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:384
+#: corehq/apps/users/static/users/js/roles.js:391
 #, javascript-format
 msgid "Select at least one item from the list for \"%s\""
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:472
+#: corehq/apps/users/static/users/js/roles.js:479
 msgid "Edit Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:472
+#: corehq/apps/users/static/users/js/roles.js:479
 msgid "View Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:473
+#: corehq/apps/users/static/users/js/roles.js:480
 msgid "New Role"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:483
+#: corehq/apps/users/static/users/js/roles.js:490
 msgid "Delete Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:486
+#: corehq/apps/users/static/users/js/roles.js:493
 msgid "Are you sure you want to delete the role <%- role %>?"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:546
+#: corehq/apps/users/static/users/js/roles.js:553
 msgid "An error occurred, please try again."
 msgstr ""
 

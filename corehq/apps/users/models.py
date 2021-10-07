@@ -12,6 +12,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField, JSONField
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -3085,7 +3086,7 @@ class UserHistory(models.Model):
     changed_via = models.CharField(max_length=255, blank=True)
     # same as the deprecated details.changes
     # a dict of CouchUser attributes that changed and their new values
-    changes = JSONField(default=dict)
+    changes = JSONField(default=dict, encoder=DjangoJSONEncoder)
 
     class Meta:
         indexes = [

@@ -245,6 +245,14 @@ class StaticToggle(object):
         domains -= self.always_disabled
         return list(domains)
 
+    def get_enabled_users(self):
+        try:
+            toggle = Toggle.get(self.slug)
+        except ResourceNotFound:
+            return []
+
+        return [user for user in toggle.enabled_users if not user.startswith("domain:")]
+
 
 def was_domain_created_after(domain, checkpoint):
     """
@@ -827,7 +835,7 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
         "search first", "see more", and "skip to default case search results", Geocoder
         and other options in Webapps Case Search.
     ''',
-    TAG_INTERNAL,
+    TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -2157,13 +2165,4 @@ DO_NOT_REPUBLISH_DOCS = StaticToggle(
     'Prevents automatic attempts to repair stale ES docs in this domain',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-THROTTLE_SYSTEM_FORMS = FeatureRelease(
-    'throttle_system_forms',
-    ('Throttles system forms (from auto update rules, etc.) with soft delays (no hard rejections) '
-     'to make them a better part of the overall submission rate limiting system.'),
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='Danny Roberts',
 )
