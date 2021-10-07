@@ -60,6 +60,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import get_case_or_404
 
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
@@ -112,12 +113,17 @@ def app_aware_search(request, domain, app_id):
 
     Returns results as a fixture with the same structure as a casedb instance.
     """
-    request_dict = request.GET if request.method == 'GET' else request.POST
-    criteria = {k: v[0] if len(v) == 1 else v for k, v in request_dict.lists()}
-    try:
-        cases = get_case_search_results(domain, criteria, app_id, request.couch_user)
-    except CaseSearchUserError as e:
-        return HttpResponse(str(e), status=400)
+    # TODO: remove once I'm using the registry view
+    case_id = request.GET.get("case_id")
+    if case_id:
+        cases = [get_case_or_404(domain, case_id)]
+    else:
+        request_dict = request.GET if request.method == 'GET' else request.POST
+        criteria = {k: v[0] if len(v) == 1 else v for k, v in request_dict.lists()}
+        try:
+            cases = get_case_search_results(domain, criteria, app_id, request.couch_user)
+        except CaseSearchUserError as e:
+            return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
