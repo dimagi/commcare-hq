@@ -24,6 +24,8 @@ def import_users_and_groups(domain, user_specs, group_specs, upload_user_id, upl
         create_or_update_groups, create_or_update_web_users
     if task is None:
         task = import_users_and_groups
+    elif task == 'parallel_import_task':
+        task = parallel_import_task
     DownloadBase.set_progress(task, 0, 100)
 
     total = len(user_specs) + len(group_specs)
@@ -71,7 +73,7 @@ def import_users_and_groups(domain, user_specs, group_specs, upload_user_id, upl
 @task(queue='ush_background_tasks')
 def parallel_import_task(domain, user_specs, group_specs, upload_user_id,
                          upload_record_id, is_web_user_upload=False):
-    task = parallel_import_task
+    task = 'parallel_import_task'
     return import_users_and_groups(domain, user_specs, group_specs, upload_user_id, upload_record_id,
                                    is_web_user_upload, task)
 
