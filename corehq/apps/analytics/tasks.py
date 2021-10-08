@@ -391,7 +391,7 @@ def track_job_candidate_on_hubspot(user_email):
     _track_on_hubspot_by_email(user_email, properties=properties)
 
 
-@analytics_task(serializer='pickle', )
+@analytics_task
 def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
