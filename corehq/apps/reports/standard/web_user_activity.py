@@ -35,7 +35,7 @@ class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport,
             yield [
                 event.user,
                 ServerTime(event.event_date).user_time(self.timezone).ui_string(),
-                self._get_report_display(event.view_kwargs.get('report_slug')),
+                self._display_fns_by_view[event.view](event),
             ]
 
     @property
@@ -49,10 +49,11 @@ class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport,
             user=username,
             event_date__gt=self.datespan.startdate,
             event_date__lt=self.datespan.enddate_adjusted,
-            view_fk__value= 'corehq.apps.reports.dispatcher.ProjectReportDispatcher',
+            view_fk__value__in=self._display_fns_by_view.keys(),
         ).select_related('view_fk')
 
-    def _get_report_display(self, slug):
+    def _get_report_display(self, event):
+        slug = event.view_kwargs.get('report_slug')
         if slug and slug in self._report_displays_by_slug:
             return self._report_displays_by_slug[slug]
         return "Unknown"
@@ -63,4 +64,10 @@ class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport,
         return {
             report.slug: mark_safe(f'<a href="{report.get_url(self.domain)}">{report.name}</a>')
             for tab in REPORTS(self.request.project) for report in tab[1]
+        }
+
+    @cached_property
+    def _display_fns_by_view(self):
+        return {
+            'corehq.apps.reports.dispatcher.ProjectReportDispatcher': self._get_report_display,
         }
