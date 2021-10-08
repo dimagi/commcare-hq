@@ -53,15 +53,17 @@ class TestSetupClass(SimpleTestCase):
 @es_test(index=CATS, setup_class=True)
 class BaseSetupTeardownCatsClass(SimpleTestCase):
 
+    state_log = []
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.class_setup_state = "up"
+        cls.state_log.append("class_up")
 
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        cls.class_setup_state = "down"
+        cls.state_log.append("class_down")
 
 
 class TestSetupTeardownClassDecoratedAndCalled(BaseSetupTeardownCatsClass):
@@ -72,15 +74,17 @@ class TestSetupTeardownClassDecoratedAndCalled(BaseSetupTeardownCatsClass):
         # non-standard: test that the class is torn down
         with assert_raises(ESRegistryError):
             verify_registered(CATS)
-        assert cls.class_setup_state == "down"
+        assert cls.state_log == ["class_up", "class_down"]
 
     def test_class_is_setup(self):
         verify_registered(CATS)
-        self.assertEqual(self.class_setup_state, "up")
+        self.assertEqual(self.state_log, ["class_up"])
 
 
 @es_test(index=CATS)
 class TestSetupTeardownDecoratedAndCalled(SimpleTestCase):
+
+    state_log = []
 
     @classmethod
     def tearDownClass(cls):
@@ -88,9 +92,19 @@ class TestSetupTeardownDecoratedAndCalled(SimpleTestCase):
         # non-standard: test that the instance is torn down
         with assert_raises(ESRegistryError):
             verify_registered(CATS)
+        assert cls.state_log == ["instance_up", "instance_down"]
+
+    def setUp(self):
+        super().setUp()
+        self.state_log.append("instance_up")
+
+    def tearDown(self):
+        super().tearDown()
+        self.state_log.append("instance_down")
 
     def test_instance_is_setup(self):
         verify_registered(CATS)
+        self.assertEqual(self.state_log, ["instance_up"])
 
 
 class TestPartialESTest(SimpleTestCase):
