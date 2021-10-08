@@ -20,7 +20,7 @@ class OutOfOrderCaseTest(TestCase):
                 xml_data = f.read()
             submit_form_locally(xml_data, 'test-domain')
 
-        case = CaseAccessors().get_case('30bc51f6-3247-4966-b4ae-994f572e85fe')
+        case = CaseAccessors('test-domain').get_case('30bc51f6-3247-4966-b4ae-994f572e85fe')
         self.assertEqual('from the update form', case.case_json['pupdate'])
         self.assertEqual('from the create form', case.case_json['pcreate'])
         # NOTE the SQL form processor works differently than the Couch one did:
