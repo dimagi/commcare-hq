@@ -424,7 +424,7 @@ def track_workflow(email, event, properties=None):
         notify_exception(None, "Error tracking kissmetrics workflow")
 
 
-@analytics_task(serializer='pickle', )
+@analytics_task
 def _track_workflow_task(email, event, properties=None, timestamp=0):
     def _no_nonascii_unicode(value):
         if isinstance(value, str):
