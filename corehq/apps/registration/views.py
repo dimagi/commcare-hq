@@ -520,7 +520,7 @@ def confirm_domain(request, guid=''):
                 'the time to confirm your email address: %s.'
             % (requesting_user.username))
         track_workflow(requesting_user.email, "Confirmed new project")
-        track_confirmed_account_on_hubspot.delay(requesting_user)
+        track_confirmed_account_on_hubspot.delay(requesting_user.get_id)
         request.session['CONFIRM'] = True
 
         return HttpResponseRedirect(reverse(view_name, args=view_args))

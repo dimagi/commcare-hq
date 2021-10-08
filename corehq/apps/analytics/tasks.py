@@ -334,8 +334,9 @@ def track_built_app_on_hubspot(webuser_id):
         _track_on_hubspot(webuser, {'built_app': True})
 
 
-@analytics_task(serializer='pickle', )
-def track_confirmed_account_on_hubspot(webuser):
+@analytics_task
+def track_confirmed_account_on_hubspot(webuser_id):
+    webuser = WebUser.get_by_user_id(webuser_id)
     vid = _get_user_hubspot_id(webuser)
     if vid:
         # Only track the property if the contact already exists.
