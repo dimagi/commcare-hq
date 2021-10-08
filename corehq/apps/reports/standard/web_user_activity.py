@@ -20,6 +20,7 @@ class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport,
     slug = 'web_user_activity'
     name = ugettext_noop("Web User Activity")
     ajax_pagination = True
+    sortable = False
 
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -56,7 +57,7 @@ class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport,
             event_date__gt=self.datespan.startdate,
             event_date__lt=self.datespan.enddate_adjusted,
             view_fk__value__in=self._event_formatter.supported_views,
-        ).select_related('view_fk')
+        ).order_by('-event_date').select_related('view_fk')
 
     @cached_property
     def _event_formatter(self):
