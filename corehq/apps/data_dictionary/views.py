@@ -44,6 +44,7 @@ from corehq.project_limits.rate_limiter import (
 )
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
+from corehq.util.workbook_reading.datamodels import Cell
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
 ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
@@ -419,17 +420,22 @@ def _process_bulk_upload(bulk_file, domain):
                 allowed_value_info[case_type] = defaultdict(dict)
                 prop_row_info[case_type] = defaultdict(list)
                 for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None), start=2):
-                    if len(row) < 3:
-                        errors.append(_('Expecting 3 columns, found only {}').format(len(row)))
+                    row_len = len(row)
+                    if row_len < 1:
+                        # simply ignore any fully blank rows
+                        continue
+                    if row_len < 3:
+                        # if missing value or description, fill in "blank"
+                        row += [Cell(value='') for _ in range(3 - row_len)]
+                    row = [cell.value if cell.value is not None else '' for cell in row]
+                    prop_name, allowed_value, description = [str(val) for val in row[0:3]]
+                    if allowed_value and not prop_name:
+                        msg_format = _('Error in valid values for case type {}, row {}: missing case property')
+                        msg_val = msg_format.format(case_type, i)
+                        errors.append(msg_val)
                     else:
-                        prop_name, allowed_value, description = [cell.value or '' for cell in row[0:3]]
-                        if allowed_value and not prop_name:
-                            msg_format = _('Error in valid values for case type {}, row {}: missing case property')
-                            msg_val = msg_format.format(case_type, i)
-                            errors.append(msg_val)
-                        else:
-                            allowed_value_info[case_type][prop_name][allowed_value] = description
-                            prop_row_info[case_type][prop_name].append(i)
+                        allowed_value_info[case_type][prop_name][allowed_value] = description
+                        prop_row_info[case_type][prop_name].append(i)
             else:
                 worksheets.append(worksheet)
 

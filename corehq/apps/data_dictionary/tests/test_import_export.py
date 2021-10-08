@@ -57,13 +57,12 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
             for data_type in ['plain', 'date', 'select']:
                 prop = case_type.properties.get(data_type=data_type, name=f'{data_type}prop')
                 if data_type == 'select':
-                    vals = ['True', 'False'] if i == 1 else ['Yes', 'No']
-                    self.assertEqual(2, prop.allowed_values.count())
+                    vals = ['True', 'False', '0', '1'] if i == 1 else ['Yes', 'No']
+                    self.assertEqual(len(vals), prop.allowed_values.count())
                     for val in vals:
-                        self.assertEqual(
-                            1,
-                            prop.allowed_values.filter(
-                                allowed_value=val, description=f'{val} description').count())
+                        av_qs = prop.allowed_values.filter(
+                            allowed_value=val, description=f'{val} description')
+                        self.assertEqual(1, av_qs.count())
 
     def test_broken_import(self):
         fname = self.get_path('broken_data_dictionary', 'xlsx')
