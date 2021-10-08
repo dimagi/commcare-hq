@@ -27,7 +27,7 @@
               {% if is_rebuilding %}
                 <span class="hq-help-template"
                   data-title="{% trans_html_attr "Rebuilding Data Source" %}"
-                  data-content="{% trans_html_attr "Currently a rebuild is already happening for this data source" %}"
+                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this data source. Rebuilding data sources erases all the existing data and will start populating it again. While the rebuild is happening, reports based on this data source will show incomplete data" %}"
                   data-placement="left"></span>
               {% endif %}
             </div>
