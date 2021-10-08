@@ -10,17 +10,19 @@
         }
         ">
     <!-- Tab title -->
-    <div class="debugger-tab-title" role="button"  tabindex="0"
+    <button class="btn-block debugger-tab-title" tabindex="0"
       data-bind="click: toggleState,
-        attr: {'aria-label': isMinimized() ? 'Expand Data Preview' : 'Collapse Data Preview'}">
+        attr: {'aria-label': isMinimized() ? expandAriaLabel : collapseAriaLabel}">
       <span class="sr-only">{% trans "Expand Data Preview Section." %}</span>
       <i class="fa fa-close pull-right"></i>
-      <i class="fa fa-table"></i>
-      <span class="debugger-title">{% trans "Data Preview" %}</span>
-    </div>
+      <div class="pull-left">
+        <i class="fa fa-table"></i>
+        <span class="debugger-title">{% trans "Data Preview" %}</span>
+      </div>
+    </button>
 
     <!-- Debugger content -->
-    <div data-bind="visible: !isMinimized(), attr: {'aria-hidden': isMinimized()}" class="debugger-container">
+    <div data-bind="visible: !isMinimized()" class="debugger-container">
       <!-- navigation tabs -->
 
       <nav class="navbar navbar-default debugger-navbar">
