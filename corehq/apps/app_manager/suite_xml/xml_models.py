@@ -387,6 +387,10 @@ class StackDatum(IdNode):
     value = XPathField('@value')
 
 
+class StackQuery(StackDatum):
+    ROOT_NAME = 'query'
+
+
 class StackCommand(XmlObject):
     ROOT_NAME = 'command'
 
