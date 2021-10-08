@@ -21,7 +21,8 @@ class HubspotClickDeployView(View):
     def post(self, request, *args, **kwargs):
         meta = get_meta(request)
         if hasattr(request, 'couch_user'):
-            track_clicked_deploy_on_hubspot.delay(request.couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta)
+            track_clicked_deploy_on_hubspot.delay(request.couch_user.get_id,
+                                                  request.COOKIES.get(HUBSPOT_COOKIE), meta)
         return HttpResponse()
 
 
