@@ -66,7 +66,7 @@ def _smart_query_string(search_string):
     return False, "*{}*".format("* *".join(tokens))
 
 
-def search_string_query(search_string, default_fields=None):
+def search_string_query(search_string, default_fields):
     """
     Allows users to use advanced query syntax, but if ``search_string`` does
     not use the ES query string syntax, default to doing an infix search for
@@ -77,6 +77,9 @@ def search_string_query(search_string, default_fields=None):
     if not search_string:
         return match_all()
 
+    if not default_fields:
+        raise Exception
+
     # use simple_query_string for user-provided syntax, since it won't error
     uses_syntax, query_string = _smart_query_string(search_string)
     query_method = "simple_query_string" if uses_syntax else "query_string"
@@ -84,7 +87,7 @@ def search_string_query(search_string, default_fields=None):
         query_method: {
             "query": query_string,
             "default_operator": "AND",
-            "fields": default_fields if not uses_syntax else None,
+            "fields": default_fields,
         }
     }
 
