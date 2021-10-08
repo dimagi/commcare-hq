@@ -1,9 +1,6 @@
 import abc
-import logging
 
 from corehq.util.es.elasticsearch import bulk
-
-logger = logging.getLogger(__name__)
 
 
 class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):

@@ -23,7 +23,7 @@ def doc_in_es(request):
 
     found_indices = {}
     es_doc_type = None
-    for index in get_registry().keys():
+    for index in get_registry():
         es_doc = lookup_doc_in_es(doc_id, index)
         if es_doc:
             found_indices[index] = to_json(es_doc)
