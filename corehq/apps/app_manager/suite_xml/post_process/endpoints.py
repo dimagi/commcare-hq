@@ -13,8 +13,9 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     SessionEndpoint,
     Stack,
     StackDatum,
+    StackQuery,
 )
-from corehq.apps.app_manager.util import module_offers_search
+from corehq.apps.app_manager.util import module_offers_registry_search, module_offers_search
 from corehq.util.timer import time_method
 
 
@@ -54,6 +55,14 @@ class EndpointsHelper(PostProcessor):
         # Add a frame to navigate to the endpoint
         frame = PushFrame()
         stack.add_frame(frame)
+        # TODO: extract this, add test, probably need to fix some tests too
+        if module_offers_registry_search(module):
+            from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
+            # TODO: split out URL arguments as data elements
+            # TODO: use $case_id
+            frame.add_datum(
+                StackQuery(id=RESULTS_INSTANCE, value="http://localhost:8000/a/bosco/phone/search/5409c49f4c284b34b792911244255e39/?commcare_registry=songs&case_id=9a1271c8-f749-4679-8abb-ce2bd0d83a90")
+            )
         for child in children:
             if isinstance(child, CommandId):
                 frame.add_command(child.to_command())
