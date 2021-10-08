@@ -85,3 +85,25 @@ def test_registry_state_with_function_decorator():
 
     yield test_pig_index_registered,
     yield test_pig_index_not_registered,
+
+
+@es_test(index=PIGS, setup_class=True)
+class TestNoSetupTeardownMethods:
+
+    def test_test_instantiation_should_not_raise_attributeerror(self):
+        pass
+
+
+@es_test_attr
+def test_setup_class_expects_classmethods():
+
+    with assert_raises(ValueError):
+
+        @es_test(index=PIGS, setup_class=True)
+        class TestMissingClassmethods:
+
+            def setUpClass(self):
+                pass
+
+            def tearDownClass(self):
+                pass

@@ -186,7 +186,12 @@ def _decorate_es_methods(test, setup_class, registry_setup, registry_teardown):
         func_name = f"{name}Class" if setup_class else name
         func = getattr(test, func_name, None)
         if setup_class:
-            decorated = classmethod(decorator(func.__func__))
+            if func is not None:
+                try:
+                    func = func.__func__
+                except AttributeError:
+                    raise ValueError(f"'setup_class' expects a classmethod, got {func} (test={test})")
+            decorated = classmethod(decorator(func))
         else:
             decorated = decorator(func)
         setattr(test, func_name, decorated)
