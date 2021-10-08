@@ -14,6 +14,8 @@ hqDefine('userreports/js/configure_report', function () {
             "sourceId": initialPageData.get('source_id'),
             "sourceType": initialPageData.get('source_type'),
             "registrySlug": initialPageData.get('registry_slug'),
+            "isDataFromOneProject": initialPageData.get('data_from_one_project'),
+            "isDataFromManyProjects": initialPageData.get('data_from_many_projects'),
             "reportPreviewUrl": initialPageData.get('report_preview_url'),
             "previewDatasourceId": initialPageData.get('preview_datasource_id'),
             "existingReport": existing_report ? existing_report._id : null,

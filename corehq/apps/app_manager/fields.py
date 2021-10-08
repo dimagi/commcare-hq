@@ -30,8 +30,8 @@ from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.toggles import AGGREGATE_UCRS
 from corehq.util.soft_assert import soft_assert
 
-DataSource = collections.namedtuple('DataSource', ['application', 'source_type', 'source',
-                                                   'registry_slug'])
+DataSource = collections.namedtuple('DataSource', ['application', 'source_type', 'source', 'registry_slug',
+                                                   'data_from_one_project', 'data_from_many_projects'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
 AppFormRMIResponse = collections.namedtuple('AppFormRMIResponse', [
     'app_types', 'apps_by_type', 'modules_by_app',
@@ -103,6 +103,16 @@ class ApplicationDataSourceUIHelper(object):
         if enable_registry:
             self.registry_slug_field.widget = forms.Select()
             self.application_field.required = False
+        self.data_from_one_project_field = forms.BooleanField(
+            label=_('Data From My Project Space'),
+            required=False,
+            initial=False,
+        )
+        self.data_from_many_projects_field = forms.BooleanField(
+            label=_('Data From My Project Space and Others'),
+            required=False,
+            initial=False,
+        )
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
@@ -155,11 +165,19 @@ class ApplicationDataSourceUIHelper(object):
             optionsValue: function(item){return item.value},
             value: sourceId
         '''}
+        self.data_from_one_project_field.widget.attrs = {'data-bind': '''
+            checked: isDataFromOneProject, disable: registrySlug() || isDataFromManyProjects()
+        '''}
+        self.data_from_many_projects_field.widget.attrs = {'data-bind': '''
+            checked: isDataFromManyProjects,
+            disable: sourceType() != 'case' || application() || isDataFromOneProject()
+        '''}
 
         if self.enable_registry:
-            self.application_field.widget.attrs['data-bind'] += ", disable: registrySlug() != ''"
+            self.application_field.widget.attrs['data-bind'] += ", disable: registrySlug() != '' || " \
+                                                                "isDataFromManyProjects()"
             self.registry_slug_field.widget.attrs = {'data-bind': '''
-                disable: sourceType() != 'case' || application() != '',
+                disable: sourceType() != 'case' || application() != '' || isDataFromOneProject(),
                 optionsText: function(item){return item.text},
                 optionsValue: function(item){return item.value},
                 value: registrySlug
@@ -176,10 +194,12 @@ class ApplicationDataSourceUIHelper(object):
         fields['application'] = self.application_field
         fields['source'] = self.source_field
         fields['registry_slug'] = self.registry_slug_field
+        fields['data_from_one_project'] = self.data_from_one_project_field
+        fields['data_from_many_projects'] = self.data_from_many_projects_field
         return fields
 
-    def get_crispy_fields(self):
-        help_texts = {
+    def get_crispy_filed_help_texts(self):
+        return {
             "source_type": _(
                 "<strong>Form</strong>: Display data from form submissions.<br/>"
                 "<strong>Case</strong>: Display data from your cases. You must be using case management for this "
@@ -188,6 +208,9 @@ class ApplicationDataSourceUIHelper(object):
             "registry_slug": _("Select the data registry containing the data you wish to access in the report"),
             "source": _("Choose the case type or form from which to retrieve data for this report."),
         }
+
+    def get_crispy_fields(self):
+        help_texts = self.get_crispy_filed_help_texts()
         return [
             hqcrispy.FieldWithHelpBubble(name, help_bubble_text=help_text)
             for name, help_text in help_texts.items()
@@ -195,7 +218,8 @@ class ApplicationDataSourceUIHelper(object):
 
     def get_app_source(self, data_dict):
         return DataSource(data_dict['application'], data_dict['source_type'], data_dict['source'],
-                          data_dict['registry_slug'])
+                          data_dict['registry_slug'], data_dict['data_from_one_project'],
+                          data_dict['data_from_many_projects'])
 
 
 def get_app_sources(domain):

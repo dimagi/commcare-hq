@@ -102,6 +102,8 @@ hqDefine('userreports/js/report_config', function () {
                 self._sourceType = config['sourceType'];
                 self._sourceId = config['sourceId'];
                 self._registrySlug = config['registrySlug'];
+                self._isDataFromOneProject = config['isDataFromOneProject'];
+                self._isDataFromManyProjects = config['isDataFromManyProjects'];
 
                 self.dateRangeOptions = config['dateRangeOptions'];
 
@@ -371,6 +373,8 @@ hqDefine('userreports/js/report_config', function () {
                                     'source_type': self._sourceType,
                                     'source_id': self._sourceId,
                                     'registry_slug': self._registrySlug,
+                                    'data_from_one_project': self._isDataFromOneProject,
+                                    'data_from_many_projects': self._isDataFromManyProjects,
                                 }
                             )),
                             dataType: 'json',

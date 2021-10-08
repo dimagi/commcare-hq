@@ -10,5 +10,7 @@ hqDefine("userreports/js/data_source_select_model", function () {
         },
         sourceId: ko.observable(""),
         registrySlug: ko.observable(""),
+        isDataFromOneProject: ko.observable(""),
+        isDataFromManyProjects: ko.observable(""),
     };
 });

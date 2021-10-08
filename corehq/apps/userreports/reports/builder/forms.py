@@ -908,9 +908,7 @@ class DataSourceForm(forms.Form):
                     )
                 )
             ),
-            crispy.Fieldset(
-                _('Data'), *self.app_source_helper.get_crispy_fields()
-            ),
+            self.get_data_layout(),
             hqcrispy.FormActions(
                 StrictButton(
                     _('Next'),
@@ -920,6 +918,23 @@ class DataSourceForm(forms.Form):
                 )
             ),
         )
+
+    def get_data_layout(self):
+        if not DATA_REGISTRY.enabled(self.domain):
+            return crispy.Fieldset(
+                _('Data'), *self.app_source_helper.get_crispy_fields(),
+            )
+        else:
+            help_texts = self.app_source_helper.get_crispy_filed_help_texts()
+            return crispy.Fieldset(
+                _('Data'),
+                hqcrispy.FieldWithHelpBubble('source_type', help_bubble_text=help_texts['source_type']),
+                crispy.Field('data_from_one_project'),
+                hqcrispy.FieldWithHelpBubble('application', help_bubble_text=help_texts['application']),
+                crispy.Field('data_from_many_projects'),
+                hqcrispy.FieldWithHelpBubble('registry_slug', help_bubble_text=help_texts['registry_slug']),
+                hqcrispy.FieldWithHelpBubble('source', help_bubble_text=help_texts['source']),
+            )
 
     @property
     def sources_map(self):
