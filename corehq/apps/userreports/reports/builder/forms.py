@@ -929,10 +929,20 @@ class DataSourceForm(forms.Form):
             return crispy.Fieldset(
                 _('Data'),
                 hqcrispy.FieldWithHelpBubble('source_type', help_bubble_text=help_texts['source_type']),
-                crispy.Field('data_from_one_project'),
-                hqcrispy.FieldWithHelpBubble('application', help_bubble_text=help_texts['application']),
-                crispy.Field('data_from_many_projects'),
-                hqcrispy.FieldWithHelpBubble('registry_slug', help_bubble_text=help_texts['registry_slug']),
+                crispy.Div(
+                    crispy.HTML('<input type="radio" name="project_data" id="one_project" '
+                                'value="isDataFromOneProject" data-bind="checked: isDataFromOneProject,'
+                                ' checkedValue: \'true\'" class="project_data-option"/>'
+                                '<label for="one_project" class="project_data-label">%s</label>'
+                                % _("Data From My Project Space")),
+                    hqcrispy.FieldWithHelpBubble('application', help_bubble_text=help_texts['application']),
+                    crispy.HTML('<input type="radio" name="project_data" id="many_projects" '
+                                'value="isDataFromOneProject" data-bind="checked: isDataFromOneProject, '
+                                'checkedValue: \'false\'" class="project_data-option"/><label '
+                                'for="many_projects" class="project_data-label">%s</label>'
+                                % _("Data From My Project Space And Others")),
+                    hqcrispy.FieldWithHelpBubble('registry_slug', help_bubble_text=help_texts['registry_slug']),
+                ),
                 hqcrispy.FieldWithHelpBubble('source', help_bubble_text=help_texts['source']),
             )
 
