@@ -1363,7 +1363,7 @@ class ProjectUsersTab(UITab):
                      'urlname': 'commcare_users_lookup'},
                     {'title': _('Edit User Fields'),
                      'urlname': 'user_fields_view'},
-                    {'title': _('Filter and Download Users'),
+                    {'title': _('Filter and Download Mobile Workers'),
                      'urlname': 'filter_and_download_commcare_users'},
                     {'title': _(
                         ConfirmBillingAccountForExtraUsersView.page_title),
