@@ -1047,12 +1047,20 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
     @property
     def page_context(self):
+        is_rebuilding = (
+            (self.config.meta.build.initiated or self.conf.meta.build.initiated_in_place)
+            and (
+                not self.config.meta.build.finished
+                and not self.config.meta.build.finished_in_place
+                and not self.config.meta.build.rebuilt_asynchronously
+            )
+        )
         return {
             'form': self.edit_form,
             'data_source': self.config,
             'read_only': self.read_only,
             'used_by_reports': self.get_reports(),
-            'is_rebuilding': self.is_rebuilding,
+            'is_rebuilding': is_rebuilding,
         }
 
     @property
