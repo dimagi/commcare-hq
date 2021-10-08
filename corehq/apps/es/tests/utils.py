@@ -141,15 +141,15 @@ def es_test(test=None, index=None, indices=[], setup_class=False):
             deregister(dereg)
 
     if isclass(test):
-        test = _decorate_es_methods(test, setup_class, registry_setup, registry_teardown)
+        test = _add_setup_and_teardown(test, setup_class, registry_setup, registry_teardown)
     else:
         if setup_class:
             raise ValueError(f"keyword 'setup_class' is for class decorators, test={test}")
-        test = _decorate_es_function(test, registry_setup, registry_teardown)
+        test = _decorate_test_function(test, registry_setup, registry_teardown)
     return es_test_attr(test)
 
 
-def _decorate_es_function(test, registry_setup, registry_teardown):
+def _decorate_test_function(test, registry_setup, registry_teardown):
 
     @wraps(test)
     def wrapper(*args, **kw):
@@ -162,7 +162,7 @@ def _decorate_es_function(test, registry_setup, registry_teardown):
     return wrapper
 
 
-def _decorate_es_methods(test, setup_class, registry_setup, registry_teardown):
+def _add_setup_and_teardown(test_class, setup_class, registry_setup, registry_teardown):
 
     def setup_decorator(setup):
         @wraps(setup)
@@ -184,21 +184,22 @@ def _decorate_es_methods(test, setup_class, registry_setup, registry_teardown):
 
     def decorate(name, decorator):
         func_name = f"{name}Class" if setup_class else name
-        func = getattr(test, func_name, None)
+        func = getattr(test_class, func_name, None)
         if setup_class:
             if func is not None:
                 try:
                     func = func.__func__
                 except AttributeError:
-                    raise ValueError(f"'setup_class' expects a classmethod, got {func} (test={test})")
+                    raise ValueError(f"'setup_class' expects a classmethod, "
+                                     f"got {func} (test_class={test_class})")
             decorated = classmethod(decorator(func))
         else:
             decorated = decorator(func)
-        setattr(test, func_name, decorated)
+        setattr(test_class, func_name, decorated)
 
     decorate("setUp", setup_decorator)
     decorate("tearDown", teardown_decorator)
-    return test
+    return test_class
 
 
 def populate_es_index(models, index_cname, doc_prep_fn=lambda doc: doc):
