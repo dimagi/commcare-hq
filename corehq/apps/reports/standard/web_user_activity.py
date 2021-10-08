@@ -7,7 +7,14 @@ from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
+from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.util.timezones.conversions import ServerTime
+from corehq.util.view_utils import reverse
+
+
+def _link(name, url):
+    return mark_safe(f'<a href="{url}">{name}</a>')
 
 
 class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
@@ -62,12 +69,21 @@ class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport,
     def _report_displays_by_slug(self):
         from corehq.reports import REPORTS
         return {
-            report.slug: mark_safe(f'<a href="{report.get_url(self.domain)}">{report.name}</a>')
+            report.slug: _link(report.name, report.get_url(self.domain))
             for tab in REPORTS(self.request.project) for report in tab[1]
         }
+
+    def _get_ucr_display(self, event):
+        return {
+            config._id: _link(
+                config.title, reverse(ConfigurableReportView.slug, args=[self.domain, config._id])
+            )
+            for config in ReportConfiguration.by_domain(self.domain)
+        }[event.view_kwargs.get('subreport_slug')]
 
     @cached_property
     def _display_fns_by_view(self):
         return {
             'corehq.apps.reports.dispatcher.ProjectReportDispatcher': self._get_report_display,
+            'corehq.apps.userreports.reports.view.ConfigurableReportView': self._get_ucr_display,
         }
