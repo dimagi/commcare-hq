@@ -8,7 +8,6 @@ from collections import OrderedDict, namedtuple
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404, JsonResponse
 from django.utils.decorators import method_decorator
@@ -82,7 +81,6 @@ from corehq.apps.userreports.app_manager.helpers import (
 from corehq.apps.userreports.const import (
     DATA_SOURCE_MISSING_APP_ERROR_MESSAGE,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
-    DATA_SOURCE_REBUILD_CACHE_PREFIX,
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
     REPORT_BUILDER_EVENTS_KEY,
@@ -104,7 +102,6 @@ from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
-    StaticDataSourceConfiguration,
     StaticReportConfiguration,
     get_datasource_config,
     get_report_config,
@@ -1064,11 +1061,6 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
         }
 
     @property
-    def is_rebuilding(self):
-        key = DATA_SOURCE_REBUILD_CACHE_PREFIX + self.config_id
-        return bool(cache.get(key))
-
-    @property
     def page_url(self):
         if self.config_id:
             return reverse(self.urlname, args=(self.domain, self.config_id,))
@@ -1217,7 +1209,6 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    _set_ucr_cache_key(config_id)
     rebuild_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
@@ -1248,7 +1239,6 @@ def resume_building_data_source(request, domain, config_id):
             request,
             _('Resuming rebuilding table "{}".').format(config.display_name)
         )
-        _set_ucr_cache_key(config_id)
         resume_building_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
@@ -1269,17 +1259,10 @@ def build_data_source_in_place(request, domain, config_id):
             config.display_name
         )
     )
-    _set_ucr_cache_key(config_id)
     rebuild_indicators_in_place.delay(config_id, request.user.username, source='edit_data_source_build_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
-
-
-def _set_ucr_cache_key(config_id):
-    key = DATA_SOURCE_REBUILD_CACHE_PREFIX + config_id
-    CACHE_TTL = 24 * 60 * 60
-    cache.set(key, True, CACHE_TTL)
 
 
 @login_and_domain_required

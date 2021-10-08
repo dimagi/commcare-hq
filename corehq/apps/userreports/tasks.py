@@ -3,7 +3,6 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.core.cache import cache
 from django.db import DatabaseError, InternalError, transaction
 from django.db.models import Count, Min
 from django.utils.translation import ugettext as _
@@ -39,7 +38,6 @@ from corehq.apps.userreports.const import (
     ASYNC_INDICATOR_CHUNK_SIZE,
     ASYNC_INDICATOR_QUEUE_TIME,
     ASYNC_INDICATOR_MAX_RETRIES,
-    DATA_SOURCE_REBUILD_CACHE_PREFIX,
     UCR_CELERY_QUEUE,
     UCR_INDICATOR_CELERY_QUEUE,
 )
@@ -212,8 +210,6 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
                 if config.meta.build.initiated == current_config.meta.build.initiated:
                     current_config.meta.build.finished = True
             current_config.save()
-    key = DATA_SOURCE_REBUILD_CACHE_PREFIX + indicator_config_id
-    cache.delete(key)
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE)
