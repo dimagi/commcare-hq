@@ -325,8 +325,9 @@ def track_user_sign_in_on_hubspot(webuser_id, hubspot_cookie, meta):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
-@analytics_task(serializer='pickle', )
-def track_built_app_on_hubspot(webuser):
+@analytics_task
+def track_built_app_on_hubspot(webuser_id):
+    webuser = WebUser.get_by_user_id(webuser_id)
     vid = _get_user_hubspot_id(webuser)
     if vid:
         # Only track the property if the contact already exists.
