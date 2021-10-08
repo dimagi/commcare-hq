@@ -71,5 +71,4 @@ def track_user_login(sender, request, user, **kwargs):
                     return
 
             meta = get_meta(request)
-            track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE),
-                                                meta, request.path)
+            track_user_sign_in_on_hubspot.delay(couch_user.get_id, request.COOKIES.get(HUBSPOT_COOKIE), meta)
