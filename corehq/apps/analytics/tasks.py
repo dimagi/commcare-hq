@@ -445,7 +445,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
         _raise_for_urllib3_response(res)
 
 
-@analytics_task(serializer='pickle', )
+@analytics_task
 def identify(email, properties):
     """
     Set the given properties on a KISSmetrics user.
