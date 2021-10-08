@@ -82,9 +82,10 @@ class TestESInterface(SimpleTestCase):
                     for hit in results["hits"]["hits"]:
                         yield hit
 
-            def test_compare_queried_docs(docs_getter):
+            interface = ElasticsearchInterface(self.es)
+            for results_getter in [search_query, scroll_query]:
                 results = {}
-                for hit in docs_getter():
+                for hit in results_getter():
                     results[hit["_id"]] = hit
                 self.assertEqual(len(indexed), len(results))
                 for doc_id, doc in indexed.items():
@@ -92,10 +93,6 @@ class TestESInterface(SimpleTestCase):
                     self.assertEqual(self.doc_type, results[doc_id]["_type"])
                     for attr in doc:
                         self.assertEqual(doc[attr], results[doc_id]["_source"][attr])
-
-            interface = ElasticsearchInterface(self.es)
-            yield test_compare_queried_docs(search_query),
-            yield test_compare_queried_docs(scroll_query),
 
     @contextmanager
     def _index_test_docs(self, index, doc_type, docs):
