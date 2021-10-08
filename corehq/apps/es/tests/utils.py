@@ -38,6 +38,9 @@ TEST_ES_TYPE = 'test_es_doc'
 TEST_ES_ALIAS = "test_es"
 
 
+es_test_attr = attr(es_test=True)
+
+
 class TEST_ES_INFO:
     alias = TEST_ES_ALIAS
     type = TEST_ES_TYPE
@@ -111,10 +114,8 @@ def es_test(test=None, index=None, indices=[], setup_class=False):
             return es_test(test, index, indices, setup_class)
         return es_test_decorator
 
-    nose_attr_wrapper = attr(es_test=True)
-
     if not (index or indices):
-        return nose_attr_wrapper(test)
+        return es_test_attr(test)
 
     if index is None:
         _registration_info = list(indices)
@@ -145,7 +146,7 @@ def es_test(test=None, index=None, indices=[], setup_class=False):
         if setup_class:
             raise ValueError(f"keyword 'setup_class' is for class decorators, test={test}")
         test = _decorate_es_function(test, registry_setup, registry_teardown)
-    return nose_attr_wrapper(test)
+    return es_test_attr(test)
 
 
 def _decorate_es_function(test, registry_setup, registry_teardown):

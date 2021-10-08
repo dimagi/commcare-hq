@@ -1,8 +1,7 @@
 from django.test import SimpleTestCase
-from nose.plugins.attrib import attr
 from testil import assert_raises
 
-from .utils import es_test
+from .utils import es_test, es_test_attr
 from ..exceptions import ESRegistryError
 from ..registry import (
     get_registry,
@@ -53,7 +52,7 @@ class TestSetupClass(SimpleTestCase):
 
 class TestPartialESTest(SimpleTestCase):
 
-    @attr(es_test=True)
+    @es_test_attr
     def test_no_pet_indices_registered(self):
         infos = get_registry().values()
         self.assertNotIn(CATS, infos)
@@ -73,7 +72,7 @@ class TestPartialESTest(SimpleTestCase):
             verify_registered(CATS)
 
 
-@attr(es_test=True)
+@es_test_attr
 def test_registry_state_with_function_decorator():
 
     @es_test(index=PIGS)
