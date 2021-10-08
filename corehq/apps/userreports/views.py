@@ -399,7 +399,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
             settings.DEFAULT_FROM_EMAIL,
             [settings.SALES_EMAIL],
         )
-        update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
+        update_hubspot_properties.delay(request.couch_user.get_id, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
 
 
