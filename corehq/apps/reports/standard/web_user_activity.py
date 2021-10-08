@@ -1,3 +1,6 @@
+import inspect
+from functools import wraps
+
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -11,10 +14,6 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import reverse
-
-
-def _link(name, url):
-    return mark_safe(f'<a href="{url}">{name}</a>')
 
 
 class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
@@ -42,7 +41,7 @@ class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport,
             yield [
                 event.user,
                 ServerTime(event.event_date).user_time(self.timezone).ui_string(),
-                self._display_fns_by_view[event.view](event),
+                self._event_formatter.display(event),
             ]
 
     @property
@@ -56,9 +55,43 @@ class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport,
             user=username,
             event_date__gt=self.datespan.startdate,
             event_date__lt=self.datespan.enddate_adjusted,
-            view_fk__value__in=self._display_fns_by_view.keys(),
+            view_fk__value__in=self._event_formatter.supported_views,
         ).select_related('view_fk')
 
+    @cached_property
+    def _event_formatter(self):
+        return EventFormatter(self.domain, self.request.project)
+
+
+def for_view(view):
+    def outer(fn):
+        fn.view = view
+        return fn
+    return outer
+
+
+class EventFormatter:
+    """
+    This class contains a series of methods for displaying navigation events.
+
+    There's a method for each view, linked by the `for_view` decorator. Only
+    views with methods here will appear in the report.
+    """
+
+    def __init__(self, domain, project):
+        self.domain = domain
+        self.project = project
+        self._methods_by_view = {
+            method.view: method
+            for name, method in inspect.getmembers(self, predicate=inspect.ismethod)
+            if getattr(method, 'view', None)
+        }
+        self.supported_views = list(self._methods_by_view.keys())
+
+    def display(self, event):
+        return self._methods_by_view[event.view](event)
+
+    @for_view('corehq.apps.reports.dispatcher.ProjectReportDispatcher')
     def _get_report_display(self, event):
         slug = event.view_kwargs.get('report_slug')
         if slug and slug in self._report_displays_by_slug:
@@ -70,20 +103,22 @@ class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport,
         from corehq.reports import REPORTS
         return {
             report.slug: _link(report.name, report.get_url(self.domain))
-            for tab in REPORTS(self.request.project) for report in tab[1]
+            for tab in REPORTS(self.project) for report in tab[1]
         }
 
+    @for_view('corehq.apps.userreports.reports.view.ConfigurableReportView')
     def _get_ucr_display(self, event):
+        return self.ucr_displays_by_id[event.view_kwargs.get('subreport_slug')]
+
+    @cached_property
+    def ucr_displays_by_id(self):
         return {
             config._id: _link(
                 config.title, reverse(ConfigurableReportView.slug, args=[self.domain, config._id])
             )
             for config in ReportConfiguration.by_domain(self.domain)
-        }[event.view_kwargs.get('subreport_slug')]
-
-    @cached_property
-    def _display_fns_by_view(self):
-        return {
-            'corehq.apps.reports.dispatcher.ProjectReportDispatcher': self._get_report_display,
-            'corehq.apps.userreports.reports.view.ConfigurableReportView': self._get_ucr_display,
         }
+
+
+def _link(name, url):
+    return mark_safe(f'<a href="{url}">{name}</a>')
