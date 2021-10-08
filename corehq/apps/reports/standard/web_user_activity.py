@@ -13,6 +13,7 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import reverse
+from corehq.toggles import WEB_USER_ACTIVITY_REPORT
 
 
 class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
@@ -20,6 +21,7 @@ class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport,
     name = ugettext_noop("Web User Activity")
     ajax_pagination = True
     sortable = False
+    toggles = [WEB_USER_ACTIVITY_REPORT]
 
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
