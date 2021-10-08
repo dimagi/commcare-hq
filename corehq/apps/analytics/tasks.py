@@ -383,7 +383,7 @@ def track_clicked_deploy_on_hubspot(webuser_id, hubspot_cookie, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, hubspot_cookie, meta, extra_fields=ab)
 
 
-@analytics_task(serializer='pickle', )
+@analytics_task
 def track_job_candidate_on_hubspot(user_email):
     properties = {
         'job_candidate': True
