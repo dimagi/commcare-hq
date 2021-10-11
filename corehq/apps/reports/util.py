@@ -33,23 +33,6 @@ from .analytics.esaccessors import (
 from .models import HQUserType, TempCommCareUser
 
 
-def make_form_couch_key(domain, user_id=Ellipsis):
-    """
-        This sets up the appropriate query for couch based on common report parameters.
-
-        Note: Ellipsis is used as the default for user_id because
-        None is actually emitted as a user_id on occasion in couch
-    """
-    prefix = ["submission"]
-    key = [domain] if domain is not None else []
-    if user_id == "":
-        prefix.append('user')
-    elif user_id is not Ellipsis:
-        prefix.append('user')
-        key.append(user_id)
-    return [" ".join(prefix)] + key
-
-
 def user_list(domain):
     #referenced in filters.users.SelectMobileWorkerFilter
     users = list(CommCareUser.by_domain(domain))
