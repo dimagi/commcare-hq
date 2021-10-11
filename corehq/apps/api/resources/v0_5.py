@@ -603,7 +603,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         else:
             return ""
 
-    def _get_report_data(self, report_config, domain, start, limit, get_params):
+    def _get_report_data(self, report_config, domain, start, limit, get_params, couch_user):
         report = ConfigurableReportDataSource.from_spec(report_config, include_prefilters=True)
 
         string_type_params = [
@@ -613,7 +613,8 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         ]
         filter_values = get_filter_values(
             report_config.ui_filters,
-            query_dict_to_dict(get_params, domain, string_type_params)
+            query_dict_to_dict(get_params, domain, string_type_params),
+            couch_user,
         )
         report.set_filter_values(filter_values)
 
@@ -640,7 +641,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
 
         report_config = self._get_report_configuration(pk, domain)
         page, columns, total_records = self._get_report_data(
-            report_config, domain, start, limit, bundle.request.GET)
+            report_config, domain, start, limit, bundle.request.GET, bundle.request.couch_user)
 
         return ConfigurableReportData(
             data=page,
