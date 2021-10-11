@@ -64,10 +64,6 @@ def data_registries(request, domain):
 def _registry_list_context(domain, registry):
     invitations = registry.invitations.all()
     domain_obj = Domain.get_by_name(registry.domain)
-    other_domain_invitations = [
-        invitation for invitation in invitations
-        if not invitation.domain == domain
-    ]
     context = {
         "domain_name": domain_obj.display_name() if domain_obj else registry.domain,
         "name": registry.name,
@@ -75,12 +71,12 @@ def _registry_list_context(domain, registry):
         "slug": registry.slug,
         "is_active": registry.is_active,
         "participator_count": len([
-            invitation for invitation in other_domain_invitations
+            invitation for invitation in invitations
             if invitation.status == RegistryInvitation.STATUS_ACCEPTED
         ])
     }
     if domain == registry.domain:  # domain is owner
-        status_counter = Counter([invitation.status for invitation in other_domain_invitations])
+        status_counter = Counter([invitation.status for invitation in invitations])
         context.update({
             "invitation_count": len(invitations),
             "accepted_invitation_count": status_counter[RegistryInvitation.STATUS_ACCEPTED],
