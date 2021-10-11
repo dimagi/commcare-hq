@@ -23,6 +23,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
     def setUp(self):
         self.domain = 'test-domain'
         self.factory = AppFactory(build_version='2.51.0', domain=self.domain)
+        self.factory.app._id = "1234"
         self.parent_case_type = 'mother'
         self.child_case_type = 'baby'
         self.module, self.form = self.factory.new_basic_module('basic', self.parent_case_type)
@@ -225,20 +226,35 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
 
     def test_registry_workflows(self):
         self.module.session_endpoint_id = 'my_case_list'
+        self.module.search_config.data_registry = 'a_registry'
+        self.factory.form_requires_case(self.form)
 
-        with patch("corehq.apps.app_manager.suite_xml.sections.endpoints.module_offers_search") as mock:
-            mock.return_value = True
+        with patch("corehq.apps.app_manager.suite_xml.sections.endpoints.module_offers_search") as search_mock, \
+                patch("corehq.apps.app_manager.suite_xml.sections.endpoints.module_offers_registry_search") as registry_mock:
+            search_mock.return_value = True
+            registry_mock.return_value = True
             self.module.search_config.data_registry_workflow = REGISTRY_WORKFLOW_SMART_LINK
             self.assertXmlPartialEqual(
                 """
                 <partial>
-                    <endpoint id="my_case_list" command_id="m0">
-                        <stack>
-                            <push>
-                                <command value="'m0'"/>
-                            </push>
-                        </stack>
-                    </endpoint>
+                  <endpoint id="my_case_list" command_id="m0">
+                    <argument id="case_id" />
+                    <stack>
+                      <push>
+                        <datum id="case_id" value="$case_id"/>
+                        <command value="'claim_command.my_case_list.case_id'"/>
+                      </push>
+                      <push>
+                        <query id="results" value="http://localhost:8000/a/test-domain/phone/registry_case/1234/">
+                          <data key="commcare_registry" ref="'a_registry'"/>
+                          <data key="case_type" ref="'mother'"/>
+                          <data key="case_id" ref="$case_id"/>
+                        </query>
+                        <command value="'m0'"/>
+                        <datum id="case_id" value="$case_id"/>
+                      </push>
+                    </stack>
+                  </endpoint>
                 </partial>
                 """,
                 self.factory.app.create_suite(),
@@ -249,13 +265,19 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             self.assertXmlPartialEqual(
                 """
                 <partial>
-                    <endpoint id="my_case_list">
-                        <stack>
-                            <push>
-                                <command value="'m0'"/>
-                            </push>
-                        </stack>
-                    </endpoint>
+                  <endpoint id="my_case_list">
+                    <argument id="case_id" />
+                    <stack>
+                      <push>
+                        <datum id="case_id" value="$case_id"/>
+                        <command value="'claim_command.my_case_list.case_id'"/>
+                      </push>
+                      <push>
+                        <command value="'m0'"/>
+                        <datum id="case_id" value="$case_id"/>
+                      </push>
+                    </stack>
+                  </endpoint>
                 </partial>
                 """,
                 self.factory.app.create_suite(),
