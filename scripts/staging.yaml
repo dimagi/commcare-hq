@@ -89,4 +89,5 @@ branches:
     - ap/ucr-rebuild-btn # Amit Oct 7
     - ml/remove-pickles-phonelog # Minha Oct 7
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
+    - gh/partition-calc-prop-task # Graham Oct 11
 submodules: { }
