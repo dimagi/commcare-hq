@@ -210,6 +210,7 @@ class HqdbContext(DatabaseContext):
 
         if self.skip_setup_for_reuse_db and self._databases_ok():
             if self.reuse_db == "migrate":
+                call_command('sync_couch_views')
                 call_command('migrate_multi', interactive=False)
             if self.reuse_db == "flush":
                 flush_databases()
@@ -225,6 +226,8 @@ class HqdbContext(DatabaseContext):
             # pass this on to the Django runner to avoid creating databases
             # that already exist
             self.runner.keepdb = True
+        else:
+            call_command('sync_couch_views')
         super(HqdbContext, self).setup()
         temporary_db_setup()
 
