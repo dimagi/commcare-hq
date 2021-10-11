@@ -2155,6 +2155,7 @@ class CaseSearch(DocumentSchema):
     blacklisted_owner_ids_expression = StringProperty()
     additional_case_types = ListProperty(str)
     data_registry = StringProperty()
+    data_registry_workflow = StringProperty()           # one of REGISTRY_WORKFLOW_*
     additional_registry_queries = SchemaListProperty(AdditionalRegistryQuery)
 
     @property
