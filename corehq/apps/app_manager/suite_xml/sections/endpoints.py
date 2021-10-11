@@ -64,24 +64,11 @@ class SessionEndpointContributor(SuiteContributorByModule):
         # Add a frame to navigate to the endpoint
         frame = PushFrame()
         stack.add_frame(frame)
-        # TODO: extract this, add test, probably need to fix some tests too
         if module_offers_registry_search(module):
-            from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
-            app = module.get_app()
-            url = absolute_reverse("registry_case", args=[app.domain, app.get_id])
-            for arg in arguments:
-                frame.add_datum(
-                    StackQuery(
-                        id=RESULTS_INSTANCE,
-                        value=url,
-                        data=[
-                            QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY,
-                                      ref=f"'{module.search_config.data_registry}'"),
-                            QueryData(key="case_type", ref=f"'{arg.case_type}'"),
-                            QueryData(key=arg.id, ref=f"${arg.id}"),
-                        ]
-                    )
-                )
+            if module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_SMART_LINK:
+                for arg in arguments:
+                    self._add_query_for_arg(frame, arg, module)
+
         for child in children:
             if isinstance(child, CommandId):
                 frame.add_command(child.to_command())
@@ -113,6 +100,23 @@ class SessionEndpointContributor(SuiteContributorByModule):
     def _add_datum_for_arg(self, frame, arg_id):
         frame.add_datum(
             StackDatum(id=arg_id, value=f"${arg_id}")
+        )
+
+    def _add_query_for_arg(self, frame, arg, module):
+        from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
+        app = module.get_app()
+        url = absolute_reverse("registry_case", args=[app.domain, app.get_id])
+        frame.add_datum(
+            StackQuery(
+                id=RESULTS_INSTANCE,
+                value=url,
+                data=[
+                    QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY,
+                              ref=f"'{module.search_config.data_registry}'"),
+                    QueryData(key="case_type", ref=f"'{arg.case_type}'"),
+                    QueryData(key=arg.id, ref=f"${arg.id}"),
+                ]
+            )
         )
 
 
