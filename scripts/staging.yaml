@@ -80,7 +80,6 @@ branches:
     - gh/remove-pickles/sms # Graham Sept 28
     - ml/remove-pickles-case-importer #Minha Sept 30
     - es/webuser-activity  # Ethan Sept 30
-    - sk/session-schema  # Simon Oct 5
     - rc/data-preview-accessibility # Robert Oct 5
     - dependabot/npm_and_yarn/datatables.net-1.11.3 # Amit Oct 6
     - ap/update-ansi-regex # Amit Oct 6
