@@ -270,7 +270,7 @@
             <tr data-bind="visible: visible">
               <td>
                 <!-- ko text: email --><!-- /ko -->
-                <span class="label label-danger" data-bind="visible: email_marked_as_bounced">{% trans "Blocked" %}</span>
+                <span class="label label-danger" id="undeliverable-label" data-bind="visible: email_marked_as_bounced">{% trans "Undeliverable" %}</span>
               </td>
               <td data-bind="text: role_label"></td>
               <td>

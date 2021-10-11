@@ -201,5 +201,11 @@ hqDefine("users/js/web_users",[
             );
             e.preventDefault();
         });
+
+        $('#undeliverable-label').tooltip({
+            placement: 'right',
+            html: true,
+            title: gettext("We have sent the invitation email to this user but the user's email server rejected it. This usually means either the email address is incorrect or your organization is blocking emails from our address (commcarehq-noreply-production@dimagi.com)."),
+        });
     });
 });
