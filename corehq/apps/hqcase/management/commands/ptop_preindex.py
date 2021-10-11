@@ -91,12 +91,12 @@ class Command(BaseCommand):
         runs = []
         all_es_indices = list(get_all_expected_es_indices())
         es = get_es_new()
-        indices_needing_reindex = [info for info in all_es_indices if not es.indices.exists(info.index)]
 
-        if not indices_needing_reindex:
-            if options['reset']:
-                indices_needing_reindex = all_es_indices
-            else:
+        if options['reset']:
+            indices_needing_reindex = all_es_indices
+        else:
+            indices_needing_reindex = [info for info in all_es_indices if not es.indices.exists(info.index)]
+            if not indices_needing_reindex:
                 print('Nothing needs to be reindexed')
                 return
 
