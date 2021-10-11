@@ -372,17 +372,19 @@ class XFormCaseBlock(object):
     def make_parent_case_block(cls, xform, node_path, parent_path, case_id_xpath=None):
         case_block = XFormCaseBlock(xform, node_path)
         id_xpath = get_case_parent_id_xpath(parent_path, case_id_xpath=case_id_xpath)
-        xform.add_bind(
-            nodeset='%scase/@case_id' % node_path,
-            calculate=id_xpath,
-        )
+        case_block.bind_case_id(id_xpath, node_path)
         return case_block
 
     def __init__(self, xform, path=''):
         self.xform = xform
         self.path = path
+        self.is_empty = True
 
-        self.elem = ET.Element('{cx2}case'.format(**namespaces), {
+    @property
+    @memoized
+    def elem(self):
+        self.is_empty = False
+        elem = ET.Element('{cx2}case'.format(**namespaces), {
             'case_id': '',
             'date_modified': '',
             'user_id': '',
@@ -391,13 +393,21 @@ class XFormCaseBlock(object):
         })
 
         self.xform.add_bind(
-            nodeset="%scase/@date_modified" % path,
+            nodeset="%scase/@date_modified" % self.path,
             type="xsd:dateTime",
             calculate=self.xform.resolve_path("meta/timeEnd")
         )
         self.xform.add_bind(
-            nodeset="%scase/@user_id" % path,
+            nodeset="%scase/@user_id" % self.path,
             calculate=self.xform.resolve_path("meta/userID"),
+        )
+        return elem
+
+    def bind_case_id(self, xpath, nodset_path=""):
+        self.elem  # create case block
+        self.xform.add_bind(
+            nodeset=f"{nodset_path}case/@case_id",
+            calculate=xpath,
         )
 
     def add_create_block(self, relevance, case_name, case_type,
@@ -1573,7 +1583,7 @@ class XForm(WrappedNode):
         if not actions or (form.requires == 'none' and not form_opens_case):
             case_block = None
         else:
-            case_block = XFormCaseBlock(self) if not is_registry_case else None
+            case_block = XFormCaseBlock(self)
             if form.requires != 'none':
                 def make_delegation_stub_case_block():
                     path = 'cc_delegation_stub/'
@@ -1615,10 +1625,7 @@ class XForm(WrappedNode):
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     case_block.add_case_updates({'external_id': actions['open_case'].external_id})
             elif not is_registry_case:
-                self.add_bind(
-                    nodeset="case/@case_id",
-                    calculate=case_id_xpath,
-                )
+                case_block.bind_case_id(case_id_xpath)
 
             if 'update_case' in actions and not is_registry_case:
                 self._add_case_updates(
@@ -1700,7 +1707,7 @@ class XForm(WrappedNode):
         case = self.case_node
         case_parent = self.data_node
 
-        if case_block is not None:
+        if case_block is not None and not case_block.is_empty:
             if case.exists():
                 raise XFormException(_("You cannot use the Case Management UI "
                                        "if you already have a case block in your form."))
@@ -1825,12 +1832,8 @@ class XForm(WrappedNode):
             base_node = _make_elem("{{x}}{0}".format(tag))
             self.data_node.append(base_node)
             case_block = XFormCaseBlock(self, path=path)
-
             if bind_case_id_xpath:
-                self.add_bind(
-                    nodeset="%scase/@case_id" % path,
-                    calculate=bind_case_id_xpath,
-                )
+                case_block.bind_case_id(bind_case_id_xpath, path)
 
             base_node.append(case_block.elem)
             return case_block, path
