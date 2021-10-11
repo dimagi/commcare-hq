@@ -2,7 +2,7 @@ import json
 import math
 import warnings
 from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime
 from importlib import import_module
 
 from django.conf import settings
@@ -21,7 +21,6 @@ from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
-from corehq.util.dates import iso_string_to_datetime
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -314,7 +313,7 @@ def numcell(text, value=None, convert='int', raw=None):
             value = int(text) if convert == 'int' else float(text)
             if math.isnan(value):
                 text = '---'
-            elif not convert == 'int': # assume this is a percentage column
+            elif not convert == 'int':  # assume this is a percentage column
                 text = '%.f%%' % value
         except ValueError:
             value = text
