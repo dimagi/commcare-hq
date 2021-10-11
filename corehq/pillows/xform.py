@@ -68,8 +68,9 @@ def xform_pillow_filter(doc_dict):
 
 def transform_xform_for_elasticsearch(doc_dict):
     """
-    Given an XFormInstance, return a copy that is ready to be sent to elasticsearch,
-    or None, if the form should not be saved to elasticsearch
+    Given xform JSON such as that returned by `XFormInstanceSQL.to_json()`,
+    return a copy that is ready to be sent to elasticsearch, or None, if the
+    form should not be saved to elasticsearch
     """
     doc_ret = copy.deepcopy(doc_dict)
 
