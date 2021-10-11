@@ -9,6 +9,10 @@
 {% block page_content %}
   {% initial_page_data 'configs' configs %}
   {% registerurl 'add_report_config' domain %}
+  {% registerurl 'reports_home' domain %} <!-- is this actually used anymore -->
+  {% initial_page_data 'scheduled_reports' scheduled_reports %}
+  {% initial_page_data 'others_scheduled_reports' others_scheduled_reports %}
+  {% initial_page_data 'is_admin' is_admin %}
 
   <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
     <li><a href="#ko-report-config-list" data-toggle="tab">{% trans "My Saved Reports" %}</a></li>
@@ -86,30 +90,99 @@
     {% if report.show and request.couch_user.can_download_reports %}
       <div class="tab-pane" id="scheduled-reports">
         <p><a class="btn btn-primary track-usage-link"
-              href="{% url "edit_scheduled_report" domain %}"
+              href="{% url 'edit_scheduled_report' domain %}"
               data-category="Scheduled Reports"
               data-action="Configure a scheduled report">
           <i class="fa fa-plus"></i>
           {% trans "Create a New Scheduled Report" %}
         </a></p>
-        {% if scheduled_reports or others_scheduled_reports %}
-          {% if others_scheduled_reports %}
-            <h3>{% trans "My Scheduled Reports" %}</h3>
-          {% endif %}
-          {% include 'reports/partials/scheduled_reports_table.html' with is_owner=True scheduled_reports=scheduled_reports %}
-          {% if others_scheduled_reports %}
-            <h3>{% trans "Other Scheduled Reports" %}</h3>
-            {% include 'reports/partials/scheduled_reports_table.html' with is_owner=False scheduled_reports=others_scheduled_reports %}
-          {% endif %}
-        {% else %}
-          <div class="alert alert-info">
-            {% blocktrans %}
-              You don't have any scheduled reports.  You can create a scheduled
-              report based on a saved report to have a report delivered by email
-              on a regular basis.
-            {% endblocktrans %}
+        <div id="js-scheduled_reports">
+          <div data-bind="if: reports().length">
+            <div class="row" style="display: none" data-bind="visible:selectedReportsCount()">
+              <div style="margin-right: 10px; float: right">
+                <p>
+                  <a class="btn btn-primary"
+                     data-toggle="modal"
+                     data-bind="attr: { href: '#bulk-modal' },
+                                click: sendModal">
+                    <!-- ko if: isMultiple -->
+                      {% trans "Send Selected Reports" %}
+                    <!-- /ko -->
+                    <!-- ko if: !isMultiple() -->
+                      {% trans "Send Selected Report" %}
+                    <!-- /ko -->
+                  </a>
+                  {% include "reports/partials/bulk_modal.html" %}
+                </p>
+              </div>
+              <div style="margin-right: 8px; float: right">
+                <p>
+                  <a class="btn btn-danger"
+                     data-toggle="modal"
+                     data-bind="attr: { href: '#bulk-modal' },
+                                click: deleteModal">
+                    <!-- ko if: isMultiple -->
+                      {% trans "Delete Selected Reports" %}
+                    <!-- /ko -->
+                    <!-- ko if: !isMultiple() -->
+                      {% trans "Delete Selected Report" %}
+                    <!-- /ko -->
+                  </a>
+                  {% include "reports/partials/bulk_modal.html" %}
+                </p>
+              </div>
+            </div>
+            <div data-bind="foreach: panels()">
+              <h3 data-bind="text: header"></h3>
+              <div class="alert alert-info" data-bind="visible: isLoadingPanel">
+                <i class="fa fa-spin fa-spinner"></i>
+                {% trans "Loading reports..." %}
+              </div>
+              <div style="display: none" class="alert alert-info" data-bind="visible: $root.isBulkDeleting">
+                <i class="fa fa-refresh fa-spin"></i>
+                <!-- ko if: $parent.isMultiple -->
+                  {% trans "Deleting reports..." %}
+                <!-- /ko -->
+                <!-- ko if: !$parent.isMultiple() -->
+                  {% trans "Deleting report..." %}
+                <!-- /ko -->
+              </div>
+              <div style="display: none" class="alert alert-info" data-bind="visible: $root.isBulkSending">
+                <i class="fa fa-refresh fa-spin"></i>
+                <!-- ko if: $parent.isMultiple -->
+                  {% trans "Sending reports..." %}
+                <!-- /ko -->
+                <!-- ko if: !$parent.isMultiple() -->
+                  {% trans "Sending report..." %}
+                <!-- /ko -->
+              </div>
+              <div style="display: none" data-bind="visible: !isLoadingPanel() && !$root.bulkAction()">
+                <div data-bind="if: is_owner">
+                  {% include 'reports/partials/scheduled_reports_table.html' with is_owner=True %}
+                </div>
+                <div data-bind="if: !is_owner">
+                  {% include 'reports/partials/scheduled_reports_table.html' with is_owner=False %}
+                </div>
+              </div>
+              <pagination data-bind="visible: scheduledReports().length && !isLoadingPanel() && !$root.bulkAction()"
+                      data-apply-bindings="false"
+                      params="goToPage: goToPage,
+                              slug: 'scheduled-reports',
+                              perPage: perPage,
+                              totalItems: totalItems,
+                              onLoad: onPaginationLoad"></pagination>
+            </div>
           </div>
-        {% endif %}
+          <div style="display: none" data-bind="if: !reports().length">
+            <div class="alert alert-info">
+              {% blocktrans %}
+                You don't have any scheduled reports.  You can create a scheduled
+                report based on a saved report to have a report delivered by email
+                on a regular basis.
+              {% endblocktrans %}
+            </div>
+          </div>
+        </div>
       </div>
     {% endif %}
   </div>
