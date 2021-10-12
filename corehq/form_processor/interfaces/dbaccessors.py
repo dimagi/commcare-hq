@@ -384,7 +384,7 @@ class CaseAccessors(object):
     Facade for Case DB access that proxies method calls to SQL or Couch version
     """
 
-    def __init__(self, domain=None):
+    def __init__(self, domain):
         self.domain = domain
 
     @property
@@ -396,7 +396,10 @@ class CaseAccessors(object):
     def get_case(self, case_id):
         if not case_id:
             raise CaseNotFound
-        return self.db_accessor.get_case(case_id)
+        case = self.db_accessor.get_case(case_id)
+        if case.domain != self.domain:
+            raise CaseNotFound(case_id)
+        return case
 
     def get_cases(self, case_ids, ordered=False, prefetched_indices=None):
         return self.db_accessor.get_cases(
