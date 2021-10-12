@@ -23,7 +23,7 @@ from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only
-from couchforms.models import XFormInstance, all_known_formlike_doc_types
+from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
 
 from .json2xml import convert_form_to_xml
@@ -77,7 +77,7 @@ class FormProcessorTestUtils(object):
     @unit_testing_only
     def delete_all_xforms(cls, domain=None):
         logger.debug("Deleting all Couch xforms for domain %s", domain)
-        cls._delete_all(XFormInstance.get_db(), all_known_formlike_doc_types(), domain)
+        cls._delete_all(XFormInstance.get_db(), XFormInstanceSQL.ALL_DOC_TYPES, domain)
         FormProcessorTestUtils.delete_all_sql_forms(domain)
 
     @classmethod

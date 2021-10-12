@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.users.util import raw_username
-from couchforms import models as couchforms_models
+from corehq.form_processor.models import XFormInstanceSQL
 from dimagi.ext.jsonobject import *
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -112,7 +112,7 @@ def get_doc_info_couch(doc, domain_hint=None, cache=None):
         )
     elif has_doc_type(doc_type, 'CommCareCase'):
         doc_info = case_docinfo(domain, doc_id, doc['name'], generic_delete)
-    elif any([has_doc_type(doc_type, d) for d in couchforms_models.doc_types().keys()]):
+    elif any([has_doc_type(doc_type, d) for d in XFormInstanceSQL.DOC_TYPE_TO_STATE]):
         doc_info = form_docinfo(domain, doc_id, generic_delete)
     elif doc_type in ('CommCareUser',):
         doc_info = DocInfo(
@@ -236,7 +236,6 @@ def get_doc_info_sql(obj, cache=None):
 
     from corehq.apps.locations.models import SQLLocation
     from corehq.form_processor.models import CommCareCaseSQL
-    from corehq.form_processor.models import XFormInstanceSQL
     if isinstance(obj, SQLLocation):
         from corehq.apps.locations.views import EditLocationView
         doc_info = DocInfo(

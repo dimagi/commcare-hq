@@ -1,7 +1,6 @@
 from django.conf import settings
 
 from casexml.apps.phone.document_store import SyncLogDocumentStore
-from couchforms.models import all_known_formlike_doc_types
 from pillowtop.dao.couch import CouchDocumentStore
 
 from corehq.apps.change_feed import topics
@@ -17,6 +16,7 @@ from corehq.form_processor.document_stores import (
     FormDocumentStore,
     LedgerV2DocumentStore,
 )
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couchdb_management import couch_config
 from corehq.util.metrics.load_counters import (
@@ -82,7 +82,7 @@ def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None, l
     * all couch models
     """
     from corehq.apps.change_feed import document_types
-    if doc_type in all_known_formlike_doc_types():
+    if doc_type in XFormInstanceSQL.ALL_DOC_TYPES:
         store = FormDocumentStore(domain, xmlns=case_type_or_xmlns)
         load_counter = form_load_counter
     elif doc_type in document_types.CASE_DOC_TYPES:
