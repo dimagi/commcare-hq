@@ -8,5 +8,9 @@ hqDefine("userreports/js/data_source_select_model", function () {
             'form': gettext('Form'),
             'data_source': gettext('Data Source'),
         },
+        sourceId: ko.observable(""),
+        registrySlug: ko.observable(""),
+        isDataFromOneProject: ko.observable(""),
+        isDataFromManyProjects: ko.observable(""),
     };
 });
