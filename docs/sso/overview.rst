@@ -12,7 +12,7 @@ username and password across several related, but independent, applications.
 
     **Authentication** is the process used to identity whether a user is who they say they are.
 
-    **Authorization** is the set of permissions given to an authenticated user on a system
+    **Authorization** is the process used to determine the set of permissions to grant a user
     that determines what they can view or edit on the system.
 
 
