@@ -258,3 +258,35 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             self.factory.app.create_suite(),
             "./endpoint",
         )
+
+    def test_shadow_module(self):
+        self.shadow_module = self.factory.new_shadow_module('shadow', self.module, with_form=False)
+        self.shadow_module.session_endpoint_id = 'my_shadow'
+
+        self.factory.form_requires_case(self.form)
+
+        self.factory.app.rearrange_modules(self.shadow_module.id, 0)
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <endpoint id="my_shadow">
+                    <argument id="case_id" />
+                    <stack>
+                        <push>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'claim_command.my_shadow.case_id'"/>
+                        </push>
+                        <push>
+                            <command value="'m0'"/>
+                            <datum id="case_id" value="$case_id"/>
+                        </push>
+                    </stack>
+                </endpoint>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./endpoint",
+        )
+
+        del self.factory.app.modules[0]
