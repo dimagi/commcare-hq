@@ -364,8 +364,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         Gets the form docs associated with a case. If it can't find a form
         it won't be included.
         """
-        from couchforms.dbaccessors import get_forms_by_id
-        return get_forms_by_id(self.xform_ids)
+        raise NotImplementedError
 
     def get_attachment(self, attachment_name):
         return self.fetch_attachment(attachment_name)
