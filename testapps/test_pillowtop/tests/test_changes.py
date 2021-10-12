@@ -6,7 +6,7 @@ from django.test import TestCase
 from pillowtop.feed.couch import get_current_seq
 from pillowtop.tests.utils import FakeConstructedPillow
 
-from toggle import Toggle as ArbitraryModelInMainDB
+from toggle.models import Toggle as ArbitraryModelInMainDB
 
 
 class ChangeFeedDbTest(TestCase):
