@@ -148,7 +148,8 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             baby_repeat_group_schema
         )
 
-        instance = FormExportInstance.generate_instance_from_schema(schema)
+        with patch("couchforms.analytics.get_form_count_breakdown_for_domain", lambda *a: {}):
+            instance = FormExportInstance.generate_instance_from_schema(schema)
         instance.export_format = Format.JSON
         # make everything show up in the export
         for table in instance.tables:

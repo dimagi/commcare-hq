@@ -98,6 +98,8 @@ from corehq.apps.app_manager.exceptions import (
     XFormException,
     XFormValidationError,
     XFormValidationFailed,
+    ModuleIdMissingException,
+    AppValidationError,
 )
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.apps.app_manager.helpers.validators import (
@@ -2481,7 +2483,8 @@ class ModuleDetailsMixin(object):
             ('ref_short', self.ref_details.short, False),
             ('ref_long', self.ref_details.long, False),
         ]
-        if module_offers_search(self) and not self.case_details.short.custom_xml:
+        custom_detail = self.case_details.short.custom_xml
+        if module_offers_search(self) and not custom_detail:
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
@@ -4532,6 +4535,10 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
+        errors = copy.validate_app()
+        if errors:
+            raise AppValidationError(errors)
+
         if copy.create_build_files_on_build:
             copy.create_build_files()
 
@@ -5508,7 +5515,13 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         return forms[0].get_questions(langs or self.langs, include_triggers, include_groups, include_translations)
 
     def validate_app(self):
-        return ApplicationValidator(self).validate_app()
+        validator = ApplicationValidator(self)
+        try:
+            return validator.validate_app()
+        except ModuleIdMissingException:
+            # For apps (mainly Exchange apps) that lost unique_id attributes on Module
+            self.ensure_module_unique_ids(should_save=True)
+            return validator.validate_app()
 
     def get_profile_setting(self, s_type, s_id):
         setting = self.profile.get(s_type, {}).get(s_id)

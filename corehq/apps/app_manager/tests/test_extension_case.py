@@ -189,7 +189,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
             has_case_sharing=self.form.get_app().case_sharing,
             case_id=case_id
         )
-        self.subcase_block.add_update_block(self.subcase.case_properties)
+        self.subcase_block.add_case_updates(self.subcase.case_properties)
 
     def test_xform_case_block_index_supports_relationship(self):
         """

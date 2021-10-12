@@ -810,6 +810,7 @@ REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.CreateCaseRepeater',
     'corehq.motech.repeaters.models.UpdateCaseRepeater',
     'corehq.motech.repeaters.models.ReferCaseRepeater',
+    'corehq.motech.repeaters.models.DataRegistryCaseUpdateRepeater',
     'corehq.motech.repeaters.models.ShortFormRepeater',
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
@@ -1696,8 +1697,6 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 
 # These are custom templates which can wrap default the sms/chat.html template
 CUSTOM_CHAT_TEMPLATES = {}
-
-CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
 PILLOWTOPS = {
     'core': [

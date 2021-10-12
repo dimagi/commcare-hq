@@ -24,6 +24,7 @@ from corehq.apps.linked_domain.const import (
 )
 from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
 from corehq.apps.linked_domain.keywords import update_keyword
+from corehq.apps.linked_domain.models import ReportLinkDetail, KeywordLinkDetail
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
@@ -42,13 +43,13 @@ def pull_missing_multimedia_for_app_and_notify_task(domain, app_id, email=None):
 
 
 @task(queue='linked_domain_queue')
-def push_models(master_domain, models, linked_domains, build_apps, username):
-    ReleaseManager(master_domain, username).release(models, linked_domains, build_apps)
+def push_models(upstream_domain, models, downstream_domains, build_apps, username):
+    ReleaseManager(upstream_domain, username).release(models, downstream_domains, build_apps)
 
 
-class ReleaseManager():
-    def __init__(self, master_domain, username):
-        self.master_domain = master_domain
+class ReleaseManager:
+    def __init__(self, upstream_domain, username):
+        self.upstream_domain = upstream_domain
         self.user = CouchUser.get_by_username(username)
         self._reset()
 
@@ -57,7 +58,7 @@ class ReleaseManager():
         self.successes_by_domain = {'html': defaultdict(list), 'text': defaultdict(list)}
 
     def results(self):
-        return (self.successes_by_domain, self.errors_by_domain)
+        return self.successes_by_domain, self.errors_by_domain
 
     def add_error(self, domain, html, text=None):
         text = text or html
@@ -92,14 +93,14 @@ class ReleaseManager():
     def _get_successes(self, domain, html=True):
         return self.successes_by_domain['html' if html else 'text'][domain]
 
-    def release(self, models, linked_domains, build_apps=False):
+    def release(self, models, downstream_domains, build_apps=False):
         self._reset()
         header = [
-            release_domain.si(self.master_domain, linked_domain, self.user.username, models, build_apps)
-            for linked_domain in linked_domains
+            release_domain.si(self.upstream_domain, downstream_domain, self.user.username, models, build_apps)
+            for downstream_domain in downstream_domains
         ]
-        callback = send_linked_domain_release_email.s(self.master_domain, self.user.username,
-                                                      models, linked_domains)
+        callback = send_linked_domain_release_email.s(self.upstream_domain, self.user.username,
+                                                      models, downstream_domains)
         chord(header)(callback)
 
     def get_email_message(self, models, linked_domains, html=True):
@@ -150,13 +151,18 @@ The following linked project spaces received content:
         except Exception as e:  # intentionally broad
             return self._error_tuple(error_prefix + str(e))
 
-    def _release_report(self, domain_link, model):
+    def _release_report(self, domain_link, model, user_id):
         report_id = model['detail']['report_id']
         found = False
         for linked_report in get_report_configs_for_domain(domain_link.linked_domain):
             if linked_report.report_meta.master_id == report_id:
                 found = True
                 update_linked_ucr(domain_link, linked_report.get_id)
+                domain_link.update_last_pull(
+                    MODEL_REPORT,
+                    user_id,
+                    model_detail=ReportLinkDetail(report_id=linked_report.get_id).to_json(),
+                )
 
         if not found:
             report = ReportConfiguration.get(report_id)
@@ -177,7 +183,7 @@ The following linked project spaces received content:
 
         return self._release_model(domain_link, model, user)
 
-    def _release_keyword(self, domain_link, model):
+    def _release_keyword(self, domain_link, model, user_id):
         upstream_id = model['detail']['keyword_id']
         try:
             linked_keyword_id = (Keyword.objects.values_list('id', flat=True)
@@ -197,6 +203,11 @@ The following linked project spaces received content:
             )
 
         update_keyword(domain_link, linked_keyword_id)
+        domain_link.update_last_pull(
+            MODEL_KEYWORD,
+            user_id,
+            model_detail=KeywordLinkDetail(keyword_id=str(linked_keyword_id)).to_json(),
+        )
 
     def _release_model(self, domain_link, model, user):
         update_model_type(domain_link, model['type'], model_detail=model['detail'])
@@ -208,13 +219,13 @@ The following linked project spaces received content:
 
 
 @task(queue='linked_domain_queue')
-def release_domain(master_domain, linked_domain, username, models, build_apps=False):
-    manager = ReleaseManager(master_domain, username)
+def release_domain(upstream_domain, downstream_domain, username, models, build_apps=False):
+    manager = ReleaseManager(upstream_domain, username)
 
-    domain_link = get_upstream_domain_link(linked_domain)
-    if not domain_link or domain_link.master_domain != master_domain:
-        manager.add_error(linked_domain, _("Project space {} is no longer linked to {}. No content "
-                                           "was released to it.").format(master_domain, linked_domain))
+    domain_link = get_upstream_domain_link(downstream_domain)
+    if not domain_link or domain_link.master_domain != upstream_domain:
+        manager.add_error(downstream_domain, _("Project space {} is no longer linked to {}. No content "
+                                           "was released to it.").format(upstream_domain, downstream_domain))
         return manager.results()
 
     for model in models:
@@ -223,14 +234,14 @@ def release_domain(master_domain, linked_domain, username, models, build_apps=Fa
             if model['type'] == MODEL_APP:
                 errors = manager._release_app(domain_link, model, manager.user, build_apps)
             elif model['type'] == MODEL_REPORT:
-                errors = manager._release_report(domain_link, model)
+                errors = manager._release_report(domain_link, model, manager.user._id)
             elif model['type'] in FEATURE_FLAG_DATA_MODEL_TOGGLES:
                 errors = manager._release_flag_dependent_model(domain_link, model, manager.user,
                                                                FEATURE_FLAG_DATA_MODEL_TOGGLES[model['type']])
             elif model['type'] == MODEL_KEYWORD:
-                errors = manager._release_keyword(domain_link, model)
+                errors = manager._release_keyword(domain_link, model, manager.user._id)
             else:
-                errors = manager._release_model(domain_link, model, manager.user)
+                manager._release_model(domain_link, model, manager.user)
         except Exception as e:   # intentionally broad
             errors = [str(e), str(e)]
             notify_exception(None, "Exception pushing linked domains: {}".format(e))
@@ -247,11 +258,11 @@ def release_domain(master_domain, linked_domain, username, models, build_apps=Fa
 
 
 @task(queue='linked_domain_queue')
-def send_linked_domain_release_email(results, master_domain, username, models, linked_domains):
-    manager = ReleaseManager(master_domain, username)
+def send_linked_domain_release_email(results, upstream_domain, username, models, downstream_domains):
+    manager = ReleaseManager(upstream_domain, username)
 
     # chord sends a list of results only if there were multiple tasks
-    if len(linked_domains) == 1:
+    if len(downstream_domains) == 1:
         results = [results]
 
     for result in results:
@@ -267,7 +278,7 @@ def send_linked_domain_release_email(results, master_domain, username, models, l
     send_html_email_async(
         subject,
         email,
-        manager.get_email_message(models, linked_domains, html=True),
-        text_content=manager.get_email_message(models, linked_domains, html=False),
+        manager.get_email_message(models, downstream_domains, html=True),
+        text_content=manager.get_email_message(models, downstream_domains, html=False),
         email_from=settings.DEFAULT_FROM_EMAIL
     )

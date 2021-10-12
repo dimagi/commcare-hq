@@ -3,9 +3,9 @@ import uuid
 from datetime import datetime
 
 from casexml.apps.case.models import CommCareCase
-from couchforms.models import XFormInstance
 
 from corehq.apps.export.export import get_export_file
+from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.util.files import TransientTempfile
 
 DOMAIN = "export-file-domain"
@@ -33,13 +33,13 @@ def new_case(domain=DOMAIN, user_id=DEFAULT_USER, owner_id=DEFAULT_USER,
     )
 
 
-def new_form(domain=DOMAIN, app_id=DEFAULT_APP_ID, xmlns=DEFAULT_XMLNS, **kwargs):
-    kwargs["_id"] = kwargs.get("_id", uuid.uuid4().hex)
-    return XFormInstance(
-        domain=domain,
-        app_id=app_id,
-        xmlns=xmlns,
-        **kwargs
+def new_form(form_data):
+    return create_form_for_test(
+        domain=DOMAIN,
+        app_id=DEFAULT_APP_ID,
+        xmlns=DEFAULT_XMLNS,
+        form_data=form_data,
+        save=False,
     )
 
 

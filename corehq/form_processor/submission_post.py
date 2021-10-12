@@ -27,7 +27,7 @@ from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import has_permission_to_view_report
-from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError, XFormSaveError
+from corehq.form_processor.exceptions import PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
@@ -606,9 +606,5 @@ def notify_submission_error(instance, message, exec_info=None):
         'domain': domain,
         'error form ID': instance.form_id,
     }
-    should_email = not isinstance(exec_info[1], CouchSaveAborted)  # intentionally don't double-email these
-    if should_email:
-        request = get_request()
-        notify_exception(request, message, details=details, exec_info=exec_info)
-    else:
-        logging.error(message, exc_info=sys.exc_info(), extra={'details': details})
+    request = get_request()
+    notify_exception(request, message, details=details, exec_info=exec_info)

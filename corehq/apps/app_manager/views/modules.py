@@ -1197,19 +1197,36 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 "search_filter", "blacklisted_owner_ids_expression",
                 "search_button_display_condition", "search_additional_relevant"
             ]
+
+            def _check_xpath(xpath, location):
+                is_valid, message = validate_xpath(xpath)
+                if not is_valid:
+                    raise ValueError(
+                        f"Please fix the errors in xpath expression '{xpath}' "
+                        f"in {location}. The error is {message}"
+                    )
+
             for prop in xpath_props:
                 xpath = search_properties.get(prop, "")
                 if xpath:
-                    is_valid, message = validate_xpath(xpath)
-                    if not is_valid:
-                        return HttpResponseBadRequest(
-                            "Please fix the errors in xpath expression {xpath} in Search and Claim Options. "
-                            "The error is {err}".format(xpath=xpath, err=message)
-                        )
-            additional_registry_queries = [
-                AdditionalRegistryQuery.wrap(query)
-                for query in search_properties.get('additional_registry_queries', [])
-            ]
+                    try:
+                        _check_xpath(xpath, "Search and Claim Options")
+                    except ValueError as e:
+                        return HttpResponseBadRequest(str(e))
+
+            additional_registry_queries = []
+            for query in search_properties.get('additional_registry_queries', []):
+                if not all(list(query.values())):
+                    return HttpResponseBadRequest("All fields for Additional Data Registry Queries are required")
+
+                try:
+                    _check_xpath(query["case_type_xpath"], "the Case Type of Additional Data Registry Query")
+                    _check_xpath(query["case_id_xpath"], "the Case ID of Additional Data Registry Query")
+                except ValueError as e:
+                    return HttpResponseBadRequest(str(e))
+
+                additional_registry_queries.append(AdditionalRegistryQuery.wrap(query))
+
             module.search_config = CaseSearch(
                 search_label=search_label,
                 search_again_label=search_again_label,

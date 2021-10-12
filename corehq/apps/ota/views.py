@@ -7,6 +7,8 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
     JsonResponse,
     HttpResponseNotFound,
     HttpResponseForbidden,
@@ -66,6 +68,7 @@ from .utils import (
     handle_401_response,
     is_permitted_to_restore,
 )
+from ..case_search.const import COMMCARE_PROJECT
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
@@ -91,6 +94,7 @@ def restore(request, domain, app_id=None):
 
 
 @location_safe_bypass
+@csrf_exempt
 @mobile_auth
 @check_domain_migration
 def search(request, domain):
@@ -98,6 +102,7 @@ def search(request, domain):
 
 
 @location_safe_bypass
+@csrf_exempt
 @mobile_auth
 @check_domain_migration
 def app_aware_search(request, domain, app_id):
@@ -108,9 +113,10 @@ def app_aware_search(request, domain, app_id):
 
     Returns results as a fixture with the same structure as a casedb instance.
     """
-    criteria = {k: v[0] if len(v) == 1 else v for k, v in request.GET.lists()}
+    request_dict = request.GET if request.method == 'GET' else request.POST
+    criteria = {k: v[0] if len(v) == 1 else v for k, v in request_dict.lists()}
     try:
-        cases = get_case_search_results(domain, criteria, app_id)
+        cases = get_case_search_results(domain, criteria, app_id, request.couch_user)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
@@ -425,16 +431,16 @@ def registry_case(request, domain, app_id):
         ).format(params="', '".join(missing)))
 
     helper = DataRegistryHelper(domain, registry_slug=registry)
-    if not helper.check_access(request.couch_user):
-        return HttpResponseForbidden()
 
     app = get_app_cached(domain, app_id)
     try:
-        case = helper.get_case(case_id, case_type, request.user, app)
+        case = helper.get_case(case_id, case_type, request.couch_user, app)
     except RegistryNotFound:
         return HttpResponseNotFound(f"Registry '{registry}' not found")
     except (CaseNotFound, RegistryAccessException):
         return HttpResponseNotFound(f"Case '{case_id}' not found")
 
-    cases = helper.get_case_hierarchy(case)
+    cases = helper.get_case_hierarchy(request.couch_user, case)
+    for case in cases:
+        case.case_json[COMMCARE_PROJECT] = case.domain
     return HttpResponse(CaseDBFixture(cases).fixture, content_type="text/xml; charset=utf-8")

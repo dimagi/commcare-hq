@@ -95,6 +95,9 @@
           <th class="text-center">
             {% trans "Apps" %}
           </th>
+          <th class="text-center">
+            {% trans "Messaging" %}
+          </th>
           {% if show_integration %}
             <th class="text-center">
               {% trans "Integration" %}
@@ -106,6 +109,11 @@
           <th class="text-center">
             {% trans "Subscription Info" %}
           </th>
+          {% if request|toggle_enabled:"DATA_REGISTRY" %}
+          <th class="text-center">
+            {% trans "Data Registries" %}
+          </th>
+          {% endif %}
           <th>{% trans "Actions" %}</th>
         </tr>
         </thead>
@@ -160,6 +168,11 @@
                                               view: permissions.view_apps,
                                             }"></div>
           </td>
+          <td class="text-center">
+            <div data-bind="permissionIcon: {
+                                              edit: permissions.edit_messaging,
+                                            }"></div>
+          </td>
           {% if show_integration %}
             <td class="text-center">
               <div data-bind="permissionIcon: {
@@ -185,6 +198,25 @@
                                               manage: permissions.edit_billing
                                             }"></div>
           </td>
+          {% if request|toggle_enabled:"DATA_REGISTRY" %}
+          <td class="text-center">
+            <div data-bind="visible: manageRegistryPermission.all()">{% trans "Manage All" %}</div>
+            <div data-bind="visible: !manageRegistryPermission.all() && manageRegistryPermission.filteredSpecific().length">
+              <strong>{% trans "Manage Only" %}</strong><br/>
+              <span data-bind="foreach: manageRegistryPermission.filteredSpecific">
+                  <span class="label label-default" data-bind="text: name"></span><br />
+              </span>
+            </div>
+            <br/>
+            <div data-bind="visible: viewRegistryContentsPermission.all()">{% trans "View All Data" %}</div>
+            <div data-bind="visible: !viewRegistryContentsPermission.all() && viewRegistryContentsPermission.filteredSpecific().length">
+              <strong>{% trans "View Data From" %}</strong><br/>
+              <span data-bind="foreach: viewRegistryContentsPermission.filteredSpecific">
+                  <span class="label label-default" data-bind="text: name"></span><br />
+              </span>
+            </div>
+          </td>
+          {% endif %}
           <td>
             <button class="btn btn-default" data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null">
                                 <span data-bind="visible: !$root.allowEdit">

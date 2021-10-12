@@ -171,7 +171,7 @@ class BaseMessagingSectionView(BaseDomainView):
         return False
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(require_permission(Permissions.edit_messaging))
     def dispatch(self, request, *args, **kwargs):
         if not self.is_granted_messaging_access:
             return render(request, "sms/wall.html", self.main_context)
@@ -410,7 +410,7 @@ class TestSMSMessageView(BaseDomainView):
 
 
 @csrf_exempt
-@require_permission(Permissions.edit_data, login_decorator=login_or_digest_ex(allow_cc_users=True))
+@require_permission(Permissions.edit_messaging, login_decorator=login_or_digest_ex(allow_cc_users=True))
 @requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 def api_send_sms(request, domain):
     """
@@ -680,7 +680,7 @@ def format_contact_data(domain, data):
         row.append(reverse('sms_chat', args=[domain, contact_id, vn_id]))
 
 
-@require_permission(Permissions.edit_data)
+@require_permission(Permissions.edit_messaging)
 @requires_privilege_with_fallback(privileges.INBOUND_SMS)
 def chat_contact_list(request, domain):
     sEcho = request.GET.get('sEcho')
@@ -723,7 +723,7 @@ def get_contact_name_for_chat(contact, domain_obj):
     return contact_name
 
 
-@require_permission(Permissions.edit_data)
+@require_permission(Permissions.edit_messaging)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat(request, domain, contact_id, vn_id=None):
     domain_obj = Domain.get_by_name(domain, strict=True)
@@ -767,7 +767,7 @@ def chat(request, domain, contact_id, vn_id=None):
 class ChatMessageHistory(View, DomainViewMixin):
     urlname = 'api_history'
 
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(require_permission(Permissions.edit_messaging))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(ChatMessageHistory, self).dispatch(request, *args, **kwargs)
@@ -910,7 +910,7 @@ class ChatMessageHistory(View, DomainViewMixin):
 class ChatLastReadMessage(View, DomainViewMixin):
     urlname = 'api_last_read_message'
 
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(require_permission(Permissions.edit_messaging))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(ChatLastReadMessage, self).dispatch(request, *args, **kwargs)

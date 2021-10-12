@@ -212,7 +212,7 @@ def redirect_to_default(req, domain=None):
     else:
         domains = Domain.active_for_user(req.user)
 
-    if not domains and not req.user.is_superuser:
+    if not domains:
         return redirect('registration_domain')
 
     if len(domains) > 1:

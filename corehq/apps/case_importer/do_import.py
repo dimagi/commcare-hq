@@ -207,6 +207,9 @@ class _Importer(object):
             self.user.username,
             self.user.user_id,
             device_id=__name__ + ".do_import",
+            # Skip the rate-limiting
+            # because this importing code will take care of any rate-limiting
+            max_wait=None,
         )
 
     def _parse_search_id(self, row):
@@ -346,7 +349,10 @@ class _TimedAndThrottledImporter(_Importer):
             })
 
     def pre_submit_hook(self):
-        if rate_limit_submission(self.domain):
+        if rate_limit_submission(
+                self.domain,
+                delay_rather_than_reject=True,
+                max_wait=self._last_submission_duration):
             # the duration of the last submission is a combined heuristic
             # for the amount of load on the databases
             # and the amount of load that the requests from this import put on the databases.
@@ -361,7 +367,6 @@ class _TimedAndThrottledImporter(_Importer):
                 tags={'domain': self.domain}
             )
             self._total_delayed_duration += self._last_submission_duration
-            time.sleep(self._last_submission_duration)
 
     def submit_case_blocks(self, caseblocks):
         timer = None

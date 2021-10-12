@@ -106,3 +106,11 @@ def get_previous_quarter_date_range():
         return get_quarter_date_range(year - 1, 4)
     else:
         return get_quarter_date_range(year, quarter - 1)
+
+
+def coerce_to_datetime(v):
+    from datetime import date, datetime  # TODO move to top level, adjust other functions
+    if isinstance(v, date) and not isinstance(v, datetime):
+        return datetime.combine(v, datetime.min.time())
+    else:
+        return v

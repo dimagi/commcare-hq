@@ -10,16 +10,11 @@ from django.utils.dateparse import parse_datetime
 from iso8601 import iso8601
 
 from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
-from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.phone.models import delete_synclogs
 from casexml.apps.phone.xml import get_case_element
-from casexml.apps.stock.models import StockReport
 from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from couchforms.models import XFormInstance
-
-from dimagi.utils.couch.database import iter_docs
 
 
 def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
@@ -98,18 +93,6 @@ def create_real_cases_from_dummy_cases(cases):
     return posted_forms, posted_cases
 
 
-def get_case_xform_ids(case_id):
-    results = XFormInstance.get_db().view('form_case_index/form_case_index',
-                                          reduce=False,
-                                          startkey=[case_id],
-                                          endkey=[case_id, {}])
-
-    # also have to add commtrack forms, which may not appear in the form --> case index
-    commtrack_reports = StockReport.objects.filter(stocktransaction__case_id=case_id)
-    commtrack_forms = commtrack_reports.values_list('form_id', flat=True).distinct()
-    return list(set([row['key'][1] for row in results] + list(commtrack_forms)))
-
-
 def prune_previous_log(sync_log):
     if sync_log.previous_log_id:
         delete_synclogs(sync_log)
@@ -118,24 +101,8 @@ def prune_previous_log(sync_log):
     return False
 
 
-def get_indexed_cases(domain, case_ids):
-    """
-    Given a base list of cases, gets all wrapped cases that they reference
-    (parent cases).
-    """
-    from casexml.apps.case.models import CommCareCase
-    return [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(),
-                                                        get_indexed_case_ids(domain, case_ids))]
-
-
 def primary_actions(case):
     return [a for a in case.actions if not a.is_case_rebuild]
-
-
-def iter_cases(case_ids, wrap=True):
-    from casexml.apps.case.models import CommCareCase
-    for doc in iter_docs(CommCareCase.get_db(), case_ids):
-        yield CommCareCase.wrap(doc) if wrap else doc
 
 
 def property_changed_in_action(domain, case_transaction, case_id, case_property_name):
