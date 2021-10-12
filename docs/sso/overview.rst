@@ -40,7 +40,7 @@ SSO is based on a trust relationship between an application, the Service
 Provider (SP) and an Identity Provider (IdP). CommCare HQ in this case acts as
 the Service Provider.
 
-To create this trust, x509 certificates are exchanged between the IdP ad the SP.
+To create this trust, x509 certificates are exchanged between the IdP and the SP.
 The IdP uses the certificate to securely sign (and sometimes encrypt) identity
 information that it sends back to the SP in the form of a token. Because the SP
 knows the IdP's public certificate, it knows that the information it receives
