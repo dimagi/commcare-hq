@@ -166,3 +166,11 @@ def is_domain_in_active_link(domain_name):
 
 def user_has_admin_access_in_all_domains(user, domains):
     return all([user.is_domain_admin(domain) for domain in domains])
+
+
+def is_keyword_linkable(keyword):
+    from corehq.apps.sms.models import KeywordAction
+    actions_with_group_recipients = keyword.keywordaction_set.filter(
+        recipient=KeywordAction.RECIPIENT_USER_GROUP
+    ).count()
+    return actions_with_group_recipients == 0
