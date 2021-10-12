@@ -15,6 +15,9 @@ from corehq.apps.app_manager.suite_xml.post_process.instances import (
     EntryInstances,
 )
 from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
+from corehq.apps.app_manager.suite_xml.post_process.endpoints import (
+    EndpointsHelper,
+)
 from corehq.apps.app_manager.suite_xml.post_process.resources import (
     ResourceOverrideHelper,
 )
@@ -23,9 +26,6 @@ from corehq.apps.app_manager.suite_xml.post_process.workflow import (
 )
 from corehq.apps.app_manager.suite_xml.sections.details import (
     DetailContributor,
-)
-from corehq.apps.app_manager.suite_xml.sections.endpoints import (  # TODO: move
-    EndpointsHelper,
 )
 from corehq.apps.app_manager.suite_xml.sections.entries import (
     EntriesContributor,
