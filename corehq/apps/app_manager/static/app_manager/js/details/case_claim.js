@@ -282,7 +282,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     return {
                         instance_name: query.instanceName(),
                         case_type_xpath: query.caseTypeXpath(),
-                        case_id_xpath: query.caseTypeXpath(),
+                        case_id_xpath: query.caseIdXpath(),
                     };
                 }),
             };
