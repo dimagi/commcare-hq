@@ -2,7 +2,6 @@ import os
 import mock
 from datetime import datetime, timedelta
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from corehq.form_processor.tasks import reprocess_archive_stubs
 from corehq.apps.change_feed import topics
@@ -284,16 +283,13 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertTrue(xform.is_normal)
         self.assertEqual(0, len(xform.history))
 
-        # Mock the couch and sql archive function throwing an error (so that this test works for both)
-        tmp = 'corehq.form_processor.backends.%s.dbaccessors.%s'
-        with mock.patch(tmp % ('sql', 'FormAccessorSQL.set_archived_state')) as mock_operation_sql:
-            with mock.patch(tmp % ('couch', 'XFormOperation')) as mock_operation_couch:
-                try:
-                    mock_operation_sql.side_effect = Exception
-                    mock_operation_couch.side_effect = Exception
-                    xform.archive(user_id='librarian')
-                except Exception:
-                    pass
+        tmp = 'corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.set_archived_state'
+        with mock.patch(tmp) as mock_operation_sql:
+            try:
+                mock_operation_sql.side_effect = Exception
+                xform.archive(user_id='librarian')
+            except Exception:
+                pass
 
         # Get the form with the updated history, make sure it has not been archived yet
         xform = self.formdb.get_form(xform.form_id)
@@ -345,16 +341,13 @@ class TestFormArchiving(TestCase, TestFileMixin):
         # Archive the form successfully
         xform.archive(user_id='librarian')
 
-        # Mock the couch and sql archive function throwing an error (so that this test works for both)
-        tmp = 'corehq.form_processor.backends.%s.dbaccessors.%s'
-        with mock.patch(tmp % ('sql', 'FormAccessorSQL.set_archived_state')) as mock_operation_sql:
-            with mock.patch(tmp % ('couch', 'XFormOperation')) as mock_operation_couch:
-                try:
-                    mock_operation_sql.side_effect = Exception
-                    mock_operation_couch.side_effect = Exception
-                    xform.unarchive(user_id='librarian')
-                except Exception:
-                    pass
+        tmp = 'corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.set_archived_state'
+        with mock.patch(tmp) as mock_operation_sql:
+            try:
+                mock_operation_sql.side_effect = Exception
+                xform.unarchive(user_id='librarian')
+            except Exception:
+                pass
 
         # Get the form with the updated history, make sure it only has one entry (the archive)
         xform = self.formdb.get_form(xform.form_id)
@@ -428,7 +421,6 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(1, archive_counter)
         self.assertEqual(1, restore_counter)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def testPublishChanges(self):
         xml_data = self.get_xml('basic')
         result = submit_form_locally(

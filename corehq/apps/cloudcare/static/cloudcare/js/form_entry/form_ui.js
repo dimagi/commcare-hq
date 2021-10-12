@@ -287,6 +287,17 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return self.currentIndex() !== "0" && self.currentIndex() !== "-1" && !self.atFirstIndex();
         });
 
+        self.erroredLabels = ko.computed(function () {
+            var questions = getQuestions(self);
+            var erroredLabels = {};
+            for (var i = 0; i < questions.length; i++) {
+                if (questions[i].isLabel && !questions[i].isValid()) {
+                    erroredLabels[getIx(questions[i])] = "OK";
+                }
+            }
+            return erroredLabels;
+        });
+
         self.erroredQuestions = ko.computed(function () {
             if (!hqImport("cloudcare/js/form_entry/utils").isWebApps() || !self.hasSubmitAttempted()) {
                 return [];
@@ -432,6 +443,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
 
+        self.focusNewRepeat = function () {
+            var repeat = $('.repetition');
+            if (repeat) {
+                repeat.trigger('focus');
+            }
+        };
+
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
         self.collapsible = _.contains(styles, Const.COLLAPSIBLE);
         self.showChildren = ko.observable(!self.collapsible || _.contains(styles, Const.COLLAPSIBLE_OPEN));
@@ -512,6 +530,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.newRepeat = function () {
             $.publish('formplayer.' + Const.NEW_REPEAT, self);
             $.publish('formplayer.dirty');
+            $('.add').trigger('blur');
         };
 
         self.getTranslation = function (translationKey, defaultTranslation) {
@@ -587,6 +606,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
 
         self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
+        self.isLabel = self.datatype() === 'info';
         self.entry = hqImport("cloudcare/js/form_entry/entries").getEntry(self);
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';
@@ -625,7 +645,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 }
                 currentNode = parent;
             }
-            var el = $("label[for='" + self.entry.entryId + "']");
+            var el = $("[for='" + self.entry.entryId + "']");
             $('html, body').animate({
                 scrollTop: $(el).offset().top - 60,
             });

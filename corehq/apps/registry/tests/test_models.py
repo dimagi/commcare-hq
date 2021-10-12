@@ -90,25 +90,25 @@ class RegistryModelsTests(TestCase):
 
     def test_check_access(self):
         registry = create_registry_for_test(self.user, self.domain, [Invitation("A")])
-        self.assertTrue(registry.check_access("A"))
+        self.assertTrue(registry.check_domain_has_access("A"))
         with self.assertRaises(RegistryAccessDenied):
-            registry.check_access("B")
+            registry.check_domain_has_access("B")
 
     def test_check_access_inactive(self):
         registry = create_registry_for_test(self.user, self.domain, [Invitation("A")])
         registry.deactivate(self.user)
         with self.assertRaises(RegistryAccessDenied):
-            registry.check_access("A")
+            registry.check_domain_has_access("A")
 
     def test_check_access_invite_not_accepted(self):
         registry = create_registry_for_test(self.user, self.domain, [Invitation("A", accepted=False)])
         with self.assertRaises(RegistryAccessDenied):
-            registry.check_access("A")
+            registry.check_domain_has_access("A")
 
     def test_check_access_invite_rejected(self):
         registry = create_registry_for_test(self.user, self.domain, [Invitation("A", rejected=True)])
         with self.assertRaises(RegistryAccessDenied):
-            registry.check_access("A")
+            registry.check_domain_has_access("A")
 
     def test_get_granted_domains(self):
         invitations = [Invitation('A'), Invitation('B'), Invitation('C')]

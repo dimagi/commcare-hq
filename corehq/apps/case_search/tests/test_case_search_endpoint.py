@@ -20,13 +20,11 @@ from corehq.apps.es.tests.utils import (
     case_search_es_teardown,
     es_test,
 )
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 from ..utils import get_case_search_results
 
 
 @es_test
-@run_with_sql_backend
 class TestCaseSearchEndpoint(TestCase):
     domain = "TestCaseSearchEndpoint"
 
@@ -78,6 +76,10 @@ class TestCaseSearchEndpoint(TestCase):
         self.assertItemsEqual(["Jane", "Xiomara", "Alba", "Rogelio", "Jane"], [
             case.name for case in res
         ])
+
+    def test_dynamic_property(self):
+        res = get_case_search_results(self.domain, {'case_type': 'person', 'family': 'Ramos'})
+        self.assertItemsEqual(["Jane"], [case.name for case in res])
 
     def test_app_aware_related_cases(self):
         with mock.patch('corehq.apps.case_search.utils.get_app_cached', new=lambda _, __: self.factory.app):

@@ -24,7 +24,7 @@
 /corehq/warehouse/ @calellowitz
 
 /corehq/apps/accounting/ @dannyroberts @biyeun
-/corehq/apps/analytics/ @orangejenny
+/corehq/apps/analytics/ @biyeun
 /corehq/apps/app_manager/ @orangejenny
 /corehq/apps/callcenter/ @snopoke
 /corehq/apps/case_search/ @proteusvacuum

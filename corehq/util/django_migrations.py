@@ -166,7 +166,7 @@ def block_upgrade_for_removed_migration(commit_with_migration):
             version must be used.
         """)
         print("")
-        print("""
+        print(f"""
         Run the following commands to run the migration and get up to date:
 
             commcare-cloud <env> fab setup_limited_release --set code_branch={commit_with_migration}

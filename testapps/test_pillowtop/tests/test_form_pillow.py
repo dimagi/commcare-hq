@@ -1,6 +1,6 @@
 import uuid
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -47,7 +47,6 @@ class FormPillowTest(TestCase):
         ensure_index_deleted(USER_INDEX)
         super().tearDownClass()
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_pillow_sql(self):
         consumer = get_test_kafka_consumer(topics.FORM, topics.FORM_SQL)
         kafka_seq = self._get_kafka_seq()
@@ -64,7 +63,6 @@ class FormPillowTest(TestCase):
         self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertTrue(Application.get(self.app._id).has_submissions)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_pillow_non_existant_build_id(self):
         consumer = get_test_kafka_consumer(topics.FORM, topics.FORM_SQL)
         kafka_seq = self._get_kafka_seq()
@@ -81,7 +79,6 @@ class FormPillowTest(TestCase):
         self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertFalse(Application.get(self.app._id).has_submissions)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_pillow_mismatch_domains(self):
         consumer = get_test_kafka_consumer(topics.FORM, topics.FORM_SQL)
         kafka_seq = self._get_kafka_seq()
@@ -100,7 +97,6 @@ class FormPillowTest(TestCase):
         self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertFalse(Application.get(self.app._id).has_submissions)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_two_forms_with_same_app(self):
         """Ensures two forms submitted to the same app does not error"""
         kafka_seq = self._get_kafka_seq()

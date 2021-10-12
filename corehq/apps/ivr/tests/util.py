@@ -2,7 +2,6 @@ from django.test import TestCase
 
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import INCOMING
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import create_test_case
 
 
@@ -53,7 +52,6 @@ class LogCallTestCase(TestCase):
         return create_test_case(self.domain, 'contact', 'test',
             case_properties=case_properties, drop_signals=False)
 
-    @run_with_all_backends
     def test_log_call(self):
         with self.create_case() as case:
             if self.__class__ == LogCallTestCase:

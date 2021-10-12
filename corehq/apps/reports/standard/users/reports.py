@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from memoized import memoized
 
 from corehq import privileges
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
@@ -20,6 +21,7 @@ from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
+from corehq.apps.users.audit.change_messages import get_messages
 from corehq.apps.users.models import UserHistory
 from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
@@ -121,7 +123,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         )
 
     def _build_query(self, user_ids, changed_by_user_ids, user_property, actions, user_upload_record_id):
-        filters = Q(domain=self.domain)
+        filters = Q(for_domain__in=self._for_domains())
 
         if user_ids:
             filters = filters & Q(user_id__in=user_ids)
@@ -130,7 +132,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             filters = filters & Q(changed_by__in=changed_by_user_ids)
 
         if user_property:
-            filters = filters & Q(**{"details__changes__has_key": user_property})
+            filters = filters & Q(**{"changes__has_key": user_property})
 
         if actions and ChangeActionFilter.ALL not in actions:
             filters = filters & Q(action__in=actions)
@@ -142,6 +144,9 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             filters = filters & Q(changed_at__lt=self.datespan.enddate_adjusted,
                                   changed_at__gte=self.datespan.startdate)
         return UserHistory.objects.filter(filters)
+
+    def _for_domains(self):
+        return BillingAccount.get_account_by_domain(self.domain).get_domains()
 
     @property
     def rows(self):
@@ -167,9 +172,9 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             cached_user_id_to_username(record.user_id),
             cached_user_id_to_username(record.changed_by),
             _get_action_display(record.action),
-            record.details['changed_via'],
-            record.message,
-            self._user_history_details_cell(record.details['changes'], domain),
+            record.changed_via,
+            list(get_messages(record.change_messages)),
+            self._user_history_details_cell(record.changes, domain),
             ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
         ]
 

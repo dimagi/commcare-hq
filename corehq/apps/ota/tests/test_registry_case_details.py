@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from defusedxml import ElementTree
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
@@ -16,7 +16,6 @@ from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, Form
 from corehq.util.test_utils import generate_cases
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class RegistryCaseDetailsTests(TestCase):
     domain = 'registry-case-details'
 
@@ -98,7 +97,7 @@ class RegistryCaseDetailsTests(TestCase):
         }, 404)
 
     def _make_request(self, params, expected_response_code):
-        with patch.object(DataRegistryHelper, 'check_access', return_value=True):
+        with patch.object(DataRegistryHelper, '_check_user_has_access', return_value=True):
             response = self.client.get(reverse('registry_case', args=[self.domain, self.app.get_id]), data=params)
         content = response.content
         self.assertEqual(response.status_code, expected_response_code, content)

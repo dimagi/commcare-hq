@@ -27,7 +27,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.util import normalize_username
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -35,7 +34,6 @@ def get_registration_xml(restore_user):
     return xml.tostring(xml.get_registration_element(restore_user)).decode('utf-8')
 
 
-@run_with_sql_backend
 class SimpleOtaRestoreTest(TestCase):
 
     def setUp(self):
@@ -79,7 +77,6 @@ class SimpleOtaRestoreTest(TestCase):
         assertRegistrationData("phone_number", "555555")
 
 
-@run_with_sql_backend
 class BaseOtaRestoreTest(TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)

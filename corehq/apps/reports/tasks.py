@@ -3,8 +3,6 @@ import uuid
 import zipfile
 from datetime import datetime, timedelta
 
-from django.conf import settings
-
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
@@ -20,7 +18,6 @@ from corehq.apps.domain.calculations import all_domain_stats, calced_props
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, DomainES, FormES, filters
 from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE
-from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.reports.util import send_report_download_email
 from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
@@ -168,13 +165,11 @@ def apps_update_calculated_properties():
 
 @task(serializer='pickle', ignore_result=True)
 def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject=None):
-    from corehq.apps.reports.standard.deployments import ApplicationStatusReport
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
     report.rendered_as = 'export'
 
     setattr(report.request, 'REQUEST', {})
-    report_start = datetime.utcnow()
     file = report.excel_response
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
 
@@ -188,24 +183,6 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
         _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject=subject)
-
-    report_end = datetime.utcnow()
-    if settings.SERVER_ENVIRONMENT == 'icds' and isinstance(report, ApplicationStatusReport):
-        message = """
-            Duration: {dur},
-            Total rows: {total},
-            User List: {users}
-            """.format(
-            dur=report_end - report_start,
-            total=report.total_records,
-            users=recipient_list
-        )
-        send_mail_async.delay(
-            subject="ApplicationStatusReport Download metrics",
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=["{}@{}.com".format("sreddy", "dimagi")]
-        )
 
 
 def _send_email(user, report, hash_id, recipient, subject=None):

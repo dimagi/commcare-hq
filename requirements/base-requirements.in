@@ -101,7 +101,7 @@ requests_toolbelt==0.9.1
 requests~=2.20
 schema
 sentry-sdk==0.19.5
-sh==1.14.1
+sh==1.14.2
 simpleeval~=0.9
 simplejson~=3.11
 six~=1.11

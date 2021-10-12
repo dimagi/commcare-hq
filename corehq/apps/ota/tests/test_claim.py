@@ -11,7 +11,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.form_processor.exceptions import CaseNotFound
 
 DOMAIN = 'test_domain'
@@ -25,7 +24,6 @@ def index_to_dict(instance):
     return {k: str(getattr(instance, k)) for k in keys}
 
 
-@run_with_sql_backend
 class CaseClaimTests(TestCase):
 
     def setUp(self):

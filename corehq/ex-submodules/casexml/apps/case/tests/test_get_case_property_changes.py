@@ -12,10 +12,8 @@ from casexml.apps.case.util import (
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import RebuildWithReason
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 
-@run_with_sql_backend
 class TestCasePropertyChanged(TestCase):
     def setUp(self):
         self.domain = "isildur"

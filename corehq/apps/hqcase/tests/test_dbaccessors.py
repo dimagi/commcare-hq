@@ -9,7 +9,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
 from corehq.elastic import get_es_new
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -23,7 +23,6 @@ TEST_ES_META = {
 
 
 @es_test
-@run_with_sql_backend
 class ESAccessorsTest(TestCase):
     domain = 'hqadmin-es-accessor'
 

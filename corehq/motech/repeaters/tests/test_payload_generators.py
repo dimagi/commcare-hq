@@ -14,7 +14,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils.xform import FormSubmissionBuilder
 from corehq.motech.repeater_helpers import (
@@ -33,7 +32,6 @@ from corehq.motech.value_source import (
 SQL_DOMAIN = 'test-sql-domain'
 
 
-@run_with_sql_backend
 class TestSqlDataTypes(TestCase):
     """
     Test that data types returned by FormDictPayloadGenerator match

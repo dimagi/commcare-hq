@@ -28,6 +28,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ngettext, ugettext_lazy, ugettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
+from dimagi.utils.couch import CriticalSection
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
@@ -296,12 +297,15 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     def backup_token(self):
         if Domain.get_by_name(self.request.domain).two_factor_auth:
-            device = self.editable_user.get_django_user().staticdevice_set.get_or_create(name='backup')[0]
-            token = device.token_set.first()
-            if token:
-                return device.token_set.first().token
-            else:
-                return device.token_set.create(token=StaticToken.random_token()).token
+            with CriticalSection([f"backup-token-{self.editable_user._id}"]):
+                device = (self.editable_user.get_django_user()
+                          .staticdevice_set
+                          .get_or_create(name='backup')[0])
+                token = device.token_set.first()
+                if token:
+                    return device.token_set.first().token
+                else:
+                    return device.token_set.create(token=StaticToken.random_token()).token
         return None
 
     @property
@@ -675,6 +679,7 @@ class ListRolesView(BaseRoleAccessView):
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
 
+
 @always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
@@ -798,9 +803,10 @@ def remove_web_user(request, domain, couch_user_id):
     if user:
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
-        log_user_change(request.domain, couch_user=user,
+        # web user's membership is bound to the domain, so log as a change for that domain
+        log_user_change(by_domain=request.domain, for_domain=domain, couch_user=user,
                         changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                        message=UserChangeMessage.domain_removal(domain))
+                        change_messages=UserChangeMessage.domain_removal(domain))
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -1238,11 +1244,12 @@ def delete_phone_number(request, domain, couch_user_id):
 
     user.delete_phone_number(phone_number)
     log_user_change(
-        domain=request.domain,
+        by_domain=request.domain,
+        for_domain=user.domain,
         couch_user=user,
         changed_by_user=request.couch_user,
         changed_via=USER_CHANGE_VIA_WEB,
-        message=UserChangeMessage.phone_number_removed(phone_number)
+        change_messages=UserChangeMessage.phone_numbers_removed([phone_number])
     )
     from corehq.apps.users.views.mobile import EditCommCareUserView
     redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
@@ -1323,11 +1330,12 @@ def change_password(request, domain, login_id):
         if form.is_valid():
             form.save()
             log_user_change(
-                domain=domain,
+                by_domain=domain,
+                for_domain=commcare_user.domain,
                 couch_user=commcare_user,
                 changed_by_user=request.couch_user,
                 changed_via=USER_CHANGE_VIA_WEB,
-                message=UserChangeMessage.password_reset()
+                change_messages=UserChangeMessage.password_reset()
             )
             json_dump['status'] = 'OK'
             form = SetUserPasswordForm(request.project, login_id, user='')

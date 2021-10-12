@@ -11,10 +11,8 @@ from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, LedgerAccessorSQL
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 
-@run_with_sql_backend
 class SMSTests(TestCase):
     user_definitions = [util.ROAMING_USER, util.FIXED_USER]
 

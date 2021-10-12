@@ -66,7 +66,7 @@ from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
 )
-from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
+from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
 from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,

@@ -1,10 +1,12 @@
 import difflib
 import os
+import uuid
 
 import lxml
 import mock
 from lxml import etree
 from lxml.doctestcompare import LHTMLOutputChecker, LXMLOutputChecker
+from nose.tools import nottest
 
 import commcare_translations
 from corehq.apps.app_manager.models import Application
@@ -47,7 +49,7 @@ class TestXmlMixin(TestFileMixin):
     def _assertXpathHelper(self, element, xpath, message, should_not_exist):
         element = parse_normalize(element, to_string=False)
         if bool(element.xpath(xpath)) == should_not_exist:
-            raise AssertionError(message + lxml.etree.tostring(element, pretty_print=True, encoding='utf-8'))
+            raise AssertionError(message + lxml.etree.tostring(element, pretty_print=True, encoding='unicode'))
 
     def assertHtmlEqual(self, expected, actual, normalize=True):
         if normalize:
@@ -150,12 +152,18 @@ def add_build(version, build_number):
     return CommCareBuild.create_from_zip(jad_path, version, build_number)
 
 
-def _get_default(self):
+@nottest
+def get_build_spec_for_tests(version=None):
     return BuildSpec({
-        "version": "2.7.0",
+        "version": version or "2.7.0",
         "build_number": None,
         "latest": True
     })
+
+
+def _get_default(self):
+    return get_build_spec_for_tests()
+
 
 patch_default_builds = mock.patch.object(CommCareBuildConfig, 'get_default',
                                          _get_default)
@@ -199,3 +207,39 @@ def delete_all_apps():
         )
         for row in res:
             Application.get_db().delete_doc(row['doc'])
+
+
+def get_simple_form(xmlns=None):
+    xmlns = xmlns or uuid.uuid4().hex
+    return """<?xml version="1.0" encoding="UTF-8" ?>
+    <h:html xmlns:h="http://www.w3.org/1999/xhtml"
+            xmlns:orx="http://openrosa.org/jr/xforms"
+            xmlns="http://www.w3.org/2002/xforms"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:jr="http://openrosa.org/javarosa">
+        <h:head>
+            <h:title>New Form</h:title>
+            <model>
+                <instance>
+                    <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+                          xmlns="{xmlns}" uiVersion="1" version="1" name="New Form">
+                        <question1 />
+                    </data>
+                </instance>
+                <bind nodeset="/data/question1" type="xsd:string" />
+                <itext>
+                    <translation lang="en" default="">
+                        <text id="question1-label">
+                            <value>question1</value>
+                        </text>
+                    </translation>
+                </itext>
+            </model>
+        </h:head>
+        <h:body>
+            <input ref="/data/question1">
+                <label ref="jr:itext('question1-label')" />
+            </input>
+        </h:body>
+    </h:html>
+    """.format(xmlns=xmlns)

@@ -7,15 +7,14 @@ from corehq.apps.case_search.models import (
     FuzzyProperties,
     IgnorePatterns,
 )
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.decorators import REMOTE_REQUESTER_HEADER
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
+from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_case_search_config
 from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.util import reverse
 
 
-class BaseLinkedCaseClaimTest(BaseLinkedAppsTest):
+class BaseLinkedCaseClaimTest(BaseLinkedDomainTest):
     @classmethod
     def setUpClass(cls):
         super(BaseLinkedCaseClaimTest, cls).setUpClass()

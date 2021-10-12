@@ -11,12 +11,13 @@ import dateutil
 from dimagi.utils.chunked import chunked
 from dimagi.utils.retry import retry_on
 
-from corehq.apps.es import CaseES, FormES
+from corehq.apps.es import CaseES, CaseSearchES, FormES
 from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
     FormReindexAccessor,
 )
+from corehq.pillows.case_search import domains_needing_search_index
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.doc_processor.progress import (
     ProcessorProgressLogger,
@@ -150,6 +151,7 @@ DATA_MODEL_HELPERS = {
 
 
 class CaseHelper:
+
     @classmethod
     def run(cls, run_config):
         for chunk in cls.get_sql_chunks(run_config):
@@ -174,13 +176,19 @@ class CaseHelper:
 
     @staticmethod
     def _yield_missing_in_es(chunk):
-        case_ids = [val[0] for val in chunk]
+        case_ids, case_search_ids = CaseHelper._get_ids_from_chunk(chunk)
         es_modified_on_by_ids = CaseHelper._get_es_modified_dates(case_ids)
+        case_search_es_modified_on_by_ids = CaseHelper._get_case_search_es_modified_dates(case_search_ids)
         for case_id, case_type, modified_on, domain in chunk:
             es_modified_on, es_domain = es_modified_on_by_ids.get(case_id, (None, None))
             if (es_modified_on, es_domain) != (modified_on, domain):
                 yield DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
                               es_date=es_modified_on, primary_date=modified_on)
+            elif domain in domains_needing_search_index():
+                es_modified_on, es_domain = case_search_es_modified_on_by_ids.get(case_id, (None, None))
+                if (es_modified_on, es_domain) != (modified_on, domain):
+                    yield DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
+                                  es_date=es_modified_on, primary_date=modified_on)
 
     @staticmethod
     @retry_on_es_timeout
@@ -192,6 +200,27 @@ class CaseHelper:
         )
         return {_id: (iso_string_to_datetime(server_modified_on), domain)
                 for _id, server_modified_on, domain in results}
+
+    @staticmethod
+    @retry_on_es_timeout
+    def _get_case_search_es_modified_dates(case_ids):
+        results = (
+            CaseSearchES(es_instance_alias=ES_EXPORT_INSTANCE)
+            .case_ids(case_ids)
+            .values_list('_id', 'server_modified_on', 'domain')
+        )
+        return {_id: (iso_string_to_datetime(server_modified_on), domain)
+                for _id, server_modified_on, domain in results}
+
+    @staticmethod
+    def _get_ids_from_chunk(chunk):
+        case_ids = []
+        case_search_ids = []
+        for val in chunk:
+            case_ids.append(val[0])
+            if val[3] in domains_needing_search_index():
+                case_search_ids.append(val[0])
+        return case_ids, case_search_ids
 
 
 class FormHelper:

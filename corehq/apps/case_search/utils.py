@@ -42,7 +42,7 @@ from corehq.apps.registry.exceptions import (
 from corehq.apps.registry.helper import DataRegistryHelper
 
 
-def get_case_search_results(domain, criteria, app_id=None):
+def get_case_search_results(domain, criteria, app_id=None, couch_user=None):
     try:
         # could be a list or a single string
         case_type = criteria.pop('case_type')
@@ -52,7 +52,7 @@ def get_case_search_results(domain, criteria, app_id=None):
 
     registry_slug = criteria.pop(CASE_SEARCH_REGISTRY_ID_KEY, None)
     if registry_slug:
-        query_domains = _get_registry_visible_domains(domain, case_types, registry_slug)
+        query_domains = _get_registry_visible_domains(couch_user, domain, case_types, registry_slug)
         helper = _RegistryQueryHelper(domain, query_domains)
     else:
         query_domains = [domain]
@@ -84,11 +84,10 @@ def get_case_search_results(domain, criteria, app_id=None):
     return cases
 
 
-def _get_registry_visible_domains(domain, case_types, registry_slug):
+def _get_registry_visible_domains(couch_user, domain, case_types, registry_slug):
     try:
         helper = DataRegistryHelper(domain, registry_slug=registry_slug)
-        for case_type in case_types:
-            helper.pre_access_check(case_type)
+        helper.check_data_access(couch_user, case_types)
     except (RegistryNotFound, RegistryAccessException):
         return [domain]
     else:
@@ -182,6 +181,8 @@ class CaseSearchCriteria:
         elif key == CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY:
             if value:
                 return case_search.blacklist_owner_id(value.split(' ')), False
+        elif key == COMMCARE_PROJECT:
+            return filters.domain(value), False
         elif key not in UNSEARCHABLE_KEYS and not key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
             return self._get_case_property_query(key, value), True
         return None, None
@@ -207,9 +208,10 @@ class CaseSearchCriteria:
         #   used by App manager case-search feature
         pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
         match = pattern.match(value)
-        if match:
-            _, _, startdate, enddate = value.split('__')
-            return case_property_range_query(key, gte=startdate, lte=enddate),
+        if not match:
+            raise CaseFilterError(_('Invalid date range format, {}'), key)
+        startdate, enddate = value.split('__')[2:]
+        return case_property_range_query(key, gte=startdate, lte=enddate)
 
     def _get_case_property_query(self, key, value):
         if isinstance(value, list) and '' in value:
@@ -235,7 +237,7 @@ class CaseSearchCriteria:
         fuzzy = key in self._fuzzy_properties
         if '/' in key:
             query = f'{key} = "{value}"'
-            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy),
+            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy)
         else:
             return case_property_query(key, value, fuzzy=fuzzy)
 

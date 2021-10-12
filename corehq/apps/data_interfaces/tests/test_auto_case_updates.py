@@ -31,7 +31,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.signals import sql_case_post_save
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.tests.locks import reentrant_redis_locks
 from corehq.util.context_managers import drop_connected_signals
@@ -96,7 +95,6 @@ def _create_empty_rule(domain, case_type='person', active=True, deleted=False):
     )
 
 
-@run_with_sql_backend
 class BaseCaseRuleTest(TestCase):
     domain = 'case-rule-test'
 

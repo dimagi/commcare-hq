@@ -1,6 +1,7 @@
 from mock import patch
 
 from corehq.apps.app_manager.models import LinkedApplication, Module
+from corehq.apps.app_manager.tests.util import patch_validate_xform
 from corehq.apps.app_manager.views.utils import get_blank_form_xml
 from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
@@ -25,8 +26,6 @@ class TestReleaseManager(BaseLinkedAppsTest):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = WebUser.create(cls.domain, 'fiona', 'secret', None, None)
-        master1_module = cls.master1.add_module(Module.new_module('Module for master1', None))
-        master1_module.new_form('Form for master1', 'en', get_blank_form_xml('Form for master1'))
 
     def _linked_data_view_model(self, _type, detail=None):
         return {
@@ -130,7 +129,7 @@ class TestReleaseManager(BaseLinkedAppsTest):
             self._linked_data_view_model(MODEL_APP, detail=AppLinkDetail(app_id='123').to_json()),
         ], error="Multi master flag is in use")
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch_validate_xform()
     def test_app_build_and_release(self, *args):
         self._make_master1_build(True)
         original_version = self.linked_app.version
@@ -141,6 +140,7 @@ class TestReleaseManager(BaseLinkedAppsTest):
         self.assertEqual(original_version + 1, self.linked_application.version)
         self.assertTrue(self.linked_application.is_released)
 
+    @patch_validate_xform()
     def test_app_update_then_fail(self):
         self._make_master1_build(True)
         # The missing validate_xform patch means this test will fail on travis, but make sure it also fails locally

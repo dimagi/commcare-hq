@@ -15,7 +15,6 @@ from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.test_utils import unit_testing_only
 
 TEST_DOMAIN_NAME = 'test-domain'
@@ -69,7 +68,6 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
 
 @contextmanager
 def create_case(domain, case_type, **kwargs):
-    assert should_use_sql_backend(domain), domain
     case = CaseFactory(domain).create_case(case_type=case_type, **kwargs)
     try:
         yield case

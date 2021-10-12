@@ -26,13 +26,11 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import restrict_user_by_location
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.util.test_utils import flag_enabled, flag_disabled
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.workbook_reading import make_worksheet
 
 
-@run_with_sql_backend
 class ImporterTest(TestCase):
 
     def setUp(self):
