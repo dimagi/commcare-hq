@@ -564,8 +564,8 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
             request.couch_user and request.couch_user.is_dimagi
             or toggles.MOBILE_PRIVILEGES_FLAG.enabled(request.couch_user.username)
         ):
-            return not_found(request)
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+            return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return not_found(request)
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
