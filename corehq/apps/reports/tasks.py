@@ -436,14 +436,8 @@ def _extract_form_attachment_info(form, properties):
         'username': form.get_data('form/meta/username')
     }
 
-    # TODO make form.attachments always return objects that conform to a
-    # uniform interface. XFormInstance attachment values are dicts, and
-    # XFormInstanceSQL attachment values are BlobMeta objects.
     for attachment_name, attachment in form.attachments.items():
-        if hasattr(attachment, 'content_type'):
-            content_type = attachment.content_type
-        else:
-            content_type = attachment['content_type']
+        content_type = attachment.content_type
         if content_type == 'text/xml':
             continue
 
@@ -454,17 +448,8 @@ def _extract_form_attachment_info(form, properties):
 
         if not properties or question_id in properties:
             extension = str(os.path.splitext(attachment_name)[1])
-            if hasattr(attachment, 'content_length'):
-                # BlobMeta
-                size = attachment.content_length
-            elif 'content_length' in attachment:
-                # dict from BlobMeta.to_json()
-                size = attachment['content_length']
-            else:
-                # couch attachment dict
-                size = attachment['length']
             form_info['attachments'].append({
-                'size': size,
+                'size': attachment.content_length,
                 'name': attachment_name,
                 'question_id': question_id,
                 'extension': extension,

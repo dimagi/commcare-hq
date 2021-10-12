@@ -14,7 +14,6 @@ from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
-from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import InvalidCaseIndex, IllegalCaseId
 from django.conf import settings
 
@@ -338,9 +337,7 @@ def extract_case_blocks(doc, include_path=False):
 
     Repeat nodes will all share the same path.
     """
-    if isinstance(doc, XFormInstance):
-        form = doc.to_json()['form']
-    elif isinstance(doc, dict):
+    if isinstance(doc, dict):
         form = doc
     else:
         form = doc.form_data
