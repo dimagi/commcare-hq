@@ -108,6 +108,7 @@ class SuiteGenerator(object):
                 remote_requests.get_module_contributions(module, detail_section_elements)
             )
 
+        for module in self.modules:
             if self.app.supports_session_endpoints:
                 self.suite.endpoints.extend(
                     session_endpoints.get_module_contributions(module)
