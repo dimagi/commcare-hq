@@ -2485,8 +2485,7 @@ class ModuleDetailsMixin(object):
             ('ref_long', self.ref_details.long, False),
         ]
         custom_detail = self.case_details.short.custom_xml
-        registry_search = self.search_config.data_registry
-        if module_offers_search(self) and not custom_detail and not registry_search:
+        if module_offers_search(self) and not custom_detail:
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
