@@ -761,7 +761,7 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         return toggles.DATA_REGISTRY_CASE_UPDATE_REPEATER.enabled(domain)
 
     def get_url(self, repeat_record):
-        new_domain = self.payload_doc(repeat_record).get_case_property('target_case_domain')
+        new_domain = self.payload_doc(repeat_record).get_case_property('target_domain')
         return self.connection_settings.url.format(domain=new_domain)
 
     def send_request(self, repeat_record, payload):
