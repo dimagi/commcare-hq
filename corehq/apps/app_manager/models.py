@@ -5814,6 +5814,9 @@ def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
             messages.warning(request, _("Copying the application succeeded, but the application will have errors "
                                         "because your application contains a Mobile Report Module that references "
                                         "a UCR configured in this project space. Multimedia may be absent."))
+    except ResourceNotFound:
+        messages.warning(request, _("Copying the application succeeded, but the application is missing "
+                                    "multimedia file(s)."))
 
     if not app.is_remote_app():
         enable_usercase_if_necessary(app)
