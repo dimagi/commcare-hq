@@ -23,7 +23,6 @@ from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
 
 from .json2xml import convert_form_to_xml
@@ -76,13 +75,6 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_xforms(cls, domain=None):
-        logger.debug("Deleting all Couch xforms for domain %s", domain)
-        cls._delete_all(XFormInstance.get_db(), XFormInstanceSQL.ALL_DOC_TYPES, domain)
-        FormProcessorTestUtils.delete_all_sql_forms(domain)
-
-    @classmethod
-    @unit_testing_only
-    def delete_all_sql_forms(cls, domain=None):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         logger.debug("Deleting all SQL xforms for domain %s", domain)
         params = {"type_code__in": [CODES.form_xml, CODES.form_attachment]}
@@ -91,6 +83,8 @@ class FormProcessorTestUtils(object):
         for db in get_db_aliases_for_partitioned_query():
             BlobMeta.objects.using(db).filter(**params).delete()
         cls._delete_all_sql_sharded_models(XFormInstanceSQL, domain)
+
+    delete_all_sql_forms = delete_all_xforms
 
     @classmethod
     @unit_testing_only
