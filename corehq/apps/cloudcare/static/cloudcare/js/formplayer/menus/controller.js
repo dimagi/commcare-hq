@@ -140,12 +140,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             },
         });
 
+        var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain,
+            caseDomain = model.smartLinkParams.domain,
+            isCrossDomain = caseDomain && caseDomain !== userDomain;
         $('#select-case').off('click').click(function () {
             var smartLinkTemplate = undefined;
             if (model.smartLinkParams) {
-                var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain,
-                    caseDomain = model.smartLinkParams.domain;
-                if (caseDomain && caseDomain !== userDomain) {
+                if (isCrossDomain) {
                     var currentAppId = Util.currentUrlToObject().appId,
                         currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", currentAppId),
                         appId = currentApp.get("upstream_app_id") || currentApp.get("copy_of") || appId;
@@ -158,6 +159,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
         $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
+        var continueText = gettext("Continue");
+        if (isCrossDomain) {
+            continueText = _.template(gettext("Continue to <%= domain %>"))({domain: caseDomain});
+        }
+        $('#case-detail-modal').find('.js-detail-continue').text(continueText);
         $('#case-detail-modal').modal('show');
 
         if (model.isPersistentDetail) {
