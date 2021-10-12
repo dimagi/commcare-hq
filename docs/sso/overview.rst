@@ -10,7 +10,7 @@ username and password across several related, but independent, applications.
 .. note::
     Pay attention the difference between **authentication** and **authorization**.
 
-    **Authentication** is the process used to identity whether a user is who they say they are.
+    **Authentication** is the process used to identify whether the credentials a user provides are valid
 
     **Authorization** is the process used to determine the set of permissions to grant a user
     that determines what they can view or edit on the system.
