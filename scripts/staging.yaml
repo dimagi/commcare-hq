@@ -56,7 +56,6 @@ branches:
     #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
-    - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - ce/bulk-case-search # Cal July 6
@@ -89,4 +88,5 @@ branches:
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - gh/partition-calc-prop-task # Graham Oct 11
     - ml/make-mobile-privileges-unreachable # Minha Oct 12
+    - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
 submodules: { }
