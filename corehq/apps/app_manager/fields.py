@@ -218,7 +218,7 @@ def get_app_sources(domain):
 
 def get_registry_case_sources(domain):
     return {
-        registry.name: {
+        registry.slug: {
             "name": registry.name,
             "case": [{"text": t, "value": t} for t in registry.wrapped_schema.case_types],
             "form": []
