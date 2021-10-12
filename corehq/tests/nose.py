@@ -226,8 +226,7 @@ class HqdbContext(DatabaseContext):
             # pass this on to the Django runner to avoid creating databases
             # that already exist
             self.runner.keepdb = True
-        else:
-            call_command('sync_couch_views')
+        call_command('sync_couch_views')
         super(HqdbContext, self).setup()
         temporary_db_setup()
 
