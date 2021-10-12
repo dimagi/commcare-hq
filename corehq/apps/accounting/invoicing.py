@@ -336,6 +336,9 @@ class DomainWireInvoiceFactory(object):
         return wire_invoice
 
     def create_wire_credits_invoice(self, items, amount):
+        """
+        NOTE: Ensure items and amount are json serializable since it will be passed to celery
+        """
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
         create_wire_credits_invoice.delay(
             domain_name=self.domain.name,
