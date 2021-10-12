@@ -28,6 +28,17 @@ class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport,
         'corehq.apps.reports.filters.simple.SimpleUsername',
     ]
 
+    @classmethod
+    def allow_access(cls, request):
+        return (
+            hasattr(request, 'couch_user')
+            and request.couch_user.is_domain_admin(request.domain)
+        )
+
+    @classmethod
+    def show_in_user_roles(cls, *args, **kwargs):
+        return False
+
     @property
     def headers(self):
         return DataTablesHeader(
