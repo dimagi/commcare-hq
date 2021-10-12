@@ -148,6 +148,7 @@ class ApplicationDataSourceUIHelper(object):
         # NOTE: This corresponds to a view-model that must be initialized in your template.
         # See the doc string of this class for more information.
         self.application_field.widget.attrs = {'data-bind': 'value: application'}
+        self.registry_slug_field.widget.attrs = {'data-bind': 'value: registrySlug'}
         self.source_type_field.widget.attrs = {'data-bind': 'value: sourceType'}
         self.source_field.widget.attrs = {'data-bind': '''
             optionsText: function(item){return item.text},
@@ -158,12 +159,9 @@ class ApplicationDataSourceUIHelper(object):
         if self.enable_registry:
             self.application_field.widget.attrs['data-bind'] += ", disable: registrySlug() != '' || " \
                                                                 "isDataFromOneProject() == 'false'"
-            self.registry_slug_field.widget.attrs = {'data-bind': '''
-                disable: sourceType() != 'case' || application() != '' || isDataFromOneProject() == 'true',
-                optionsText: function(item){return item.text},
-                optionsValue: function(item){return item.value},
-                value: registrySlug
-            '''}
+            self.registry_slug_field.widget.attrs['data-bind'] += ", disable: sourceType() != 'case' || " \
+                                                                  "application() != '' || " \
+                                                                  "isDataFromOneProject() == 'true'"
             self.source_field.widget.attrs['data-bind'] += ", options: _.union(" \
                                                            "sourcesMap[application()][sourceType()], " \
                                                            "sourcesMap[registrySlug()][sourceType()])"
