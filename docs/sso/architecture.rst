@@ -2,7 +2,7 @@ Architecture
 ==============
 
 .. note::
-    Everything related on SSO on CommCare HQ can be found in `corehq.apps.sso`
+    Everything related to SSO on CommCare HQ can be found in `corehq.apps.sso`
 
 We have four primary models in our current SSO architecture, which is
 based on the SAML 2.0 protocol.
