@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from testil import assert_raises
+from testil import assert_raises, eq
 
 from .utils import es_test, es_test_attr
 from ..exceptions import ESRegistryError
@@ -74,7 +74,7 @@ class TestSetupTeardownClassDecoratedAndCalled(BaseSetupTeardownCatsClass):
         # non-standard: test that the class is torn down
         with assert_raises(ESRegistryError):
             verify_registered(CATS)
-        assert cls.state_log == ["class_up", "class_down"]
+        eq(cls.state_log, ["class_up", "class_down"])
 
     def test_class_is_setup(self):
         verify_registered(CATS)
@@ -92,7 +92,7 @@ class TestSetupTeardownDecoratedAndCalled(SimpleTestCase):
         # non-standard: test that the instance is torn down
         with assert_raises(ESRegistryError):
             verify_registered(CATS)
-        assert cls.state_log == ["instance_up", "instance_down"]
+        eq(cls.state_log, ["instance_up", "instance_down"])
 
     def setUp(self):
         super().setUp()
@@ -161,6 +161,15 @@ def test_setup_class_expects_classmethods():
 
             def setUpClass(self):
                 pass
+
+
+@es_test_attr
+def test_teardown_class_expects_classmethods():
+
+    with assert_raises(ValueError):
+
+        @es_test(index=PIGS, setup_class=True)
+        class TestMissingClassmethods:
 
             def tearDownClass(self):
                 pass
