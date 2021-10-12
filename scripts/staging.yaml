@@ -78,7 +78,6 @@ branches:
     - dmr/throttle-system-forms  # Danny Sept 24
     - gh/erm/link-reports-and-keywords-on-push-take2 # Graham Sept 28
     - gh/remove-pickles/sms # Graham Sept 28
-    - ml/remove-pickles-case-importer #Minha Sept 30
     - es/webuser-activity  # Ethan Sept 30
     - rc/data-preview-accessibility # Robert Oct 5
     - dependabot/npm_and_yarn/datatables.net-1.11.3 # Amit Oct 6
@@ -89,4 +88,5 @@ branches:
     - ml/remove-pickles-phonelog # Minha Oct 7
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - gh/partition-calc-prop-task # Graham Oct 11
+    - ml/make-mobile-privileges-unreachable # Minha Oct 12
 submodules: { }
