@@ -163,7 +163,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         if (isCrossDomain) {
             continueText = _.template(gettext("Continue to <%= domain %>"))({domain: caseDomain});
         }
-        $('#case-detail-modal').find('.js-detail-continue').html(continueText);
+        $('#case-detail-modal').find('.js-detail-continue').text(continueText);
         $('#case-detail-modal').modal('show');
 
         if (model.isPersistentDetail) {
