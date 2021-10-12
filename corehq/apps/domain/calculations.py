@@ -329,7 +329,7 @@ def dom_calc(calc_tag, dom, extra_arg=''):
     return ans
 
 
-@quickcache([], timeout=60 * 60)
+@quickcache([], timeout=23 * 60 * 60)
 def all_domain_stats():
     webuser_counts = defaultdict(int)
     commcare_counts = defaultdict(int)
