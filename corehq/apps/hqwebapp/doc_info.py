@@ -4,7 +4,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.users.util import raw_username
 from corehq.form_processor.models import XFormInstanceSQL
-from dimagi.ext.jsonobject import *
+from dimagi.ext.jsonobject import BooleanProperty, JsonObject, StringProperty
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 
@@ -68,8 +68,8 @@ def get_doc_info_couch(doc, domain_hint=None, cache=None):
     generic_delete = doc_type.endswith(DELETED_SUFFIX)
 
     def has_doc_type(doc_type, expected_doc_type):
-        return (doc_type == expected_doc_type or
-            doc_type == ('%s%s' % (expected_doc_type, DELETED_SUFFIX)))
+        return (doc_type == expected_doc_type
+            or doc_type == ('%s%s' % (expected_doc_type, DELETED_SUFFIX)))
 
     if cache and doc_id in cache:
         return cache[doc_id]
@@ -149,7 +149,7 @@ def get_doc_info_couch(doc, domain_hint=None, cache=None):
             display=doc['name'],
             link=reverse(
                 urlname,
-                kwargs={'domain' : doc['name']}
+                kwargs={'domain': doc['name']}
             ),
             is_deleted=generic_delete,
         )

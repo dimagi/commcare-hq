@@ -72,7 +72,8 @@ class Command(BaseCommand):
         }
         handlers.update({doc_type: compare_xforms for doc_type in XFormInstanceSQL.DOC_TYPE_TO_STATE})
         try:
-            primary_count, es_count, primary_only, es_only = handlers[doc_type](domain, doc_type, startdate, enddate)
+            primary_count, es_count, primary_only, es_only = \
+                handlers[doc_type](domain, doc_type, startdate, enddate)
         except KeyError:
             raise CommandError('Unsupported doc type. Use on of: {}'.format(', '.join(handlers)))
 
