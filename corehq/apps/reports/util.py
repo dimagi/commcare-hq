@@ -412,6 +412,7 @@ class DatatablesParams(object):
     def __init__(self, count, start, desc, echo, search=None):
         self.count = count
         self.start = start
+        self.end = start + count
         self.desc = desc
         self.echo = echo
         self.search = search
