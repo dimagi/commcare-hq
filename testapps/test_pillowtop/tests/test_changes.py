@@ -6,14 +6,14 @@ from django.test import TestCase
 from pillowtop.feed.couch import get_current_seq
 from pillowtop.tests.utils import FakeConstructedPillow
 
-from toggle.models import Toggle as ArbitraryModelInMainDB
+from corehq.util.couchdb_management import couch_config
 
 
 class ChangeFeedDbTest(TestCase):
 
     def setUp(self):
         super(ChangeFeedDbTest, self).setUp()
-        self.couch_db = ArbitraryModelInMainDB.get_db()
+        self.couch_db = couch_config.get_db(None)
         self.update_seq = get_current_seq(self.couch_db)
 
     def test_basic_functionality(self):

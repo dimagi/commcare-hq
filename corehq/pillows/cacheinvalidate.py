@@ -8,6 +8,8 @@ from pillowtop.models import DjangoPillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 
+from corehq.util.couchdb_management import couch_config
+
 pillow_logging = logging.getLogger("pillowtop")
 
 
@@ -82,8 +84,8 @@ class CacheInvalidateProcessor(PillowProcessor):
 
 
 def get_main_cache_invalidation_pillow(pillow_id, **kwargs):
-    from toggle.models import Toggle  # arbitrary model in main db
-    return _get_cache_invalidation_pillow(pillow_id, Toggle.get_db(), couch_filter="hqadmin/not_case_form")
+    main_db = couch_config.get_db(None)
+    return _get_cache_invalidation_pillow(pillow_id, main_db, couch_filter="hqadmin/not_case_form")
 
 
 def get_user_groups_cache_invalidation_pillow(pillow_id, **kwargs):
