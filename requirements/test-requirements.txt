@@ -32,7 +32,7 @@ https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/re
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2020.6.20
+certifi==2021.5.30
     # via
     #   requests
     #   sentry-sdk
