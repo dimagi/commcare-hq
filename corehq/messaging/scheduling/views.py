@@ -46,7 +46,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_count_of_active_schedule_instances_due,
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
-from corehq.messaging.tasks import initiate_messaging_rule_run
+from corehq.messaging.tasks import initiate_rule_run
 from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.messaging.scheduling.view_helpers import (
     get_conditional_alert_headers,
@@ -694,7 +694,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
 
             schedule.active = active_flag
             schedule.save()
-            initiate_messaging_rule_run(rule)
+            initiate_rule_run(rule)
 
         return JsonResponse({
             'status': 'success',
@@ -714,7 +714,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
             minutes_remaining = helper.rule_initiation_key_minutes_remaining()
             return JsonResponse({'status': 'error', 'minutes_remaining': minutes_remaining})
 
-        initiate_messaging_rule_run(rule)
+        initiate_rule_run(rule)
         return JsonResponse({
             'status': 'success',
             'rule': self._format_rule_for_json(rule),
@@ -885,7 +885,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.criteria_form.save_criteria(rule)
                 self.schedule_form.save_rule_action_and_schedule(rule)
 
-            initiate_messaging_rule_run(rule)
+            initiate_rule_run(rule)
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
