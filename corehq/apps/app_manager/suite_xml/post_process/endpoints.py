@@ -1,8 +1,4 @@
-from typing import List
-
-from corehq.apps.app_manager.suite_xml.contributors import (
-    SuiteContributorByModule,
-)
+from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.post_process.workflow import (
     CommandId,
     WorkflowDatumMeta,
@@ -19,7 +15,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 from corehq.util.timer import time_method
 
 
-class SessionEndpointContributor(SuiteContributorByModule):
+class EndpointsHelper(PostProcessor):
     """
     Generates "Session Endpoints" - user-defined labels for forms or modules.
     They end up as entries in the suite file that declare stack operations
@@ -28,15 +24,14 @@ class SessionEndpointContributor(SuiteContributorByModule):
     """
 
     @time_method()
-    def get_module_contributions(self, module) -> List[SessionEndpoint]:
-        endpoints = []
-        if module.session_endpoint_id:
-            endpoints.append(self._make_session_endpoint(module))
-        if module.module_type != "shadow":
-            for form in module.get_suite_forms():
-                if form.session_endpoint_id:
-                    endpoints.append(self._make_session_endpoint(module, form))
-        return endpoints
+    def update_suite(self):
+        for module in self.modules:
+            if module.session_endpoint_id:
+                self.suite.endpoints.append(self._make_session_endpoint(module))
+            if module.module_type != "shadow":
+                for form in module.get_suite_forms():
+                    if form.session_endpoint_id:
+                        self.suite.endpoints.append(self._make_session_endpoint(module, form))
 
     def _make_session_endpoint(self, module, form=None):
         if form is not None:
@@ -45,8 +40,7 @@ class SessionEndpointContributor(SuiteContributorByModule):
             endpoint_id = module.session_endpoint_id
 
         stack = Stack()
-        helper = EndpointsHelper(self.suite, self.app)
-        children = helper.get_frame_children(module, form)
+        children = self.get_frame_children(module, form)
         argument_ids = self._get_argument_ids(children)
 
         # Add a claim request for each endpoint argument.
@@ -85,12 +79,6 @@ class SessionEndpointContributor(SuiteContributorByModule):
         frame.add_datum(
             StackDatum(id=arg_id, value=f"${arg_id}")
         )
-
-
-class EndpointsHelper(object):
-    def __init__(self, suite, app):
-        self.suite = suite
-        self.app = app
 
     def get_frame_children(self, module, form):
         helper = WorkflowHelper(self.suite, self.app, self.app.get_modules())

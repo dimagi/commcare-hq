@@ -5,12 +5,12 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
+from corehq.apps.app_manager.suite_xml.post_process.endpoints import EndpointsHelper
 from corehq.apps.app_manager.suite_xml.post_process.instances import (
     get_all_instances_referenced_in_xpaths,
 )
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowDatumMeta
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
-from corehq.apps.app_manager.suite_xml.sections.endpoints import EndpointsHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
@@ -328,7 +328,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
         return elements
 
     def get_endpoint_contributions(self, module, form, endpoint_id, detail_section_elements):
-        helper = EndpointsHelper(self.suite, self.app)
+        helper = EndpointsHelper(self.suite, self.app, [module])
         children = helper.get_frame_children(module, form)
         elements = []
         for child in children:
