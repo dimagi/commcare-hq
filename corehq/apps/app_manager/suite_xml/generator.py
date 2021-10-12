@@ -24,8 +24,8 @@ from corehq.apps.app_manager.suite_xml.post_process.workflow import (
 from corehq.apps.app_manager.suite_xml.sections.details import (
     DetailContributor,
 )
-from corehq.apps.app_manager.suite_xml.sections.endpoints import (
-    SessionEndpointContributor,
+from corehq.apps.app_manager.suite_xml.sections.endpoints import (  # TODO: move
+    EndpointsHelper,
 )
 from corehq.apps.app_manager.suite_xml.sections.entries import (
     EntriesContributor,
@@ -88,7 +88,6 @@ class SuiteGenerator(object):
         entries = EntriesContributor(self.suite, self.app, self.modules, self.build_profile_id)
         menus = MenuContributor(self.suite, self.app, self.modules, self.build_profile_id)
         remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
-        session_endpoints = SessionEndpointContributor(self.suite, self.app, self.modules)
 
         if any(module.is_training_module for module in self.modules):
             training_menu = LocalizedMenu(id='training-root')
@@ -108,12 +107,6 @@ class SuiteGenerator(object):
                 remote_requests.get_module_contributions(module, detail_section_elements)
             )
 
-        for module in self.modules:
-            if self.app.supports_session_endpoints:
-                self.suite.endpoints.extend(
-                    session_endpoints.get_module_contributions(module)
-                )
-
         if training_menu:
             self.suite.menus.append(training_menu)
 
@@ -122,6 +115,8 @@ class SuiteGenerator(object):
             SchedulerFixtureContributor(self.suite, self.app, self.modules),
         ])
 
+        if self.app.supports_session_endpoints:
+            EndpointsHelper(self.suite, self.app, self.modules).update_suite()
         if self.app.enable_post_form_workflow:
             WorkflowHelper(self.suite, self.app, self.modules).update_suite()
         if self.app.use_grid_menus:

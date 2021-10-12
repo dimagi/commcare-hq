@@ -328,7 +328,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
         return elements
 
     def get_endpoint_contributions(self, module, form, endpoint_id, detail_section_elements):
-        helper = EndpointsHelper(self.suite, self.app)
+        helper = EndpointsHelper(self.suite, self.app, [module])
         children = helper.get_frame_children(module, form)
         elements = []
         for child in children:
