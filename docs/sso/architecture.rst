@@ -63,7 +63,7 @@ with their username and password. Generally, these users are one or two
 enterprise admins (or other special users).
 
 We require at least one user to be exempt from SSO login in the event that
-the `IdentityProvider` is mis-configured or the certificate expires and a user
+the `IdentityProvider` is misconfigured or the certificate expires and a user
 needs to gain access to their enterprise console to fix the situation.
 
 
