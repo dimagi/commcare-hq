@@ -86,5 +86,5 @@ branches:
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - ml/make-mobile-privileges-unreachable # Minha Oct 12
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
-    - ml/remove-pickles-user-importer #Minha Oct 13
+    - ml/remove-pickles-user-importer # Minha Oct 13
 submodules: { }
