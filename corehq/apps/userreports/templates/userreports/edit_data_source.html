@@ -21,8 +21,7 @@
                 data-container="body"
                 data-content="{% trans_html_attr "Rebuilding data sources erases all the existing data and will start populating it again. While the rebuild is happening, reports based on this data source will show incomplete data" %}"
                 data-trigger="hover"
-                id="data-source-rebuild-btn"
-                {% if is_rebuilding or data_source.disable_destructive_rebuild %}disabled{% endif %}>
+                {% if data_source.disable_destructive_rebuild %}disabled{% endif %}>
                 {% trans 'Rebuild Data Source'%}
               </button>
               {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for #}
@@ -35,7 +34,7 @@
               {% if is_rebuilding %}
                 <span class="hq-help-template"
                   data-title="{% trans_html_attr "Rebuilding Data Source" %}"
-                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this data source." %}"
+                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this data source. Next rebuild will start when the previous rebuilds finishes" %}"
                   data-placement="left"></span>
               {% endif %}
             </div>
@@ -64,6 +63,13 @@
             <li>
               <a class="submit-dropdown-form"
                  href=""
+                {% if is_rebuilding %}
+                  data-toggle="popover"
+                  title="Warning"
+                  data-container="body"
+                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this data source. Next rebuild will start when the previous rebuilds finishes" %}"
+                  data-trigger="hover"
+                {% endif %}
                  data-action="{% url 'build_in_place' domain data_source.get_id %}">
                 {% trans 'Rebuild Table in Place' %}
               </a>
