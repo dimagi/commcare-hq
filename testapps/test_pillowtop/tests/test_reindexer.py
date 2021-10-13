@@ -136,7 +136,6 @@ class CheckpointCreationTest(CallCenterDomainMockTest):
 @generate_cases([
     ('app', 'ApplicationToElasticsearchPillow'),
     ('case', 'CaseToElasticsearchPillow'),
-    ('form', 'XFormToElasticsearchPillow'),
     ('domain', 'KafkaDomainPillow'),
     ('user', 'UserPillow'),
     ('group', 'GroupPillow'),
@@ -174,7 +173,6 @@ def test_checkpoint_creation(self, reindex_id, pillow_name):
     ('sql-form', 'xform-pillow'),
     ('groups-to-user', 'UserPillow'),
     ('case', 'case-pillow'),
-    ('form', 'xform-pillow'),
     ('report-case', 'case-pillow'),
     ('report-xform', 'xform-pillow'),
     ('user', 'user-pillow'),
