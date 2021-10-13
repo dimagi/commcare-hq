@@ -2,6 +2,7 @@ import functools
 
 from celery.exceptions import TimeoutError
 from celery.task import task
+from celery.result import AsyncResult
 
 from django.db import DEFAULT_DB_ALIAS
 
@@ -17,15 +18,16 @@ from corehq.apps.user_importer.models import UserUploadRecord
 USER_UPLOAD_CHUNK_SIZE = 1000
 
 
-@task
-def import_users_and_groups(domain, user_specs, group_specs, upload_user_id, upload_record_id, is_web_upload,
+@task(bind=True)
+def import_users_and_groups(self, domain, user_specs, group_specs, upload_user_id, upload_record_id, is_web_upload,
                             task=None):
     from corehq.apps.user_importer.importer import create_or_update_commcare_users_and_groups, \
         create_or_update_groups, create_or_update_web_users
     if task is None:
-        task = import_users_and_groups
-    elif task == 'parallel_import_task':
-        task = parallel_import_task
+        task = self
+    else:
+        #parallel_import_task is the only place that passes a task argument
+        task = AsyncResult(task)
     DownloadBase.set_progress(task, 0, 100)
 
     total = len(user_specs) + len(group_specs)
@@ -70,10 +72,10 @@ def import_users_and_groups(domain, user_specs, group_specs, upload_user_id, upl
     }
 
 
-@task(queue='ush_background_tasks')
-def parallel_import_task(domain, user_specs, group_specs, upload_user_id,
+@task(queue='ush_background_tasks', bind=True)
+def parallel_import_task(self, domain, user_specs, group_specs, upload_user_id,
                          upload_record_id, is_web_user_upload=False):
-    task = 'parallel_import_task'
+    task = self.request.id
     return import_users_and_groups(domain, user_specs, group_specs, upload_user_id, upload_record_id,
                                    is_web_user_upload, task)
 
