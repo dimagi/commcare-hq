@@ -897,6 +897,13 @@ ECD_MIGRATED_DOMAINS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+WEB_USER_ACTIVITY_REPORT = StaticToggle(
+    'web_user_activity_report',
+    'USH: Enable Web User Activity Report',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
     'ecd_enterprise_domains',
     'Enterprise Domains that are eligible to view the Explore Case Data '
