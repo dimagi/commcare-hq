@@ -169,8 +169,12 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     def _user_history_row(self, record, domain, timezone):
         return [
-            cached_user_id_to_username(record.user_id),
-            cached_user_id_to_username(record.changed_by),
+            # this works fine for changes via web, but does not work for bulk uploads
+            # advice on where to address this is appreciated
+            record.user_repr,
+            record.changed_by_repr,
+            # cached_user_id_to_username(record.user_id),
+            # cached_user_id_to_username(record.changed_by),
             _get_action_display(record.action),
             record.changed_via,
             list(get_messages(record.change_messages)),
