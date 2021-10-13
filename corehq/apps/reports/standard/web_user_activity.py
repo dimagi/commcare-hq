@@ -109,13 +109,13 @@ class EventFormatter:
         slug = event.view_kwargs.get('report_slug')
         if slug and slug in self._report_displays_by_slug:
             return self._report_displays_by_slug[slug]
-        return "Unknown"
+        return _("Unknown")
 
     @cached_property
     def _report_displays_by_slug(self):
         from corehq.reports import REPORTS
         return {
-            report.slug: _link(report.name, report.get_url(self.domain))
+            report.slug: _link(_(report.name), report.get_url(self.domain))
             for tab in REPORTS(self.project) for report in tab[1]
         }
 
