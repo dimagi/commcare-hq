@@ -894,6 +894,7 @@ WEB_USER_ACTIVITY_REPORT = StaticToggle(
     'USH: Enable Web User Activity Report',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Activity+Report',
 )
 
 ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
