@@ -87,4 +87,5 @@ branches:
     - ml/make-mobile-privileges-unreachable # Minha Oct 12
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
+    - gh/remove-couchapps-models # Graham Oct 13
 submodules: { }
