@@ -13,7 +13,6 @@ from corehq.apps.locations.document_store import (
 from corehq.apps.sms.document_stores import SMSDocumentStore
 from corehq.form_processor.document_stores import (
     DocStoreLoadTracker,
-    LedgerV1DocumentStore,
     CaseDocumentStore,
     FormDocumentStore,
     LedgerV2DocumentStore,
@@ -35,7 +34,6 @@ FORM_SQL = 'form-sql'
 CASE_SQL = 'case-sql'
 SMS = 'sms'
 LEDGER_V2 = 'ledger-v2'
-LEDGER_V1 = 'ledger-v1'
 LOCATION = 'location'
 SYNCLOG_SQL = 'synclog-sql'
 
@@ -62,9 +60,6 @@ def get_document_store(data_source_type, data_source_name, domain, load_source="
         load_counter = sms_load_counter
     elif LEDGER_V2 in type_or_name:
         store = LedgerV2DocumentStore(domain)
-        load_counter = ledger_load_counter
-    elif LEDGER_V1 in type_or_name:
-        store = LedgerV1DocumentStore(domain)
         load_counter = ledger_load_counter
     elif LOCATION in type_or_name:
         return LocationDocumentStore(domain)

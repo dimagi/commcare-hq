@@ -1,5 +1,5 @@
 from casexml.apps.case.signals import cases_received
-from casexml.apps.case.models import XFormInstance
+from couchforms.models import XFormInstance
 from fluff.signals import indicator_document_updated
 import json
 from dimagi.utils.couch import get_redis_client, get_redis_lock, release_lock

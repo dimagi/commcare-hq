@@ -1,11 +1,11 @@
 from corehq.apps.integration.models import GaenOtpServerSettings
 
 from corehq.apps.linked_domain.local_accessors import get_otp_settings
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
+from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_otp_settings
 
 
-class TestUpdateOTPSettings(BaseLinkedAppsTest):
+class TestUpdateOTPSettings(BaseLinkedDomainTest):
     def setUp(self):
         self.otp_setup = GaenOtpServerSettings(domain=self.domain,
                                                is_enabled=True,

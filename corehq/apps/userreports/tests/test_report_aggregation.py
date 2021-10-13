@@ -11,7 +11,6 @@ from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 
 class ConfigurableReportAggregationTestMixin(ConfigurableReportTestMixin):
@@ -37,7 +36,6 @@ class ConfigurableReportAggregationTestMixin(ConfigurableReportTestMixin):
         return view
 
 
-@run_with_sql_backend
 class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase):
     """
     Integration tests for configurable report aggregation
@@ -607,7 +605,6 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
         )
 
 
-@run_with_sql_backend
 @freeze_time("2020-12-30")
 class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, TestCase):
     @classmethod

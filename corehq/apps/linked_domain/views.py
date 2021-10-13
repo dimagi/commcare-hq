@@ -25,6 +25,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.domain.dbaccessors import domain_exists
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_or_api_key,
@@ -86,10 +87,10 @@ from corehq.apps.linked_domain.view_helpers import (
     build_domain_link_view_model,
     build_pullable_view_models_from_data_models,
     build_view_models_from_data_models,
-    get_apps,
-    get_fixtures,
-    get_keywords,
-    get_reports,
+    get_upstream_and_downstream_apps,
+    get_upstream_and_downstream_fixtures,
+    get_upstream_and_downstream_keywords,
+    get_upstream_and_downstream_reports,
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import ReleaseManagementReportDispatcher
@@ -266,22 +267,23 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         (and legacy domains that are both).
         """
         timezone = get_timezone_for_request()
-        master_link = get_upstream_domain_link(self.domain)
+        upstream_link = get_upstream_domain_link(self.domain)
         linked_domains = [build_domain_link_view_model(link, timezone) for link in get_linked_domains(self.domain)]
-        master_apps, linked_apps = get_apps(self.domain)
-        master_fixtures, linked_fixtures = get_fixtures(self.domain, master_link)
-        master_reports, linked_reports = get_reports(self.domain)
-        master_keywords, linked_keywords = get_keywords(self.domain)
+        upstream_apps, downstream_apps = get_upstream_and_downstream_apps(self.domain)
+        upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.domain, upstream_link)
+        upstream_reports, downstream_reports = get_upstream_and_downstream_reports(self.domain)
+        upstream_keywords, downstream_keywords = get_upstream_and_downstream_keywords(self.domain)
 
         is_superuser = self.request.couch_user.is_superuser
         timezone = get_timezone_for_request()
         view_models_to_pull = build_pullable_view_models_from_data_models(
-            self.domain, master_link, linked_apps, linked_fixtures, linked_reports, linked_keywords, timezone,
-            is_superuser=is_superuser
+            self.domain, upstream_link, downstream_apps, downstream_fixtures, downstream_reports,
+            downstream_keywords, timezone, is_superuser=is_superuser
         )
 
         view_models_to_push = build_view_models_from_data_models(
-            self.domain, master_apps, master_fixtures, master_reports, master_keywords, is_superuser=is_superuser
+            self.domain, upstream_apps, upstream_fixtures, upstream_reports, upstream_keywords,
+            is_superuser=is_superuser
         )
 
         account = BillingAccount.get_account_by_domain(self.request.domain)
@@ -296,8 +298,8 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         for domain in upstream_domains:
             upstream_domain_urls.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
 
-        if master_link and master_link.is_remote:
-            remote_linkable_ucr = get_remote_linkable_ucr(master_link)
+        if upstream_link and upstream_link.is_remote:
+            remote_linkable_ucr = get_remote_linkable_ucr(upstream_link)
         else:
             remote_linkable_ucr = None
 
@@ -305,14 +307,15 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
             'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
+            'is_superuser': is_superuser,
             'view_data': {
-                'is_downstream_domain': bool(master_link),
+                'is_downstream_domain': bool(upstream_link),
                 'upstream_domains': upstream_domain_urls,
                 'available_domains': available_domains_to_link,
-                'master_link': build_domain_link_view_model(master_link, timezone) if master_link else None,
-                'model_status': sorted(view_models_to_pull, key=lambda m: m['name']),
-                'master_model_status': sorted(view_models_to_push, key=lambda m: m['name']),
-                'linked_domains': sorted(linked_domains, key=lambda d: d['linked_domain']),
+                'upstream_link': build_domain_link_view_model(upstream_link, timezone) if upstream_link else None,
+                'view_models_to_pull': sorted(view_models_to_pull, key=lambda m: m['name']),
+                'view_models_to_push': sorted(view_models_to_push, key=lambda m: m['name']),
+                'linked_domains': sorted(linked_domains, key=lambda d: d['downstream_domain']),
                 'linkable_ucr': remote_linkable_ucr,
             },
         }
@@ -329,12 +332,12 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         detail = model['detail']
         detail_obj = wrap_detail(type_, detail) if detail else None
 
-        master_link = get_upstream_domain_link(self.domain)
+        upstream_link = get_upstream_domain_link(self.domain)
         error = ""
         try:
-            update_model_type(master_link, type_, detail_obj)
+            update_model_type(upstream_link, type_, detail_obj)
             model_detail = detail_obj.to_json() if detail_obj else None
-            master_link.update_last_pull(type_, self.request.couch_user._id, model_detail=model_detail)
+            upstream_link.update_last_pull(type_, self.request.couch_user._id, model_detail=model_detail)
         except (DomainLinkError, UnsupportedActionError) as e:
             error = str(e)
 
@@ -348,7 +351,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         return {
             'success': not error,
             'error': error,
-            'last_update': server_to_user_time(master_link.last_pull, timezone)
+            'last_update': server_to_user_time(upstream_link.last_pull, timezone)
         }
 
     @allow_remote_invocation
@@ -387,6 +390,21 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     @allow_remote_invocation
     def create_domain_link(self, in_data):
         domain_to_link = in_data['downstream_domain']
+        if not domain_exists(domain_to_link):
+            return {
+                'success': False,
+                'message': ugettext("The project space {} does not exist. Make sure the name is "
+                                    "correct and this domain hasn't been deleted.").format(domain_to_link)
+            }
+
+        if DomainLink.objects.filter(master_domain=self.domain, linked_domain=domain_to_link):
+            return {
+                'success': False,
+                'message': ugettext(
+                    "The project space {} is already linked to this project space."
+                ).format(domain_to_link)
+            }
+
         try:
             domain_link = DomainLink.link_domains(domain_to_link, self.domain)
         except DomainLinkError as e:
@@ -432,7 +450,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
     @property
     def fields(self):
-        if self.master_link:
+        if self.upstream_link:
             fields = []
         else:
             fields = ['corehq.apps.linked_domain.filters.DomainLinkFilter']
@@ -457,13 +475,13 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
     @property
     @memoized
-    def master_link(self):
+    def upstream_link(self):
         return get_upstream_domain_link(self.domain)
 
     @property
     @memoized
     def selected_link(self):
-        return self.master_link or self.domain_link
+        return self.upstream_link or self.domain_link
 
     @property
     def total_records(self):

@@ -40,7 +40,6 @@ from corehq.messaging.scheduling.tasks import (
 )
 
 
-@run_with_sql_backend
 class BaseScheduleTest(TestCase):
 
     @classmethod
@@ -213,7 +212,6 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
             self.assertEqual(send_patch.call_count, 0)
 
 
-@run_with_sql_backend
 class StopDateCasePropertyTest(TestCase):
 
     @classmethod

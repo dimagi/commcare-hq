@@ -33,7 +33,7 @@ class EnterprisePermissions(models.Model):
         try:
             return cls.objects.get(account=account)
         except cls.DoesNotExist:
-            return cls()
+            return cls(account=account)
 
     @classmethod
     @quickcache(['source_domain'], timeout=7 * 24 * 60 * 60)

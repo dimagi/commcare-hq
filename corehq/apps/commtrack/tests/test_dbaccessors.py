@@ -4,10 +4,8 @@ from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq.apps.commtrack.tests.util import bootstrap_domain, make_loc
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 
-@run_with_sql_backend
 class SupplyPointDBAccessorsTest(TestCase):
 
     def setUp(self):

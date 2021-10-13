@@ -2,8 +2,6 @@ import logging
 from collections import namedtuple
 from datetime import datetime
 
-from couchdbkit import ResourceNotFound
-
 from casexml.apps.case.exceptions import IllegalCaseId, InvalidCaseIndex, CaseValueError, PhoneDateValueError
 from casexml.apps.case.exceptions import UsesReferrals
 from corehq.apps.commtrack.exceptions import MissingProductId
@@ -15,7 +13,6 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.metrics.load_counters import form_load_counter
 from dimagi.utils.couch import LockManager
 
@@ -74,14 +71,13 @@ def _perfom_post_save_actions(form, save=True):
         case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
         case_models = case_stock_result.case_models
 
-        if interface.use_sql_domain:
-            forms = ProcessedForms(form, None)
-            stock_result = case_stock_result.stock_result
-            try:
-                FormProcessorSQL.publish_changes_to_kafka(forms, case_models, stock_result)
-            except Exception:
-                error_message = "Error publishing to kafka"
-                return ReprocessingResult(form, None, None, error_message)
+        forms = ProcessedForms(form, None)
+        stock_result = case_stock_result.stock_result
+        try:
+            FormProcessorSQL.publish_changes_to_kafka(forms, case_models, stock_result)
+        except Exception:
+            error_message = "Error publishing to kafka"
+            return ReprocessingResult(form, None, None, error_message)
 
         try:
             save and SubmissionPost.do_post_save_actions(casedb, [form], case_stock_result)
@@ -125,10 +121,7 @@ def reprocess_form(form, save=True, lock_form=True):
     with LockManager(form, lock):
         logger.info('Reprocessing form: %s (%s)', form.form_id, form.domain)
         # reset form state prior to processing
-        if should_use_sql_backend(form.domain):
-            form.state = XFormInstanceSQL.NORMAL
-        else:
-            form.doc_type = 'XFormInstance'
+        form.state = XFormInstanceSQL.NORMAL
 
         cache = interface.casedb_cache(
             domain=form.domain, lock=True, deleted_ok=True, xforms=[form],
@@ -151,47 +144,32 @@ def reprocess_form(form, save=True, lock_form=True):
 
             cases = case_stock_result.case_models
             _log_changes(cases, stock_result.models_to_save, stock_result.models_to_delete)
+            cases_needing_rebuild = _get_case_ids_needing_rebuild(form, cases)
 
-            ledgers = []
-            if should_use_sql_backend(form.domain):
-                cases_needing_rebuild = _get_case_ids_needing_rebuild(form, cases)
+            ledgers = stock_result.models_to_save
+            ledgers_updated = {ledger.ledger_reference for ledger in ledgers if ledger.is_saved()}
 
-                ledgers = stock_result.models_to_save
-                ledgers_updated = {ledger.ledger_reference for ledger in ledgers if ledger.is_saved()}
-
-                if save:
-                    for case in cases:
-                        CaseAccessorSQL.save_case(case)
-                    LedgerAccessorSQL.save_ledger_values(ledgers)
-                    FormAccessorSQL.update_form_problem_and_state(form)
-                    FormProcessorSQL.publish_changes_to_kafka(ProcessedForms(form, None), cases, stock_result)
-
-                # rebuild cases and ledgers that were affected
+            if save:
                 for case in cases:
-                    if case.case_id in cases_needing_rebuild:
-                        logger.info('Rebuilding case: %s', case.case_id)
-                        if save:
-                            # only rebuild cases that were updated
-                            detail = FormReprocessRebuild(form_id=form.form_id)
-                            interface.hard_rebuild_case(case.case_id, detail, lock=False)
+                    CaseAccessorSQL.save_case(case)
+                LedgerAccessorSQL.save_ledger_values(ledgers)
+                FormAccessorSQL.update_form_problem_and_state(form)
+                FormProcessorSQL.publish_changes_to_kafka(ProcessedForms(form, None), cases, stock_result)
 
-                for ledger in ledgers:
-                    if ledger.ledger_reference in ledgers_updated:
-                        logger.info('Rebuilding ledger: %s', ledger.ledger_reference)
-                        if save:
-                            # only rebuild updated ledgers
-                            interface.ledger_processor.rebuild_ledger_state(**ledger.ledger_reference._asdict())
+            # rebuild cases and ledgers that were affected
+            for case in cases:
+                if case.case_id in cases_needing_rebuild:
+                    logger.info('Rebuilding case: %s', case.case_id)
+                    if save:
+                        # only rebuild cases that were updated
+                        detail = FormReprocessRebuild(form_id=form.form_id)
+                        interface.hard_rebuild_case(case.case_id, detail, lock=False)
 
-            else:
-                if save:
-                    interface.processor.save_processed_models([form], cases, stock_result)
-                    from casexml.apps.stock.models import StockTransaction
-                    ledgers = [
-                        model
-                        for model in stock_result.models_to_save
-                        if isinstance(model, StockTransaction)
-                    ]
-                    for ledger in ledgers:
+            for ledger in ledgers:
+                if ledger.ledger_reference in ledgers_updated:
+                    logger.info('Rebuilding ledger: %s', ledger.ledger_reference)
+                    if save:
+                        # only rebuild updated ledgers
                         interface.ledger_processor.rebuild_ledger_state(**ledger.ledger_reference._asdict())
 
             save and SubmissionPost.do_post_save_actions(casedb, [form], case_stock_result)
@@ -223,15 +201,7 @@ def _get_case_ids_needing_rebuild(form, cases):
 
 def _get_form(form_id):
     from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-    from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
     try:
         return FormAccessorSQL.get_form(form_id)
     except XFormNotFound:
-        pass
-
-    try:
-        return FormAccessorCouch.get_form(form_id)
-    except ResourceNotFound:
-        pass
-
-    return None
+        return None

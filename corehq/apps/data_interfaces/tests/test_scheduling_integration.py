@@ -26,7 +26,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
@@ -89,7 +88,6 @@ def get_visit_scheduler_module_and_form_for_test():
     return module, form
 
 
-@run_with_sql_backend
 class CaseRuleSchedulingIntegrationTest(TestCase):
     domain = 'case-rule-scheduling-test'
 
@@ -1316,7 +1314,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertTrue(instance.active)
 
 
-@run_with_sql_backend
 class VisitSchedulerIntegrationHelperTestCase(TestCase):
     domain = 'visit-scheduler-integration-helper'
 

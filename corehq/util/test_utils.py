@@ -610,7 +610,6 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
         case_id=None, owner_id=None, user_id=None):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-    from corehq.form_processor.utils.general import should_use_sql_backend
     from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import delete_schedule_instances_by_case_id
 
     case = create_and_save_a_case(domain, case_id or uuid.uuid4().hex, case_name,
@@ -621,10 +620,7 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
     finally:
         delete_phone_numbers_for_owners([case.case_id])
         delete_schedule_instances_by_case_id(domain, case.case_id)
-        if should_use_sql_backend(domain):
-            CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
-        else:
-            case.delete()
+        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
 
 
 create_test_case.__test__ = False
@@ -819,3 +815,18 @@ def require_db_context(fn):
         if not isinstance(Domain.get_db(), mock.Mock):
             return fn(*args, **kwargs)
     return inner
+
+
+def disable_quickcache(test_case=None):
+    """A patch/decorator that disables quickcache
+
+    :param test_case: Optional test class or function. The patch is
+    applied as a decorator to this object if provided.
+    :returns: A `mock.patch` object that disables the cache when started
+    and re-enables it when stopped OR a decorated test case when
+    `test_case` is provided.
+    """
+    def call(self, *args, **kw):
+        return self.fn(*args, **kw)
+    patch = mock.patch("quickcache.quickcache_helper.QuickCacheHelper.__call__", call)
+    return patch if test_case is None else patch(test_case)

@@ -1,5 +1,10 @@
 <?xml version='1.0' ?>
 <system version="1" uiVersion="1" xmlns="{{ xmlns }}" xmlns:orx="http://openrosa.org/jr/xforms">
+    {% if form_data %}
+    {% for name, value in form_data.items %}
+    <{{ name }}>{{ value }}</{{ name }}>
+    {% endfor %}
+    {% endif %}
     <orx:meta xmlns:cc="http://commcarehq.org/xforms">
         <orx:deviceID>{{ device_id }}</orx:deviceID>
         <orx:timeStart>{{ time }}</orx:timeStart>

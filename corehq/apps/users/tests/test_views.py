@@ -4,11 +4,13 @@ from django.test import TestCase
 from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CouchUser, WebUser, Permissions
+from corehq.apps.users.models import CouchUser, WebUser, Permissions, CommCareUser, UserHistory
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views import _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.test_utils import generate_cases
 
 
@@ -151,3 +153,51 @@ class TestUpdateRoleFromView(TestCase):
         role_data["default_landing_page"] = "bad value"
         with self.assertRaises(ValueError):
             _update_role_from_view(self.domain, role_data)
+
+
+class TestDeletePhoneNumberView(TestCase):
+    domain = 'test'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.webuser_username = f"webuser@{cls.domain}.commcarehq.org"
+        cls.dummy_password = "******"
+        cls.project = create_domain(cls.domain)
+        cls.web_user = WebUser.create(cls.domain, cls.webuser_username, cls.dummy_password,
+                                      None, None)
+        cls.web_user.set_role(cls.domain, 'admin')
+        cls.web_user.save()
+        cls.commcare_user = CommCareUser.create(cls.domain, "test-user", cls.dummy_password, None, None)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.commcare_user.delete(cls.domain, deleted_by=None)
+        cls.web_user.delete(cls.domain, deleted_by=None)
+        cls.project.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        self.client.login(username=self.webuser_username, password=self.dummy_password)
+
+    def test_no_phone_number(self):
+        response = self.client.post(
+            reverse('delete_phone_number', args=[self.domain, self.commcare_user.get_id]),
+            {'phone_number': ''}
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_delete_phone_number(self):
+        phone_number = '99999999'
+        self.client.post(
+            reverse('delete_phone_number', args=[self.domain, self.commcare_user.get_id]),
+            {'phone_number': phone_number}
+        )
+
+        user_history_log = UserHistory.objects.get(user_id=self.commcare_user.get_id)
+        self.assertIsNone(user_history_log.message)
+        self.assertEqual(user_history_log.change_messages, UserChangeMessage.phone_numbers_removed([phone_number]))
+        self.assertEqual(user_history_log.changed_by, self.web_user.get_id)
+        self.assertEqual(user_history_log.by_domain, self.domain)
+        self.assertEqual(user_history_log.for_domain, self.domain)
+        self.assertEqual(user_history_log.changed_via, USER_CHANGE_VIA_WEB)

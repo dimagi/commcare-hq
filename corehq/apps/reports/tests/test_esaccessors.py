@@ -61,7 +61,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
@@ -76,7 +75,6 @@ from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
 @es_test
-@run_with_sql_backend
 class BaseESAccessorsTest(TestCase):
     es_index_info = None
 
@@ -862,7 +860,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
 
 @es_test
-@run_with_sql_backend
 class TestUserESAccessors(TestCase):
     @classmethod
     def setUpClass(cls):

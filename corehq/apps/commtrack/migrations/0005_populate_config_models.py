@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-from corehq.apps.commtrack.management.commands.populate_commtrackconfig import Command
+from corehq.util.django_migrations import block_upgrade_for_removed_migration
 
 
 class Migration(migrations.Migration):
@@ -12,7 +12,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(Command.migrate_from_migration,
-                             reverse_code=migrations.RunPython.noop,
-                             elidable=True),
+        block_upgrade_for_removed_migration("539a7399b995e03fd9ead14ca64a8e66b9b576a4")
     ]

@@ -11,7 +11,6 @@ from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -22,7 +21,6 @@ from ..utils import submit_case_blocks
 
 
 @es_test
-@run_with_sql_backend
 class TestAPISerialization(TestCase):
     domain = 'test-update-cases'
     maxDiff = None

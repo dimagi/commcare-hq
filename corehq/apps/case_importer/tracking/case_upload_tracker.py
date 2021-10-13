@@ -77,7 +77,7 @@ class CaseUpload(object):
         with open(self.get_tempfile(), 'rb') as f:
             case_upload_file_meta = persistent_file_store.write_file(f, original_filename, domain)
 
-        task = bulk_import_async.delay(config, domain, self.upload_id)
+        task = bulk_import_async.delay(config.to_json(), domain, self.upload_id)
         CaseUploadRecord(
             domain=domain,
             comment=comment,

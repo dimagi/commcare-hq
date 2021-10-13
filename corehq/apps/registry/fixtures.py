@@ -3,9 +3,11 @@ from lxml.builder import E
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.util import module_offers_registry_search
 from corehq.apps.domain.models import Domain
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import DataRegistry
+from corehq.apps.registry.utils import RegistryPermissionCheck
 
 
 class RegistryFixtureProvider(FixtureProvider):
@@ -21,15 +23,16 @@ class RegistryFixtureProvider(FixtureProvider):
             module.search_config.data_registry
             for app in apps
             for module in app.get_modules()
-            if module.search_config.data_registry
+            if module_offers_registry_search(module)
         }
         if not registry_slugs:
             return []
 
-        # TODO: apply user level permissions
+        permission_check = _get_permission_checker(restore_state)
         available_registries = {
             registry.slug: registry
             for registry in DataRegistry.objects.visible_to_domain(restore_state.domain)
+            if permission_check.can_view_registry_data(registry.slug)
         }
         needed_registries = [
             available_registries[slug] for slug in registry_slugs
@@ -59,6 +62,11 @@ def _get_apps(restore_state):
         apps = get_apps_in_domain(restore_state.domain, include_remote=False)
 
     return apps
+
+
+def _get_permission_checker(restore_state):
+    couch_user = restore_state.restore_user._couch_user
+    return RegistryPermissionCheck(restore_state.domain, couch_user)
 
 
 def _get_registry_list_fixture(registries):

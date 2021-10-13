@@ -1,7 +1,9 @@
 import datetime
+import time
 import uuid
 
 from django.test import TestCase
+from flaky import flaky
 from mock import patch
 from requests import ConnectionError
 
@@ -14,24 +16,29 @@ from couchforms.analytics import (
     get_form_analytics_metadata,
     get_last_form_submission_received,
     get_number_of_forms_in_domain,
-    update_analytics_indexes,
 )
-from couchforms.models import XFormInstance, XFormError
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_sql_backend
+from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
 from corehq.form_processor.utils import TestFormMetadata
+from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import DocTestMixin, get_form_ready_to_save, trap_extra_setup
+from corehq.util.test_utils import (
+    DocTestMixin,
+    disable_quickcache,
+    get_form_ready_to_save,
+    trap_extra_setup,
+)
 
 
 @es_test
-@run_with_sql_backend
+@disable_quickcache
 class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
     maxDiff = None
 
@@ -58,26 +65,20 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         for app in cls.apps:
             app.save()
         cls.forms = [
-            XFormInstance(domain=cls.domain,
-                          app_id=cls.app_id_1, xmlns=cls.xmlns_1),
-            XFormInstance(domain=cls.domain,
-                          app_id=cls.app_id_1, xmlns=cls.xmlns_1),
-            XFormInstance(domain=cls.domain,
-                          app_id=cls.app_id_2, xmlns=cls.xmlns_2),
+            create_form_for_test(domain=cls.domain, app_id=cls.app_id_1, xmlns=cls.xmlns_1, save=False),
+            create_form_for_test(domain=cls.domain, app_id=cls.app_id_1, xmlns=cls.xmlns_1, save=False),
+            create_form_for_test(domain=cls.domain, app_id=cls.app_id_2, xmlns=cls.xmlns_2, save=False),
         ]
-        cls.error_forms = [XFormError(domain=cls.domain)]
+        cls.error_forms = [create_form_for_test(domain=cls.domain, state=XFormInstanceSQL.ERROR, save=False)]
         cls.all_forms = cls.forms + cls.error_forms
         for form in cls.all_forms:
-            form.save()
-            send_to_elasticsearch('forms', form.to_json())
+            elastic_form = transform_xform_for_elasticsearch(form.to_json())
+            send_to_elasticsearch('forms', elastic_form)
 
         cls.es.indices.refresh(XFORM_INDEX_INFO.index)
-        update_analytics_indexes()
 
     @classmethod
     def tearDownClass(cls):
-        for form in cls.all_forms:
-            form.delete()
         for app in cls.apps:
             app.delete()
         ensure_index_deleted(XFORM_INDEX_INFO.index)
@@ -103,6 +104,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
             'xmlns': 'my://crazy.xmlns/app'
         })
 
+    @flaky(max_runs=3, rerun_filter=lambda *a: time.sleep(1) or True)
     def test_get_exports_by_form(self):
         self.assertEqual(get_exports_by_form(self.domain), [{
             'value': {'xmlns': 'my://crazy.xmlns/', 'submissions': 2},
@@ -125,7 +127,7 @@ TEST_ES_META = {
 }
 
 
-@run_with_sql_backend
+@disable_quickcache
 class CouchformsESAnalyticsTest(TestCase):
     domain = 'hqadmin-es-accessor'
 
@@ -156,7 +158,7 @@ class CouchformsESAnalyticsTest(TestCase):
         with trap_extra_setup(ConnectionError):
             cls.elasticsearch = get_es_new()
             initialize_index_and_mapping(cls.elasticsearch, XFORM_INDEX_INFO)
-            cls.forms = [create_form_and_sync_to_es(cls.now), create_form_and_sync_to_es(cls.now-cls._60_days)]
+            cls.forms = [create_form_and_sync_to_es(cls.now), create_form_and_sync_to_es(cls.now - cls._60_days)]
 
         cls.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
 

@@ -12,6 +12,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField, JSONField
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -27,8 +28,6 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
-
-from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -65,8 +64,8 @@ from corehq.apps.domain.utils import (
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
-from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.tasks import (
     tag_cases_as_deleted_and_remove_indices,
@@ -81,7 +80,6 @@ from corehq.apps.users.util import (
     user_location_data,
     username_to_user_id,
 )
-from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -89,11 +87,16 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.dates import get_timestamp
+from corehq.util.models import BouncedEmail
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
 from .models_role import (  # noqa
-    UserRole, SQLPermission, RolePermission, RoleAssignableBy, StaticRole,
+    RoleAssignableBy,
+    RolePermission,
+    SQLPermission,
+    StaticRole,
+    UserRole,
 )
 
 MAX_LOGIN_ATTEMPTS = 5
@@ -142,6 +145,8 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
 
 PARAMETERIZED_PERMISSIONS = {
     'view_reports': 'view_report_list',
+    'manage_data_registry': 'manage_data_registry_list',
+    'view_data_registry_contents': 'view_data_registry_contents_list',
 }
 
 
@@ -171,11 +176,13 @@ class Permissions(DocumentSchema):
     access_all_locations = BooleanProperty(default=True)
     access_api = BooleanProperty(default=True)
     access_web_apps = BooleanProperty(default=False)
+    edit_messaging = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
     download_reports = BooleanProperty(default=True)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
+    edit_ucrs = BooleanProperty(default=False)
 
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
@@ -188,6 +195,11 @@ class Permissions(DocumentSchema):
     login_as_all_users = BooleanProperty(default=False)
     limited_login_as = BooleanProperty(default=False)
     access_default_login_as_user = BooleanProperty(default=False)
+
+    manage_data_registry = BooleanProperty(default=False)
+    manage_data_registry_list = StringListProperty(default=[])
+    view_data_registry_contents = BooleanProperty(default=False)
+    view_data_registry_contents_list = StringListProperty(default=[])
 
     @classmethod
     def from_permission_list(cls, permission_list):
@@ -1107,8 +1119,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         except User.DoesNotExist:
             pass
         if deleted_by:
-            log_user_change(deleted_by_domain, self, deleted_by,
-                            changed_via=deleted_via, action=UserModelAction.DELETE)
+            # Commcare user is owned by the domain it belongs to so use self.domain for for_domain
+            # Web user is never deleted except in tests so keep for_domain as None
+            if self.is_commcare_user():
+                for_domain = self.domain
+                for_domain_required_for_log = True
+            else:
+                for_domain = None
+                for_domain_required_for_log = False
+            log_user_change(by_domain=deleted_by_domain, for_domain=for_domain,
+                            couch_user=self, changed_by_user=deleted_by,
+                            changed_via=deleted_via, action=UserModelAction.DELETE,
+                            for_domain_required_for_log=for_domain_required_for_log)
         super(CouchUser, self).delete()  # Call the "real" delete() method.
 
     def delete_phone_number(self, phone_number):
@@ -1538,21 +1560,41 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.has_built_app = True
             self.save()
 
-    def log_user_create(self, domain, created_by, created_via, domain_required_for_log=True):
+    def log_user_create(self, domain, created_by, created_via, by_domain_required_for_log=True):
         from corehq.apps.users.model_log import UserModelAction
 
         if settings.UNIT_TESTING and created_by is None and created_via is None:
             return
         # fallback to self if not created by any user
         created_by = created_by or self
+        # Commcare user is owned by the domain it belongs to so use self.domain for for_domain
+        # Web user is not "created" by a domain but invited so keep for_domain as None
+        if self.is_commcare_user():
+            for_domain = self.domain
+            for_domain_required_for_log = True
+        else:
+            for_domain = None
+            for_domain_required_for_log = False
         log_user_change(
-            domain,
-            self,
-            created_by,
+            by_domain=domain,
+            for_domain=for_domain,
+            couch_user=self,
+            changed_by_user=created_by,
             changed_via=created_via,
             action=UserModelAction.CREATE,
-            domain_required_for_log=domain_required_for_log,
+            by_domain_required_for_log=by_domain_required_for_log,
+            for_domain_required_for_log=for_domain_required_for_log
         )
+
+    def belongs_to_messaging_domain(self):
+        domains = (Domain.get_by_name(domain) for domain in self.domains)
+
+        # The reason we iterate through domains, rather than fetch them all at once (there is a view to do so)
+        # is due to concerns about scale. Most users belong to one or a few domains, so iteration isn't expensive.
+        # For users that DO belong to many domains, I'm working off the assumption that most of them are for
+        # enterprise domains, which have turned on messaging for most of their domains -- so we likely will
+        # short-circuit after only a few domains
+        return any(domain.granted_messaging_access for domain in domains)
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
@@ -1801,9 +1843,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.save()
         if unretired_by:
             log_user_change(
-                unretired_by_domain,
-                self,
-                unretired_by,
+                by_domain=unretired_by_domain,
+                for_domain=self.domain,
+                couch_user=self,
+                changed_by_user=unretired_by,
                 changed_via=unretired_via,
                 action=UserModelAction.CREATE,
             )
@@ -1848,7 +1891,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             django_user.delete()
         if deleted_by:
-            log_user_change(retired_by_domain, self, deleted_by,
+            log_user_change(by_domain=retired_by_domain, for_domain=self.domain,
+                            couch_user=self, changed_by_user=deleted_by,
                             changed_via=deleted_via, action=UserModelAction.DELETE)
         self.save()
 
@@ -1899,6 +1943,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return Group.by_user_id(self._id, wrap=False)
 
     def set_groups(self, group_ids):
+        """
+        :returns: True if groups were updated
+        """
         from corehq.apps.groups.models import Group
         desired = set(group_ids)
         current = set(self.get_group_ids())
@@ -1913,6 +1960,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             touched.append(group)
 
         Group.bulk_save(touched)
+        return bool(touched)
 
     def get_time_zone(self):
         if self.memoized_usercase:
@@ -2323,13 +2371,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               metadata=None, domain_required_for_log=True, **kwargs):
+               metadata=None, by_domain_required_for_log=True, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
                                               date, metadata=metadata, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
-        web_user.log_user_create(domain, created_by, created_via, domain_required_for_log=domain_required_for_log)
+        web_user.log_user_create(domain, created_by, created_via,
+                                 by_domain_required_for_log=by_domain_required_for_log)
         return web_user
 
     def is_commcare_user(self):
@@ -2724,6 +2773,9 @@ class AnonymousCouchUser(object):
     def can_edit_data(self):
         return False
 
+    def can_edit_messgaing(self):
+        return False
+
     def can_edit_apps(self):
         return False
 
@@ -3009,23 +3061,35 @@ class UserHistory(models.Model):
         (UPDATE, _('Update')),
         (DELETE, _('Delete')),
     )
-    domain = models.CharField(max_length=255, null=True)
+    by_domain = models.CharField(max_length=255, null=True)
+    for_domain = models.CharField(max_length=255, null=True)
     user_type = models.CharField(max_length=255)  # CommCareUser / WebUser
     user_id = models.CharField(max_length=128)
     changed_by = models.CharField(max_length=128)
+    # ToDo: remove post migration/reset of existing records
     message = models.TextField(blank=True, null=True)
+    # JSON structured replacement for the deprecated text message field
+    change_messages = JSONField(default=dict)
     changed_at = models.DateTimeField(auto_now_add=True, editable=False)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
     user_upload_record = models.ForeignKey(UserUploadRecord, null=True, on_delete=models.SET_NULL)
-
+    # ToDo: remove post migration/reset of existing records
     """
     dict with keys:
        changed_via: one of the USER_CHANGE_VIA_* constants
        changes: a dict of CouchUser attributes that changed and their new values
     """
     details = JSONField(default=dict)
+    # ToDo: remove blank=true post migration/reset of existing records since it will always be present
+    # same as the deprecated details.changed_via
+    # one of the USER_CHANGE_VIA_* constants
+    changed_via = models.CharField(max_length=255, blank=True)
+    # same as the deprecated details.changes
+    # a dict of CouchUser attributes that changed and their new values
+    changes = JSONField(default=dict, encoder=DjangoJSONEncoder)
 
     class Meta:
         indexes = [
-            models.Index(fields=['domain']),
+            models.Index(fields=['by_domain']),
+            models.Index(fields=['for_domain']),
         ]

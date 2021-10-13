@@ -58,7 +58,7 @@ hqDefine("linked_domain/js/domain_links", [
 
     var DomainLinksViewModel = function (data) {
         var self = {};
-        self.upstreamLink = data.master_link ? DomainLink(data.master_link) : null;
+        self.upstreamLink = data.upstream_link ? DomainLink(data.upstream_link) : null;
 
         // setup getting started view model
         var gettingStartedData = {
@@ -75,14 +75,14 @@ hqDefine("linked_domain/js/domain_links", [
         self.addDownstreamDomainViewModel = AddDownstreamDomainViewModel(addDownstreamDomainData);
 
         // can only pull content if a link with an upstream domain exists
-        var pullReleaseContentData = null;
+        var pullContentData = null;
         if (self.upstreamLink) {
-            pullReleaseContentData = {
+            pullContentData = {
                 parent: self,
-                linkedDataViewModels: _.map(data.model_status, LinkedDataViewModel),
+                linkedDataViewModels: _.map(data.view_models_to_pull, LinkedDataViewModel),
                 domainLink: self.upstreamLink,
             };
-            self.pullReleaseContentViewModel = PullReleaseContentViewModel(pullReleaseContentData);
+            self.pullContentViewModel = PullContentViewModel(pullContentData);
         }
 
         // General data
@@ -142,7 +142,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.query = ko.observable();
         self.filteredDomainLinks = ko.observableArray([]);
         self.matchesQuery = function (domainLink) {
-            return !self.query() || domainLink.linked_domain().toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+            return !self.query() || domainLink.downstreamDomain().toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
         };
         self.filter = function () {
             self.filteredDomainLinks(_.filter(self.domain_links(), self.matchesQuery));
@@ -175,8 +175,8 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.createRemoteReportLink = function (reportId) {
             _private.RMI("create_remote_report_link", {
-                "master_domain": self.upstreamLink.master_domain,
-                "linked_domain": self.upstreamLink.linked_domain(),
+                "master_domain": self.upstreamLink.upstreamDomain,
+                "linked_domain": self.upstreamLink.downstreamDomain(),
                 "report_id": reportId,
             }).done(function (data) {
                 if (data.success) {
@@ -195,11 +195,11 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.deleteLink = function (link) {
             _private.RMI("delete_domain_link", {
-                "linked_domain": link.linked_domain(),
+                "linked_domain": link.downstreamDomain(),
             }).done(function () {
                 self.domain_links.remove(link);
                 var availableDomains = self.addDownstreamDomainViewModel.availableDomains();
-                availableDomains.push(link.linked_domain());
+                availableDomains.push(link.downstreamDomain());
                 self.addDownstreamDomainViewModel.availableDomains(availableDomains.sort());
                 self.goToPage(self.currentPage);
             }).fail(function () {
@@ -220,9 +220,9 @@ hqDefine("linked_domain/js/domain_links", [
 
     var DomainLink = function (link) {
         var self = {};
-        self.linked_domain = ko.observable(link.linked_domain);
-        self.is_remote = link.is_remote;
-        self.master_domain = link.master_domain;
+        self.downstreamDomain = ko.observable(link.downstream_domain);
+        self.isRemote = link.is_remote;
+        self.upstreamDomain = link.upstream_domain;
         self.lastUpdate = link.last_update;
         self.upstreamUrl = link.upstream_url;
         self.downstreamUrl = link.downstream_url;
@@ -242,8 +242,8 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.localDownstreamDomains = ko.computed(function () {
             return self.parent.domain_links().reduce(function (result, link) {
-                if (!link.is_remote) {
-                    return result.concat(link.linked_domain());
+                if (!link.isRemote) {
+                    return result.concat(link.downstreamDomain());
                 }
                 return result;
             }, []);
@@ -278,9 +278,8 @@ hqDefine("linked_domain/js/domain_links", [
         return self;
     };
 
-    var PullReleaseContentViewModel = function (data) {
+    var PullContentViewModel = function (data) {
         var self = {};
-        // Pull Content Tab
         self.parent = data.parent;
         self.linkedDataViewModels = data.linkedDataViewModels;
         self.domainLink = data.domainLink;
@@ -327,8 +326,8 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.createLink = function () {
             _private.RMI("create_remote_report_link", {
-                "master_domain": upstreamLink.master_domain,
-                "linked_domain": upstreamLink.linked_domain(),
+                "master_domain": upstreamLink.upstreamDomain,
+                "linked_domain": upstreamLink.downstreamDomain(),
                 "report_id": self.id,
             }).done(function (data) {
                 if (data.success) {
@@ -353,25 +352,25 @@ hqDefine("linked_domain/js/domain_links", [
         var self = {};
         self.parent = data.parent;
         self.availableDomains = ko.observableArray(data.availableDomains.sort());
-        self.value = ko.observable();
+        self.domainToAdd = ko.observable();
 
         self.addDownstreamDomain = function (viewModel) {
             _private.RMI("create_domain_link", {
-                "downstream_domain": viewModel.value(),
+                "downstream_domain": viewModel.domainToAdd(),
             }).done(function (response) {
                 if (response.success) {
                     self.availableDomains(_.filter(self.availableDomains(), function (item) {
-                        return item !== viewModel.value();
+                        return item !== viewModel.domainToAdd();
                     }));
-                    self.value(null);
                     self.parent.domain_links.unshift(DomainLink(response.domain_link));
                     self.parent.goToPage(1);
                 } else {
                     var errorMessage = _.template(
-                        gettext('Unable to link project spaces. <%- error %>\nYou must remove the existing link before creating this new link.')
+                        gettext('Unable to link project spaces. <%- error %>')
                     )({error: response.message});
                     alertUser.alert_user(errorMessage, 'danger');
                 }
+                self.domainToAdd(null);
             }).fail(function () {
                 alertUser.alert_user(gettext('Unable to link project spaces.\nPlease try again, or report an issue if the problem persists.'), 'danger');
             });

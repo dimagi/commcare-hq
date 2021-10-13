@@ -3,7 +3,7 @@ import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
 
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 
 import attr
 from mock import Mock, patch
@@ -31,10 +31,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    run_with_sql_backend,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.const import (
     MAX_RETRY_WAIT,
@@ -86,7 +83,6 @@ XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>
 """
 
 
-@run_with_sql_backend
 class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
     domain = 'base-domain'
 
@@ -789,7 +785,6 @@ class TestRepeaterFormat(BaseRepeaterTest):
         ).generator, self.new_generator)
 
 
-@run_with_sql_backend
 class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
 
     @classmethod
@@ -866,7 +861,6 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
         )
 
 
-@run_with_sql_backend
 class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
 
     @classmethod
@@ -982,7 +976,7 @@ class TestRepeaterPause(BaseRepeaterTest):
         with patch.object(RepeatRecord, 'fire') as mock_fire:
             with patch.object(RepeatRecord, 'postpone_by') as mock_postpone_fire:
                 # calls _process_repeat_record():
-                self.repeat_record = self.repeater.register(CaseAccessors(self.domain_obj).get_case(CASE_ID))
+                self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
                 self.assertEqual(mock_fire.call_count, 1)
                 self.assertEqual(mock_postpone_fire.call_count, 0)
 
@@ -1033,7 +1027,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
         self.repeater.retire()
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:
-            self.repeat_record = self.repeater.register(CaseAccessors(self.domain_obj).get_case(CASE_ID))
+            self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
             _process_repeat_record(self.repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
@@ -1043,7 +1037,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
         self.repeater.retire()
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:
-            self.repeat_record = self.repeater.register(CaseAccessors(self.domain_obj).get_case(CASE_ID))
+            self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
             _process_repeat_record(self.repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")

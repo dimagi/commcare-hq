@@ -58,6 +58,11 @@ TAG_PREVIEW = Tag(
     css_class='default',
     description='',
 )
+TAG_RELEASE = Tag(
+    name='Release',
+    css_class='release',
+    description='This is a feature that is in the process of being released.',
+)
 TAG_SAAS_CONDITIONAL = Tag(
     name='SaaS - Conditional Use',
     css_class='primary',
@@ -103,7 +108,7 @@ TAG_INTERNAL = Tag(
     description="These are tools for our engineering team to use to manage the product",
 )
 # Order roughly corresponds to how much we want you to use it
-ALL_TAG_GROUPS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_DEPRECATED]
+ALL_TAG_GROUPS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_RELEASE, TAG_DEPRECATED]
 ALL_TAGS = [
                TAG_SOLUTIONS_OPEN,
                TAG_SOLUTIONS_CONDITIONAL,
@@ -239,6 +244,14 @@ class StaticToggle(object):
         domains |= self.always_enabled
         domains -= self.always_disabled
         return list(domains)
+
+    def get_enabled_users(self):
+        try:
+            toggle = Toggle.get(self.slug)
+        except ResourceNotFound:
+            return []
+
+        return [user for user in toggle.enabled_users if not user.startswith("domain:")]
 
 
 def was_domain_created_after(domain, checkpoint):
@@ -387,6 +400,36 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
             return dynamic_randomness
         except ValueError:
             return self.default_randomness
+
+
+class FeatureRelease(DynamicallyPredictablyRandomToggle):
+    """This class is designed to allow release of features in a controlled manner.
+    The primary purpose is to decouple code deploys from feature releases.
+
+    In addition the normal arguments, feature release toggles must also provide
+    an 'owner' to indicate the member of the team responsible for releasing this feature.
+    This will be displayed on the UI when editing the toggle.
+    """
+    def __init__(
+        self,
+        slug,
+        label,
+        tag,
+        namespaces,
+        owner,
+        default_randomness=0.0,
+        help_link=None,
+        description=None,
+        relevant_environments=None
+    ):
+        super().__init__(
+            slug, label, tag, namespaces,
+            default_randomness=default_randomness,
+            help_link=help_link,
+            description=description,
+            relevant_environments=relevant_environments
+        )
+        self.owner = owner
 
 
 # if no namespaces are specified the user namespace is assumed
@@ -777,6 +820,14 @@ DISABLE_WEB_APPS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Disable+access+to+Web+Apps+UI',
 )
 
+WEB_APPS_DOMAIN_BANNER = StaticToggle(
+    'web_apps_domain_banner',
+    'USH: Show current domain in web apps Login As banner',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
+)
+
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
@@ -792,7 +843,7 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
         "search first", "see more", and "skip to default case search results", Geocoder
         and other options in Webapps Case Search.
     ''',
-    TAG_INTERNAL,
+    TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -861,6 +912,13 @@ CASE_API_V0_6 = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_enable_search_index,
+)
+
+LIVEQUERY_SYNC = DynamicallyPredictablyRandomToggle(
+    'livequery_sync',
+    'Enable livequery sync algorithm',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
@@ -1208,13 +1266,6 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     'ICDS: Enable the use of locations as owners of call center cases',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
-    'not_tf_sql_backend',
-    'Domains that do not use a SQLite backend for Touchforms',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
 )
 
 CUSTOM_APP_BASE_URL = StaticToggle(
@@ -1889,6 +1940,15 @@ REFER_CASE_REPEATER = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
 
+DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
+    'data_registry_case_update_repeater',
+    'USH: Allow data registry repeater to be setup to update cases in other domains',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
+)
+
+
 WIDGET_DIALER = StaticToggle(
     'widget_dialer',
     'USH: Enable usage of AWS Connect Dialer',
@@ -2062,6 +2122,7 @@ USER_HISTORY_REPORT = StaticToggle(
     'View user history report under user management',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_USER],
+    help_link="https://confluence.dimagi.com/display/saas/User+History+Report",
 )
 
 
@@ -2085,8 +2146,9 @@ FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
     'followup_forms_as_case_list_form',
     'Option to configure follow up forms on parent case for Case List Form menu setting of '
     'child modules that use Parent Child Selection',
-    TAG_INTERNAL,
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/pages/viewpage.action?spaceKey=USH&title=Add+Form+to+Bottom+of++Case+List",
 )
 
 

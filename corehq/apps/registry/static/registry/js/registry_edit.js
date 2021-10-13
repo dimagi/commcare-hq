@@ -6,6 +6,7 @@ hqDefine("registry/js/registry_edit", [
     'hqwebapp/js/alert_user',
     'registry/js/registry_text',
     'registry/js/registry_actions',
+    'registry/js/registry_logs',
     'hqwebapp/js/components/inline_edit',
     'hqwebapp/js/select2_knockout_bindings.ko',
     'hqwebapp/js/knockout_bindings.ko', // openModal
@@ -19,6 +20,7 @@ hqDefine("registry/js/registry_edit", [
     alertUser,
     text,
     actions,
+    auditLogs,
     inlineEdit
 ) {
     ko.components.register('inline-edit', inlineEdit);
@@ -212,6 +214,11 @@ hqDefine("registry/js/registry_edit", [
                 return true;
             }
         };
+
+        self.auditLogs = auditLogs.model(self.slug, invitedDomains, initialPageData.get('logActionTypes'));
+        $('[href="#audit-logs"]').on('shown.bs.tab', function () {
+            self.auditLogs.load();
+        });
 
         return self;
     }

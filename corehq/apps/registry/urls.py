@@ -11,6 +11,7 @@ from corehq.apps.registry.views import (
     delete_registry,
     create_registry,
     validate_registry_name,
+    registry_audit_logs,
 )
 
 urlpatterns = [
@@ -24,4 +25,5 @@ urlpatterns = [
     path('delete/<slug:registry_slug>/', delete_registry, name='delete_registry'),
     path('create/', create_registry, name='create_registry'),
     path('validate_name/', validate_registry_name, name='validate_registry_name'),
+    path('audit_logs/<slug:registry_slug>/', registry_audit_logs, name='registry_audit_logs'),
 ]

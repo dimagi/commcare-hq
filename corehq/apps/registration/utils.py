@@ -82,7 +82,7 @@ def activate_new_user(
         created_by,
         created_via,
         is_admin=is_domain_admin,
-        domain_required_for_log=bool(domain),
+        by_domain_required_for_log=bool(domain),
     )
     new_user.first_name = first_name
     new_user.last_name = last_name
@@ -126,7 +126,6 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
             date_created=datetime.utcnow(),
             creating_user=current_user.username,
             secure_submissions=True,
-            use_sql_backend=True,
             first_domain_for_user=is_new_user
         )
 

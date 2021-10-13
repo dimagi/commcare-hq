@@ -24,6 +24,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.case_search.utils import (
     CaseSearchCriteria,
+    _QueryHelper,
     get_related_case_relationships,
     get_related_case_results,
     get_related_cases,
@@ -38,10 +39,7 @@ from corehq.apps.es.case_search import (
 )
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT, get_es_new
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    run_with_sql_backend,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -267,7 +265,6 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
 
 @es_test
-@run_with_sql_backend
 class TestCaseSearchLookups(TestCase):
 
     def setUp(self):
@@ -317,6 +314,11 @@ class TestCaseSearchLookups(TestCase):
                 CaseSearchES().xpath_query(self.domain, xpath_query).get_ids(),
                 output
             )
+
+    def _create_case_search_config(self):
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self.addCleanup(config.delete)
+        return config
 
     def test_simple_case_property_query(self):
         self._assert_query_runs_correctly(
@@ -456,7 +458,7 @@ class TestCaseSearchLookups(TestCase):
         )
 
     def test_date_range_criteria(self):
-        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self._create_case_search_config()
         self._assert_query_runs_correctly(
             self.domain,
             [
@@ -469,7 +471,6 @@ class TestCaseSearchLookups(TestCase):
             None,
             ['c2', 'c3']
         )
-        config.delete()
 
     def test_get_related_case_relationships(self):
         app = Application.new_app(self.domain, "Case Search App")
@@ -562,14 +563,14 @@ class TestCaseSearchLookups(TestCase):
                    return_value={"parent", "parent/parent"}), \
              patch("corehq.apps.case_search.utils.get_child_case_types", return_value={"c", "d"}), \
              patch("corehq.apps.case_search.utils.get_app_cached"):
-            cases = get_related_cases(self.domain, None, {"c"}, cases)
+            cases = get_related_cases(_QueryHelper(self.domain), None, {"c"}, cases)
 
         case_ids = Counter([case.case_id for case in cases])
         self.assertEqual(set(case_ids), {"a1", "d1"})  # c1, c2 excluded since they are in the initial list
         self.assertEqual(max(case_ids.values()), 1, case_ids)  # no duplicates
 
     def _assert_related_case_ids(self, cases, paths, ids):
-        results = get_related_case_results(self.domain, cases, paths)
+        results = get_related_case_results(_QueryHelper(self.domain), cases, paths)
         result_ids = Counter([result['_id'] for result in results])
         self.assertEqual(ids, set(result_ids))
         if result_ids:
@@ -581,9 +582,10 @@ class TestCaseSearchLookups(TestCase):
             {'_id': 'c2', 'case_type': 'song', 'description': 'Neu York'},
             {'_id': 'c3', 'case_type': 'show', 'description': 'Boston'},
         ]
-        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        config = self._create_case_search_config()
         fuzzy_properties = FuzzyProperties.objects.create(domain=self.domain, case_type='song', properties=['description'])
         config.fuzzy_properties.add(fuzzy_properties)
+        self.addCleanup(fuzzy_properties.delete)
         self._assert_query_runs_correctly(
             self.domain,
             cases,
@@ -591,18 +593,17 @@ class TestCaseSearchLookups(TestCase):
             None,
             ['c1', 'c2']
         )
-        fuzzy_properties.delete()
-        config.delete()
 
     def test_ignore_patterns(self):
         cases = [
             {'_id': 'c1', 'case_type': 'person', 'phone_number': '8675309'},
             {'_id': 'c2', 'case_type': 'person', 'phone_number': '9045555555'},
         ]
-        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        config = self._create_case_search_config()
         pattern = IgnorePatterns.objects.create(
             domain=self.domain, case_type='person', case_property='phone_number', regex="+1")
         config.ignore_patterns.add(pattern)
+        self.addCleanup(pattern.delete)
         self._assert_query_runs_correctly(
             self.domain,
             cases,
@@ -610,8 +611,6 @@ class TestCaseSearchLookups(TestCase):
             None,
             ['c1']
         )
-        pattern.delete()
-        config.delete()
 
     def test_multiple_case_types(self):
         cases = [
@@ -620,7 +619,7 @@ class TestCaseSearchLookups(TestCase):
             {'_id': 'c3', 'case_type': 'show', 'description': 'New York'},
             {'_id': 'c4', 'case_type': 'show', 'description': 'Boston'},
         ]
-        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self._create_case_search_config()
         self._assert_query_runs_correctly(
             self.domain,
             cases,
@@ -628,11 +627,10 @@ class TestCaseSearchLookups(TestCase):
             None,
             ['c1', 'c3']
         )
-        config.delete()
 
     def test_blank_case_search(self):
         # foo = '' should match all cases where foo is empty or absent
-        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self._create_case_search_config()
         self._bootstrap_cases_in_es_for_domain(self.domain, [
             {'_id': 'c1', 'foo': 'redbeard'},
             {'_id': 'c2', 'foo': 'blackbeard'},
@@ -646,10 +644,9 @@ class TestCaseSearchLookups(TestCase):
             actual = CaseSearchCriteria(self.domain, [self.case_type], criteria).search_es.get_ids()
             msg = f"{criteria} yielded {actual}, not {expected}"
             self.assertItemsEqual(actual, expected, msg=msg)
-        config.delete()
 
     def test_blank_case_search_parent(self):
-        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self._create_case_search_config()
         self._bootstrap_cases_in_es_for_domain(self.domain, [
             {'_id': 'c1', 'foo': 'redbeard'},
             {'_id': 'c2', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c1')}},
@@ -664,4 +661,3 @@ class TestCaseSearchLookups(TestCase):
             'parent/foo': ['', 'blackbeard'],
         }).search_es.get_ids()
         self.assertItemsEqual(actual, ['c4', 'c6', 'c8'])
-        config.delete()

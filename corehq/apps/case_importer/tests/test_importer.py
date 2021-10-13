@@ -26,13 +26,11 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import restrict_user_by_location
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.util.test_utils import flag_enabled, flag_disabled
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.workbook_reading import make_worksheet
 
 
-@run_with_sql_backend
 class ImporterTest(TestCase):
 
     def setUp(self):
@@ -85,7 +83,7 @@ class ImporterTest(TestCase):
         # by using a made up upload_id, we ensure it's not referencing any real file
         case_upload = CaseUploadRecord(upload_id=str(uuid.uuid4()), task_id=str(uuid.uuid4()))
         case_upload.save()
-        res = bulk_import_async.delay(self._config(['anything']), self.domain, case_upload.upload_id)
+        res = bulk_import_async.delay(self._config(['anything']).to_json(), self.domain, case_upload.upload_id)
         self.assertIsInstance(res.result, Ignore)
         update_state.assert_called_with(
             state=states.FAILURE,

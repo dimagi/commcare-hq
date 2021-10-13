@@ -2,8 +2,7 @@
 <data uiVersion="1" version="1" name="New Form1"
 	xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
 	xmlns="http://openrosa.org/formdesigner/parent">
-	<case>
-		<case_id>0bd56681dce2b7a5160f75266d1e436e</case_id>
+	<case case_id="0bd56681dce2b7a5160f75266d1e436e" xmlns="http://commcarehq.org/case/transaction/v2">
 		<date_modified>2010-10-06T07:23:23.000</date_modified>
 		<create>
 			<user_id>873a1b8c-3a02-11e0-a513-005056aa7fb5</user_id>
@@ -26,8 +25,7 @@
 		</update>
 	</case>
 	<sometag>
-		<case>
-			<case_id>0bd56681dce2b7a5140f75266d1d93a6</case_id>
+		<case case_id="0bd56681dce2b7a5140f75266d1d93a6" xmlns="http://commcarehq.org/case/transaction/v2">
 			<date_modified>2010-10-06T07:23:25.000</date_modified>
 			<create>
 				<user_id>873a1b8c-3a02-11e0-a513-005056aa7fb5</user_id>
@@ -51,8 +49,7 @@
 		</case>
 	</sometag>
 	<anothertag>
-		<case>
-			<case_id>0bd56681dce2b7a5140f75266d1d9312</case_id>
+		<case case_id="0bd56681dce2b7a5140f75266d1d9312" xmlns="http://commcarehq.org/case/transaction/v2">
 			<date_modified>2010-10-06T07:23:25.000</date_modified>
 			<create>
 				<user_id>873a1b8c-3a02-11e0-a513-005056aa7fb5</user_id>
@@ -75,8 +72,7 @@
 			</update>
 		</case>
 		<nested>
-			<case>
-				<case_id>0bd56681dce2b7a5140f75266d2064c0</case_id>
+			<case case_id="0bd56681dce2b7a5140f75266d2064c0" xmlns="http://commcarehq.org/case/transaction/v2">
 				<date_modified>2010-10-06T07:23:19.000</date_modified>
 				<create>
 					<user_id>873a1b8c-3a02-11e0-a513-005056aa7fb5</user_id>

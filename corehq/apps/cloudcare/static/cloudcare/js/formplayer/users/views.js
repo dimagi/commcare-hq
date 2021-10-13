@@ -20,9 +20,22 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             'click @ui.clear': 'onClickClearUser',
         },
         templateContext: function () {
-            return {
+            var template = "";
+            if (hqImport('hqwebapp/js/toggles').toggleEnabled('WEB_APPS_DOMAIN_BANNER')) {
+                template = gettext("Working as <b><%- restoreAs %></b> in <b><%- domain %></b>.");
+            } else {
+                template = gettext("Working as <b><%- restoreAs %></b>.");
+            }
+            template += " <a class='js-clear-user'>" + gettext("Use <%- username %>.") + "</a>";
+
+            var message = _.template(template)({
                 restoreAs: this.model.restoreAs,
                 username: this.model.getDisplayUsername(),
+                domain: FormplayerFrontend.getChannel().request('currentUser').domain,
+            });
+            return {
+                message: message,
+                restoreAs: this.model.restoreAs,
             };
         },
         onClickClearUser: function () {
@@ -52,19 +65,26 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         },
         onClickUser: function () {
             Util.confirmationModal({
-                title: gettext('Log in as ' + this.model.get('username') + '?'),
+                title: _.template(gettext('Log in as <%= username %>?'))({username: this.model.get('username')}),
                 message: _.template($('#user-data-template').html())(
                     { user: this.model.toJSON() }
                 ),
                 confirmText: gettext('Yes, log in as this user'),
                 onConfirm: function () {
                     hqImport("cloudcare/js/formplayer/users/utils").Users.logInAsUser(this.model.get('username'));
-                    FormplayerFrontend.trigger('navigateHome');
                     FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                         new RestoreAsBanner({
                             model: FormplayerFrontend.getChannel().request('currentUser'),
                         })
                     );
+                    var loginAsNextOptions = FormplayerFrontend.getChannel().request('getLoginAsNextOptions');
+                    if (loginAsNextOptions) {
+                        FormplayerFrontend.trigger("clearLoginAsNextOptions");
+                        var menusController = hqImport("cloudcare/js/formplayer/menus/controller");
+                        menusController.selectMenu(loginAsNextOptions);
+                    } else {
+                        FormplayerFrontend.trigger('navigateHome');
+                    }
                 }.bind(this),
             });
         },

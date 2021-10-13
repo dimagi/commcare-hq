@@ -8,7 +8,7 @@ from corehq.apps.es import CaseES
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.elastic import get_es_new
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.elasticsearch import ConnectionError
@@ -20,7 +20,6 @@ from .base import BasePillowTestCase
 DOMAIN = 'report-case-pillowtest-domain'
 
 
-@run_with_sql_backend
 @override_settings(ES_CASE_FULL_INDEX_DOMAINS=[DOMAIN])
 @es_test
 class ReportCasePillowTest(BasePillowTestCase):
@@ -67,7 +66,6 @@ class ReportCasePillowTest(BasePillowTestCase):
         return case_id, case_name
 
 
-@run_with_sql_backend
 @override_settings(ES_CASE_FULL_INDEX_DOMAINS=[DOMAIN])
 class ReportCaseReindexerTest(TestCase):
 

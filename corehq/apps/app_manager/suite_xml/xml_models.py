@@ -468,6 +468,39 @@ class Assertion(XmlObject):
     text = NodeListField('text', Text)
 
 
+class QueryData(XmlObject):
+    ROOT_NAME = 'data'
+
+    key = StringField('@key')
+    ref = XPathField('@ref')
+
+
+class QueryPrompt(DisplayNode):
+    ROOT_NAME = 'prompt'
+
+    key = StringField('@key')
+    appearance = StringField('@appearance', required=False)
+    receive = StringField('@receive', required=False)
+    hidden = BooleanField('@hidden', required=False)
+    input_ = StringField('@input', required=False)
+    default_value = StringField('@default', required=False)
+    allow_blank_value = BooleanField('@allow_blank_value', required=False)
+
+    itemset = NodeField('itemset', Itemset)
+
+
+class RemoteRequestQuery(OrderedXmlObject, XmlObject):
+    ROOT_NAME = 'query'
+    ORDER = ('data', 'prompts')
+
+    url = StringField('@url')
+    storage_instance = StringField('@storage-instance')
+    template = StringField('@template')
+    data = NodeListField('data', QueryData)
+    prompts = NodeListField('prompt', QueryPrompt)
+    default_search = BooleanField("@default_search")
+
+
 class Entry(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'entry'
     ORDER = ('form', 'command', 'instance', 'datums')
@@ -477,6 +510,7 @@ class Entry(OrderedXmlObject, XmlObject):
     instances = NodeListField('instance', Instance)
 
     datums = NodeListField('session/datum', SessionDatum)
+    queries = NodeListField('session/query', RemoteRequestQuery)
 
     stack = NodeField('stack', Stack)
 
@@ -485,6 +519,8 @@ class Entry(OrderedXmlObject, XmlObject):
     def require_instances(self, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in self.instances}
         for instance in instances:
+            if 'remote' in instance.src:
+                continue
             if (instance.id, instance.src) not in used:
                 self.instances.append(
                     # it's important to make a copy,
@@ -516,45 +552,12 @@ class Entry(OrderedXmlObject, XmlObject):
             self.instances = sorted_instances
 
 
-class QueryData(XmlObject):
-    ROOT_NAME = 'data'
-
-    key = StringField('@key')
-    ref = XPathField('@ref')
-
-
-class QueryPrompt(DisplayNode):
-    ROOT_NAME = 'prompt'
-
-    key = StringField('@key')
-    appearance = StringField('@appearance', required=False)
-    receive = StringField('@receive', required=False)
-    hidden = BooleanField('@hidden', required=False)
-    input_ = StringField('@input', required=False)
-    default_value = StringField('@default', required=False)
-    allow_blank_value = BooleanField('@allow_blank_value', required=False)
-
-    itemset = NodeField('itemset', Itemset)
-
-
 class RemoteRequestPost(XmlObject):
     ROOT_NAME = 'post'
 
     url = StringField('@url')
     relevant = StringField('@relevant')
     data = NodeListField('data', QueryData)
-
-
-class RemoteRequestQuery(OrderedXmlObject, XmlObject):
-    ROOT_NAME = 'query'
-    ORDER = ('data', 'prompts')
-
-    url = StringField('@url')
-    storage_instance = StringField('@storage-instance')
-    template = StringField('@template')
-    data = NodeListField('data', QueryData)
-    prompts = NodeListField('prompt', QueryPrompt)
-    default_search = BooleanField("@default_search")
 
 
 class RemoteRequestSession(OrderedXmlObject, XmlObject):

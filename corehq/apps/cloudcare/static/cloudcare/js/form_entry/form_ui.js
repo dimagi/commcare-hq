@@ -233,6 +233,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         delete json.tree;
         Container.call(self, json);
         self.blockSubmit = ko.observable(false);
+        self.hasSubmitAttempted = ko.observable(false);
         self.isSubmitting = ko.observable(false);
         self.submitClass = Const.LABEL_OFFSET + ' ' + Const.CONTROL_WIDTH;
 
@@ -286,8 +287,19 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return self.currentIndex() !== "0" && self.currentIndex() !== "-1" && !self.atFirstIndex();
         });
 
+        self.erroredLabels = ko.computed(function () {
+            var questions = getQuestions(self);
+            var erroredLabels = {};
+            for (var i = 0; i < questions.length; i++) {
+                if (questions[i].isLabel && !questions[i].isValid()) {
+                    erroredLabels[getIx(questions[i])] = "OK";
+                }
+            }
+            return erroredLabels;
+        });
+
         self.erroredQuestions = ko.computed(function () {
-            if (!hqImport("cloudcare/js/form_entry/utils").isWebApps()) {
+            if (!hqImport("cloudcare/js/form_entry/utils").isWebApps() || !self.hasSubmitAttempted()) {
                 return [];
             }
 
@@ -295,7 +307,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             var qs = [];
             for (var i = 0; i < questions.length; i++) {
                 // eslint-disable-next-line
-                if (questions[i].error() != null || questions[i].serverError() != null) {
+                if (questions[i].error() != null || questions[i].serverError() != null
+                            || (questions[i].required() && questions[i].answer() == null)) {
                     qs.push(questions[i]);
                 }
             }
@@ -307,7 +320,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             var erroredQuestions = self.erroredQuestions();
             for (var i = erroredQuestions.length - 1; i >= 0; i--) {
                 if (!self.currentJumpPoint || !erroredQuestions.includes(self.currentJumpPoint)) {
-                    self.currentJumpPoint = erroredQuestions[i];
+                    self.currentJumpPoint = erroredQuestions[0];
                     break;
                 }
                 if (self.currentJumpPoint.entry.entryId === erroredQuestions[i].entry.entryId) {
@@ -356,6 +369,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         self.submitForm = function () {
+            self.hasSubmitAttempted(true);
             $.publish('formplayer.' + Const.SUBMIT, self);
         };
 
@@ -428,6 +442,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
+
+        self.focusNewRepeat = function () {
+            var repeat = $('.repetition');
+            if (repeat) {
+                repeat.trigger('focus');
+            }
+        };
 
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
         self.collapsible = _.contains(styles, Const.COLLAPSIBLE);
@@ -509,6 +530,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.newRepeat = function () {
             $.publish('formplayer.' + Const.NEW_REPEAT, self);
             $.publish('formplayer.dirty');
+            $('.add').trigger('blur');
         };
 
         self.getTranslation = function (translationKey, defaultTranslation) {
@@ -571,11 +593,20 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return (self.error() || self.serverError()) && !self.dirty();
         });
 
+        self.form = function () {
+            var parent = self.parent;
+            while (parent.type && parent.type() !== null) {
+                parent = parent.parent;
+            }
+            return parent;
+        };
+
         self.isValid = function () {
             return self.error() === null && self.serverError() === null;
         };
 
         self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
+        self.isLabel = self.datatype() === 'info';
         self.entry = hqImport("cloudcare/js/form_entry/entries").getEntry(self);
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';
@@ -614,10 +645,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 }
                 currentNode = parent;
             }
-            var el = $("label[for='" + self.entry.entryId + "']");
+            var el = $("[for='" + self.entry.entryId + "']");
             $('html, body').animate({
                 scrollTop: $(el).offset().top - 60,
             });
+            self.form().currentJumpPoint = self;
             el.fadeOut(200).fadeIn(200).fadeOut(200).fadeIn(200);
         };
     }

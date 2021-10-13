@@ -1,11 +1,11 @@
 from corehq.apps.integration.models import DialerSettings
 
 from corehq.apps.linked_domain.local_accessors import get_dialer_settings
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
+from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_dialer_settings
 
 
-class TestUpdateDialerSettings(BaseLinkedAppsTest):
+class TestUpdateDialerSettings(BaseLinkedDomainTest):
     def setUp(self):
         self.dialer_setup = DialerSettings(domain=self.domain,
                                            aws_instance_id='id_314159',

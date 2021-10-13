@@ -91,7 +91,11 @@
     <div data-bind="template: {name: 'remove-action'}"></div>
     <label class="control-label col-xs-2">{% trans "Custom action ID" %}</label>
     <div class="controls col-xs-4">
-      <input type="text" class="textinput form-control" data-bind="value: name" required placeholder="{% trans 'custom action id' %}" />
+      <select class="select form-control" data-bind="value: name">
+        {% for custom_action in form.custom_actions %}
+          <option value="{{ custom_action }}">{{ custom_action }}</option>
+        {% endfor %}
+      </select>
     </div>
     <label class="col-xs-1 control-label">
       <span class="label label-primary">{% trans "Requires System Admin" %}</span>

@@ -9,7 +9,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 
 def _count_locations(domain):
@@ -20,7 +19,6 @@ def _count_root_locations(domain):
     return SQLLocation.active_objects.root_nodes().filter(domain=domain).count()
 
 
-@run_with_sql_backend
 class LocationsTest(TestCase):
     domain = 'westworld'
 
