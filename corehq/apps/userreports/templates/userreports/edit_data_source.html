@@ -14,7 +14,15 @@
           <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
             {% csrf_token %}
             <div {% if is_rebuilding or data_source.disable_destructive_rebuild %}style="margin-right: 15px;"{% endif %}>
-              <button type="submit" class="btn btn-default disable-on-submit" {% if is_rebuilding or data_source.disable_destructive_rebuild %}disabled{% endif %}>
+              <button type="submit"
+                class="btn btn-default disable-on-submit"
+                data-toggle="popover"
+                title="Warning"
+                data-container="body"
+                data-content="{% trans_html_attr "Rebuilding data sources erases all the existing data and will start populating it again. While the rebuild is happening, reports based on this data source will show incomplete data" %}"
+                data-trigger="hover"
+                id="data-source-rebuild-btn"
+                {% if is_rebuilding or data_source.disable_destructive_rebuild %}disabled{% endif %}>
                 {% trans 'Rebuild Data Source'%}
               </button>
               {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for #}
@@ -27,7 +35,7 @@
               {% if is_rebuilding %}
                 <span class="hq-help-template"
                   data-title="{% trans_html_attr "Rebuilding Data Source" %}"
-                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this data source. Rebuilding data sources erases all the existing data and will start populating it again. While the rebuild is happening, reports based on this data source will show incomplete data" %}"
+                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this data source." %}"
                   data-placement="left"></span>
               {% endif %}
             </div>
