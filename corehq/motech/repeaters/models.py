@@ -1434,8 +1434,3 @@ def domain_can_forward(domain):
         domain_has_privilege(domain, ZAPIER_INTEGRATION)
         or domain_has_privilege(domain, DATA_FORWARDING)
     )
-
-
-# import signals
-# Do not remove this import, its required for the signals code to run even though not explicitly used in this file
-from corehq.motech.repeaters import signals  # noqa: disable=unused-import,F401
