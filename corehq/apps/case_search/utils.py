@@ -23,7 +23,6 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
-    SEARCH_QUERY_CUSTOM_VALUE,
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
 )
@@ -178,7 +177,7 @@ class CaseSearchCriteria:
                 return search_es.filter(case_search.blacklist_owner_id(value.split(' ')))
         elif key == COMMCARE_PROJECT:
             return search_es.filter(filters.domain(value))
-        elif key not in UNSEARCHABLE_KEYS and not key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
+        elif key not in UNSEARCHABLE_KEYS:
             return search_es.add_query(self._get_case_property_query(key, value), queries.MUST)
         return search_es
 
