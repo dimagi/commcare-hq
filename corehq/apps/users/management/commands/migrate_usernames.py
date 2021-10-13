@@ -85,6 +85,7 @@ class Command(BaseCommand):
     def update_feature_flags(self, current_username, new_username):
         enabled_toggles = toggles_enabled_for_user(current_username)
         for toggle in enabled_toggles:
+            logger.info(f'Updating toggle {toggle} from {current_username} to {new_username}')
             set_toggle(toggle, current_username, False, namespace=NAMESPACE_USER)
             set_toggle(toggle, new_username, True, namespace=NAMESPACE_USER)
 
