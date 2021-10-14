@@ -1018,6 +1018,23 @@ class CaseDuplicate(models.Model):
         return f"CaseDuplicate(id={self.id}, case_id={self.case_id}, action_id={self.action_id})"
 
     @classmethod
+    def get_case_ids(cls, rule_id):
+        """Given a AutomaticUpdateRule id, return all case_ids that match
+        """
+        try:
+            rule = AutomaticUpdateRule.objects.get(
+                id=rule_id,
+                workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+                active=True,
+                deleted=False
+            )
+        except AutomaticUpdateRule.DoesNotExist:
+            return []
+
+        action_id = rule.memoized_actions[0].definition.id
+        return list(cls.objects.filter(action_id=action_id).values_list('case_id', flat=True))
+
+    @classmethod
     def remove_unique_cases(cls, action, case_id):
         # Given a case_id that is no longer a duplicate, ensure there are no
         # other CaseDuplicates that were only pointing to this case

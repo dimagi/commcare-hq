@@ -31,7 +31,9 @@ from corehq.apps.casegroups.dbaccessors import (
     get_number_of_case_groups_in_domain,
 )
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.data_interfaces.deduplication import reset_and_backfill_deduplicate_rule
+from corehq.apps.data_interfaces.deduplication import (
+    reset_and_backfill_deduplicate_rule,
+)
 from corehq.apps.data_interfaces.dispatcher import (
     EditDataInterfaceDispatcher,
     require_can_edit_data,
@@ -77,6 +79,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.view_utils import reverse as reverse_with_params
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
 from .dispatcher import require_form_management_privilege
@@ -907,6 +910,21 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
     @property
     def edit_url_name(self):
         return DeduplicationRuleEditView.urlname
+
+    def _format_rule(self, rule):
+        ret = super()._format_rule(rule)
+        rule_properties = set(rule.memoized_actions[0].definition.case_properties)
+        explorer_columns = {"@case_type", "case_name", "last_modified"} | rule_properties
+        ret['explore_url'] = reverse_with_params(
+            'project_report_dispatcher',
+            args=(self.domain, 'duplicate_cases'),
+            params={
+                "duplicate_case_rule": rule.id,
+                "explorer_columns": json.dumps(list(explorer_columns)),
+            },
+        )
+
+        return ret
 
 
 class DeduplicationRuleCreateView(DataInterfaceSection):

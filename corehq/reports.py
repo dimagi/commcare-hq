@@ -48,6 +48,9 @@ from corehq.apps.reports.standard import deployments, inspect, monitoring, sms, 
 from corehq.apps.reports.standard.cases.case_list_explorer import (
     CaseListExplorer,
 )
+from corehq.apps.reports.standard.cases.duplicate_cases import (
+    DuplicateCasesExplorer,
+)
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
@@ -101,6 +104,10 @@ def REPORTS(project):
     ]
     if toggles.CASE_LIST_EXPLORER.enabled(project.name):
         inspect_reports.append(CaseListExplorer)
+
+    if toggles.CASE_DEDUPE.enabled(project.name):
+        inspect_reports.append(DuplicateCasesExplorer)
+
     deployments_reports = (
         deployments.ApplicationStatusReport,
         deployments.AggregateUserStatusReport,
