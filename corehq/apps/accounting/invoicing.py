@@ -3,6 +3,7 @@ import datetime
 from collections import defaultdict
 from decimal import Decimal
 
+import simplejson
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Max, Min, Q, Sum
@@ -49,6 +50,7 @@ from corehq.apps.accounting.utils import (
     months_from_date,
 )
 from corehq.apps.domain.dbaccessors import domain_exists, deleted_domain_exists
+from corehq.apps.domain.utils import get_serializable_wire_invoice_general_credit
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.dates import (
     get_first_last_days,
@@ -335,15 +337,16 @@ class DomainWireInvoiceFactory(object):
 
         return wire_invoice
 
-    def create_wire_credits_invoice(self, items, amount):
-        """
-        NOTE: Ensure items and amount are json serializable since it will be passed to celery
-        """
+    def create_wire_credits_invoice(self, amount, general_credit):
+
+        serializable_amount = simplejson.dumps(amount, use_decimal=True)
+        serializable_items = get_serializable_wire_invoice_general_credit(general_credit)
+
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
         create_wire_credits_invoice.delay(
             domain_name=self.domain.name,
-            amount=amount,
-            invoice_items=items,
+            amount=serializable_amount,
+            invoice_items=serializable_items,
             contact_emails=self.contact_emails
         )
 

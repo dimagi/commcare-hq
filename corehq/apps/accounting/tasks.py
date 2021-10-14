@@ -83,6 +83,7 @@ from corehq.const import (
 )
 from corehq.util.dates import get_previous_month_date_range
 from corehq.util.log import send_HTML_email
+from corehq.util.serialization import deserialize_decimal
 from corehq.util.soft_assert import soft_assert
 
 _invoicing_complete_soft_assert = soft_assert(
@@ -479,23 +480,20 @@ def create_wire_credits_invoice(domain_name,
                                 amount,
                                 invoice_items,
                                 contact_emails):
+    deserialized_amount = deserialize_decimal(amount)
     wire_invoice = WirePrepaymentInvoice.objects.create(
         domain=domain_name,
         date_start=datetime.datetime.utcnow(),
         date_end=datetime.datetime.utcnow(),
         date_due=None,
-        balance=amount,
+        balance=deserialized_amount,
     )
 
     deserialized_items = []
     for item in invoice_items:
-        amount = item['amount']
-        deserialized_amount = simplejson.loads(amount)
-        if not isinstance(deserialized_amount, Decimal):
-            # there are cases (whole numbers), where simplejson does not load the value back as a Decimal
-            # so we need to coerce the value to be a Decimal
-            deserialized_amount = Decimal(deserialized_amount)
-        deserialized_items.append({'type': item['type'], 'amount': deserialized_amount})
+        general_credit_amount = item['amount']
+        deserialized_general_credit = deserialize_decimal(general_credit_amount)
+        deserialized_items.append({'type': item['type'], 'amount': deserialized_general_credit})
 
     wire_invoice.items = deserialized_items
 

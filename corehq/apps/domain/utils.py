@@ -117,8 +117,7 @@ def clear_domain_names(*domain_names):
             domain.delete()
 
 
-def get_serializable_wire_invoice_item_from_request(request):
-    general_credit = Decimal(request.POST.get('general_credit', 0))
+def get_serializable_wire_invoice_general_credit(general_credit):
     if general_credit > 0:
         return [{
             'type': 'General Credits',

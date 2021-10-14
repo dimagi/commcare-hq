@@ -106,7 +106,6 @@ from corehq.apps.domain.forms import (
     EditBillingAccountInfoForm,
     SelectSubscriptionTypeForm,
 )
-from corehq.apps.domain.utils import get_serializable_wire_invoice_item_from_request
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
@@ -711,12 +710,10 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
                          'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails]))
             return json_response({'error': {'message': message}})
         amount = Decimal(request.POST.get('amount', 0))
+        general_credit = Decimal(request.POST.get('general_credit', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
-            wire_invoice_factory.create_wire_credits_invoice(
-                get_serializable_wire_invoice_item_from_request(request),
-                amount
-            )
+            wire_invoice_factory.create_wire_credits_invoice(amount, general_credit)
         except Exception as e:
             return json_response({'error': {'message': str(e)}})
 
