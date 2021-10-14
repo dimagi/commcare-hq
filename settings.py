@@ -373,7 +373,6 @@ HQ_APPS = (
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.succeed',
     'custom.ucla',
 
     'custom.intrahealth',
@@ -1089,7 +1088,6 @@ DEFAULT_COMMCARE_EXTENSIONS = [
     "custom.abt.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
-    "custom.succeed.commcare_extensions",
     "custom.nutrition_project.commcare_extensions"
 ]
 COMMCARE_EXTENSIONS = []
@@ -1555,7 +1553,6 @@ COUCHDB_APPS = [
     # custom reports
     'pact',
     'accounting',
-    'succeed',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
@@ -1855,7 +1852,6 @@ PILLOWTOPS = {
     'fluff': [
         'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
-        'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
         {
@@ -1890,8 +1886,6 @@ STATIC_UCR_REPORTS = [
 STATIC_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
-    os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
-    os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
@@ -1979,7 +1973,6 @@ DOMAIN_MODULE_MAP = {
 
     'crs-remind': 'custom.apps.crs_reports',
 
-    'succeed': 'custom.succeed',
     'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',
 
