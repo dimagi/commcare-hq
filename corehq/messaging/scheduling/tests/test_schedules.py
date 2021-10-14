@@ -10,7 +10,7 @@ from dimagi.utils.parsing import json_format_date
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import run_with_sql_backend, sharded
+from corehq.form_processor.tests.utils import sharded
 from corehq.messaging.scheduling.models import (
     AlertEvent,
     AlertSchedule,
