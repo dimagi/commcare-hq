@@ -1045,12 +1045,15 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
     @property
     def page_context(self):
         is_rebuilding = (
-            (self.config.meta.build.initiated or self.conf.meta.build.initiated_in_place)
+            self.config.meta.build.initiated
             and (
                 not self.config.meta.build.finished
-                and not self.config.meta.build.finished_in_place
                 and not self.config.meta.build.rebuilt_asynchronously
             )
+        )
+        is_rebuilding_inplace = (
+            self.config.meta.build.initiated_in_place
+            and not self.config.meta.build.finished_in_place
         )
         return {
             'form': self.edit_form,
@@ -1058,6 +1061,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'read_only': self.read_only,
             'used_by_reports': self.get_reports(),
             'is_rebuilding': is_rebuilding,
+            'is_rebuilding_inplace': is_rebuilding_inplace,
         }
 
     @property
