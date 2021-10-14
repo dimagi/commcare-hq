@@ -75,7 +75,6 @@ branches:
     - jls/smart-linking-in-web-apps-stack-queries # Jenny Oct 7
     - dmr/throttle-system-forms  # Danny Sept 24
     - gh/erm/link-reports-and-keywords-on-push-take2 # Graham Sept 28
-    - gh/remove-pickles/sms # Graham Sept 28
     - es/webuser-activity  # Ethan Sept 30
     - rc/data-preview-accessibility # Robert Oct 5
     - dependabot/npm_and_yarn/datatables.net-1.11.3 # Amit Oct 6
