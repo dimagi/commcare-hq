@@ -1,6 +1,6 @@
 from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
-from couchforms.models import XFormInstance
+from custom.common.legacy import XFormInstanceWasRemoved as XFormInstance
 from fluff.filters import ORFilter, ANDFilter, CustomFilter
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed.topics import CASE_SQL

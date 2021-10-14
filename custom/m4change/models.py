@@ -7,7 +7,7 @@ from couchdbkit import NoResultFound, MultipleResultsFound, ResourceNotFound, Qu
 from dimagi.ext.couchdbkit import StringProperty, DateProperty, DictProperty, Document
 from django.db import models
 from casexml.apps.case.models import CommCareCase
-from couchforms.models import XFormInstance
+from custom.common.legacy import XFormInstanceWasRemoved as XFormInstance
 
 import fluff
 from fluff.filters import ORFilter
