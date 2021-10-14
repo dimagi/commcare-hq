@@ -1,9 +1,7 @@
 import datetime
-import time
 import uuid
 
 from django.test import TestCase
-from flaky import flaky
 from mock import patch
 from requests import ConnectionError
 
@@ -32,6 +30,7 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import (
     DocTestMixin,
     disable_quickcache,
+    flaky_slow,
     get_form_ready_to_save,
     trap_extra_setup,
 )
@@ -104,7 +103,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
             'xmlns': 'my://crazy.xmlns/app'
         })
 
-    @flaky(max_runs=3, rerun_filter=lambda *a: time.sleep(1) or True)
+    @flaky_slow
     def test_get_exports_by_form(self):
         self.assertEqual(get_exports_by_form(self.domain), [{
             'value': {'xmlns': 'my://crazy.xmlns/', 'submissions': 2},
