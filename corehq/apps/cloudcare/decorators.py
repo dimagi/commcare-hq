@@ -24,15 +24,13 @@ def require_cloudcare_access_ex():
 
                 apps_in_domain = get_apps_in_domain(domain)
                 if (len(apps_in_domain) == 1):
-                    app_or_domain_name = "application " + apps_in_domain[0].name
+                    app_or_domain_name = apps_in_domain[0].name
                 else:
-                    app_or_domain_name = "domain " + domain
-
-                is_superuser = hasattr(request, "couch_user") and request.couch_user.is_superuser
+                    app_or_domain_name = domain
 
                 context = {
                     "app_or_domain_name": app_or_domain_name,
-                    "show_ff_detail_message": is_superuser or toggles.SUPPORT.enabled_for_request(request)
+                    "is_superuser": hasattr(request, "couch_user") and request.couch_user.is_superuser
                 }
                 return render(request, "cloudcare/web_apps_disabled.html", context)
             if hasattr(request, "couch_user"):

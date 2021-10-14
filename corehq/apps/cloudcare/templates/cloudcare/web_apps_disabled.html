@@ -1,12 +1,13 @@
 {% extends "hqwebapp/base_page.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
 
 {% block title %}{% trans "Functionality Disabled" %}{% endblock %}
 
 {% block page_name %}{% trans "This functionality is disabled." %}{% endblock %}
 {% block page_content %}
-<div>{% blocktrans %}Web apps for your {{app_or_domain_name}} are currently down for maintainence.{% endblocktrans %}</div>
-{% if show_ff_detail_message %}
+<div>{% blocktrans %}Web apps for {{app_or_domain_name}} are currently down for maintainence.{% endblocktrans %}</div>
+{% if is_superuser or request|toggle_enabled:"SUPPORT" %}
 <br/>
 <span>{% blocktrans %}The 'disable_web_apps' feature flag is turned on.{% endblocktrans %}</span>
 {% endif %}
