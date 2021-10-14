@@ -1,5 +1,4 @@
 import json
-from unittest.mock import MagicMock
 
 from contextlib import contextmanager
 

@@ -2,7 +2,6 @@ import csv
 import datetime
 import io
 import json
-from decimal import Decimal
 from datetime import date
 
 from django.conf import settings
@@ -12,7 +11,6 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
-import simplejson
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
@@ -74,7 +72,7 @@ from corehq.apps.accounting.utils.subscription import (
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
-from corehq.apps.users.models import CommCareUser, FakeUser, WebUser
+from corehq.apps.users.models import CommCareUser, FakeUser
 from corehq.const import (
     SERVER_DATE_FORMAT,
     SERVER_DATETIME_FORMAT_NO_SEC,

@@ -2,7 +2,6 @@ import os
 import re
 import sys
 from collections import Counter
-from decimal import Decimal
 
 import simplejson
 from django.conf import settings
