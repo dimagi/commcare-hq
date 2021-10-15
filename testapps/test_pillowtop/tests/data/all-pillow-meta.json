@@ -83,13 +83,6 @@
         "full_class_name": "custom.m4change.models.M4ChangeFormFluffPillow",
         "name": "M4ChangeFormFluffPillow"
     },
-    "RecouvrementFluffPillow": {
-        "advertised_name": "RecouvrementFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.RecouvrementFluffPillow.testhq",
-        "full_class_name": "custom.intrahealth.models.RecouvrementFluffPillow",
-        "name": "RecouvrementFluffPillow"
-    },
     "ReportCaseToElasticsearchPillow": {
         "advertised_name": "ReportCaseToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
