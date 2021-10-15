@@ -1923,7 +1923,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
     'commtrack-public-demo',
     'crs-remind',
-    'succeed',
 ]
 
 # Custom fully indexed domains for ReportXForm index/pillowtop --
@@ -1933,7 +1932,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'pact',
-    'succeed'
 ]
 
 CUSTOM_UCR_EXPRESSIONS = [
