@@ -95,10 +95,16 @@
           <div class="form-group">
             {% if show_search_workflow %}
               <div class="form-group">
-                <label class="control-label {% css_label_class %}" for="search-workflow">
+                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="hidden: dataRegistry">
                   {% trans "Web Apps Search Workflow" %}
                   <span class="hq-help-template" data-title="{% trans "Web Apps Search Workflow" %}"
                         data-content="{% trans_html_attr "<strong>Normal Case List</strong> is the &quot;classic&quot; case search workflow.  <br><br><strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is typically used for a &quot;Search Cases&quot; module.  <br><br><strong>See More</strong> is the same functionality as Normal Case List, except clicking the search button runs the default searches and returns the results. The user doesn't get to change the search criteria. This enables a workflow where the user sees what's in the local casedb then clicks &quot;See More&quot; to view all cases that fit the criteria.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search. The user never sees the results of the casedb." %}">
+                  </span>
+                </label>
+                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="visible: dataRegistry">
+                  {% trans "Web Apps Search Workflow" %}
+                  <span class="hq-help-template" data-title="{% trans "Web Apps Search Workflow (Data Registry)" %}"
+                        data-content="{% trans_html_attr "<strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is the default for Data Registry search.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search." %}">
                   </span>
                 </label>
                 <div class="{% css_field_class %}">
