@@ -104,13 +104,6 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlSMSPillow"
     },
-    "UCLAPatientFluffPillow": {
-        "advertised_name": "UCLAPatientFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.UCLAPatientFluffPillow.testhq",
-        "full_class_name": "custom.succeed.models.UCLAPatientFluffPillow",
-        "name": "UCLAPatientFluffPillow"
-    },
     "UnknownUsersPillow": {
         "advertised_name": "UnknownUsersPillow",
         "change_feed_type": "KafkaChangeFeed",
