@@ -84,5 +84,5 @@ branches:
     - ml/make-mobile-privileges-unreachable # Minha Oct 12
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
-    - rp/insert-status-embed # Rynhard Oct 15
+    #- rp/insert-status-embed # Rynhard Oct 15
 submodules: { }
