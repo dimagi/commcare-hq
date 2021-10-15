@@ -820,6 +820,14 @@ DISABLE_WEB_APPS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Disable+access+to+Web+Apps+UI',
 )
 
+WEB_APPS_DOMAIN_BANNER = StaticToggle(
+    'web_apps_domain_banner',
+    'USH: Show current domain in web apps Login As banner',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
+)
+
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
@@ -887,6 +895,14 @@ ECD_MIGRATED_DOMAINS = StaticToggle(
     'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+WEB_USER_ACTIVITY_REPORT = StaticToggle(
+    'web_user_activity_report',
+    'USH: Enable Web User Activity Report',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Activity+Report',
 )
 
 ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(

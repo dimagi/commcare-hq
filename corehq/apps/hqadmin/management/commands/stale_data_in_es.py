@@ -17,6 +17,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
     FormReindexAccessor,
 )
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.pillows.case_search import domains_needing_search_index
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.doc_processor.progress import (
@@ -180,15 +181,37 @@ class CaseHelper:
         es_modified_on_by_ids = CaseHelper._get_es_modified_dates(case_ids)
         case_search_es_modified_on_by_ids = CaseHelper._get_case_search_es_modified_dates(case_search_ids)
         for case_id, case_type, modified_on, domain in chunk:
-            es_modified_on, es_domain = es_modified_on_by_ids.get(case_id, (None, None))
+            stale, data_row = CaseHelper._check_stale(case_id, case_type, modified_on, domain,
+                                                      es_modified_on_by_ids, case_search_es_modified_on_by_ids)
+            if stale:
+                yield data_row
+
+    @staticmethod
+    def _check_stale(case_id, case_type, modified_on, domain,
+                     es_modified_on_by_ids, case_search_es_modified_on_by_ids):
+        es_modified_on, es_domain = es_modified_on_by_ids.get(case_id, (None, None))
+        if (es_modified_on, es_domain) != (modified_on, domain):
+            # if the doc is newer in ES than sql, refetch from sql to get newest
+            if es_modified_on is not None and es_modified_on > modified_on:
+                refreshed = CaseAccessors(domain).get_case(case_id)
+                return CaseHelper._check_stale(case_id, case_type, refreshed.server_modified_on,
+                                    refreshed.domain, es_modified_on_by_ids, case_search_es_modified_on_by_ids)
+            else:
+                return True, DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type,
+                                     domain=domain, es_date=es_modified_on, primary_date=modified_on)
+        elif domain in domains_needing_search_index():
+            es_modified_on, es_domain = case_search_es_modified_on_by_ids.get(case_id, (None, None))
             if (es_modified_on, es_domain) != (modified_on, domain):
-                yield DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
-                              es_date=es_modified_on, primary_date=modified_on)
-            elif domain in domains_needing_search_index():
-                es_modified_on, es_domain = case_search_es_modified_on_by_ids.get(case_id, (None, None))
-                if (es_modified_on, es_domain) != (modified_on, domain):
-                    yield DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
-                                  es_date=es_modified_on, primary_date=modified_on)
+                # if the doc is newer in ES than sql, refetch from sql to get newest
+                if es_modified_on is not None and es_modified_on > modified_on:
+                    refreshed = CaseAccessors(domain).get_case(case_id)
+                    return CaseHelper._check_stale(case_id, case_type, refreshed.server_modified_on,
+                                                   refreshed.domain, es_modified_on_by_ids,
+                                                   case_search_es_modified_on_by_ids)
+                else:
+                    return True, DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type,
+                                         domain=domain, es_date=es_modified_on, primary_date=modified_on)
+        return False, None
 
     @staticmethod
     @retry_on_es_timeout

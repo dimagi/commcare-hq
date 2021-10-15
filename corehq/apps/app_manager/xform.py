@@ -38,6 +38,7 @@ from .exceptions import (
     XFormValidationError,
     XFormValidationFailed,
 )
+from .suite_xml.xml_models import Instance
 from .xpath import CaseIDXPath, QualifiedScheduleFormXPath, session_var
 
 VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
@@ -826,12 +827,23 @@ class XForm(WrappedNode):
                 if key.startswith(vellum_ns):
                     del node.attrib[key]
 
-    def add_missing_instances(self, app):
+    def add_missing_instances(self, form, app):
         from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
         instance_declarations = self._get_instance_ids()
         missing_unknown_instances = set()
         instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(
             app, [self.render().decode('utf-8')])
+
+        module = form.get_module()
+        if _module_offers_registry_search(module) and module.search_config.additional_registry_queries:
+            remote_instances = [
+                Instance(id=query.instance_name, src='jr://instance/remote')
+                for query in module.search_config.additional_registry_queries
+            ]
+            for instance in remote_instances:
+                instances.add(instance)
+                unknown_instance_ids.discard(instance.id)
+
         for instance_id in unknown_instance_ids:
             if instance_id not in instance_declarations:
                 missing_unknown_instances.add(instance_id)

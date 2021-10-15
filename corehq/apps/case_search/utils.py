@@ -23,7 +23,6 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
-    SEARCH_QUERY_CUSTOM_VALUE,
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
 )
@@ -155,12 +154,7 @@ class CaseSearchCriteria:
     def search_es(self):
         search_es = self._get_initial_search_es()
         for key, value in self.criteria.items():
-            filter_, is_query = self._get_filter(key, value)
-            if filter_:
-                if is_query:
-                    search_es = search_es.add_query(filter_, queries.MUST)
-                else:
-                    search_es = search_es.filter(filter_)
+            search_es = self._apply_filter(search_es, key, value)
         return search_es
 
     def _get_initial_search_es(self):
@@ -171,21 +165,21 @@ class CaseSearchCriteria:
                 .size(CASE_SEARCH_MAX_RESULTS)
                 .set_sorting_block(['_score', '_doc']))
 
-    def _get_filter(self, key, value):
+    def _apply_filter(self, search_es, key, value):
         if key == CASE_SEARCH_XPATH_QUERY_KEY:
             if value:
-                return build_filter_from_xpath(self.query_domains, value), False
+                return search_es.filter(build_filter_from_xpath(self.query_domains, value))
         elif key == 'owner_id':
             if value:
-                return case_search.owner(value), False
+                return search_es.filter(case_search.owner(value))
         elif key == CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY:
             if value:
-                return case_search.blacklist_owner_id(value.split(' ')), False
+                return search_es.filter(case_search.blacklist_owner_id(value.split(' ')))
         elif key == COMMCARE_PROJECT:
-            return filters.domain(value), False
-        elif key not in UNSEARCHABLE_KEYS and not key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
-            return self._get_case_property_query(key, value), True
-        return None, None
+            return search_es.filter(filters.domain(value))
+        elif key not in UNSEARCHABLE_KEYS:
+            return search_es.add_query(self._get_case_property_query(key, value), queries.MUST)
+        return search_es
 
     def _validate_multiple_parameter_values(self, key, val):
         if not isinstance(val, list):

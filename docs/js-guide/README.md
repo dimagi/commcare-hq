@@ -1,6 +1,8 @@
 # Dimagi JavaScript Guide
 
-Dimagi's internal JavaScript guide for use in the CommCare HQ project
+Dimagi's internal JavaScript guide for use in the CommCare HQ project.
+
+Javascript code should be functional in all current major browsers, following the ECMAScript 2015 (ES6) standards, and should follow the guidelines described in this document.
 
 ## Table of contents
 

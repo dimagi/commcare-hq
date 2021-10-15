@@ -56,7 +56,6 @@ branches:
     #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
-    - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - ce/bulk-case-search # Cal July 6
@@ -66,28 +65,23 @@ branches:
     - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
     - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - ml/add-bulk-action-scheduled-reports # Minha Aug 30
     - gh/remove-pickles-from-accounting # Graham Sep 3
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
     - rp/improve-deleted-odata-feed-error-message # Rynhard Sept 15
     - fr/dedupe  # Farid Sept 17
-    #- jm/remove-es-scan  # Joel Sep 17 [QA]
+    - fr/dedupe-report  # Farid October 14
+    - jm/remove-es-scan  # Joel Sep 17 [QA]
     - jls/smart-linking-in-web-apps # Jenny Sept 22
     - jls/smart-linking-in-web-apps-stack-queries # Jenny Oct 7
     - dmr/throttle-system-forms  # Danny Sept 24
     - gh/erm/link-reports-and-keywords-on-push-take2 # Graham Sept 28
-    - gh/remove-pickles/sms # Graham Sept 28
-    - ml/remove-pickles-case-importer #Minha Sept 30
-    - es/webuser-activity  # Ethan Sept 30
-    - rc/data-preview-accessibility # Robert Oct 5
     - dependabot/npm_and_yarn/datatables.net-1.11.3 # Amit Oct 6
-    - ap/update-ansi-regex # Amit Oct 6
-    - ml/modify-case-accessors # Minha Oct 6 [QA]
     - smh/remove-extra-spinner-icons # Steph Oct 6
     - ap/ucr-rebuild-btn # Amit Oct 7
     - ml/remove-pickles-phonelog # Minha Oct 7
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
-    - gh/partition-calc-prop-task # Graham Oct 11
-    - jls/postprocess-endpoints # Jenny Oct 11
+    - ml/make-mobile-privileges-unreachable # Minha Oct 12
+    - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
+    - ml/remove-pickles-user-importer # Minha Oct 13
 submodules: { }
