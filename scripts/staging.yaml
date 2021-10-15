@@ -68,7 +68,6 @@ branches:
     - gh/remove-pickles-from-accounting # Graham Sep 3
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
-    - rp/improve-deleted-odata-feed-error-message # Rynhard Sept 15
     - fr/dedupe  # Farid Sept 17
     - fr/dedupe-report  # Farid October 14
     - jm/remove-es-scan  # Joel Sep 17 [QA]
@@ -84,4 +83,5 @@ branches:
     - ml/make-mobile-privileges-unreachable # Minha Oct 12
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
+    - rp/insert-status-embed # Rynhard Oct 15
 submodules: { }
