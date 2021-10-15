@@ -71,7 +71,7 @@ As mentioned above, whe a rule is changed, all cases of the relevant type in the
 The steps of this process are as follows:
 
 #. When a conditional alert is created or activated, a
-   `corehq.messaging.tasks.initiate_messaging_rule_run <https://github.com/dimagi/commcare-hq/blob/master/corehq/messaging/tasks.py>`_
+   `corehq.messaging.tasks.initiate_rule_run <https://github.com/dimagi/commcare-hq/blob/master/corehq/messaging/tasks.py>`_
    task is spawned.
 
 #. This locks the rule, so that it cannot be edited from the UI, and spawns a
