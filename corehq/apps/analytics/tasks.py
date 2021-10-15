@@ -280,7 +280,7 @@ def _send_hubspot_form_request(hubspot_id, form_id, data):
     return response
 
 
-@analytics_task
+@analytics_task()
 def update_hubspot_properties(webuser_id, properties):
     webuser = WebUser.get_by_user_id(webuser_id)
     vid = _get_user_hubspot_id(webuser)
@@ -319,13 +319,13 @@ def track_web_user_registration_hubspot(request, web_user, properties):
     )
 
 
-@analytics_task
+@analytics_task()
 def track_user_sign_in_on_hubspot(webuser_id, hubspot_cookie, meta):
     webuser = WebUser.get_by_user_id(webuser_id)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
-@analytics_task
+@analytics_task()
 def track_built_app_on_hubspot(webuser_id):
     webuser = WebUser.get_by_user_id(webuser_id)
     vid = _get_user_hubspot_id(webuser)
@@ -334,7 +334,7 @@ def track_built_app_on_hubspot(webuser_id):
         _track_on_hubspot(webuser, {'built_app': True})
 
 
-@analytics_task
+@analytics_task()
 def track_confirmed_account_on_hubspot(webuser_id):
     webuser = WebUser.get_by_user_id(webuser_id)
     vid = _get_user_hubspot_id(webuser)
@@ -374,7 +374,7 @@ def send_hubspot_form_task(form_id, web_user_id, hubspot_cookie, meta,
                           extra_fields=extra_fields)
 
 
-@analytics_task
+@analytics_task()
 def track_clicked_deploy_on_hubspot(webuser_id, hubspot_cookie, meta):
     webuser = WebUser.get_by_user_id(webuser_id)
     ab = {
@@ -383,7 +383,7 @@ def track_clicked_deploy_on_hubspot(webuser_id, hubspot_cookie, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, hubspot_cookie, meta, extra_fields=ab)
 
 
-@analytics_task
+@analytics_task()
 def track_job_candidate_on_hubspot(user_email):
     properties = {
         'job_candidate': True
@@ -391,7 +391,7 @@ def track_job_candidate_on_hubspot(user_email):
     _track_on_hubspot_by_email(user_email, properties=properties)
 
 
-@analytics_task
+@analytics_task()
 def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
@@ -424,7 +424,7 @@ def track_workflow(email, event, properties=None):
         notify_exception(None, "Error tracking kissmetrics workflow")
 
 
-@analytics_task
+@analytics_task()
 def _track_workflow_task(email, event, properties=None, timestamp=0):
     def _no_nonascii_unicode(value):
         if isinstance(value, str):
@@ -445,7 +445,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
         _raise_for_urllib3_response(res)
 
 
-@analytics_task
+@analytics_task()
 def identify(email, properties):
     """
     Set the given properties on a KISSmetrics user.
