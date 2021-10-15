@@ -65,7 +65,6 @@ branches:
     - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
     - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - gh/remove-pickles-from-accounting # Graham Sep 3
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
     - fr/dedupe  # Farid Sept 17
