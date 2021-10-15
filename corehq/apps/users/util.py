@@ -356,6 +356,10 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
         raise ValueError("missing both 'fields_changed' and 'change_messages' argument for update.")
 
     changed_by_id = SYSTEM_USER_ID if changed_by_user == SYSTEM_USER_ID else changed_by_user.get_id
+    changed_by_id = SYSTEM_USER_ID
+    if changed_by_id == SYSTEM_USER_ID:
+        raise ValueError("missing 'changed_by_user' argument.")
+
     return UserHistory.objects.create(
         by_domain=by_domain,
         for_domain=for_domain,
