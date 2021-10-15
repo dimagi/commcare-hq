@@ -552,6 +552,11 @@ class _ImportResults(object):
 
         self._errors[key][column_name]['rows'].append(row_num)
 
+        if 'sample' not in self._errors[key][column_name] and hasattr(error, 'sample'):
+            self._errors[key][column_name]['sample'] = _(
+                'Sample: Cell in row {row_num} contains "{sample}"').format(
+                row_num=row_num, sample=error.sample)
+
     def add_errors(self, row_num, errors):
         for error in errors:
             self.add_error(row_num, error)
