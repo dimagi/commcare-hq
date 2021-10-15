@@ -797,6 +797,7 @@ LOCAL_PILLOWTOPS = {}
 RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
+RUN_DEDUPLICATION_PILLOW = True
 
 # Set to True to remove the `actions` and `xform_id` fields from the
 # ES Case index. These fields contribute high load to the shard
