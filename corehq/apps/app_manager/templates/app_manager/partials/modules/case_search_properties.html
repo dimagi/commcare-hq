@@ -103,9 +103,9 @@
                 </label>
                 <div class="{% css_field_class %}">
                   <select class="form-control" data-bind="value: workflow" id="search-workflow">
-                    <option value="classic">{% trans "Normal Case List" %}</option>
+                    <option value="classic" data-bind="hidden: dataRegistry">{% trans "Normal Case List" %}</option>
                     <option value="auto_launch">{% trans "Search First" %}</option>
-                    <option value="see_more">{% trans "See More" %}</option>
+                    <option value="see_more" data-bind="hidden: dataRegistry">{% trans "See More" %}</option>
                     <option value="es_only">{% trans "Skip to Default Case Search Results" %}</option>
                   </select>
                 </div>
