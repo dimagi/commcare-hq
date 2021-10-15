@@ -45,6 +45,9 @@
     </td>
     <td data-bind="text: last_run"></td>
     <td data-bind="css: {'has-error': action_error}">
+      <a class="btn btn-default" data-bind="attr: {href: explore_url}">
+        {% trans "Explore Duplicates" %}
+      </a>
       <button type="button" class="btn btn-default" data-action="activate" data-bind="visible: !active">
         {% trans "Activate" %}
       </button>
