@@ -18,7 +18,6 @@ from django.db import connections
 from django.db.backends import utils
 from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
-from flaky import flaky
 
 import mock
 
@@ -839,8 +838,11 @@ def flaky_slow(test=None, max_runs=5, min_passes=1, rerun_filter=lambda *a: True
 
     Use for tests that depend on eventual database consistency.
     """
+    from flaky import flaky
+
     def rerun(*args):
         sleep(0.5)
         return rerun_filter(*args)
+
     deco = flaky(max_runs=max_runs, min_passes=min_passes, rerun_filter=rerun)
     return deco if test is None else deco(test)
