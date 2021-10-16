@@ -13,7 +13,6 @@ from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowDatu
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
-    ClearFrame,
     Display,
     Hint,
     Instance,
@@ -26,7 +25,6 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     RemoteRequestQuery,
     RemoteRequestSession,
     SessionDatum,
-    StackDatum,
     Stack,
     Text,
 )
@@ -63,13 +61,12 @@ class QuerySessionXPath(InstanceXpath):
 
 
 class RemoteRequestFactory(object):
-    def __init__(self, module, detail_section_elements, form=None):
+    def __init__(self, module, detail_section_elements):
         self.app = module.get_app()
         self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
         self.case_session_var = self.module.search_config.case_session_var
-        self.form = form
 
     def build_remote_request(self):
         return RemoteRequest(
@@ -90,13 +87,7 @@ class RemoteRequestFactory(object):
                 ),
             ],
         }
-        relevant = self.get_post_relevant() or ""
-        if self.form:
-            if relevant:
-                relevant += " and "
-            else:
-                relevant = ""
-            relevant += "instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project = instance('commcaresession')/session/user/data/commcare_project"
+        relevant = self.get_post_relevant()
         if relevant:
             kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
@@ -106,9 +97,9 @@ class RemoteRequestFactory(object):
 
     def build_command(self):
         return Command(
-            id=f"remote_query.m1-f{self.form.id}" if self.form else id_strings.search_command(self.module),
+            id=id_strings.search_command(self.module),
             display=Display(
-                text=Text(locale_id=id_strings.form_locale(self.form) if self.form else id_strings.case_search_locale(self.module)),
+                text=Text(locale_id=id_strings.case_search_locale(self.module)),
             ),
         )
 
@@ -263,18 +254,9 @@ class RemoteRequestFactory(object):
 
     def build_stack(self):
         stack = Stack()
-        if self.form:
-            frame = PushFrame()
-            frame.add_command(f"'m{self.module.id}-f{self.form.id}'")
-            frame.add_datum(StackDatum(
-                id="case_id",
-                value=QuerySessionXPath(self.case_session_var).instance(),
-            ))
-            stack.add_frame(frame)
-        else:
-            frame = PushFrame()
-            frame.add_rewind(QuerySessionXPath(self.case_session_var).instance())
-            stack.add_frame(frame)
+        frame = PushFrame()
+        frame.add_rewind(QuerySessionXPath(self.case_session_var).instance())
+        stack.add_frame(frame)
         return stack
 
 
@@ -340,10 +322,6 @@ class RemoteRequestContributor(SuiteContributorByModule):
             elements.extend(self.get_endpoint_contributions(module, None, module.session_endpoint_id,
                                                             detail_section_elements))
         for form in module.get_forms():
-            if module.id == 1:      # jls
-                elements.append(RemoteRequestFactory(
-                    module, detail_section_elements, form=form).build_remote_request()
-                )
             if form.session_endpoint_id:
                 elements.extend(self.get_endpoint_contributions(module, form, form.session_endpoint_id,
                                                                 detail_section_elements))
