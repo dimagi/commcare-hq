@@ -28,7 +28,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Stack,
     Text,
 )
-from corehq.apps.app_manager.util import module_offers_search
+from corehq.apps.app_manager.util import module_offers_search, module_offers_registry_search
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
     CaseTypeXpath,
@@ -314,7 +314,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
     @time_method()
     def get_module_contributions(self, module, detail_section_elements):
         elements = []
-        if module_offers_search(module):
+        if module_offers_search(module) or module_offers_registry_search(module):     # TODO: check workflow instead
             elements.append(RemoteRequestFactory(
                 module, detail_section_elements).build_remote_request()
             )

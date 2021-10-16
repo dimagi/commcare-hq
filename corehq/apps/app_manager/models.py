@@ -135,6 +135,7 @@ from corehq.apps.app_manager.util import (
     get_latest_enabled_versions_per_profile,
     is_remote_app,
     is_usercase_in_use,
+    module_offers_registry_search,
     module_offers_search,
     save_xform,
     update_form_unique_ids,
@@ -2485,7 +2486,8 @@ class ModuleDetailsMixin(object):
             ('ref_long', self.ref_details.long, False),
         ]
         custom_detail = self.case_details.short.custom_xml
-        if module_offers_search(self) and not custom_detail:
+        if True:
+        #if (module_offers_search(self) or module_offers_registry_search(self)) and not custom_detail: # TODO: look at workflow
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
@@ -3192,7 +3194,8 @@ class AdvancedModule(ModuleBase):
             ('product_short', self.product_details.short, self.get_app().commtrack_enabled),
             ('product_long', self.product_details.long, False),
         ]
-        if module_offers_search(self) and not self.case_details.short.custom_xml:
+        #if (module_offers_search(self) or module_offers_registry_search(self)) and not custom_detail: # TODO: look at workflow
+        if True:
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return details

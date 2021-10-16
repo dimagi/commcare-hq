@@ -197,8 +197,9 @@ class DetailContributor(SectionContributor):
                     if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
                         d.actions.append(self._get_case_list_form_action(module))
 
-                if module_offers_search(module):
-                    in_search = module.search_config.data_registry or "search" in id
+                if module_offers_search(module): # and not module.search_config.data_registry: # TODO: check workflow instead
+                    #in_search = module.search_config.data_registry or "search" in id
+                    in_search = "search" in id
                     d.actions.append(self._get_case_search_action(module, in_search=in_search))
 
             try:

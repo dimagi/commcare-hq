@@ -190,8 +190,9 @@ def get_form_data_schema(request, domain, app_id, form_unique_id):
         data.append(get_session_schema(form))
         if form.requires_case() or is_usercase_in_use(domain):
             data.append(get_casedb_schema(form))
-        if form.requires_case() and form.get_module().search_config.data_registry:
-            data.append(get_registry_schema(form))
+        # TODO
+        #if form.requires_case() and form.get_module().search_config.data_registry:
+        #    data.append(get_registry_schema(form))
     except AppManagerException as e:
         notify_exception(request, message=str(e))
         return HttpResponseBadRequest(

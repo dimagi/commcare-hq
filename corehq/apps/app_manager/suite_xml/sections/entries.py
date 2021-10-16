@@ -5,7 +5,7 @@ import attr
 from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
+from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_LOAD_CASE, USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ParentModuleReferenceError,
@@ -212,7 +212,7 @@ class EntriesHelper(object):
 
             EntriesHelper.add_custom_assertions(e, form)
 
-            if module_offers_registry_search(module):
+            if module_offers_registry_search(module) and module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_LOAD_CASE:
                 EntriesHelper.add_registry_search_instances(e, form)
 
             if (
@@ -430,9 +430,11 @@ class EntriesHelper(object):
             if datum.module_id and datum.case_type:
                 module = self.app.get_module_by_unique_id(datum.module_id)
                 if module_offers_registry_search(module):
-                    result.append(self.get_data_registry_search_datums(module))
+                    if module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_LOAD_CASE:
+                        result.append(self.get_data_registry_search_datums(module))
                     result.append(datum)
-                    result.extend(self.get_data_registry_case_datums(datum, module))
+                    if module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_LOAD_CASE:
+                        result.extend(self.get_data_registry_case_datums(datum, module))
                 else:
                     result.append(datum)
             else:
@@ -500,7 +502,7 @@ class EntriesHelper(object):
             filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
             instance_name, root_element = "casedb", "casedb"
-            if module_offers_registry_search(detail_module):
+            if module_offers_registry_search(detail_module) and module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_LOAD_CASE:
                 instance_name, root_element = "results", "results"
 
             nodeset = EntriesHelper._get_nodeset_xpath(
