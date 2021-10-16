@@ -50,9 +50,10 @@ class EntryInstances(PostProcessor):
         details = [details_by_id[detail_id] for detail_id in detail_ids if detail_id]
 
         entry_id = entry.command.id
-        menu_id = menu_by_command[entry_id]
-        relevances = relevance_by_menu[menu_id]
-        xpaths.update(relevances)
+        menu_id = menu_by_command.get(entry_id)
+        if menu_id:
+            relevances = relevance_by_menu[menu_id]
+            xpaths.update(relevances)
 
         for detail in details:
             xpaths.update(detail.get_all_xpaths())

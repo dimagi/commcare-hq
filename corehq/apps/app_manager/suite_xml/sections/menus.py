@@ -211,7 +211,10 @@ class MenuContributor(SuiteContributorByModule):
             if form.unique_id in excluded_form_ids:
                 continue
 
-            command = Command(id=id_strings.form_command(form, module))
+            command_id = id_strings.form_command(form, module)
+            if module.id == 1:
+                command_id = "remote_query." + command_id
+            command = Command(id=command_id)
 
             if form.requires_case():
                 form_datums = self.entries_helper.get_datums_meta_for_form_generic(form)
