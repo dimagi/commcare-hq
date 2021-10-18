@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import date, time
 
@@ -43,6 +44,7 @@ from corehq.messaging.scheduling.models import (
     TimedSchedule,
 )
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
+from corehq.util.json import CommCareJSONEncoder
 
 
 class TestSubscriptionEmailLogic(SimpleTestCase):
@@ -389,7 +391,10 @@ class DeactivateScheduleTest(TransactionTestCase):
             self.assertEqual(p1.call_count, 2)
             p1.assert_has_calls(
                 [
-                    call(broadcast.schedule_id, broadcast.recipients, start_date=broadcast.start_date)
+                    call(broadcast.schedule_id,
+                         broadcast.recipients,
+                         start_date=json.dumps(broadcast.start_date, cls=CommCareJSONEncoder)
+                         )
                     for broadcast in (self.domain_1_sms_schedules[0], self.domain_1_survey_schedules[0])
                 ],
                 any_order=True
@@ -431,7 +436,11 @@ class DeactivateScheduleTest(TransactionTestCase):
             _deactivate_schedules(self.domain_obj_1, survey_only=True)
 
             b = self.domain_1_survey_schedules[0]
-            p1.assert_called_once_with(b.schedule_id, b.recipients, start_date=b.start_date)
+            p1.assert_called_once_with(
+                b.schedule_id,
+                b.recipients,
+                start_date=json.dumps(b.start_date, cls=CommCareJSONEncoder)
+            )
 
             b = self.domain_1_survey_schedules[1]
             p2.assert_called_once_with(b.schedule_id, b.recipients)
