@@ -66,6 +66,8 @@ from .permissions import (
 )
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config
+from django.http import JsonResponse, HttpResponseBadRequest
+from corehq.apps.locations.dbaccessors import get_filtered_locations_count
 
 logger = logging.getLogger(__name__)
 
@@ -202,10 +204,8 @@ class LocationsListView(BaseLocationView):
     @property
     def page_context(self):
         has_location_types = len(self.domain_object.location_types) > 0
-        if toggles.FILTERED_LOCATION_DOWNLOAD.enabled(self.domain):
-            bulk_download_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
-        else:
-            bulk_download_url = reverse("location_export", args=[self.domain])
+        bulk_download_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
+
         return {
             'bulk_download_url': bulk_download_url,
             'locations': self.get_visible_locations(),
@@ -247,7 +247,8 @@ class FilteredLocationDownload(BaseLocationView):
     @property
     def page_context(self):
         return {
-            'form': LocationFilterForm(self.request.GET, domain=self.domain),
+            'form': LocationFilterForm(self.request.GET, domain=self.domain, user=self.request.couch_user),
+            'locations_count_url': reverse('locations_count', args=[self.domain])
         }
 
 
@@ -987,18 +988,25 @@ def location_importer_job_poll(request, domain, download_id):
 @location_safe
 def location_export(request, domain):
     headers_only = request.GET.get('download_type', 'full') == 'empty'
-    if not request.can_access_all_locations and not headers_only:
-        return no_permissions(request)
     if not LocationType.objects.filter(domain=domain).exists():
         messages.error(request, _("You need to define organization levels before "
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
+
     include_consumption = request.GET.get('include_consumption') == 'true'
-    root_location_id = request.GET.get('root_location_id')
     owner_id = request.couch_user.get_id
     download = DownloadBase()
+
+    form = LocationFilterForm(request.GET, domain=domain, user=request.couch_user)
+
+    if form.is_valid():
+        location_filters = form.get_filters()
+    else:
+        return HttpResponseBadRequest('Location filters invalid')
+
+    root_location_id = location_filters.pop('location_id')
     res = download_locations_async.delay(domain, download.download_id, include_consumption,
-                                         headers_only, owner_id, root_location_id)
+                                         headers_only, owner_id, root_location_id, **location_filters)
     download.set_task(res)
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
@@ -1027,12 +1035,9 @@ class DownloadLocationStatusView(BaseLocationView):
 
     def get(self, request, *args, **kwargs):
         context = super(DownloadLocationStatusView, self).main_context
-        if toggles.FILTERED_LOCATION_DOWNLOAD.enabled(self.domain):
-            next_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
-            next_url_text = _("Go back to organization download")
-        else:
-            next_url = reverse(LocationsListView.urlname, args=[self.domain])
-            next_url_text = _("Go back to organization structure")
+        next_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
+        next_url_text = _("Go back to organization download")
+
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
@@ -1085,3 +1090,28 @@ def unassign_users(request, domain):
                      _("All users have been unassigned from their locations"))
     fallback_url = reverse('users_default', args=[domain])
     return HttpResponseRedirect(request.POST.get('redirect', fallback_url))
+
+
+@require_can_edit_or_view_locations
+@location_safe
+def count_locations(request, domain):
+    form = LocationFilterForm(request.GET, domain=domain, user=request.couch_user)
+
+    if form.is_valid():
+        location_filters = form.get_filters()
+    else:
+        return HttpResponseBadRequest('Location filters invalid')
+
+    if location_filters.pop('selected_location_only'):
+        locations_count = 1
+    else:
+        root_location_id = location_filters.pop('location_id')
+        locations_count = get_filtered_locations_count(
+            domain,
+            root_location_id=root_location_id,
+            **location_filters
+        )
+
+    return JsonResponse({
+        'count': locations_count
+    })
