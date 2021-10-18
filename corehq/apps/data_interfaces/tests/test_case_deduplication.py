@@ -148,6 +148,30 @@ class FindingDuplicatesTest(TestCase):
         self.assertItemsEqual([cases[4].case_id, cases[5].case_id],
                               find_duplicate_case_ids(self.domain, cases[4], ["name", "dob"], match_type="ANY"))
 
+    def test_find_duplicates_blank_case_properties(self):
+        """cases with blank properties shouldn't match
+        """
+        cases = [
+            self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
+                ("Padme Amidala", ""),
+                ("Padme Naberrie", ""),
+                ("Anakin Skywalker", "1977-03-25"),
+                ("Darth Vadar", "1977-03-25"),
+            ]
+        ]
+
+        self._prime_es_index(cases)
+
+        # An inexistent property shouldn't match any cases
+        self.assertItemsEqual([
+            cases[0].case_id
+        ], find_duplicate_case_ids(self.domain, cases[0], ["random_property"], match_type="ANY"))
+
+        # A blank property shouldn't match any cases, even though there are
+        # other cases where that property is blank
+        self.assertItemsEqual([cases[0].case_id],
+                              find_duplicate_case_ids(self.domain, cases[0], ["name", "dob"], match_type="ANY"))
+
 
 class CaseDeduplicationActionTest(TestCase):
 

@@ -14,6 +14,8 @@ def find_duplicate_case_ids(domain, case, case_properties, include_closed=False,
     clause = queries.MUST if match_type == "ALL" else queries.SHOULD
     _case_json = None
 
+    at_least_one_property_query = False
+
     for case_property_name in case_properties:
         if case_property_name in SPECIAL_CASE_PROPERTIES_MAP:
             if _case_json is None:
@@ -22,12 +24,22 @@ def find_duplicate_case_ids(domain, case, case_properties, include_closed=False,
         else:
             case_property_value = case.get_case_property(case_property_name)
 
+        if not case_property_value:
+            continue
+
+        at_least_one_property_query = True
+
         es = es.case_property_query(
             case_property_name,
-            case_property_value or '',
+            case_property_value,
             clause
         )
-    return es.get_ids()
+
+    if at_least_one_property_query:
+        # We need at least one property query otherwise this would return all the cases in the domain
+        return es.get_ids()
+    else:
+        return [case.case_id]
 
 
 def reset_and_backfill_deduplicate_rule(rule):
