@@ -140,20 +140,21 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             },
         });
 
-        var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain,
-            caseDomain = model.smartLinkParams.domain,
+        var isCrossDomain = false;
+        if (model.smartLinkParams) {
+            var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain,
+                caseDomain = model.smartLinkParams.domain,
             isCrossDomain = caseDomain && caseDomain !== userDomain;
+        }
         $('#select-case').off('click').click(function () {
             var smartLinkTemplate = undefined;
-            if (model.smartLinkParams) {
-                if (isCrossDomain) {
-                    var currentAppId = Util.currentUrlToObject().appId,
-                        currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", currentAppId),
-                        appId = currentApp.get("upstream_app_id") || currentApp.get("copy_of") || appId;
-                    smartLinkTemplate = hqImport("hqwebapp/js/initial_page_data").get("smart_link_template");
-                    smartLinkTemplate = smartLinkTemplate.replace("{domain}", caseDomain);
-                    smartLinkTemplate = smartLinkTemplate.replace("{app_id}", appId);
-                }
+            if (isCrossDomain) {
+                var currentAppId = Util.currentUrlToObject().appId,
+                    currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", currentAppId),
+                    appId = currentApp.get("upstream_app_id") || currentApp.get("copy_of") || appId;
+                smartLinkTemplate = hqImport("hqwebapp/js/initial_page_data").get("smart_link_template");
+                smartLinkTemplate = smartLinkTemplate.replace("{domain}", caseDomain);
+                smartLinkTemplate = smartLinkTemplate.replace("{app_id}", appId);
             }
             FormplayerFrontend.trigger("menu:select", caseId, smartLinkTemplate);
         });
