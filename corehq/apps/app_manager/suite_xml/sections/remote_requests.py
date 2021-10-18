@@ -2,6 +2,7 @@ from django.utils.functional import cached_property
 
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
@@ -26,6 +27,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     RemoteRequestSession,
     SessionDatum,
     Stack,
+    StackQuery,
     Text,
 )
 from corehq.apps.app_manager.util import (
@@ -37,6 +39,7 @@ from corehq.apps.app_manager.xpath import (
     CaseTypeXpath,
     InstanceXpath,
     interpolate_xpath,
+    XPath,
 )
 from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
@@ -257,6 +260,15 @@ class RemoteRequestFactory(object):
 
     def build_stack(self):
         stack = Stack()
+        if module_offers_registry_search(self.module) and self.module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_SMART_LINK:
+            # TODO: XPath instead of string
+            frame = PushFrame(if_clause=XPath("instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project != instance('commcaresession')/session/user/data/commcare_project"))
+            frame.add_datum(StackQuery(     # TODO: StackNav/StackJump
+                id="whatever",  # TODO: no id for these
+                # TODO: HQ should generate the endpoint id
+                value="'http://localhost:8000/a/bosco/app/v1/32d29ff8e7ca4a0cab792b1dbbae00fd/endpoint_songs/'",
+            ))
+            stack.add_frame(frame)
         frame = PushFrame()
         frame.add_rewind(QuerySessionXPath(self.case_session_var).instance())
         stack.add_frame(frame)
