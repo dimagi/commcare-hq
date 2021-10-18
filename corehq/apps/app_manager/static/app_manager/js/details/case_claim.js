@@ -205,6 +205,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.workflow = ko.computed({
             read: function () {
+                if (self.dataRegistry()) {
+                    if (self.autoLaunch()) {
+                        if (self.defaultSearch()) {
+                            return "es_only";
+                        }
+                    }
+                    return "auto_launch";
+                }
                 if (self.autoLaunch()) {
                     if (self.defaultSearch()) {
                         return "es_only";
