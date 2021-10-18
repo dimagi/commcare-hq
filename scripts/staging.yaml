@@ -53,7 +53,6 @@ branches:
     # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-    #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
     - sr/cs-multiselect  # Sravan May 31
@@ -68,7 +67,6 @@ branches:
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
     - fr/dedupe  # Farid Sept 17
-    - fr/dedupe-report  # Farid October 14
     - jm/remove-es-scan  # Joel Sep 17 [QA]
     - jls/smart-linking-in-web-apps # Jenny Sept 22
     - dmr/throttle-system-forms  # Danny Sept 24
