@@ -61,7 +61,7 @@ Jinja2~=2.11.3
 json-delta==2.0
 jsonfield==2.1.1
 jsonobject-couchdbkit~=1.0.1
-jsonobject==0.9.9
+jsonobject>0.9.9
 # jsonpath-ng with support for "wherenot" operator, and building documents
 # Upgrade when changes merged upstream
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl

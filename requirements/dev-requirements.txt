@@ -287,7 +287,7 @@ jsonfield==2.1.1
     # via
     #   -r base-requirements.in
     #   django-prbac
-jsonobject==0.9.9
+jsonobject==0.9.10
     # via
     #   -r base-requirements.in
     #   git-build-branch
