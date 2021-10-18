@@ -935,13 +935,19 @@ class DataSourceForm(forms.Form):
                                 ' checkedValue: \'true\'" class="project_data-option"/>'
                                 '<label for="one_project" class="project_data-label">%s</label>'
                                 % _("Data From My Project Space")),
-                    hqcrispy.FieldWithHelpBubble('application', help_bubble_text=help_texts['application']),
+                    crispy.Div(
+                        hqcrispy.FieldWithHelpBubble('application', help_bubble_text=help_texts['application']),
+                        style="padding-left: 50px;"
+                    ),
                     crispy.HTML('<input type="radio" name="project_data" id="many_projects" '
                                 'value="isDataFromOneProject" data-bind="checked: isDataFromOneProject, '
                                 'checkedValue: \'false\'" class="project_data-option"/><label '
                                 'for="many_projects" class="project_data-label">%s</label>'
                                 % _("Data From My Project Space And Others")),
-                    hqcrispy.FieldWithHelpBubble('registry_slug', help_bubble_text=help_texts['registry_slug']),
+                    crispy.Div(
+                        hqcrispy.FieldWithHelpBubble('registry_slug', help_bubble_text=help_texts['registry_slug']),
+                        style="padding-left: 50px;"
+                    ),
                 ),
                 hqcrispy.FieldWithHelpBubble('source', help_bubble_text=help_texts['source']),
             )
