@@ -28,11 +28,11 @@ botocore==1.20.85
     # via
     #   boto3
     #   s3transfer
-https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl
+celery @ https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2020.6.20
+certifi==2021.10.8
     # via
     #   requests
     #   sentry-sdk
@@ -130,7 +130,7 @@ django-formtools==2.1
     #   django-two-factor-auth
 django-logentry-admin==1.0.6
     # via -r base-requirements.in
-https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
+django-nose @ https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
     # via -r test-requirements.in
 django-oauth-toolkit==1.5.0
     # via -r base-requirements.in
@@ -247,7 +247,7 @@ jsonobject==0.9.9
     #   jsonobject-couchdbkit
 jsonobject-couchdbkit==1.0.1
     # via -r base-requirements.in
-https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
+jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
 jsonschema==3.2.0
     # via -r base-requirements.in
