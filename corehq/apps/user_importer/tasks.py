@@ -53,8 +53,8 @@ def import_users_and_groups(self, domain, user_specs, group_specs, upload_user_i
         user_results = create_or_update_commcare_users_and_groups(
             domain,
             user_specs,
-            upload_record_id=upload_record_id,
             upload_user=upload_user,
+            upload_record_id=upload_record_id,
             group_memoizer=group_memoizer,
             update_progress=functools.partial(_update_progress, start=len(group_specs))
         )
