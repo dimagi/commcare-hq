@@ -67,6 +67,8 @@ from dimagi.utils.couch import CriticalSection
 import io
 from six.moves.urllib.parse import quote_plus
 
+from dimagi.utils.parsing import json_format_date
+
 
 def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
     return CriticalSection(['edit-broadcast-%s-%s' % (broadcast_type, broadcast_id)], timeout=5 * 60)
@@ -374,7 +376,7 @@ class BroadcastListView(BaseMessagingSectionView):
         refresh_timed_schedule_instances.delay(
             broadcast.schedule_id,
             broadcast.recipients,
-            start_date=broadcast.start_date
+            start_date=json_format_date(broadcast.start_date)
         )
 
         return JsonResponse({
@@ -477,8 +479,11 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
             if isinstance(schedule, AlertSchedule):
                 refresh_alert_schedule_instances.delay(schedule.schedule_id, broadcast.recipients)
             elif isinstance(schedule, TimedSchedule):
-                refresh_timed_schedule_instances.delay(schedule.schedule_id, broadcast.recipients,
-                    start_date=broadcast.start_date)
+                refresh_timed_schedule_instances.delay(
+                    schedule.schedule_id,
+                    broadcast.recipients,
+                    start_date=json_format_date(broadcast.start_date)
+                )
             else:
                 raise TypeError("Expected AlertSchedule or TimedSchedule")
 

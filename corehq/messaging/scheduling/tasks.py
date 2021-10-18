@@ -35,6 +35,8 @@ from datetime import datetime
 from dimagi.utils.couch import CriticalSection
 from django.conf import settings
 
+from corehq.util.dates import iso_string_to_date
+
 
 class ScheduleInstanceRefresher(object):
 
@@ -302,14 +304,15 @@ def refresh_alert_schedule_instances(schedule_id, recipients):
         ).refresh()
 
 
-@task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
-def refresh_timed_schedule_instances(schedule_id, recipients, start_date=None):
+@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
+def refresh_timed_schedule_instances(schedule_id, recipients, start_date_iso_string=None):
     """
     :param schedule_id: the TimedSchedule schedule_id
-    :param start_date: the date to start the TimedSchedule
     :param recipients: a list of (recipient_type, recipient_id) tuples; the
     recipient type should be one of the values checked in ScheduleInstance.recipient
+    :param start_date_iso_string: the date to start the TimedSchedule formatted as an iso string
     """
+    start_date = iso_string_to_date(start_date_iso_string) if start_date_iso_string else None
     with CriticalSection(['refresh-timed-schedule-instances-for-%s' % schedule_id.hex], timeout=5 * 60):
         schedule = TimedSchedule.objects.get(schedule_id=schedule_id)
         TimedScheduleInstanceRefresher(

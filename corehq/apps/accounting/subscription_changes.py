@@ -37,6 +37,8 @@ from corehq.messaging.scheduling.tasks import (
     refresh_timed_schedule_instances,
 )
 
+from dimagi.utils.parsing import json_format_date
+
 
 class BaseModifySubscriptionHandler(object):
 
@@ -130,7 +132,7 @@ def get_refresh_timed_schedule_instances_call(broadcast):
         refresh_timed_schedule_instances.delay(
             broadcast.schedule_id,
             broadcast.recipients,
-            start_date=broadcast.start_date
+            start_date=json_format_date(broadcast.start_date)
         )
 
     return refresh
