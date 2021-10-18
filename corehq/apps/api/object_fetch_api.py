@@ -20,6 +20,7 @@ from dimagi.utils.django.cached_object import (
 )
 
 from corehq.apps.domain.decorators import api_auth
+from corehq.apps.hqmedia.models import CommCareAudio
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.views import (
     can_view_attachments,
@@ -157,8 +158,11 @@ class FormAttachmentAPI(View):
         if meta.is_audio:
             content_body = content.content_body
             content_type = content.content_type
+            # mock code to return a application multimedia instead
+            # multimedia_id = "332d145cab1e970ed077ebd3a6000afc"
+            # content_body, content_type = CommCareAudio.get(multimedia_id).get_display_file()
             response = HttpResponse(content_body, content_type=content_type)
-            response['Content-Disposition'] = 'inline'
+            response['Content-Disposition'] = 'filename="download{}"'.format('.mp3')
             return response
 
         return StreamingHttpResponse(
