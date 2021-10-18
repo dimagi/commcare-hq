@@ -198,10 +198,10 @@
           <td class="fhir-path">
             <input class="form-control" data-bind="value: $data.fhirResourcePropPath, disable: removeFHIRResourcePropertyPath"></input>
             <!-- ko if: fhirResourcePropPath() && !removeFHIRResourcePropertyPath() -->
-            <i data-bind="click: removePath" class="fa fa-close"></i>
+            <button title="{% trans_html_attr 'Remove Path' %}" data-bind="click: removePath" class="fa fa-close"></button>
             <!-- /ko -->
             <!-- ko if: removeFHIRResourcePropertyPath() -->
-            <i data-bind="click: restorePath" class="fa fa-undo"></i>
+            <button title="{% trans_html_attr 'Restore Path' %}" data-bind="click: restorePath" class="fa fa-undo"></button>
             <!-- /ko -->
           </td>
           {% endif %}
@@ -215,10 +215,10 @@
           </td>
           <td>
             <!-- ko if: !deprecated() -->
-            <i data-bind="click: deprecateProperty" class="fa fa-archive"></i>
+            <button title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="fa fa-archive"></button>
             <!-- /ko -->
             <!-- ko if: deprecated() -->
-            <i data-bind="click: restoreProperty" class="fa fa-undo"></i>
+            <button title="{% trans_html_attr 'Restore Property' %}" data-bind="click: restoreProperty" class="fa fa-undo"></button>
             <!-- /ko -->
           </td>
         </tr>
