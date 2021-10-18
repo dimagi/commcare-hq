@@ -950,6 +950,10 @@ class DataSourceForm(forms.Form):
     def sources_map(self):
         return self.app_source_helper.all_sources
 
+    @property
+    def dropdown_map(self):
+        return self.app_source_helper.app_and_registry_sources
+
     def get_selected_source(self):
         return self.app_source_helper.get_app_source(self.cleaned_data)
 

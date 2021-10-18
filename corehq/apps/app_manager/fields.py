@@ -82,6 +82,7 @@ class ApplicationDataSourceUIHelper(object):
         self.all_sources = {}
         self.enable_raw = enable_raw
         self.enable_registry = enable_registry
+        self.app_and_registry_sources = {}
         source_choices = [
             (DATA_SOURCE_TYPE_CASE, _("Case")),
             (DATA_SOURCE_TYPE_FORM, _("Form"))
@@ -109,9 +110,10 @@ class ApplicationDataSourceUIHelper(object):
             [(app_id, source['name']) for app_id, source in self.all_sources.items()]
         )
         if self.enable_registry:
-            self.all_sources.update(get_registry_case_sources(domain))
             self.application_field.choices += [('', '--------')]
             self.all_sources.update({'': {"name": '', "case": [], "form": []}})
+            self.app_and_registry_sources = get_dropdown_options(domain, self.all_sources)
+            self.all_sources.update(get_registry_case_sources(domain))
 
         self.source_field.choices = []
 
@@ -148,7 +150,11 @@ class ApplicationDataSourceUIHelper(object):
         # NOTE: This corresponds to a view-model that must be initialized in your template.
         # See the doc string of this class for more information.
         self.application_field.widget.attrs = {'data-bind': 'value: application'}
-        self.registry_slug_field.widget.attrs = {'data-bind': 'value: registrySlug'}
+        self.registry_slug_field.widget.attrs = {'data-bind': '''
+            optionsText: function(item){return item.text},
+            optionsValue: function(item){return item.value},
+            value: registrySlug
+            '''}
         self.source_type_field.widget.attrs = {'data-bind': 'value: sourceType'}
         self.source_field.widget.attrs = {'data-bind': '''
             optionsText: function(item){return item.text},
@@ -157,11 +163,14 @@ class ApplicationDataSourceUIHelper(object):
         '''}
 
         if self.enable_registry:
-            self.application_field.widget.attrs['data-bind'] += ", disable: registrySlug() != '' || " \
-                                                                "isDataFromOneProject() == 'false'"
+            self.application_field.widget.attrs['data-bind'] += ", disable:" \
+                                                                "isDataFromOneProject() != 'true'," \
+                                                                "optionsText: function(item){return item.text}," \
+                                                                "optionsValue: function(item){return item.value}," \
+                                                                "options: dropdownMap['app'][isDataFromOneProject()]"
             self.registry_slug_field.widget.attrs['data-bind'] += ", disable: sourceType() != 'case' || " \
-                                                                  "application() != '' || " \
-                                                                  "isDataFromOneProject() == 'true'"
+                                                                  "isDataFromOneProject() != 'false'," \
+                                                                  "options: dropdownMap['registry'][isDataFromOneProject()]"
             self.source_field.widget.attrs['data-bind'] += ", options: _.union(" \
                                                            "sourcesMap[application()][sourceType()], " \
                                                            "sourcesMap[registrySlug()][sourceType()])"
@@ -224,6 +233,22 @@ def get_registry_case_sources(domain):
             "form": []
         }
         for registry in DataRegistry.objects.visible_to_domain(domain)
+    }
+
+
+def get_dropdown_options(domain, all_sources):
+    registry_options = get_data_registry_dropdown_options(domain) + [{'slug': '', 'name': ''}]
+    return{
+        "app": {
+            "true": [{"text": source['name'], "value": app_id} for app_id, source in all_sources.items()],
+            "false": [{"text": '--------', "value": ''}],
+            "": [{"text": '--------', "value": ''}]
+        },
+        "registry": {
+            "true": [{"text": '--------', "value": ''}],
+            "false": [{"text": r["name"], "value": r["slug"]} for r in registry_options],
+            "": [{"text": '--------', "value": ''}]
+        }
     }
 
 

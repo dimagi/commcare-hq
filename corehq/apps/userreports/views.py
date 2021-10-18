@@ -408,6 +408,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
             "domain": self.domain,
             'report': {"title": _("Create New Report")},
             'form': self.form,
+            "dropdown_map": self.form.dropdown_map,
         }
         return context
 
