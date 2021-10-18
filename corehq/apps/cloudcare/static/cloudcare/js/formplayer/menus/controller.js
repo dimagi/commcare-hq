@@ -143,7 +143,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var isCrossDomain = false;
         if (model.smartLinkParams) {
             var userDomain = FormplayerFrontend.getChannel().request('currentUser').domain,
-                caseDomain = model.smartLinkParams.domain,
+                caseDomain = model.smartLinkParams.domain;
             isCrossDomain = caseDomain && caseDomain !== userDomain;
         }
         $('#select-case').off('click').click(function () {
