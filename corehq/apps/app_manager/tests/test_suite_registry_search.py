@@ -7,8 +7,9 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     Itemset,
     Module,
-    AdditionalRegistryQuery, DetailColumn, FormLink, DetailTab, OpenCaseAction,
+    AdditionalRegistryQuery, DetailColumn, FormLink, DetailTab, OpenCaseAction, ParentSelect,
 )
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
@@ -174,7 +175,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             self.app.create_suite(),
             './detail[@id="m0_case_long"]')
 
-    def test_form_linking_to_registry_module(self):
+    def test_form_linking_to_registry_module_from_registration_form(self):
         suite = self.app.create_suite()
         expected = """
         <partial>
@@ -194,6 +195,66 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             <command value="'m0-f0'"/>
           </create>
         </partial>"""
+        self.assertXmlPartialEqual(
+            expected,
+            suite,
+            "./entry[2]/stack/create"
+        )
+
+
+@patch_get_xform_resource_overrides()
+class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+    file_path = ('data', 'suite_registry')
+
+    def setUp(self):
+        factory = AppFactory(DOMAIN, "App with DR and child modules", build_version='2.35.0')
+        m0, f0 = factory.new_basic_module("case list", "case")
+        factory.form_requires_case(f0)
+
+        m1, f1 = factory.new_basic_module("child case list", "case", parent_module=m0)
+        m1.parent_select = ParentSelect(active=True, relationship="other", module_id=m0.get_or_create_unique_id())
+        f2 = factory.new_form(m1)
+
+        factory.form_requires_case(f1)
+        factory.form_requires_case(f2)
+
+        m1.search_config = CaseSearch(
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+            data_registry="myregistry"
+        )
+
+        # link from f1 to f2 (both in the child module)
+        f1.post_form_workflow = WORKFLOW_FORM
+        f1.form_links = [FormLink(form_id=f2.get_unique_id())]
+
+        factory.app._id = "123"
+        # wrap to have assign_references called
+        self.app = Application.wrap(factory.app.to_json())
+
+    def test_suite(self):
+        suite = self.app.create_suite()
+
+        expected = """
+        <partial>
+          <create>
+            <command value="'m0'"/>
+            <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+            <command value="'m1'"/>
+            <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+              <data key="case_type" ref="'case'"/>
+              <data key="commcare_registry" ref="'myregistry'"/>
+              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+            </query>
+            <datum id="case_id_case" value="instance('commcaresession')/session/data/case_id_case"/>
+            <query id="registry" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+              <data key="case_type" ref="'case'"/>
+              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+              <data key="commcare_registry" ref="'myregistry'"/>
+            </query>
+            <command value="'m1-f1'"/>
+          </create>
+        </partial>"""
+
         self.assertXmlPartialEqual(
             expected,
             suite,
