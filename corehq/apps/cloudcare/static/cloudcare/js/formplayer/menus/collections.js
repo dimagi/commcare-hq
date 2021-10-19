@@ -44,7 +44,6 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
 
         detailProperties: [
             'isPersistentDetail',
-            'smartLinkParams',
         ],
 
         formProperties: [
