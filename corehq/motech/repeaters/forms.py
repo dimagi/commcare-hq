@@ -122,7 +122,6 @@ class FormRepeaterForm(GenericRepeaterForm):
     def get_ordered_crispy_form_fields(self):
         fields = super(FormRepeaterForm, self).get_ordered_crispy_form_fields()
         fields.append(twbscrispy.PrependedText('include_app_id_param', ''))
-        print(fields)
         return fields + ['black_listed_users']
 
 
