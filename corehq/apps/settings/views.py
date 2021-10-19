@@ -560,12 +560,18 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
 
     def dispatch(self, request, *args, **kwargs):
         # raises a 404 if a user tries to access this page without the right authorizations
-        if (
-            request.couch_user and request.couch_user.is_dimagi
-            or toggles.MOBILE_PRIVILEGES_FLAG.enabled(request.couch_user.username)
-        ):
+        if self.is_user_authorized(request.couch_user):
             return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
         return not_found(request)
+
+    @staticmethod
+    def is_user_authorized(couch_user):
+        if (
+            couch_user and couch_user.is_dimagi
+            or toggles.MOBILE_PRIVILEGES_FLAG.enabled(couch_user.username)
+        ):
+            return True
+        return False
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
