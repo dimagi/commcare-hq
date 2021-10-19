@@ -27,7 +27,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     RemoteRequestSession,
     SessionDatum,
     Stack,
-    StackQuery,
+    StackJump,
     Text,
 )
 from corehq.apps.app_manager.util import (
@@ -261,11 +261,10 @@ class RemoteRequestFactory(object):
 
     def build_stack(self):
         stack = Stack()
-        if module_offers_registry_search(self.module) and self.module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_SMART_LINK:
+        if module_uses_smart_links(self.module):
             # TODO: XPath instead of string
             frame = PushFrame(if_clause=XPath("instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project != instance('commcaresession')/session/user/data/commcare_project"))
-            frame.add_datum(StackQuery(     # TODO: StackNav/StackJump
-                id="whatever",  # TODO: no id for these
+            frame.add_datum(StackJump(
                 value=f"'{self.get_smart_link()}'",
                 data=[
                     QueryData(key="domain", ref="instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project")     # TODO: XPath not string
