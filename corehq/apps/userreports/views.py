@@ -84,6 +84,7 @@ from corehq.apps.userreports.const import (
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
     REPORT_BUILDER_EVENTS_KEY,
+    TEMP_REPORT_PREFIX,
 )
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -144,15 +145,13 @@ from corehq.apps.userreports.util import (
     has_report_builder_add_on_privilege,
     number_of_report_builder_reports,
 )
-from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.decorators import get_permission_name, require_permission
 from corehq.apps.users.models import Permissions
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
-
-TEMP_REPORT_PREFIX = '__tmp'
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -212,6 +211,17 @@ class BaseUserConfigReportsView(BaseDomainView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=(self.domain,))
+
+    def dispatch(self, *args, **kwargs):
+        allow_access_to_ucrs = (
+            self.request.couch_user.has_permission(
+                self.domain,
+                get_permission_name(Permissions.edit_ucrs)
+            )
+        )
+        if allow_access_to_ucrs:
+            return super().dispatch(*args, **kwargs)
+        raise Http404()
 
 
 class UserConfigReportsHomeView(BaseUserConfigReportsView):

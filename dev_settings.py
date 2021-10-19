@@ -41,7 +41,6 @@ SHELL_PLUS_POST_IMPORTS = (
     ('corehq.apps.users.models', ('CouchUser', 'WebUser', 'CommCareUser')),
     ('casexml.apps.case.models', 'CommCareCase'),
     ('corehq.form_processor.interfaces.dbaccessors', ('CaseAccessors', 'FormAccessors')),
-    ('couchforms.models', 'XFormInstance'),
 
     # Data querying utils
     ('dimagi.utils.couch.database', 'get_db'),

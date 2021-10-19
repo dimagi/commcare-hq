@@ -129,6 +129,21 @@
                 </div>
               </div>
             </div>
+            {% if request|toggle_enabled:"USER_CONFIGURABLE_REPORTS" %}
+            <div data-bind="foreach: ucrs">
+              <div class="form-group" data-bind="visible: visibilityRestraint">
+                <label class="col-sm-4 control-label" data-bind="text: text"></label>
+                <div class="col-sm-8 controls">
+                  <div class="form-check">
+                    <input type="checkbox"
+                           data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission, disable: !$root.allowEdit" />
+                    <label data-bind="attr:{for: checkboxLabel}, text: checkboxText">
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
             <div class="form-group" data-bind="visible: !reportPermissions.all()">
               <label class="col-sm-4 control-label">
                 {% trans "Access Specific Reports" %}

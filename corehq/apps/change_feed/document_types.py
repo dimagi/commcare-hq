@@ -1,10 +1,10 @@
 from collections import namedtuple
 
-from couchforms.models import all_known_formlike_doc_types
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.feed.interface import ChangeMeta
 
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError
+from corehq.form_processor.models import XFormInstanceSQL
 
 GROUP_DOC_TYPES = ('Group', 'Group-Deleted')
 WEB_USER_DOC_TYPES = ('WebUser', 'WebUser-Deleted')
@@ -28,7 +28,7 @@ def get_doc_meta_object_from_document(document):
 def _make_document_type(raw_doc_type, document):
     if raw_doc_type in CASE_DOC_TYPES:
         return _case_doc_type_constructor(raw_doc_type, document)
-    elif raw_doc_type in all_known_formlike_doc_types():
+    elif raw_doc_type in XFormInstanceSQL.ALL_DOC_TYPES:
         return _form_doc_type_constructor(raw_doc_type, document)
     elif raw_doc_type in DOMAIN_DOC_TYPES:
         return _domain_doc_type_constructor(raw_doc_type, document)

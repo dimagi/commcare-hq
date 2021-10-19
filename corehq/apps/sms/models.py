@@ -318,7 +318,7 @@ class SMS(SMSBase):
         try:
             publish_sms_saved(self)
         except Exception:
-            publish_sms_change.delay(self)
+            publish_sms_change.delay(self.id)
 
     def requeue(self):
         if self.processed or self.direction != OUTGOING:

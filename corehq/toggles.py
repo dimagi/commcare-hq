@@ -245,6 +245,14 @@ class StaticToggle(object):
         domains -= self.always_disabled
         return list(domains)
 
+    def get_enabled_users(self):
+        try:
+            toggle = Toggle.get(self.slug)
+        except ResourceNotFound:
+            return []
+
+        return [user for user in toggle.enabled_users if not user.startswith("domain:")]
+
 
 def was_domain_created_after(domain, checkpoint):
     """
@@ -812,6 +820,14 @@ DISABLE_WEB_APPS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Disable+access+to+Web+Apps+UI',
 )
 
+WEB_APPS_DOMAIN_BANNER = StaticToggle(
+    'web_apps_domain_banner',
+    'USH: Show current domain in web apps Login As banner',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
+)
+
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
@@ -827,7 +843,7 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
         "search first", "see more", and "skip to default case search results", Geocoder
         and other options in Webapps Case Search.
     ''',
-    TAG_INTERNAL,
+    TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -881,6 +897,14 @@ ECD_MIGRATED_DOMAINS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+WEB_USER_ACTIVITY_REPORT = StaticToggle(
+    'web_user_activity_report',
+    'USH: Enable Web User Activity Report',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Activity+Report',
+)
+
 ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
     'ecd_enterprise_domains',
     'Enterprise Domains that are eligible to view the Explore Case Data '
@@ -896,6 +920,13 @@ CASE_API_V0_6 = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_enable_search_index,
+)
+
+LIVEQUERY_SYNC = DynamicallyPredictablyRandomToggle(
+    'livequery_sync',
+    'Enable livequery sync algorithm',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
@@ -1916,6 +1947,15 @@ REFER_CASE_REPEATER = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
+
+DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
+    'data_registry_case_update_repeater',
+    'USH: Allow data registry repeater to be setup to update cases in other domains',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
+)
+
 
 WIDGET_DIALER = StaticToggle(
     'widget_dialer',

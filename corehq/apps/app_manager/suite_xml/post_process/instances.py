@@ -130,6 +130,7 @@ INSTANCE_KWARGS_BY_ID = {
     'casedb': dict(id='casedb', src='jr://instance/casedb'),
     'commcaresession': dict(id='commcaresession', src='jr://instance/session'),
     'registry': dict(id='registry', src='jr://instance/remote'),
+    'results': dict(id='results', src='jr://instance/remote'),
 }
 
 

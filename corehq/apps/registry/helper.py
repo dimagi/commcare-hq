@@ -44,7 +44,12 @@ class DataRegistryHelper:
     def log_data_access(self, user, domain, related_object, filters=None):
         self.registry.logger.data_accessed(user, domain, related_object, filters)
 
-    def get_case(self, case_id, case_type, couch_user, application):
+    def get_case(self, case_id, case_type, couch_user, accessing_object):
+        """
+        :param accessing_object: object that is calling 'get_case'.
+            See ``corehq.apps.registry.models.RegistryAuditHelper.data_accessed``
+        :return:
+        """
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 
         case = CaseAccessorSQL.get_case(case_id)
@@ -52,7 +57,7 @@ class DataRegistryHelper:
             raise CaseNotFound("Case type mismatch")
 
         self.check_data_access(couch_user, [case.type], case.domain)
-        self.log_data_access(couch_user.get_django_user(), case.domain, application, filters={
+        self.log_data_access(couch_user.get_django_user(), case.domain, accessing_object, filters={
             "case_type": case_type,
             "case_id": case_id
         })

@@ -24,6 +24,7 @@ from corehq.apps.linked_domain.const import (
 )
 from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
 from corehq.apps.linked_domain.keywords import update_keyword
+from corehq.apps.linked_domain.models import ReportLinkDetail, KeywordLinkDetail
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
@@ -156,7 +157,12 @@ The following linked project spaces received content:
         for linked_report in get_report_configs_for_domain(domain_link.linked_domain):
             if linked_report.report_meta.master_id == report_id:
                 found = True
-                update_linked_ucr(domain_link, linked_report.get_id, user_id)
+                update_linked_ucr(domain_link, linked_report.get_id)
+                domain_link.update_last_pull(
+                    MODEL_REPORT,
+                    user_id,
+                    model_detail=ReportLinkDetail(report_id=linked_report.get_id).to_json(),
+                )
 
         if not found:
             report = ReportConfiguration.get(report_id)
@@ -196,7 +202,12 @@ The following linked project spaces received content:
                 _('Could not find linked keyword. Please check the keyword has been linked.'),
             )
 
-        update_keyword(domain_link, linked_keyword_id, user_id)
+        update_keyword(domain_link, linked_keyword_id)
+        domain_link.update_last_pull(
+            MODEL_KEYWORD,
+            user_id,
+            model_detail=KeywordLinkDetail(keyword_id=str(linked_keyword_id)).to_json(),
+        )
 
     def _release_model(self, domain_link, model, user):
         update_model_type(domain_link, model['type'], model_detail=model['detail'])
@@ -230,7 +241,7 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
             elif model['type'] == MODEL_KEYWORD:
                 errors = manager._release_keyword(domain_link, model, manager.user._id)
             else:
-                errors = manager._release_model(domain_link, model, manager.user)
+                manager._release_model(domain_link, model, manager.user)
         except Exception as e:   # intentionally broad
             errors = [str(e), str(e)]
             notify_exception(None, "Exception pushing linked domains: {}".format(e))
