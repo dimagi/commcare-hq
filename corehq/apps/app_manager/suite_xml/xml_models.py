@@ -387,6 +387,23 @@ class StackDatum(IdNode):
     value = XPathField('@value')
 
 
+class QueryData(XmlObject):
+    ROOT_NAME = 'data'
+
+    key = StringField('@key')
+    ref = XPathField('@ref')
+
+
+class StackQuery(StackDatum):
+    ROOT_NAME = 'query'
+
+    data = NodeListField('data', QueryData)
+
+
+class StackJump(StackQuery):
+    ROOT_NAME = 'jump'
+
+
 class StackCommand(XmlObject):
     ROOT_NAME = 'command'
 
@@ -467,13 +484,6 @@ class Assertion(XmlObject):
 
     test = XPathField('@test')
     text = NodeListField('text', Text)
-
-
-class QueryData(XmlObject):
-    ROOT_NAME = 'data'
-
-    key = StringField('@key')
-    ref = XPathField('@ref')
 
 
 class QueryPrompt(DisplayNode):
