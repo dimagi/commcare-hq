@@ -1,0 +1,12 @@
+{% load i18n %}
+
+{{ greeting }}
+
+{% blocktrans %}
+The user associated with the username {{ old_username }} has been deprecated in favor of a new user with the username {{ new_username }}.
+To complete this process, log in with the new username. Taking this action will confirm the deletion of the old user,
+and will result in the old user being inaccessible.
+
+Thanks,
+CommCareHQ
+{% endblocktrans %}
