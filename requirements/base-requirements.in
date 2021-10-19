@@ -102,14 +102,15 @@ requests~=2.20
 schema
 sentry-sdk==0.19.5
 sh==1.14.2
-simpleeval~=0.9
+# Package has an unfixed issue https://github.com/danthedeckie/simpleeval/issues/90 Can use that once https://github.com/danthedeckie/simpleeval/pull/91 is merged
+simpleeval @ git+git://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
 simplejson~=3.11
 six~=1.11
 socketpool==0.5.3
 sqlagg==0.17.2
 SQLAlchemy~=1.3.0
 stripe==2.54.0
-suds-jurko==0.6
+suds-py3==1.4.4.1
 text-unidecode>=1.2
 tinys3==0.1.12
 tropo-webapi-python==0.1.3
