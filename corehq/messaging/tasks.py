@@ -1,24 +1,28 @@
+from django.conf import settings
+from django.db import transaction
+from django.db.models import Q
+
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch import CriticalSection
+
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.apps.sms import tasks as sms_tasks
 from corehq.apps.es import CaseES
+from corehq.apps.sms import tasks as sms_tasks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
+from corehq.messaging.scheduling.tasks import (
+    delete_schedule_instances_for_cases,
+)
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     paginate_query,
-    paginate_query_across_partitioned_databases
+    paginate_query_across_partitioned_databases,
 )
 from corehq.util.celery_utils import no_result_task
 from corehq.util.metrics.load_counters import case_load_counter
-from dimagi.utils.chunked import chunked
-from dimagi.utils.couch import CriticalSection
-from django.conf import settings
-from django.db.models import Q
-from django.db import transaction
 
 
 def get_sync_key(case_id):

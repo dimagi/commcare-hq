@@ -8,6 +8,8 @@ from django.utils.translation import ungettext
 
 from couchdbkit import ResourceConflict
 
+from dimagi.utils.parsing import json_format_date
+
 from corehq import privileges
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
@@ -20,10 +22,10 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.role_utils import (
-    get_custom_roles_for_domain,
     archive_custom_roles_for_domain,
-    unarchive_roles_for_domain,
+    get_custom_roles_for_domain,
     reset_initial_roles_for_domain,
+    unarchive_roles_for_domain,
 )
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
@@ -36,8 +38,6 @@ from corehq.messaging.scheduling.tasks import (
     refresh_alert_schedule_instances,
     refresh_timed_schedule_instances,
 )
-
-from dimagi.utils.parsing import json_format_date
 
 
 class BaseModifySubscriptionHandler(object):
@@ -309,14 +309,19 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_practice_mobile_workers(project, new_plan_version):
-        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
+        from corehq.apps.app_manager.views.utils import (
+            unset_practice_mode_configured_apps,
+        )
         unset_practice_mode_configured_apps(project.name)
 
     @staticmethod
     def response_mobile_worker_creation(domain, new_plan_version):
         """ Deactivates users if there are too many for a community plan """
         from corehq.apps.accounting.models import (
-            DefaultProductPlan, FeatureType, UNLIMITED_FEATURE_USAGE)
+            UNLIMITED_FEATURE_USAGE,
+            DefaultProductPlan,
+            FeatureType,
+        )
 
         # checks for community plan
         if (new_plan_version != DefaultProductPlan.get_default_plan_version()):
@@ -582,7 +587,11 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Get the allowed number of mobile workers based on plan version.
         """
-        from corehq.apps.accounting.models import FeatureType, FeatureRate, UNLIMITED_FEATURE_USAGE
+        from corehq.apps.accounting.models import (
+            UNLIMITED_FEATURE_USAGE,
+            FeatureRate,
+            FeatureType,
+        )
         num_users = CommCareUser.total_by_domain(self.domain.name, is_active=True)
         try:
             user_rate = self.new_plan_version.feature_rates.filter(
@@ -682,8 +691,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         in the future.
         """
         from corehq.apps.accounting.models import (
-            Subscription,
             SoftwarePlanEdition,
+            Subscription,
         )
         later_subs = Subscription.visible_objects.filter(
             subscriber__domain=self.domain.name,
@@ -769,7 +778,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
 
     @staticmethod
     def response_practice_mobile_workers(project, new_plan_version):
-        from corehq.apps.app_manager.views.utils import get_practice_mode_configured_apps
+        from corehq.apps.app_manager.views.utils import (
+            get_practice_mode_configured_apps,
+        )
         apps = get_practice_mode_configured_apps(project.name)
         if not apps:
             return None

@@ -1,40 +1,43 @@
+from datetime import date, datetime, time
+
+from django.test import TestCase
+
+from mock import patch
+
 from casexml.apps.case.tests.util import create_case
+from dimagi.utils.parsing import json_format_date
+
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import sharded
-from corehq.apps.hqcase.utils import update_case
-from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
-    save_alert_schedule_instance,
-    save_timed_schedule_instance,
-    delete_timed_schedule_instance,
-    get_alert_schedule_instances_for_schedule,
-    get_timed_schedule_instances_for_schedule,
-    delete_alert_schedule_instances_for_schedule,
-    delete_timed_schedule_instances_for_schedule,
-)
-from corehq.messaging.scheduling.scheduling_partitioned.models import (
-    AlertScheduleInstance,
-    TimedScheduleInstance,
-    CaseTimedScheduleInstance,
-)
 from corehq.messaging.scheduling.models import (
-    AlertSchedule,
     AlertEvent,
-    TimedSchedule,
-    TimedEvent,
+    AlertSchedule,
     CasePropertyTimedEvent,
     RandomTimedEvent,
     SMSContent,
+    TimedEvent,
+    TimedSchedule,
+)
+from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+    delete_alert_schedule_instances_for_schedule,
+    delete_timed_schedule_instance,
+    delete_timed_schedule_instances_for_schedule,
+    get_alert_schedule_instances_for_schedule,
+    get_timed_schedule_instances_for_schedule,
+    save_alert_schedule_instance,
+    save_timed_schedule_instance,
+)
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    AlertScheduleInstance,
+    CaseTimedScheduleInstance,
+    TimedScheduleInstance,
 )
 from corehq.messaging.scheduling.tasks import (
     refresh_alert_schedule_instances,
     refresh_timed_schedule_instances,
 )
-from datetime import datetime, date, time
-from django.test import TestCase
-from mock import patch
-
-from dimagi.utils.parsing import json_format_date
 
 
 class BaseScheduleTest(TestCase):
