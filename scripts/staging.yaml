@@ -80,5 +80,5 @@ branches:
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
     - rp/insert-status-embed # Rynhard Oct 15
-    - gh/remove-pickles/messaging # Grahan Oct 15
+    - gh/remove-pickles-from-messaging # Grahan Oct 15
 submodules: { }
