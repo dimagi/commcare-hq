@@ -760,6 +760,7 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
             data.append(QueryData(key="case_id", ref=session_var(self.source_id)))
         url = self.query.url
         if self.is_case_search:
+            # we don't need the full search results, just the case that's been selected
             url = url.replace('/phone/search/', '/phone/registry_case/')
         return StackQuery(id=self.query.storage_instance, value=url, data=data)
 
