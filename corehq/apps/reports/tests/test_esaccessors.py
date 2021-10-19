@@ -130,7 +130,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         es_form = transform_xform_for_elasticsearch(form_pair.json_form)
         send_to_elasticsearch('forms', es_form)
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        self.es.indices.refresh(XFORM_INDEX_INFO.alias)
         return form_pair
 
     def _send_group_to_es(self, _id=None, users=None):
