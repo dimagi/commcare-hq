@@ -13,6 +13,7 @@ hqDefine('userreports/js/configure_report', function () {
             "app": initialPageData.get('application'),
             "sourceId": initialPageData.get('source_id'),
             "sourceType": initialPageData.get('source_type'),
+            "registrySlug": initialPageData.get('registry_slug'),
             "reportPreviewUrl": initialPageData.get('report_preview_url'),
             "previewDatasourceId": initialPageData.get('preview_datasource_id'),
             "existingReport": existing_report ? existing_report._id : null,
