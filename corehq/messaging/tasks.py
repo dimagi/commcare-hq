@@ -1,31 +1,35 @@
+from django.conf import settings
+from django.db import transaction
+from django.db.models import Q
+
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch import CriticalSection
+
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.apps.sms import tasks as sms_tasks
 from corehq.apps.es import CaseES
+from corehq.apps.sms import tasks as sms_tasks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
+from corehq.messaging.scheduling.tasks import (
+    delete_schedule_instances_for_cases,
+)
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     paginate_query,
-    paginate_query_across_partitioned_databases
+    paginate_query_across_partitioned_databases,
 )
 from corehq.util.celery_utils import no_result_task
 from corehq.util.metrics.load_counters import case_load_counter
-from dimagi.utils.chunked import chunked
-from dimagi.utils.couch import CriticalSection
-from django.conf import settings
-from django.db.models import Q
-from django.db import transaction
 
 
 def get_sync_key(case_id):
     return 'sync-case-for-messaging-%s' % case_id
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=12, bind=True)
 def sync_case_for_messaging(self, domain, case_id):
     try:
@@ -35,7 +39,7 @@ def sync_case_for_messaging(self, domain, case_id):
         self.retry(exc=e)
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE, acks_late=True,
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=12, bind=True)
 def sync_case_for_messaging_rule(self, domain, case_id, rule_id):
     try:
@@ -45,7 +49,7 @@ def sync_case_for_messaging_rule(self, domain, case_id, rule_id):
         self.retry(exc=e)
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE, acks_late=True)
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE, acks_late=True)
 def sync_case_chunk_for_messaging_rule(domain, case_id_chunk, rule_id):
     for case_id in case_id_chunk:
         try:
@@ -89,7 +93,8 @@ def run_auto_update_rules_for_case(case):
 def _get_cached_rule(domain, rule_id):
     rules = AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
     rules = [rule for rule in rules if rule.pk == rule_id]
-    return rules[0] if len(rules) == 1 else None
+    if len(rules) == 1:
+        return rules[0]
 
 
 def _sync_case_for_messaging_rule(domain, case_id, rule_id):
@@ -105,7 +110,7 @@ def _sync_case_for_messaging_rule(domain, case_id, rule_id):
         MessagingRuleProgressHelper(rule_id).increment_current_case_count()
 
 
-def initiate_messaging_rule_run(rule):
+def initiate_rule_run(rule):
     if not rule.active:
         return
     AutomaticUpdateRule.objects.filter(pk=rule.pk).update(locked_for_editing=True)
@@ -131,13 +136,13 @@ def get_case_ids_for_messaging_rule(domain, case_type):
     return paginated_case_ids(domain, case_type)
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE)
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE)
 def set_rule_complete(rule_id):
     AutomaticUpdateRule.objects.filter(pk=rule_id).update(locked_for_editing=False)
     MessagingRuleProgressHelper(rule_id).set_rule_complete()
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE, acks_late=True,
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE, acks_late=True,
                 soft_time_limit=15 * settings.CELERY_TASK_SOFT_TIME_LIMIT)
 def run_messaging_rule(domain, rule_id):
     rule = _get_cached_rule(domain, rule_id)
@@ -153,7 +158,7 @@ def run_messaging_rule(domain, rule_id):
         run_messaging_rule_for_shard.delay(domain, rule_id, db_alias)
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE, acks_late=True,
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE, acks_late=True,
                 soft_time_limit=15 * settings.CELERY_TASK_SOFT_TIME_LIMIT)
 def run_messaging_rule_for_shard(domain, rule_id, db_alias):
     rule = _get_cached_rule(domain, rule_id)
