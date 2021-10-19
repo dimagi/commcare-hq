@@ -31,6 +31,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Text,
 )
 from corehq.apps.app_manager.util import (
+    is_linked_app,
     module_offers_search,
     module_uses_smart_links,
 )
@@ -265,14 +266,23 @@ class RemoteRequestFactory(object):
             frame = PushFrame(if_clause=XPath("instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project != instance('commcaresession')/session/user/data/commcare_project"))
             frame.add_datum(StackQuery(     # TODO: StackNav/StackJump
                 id="whatever",  # TODO: no id for these
-                # TODO: HQ should generate the endpoint id
-                value="'http://localhost:8000/a/bosco/app/v1/32d29ff8e7ca4a0cab792b1dbbae00fd/endpoint_songs/'",
+                value=f"'{self.get_smart_link()}'",
+                data=[
+                    QueryData(key="domain", ref="instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project")     # TODO: XPath not string
+                ],
             ))
             stack.add_frame(frame)
         frame = PushFrame()
         frame.add_rewind(QuerySessionXPath(self.case_session_var).instance())
         stack.add_frame(frame)
         return stack
+
+    def get_smart_link(self):
+        endpoint_id = "endpoint_songs"      # TODO
+        app_id = self.app.upstream_app_id if is_linked_app(self.app) else self.app.origin_id
+        url = absolute_reverse("session_endpoint", args=["---", app_id, endpoint_id])
+        url = url.replace("---", "{domain}")
+        return url
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
