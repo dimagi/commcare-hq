@@ -31,11 +31,11 @@ botocore==1.20.85
     # via
     #   boto3
     #   s3transfer
-https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl
+celery @ https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2020.6.20
+certifi==2021.10.8
     # via
     #   requests
     #   sentry-sdk
@@ -190,13 +190,13 @@ eulxml==1.1.3
     # via -r base-requirements.in
 faker==5.0.2
     # via -r base-requirements.in
-gevent==1.4.0
+gevent==21.8.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
 ghdiff==0.4
     # via -r base-requirements.in
-greenlet==0.4.17
+greenlet==1.1.2
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -236,13 +236,13 @@ jsonfield==2.1.1
     # via
     #   -r base-requirements.in
     #   django-prbac
-jsonobject==0.9.9
+jsonobject==0.9.10
     # via
     #   -r base-requirements.in
     #   jsonobject-couchdbkit
 jsonobject-couchdbkit==1.0.1
     # via -r base-requirements.in
-https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
+jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
 jsonschema==3.2.0
     # via -r base-requirements.in
@@ -262,8 +262,6 @@ lxml==4.6.3
     #   eulxml
 mako==1.1.3
     # via alembic
-markdown==2.2.1
-    # via -r base-requirements.in
 markdown-it-py==1.1.0
     # via
     #   mdit-py-plugins
@@ -409,7 +407,7 @@ sentry-sdk==0.19.5
     # via -r base-requirements.in
 sh==1.14.2
     # via -r base-requirements.in
-simpleeval==0.9.10
+git+git://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
 simplejson==3.17.2
     # via
@@ -480,7 +478,7 @@ sqlparse==0.3.1
     # via django
 stripe==2.54.0
     # via -r base-requirements.in
-suds-jurko==0.6
+suds-py3==1.4.4.1
     # via -r base-requirements.in
 tenacity==6.2.0
     # via ddtrace
@@ -526,12 +524,19 @@ xlwt==1.3.0
     # via -r base-requirements.in
 zipp==3.4.0
     # via importlib-metadata
+zope.event==4.5.0
+    # via gevent
+zope.interface==5.4.0
+    # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
 setuptools==53.0.0
     # via
     #   django-websocket-redis
+    #   gevent
     #   gunicorn
     #   jsonschema
     #   protobuf
     #   sphinx
+    #   zope.event
+    #   zope.interface

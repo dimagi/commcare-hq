@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase
 
 import pytz
-from corehq.util.es.elasticsearch import ConnectionError
 from mock import MagicMock, patch
 
 from casexml.apps.case.models import CommCareCase
@@ -71,40 +70,36 @@ from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted, reset_es_index
+from corehq.util.es.elasticsearch import ConnectionError
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
 @es_test
 class BaseESAccessorsTest(TestCase):
-    es_index_info = None
+
+    es_index_infos = []
 
     def setUp(self):
         super(BaseESAccessorsTest, self).setUp()
         with trap_extra_setup(ConnectionError):
             self.es = get_es_new()
-            self._delete_es_index()
+            self._delete_es_indices()
             self.domain = uuid.uuid4().hex
-            if isinstance(self.es_index_info, (list, tuple)):
-                for index_info in self.es_index_info:
-                    initialize_index_and_mapping(self.es, index_info)
-            else:
-                initialize_index_and_mapping(self.es, self.es_index_info)
+            for index_info in self.es_index_infos:
+                initialize_index_and_mapping(self.es, index_info)
 
     def tearDown(self):
-        self._delete_es_index()
+        self._delete_es_indices()
         super(BaseESAccessorsTest, self).tearDown()
 
-    def _delete_es_index(self):
-        if isinstance(self.es_index_info, (list, tuple)):
-            for index_info in self.es_index_info:
-                ensure_index_deleted(index_info.index)
-        else:
-            ensure_index_deleted(self.es_index_info.index)
+    def _delete_es_indices(self):
+        for index_info in self.es_index_infos:
+            ensure_index_deleted(index_info.index)
 
 
 class TestFormESAccessors(BaseESAccessorsTest):
 
-    es_index_info = [XFORM_INDEX_INFO, GROUP_INDEX_INFO]
+    es_index_infos = [XFORM_INDEX_INFO, GROUP_INDEX_INFO]
 
     def _send_form_to_es(
             self,
@@ -130,7 +125,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         es_form = transform_xform_for_elasticsearch(form_pair.json_form)
         send_to_elasticsearch('forms', es_form)
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        self.es.indices.refresh(XFORM_INDEX_INFO.alias)
         return form_pair
 
     def _send_group_to_es(self, _id=None, users=None):
@@ -861,6 +856,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
 @es_test
 class TestUserESAccessors(TestCase):
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -1022,7 +1018,7 @@ class TestGroupESAccessors(SimpleTestCase):
 
 class TestCaseESAccessors(BaseESAccessorsTest):
 
-    es_index_info = CASE_INDEX_INFO
+    es_index_infos = [CASE_INDEX_INFO, USER_INDEX_INFO]
 
     def setUp(self):
         super(TestCaseESAccessors, self).setUp()

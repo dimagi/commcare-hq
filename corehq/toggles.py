@@ -1212,9 +1212,8 @@ NON_PARENT_MENU_SELECTION = StaticToggle(
     'Allow selecting of module of any case-type in select-parent workflow',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Allow selecting of module of any case-type in select-parent workflow
-    """,
+    description="Allow selecting of module of any case-type in select-parent workflow",
+    help_link="https://confluence.dimagi.com/display/USH/Selecting+any+case+in+%27select+parent+first%27+workflow"
 )
 
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
@@ -1259,6 +1258,13 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
     TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
+CASE_DEDUPE = StaticToggle(
+    'case_dedupe',
+    'Case deduplication feature',
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1532,20 +1538,12 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
     """
         Bulk user management features:
-        For mobile users, enables filtered download page, bulk deletion page, and bulk lookup page.
+        For mobile users, enables bulk deletion page and bulk lookup page.
         For web users, enables filtered download page.
     """,
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Bulk+User+Management',
-)
-
-FILTERED_LOCATION_DOWNLOAD = StaticToggle(
-    'filtered_location_download',
-    "Ability to filter location download to include only a specified location and its descendants.",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Filtered+Locations+Download',
 )
 
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
