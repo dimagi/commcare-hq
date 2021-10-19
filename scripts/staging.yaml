@@ -66,7 +66,6 @@ branches:
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
-    - fr/dedupe  # Farid Sept 17
     - jm/remove-es-scan  # Joel Sep 17 [QA]
     - jls/smart-linking-in-web-apps # Jenny Sept 22
     - dmr/throttle-system-forms  # Danny Sept 24
@@ -79,7 +78,8 @@ branches:
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
     - rp/insert-status-embed # Rynhard Oct 15
-    - gh/remove-pickles-from-messaging # Grahan Oct 15
     - gh/remove-pickles-from-messaging+fr/dedupe # Daniel Oct 19
+    - gh/remove-pickles-from-messaging # Grahan Oct 15
+    - fr/dedupe  # Farid Sept 17
     - dm/upgrade-gevent # Daniel Oct 19
 submodules: { }
