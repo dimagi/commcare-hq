@@ -400,6 +400,10 @@ class StackQuery(StackDatum):
     data = NodeListField('data', QueryData)
 
 
+class StackJump(StackQuery):
+    ROOT_NAME = 'jump'
+
+
 class StackCommand(XmlObject):
     ROOT_NAME = 'command'
 
