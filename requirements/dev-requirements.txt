@@ -318,8 +318,6 @@ mako==1.1.3
     # via alembic
 mando==0.6.4
     # via radon
-markdown==2.2.1
-    # via -r base-requirements.in
 markupsafe==1.1.1
     # via
     #   jinja2
