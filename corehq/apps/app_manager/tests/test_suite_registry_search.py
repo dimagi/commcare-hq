@@ -231,7 +231,7 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, Su
         # wrap to have assign_references called
         self.app = Application.wrap(factory.app.to_json())
 
-    def test_suite(self):
+    def test_form_link_in_child_module_with_registry_search(self):
         suite = self.app.create_suite()
 
         expected = """
