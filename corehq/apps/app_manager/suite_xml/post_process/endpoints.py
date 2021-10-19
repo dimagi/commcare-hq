@@ -10,16 +10,12 @@ from corehq.apps.app_manager.suite_xml.post_process.workflow import (
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Argument,
     PushFrame,
-    QueryData,
     SessionEndpoint,
     Stack,
     StackDatum,
-    StackQuery,
 )
-from corehq.apps.app_manager.util import module_offers_registry_search, module_offers_search
-from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
+from corehq.apps.app_manager.util import module_offers_search
 from corehq.util.timer import time_method
-from corehq.util.view_utils import absolute_reverse
 
 
 class EndpointsHelper(PostProcessor):
@@ -48,30 +44,25 @@ class EndpointsHelper(PostProcessor):
 
         stack = Stack()
         children = self.get_frame_children(module, form)
-        arguments = self._get_arguments(children)
+        argument_ids = self._get_argument_ids(children)
 
         # Add a claim request for each endpoint argument.
         # This assumes that all arguments are case ids.
-        for arg in arguments:
-            self._add_claim_frame(stack, arg.id, endpoint_id)
+        for arg_id in argument_ids:
+            self._add_claim_frame(stack, arg_id, endpoint_id)
 
         # Add a frame to navigate to the endpoint
         frame = PushFrame()
         stack.add_frame(frame)
-        if module_offers_registry_search(module):
-            if module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_SMART_LINK:
-                for arg in arguments:
-                    self._add_query_for_arg(frame, arg, module)
-
         for child in children:
             if isinstance(child, CommandId):
                 frame.add_command(child.to_command())
-            elif child.id in [arg.id for arg in arguments]:
+            elif child.id in argument_ids:
                 self._add_datum_for_arg(frame, child.id)
 
         kwargs = {
             "id": endpoint_id,
-            "arguments": [Argument(id=arg.id) for arg in arguments],
+            "arguments": [Argument(id=arg_id) for arg_id in argument_ids],
             "stack": stack,
         }
         if module_offers_search(module):
@@ -79,9 +70,9 @@ class EndpointsHelper(PostProcessor):
                 kwargs["command_id"] = id_strings.form_command(form) if form else id_strings.menu_id(module)
         return SessionEndpoint(**kwargs)
 
-    def _get_arguments(self, frame_children):
+    def _get_argument_ids(self, frame_children):
         return [
-            child for child in frame_children
+            child.id for child in frame_children
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection
         ]
 
@@ -94,23 +85,6 @@ class EndpointsHelper(PostProcessor):
     def _add_datum_for_arg(self, frame, arg_id):
         frame.add_datum(
             StackDatum(id=arg_id, value=f"${arg_id}")
-        )
-
-    def _add_query_for_arg(self, frame, arg, module):
-        from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
-        app = module.get_app()
-        url = absolute_reverse("registry_case", args=[app.domain, app.get_id])
-        frame.add_datum(
-            StackQuery(
-                id=RESULTS_INSTANCE,
-                value=url,
-                data=[
-                    QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY,
-                              ref=f"'{module.search_config.data_registry}'"),
-                    QueryData(key="case_type", ref=f"'{arg.case_type}'"),
-                    QueryData(key=arg.id, ref=f"${arg.id}"),
-                ]
-            )
         )
 
     def get_frame_children(self, module, form):
