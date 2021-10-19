@@ -74,7 +74,6 @@ branches:
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
     - rp/improve-deleted-odata-feed-error-message # Rynhard Sept 15
-    - gh/erm/link-reports-and-keywords-on-push+gh/erm/refactor-release-methods # Graham Sept 24
     - gh/erm/link-reports-and-keywords-on-push # Graham Sept 15
     - fr/dedupe  # Farid Sept 17
     - jm/remove-es-scan  # Joel Sep 17 [QA]
