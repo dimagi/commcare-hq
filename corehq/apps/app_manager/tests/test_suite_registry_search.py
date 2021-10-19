@@ -7,7 +7,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     Itemset,
     Module,
-    AdditionalRegistryQuery, DetailColumn, FormLink, DetailTab,
+    AdditionalRegistryQuery, DetailColumn, FormLink, DetailTab, OpenCaseAction,
 )
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -28,7 +28,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.app = Application.new_app(DOMAIN, "Untitled Application")
         self.app._id = '123'
         self.app.build_spec = BuildSpec(version='2.35.0', build_number=1)
-        self.module = self.app.add_module(Module.new_module("Untitled Module", None))
+        self.module = self.app.add_module(Module.new_module("Followup", None))
         self.form = self.app.new_form(0, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
         self.form.requires = 'case'
         self.module.case_type = 'case'
@@ -52,6 +52,16 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ],
             data_registry="myregistry"
         )
+
+        self.reg_module = self.app.add_module(Module.new_module("Registration", None))
+        self.reg_form = self.app.new_form(1, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
+        self.reg_module.case_type = 'case'
+        self.reg_form.actions.open_case = OpenCaseAction(name_path="/data/question1")
+        self.reg_form.actions.open_case.condition.type = 'always'
+        self.reg_form.post_form_workflow = WORKFLOW_FORM
+        self.reg_form.form_links = [
+            FormLink(form_id=self.form.get_unique_id())
+        ]
 
         # wrap to have assign_references called
         self.app = Application.wrap(self.app.to_json())
@@ -143,7 +153,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
         self.assertXmlDoesNotHaveXpath(suite, "./entry[1]/instance[@id='registry']")
 
-    def test_form_linking_with_registry_module(self, *args):
+    def test_form_linking_from_registry_module(self, *args):
         self.form.post_form_workflow = WORKFLOW_FORM
         self.form.form_links = [
             FormLink(xpath="(today() - dob) &lt; 7", module_unique_id=self.module.unique_id)
@@ -163,3 +173,29 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             self.get_xml("detail_tabs"),
             self.app.create_suite(),
             './detail[@id="m0_case_long"]')
+
+    def test_form_linking_to_registry_module(self):
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <create>
+            <command value="'m0'"/>
+            <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+              <data key="case_type" ref="'case'"/>
+              <data key="commcare_registry" ref="'myregistry'"/>
+              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_new_case_0"/>
+            </query>
+            <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_case_0"/>
+            <query id="registry" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+              <data key="case_type" ref="'case'"/>
+              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_new_case_0"/>
+              <data key="commcare_registry" ref="'myregistry'"/>
+            </query>
+            <command value="'m0-f0'"/>
+          </create>
+        </partial>"""
+        self.assertXmlPartialEqual(
+            expected,
+            suite,
+            "./entry[2]/stack/create"
+        )
