@@ -257,6 +257,8 @@ def _find_best_match(target_datum, source_datums):
     """
     candidate = None
     for source_datum in source_datums:
+        if isinstance(source_datum, WorkflowQueryMeta):
+            continue
         if source_datum.from_parent_module:
             # if the datum is only there as a placeholder then we should ignore it
             continue
