@@ -506,7 +506,7 @@ class EntriesHelper(object):
             filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
             instance_name, root_element = "casedb", "casedb"
-            if module_loads_registry_case(module):
+            if module_loads_registry_case(detail_module):
                 instance_name, root_element = "results", "results"
 
             nodeset = EntriesHelper._get_nodeset_xpath(
