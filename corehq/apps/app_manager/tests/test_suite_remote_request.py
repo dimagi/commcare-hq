@@ -15,7 +15,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.suite_xml.sections.details import (
     AUTO_LAUNCH_EXPRESSION,
 )
-from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import (
     RESULTS_INSTANCE,
 )
 from corehq.apps.app_manager.tests.util import (

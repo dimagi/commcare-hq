@@ -18,9 +18,6 @@ from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
 from corehq.apps.app_manager.suite_xml.post_process.endpoints import (
     EndpointsHelper,
 )
-from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-    RemoteRequestsHelper,
-)
 from corehq.apps.app_manager.suite_xml.post_process.resources import (
     ResourceOverrideHelper,
 )
@@ -37,6 +34,9 @@ from corehq.apps.app_manager.suite_xml.sections.fixtures import (
     FixtureContributor,
 )
 from corehq.apps.app_manager.suite_xml.sections.menus import MenuContributor
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import (
+    RemoteRequestsHelper,
+)
 from corehq.apps.app_manager.suite_xml.sections.resources import (
     FormResourceContributor,
     LocaleResourceContributor,
