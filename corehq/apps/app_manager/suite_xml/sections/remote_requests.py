@@ -2,6 +2,7 @@ from django.utils.functional import cached_property
 
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
@@ -26,14 +27,20 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     RemoteRequestSession,
     SessionDatum,
     Stack,
+    StackJump,
     Text,
 )
-from corehq.apps.app_manager.util import module_offers_search
+from corehq.apps.app_manager.util import (
+    is_linked_app,
+    module_offers_search,
+    module_uses_smart_links,
+)
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
     CaseTypeXpath,
     InstanceXpath,
     interpolate_xpath,
+    XPath,
 )
 from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
@@ -254,10 +261,26 @@ class RemoteRequestFactory(object):
 
     def build_stack(self):
         stack = Stack()
+        if module_uses_smart_links(self.module):
+            # TODO: XPath instead of string
+            frame = PushFrame(if_clause=XPath("instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project != instance('commcaresession')/session/user/data/commcare_project"))
+            frame.add_datum(StackJump(
+                value=f"'{self.get_smart_link()}'",
+                data=[
+                    QueryData(key="domain", ref="instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project")     # TODO: XPath not string
+                ],
+            ))
+            stack.add_frame(frame)
         frame = PushFrame()
         frame.add_rewind(QuerySessionXPath(self.case_session_var).instance())
         stack.add_frame(frame)
         return stack
+
+    def get_smart_link(self):
+        app_id = self.app.upstream_app_id if is_linked_app(self.app) else self.app.origin_id
+        url = absolute_reverse("session_endpoint", args=["---", app_id, self.module.session_endpoint_id])
+        url = url.replace("---", "{domain}")
+        return url
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
@@ -314,7 +337,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
     @time_method()
     def get_module_contributions(self, module, detail_section_elements):
         elements = []
-        if module_offers_search(module):
+        if module_offers_search(module) or module_uses_smart_links(module):
             elements.append(RemoteRequestFactory(
                 module, detail_section_elements).build_remote_request()
             )
