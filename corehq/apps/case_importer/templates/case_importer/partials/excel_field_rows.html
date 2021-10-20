@@ -59,20 +59,25 @@
     <div class="has-warning">
       <p class="help-block">
         {% blocktrans with '<!--ko foreach: caseFieldSuggestions--><!--ko if: $index() !== 0-->, <!--/ko--><strong data-bind="text: $data"></strong><!--/ko-->' as suggestion %}
-          Did you mean {{ suggestion }}?
+          Did you mean "{{ suggestion }}" instead?
         {% endblocktrans %}
       </p>
     </div>
     <!--/ko-->
   </td>
 
-  <td>
+  <td class="col-md-1">
     <div class="checkbox">
       <label>
-        <input type="checkbox" class="new_property" data-bind="checked: isCustom"/>
-        {% trans "Create a new property instead" %}
+        <input type="checkbox" class="new_property" style="margin-left: auto;" data-bind="checked: isCustom"/>
       </label>
     </div>
+  </td>
+
+  <td>
+      <ul class="list-unstyled" data-bind="visible: valuesHints().length, foreach: valuesHints">
+        <li data-bind="text: $data"></li>
+      </ul>
   </td>
 
 </tr>
