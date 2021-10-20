@@ -277,9 +277,8 @@ class RemoteRequestFactory(object):
         return stack
 
     def get_smart_link(self):
-        endpoint_id = "endpoint_songs"      # TODO
         app_id = self.app.upstream_app_id if is_linked_app(self.app) else self.app.origin_id
-        url = absolute_reverse("session_endpoint", args=["---", app_id, endpoint_id])
+        url = absolute_reverse("session_endpoint", args=["---", app_id, self.module.session_endpoint_id])
         url = url.replace("---", "{domain}")
         return url
 
