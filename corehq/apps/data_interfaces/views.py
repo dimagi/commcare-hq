@@ -916,7 +916,7 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
 
     def _format_rule(self, rule):
         ret = super()._format_rule(rule)
-        rule_properties = set(rule.memoized_actions[0].definition.case_properties)
+        rule_properties = set(CaseDeduplicationActionDefinition.from_rule(rule).case_properties)
         explorer_columns = {"@case_type", "case_name", "last_modified"} | rule_properties
         ret['explore_url'] = reverse_with_params(
             'project_report_dispatcher',
@@ -1015,7 +1015,7 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
     @property
     @memoized
     def dedupe_action(self):
-        return self.rule.memoized_actions[0].definition
+        return CaseDeduplicationActionDefinition.from_rule(self.rule)
 
     @property
     def page_context(self):

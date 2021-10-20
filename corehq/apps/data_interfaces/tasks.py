@@ -36,6 +36,7 @@ from .models import (
     AUTO_UPDATE_XMLNS,
     AutomaticUpdateRule,
     CaseDuplicate,
+    CaseDeduplicationActionDefinition,
     CaseRuleActionResult,
     CaseRuleSubmission,
     DomainCaseRuleRun,
@@ -79,7 +80,7 @@ def backfill_deduplication_rule(domain, rule_id):
     if not rule.active:
         return
     AutomaticUpdateRule.clear_caches(rule.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
-    deduplicate_action = rule.memoized_actions[0].definition
+    deduplicate_action = CaseDeduplicationActionDefinition.from_rule(rule)
     CaseDuplicate.objects.filter(action=deduplicate_action).delete()
 
     rule.locked_for_editing = True

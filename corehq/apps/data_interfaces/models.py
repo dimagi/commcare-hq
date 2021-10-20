@@ -906,6 +906,25 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     case_properties = ArrayField(models.TextField())
     include_closed = models.BooleanField(default=False)
 
+    @classmethod
+    def from_rule(cls, rule):
+        """There can only ever be one CaseDeduplicationActionDefinition for any AutomaticUpdateRule
+        Given the rule, return that action
+        """
+        if not rule.workflow == AutomaticUpdateRule.WORKFLOW_DEDUPLICATE:
+            raise ValueError(
+                f"Rule must have workflow {AutomaticUpdateRule.WORKFLOW_DEDUPLICATE}, but we got {rule.workflow}"
+            )
+        try:
+            deduplicate_action_definition = rule.memoized_actions[0].definition
+        except IndexError:
+            raise ValueError("Rule has no actions")
+
+        if not isinstance(deduplicate_action_definition, cls):
+            raise ValueError(f"The action from rule {rule.pk} is not a {cls.__name__}")
+
+        return deduplicate_action_definition
+
     def properties_fit_definition(self, case_properties):
         """Given a list of case properties, returns whether these will be pertinent in
         finding duplicate cases.
@@ -1030,8 +1049,7 @@ class CaseDuplicate(models.Model):
             )
         except AutomaticUpdateRule.DoesNotExist:
             return []
-
-        action_id = rule.memoized_actions[0].definition.id
+        action_id = CaseDeduplicationActionDefinition.from_rule(rule).id
         return list(cls.objects.filter(action_id=action_id).values_list('case_id', flat=True))
 
     @classmethod

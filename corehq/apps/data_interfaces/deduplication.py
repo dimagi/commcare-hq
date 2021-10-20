@@ -43,20 +43,13 @@ def find_duplicate_case_ids(domain, case, case_properties, include_closed=False,
 
 
 def reset_and_backfill_deduplicate_rule(rule):
-    from corehq.apps.data_interfaces.models import (
-        AutomaticUpdateRule,
-        CaseDeduplicationActionDefinition,
-    )
+    from corehq.apps.data_interfaces.models import AutomaticUpdateRule
     from corehq.apps.data_interfaces.tasks import backfill_deduplication_rule
 
     if not rule.active:
         return
 
     if rule.workflow != AutomaticUpdateRule.WORKFLOW_DEDUPLICATE:
-        raise AttributeError
-
-    deduplicate_action = rule.memoized_actions[0].definition
-    if not isinstance(deduplicate_action, CaseDeduplicationActionDefinition):
         raise AttributeError
 
     backfill_deduplication_rule.delay(rule.domain, rule.pk)
