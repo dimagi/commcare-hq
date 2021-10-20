@@ -78,7 +78,6 @@ branches:
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
     - rp/insert-status-embed # Rynhard Oct 15
-    - gh/remove-pickles-from-messaging+fr/dedupe # Daniel Oct 19
     - fr/dedupe  # Farid Sept 17
     - dm/upgrade-gevent # Daniel Oct 19
     - jls/smart-linking-in-web-apps-stack-queries-debug # Jenny Oct 20
