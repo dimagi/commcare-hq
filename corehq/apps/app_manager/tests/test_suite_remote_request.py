@@ -1,5 +1,4 @@
 from django.test import SimpleTestCase
-
 from mock import patch
 
 from corehq.apps.app_manager.models import (
@@ -10,10 +9,8 @@ from corehq.apps.app_manager.models import (
     CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
-    DetailColumn,
     Itemset,
-    Module,
-    AdditionalRegistryQuery,
+    Module, DetailColumn,
 )
 from corehq.apps.app_manager.suite_xml.sections.details import (
     AUTO_LAUNCH_EXPRESSION,
@@ -120,9 +117,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         config = CaseSearch()
 
         config.default_relevant = True
-        self.assertEqual(config.get_relevant(), """
-            count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0
-        """.strip())
+        self.assertEqual(config.get_relevant(), "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0")  # noqa: E501
 
         config.default_relevant = False
         self.assertEqual(config.get_relevant(), "")
@@ -131,7 +126,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertEqual(config.get_relevant(), "double(now()) mod 2 = 0")
 
         config.default_relevant = True
-        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")
+        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")  # noqa: E501
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_remote_request(self, *args):
@@ -353,62 +348,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_blacklisted_owners'), suite, "./remote-request[1]")
-
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    def test_search_data_registry(self, *args):
-        self.module.search_config.data_registry = "myregistry"
-        suite = self.app.create_suite()
-
-        expected_entry_query = """
-        <partial>
-          <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/" storage-instance="registry" template="case" default_search="true">
-            <data key="case_type" ref="'case'"/>
-            <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
-            <data key="commcare_registry" ref="'myregistry'"/>
-          </query>
-        </partial>"""
-        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query")
-
-        # assert that session instance is added to the entry
-        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
-
-        # assert post is disabled
-        self.assertXmlHasXpath(suite, "./remote-request[1]/post[@relevant='false()']")
-
-        expected_data = """
-        <partial>
-          <data key="commcare_registry" ref="'myregistry'"/>
-        </partial>
-        """
-        self.assertXmlPartialEqual(expected_data, suite, "./remote-request[1]/session/query/data[@key='commcare_registry']")
-
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    def test_search_data_registry_additional_registry_query(self, *args):
-        self.module.search_config.data_registry = "myregistry"
-        base_xpath = "instance('registry')/results/case[@case_id=instance('commcaresession')/session/data/case_id]"
-        self.module.search_config.additional_registry_queries = [
-            AdditionalRegistryQuery(
-                instance_name="duplicate",
-                case_type_xpath=f"{base_xpath}/potential_duplicate_case_type",
-                case_id_xpath=f"{base_xpath}/potential_duplicate_case_id"
-            )
-        ]
-        suite = self.app.create_suite()
-
-        expected_entry_query = f"""
-        <partial>
-          <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/" storage-instance="duplicate" template="case" default_search="true">
-            <data key="case_type" ref="{base_xpath}/potential_duplicate_case_type"/>
-            <data key="case_id" ref="{base_xpath}/potential_duplicate_case_id"/>
-            <data key="commcare_registry" ref="'myregistry'"/>
-          </query>
-        </partial>"""
-        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[2]")
-
-        # assert that session and registry instances are added to the entry
-        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
-        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='registry']")
-
 
     def test_prompt_hint(self, *args):
         self.module.search_config.properties[0].hint = {'en': 'Search against name'}

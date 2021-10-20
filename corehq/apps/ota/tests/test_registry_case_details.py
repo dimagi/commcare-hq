@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.registry.helper import DataRegistryHelper
@@ -77,8 +78,16 @@ class RegistryCaseDetailsTests(TestCase):
         response_content = self._make_request({
             "commcare_registry": self.registry.slug, "case_id": self.parent_case_id, "case_type": "parent",
         }, 200)
-        case_ids = self._get_cases_in_response(response_content)
-        self.assertEqual(case_ids, {case.case_id for case in self.cases})
+        actual_cases = self._get_cases_in_response(response_content)
+        expected_cases = {case.case_id: case for case in self.cases}
+        self.assertEqual(set(actual_cases), set(expected_cases))
+
+        actual_domains = {
+            case.case_id: case.get_property(COMMCARE_PROJECT) for case in actual_cases.values()
+        }
+        expected_domains = {case.case_id: case.domain for case in self.cases}
+        self.assertEqual(actual_domains, expected_domains)
+
         self.assertEqual(1, RegistryAuditLog.objects.filter(
             registry=self.registry,
             action=RegistryAuditLog.ACTION_DATA_ACCESSED,
@@ -97,7 +106,7 @@ class RegistryCaseDetailsTests(TestCase):
         }, 404)
 
     def _make_request(self, params, expected_response_code):
-        with patch.object(DataRegistryHelper, 'check_access', return_value=True):
+        with patch.object(DataRegistryHelper, '_check_user_has_access', return_value=True):
             response = self.client.get(reverse('registry_case', args=[self.domain, self.app.get_id]), data=params)
         content = response.content
         self.assertEqual(response.status_code, expected_response_code, content)
@@ -105,7 +114,22 @@ class RegistryCaseDetailsTests(TestCase):
 
     def _get_cases_in_response(self, response_content):
         xml = ElementTree.fromstring(response_content)
-        return {node.get("case_id") for node in xml.findall("case")}
+        return {node.get('case_id'): _FixtureCase(node) for node in xml.findall("case")}
+
+
+class _FixtureCase:
+    """
+    Shim class for working with XML case blocks in a case DB fixture.
+    """
+    def __init__(self, xml_element):
+        self.xml_element = xml_element
+
+    @property
+    def case_id(self):
+        return self.xml_element.get('case_id')
+
+    def get_property(self, name):
+        return self.xml_element.findtext(name)
 
 
 @generate_cases([

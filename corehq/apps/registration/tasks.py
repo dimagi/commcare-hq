@@ -59,7 +59,7 @@ FORUM_LINK = 'https://forum.dimagi.com/'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
-@task(serializer='pickle', queue="email_queue")
+@task(queue="email_queue")
 def send_domain_registration_email(recipient, domain_name, guid, full_name, first_name):
     registration_link = 'http://' + get_site_domain() + reverse('registration_confirm_domain') + guid + '/'
     params = {

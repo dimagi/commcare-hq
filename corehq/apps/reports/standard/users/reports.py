@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from memoized import memoized
 
 from corehq import privileges
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
@@ -122,7 +123,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         )
 
     def _build_query(self, user_ids, changed_by_user_ids, user_property, actions, user_upload_record_id):
-        filters = Q(by_domain=self.domain)
+        filters = Q(for_domain__in=self._for_domains())
 
         if user_ids:
             filters = filters & Q(user_id__in=user_ids)
@@ -143,6 +144,9 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             filters = filters & Q(changed_at__lt=self.datespan.enddate_adjusted,
                                   changed_at__gte=self.datespan.startdate)
         return UserHistory.objects.filter(filters)
+
+    def _for_domains(self):
+        return BillingAccount.get_account_by_domain(self.domain).get_domains()
 
     @property
     def rows(self):

@@ -54,6 +54,7 @@ from corehq.apps.reports.standard.cases.duplicate_cases import (
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
+from corehq.apps.reports.standard.web_user_activity import WebUserActivityReport
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
@@ -69,7 +70,7 @@ from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
 )
-from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
+from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
 from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,
@@ -90,6 +91,7 @@ def REPORTS(project):
     reports.extend(_get_configurable_reports(project))
 
     monitoring_reports = (
+        WebUserActivityReport,
         monitoring.WorkerActivityReport,
         monitoring.DailyFormStatsReport,
         monitoring.SubmissionsByFormReport,

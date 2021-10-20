@@ -3,7 +3,6 @@ When a location type is set from stock-tracking to not stock-tracking, find all
 locations of that type and:
     close the supply point case,
     nullify the supply_point_id,
-    nullify the StockState sql_location field
 
 When a location type is set from not stock tracking to stock tracking, find all
 locations of that type and:

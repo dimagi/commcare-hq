@@ -1,7 +1,3 @@
-def should_use_sql_backend(domain_object_or_name):
-    return True
-
-
 def use_sqlite_backend(domain_name):
     return True
 

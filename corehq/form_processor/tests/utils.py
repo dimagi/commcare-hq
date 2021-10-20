@@ -23,8 +23,9 @@ from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only
-from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.couch.database import safe_delete
+
+from .json2xml import convert_form_to_xml
 
 logger = logging.getLogger(__name__)
 
@@ -53,24 +54,9 @@ class FormProcessorTestUtils(object):
         cls._delete_all_sql_sharded_models(CommCareCaseSQL, domain)
 
     @staticmethod
+    @unit_testing_only
     def delete_all_ledgers(domain=None):
-        FormProcessorTestUtils.delete_all_v2_ledgers(domain)
-        FormProcessorTestUtils.delete_all_v1_ledgers(domain)
-
-    @staticmethod
-    @unit_testing_only
-    def delete_all_v1_ledgers(domain=None):
-        logger.debug("Deleting all V1 ledgers for domain %s", domain)
-        from casexml.apps.stock.models import StockReport
-        from casexml.apps.stock.models import StockTransaction
-        stock_report_ids = StockReport.objects.filter(domain=domain).values_list('id', flat=True)
-        StockReport.objects.filter(domain=domain).delete()
-        StockTransaction.objects.filter(report_id__in=stock_report_ids).delete()
-
-    @staticmethod
-    @unit_testing_only
-    def delete_all_v2_ledgers(domain=None):
-        logger.debug("Deleting all V2 ledgers for domain %s", domain)
+        logger.debug("Deleting all ledgers for domain %s", domain)
 
         def _delete_ledgers_for_case(case_id):
             transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
@@ -89,13 +75,6 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_xforms(cls, domain=None):
-        logger.debug("Deleting all Couch xforms for domain %s", domain)
-        cls._delete_all(XFormInstance.get_db(), all_known_formlike_doc_types(), domain)
-        FormProcessorTestUtils.delete_all_sql_forms(domain)
-
-    @classmethod
-    @unit_testing_only
-    def delete_all_sql_forms(cls, domain=None):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         logger.debug("Deleting all SQL xforms for domain %s", domain)
         params = {"type_code__in": [CODES.form_xml, CODES.form_attachment]}
@@ -104,6 +83,8 @@ class FormProcessorTestUtils(object):
         for db in get_db_aliases_for_partitioned_query():
             BlobMeta.objects.using(db).filter(**params).delete()
         cls._delete_all_sql_sharded_models(XFormInstanceSQL, domain)
+
+    delete_all_sql_forms = delete_all_xforms
 
     @classmethod
     @unit_testing_only
@@ -283,8 +264,19 @@ def patch_shard_db_transactions(cls):
 
 @nottest
 def create_form_for_test(
-        domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL,
-        received_on=None, user_id='user1', edited_on=None):
+    domain,
+    case_id=None,
+    attachments=None,
+    save=True,
+    state=XFormInstanceSQL.NORMAL,
+    received_on=None,
+    user_id=None,
+    edited_on=None,
+    *,
+    form_id=None,
+    form_data=None,
+    **kwargs,
+):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
@@ -295,19 +287,27 @@ def create_form_for_test(
     """
     from corehq.form_processor.utils import get_simple_form_xml
 
-    form_id = uuid4().hex
+    form_id = form_id or uuid4().hex
     utcnow = received_on or datetime.utcnow()
+    kwargs.setdefault('xmlns', 'http://openrosa.org/formdesigner/form-processor')
 
-    form_xml = get_simple_form_xml(form_id, case_id)
+    if form_data is not None:
+        form_xml = convert_form_to_xml(form_data)
+        if user_id is None and form_data.get('meta'):
+            user_id = form_data['meta'].get('userID', user_id)
+    else:
+        form_xml = get_simple_form_xml(form_id, case_id)
+    if user_id is None:
+        user_id = 'user1'
 
     form = XFormInstanceSQL(
         form_id=form_id,
-        xmlns='http://openrosa.org/formdesigner/form-processor',
         received_on=utcnow,
         user_id=user_id,
         domain=domain,
         state=state,
         edited_on=edited_on,
+        **kwargs,
     )
 
     attachments = attachments or {}

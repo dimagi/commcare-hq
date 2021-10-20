@@ -1,17 +1,13 @@
 import uuid
 from datetime import datetime, timedelta
 
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 
-from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms
-from casexml.apps.case.exceptions import MissingServerDate
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks, primary_actions
 from corehq.apps.change_feed import topics
-from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy, _action_sort_key_function
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.tests.utils import sharded
@@ -43,7 +39,19 @@ def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
     return case_id
 
 
-class CaseRebuildTestMixin(object):
+@sharded
+class CaseRebuildTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(CaseRebuildTest, cls).setUpClass()
+        delete_all_cases()
+
+    def test_rebuild_empty(self):
+        self.assertEqual(
+            None,
+            rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test'))
+        )
 
     def _assertListEqual(self, l1, l2, include_ordering=True):
         if include_ordering:
@@ -61,21 +69,6 @@ class CaseRebuildTestMixin(object):
             pass  # this is what we want
         else:
             self.fail(msg)
-
-
-@sharded
-class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
-
-    @classmethod
-    def setUpClass(cls):
-        super(CaseRebuildTest, cls).setUpClass()
-        delete_all_cases()
-
-    def test_rebuild_empty(self):
-        self.assertEqual(
-            None,
-            rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test'))
-        )
 
     def test_archiving_only_form(self):
         """
@@ -228,7 +221,7 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
             [update_block.as_xml()], form_extras={'received_on': earlier}
         )
 
-        case_accessors = CaseAccessors(REBUILD_TEST_DOMAIN)
+        case_accessors = CaseAccessors('test-domain')
         case = case_accessors.get_case(case_id)
         self.assertEqual(earlier, case.modified_on)
 
@@ -269,7 +262,7 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
             CaseBlock.deprecated_init(child_case_id, index={'mom': ('mother', parent_case_id)}).as_xml()
         ])
 
-        case_accessors = CaseAccessors(REBUILD_TEST_DOMAIN)
+        case_accessors = CaseAccessors('test-domain')
         case = case_accessors.get_case(child_case_id)
         self.assertEqual(1, len(case.indices))
 
@@ -277,126 +270,3 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
 
         case = case_accessors.get_case(child_case_id)
         self.assertEqual(0, len(case.indices))
-
-
-class TestCheckActionOrder(SimpleTestCase):
-
-    def _action(self, datetime_):
-        return CommCareCaseAction(server_date=datetime_, date=datetime_, action_type='update')
-
-    def test_already_sorted(self):
-        case = CommCareCase(actions=[
-            self._action(datetime(2001, 1, 1, 0, 0, 0)),
-            self._action(datetime(2001, 1, 2, 0, 0, 0)),
-            self._action(datetime(2001, 1, 3, 0, 0, 0)),
-        ])
-        self.assertTrue(CouchCaseUpdateStrategy(case).check_action_order())
-
-    def test_out_of_order(self):
-        case = CommCareCase(actions=[
-            self._action(datetime(2001, 1, 1, 0, 0, 0)),
-            self._action(datetime(2001, 1, 3, 0, 0, 0)),
-            self._action(datetime(2001, 1, 2, 0, 0, 0)),
-        ])
-        self.assertFalse(CouchCaseUpdateStrategy(case).check_action_order())
-
-
-class TestActionSortKey(SimpleTestCase):
-
-    def test_missing_server_date(self):
-        case = CommCareCase(actions=[
-            _make_action(server_date=datetime(2001, 1, 1)),
-            _make_action(server_date=None, phone_date=datetime(2001, 1, 1)),
-        ])
-        with self.assertRaises(MissingServerDate):
-            sorted(case.actions, key=_action_sort_key_function(case))
-
-    def test_missing_phone_date(self):
-        case = CommCareCase(actions=[
-            _make_action(server_date=datetime(2001, 1, 1)),
-            _make_action(server_date=datetime(2001, 1, 1), phone_date=None),
-        ])
-        with self.assertRaises(MissingServerDate):
-            sorted(case.actions, key=_action_sort_key_function(case))
-
-    def test_sort_by_server_date(self):
-        expected_actions = (
-            (0, _make_action(server_date=datetime(2001, 1, 1))),
-            (2, _make_action(server_date=datetime(2001, 1, 3))),
-            (1, _make_action(server_date=datetime(2001, 1, 2))),
-        )
-        self._test(expected_actions)
-
-    def test_sort_by_server_date_precise(self):
-        expected_actions = (
-            (1, _make_action(server_date=datetime(2001, 1, 1, 0, 0, 1))),
-            (0, _make_action(server_date=datetime(2001, 1, 1, 0, 0, 0))),
-        )
-        self._test(expected_actions)
-
-    def test_default_to_phone_date_on_same_day(self):
-        expected_actions = (
-            (1, _make_action(server_date=datetime(2001, 1, 1, 0, 0, 0), phone_date=datetime(2001, 1, 1, 0, 0, 1))),
-            (0, _make_action(server_date=datetime(2001, 1, 1, 0, 0, 1), phone_date=datetime(2001, 1, 1, 0, 0, 0))),
-        )
-        self._test(expected_actions)
-
-    def test_create_before_update(self):
-        expected_actions = (
-            (1, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_UPDATE)),
-            (0, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_CREATE)),
-        )
-        self._test(expected_actions)
-
-    def test_update_before_close(self):
-        expected_actions = (
-            (1, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_CLOSE)),
-            (0, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_UPDATE)),
-        )
-        self._test(expected_actions)
-
-    def test_different_usernames_default_to_server_date(self):
-        expected_actions = (
-            (0, _make_action(server_date=datetime(2001, 1, 1, 0, 0, 0),
-                             phone_date=datetime(2001, 1, 1, 0, 0, 1),
-                             user_id='user1')),
-            (1, _make_action(server_date=datetime(2001, 1, 1, 0, 0, 1),
-                             phone_date=datetime(2001, 1, 1, 0, 0, 0),
-                             user_id='user2')),
-        )
-        self._test(expected_actions)
-
-    def test_type_order_in_same_form(self):
-        expected_actions = (
-            (3, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_CLOSE, form_id='1')),
-            (1, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_UPDATE, form_id='1')),
-            (0, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_CREATE, form_id='1')),
-            (2, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_UPDATE, form_id='1')),
-        )
-        self._test(expected_actions)
-
-    def _test(self, action_tuples):
-        """
-        Takes in an iterable of tuples of the form: (expected_index, action).
-
-        Calls the sort function on the actions in the order of the tuples and
-        then asserts that they end up sorted in the order specified by the expected_index
-        values.
-        """
-        case = CommCareCase(actions=[tup[1] for tup in action_tuples])
-        sorted_actions = sorted(case.actions, key=_action_sort_key_function(case))
-        for index, action in action_tuples:
-            self.assertEqual(action, sorted_actions[index])
-
-
-EMPTY_DATE = object()
-
-
-def _make_action(server_date, phone_date=EMPTY_DATE, action_type=const.CASE_ACTION_UPDATE,
-                 user_id='someuserid', form_id=None):
-    if phone_date == EMPTY_DATE:
-        phone_date = server_date
-    form_id = form_id or uuid.uuid4().hex
-    return CommCareCaseAction(
-        action_type=action_type, server_date=server_date, date=phone_date, user_id=user_id, xform_id=form_id
-    )

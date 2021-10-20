@@ -53,7 +53,7 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppLinkError,
     IncompatibleFormTypeException,
-    RearrangeError,
+    RearrangeError, AppValidationError,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
@@ -543,15 +543,17 @@ def load_app_from_slug(domain, username, slug):
 
 
 def _build_sample_app(app):
-    errors = app.validate_app()
-    if not errors:
-        comment = _("A sample CommCare application for you to explore")
+    comment = _("A sample CommCare application for you to explore")
+    try:
         copy = app.make_build(comment=comment)
-        copy.is_released = True
-        copy.save(increment_version=False)
-        return copy
-    else:
-        notify_exception(None, 'Validation errors building sample app', details=errors)
+    except AppValidationError as e:
+        notify_exception(None, 'Validation errors building sample app', details=e.errors)
+        return
+
+    copy.is_released = True
+    copy.save(increment_version=False)
+    return copy
+
 
 
 @require_can_edit_apps

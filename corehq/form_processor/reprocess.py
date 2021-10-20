@@ -2,8 +2,6 @@ import logging
 from collections import namedtuple
 from datetime import datetime
 
-from couchdbkit import ResourceNotFound
-
 from casexml.apps.case.exceptions import IllegalCaseId, InvalidCaseIndex, CaseValueError, PhoneDateValueError
 from casexml.apps.case.exceptions import UsesReferrals
 from corehq.apps.commtrack.exceptions import MissingProductId
@@ -73,14 +71,13 @@ def _perfom_post_save_actions(form, save=True):
         case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
         case_models = case_stock_result.case_models
 
-        if interface.use_sql_domain:
-            forms = ProcessedForms(form, None)
-            stock_result = case_stock_result.stock_result
-            try:
-                FormProcessorSQL.publish_changes_to_kafka(forms, case_models, stock_result)
-            except Exception:
-                error_message = "Error publishing to kafka"
-                return ReprocessingResult(form, None, None, error_message)
+        forms = ProcessedForms(form, None)
+        stock_result = case_stock_result.stock_result
+        try:
+            FormProcessorSQL.publish_changes_to_kafka(forms, case_models, stock_result)
+        except Exception:
+            error_message = "Error publishing to kafka"
+            return ReprocessingResult(form, None, None, error_message)
 
         try:
             save and SubmissionPost.do_post_save_actions(casedb, [form], case_stock_result)
@@ -204,15 +201,7 @@ def _get_case_ids_needing_rebuild(form, cases):
 
 def _get_form(form_id):
     from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-    from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
     try:
         return FormAccessorSQL.get_form(form_id)
     except XFormNotFound:
-        pass
-
-    try:
-        return FormAccessorCouch.get_form(form_id)
-    except ResourceNotFound:
-        pass
-
-    return None
+        return None

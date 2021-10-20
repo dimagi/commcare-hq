@@ -2,7 +2,6 @@ from django.utils.functional import lazy
 from jsonfield import JSONField
 from rest_framework import serializers
 
-from corehq.apps.commtrack.models import StockState
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.models import (
@@ -230,23 +229,3 @@ class LedgerValueSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = LedgerValue
         exclude = ('id', 'case')
-
-
-class StockStateSerializer(serializers.ModelSerializer):
-    _id = serializers.IntegerField(source='id')
-    entry_id = serializers.CharField(source='product_id')
-    location_id = serializers.CharField(source='sql_location.location_id', default=None)
-    balance = serializers.IntegerField(source='stock_on_hand')
-    last_modified = serializers.DateTimeField(source='last_modified_date')
-    domain = serializers.CharField()
-
-    class Meta(object):
-        model = StockState
-        exclude = (
-            'id',
-            'product_id',
-            'stock_on_hand',
-            'last_modified_date',
-            'sql_product',
-            'sql_location',
-        )

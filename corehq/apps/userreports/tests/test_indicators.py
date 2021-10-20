@@ -9,7 +9,6 @@ from mock import patch
 
 from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
-from casexml.apps.stock.models import StockReport, StockTransaction
 
 from corehq.apps.commtrack.processing import StockProcessingResult
 from corehq.apps.domain.shortcuts import create_domain
@@ -667,8 +666,6 @@ class TestGetValuesByProduct(TestCase):
         self.domain_obj.delete()
         delete_all_xforms()
         delete_all_ledgers()
-        StockReport.objects.all().delete()
-        StockTransaction.objects.all().delete()
         super(TestGetValuesByProduct, self).tearDown()
 
     def test_get_soh_values_by_product(self):

@@ -10,7 +10,7 @@
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
 #     $ scripts/rebuildstaging
-#     $ commcare-cloud staging deploy
+#     $ commcare-cloud --control staging deploy
 # Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
@@ -53,35 +53,33 @@ branches:
     # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-    #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
-    - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-    - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
-    - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - ce/bulk-case-search # Cal July 6
     - rp/enterprize-sms-report # Rynhard July 12
-    - ml/add-bulk-delete-form-export-report # Minha July 20
     #- sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
     - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
-    - jls/smart-linking-mvp  # Jenny Aug 9
-    - caktus:allowed_values_ui # Jenny Aug 13
-    - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
+    - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - ml/add-bulk-action-scheduled-reports # Minha Aug 30
-    - mk/user-history/structured-messages-v2 # MK Sep 1
-    - mk/user-history/migrate-change-messages # MK Sep 14
-    - gh/remove-pickles-from-accounting # Graham Sep 3
-    - dmr/cbc-tools  # Danny Sept 10
-    - gh/erm/allow-text-input-for-new-domain # Graham Sept 13
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
-    - gh/erm/hide-deleted-content # Graham Sept 14
-    - rp/improve-deleted-odata-feed-error-message # Rynhard Sept 15
-    - mjr/remove_phone_2fa # Matt Sept 15
-    - rc/repeat-button-focus # Robert Sept 15
-    - gh/erm/link-reports-and-keywords-on-push # Graham Sept 15
+    - jm/remove-es-scan  # Joel Sep 17 [QA]
+    - jls/smart-linking-in-web-apps # Jenny Sept 22
+    - dmr/throttle-system-forms  # Danny Sept 24
+    - dependabot/npm_and_yarn/datatables.net-1.11.3 # Amit Oct 6
+    - smh/remove-extra-spinner-icons # Steph Oct 6
+    - ap/ucr-rebuild-btn # Amit Oct 7
+    - ml/remove-pickles-phonelog # Minha Oct 7
+    - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
+    - ml/make-mobile-privileges-unreachable # Minha Oct 12
+    - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
+    - ml/remove-pickles-user-importer # Minha Oct 13
+    - rp/insert-status-embed # Rynhard Oct 15
+    - gh/remove-pickles-from-messaging+fr/dedupe # Daniel Oct 19
+    - fr/dedupe  # Farid Sept 17
+    - dm/upgrade-gevent # Daniel Oct 19
+    - jls/smart-linking-in-web-apps-stack-queries-debug # Jenny Oct 20
 submodules: { }
