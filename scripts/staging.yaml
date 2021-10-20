@@ -80,5 +80,4 @@ branches:
     - fr/dedupe  # Farid Sept 17
     - dm/upgrade-gevent # Daniel Oct 19
     - jls/smart-linking-in-web-apps-stack-queries-debug # Jenny Oct 20
-    - ce/separate-couch-sync
 submodules: { }
