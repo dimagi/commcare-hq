@@ -30,6 +30,7 @@ class ExportResponseTest(TestCase):
         cls.domain_obj.delete()
         super().tearDownClass()
 
+    @patch('corehq.apps.reports.standard.monitoring.WorkerActivityReport.export_table', MagicMock(return_value=[]))
     def test_export_response_returns_200(self):
         request = self.request_factory.post('/some/url')
         request.couch_user = self.couch_user
