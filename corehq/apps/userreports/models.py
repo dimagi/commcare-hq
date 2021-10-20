@@ -668,7 +668,7 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
     def default_indicators(self):
         default_indicators = super().default_indicators
         default_indicators.append(IndicatorFactory.from_spec({
-            "column_id": "domain",
+            "column_id": "commcare_project",
             "type": "expression",
             "display_name": "Project Space",
             "datatype": "string",
