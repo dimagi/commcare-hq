@@ -11,7 +11,7 @@ from dimagi.utils.chunked import chunked
 from soil import DownloadBase
 from soil.progress import get_task_progress
 
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import WebUser
 from corehq.apps.user_importer.models import UserUploadRecord
 
 
@@ -40,7 +40,7 @@ def import_users_and_groups(self, domain, user_specs, group_specs, upload_user_i
     def _update_progress(value, start=0):
         DownloadBase.set_progress(task, start + value, total)
 
-    upload_user = CouchUser.get_by_user_id(upload_user_id)
+    upload_user = WebUser.get_by_user_id(upload_user_id)
     if is_web_upload:
         user_results = create_or_update_web_users(
             domain,
