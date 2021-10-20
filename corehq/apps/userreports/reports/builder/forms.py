@@ -373,6 +373,19 @@ class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
         return True
 
     @property
+    def uses_registry_data_source(self):
+        """
+        Whether this interface uses a registry data source.
+
+        If true, it will use RegistryDataSourceConfiguration.
+
+        If false, it uses DataSourceConfiguration.
+
+        :return:
+        """
+        raise NotImplementedError
+
+    @property
     @abstractmethod
     def source_doc_type(self):
         """Return the doc_type the datasource.referenced_doc_type"""
@@ -615,6 +628,10 @@ class ApplicationFormDataSourceHelper(ManagedReportBuilderDataSourceHelper):
         return 'XFormInstance'
 
     @property
+    def uses_registry_data_source(self):
+        return False
+
+    @property
     @memoized
     def filter(self):
         return make_form_data_source_filter(
@@ -830,6 +847,10 @@ class ApplicationCaseDataSourceHelper(CaseDataSourceHelper):
         )
 
     @property
+    def uses_registry_data_source(self):
+        return False
+
+    @property
     @memoized
     def data_source_name(self):
         today = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
@@ -852,6 +873,10 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
             source_id=self.source_id,
             registry_slug=self.registry_slug,
         )
+
+    @property
+    def uses_registry_data_source(self):
+        return True
 
     @property
     @memoized
@@ -1044,13 +1069,21 @@ class ConfigureNewReportBase(forms.Form):
                                                                  self._is_multiselect_chart_report,
                                                                  ms_field)
 
-    def _build_data_source(self):
-        data_source_config = DataSourceConfiguration(
-            domain=self.domain,
-            # The uuid gets truncated, so it's not really universally unique.
-            table_id=clean_table_name(self.domain, str(uuid.uuid4().hex)),
-            **self._get_data_source_configuration_kwargs()
-        )
+    def _build_data_source(self, is_registry=False):
+        if is_registry:
+            data_source_config = RegistryDataSourceConfiguration(
+                domain=self.domain,
+                table_id=clean_table_name(self.domain, str(uuid.uuid4().hex)),
+                registry_slug=self.registry_slug,
+                **self._get_data_source_configuration_kwargs()
+            )
+        else:
+            data_source_config = DataSourceConfiguration(
+                domain=self.domain,
+                # The uuid gets truncated, so it's not really universally unique.
+                table_id=clean_table_name(self.domain, str(uuid.uuid4().hex)),
+                **self._get_data_source_configuration_kwargs()
+            )
         data_source_config.validate()
         data_source_config.save()
         tasks.rebuild_indicators.delay(data_source_config._id, source="report_builder")
@@ -1073,12 +1106,15 @@ class ConfigureNewReportBase(forms.Form):
 
     def _update_data_source_if_necessary(self):
         if self.ds_builder.uses_managed_data_source:
-            data_source = DataSourceConfiguration.get(self.existing_report.config_id)
+            if self.ds_builder.uses_registry_data_source:
+                data_source = RegistryDataSourceConfiguration.get(self.existing_report.config_id)
+            else:
+                data_source = DataSourceConfiguration.get(self.existing_report.config_id)
             if data_source.get_report_count() > 1:
                 # If another report is pointing at this data source, create a new
                 # data source for this report so that we can change the indicators
                 # without worrying about breaking another report.
-                data_source_config_id = self._build_data_source()
+                data_source_config_id = self._build_data_source(is_registry=self.ds_builder.uses_registry_data_source)
                 self.existing_report.config_id = data_source_config_id
             else:
                 indicators = self.ds_builder.indicators(
@@ -1099,7 +1135,7 @@ class ConfigureNewReportBase(forms.Form):
         :raises BadSpecError if validation fails when building data source, or report is invalid
         """
         if self.ds_builder.uses_managed_data_source:
-            data_source_config_id = self._build_data_source()
+            data_source_config_id = self._build_data_source(is_registry=self.ds_builder.uses_registry_data_source)
         else:
             data_source_config_id = self.ds_builder.data_source_id
         report = ReportConfiguration(
@@ -1163,11 +1199,19 @@ class ConfigureNewReportBase(forms.Form):
         filters = [f._asdict() for f in self.initial_user_filters + self.initial_default_filters]
         columns = [c._asdict() for c in self.initial_columns]
 
-        data_source_config = DataSourceConfiguration(
-            domain=self.domain,
-            table_id=clean_table_name(self.domain, uuid.uuid4().hex),
-            **self.ds_builder.get_temp_datasource_constructor_kwargs(columns, filters)
-        )
+        if self.ds_builder.uses_registry_data_source:
+            data_source_config = RegistryDataSourceConfiguration(
+                domain=self.domain,
+                table_id=clean_table_name(self.domain, uuid.uuid4().hex),
+                registry_slug=self.registry_slug,
+                **self.ds_builder.get_temp_datasource_constructor_kwargs(columns, filters)
+            )
+        else:
+            data_source_config = DataSourceConfiguration(
+                domain=self.domain,
+                table_id=clean_table_name(self.domain, uuid.uuid4().hex),
+                **self.ds_builder.get_temp_datasource_constructor_kwargs(columns, filters)
+            )
         data_source_config.validate()
         data_source_config.save()
 
@@ -1207,8 +1251,10 @@ class ConfigureNewReportBase(forms.Form):
     def _update_temp_datasource(self, data_source_config_id, username):
         if not self.ds_builder.uses_managed_data_source:
             return
-
-        data_source_config = DataSourceConfiguration.get(data_source_config_id)
+        if self.ds_builder.uses_registry_data_source:
+            data_source_config = RegistryDataSourceConfiguration.get(data_source_config_id)
+        else:
+            data_source_config = DataSourceConfiguration.get(data_source_config_id)
 
         filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
         # The data source needs indicators for all possible calculations, not just the ones currently in use
