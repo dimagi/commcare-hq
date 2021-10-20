@@ -82,4 +82,5 @@ branches:
     - gh/remove-pickles-from-messaging # Grahan Oct 15
     - fr/dedupe  # Farid Sept 17
     - dm/upgrade-gevent # Daniel Oct 19
+    - jls/smart-linking-in-web-apps-stack-queries-debug # Jenny Oct 20
 submodules: { }
