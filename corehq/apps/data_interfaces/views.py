@@ -911,6 +911,15 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
     rule_workflow = AutomaticUpdateRule.WORKFLOW_DEDUPLICATE
 
     @property
+    def column_names(self):
+        return [
+            _("Name"),
+            _("Case Type"),
+            _("Status"),
+            _("Action"),
+        ]
+
+    @property
     def edit_url_name(self):
         return DeduplicationRuleEditView.urlname
 
