@@ -5,8 +5,6 @@ from django.test import SimpleTestCase, TransactionTestCase
 
 from mock import Mock, call, patch
 
-from dimagi.utils.parsing import json_format_date
-
 from corehq.apps.accounting.exceptions import SubscriptionAdjustmentError
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -391,11 +389,7 @@ class DeactivateScheduleTest(TransactionTestCase):
             self.assertEqual(p1.call_count, 2)
             p1.assert_has_calls(
                 [
-                    call(
-                        broadcast.schedule_id,
-                        broadcast.recipients,
-                        start_date=json_format_date(broadcast.start_date)
-                    )
+                    call(broadcast.schedule_id, broadcast.recipients, start_date=broadcast.start_date)
                     for broadcast in (self.domain_1_sms_schedules[0], self.domain_1_survey_schedules[0])
                 ],
                 any_order=True
@@ -437,7 +431,7 @@ class DeactivateScheduleTest(TransactionTestCase):
             _deactivate_schedules(self.domain_obj_1, survey_only=True)
 
             b = self.domain_1_survey_schedules[0]
-            p1.assert_called_once_with(b.schedule_id, b.recipients, start_date=json_format_date(b.start_date))
+            p1.assert_called_once_with(b.schedule_id, b.recipients, start_date=b.start_date)
 
             b = self.domain_1_survey_schedules[1]
             p2.assert_called_once_with(b.schedule_id, b.recipients)

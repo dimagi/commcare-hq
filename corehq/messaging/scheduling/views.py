@@ -1,89 +1,71 @@
-import io
+from functools import wraps
 from datetime import datetime, timedelta
-
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.http import (
     Http404,
-    HttpResponseBadRequest,
+    HttpResponse,
     HttpResponseRedirect,
+    HttpResponseBadRequest,
     JsonResponse,
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
-
-from six.moves.urllib.parse import quote_plus
-
-from couchexport.export import export_raw
-from couchexport.models import Format
-from couchexport.shortcuts import export_response
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.parsing import json_format_date
-
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule,
-)
-from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_jquery_ui,
-    use_nvd3,
-    use_timepicker,
-)
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.sms.filters import EventStatusFilter, EventTypeFilter
-from corehq.apps.sms.models import (
-    INCOMING,
-    OUTGOING,
-    SMS,
-    MessagingEvent,
-    QueuedSMS,
-)
-from corehq.apps.sms.tasks import OutboundDailyCounter, time_within_windows
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
+from corehq.apps.domain.models import Domain
+from corehq.apps.sms.filters import EventTypeFilter, EventStatusFilter
+from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, MessagingEvent
+from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
-from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.messaging.scheduling.async_handlers import (
-    ConditionalAlertAsyncHandler,
-    MessagingRecipientHandler,
-)
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, use_timepicker, use_nvd3
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
+from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler, ConditionalAlertAsyncHandler
 from corehq.messaging.scheduling.forms import (
     BroadcastForm,
-    ConditionalAlertCriteriaForm,
     ConditionalAlertForm,
+    ConditionalAlertCriteriaForm,
     ConditionalAlertScheduleForm,
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,
     ScheduledBroadcast,
+    SMSContent,
     TimedSchedule,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_count_of_active_schedule_instances_due,
 )
-from corehq.messaging.scheduling.tasks import (
-    refresh_alert_schedule_instances,
-    refresh_timed_schedule_instances,
-)
+from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
+from corehq.messaging.tasks import initiate_messaging_rule_run
+from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.messaging.scheduling.view_helpers import (
-    TranslatedConditionalAlertUploader,
-    UntranslatedConditionalAlertUploader,
     get_conditional_alert_headers,
     get_conditional_alert_rows,
     get_conditional_alerts_queryset_by_domain,
+    TranslatedConditionalAlertUploader,
+    UntranslatedConditionalAlertUploader,
     upload_conditional_alert_workbook,
 )
-from corehq.messaging.tasks import initiate_messaging_rule_run
-from corehq.messaging.util import MessagingRuleProgressHelper
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
+from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.couch import CriticalSection
+import io
+from six.moves.urllib.parse import quote_plus
 
 
 def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
@@ -121,9 +103,9 @@ class MessagingDashboardView(BaseMessagingSectionView):
     @property
     def page_context(self):
         from corehq.apps.reports.standard.sms import (
+            ScheduleInstanceReport,
             MessageLogReport,
             MessagingEventsReport,
-            ScheduleInstanceReport,
         )
 
         scheduled_events_url = reverse(ScheduleInstanceReport.dispatcher.name(), args=[],
@@ -392,7 +374,7 @@ class BroadcastListView(BaseMessagingSectionView):
         refresh_timed_schedule_instances.delay(
             broadcast.schedule_id,
             broadcast.recipients,
-            start_date=json_format_date(broadcast.start_date)
+            start_date=broadcast.start_date
         )
 
         return JsonResponse({
@@ -495,11 +477,8 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
             if isinstance(schedule, AlertSchedule):
                 refresh_alert_schedule_instances.delay(schedule.schedule_id, broadcast.recipients)
             elif isinstance(schedule, TimedSchedule):
-                refresh_timed_schedule_instances.delay(
-                    schedule.schedule_id,
-                    broadcast.recipients,
-                    start_date=json_format_date(broadcast.start_date)
-                )
+                refresh_timed_schedule_instances.delay(schedule.schedule_id, broadcast.recipients,
+                    start_date=broadcast.start_date)
             else:
                 raise TypeError("Expected AlertSchedule or TimedSchedule")
 
