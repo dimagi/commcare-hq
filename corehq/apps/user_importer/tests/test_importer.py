@@ -85,6 +85,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         cls.profile.save()
 
+    def setUp(self):
+        if WebUser.get_by_user_id(self.uploading_user.get_id) is None:
+            self.uploading_user = WebUser.create(self.domain_name, "admin@xyz.com", 'password', None, None,
+                                                is_superuser=True)
+
     @classmethod
     def tearDownClass(cls):
         cls.upload_record.delete()
