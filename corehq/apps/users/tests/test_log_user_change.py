@@ -4,7 +4,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
-from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change
+from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change, user_id_to_username
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER, USER_CHANGE_VIA_WEB
 
 
@@ -128,6 +128,56 @@ class TestLogUserChange(TestCase):
                 changed_via=USER_CHANGE_VIA_WEB,
                 action=UserModelAction.UPDATE,
             )
+
+    def test_repr_on_create(self):
+        user_history = UserHistory.objects.get(user_id=self.commcare_user.get_id,
+                                               action=UserModelAction.CREATE.value)
+        self.assertEqual(user_history.user_repr, user_id_to_username(self.commcare_user.get_id))
+        self.assertEqual(user_history.changed_by_repr, user_id_to_username(self.web_user.get_id))
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_WEB)
+        self.assertEqual(user_history.change_messages, {})
+        self.assertEqual(user_history.action, UserModelAction.CREATE.value)
+
+    def test_repr_on_update(self):
+        restore_phone_numbers_to = self.commcare_user.to_json()['phone_numbers']
+        self.commcare_user.add_phone_number("55555555")
+        change_messages = UserChangeMessage.phone_numbers_added(["55555555"])
+        user_history = log_user_change(
+            self.domain,
+            self.domain,
+            self.commcare_user,
+            self.web_user,
+            changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
+            change_messages=change_messages,
+            fields_changed={
+                'phone_numbers': self.commcare_user.phone_numbers,
+                'password': '******'
+            },
+            action=UserModelAction.UPDATE
+        )
+        self.assertEqual(user_history.user_repr, user_id_to_username(self.commcare_user.get_id))
+        self.assertEqual(user_history.changed_by_repr, user_id_to_username(self.web_user.get_id))
+        self.assertEqual(user_history.changes, {'phone_numbers': ['55555555']})
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+        self.assertEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.action, UserModelAction.UPDATE.value)
+
+        self.commcare_user.phone_numbers = restore_phone_numbers_to
+
+    def test_repr_on_delete(self):
+        user_to_delete = CommCareUser.create(self.domain, f'delete@{self.domain}.commcarehq.org', '******',
+                                             created_by=None, created_via=None)
+        user_to_delete_id = user_to_delete.get_id
+        deleted_username = user_id_to_username(user_to_delete_id)
+        user_to_delete.delete(self.domain, deleted_by=self.web_user, deleted_via=USER_CHANGE_VIA_WEB)
+
+        user_history = UserHistory.objects.get(by_domain=self.domain, for_domain=self.domain,
+                                               user_id=user_to_delete_id)
+        self.assertEqual(user_history.user_repr, deleted_username)
+        self.assertEqual(user_history.changed_by_repr, user_id_to_username(self.web_user.get_id))
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_WEB)
+        self.assertEqual(user_history.change_messages, {})
+        self.assertEqual(user_history.action, UserModelAction.DELETE.value)
 
 
 def _get_expected_changes_json(user):

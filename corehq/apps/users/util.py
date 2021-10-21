@@ -355,17 +355,19 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
     if action == UserModelAction.UPDATE and not fields_changed and not change_messages:
         raise ValueError("missing both 'fields_changed' and 'change_messages' argument for update.")
 
-    changed_by_id = SYSTEM_USER_ID if changed_by_user == SYSTEM_USER_ID else changed_by_user.get_id
-
-    if changed_by_id == SYSTEM_USER_ID:
-        raise ValueError("missing 'changed_by_user' argument.")
+    if changed_by_user == SYSTEM_USER_ID:
+        changed_by_id = SYSTEM_USER_ID
+        changed_by_repr = SYSTEM_USER_ID
+    else:
+        changed_by_id = changed_by_user.get_id
+        changed_by_repr = cached_user_id_to_username(changed_by_id)
 
     return UserHistory.objects.create(
         by_domain=by_domain,
         for_domain=for_domain,
         user_type=couch_user.doc_type,
         user_repr=cached_user_id_to_username(couch_user.get_id),
-        changed_by_repr=cached_user_id_to_username(changed_by_id),
+        changed_by_repr=changed_by_repr,
         user_id=couch_user.get_id,
         changed_by=changed_by_id,
         changes=_get_changed_details(couch_user, action, fields_changed),
