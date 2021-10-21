@@ -1,6 +1,11 @@
+
+from datetime import datetime
+
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
-from corehq.apps.es import queries
+from corehq.apps.es import CaseES, queries
 from corehq.apps.es.case_search import CaseSearchES
+from corehq.messaging.util import MessagingRuleProgressHelper
+from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
 
 DUPLICATE_LIMIT = 1000
 
@@ -44,12 +49,58 @@ def find_duplicate_case_ids(domain, case, case_properties, include_closed=False,
 
 def reset_and_backfill_deduplicate_rule(rule):
     from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-    from corehq.apps.data_interfaces.tasks import backfill_deduplication_rule
+    from corehq.apps.data_interfaces.tasks import reset_and_backfill_deduplicate_rule_task
 
-    if not rule.active:
+    if not rule.active or rule.deleted:
         return
 
     if rule.workflow != AutomaticUpdateRule.WORKFLOW_DEDUPLICATE:
         raise AttributeError
+    reset_and_backfill_deduplicate_rule_task.delay(rule.domain, rule.pk)
 
-    backfill_deduplication_rule.delay(rule.domain, rule.pk)
+
+def reset_deduplicate_rule(rule):
+    """Deletes all case duplicates for this rule
+    """
+    from corehq.apps.data_interfaces.models import (
+        CaseDeduplicationActionDefinition,
+        CaseDuplicate,
+    )
+    deduplicate_action = CaseDeduplicationActionDefinition.from_rule(rule)
+    CaseDuplicate.objects.filter(action=deduplicate_action).delete()
+
+
+def backfill_deduplicate_rule(domain, rule):
+    from corehq.apps.data_interfaces.models import (
+        AutomaticUpdateRule,
+        DomainCaseRuleRun,
+    )
+    rule.locked_for_editing = True
+    rule.save()
+
+    progress_helper = MessagingRuleProgressHelper(rule.pk)
+    total_cases_count = CaseES().domain(domain).case_type(rule.case_type).count()
+    progress_helper.set_total_cases_to_be_processed(total_cases_count)
+    now = datetime.utcnow()
+
+    run_record = DomainCaseRuleRun.objects.create(
+        domain=domain,
+        started_on=now,
+        status=DomainCaseRuleRun.STATUS_RUNNING,
+        case_type=rule.case_type,
+    )
+    case_iterator = AutomaticUpdateRule.iter_cases(domain, rule.case_type)
+    iter_cases_and_run_rules(
+        domain,
+        case_iterator,
+        [rule],
+        now,
+        run_record.id,
+        rule.case_type,
+        progress_helper=progress_helper,
+    )
+    progress_helper.set_rule_complete()
+    AutomaticUpdateRule.objects.filter(pk=rule.pk).update(
+        locked_for_editing=False,
+        last_run=now,
+    )
