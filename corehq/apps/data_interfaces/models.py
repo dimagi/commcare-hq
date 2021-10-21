@@ -30,6 +30,7 @@ from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.data_interfaces.deduplication import (
     find_duplicate_case_ids,
     reset_and_backfill_deduplicate_rule,
+    reset_deduplicate_rule,
 )
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
@@ -280,6 +281,9 @@ class AutomaticUpdateRule(models.Model):
                     delete_case_timed_schedule_instances.delay(schedule.schedule_id)
                 else:
                     raise TypeError("Unexpected schedule type")
+
+            elif self.workflow == self.WORKFLOW_DEDUPLICATE:
+                reset_deduplicate_rule(self)
 
     @unit_testing_only
     def hard_delete(self):

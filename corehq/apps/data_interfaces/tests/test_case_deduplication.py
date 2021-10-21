@@ -393,6 +393,20 @@ class CaseDeduplicationActionTest(TestCase):
             self.rule.activate()  # This should do nothing, since the rule is already active
             backfill_patch.assert_not_called()
 
+    def test_rule_deletion(self):
+        """Test that deleting a rule will also delete case duplicates
+        """
+        duplicates, uniques = self._create_cases()
+        CaseDuplicate.bulk_create_duplicate_relationships(
+            self.action, duplicates[0], [c.case_id for c in duplicates]
+        )
+
+        self.rule.soft_delete()
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 0)
+
+        self.rule.deleted = False
+        self.rule.save()
+
     @es_test
     def test_integration_test(self):
         """Don't mock the find_duplicate_ids response to make sure it works
