@@ -48,6 +48,7 @@ from corehq.apps.data_interfaces.forms import (
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
+    CaseDuplicate,
     CaseDeduplicationActionDefinition,
 )
 from corehq.apps.data_interfaces.tasks import (
@@ -917,6 +918,7 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
             _("Name"),
             _("Case Type"),
             _("Status"),
+            _("Potential Duplicate Count"),
             _("Action"),
         ]
 
@@ -930,6 +932,7 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
             set(CaseDeduplicationActionDefinition.from_rule(rule).case_properties)
             - set(CaseListExplorerColumns.DEFAULT_COLUMNS)
         )
+        ret['duplicates_count'] = self._get_duplicates_count(rule)
         ret['explore_url'] = reverse_with_params(
             'project_report_dispatcher',
             args=(self.domain, 'duplicate_cases'),
@@ -940,6 +943,17 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
         )
 
         return ret
+
+    def _get_duplicates_count(self, rule):
+        if rule.locked_for_editing:
+            progress_helper = MessagingRuleProgressHelper(rule.id)
+            return _("Processing - {progress_percent}% ({cases_processed}/{total_cases} cases) complete").format(
+                progress_percent=progress_helper.get_progress_pct(),
+                cases_processed=progress_helper.get_cases_processed(),
+                total_cases=progress_helper.get_total_cases_to_process(),
+            )
+        action = CaseDeduplicationActionDefinition.from_rule(rule)
+        return CaseDuplicate.objects.filter(action=action).count()
 
 
 class DeduplicationRuleCreateView(DataInterfaceSection):

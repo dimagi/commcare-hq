@@ -43,6 +43,7 @@
       <span class="label label-success" data-bind="visible: active">{% trans "Active" %}</span>
       <span class="label label-danger" data-bind="visible: !active">{% trans "Inactive" %}</span>
     </td>
+    <td data-bind="text: duplicates_count"></td>
     <td data-bind="css: {'has-error': action_error}">
       <a class="btn btn-default" data-bind="attr: {href: explore_url}">
         {% trans "Explore Duplicates" %}
