@@ -69,6 +69,7 @@ from corehq.apps.hqwebapp.views import (
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
+from corehq.apps.reports.standard.cases.filters import CaseListExplorerColumns
 from corehq.apps.reports.v2.reports.explore_case_data import (
     ExploreCaseDataReport,
 )
@@ -925,14 +926,16 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
 
     def _format_rule(self, rule):
         ret = super()._format_rule(rule)
-        rule_properties = set(CaseDeduplicationActionDefinition.from_rule(rule).case_properties)
-        explorer_columns = {"@case_type", "case_name", "last_modified"} | rule_properties
+        rule_properties = (
+            set(CaseDeduplicationActionDefinition.from_rule(rule).case_properties)
+            - set(CaseListExplorerColumns.DEFAULT_COLUMNS)
+        )
         ret['explore_url'] = reverse_with_params(
             'project_report_dispatcher',
             args=(self.domain, 'duplicate_cases'),
             params={
                 "duplicate_case_rule": rule.id,
-                "explorer_columns": json.dumps(list(explorer_columns)),
+                "explorer_columns": json.dumps(CaseListExplorerColumns.DEFAULT_COLUMNS + list(rule_properties)),
             },
         )
 
