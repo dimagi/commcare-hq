@@ -56,6 +56,9 @@ def reset_and_backfill_deduplicate_rule(rule):
 
     if rule.workflow != AutomaticUpdateRule.WORKFLOW_DEDUPLICATE:
         raise AttributeError
+
+    rule.locked_for_editing = True
+    rule.save()
     reset_and_backfill_deduplicate_rule_task.delay(rule.domain, rule.pk)
 
 
@@ -75,8 +78,6 @@ def backfill_deduplicate_rule(domain, rule):
         AutomaticUpdateRule,
         DomainCaseRuleRun,
     )
-    rule.locked_for_editing = True
-    rule.save()
 
     progress_helper = MessagingRuleProgressHelper(rule.pk)
     total_cases_count = CaseES().domain(domain).case_type(rule.case_type).count()
