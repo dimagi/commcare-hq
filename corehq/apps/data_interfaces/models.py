@@ -27,7 +27,10 @@ from dimagi.utils.modules import to_function
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
-from corehq.apps.data_interfaces.deduplication import find_duplicate_case_ids
+from corehq.apps.data_interfaces.deduplication import (
+    find_duplicate_case_ids,
+    reset_and_backfill_deduplicate_rule,
+)
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
 from corehq.apps.hqcase.utils import bulk_update_cases, update_case
@@ -255,8 +258,13 @@ class AutomaticUpdateRule(models.Model):
             yield case_id
 
     def activate(self, active=True):
+        previous_active = self.active
         self.active = active
         self.save()
+
+        if self.workflow == self.WORKFLOW_DEDUPLICATE:
+            if not previous_active and active:  # This is an activation, rerun the rules
+                reset_and_backfill_deduplicate_rule(self)
 
     def soft_delete(self):
         with transaction.atomic():

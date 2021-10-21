@@ -380,6 +380,19 @@ class CaseDeduplicationActionTest(TestCase):
         self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), num_duplicates)
         self._assert_potential_duplicates(duplicates[1].case_id, duplicates)
 
+    def test_rule_activation(self):
+        """Test that activating or deactivating a rule will trigger the right action
+        """
+        self.rule.active = False
+
+        with patch("corehq.apps.data_interfaces.models.reset_and_backfill_deduplicate_rule") as backfill_patch:
+            self.rule.activate()  # reactivate
+            backfill_patch.assert_called_with(self.rule)
+
+        with patch("corehq.apps.data_interfaces.models.reset_and_backfill_deduplicate_rule") as backfill_patch:
+            self.rule.activate()  # This should do nothing, since the rule is already active
+            backfill_patch.assert_not_called()
+
     @es_test
     def test_integration_test(self):
         """Don't mock the find_duplicate_ids response to make sure it works
