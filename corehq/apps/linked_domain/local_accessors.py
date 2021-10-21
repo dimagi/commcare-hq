@@ -11,6 +11,7 @@ from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
 from corehq.apps.reports.models import TableauServer, TableauVisualization
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria
 
 
 def get_tableau_server_and_visualizations(domain):
@@ -144,3 +145,55 @@ def get_hmac_callout_settings(domain):
         'api_key': settings.api_key,
         'api_secret': settings.api_secret,
     }
+
+def get_auto_update_rules(domain):
+    rules = AutomaticUpdateRule.by_domain(
+            domain,
+            # Grab only those rules that update cases, not conditional alerts for messaging
+            AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+            active_only=False
+        )
+
+    data = []
+    for rule in rules:
+        caseRuleCriterias = CaseRuleCriteria.objects.filter(rule=rule)
+        caseRuleActions = CaseRuleAction.objects.filter(rule=rule)
+
+        rule_data = {
+            "rule": {
+                "name": rule.name,
+                "case_type": rule.case_type,
+                "filter_on_server_modified": rule.filter_on_server_modified,
+                "server_modified_boundary": rule.server_modified_boundary
+            },
+
+            "caseRuleCriterias" : [
+                {
+                    "match_property_definition": {
+                        "property_name": caseRuleCriteria.match_property_definition.property_name,
+                        "property_value": caseRuleCriteria.match_property_definition.property_value,
+                        "match_type": caseRuleCriteria.match_property_definition.match_type
+                    } if caseRuleCriteria.match_property_definition is not None else None,
+                    "custom_match_definition": {
+                        "name": caseRuleCriteria.custom_match_definition.name,
+                    } if caseRuleCriteria.custom_match_definition is not None else None,
+                    "closed_parent_definition": caseRuleCriteria.closed_parent_definition != None
+                } for caseRuleCriteria in caseRuleCriterias
+            ],
+
+            "caseRuleAction": [
+                {
+                    "update_case_definition": {
+                        "properties_to_update": caseRuleAction.update_case_definition.properties_to_update,
+                        "close_case": caseRuleAction.update_case_definition.close_case
+                    } if caseRuleAction.update_case_definition is not None else None,
+                    "custom_action_definition": {
+                        "name": caseRuleAction.custom_action_definition.name
+                    } if caseRuleAction.custom_action_definition is not None else None,
+                } for caseRuleAction in caseRuleActions
+            ]
+        }
+        data.append(rule_data)
+
+    print(data)
+    return data
