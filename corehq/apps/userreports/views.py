@@ -69,11 +69,14 @@ from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
 from corehq.apps.linked_domain.ucr import create_linked_ucr, linked_downstream_reports_by_domain
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
+from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.registry.models import DataRegistry
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_RAW,
+    DATA_SOURCE_TYPE_CASE,
 )
 from corehq.apps.userreports.app_manager.helpers import (
     get_case_data_source,
@@ -418,6 +421,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
             "domain": self.domain,
             'report': {"title": _("Create New Report")},
             'form': self.form,
+            "dropdown_map": self.form.dropdown_map,
         }
         return context
 
@@ -451,6 +455,8 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'source_type': app_source.source_type,
                 'source': app_source.source,
             }
+            if app_source.registry_slug != '':
+                get_params['registry_slug'] = app_source.registry_slug
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
             )
@@ -490,20 +496,28 @@ class ConfigureReport(ReportBuilderView):
                 self.source_id = self.existing_report.config.meta.build.source_id
                 self.app_id = self.existing_report.config.meta.build.app_id
                 self.app = Application.get(self.app_id) if self.app_id else None
+                self.registry_slug = self.existing_report.config.meta.build.registry_slug
             else:
                 self.source_id = self.existing_report.config_id
-                self.app_id = self.app = None
+                self.app_id = self.app = self.registry_slug = None
         else:
-            self.app_id = self.request.GET['application']
-            self.app = Application.get(self.app_id)
-            self.source_type = self.request.GET['source_type']
+            self.registry_slug = self.request.GET.get('registry_slug', None)
+            self.app_id = self.request.GET.get('application', None)
             self.source_id = self.request.GET['source']
+            if self.registry_slug:
+                helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
+                helper.check_data_access(request.couch_user, [self.source_id], case_domain=self.domain)
+                self.source_type = DATA_SOURCE_TYPE_CASE
+                self.app = None
+            else:
+                self.app = Application.get(self.app_id)
+                self.source_type = self.request.GET['source_type']
 
-        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW:
+        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug:
             raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         try:
             data_source_interface = get_data_source_interface(
-                self.domain, self.app, self.source_type, self.source_id
+                self.domain, self.app, self.source_type, self.source_id, self.registry_slug
             )
         except ResourceNotFound:
             self.template_name = 'userreports/report_error.html'
@@ -596,7 +610,7 @@ class ConfigureReport(ReportBuilderView):
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
         report_form = form_type(
-            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
+            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report, self.registry_slug,
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
         return {
@@ -616,6 +630,7 @@ class ConfigureReport(ReportBuilderView):
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,
+            'registry_slug': self.registry_slug,
             'report_preview_url': reverse(ReportPreview.urlname,
                                           args=[self.domain, temp_ds_id]),
             'preview_datasource_id': temp_ds_id,
@@ -633,10 +648,11 @@ class ConfigureReport(ReportBuilderView):
         return form_class(
             self.domain,
             self._get_report_name(),
-            self.app._id,
+            self.app._id if self.app else None,
             self.source_type,
             self.source_id,
             self.existing_report,
+            self.registry_slug,
             report_data
         )
 
@@ -727,7 +743,7 @@ def _munge_report_data(report_data):
     report_data['default_filters'] = json.dumps(report_data['default_filters'])
 
 
-class ReportPreview(BaseDomainView):
+class ReportPreview(BaseDomainView):  # TODO: fix with adding registry info
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
@@ -741,10 +757,11 @@ class ReportPreview(BaseDomainView):
         bound_form = form_class(
             domain,
             '{}_{}_{}'.format(TEMP_REPORT_PREFIX, self.domain, data_source),
-            report_data['app'],
+            report_data['app'],  # TODO: errors since app is None for registry
             report_data['source_type'],
             report_data['source_id'],
             None,
+            report_data['registry_slug'],
             report_data
         )
         if bound_form.is_valid():
