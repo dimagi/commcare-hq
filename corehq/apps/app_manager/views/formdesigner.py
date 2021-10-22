@@ -42,6 +42,7 @@ from corehq.apps.app_manager.util import (
     app_callout_templates,
     is_linked_app,
     is_usercase_in_use,
+    module_loads_registry_case,
 )
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.forms import FormHasSubmissionsView
@@ -190,7 +191,7 @@ def get_form_data_schema(request, domain, app_id, form_unique_id):
         data.append(get_session_schema(form))
         if form.requires_case() or is_usercase_in_use(domain):
             data.append(get_casedb_schema(form))
-        if form.requires_case() and form.get_module().search_config.data_registry:
+        if form.requires_case() and module_loads_registry_case(form.get_module()):
             data.append(get_registry_schema(form))
     except AppManagerException as e:
         notify_exception(request, message=str(e))
