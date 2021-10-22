@@ -400,10 +400,6 @@ class StackQuery(StackDatum):
     data = NodeListField('data', QueryData)
 
 
-class StackJump(StackQuery):
-    ROOT_NAME = 'jump'
-
-
 class StackCommand(XmlObject):
     ROOT_NAME = 'command'
 
@@ -465,6 +461,12 @@ class Stack(XmlObject):
 
     def add_frame(self, frame):
         self.node.append(frame.node)
+
+
+class StackJump(XmlObject):
+    ROOT_NAME = 'jump'
+
+    url = NodeField('url/text', Text)
 
 
 class Argument(IdNode):
