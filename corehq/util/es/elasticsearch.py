@@ -42,7 +42,7 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 5:
         IndicesClient,
         SnapshotClient,
     )
-    from elasticsearch5.helpers import bulk, scan
+    from elasticsearch5.helpers import BulkIndexError, bulk, scan
 else:
     raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 2 or 5, given {}".format(
         settings.ELASTICSEARCH_MAJOR_VERSION))
