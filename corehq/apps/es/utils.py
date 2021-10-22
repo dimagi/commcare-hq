@@ -17,7 +17,7 @@ def values_list(hits, *fields, **kwargs):
         field, = fields
         return [hit[field] for hit in hits]
     else:
-        return [tuple(hit[field] for field in fields) for hit in hits]
+        return [tuple(hit.get(field) for field in fields) for hit in hits]
 
 
 def flatten_field_dict(results, fields_property='fields'):
