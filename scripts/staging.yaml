@@ -82,4 +82,5 @@ branches:
     - jls/smart-linking-in-web-apps-stack-queries-debug # Jenny Oct 20
     - dm/upgrade-xlrd # Daniel Oct 21
     - ml/remove-pickles-reports # Minha Oct 21
+    - sk/data-registry-form-linking  # Simon Oct 22
 submodules: { }
