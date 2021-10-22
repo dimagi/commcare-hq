@@ -127,6 +127,14 @@ class PublicOnlyHttpAdapter(HTTPAdapter):
 
 
 def make_session_public_only(session, domain_name, src):
+    """
+    Modifies `session` to validate urls before sending and accept only hosts resolving to public IPs
+
+    Once this function has been called on a session, session.request, etc., will
+    raise PossibleSSRFAttempt whenever called with a url host that resolves to a non-public IP.
+    """
+    # the following two lines entirely replace the default adapters with our custom ones
+    # by redefining the adapter to use for the two default prefixes
     session.mount('http://', PublicOnlyHttpAdapter(domain_name=domain_name, src=src))
     session.mount('https://', PublicOnlyHttpAdapter(domain_name=domain_name, src=src))
 
