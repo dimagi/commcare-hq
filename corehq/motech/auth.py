@@ -115,14 +115,20 @@ class HTTPBearerAuth(AuthBase):
 
 
 class PublicOnlyHttpAdapter(HTTPAdapter):
-    def __init__(self, domain_name):
+    def __init__(self, domain_name, src):
         self.domain_name = domain_name
+        self.src = src
         super().__init__()
 
     def get_connection(self, url, proxies=None):
         from corehq.motech.requests import validate_user_input_url_for_repeaters
-        validate_user_input_url_for_repeaters(url, domain=self.domain_name, src='sent_attempt')
+        validate_user_input_url_for_repeaters(url, domain=self.domain_name, src=self.src)
         return super().get_connection(url, proxies=proxies)
+
+
+def make_session_public_only(session, domain_name, src):
+    session.mount('http://', PublicOnlyHttpAdapter(domain_name=domain_name, src=src))
+    session.mount('https://', PublicOnlyHttpAdapter(domain_name=domain_name, src=src))
 
 
 class AuthManager:
@@ -140,8 +146,7 @@ class AuthManager:
         tokens, if applicable.
         """
         session = Session()
-        session.mount('http://', PublicOnlyHttpAdapter(domain_name=domain_name))
-        session.mount('https://', PublicOnlyHttpAdapter(domain_name=domain_name))
+        make_session_public_only(session, domain_name, src='sent_attempt')
         session.auth = self.get_auth()
         return session
 
@@ -252,7 +257,7 @@ class OAuth2PasswordGrantManager(AuthManager):
         self.connection_settings.last_token = value
         self.connection_settings.save()
 
-    def get_session(self):
+    def get_session(self, domain_name: str) -> Session:
 
         def set_last_token(token):
             # Used by OAuth2Session
@@ -289,10 +294,12 @@ class OAuth2PasswordGrantManager(AuthManager):
             'client_id': self.client_id,
             'client_secret': self.client_secret,
         }
-        return OAuth2Session(
+        session = OAuth2Session(
             self.client_id,
             token=self.last_token,
             auto_refresh_url=refresh_url,
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )
+        make_session_public_only(session, domain_name, src='oauth_sent_attempt')
+        return session
