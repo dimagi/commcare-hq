@@ -8,6 +8,7 @@ import attr
 import requests
 from oauthlib.oauth2 import LegacyApplicationClient
 from requests import Session
+from requests.adapters import HTTPAdapter
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import RequestException
 from requests_oauthlib import OAuth1, OAuth2Session
@@ -113,6 +114,17 @@ class HTTPBearerAuth(AuthBase):
         return r
 
 
+class PublicOnlyHttpAdapter(HTTPAdapter):
+    def __init__(self, domain_name):
+        self.domain_name = domain_name
+        super().__init__()
+
+    def get_connection(self, url, proxies=None):
+        from corehq.motech.requests import validate_user_input_url_for_repeaters
+        validate_user_input_url_for_repeaters(url, domain=self.domain_name, src='sent_attempt')
+        return super().get_connection(url, proxies=proxies)
+
+
 class AuthManager:
 
     def get_auth(self) -> Optional[AuthBase]:
@@ -122,12 +134,14 @@ class AuthManager:
         """
         return None
 
-    def get_session(self) -> Session:
+    def get_session(self, domain_name: str) -> Session:
         """
         Returns an instance of requests.Session. Manages authentication
         tokens, if applicable.
         """
         session = Session()
+        session.mount('http://', PublicOnlyHttpAdapter(domain_name=domain_name))
+        session.mount('https://', PublicOnlyHttpAdapter(domain_name=domain_name))
         session.auth = self.get_auth()
         return session
 
