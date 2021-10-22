@@ -3,9 +3,15 @@ from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
 
 from django.utils.translation import ugettext as _
+from django.db import transaction
 
 from toggle.shortcuts import set_toggle
 
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
+    CaseRuleSubmission, ClosedParentDefinition, CustomActionDefinition,
+    CustomMatchDefinition, MatchPropertyDefinition, UpdateCaseDefinition
+)
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
@@ -67,6 +73,8 @@ from corehq.apps.linked_domain.local_accessors import \
     get_otp_settings as local_get_otp_settings
 from corehq.apps.linked_domain.local_accessors import \
     get_hmac_callout_settings as local_get_hmac_callout_settings
+from corehq.apps.linked_domain.local_accessors import \
+    get_auto_update_rules as local_get_auto_update_rules
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
@@ -87,6 +95,8 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_otp_settings as remote_get_otp_settings
 from corehq.apps.linked_domain.remote_accessors import \
     get_hmac_callout_settings as remote_get_hmac_callout_settings
+from corehq.apps.linked_domain.remote_accessors import \
+    get_auto_update_rules as remote_get_auto_update_rules
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.keywords import update_keyword
 from corehq.apps.locations.views import LocationFieldsView
@@ -402,6 +412,93 @@ def update_hmac_callout_settings(domain_link):
     model.api_secret = master_results['api_secret']
     model.save()
 
+
+def update_auto_update_rules(domain_link):
+    if domain_link.is_remote:
+        master_results = remote_get_auto_update_rules(domain_link)
+    else:
+        master_results = local_get_auto_update_rules(domain_link.master_domain)
+
+    local_rules = AutomaticUpdateRule.by_domain(
+        domain_link.linked_domain,
+        AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+        active_only=False
+    )
+
+    def _delete_rule(rule):
+        rule.delete_criteria()
+        rule.delete_actions()
+        CaseRuleSubmission.objects.filter(rule=rule).delete()
+        rule.delete()
+
+    def _copy_rule(rule):
+        with transaction.atomic():
+
+            # Copy over AutomaticUpdateRule model
+            new_rule = AutomaticUpdateRule(
+                domain=domain_link.linked_domain,
+                active=rule['rule']['active'],
+                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+            )
+
+            new_rule.name = rule['rule']['name']
+            new_rule.case_type = rule['rule']['case_type']
+            new_rule.filter_on_server_modified = rule['rule']['filter_on_server_modified']
+            new_rule.server_modified_boundary = rule['rule']['server_modified_boundary']
+            new_rule.save()
+
+            for criteria in rule['criteria']:
+                definition = None
+
+                if criteria['match_property_definition']:
+                    definition = MatchPropertyDefinition.objects.create(
+                        property_name=criteria['match_property_definition']['property_name'],
+                        property_value=criteria['match_property_definition']['property_value'],
+                        match_type=criteria['match_property_definition']['match_type'],
+                    )
+                elif criteria['custom_match_definition']:
+                    definition = CustomMatchDefinition.objects.create(
+                        name=criteria['custom_match_definition']['name'],
+                    )
+                elif criteria['closed_parent_definition']:
+                    definition = ClosedParentDefinition.objects.create()
+
+                new_criteria = CaseRuleCriteria(rule=new_rule)
+                new_criteria.definition = definition
+                new_criteria.save()
+
+            for action in rule['actions']:
+                definition = None
+
+                if action['update_case_definition']:
+                    definition = UpdateCaseDefinition(close_case=action['update_case_definition']['close_case'])
+                    properties = []
+                    for propertyItem in action['update_case_definition']['properties_to_update']:
+                        properties.append(
+                            UpdateCaseDefinition.PropertyDefinition(
+                                name=propertyItem['name'],
+                                value_type=propertyItem['value_type'],
+                                value=propertyItem['value'],
+                            )
+                        )
+                    definition.set_properties_to_update(properties)
+                    definition.save()
+                elif action['custom_action_definition']:
+                    definition = CustomActionDefinition.objects.create(
+                        name=action['custom_action_definition']['name'],
+                    )
+
+                action = CaseRuleAction(rule=new_rule)
+                action.definition = definition
+                action.save()
+
+    for local_rule in local_rules:
+        _delete_rule(local_rule)
+
+    for master_rule in master_results:
+        _copy_rule(master_rule)
+
+    print(master_results)
 
 def _convert_reports_permissions(domain_link, master_results):
     """Mutates the master result docs to convert dynamic report permissions.

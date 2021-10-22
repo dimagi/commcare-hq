@@ -168,7 +168,7 @@ def get_auto_update_rules(domain):
                 "active": rule.active
             },
 
-            "criteria" : [
+            "criteria": [
                 {
                     "match_property_definition": {
                         "property_name": caseRuleCriteria.match_property_definition.property_name,
