@@ -15,7 +15,7 @@ def values_list(hits, *fields, **kwargs):
         raise TypeError('must be called with at least one field')
     if flat:
         field, = fields
-        return [hit[field] for hit in hits]
+        return [hit.get(field) for hit in hits]
     else:
         return [tuple(hit.get(field) for field in fields) for hit in hits]
 
