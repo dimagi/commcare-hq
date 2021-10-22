@@ -28,14 +28,16 @@ hqDefine('registration/js/user_login_form', [
 
         self.checkSsoLoginStatusUrl = initialPageData.reverse('check_sso_login_status');
         self.sessionExpirationSsoIframeUrl = initialPageData.reverse('iframe_sso_login_pending');
+        self.loginDomain = initialPageData.get('login_domain');
         self.nextUrl = options.nextUrl;
         self.isSessionExpiration = options.isSessionExpiration;
         self.passwordField = options.passwordField;
         self.passwordFormGroup = options.passwordFormGroup;
+        self.passwordFormGroup.hide();
 
         self.authUsername = ko.observable(options.initialUsername);
         self.authUsername.subscribe(function (newValue) {
-            if (emailUtils.validateEmail(newValue)) {
+            if (self.isUsernameValid(newValue)) {
                 if (self.continueTextPromise) {
                     self.continueTextPromise.abort();
                 }
@@ -46,14 +48,21 @@ hqDefine('registration/js/user_login_form', [
         self.continueTextPromise = null;
         self.defaultContinueText = gettext("Continue");
         self.continueButtonText = ko.observable(self.defaultContinueText);
-        self.showContinueButton = ko.observable(false);
+        self.showContinueButton = ko.observable(true);
         self.showContinueSpinner = ko.observable(false);
 
+        self.isUsernameValid = function (username) {
+            if (!self.loginDomain || username.indexOf('@') !== -1) {
+                return emailUtils.validateEmail(username);
+            }
+            return self.loginDomain && username.length > 1;
+        };
+
         self.isContinueDisabled = ko.computed(function () {
-            return !emailUtils.validateEmail(self.authUsername());
+            return !self.isUsernameValid(self.authUsername());
         });
 
-        self.showSignInButton = ko.observable(true);
+        self.showSignInButton = ko.observable(false);
 
         /**
          * This updates the "Continue" Button text with either "Continue"
