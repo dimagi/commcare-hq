@@ -79,8 +79,9 @@ branches:
     - rp/insert-status-embed # Rynhard Oct 15
     - fr/dedupe  # Farid Sept 17
     - dm/upgrade-gevent # Daniel Oct 19
-    - jls/smart-linking-in-web-apps-stack-jump # Jenny Oct 20
     - dm/upgrade-xlrd # Daniel Oct 21
     - ml/remove-pickles-reports # Minha Oct 21
+    - sk/data-registry-form-linking+jls/smart-linking-in-web-apps-stack-jump
+    - jls/smart-linking-in-web-apps-stack-jump # Jenny Oct 20
     - sk/data-registry-form-linking  # Simon Oct 22
 submodules: { }
