@@ -23,7 +23,6 @@ from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
 from corehq.apps.users.audit.change_messages import get_messages
 from corehq.apps.users.models import UserHistory
-from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 
