@@ -86,6 +86,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
+from corehq.util.view_utils import absolute_reverse
 from xml2json.lib import xml2json
 
 
@@ -371,7 +372,7 @@ class LoginAsUsers(View):
 
 
 def _format_app_doc(doc):
-    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile']
+    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile', 'upstream_app_id']
     context = {key: doc.get(key) for key in keys}
     context['imageUri'] = doc.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
     return context

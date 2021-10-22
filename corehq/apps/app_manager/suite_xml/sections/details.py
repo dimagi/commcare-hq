@@ -42,6 +42,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 from corehq.apps.app_manager.util import (
     create_temp_sort_column,
     get_sort_and_sort_only_columns,
+    module_loads_registry_case,
     module_offers_search,
 )
 from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, session_var
@@ -198,7 +199,7 @@ class DetailContributor(SectionContributor):
                         d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module):
-                    in_search = module.search_config.data_registry or "search" in id
+                    in_search = module_loads_registry_case(module) or "search" in id
                     d.actions.append(self._get_case_search_action(module, in_search=in_search))
 
             try:

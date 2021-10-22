@@ -400,6 +400,10 @@ class StackQuery(StackDatum):
     data = NodeListField('data', QueryData)
 
 
+class StackJump(StackQuery):
+    ROOT_NAME = 'jump'
+
+
 class StackCommand(XmlObject):
     ROOT_NAME = 'command'
 
@@ -470,6 +474,7 @@ class Argument(IdNode):
 class SessionEndpoint(IdNode):
     ROOT_NAME = 'endpoint'
 
+    command_id = StringField('@command_id')
     arguments = NodeListField('argument', Argument)
     stack = NodeField('stack', Stack)
 

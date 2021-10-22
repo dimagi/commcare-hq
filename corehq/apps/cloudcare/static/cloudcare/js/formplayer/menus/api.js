@@ -59,6 +59,13 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             defer.reject();
 
                         } else {
+                            if (response.smartLinkRedirect) {
+                                // TODO: this is really slow
+                                console.log("Redirecting to " + response.smartLinkRedirect);
+                                document.location = response.smartLinkRedirect;
+                                return;
+                            }
+
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
