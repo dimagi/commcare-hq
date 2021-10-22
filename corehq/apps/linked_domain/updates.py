@@ -29,6 +29,7 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.const import (
+    MODEL_AUTO_UPDATE_RULES,
     MODEL_CASE_SEARCH,
     MODEL_FIXTURE,
     MODEL_FLAGS,
@@ -102,6 +103,7 @@ from corehq.toggles import NAMESPACE_DOMAIN
 
 def update_model_type(domain_link, model_type, model_detail=None):
     update_fn = {
+        MODEL_AUTO_UPDATE_RULES: update_auto_update_rules,
         MODEL_FIXTURE: update_fixture,
         MODEL_FLAGS: update_toggles,
         MODEL_PREVIEWS: update_previews,
