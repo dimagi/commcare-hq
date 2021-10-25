@@ -16,7 +16,7 @@ from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.models import ToggleAudit
-from corehq.apps.toggle_ui.tasks import generate_toggle_download
+from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
 from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
@@ -377,7 +377,7 @@ def export_toggles(request):
     tag = request.POST['tag'] or None
 
     download = DownloadBase()
-    download.set_task(generate_toggle_download.delay(
+    download.set_task(generate_toggle_csv_download.delay(
         tag, download.download_id, request.couch_user.username
     ))
 
