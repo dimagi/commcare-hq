@@ -30,6 +30,7 @@ class ExportResponseTest(TestCase):
         cls.domain_obj.delete()
         super().tearDownClass()
 
+    @patch('corehq.apps.reports.standard.monitoring.WorkerActivityReport.export_table', MagicMock(return_value=[]))
     def test_export_response_returns_200(self):
         request = self.request_factory.post('/some/url')
         request.couch_user = self.couch_user
@@ -91,8 +92,9 @@ class ExportResponseTest(TestCase):
 
         self.assertEqual(export_from_tables_mock.call_count, 1)
 
+    @patch('corehq.apps.reports.standard.monitoring.WorkerActivityReport.export_table', return_value=[])
     @patch('corehq.apps.reports.generic.export_all_rows_task.delay')
-    def test_export_response_does_not_cache_tasks(self, task_mock):
+    def test_export_response_does_not_cache_tasks(self, task_mock, _):
         request = self.request_factory.post(f'/a/{self.domain}/report/url')
         request.couch_user = self.couch_user
         request.domain = self.domain
