@@ -4,7 +4,7 @@ from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK
 from corehq.apps.app_manager.suite_xml.contributors import (
-    SuiteContributorByModule,
+    PostProcessor,
 )
 from corehq.apps.app_manager.suite_xml.post_process.endpoints import EndpointsHelper
 from corehq.apps.app_manager.suite_xml.post_process.instances import (
@@ -320,7 +320,7 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
         return Stack()
 
 
-class RemoteRequestContributor(SuiteContributorByModule):
+class RemoteRequestsHelper(PostProcessor):
     """
     Adds a remote-request node, which sets the URL and query details for
     synchronous searching and case claiming.
@@ -335,20 +335,21 @@ class RemoteRequestContributor(SuiteContributorByModule):
     """
 
     @time_method()
-    def get_module_contributions(self, module, detail_section_elements):
-        elements = []
-        if module_offers_search(module) or module_uses_smart_links(module):
-            elements.append(RemoteRequestFactory(
-                module, detail_section_elements).build_remote_request()
-            )
-        if module.session_endpoint_id:
-            elements.extend(self.get_endpoint_contributions(module, None, module.session_endpoint_id,
-                                                            detail_section_elements))
-        for form in module.get_forms():
-            if form.session_endpoint_id:
-                elements.extend(self.get_endpoint_contributions(module, form, form.session_endpoint_id,
-                                                                detail_section_elements))
-        return elements
+    def update_suite(self, detail_section_elements):
+        for module in self.modules:
+            if module_offers_search(module) or module_uses_smart_links(module):
+                self.suite.remote_requests.append(RemoteRequestFactory(
+                    module, detail_section_elements).build_remote_request()
+                )
+            if module.session_endpoint_id:
+                self.suite.remote_requests.extend(
+                    self.get_endpoint_contributions(module, None, module.session_endpoint_id,
+                                                    detail_section_elements))
+            for form in module.get_forms():
+                if form.session_endpoint_id:
+                    self.suite.remote_requests.extend(
+                        self.get_endpoint_contributions(module, form, form.session_endpoint_id,
+                                                        detail_section_elements))
 
     def get_endpoint_contributions(self, module, form, endpoint_id, detail_section_elements):
         helper = EndpointsHelper(self.suite, self.app, [module])

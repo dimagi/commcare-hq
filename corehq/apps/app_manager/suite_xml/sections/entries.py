@@ -543,7 +543,7 @@ class EntriesHelper(object):
         workflow and perform the search directly as part of the entry instead of via an action in the
         details screen. The case details is then populated with data from the results of the query.
         """
-        from corehq.apps.app_manager.suite_xml.sections.remote_requests import RemoteRequestFactory
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
         factory = RemoteRequestFactory(module, [])
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
@@ -553,7 +553,7 @@ class EntriesHelper(object):
         the user selected is in the user's casedb so we have to get the data directly from HQ before
         entering the form. This data is then available in the 'registry' instance (``instance('registry')``)
         """
-        from corehq.apps.app_manager.suite_xml.sections.remote_requests import REGISTRY_INSTANCE
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
 
         def _registry_query(instance_name, case_type_xpath, case_id_xpath):
             return FormDatumMeta(
