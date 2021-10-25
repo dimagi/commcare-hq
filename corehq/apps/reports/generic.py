@@ -191,57 +191,6 @@ class GenericReportView(object):
             fields="\n   Report Fields: \n     -%s" % "\n     -".join(self.fields) if self.fields else ""
         )
 
-    def __getstate__(self):
-        """
-            For pickling the report when passing it to Celery.
-        """
-        request = request_as_dict(self.request)
-
-        return dict(
-            request=request,
-            request_params=self.request_params,
-            domain=self.domain,
-            context={}
-        )
-
-    _caching = False
-
-    def __setstate__(self, state):
-        """
-            For unpickling a pickled report.
-        """
-        logging = get_task_logger(__name__) # logging lis likely to happen within celery.
-        self.domain = state.get('domain')
-        self.context = state.get('context', {})
-
-        class FakeHttpRequest(object):
-            method = 'GET'
-            domain = ''
-            GET = {}
-            META = {}
-            couch_user = None
-            datespan = None
-            can_access_all_locations = None
-
-        request_data = state.get('request')
-        request = FakeHttpRequest()
-        request.domain = self.domain
-        request.GET = request_data.get('GET', {})
-        request.META = request_data.get('META', {})
-        request.datespan = request_data.get('datespan')
-        request.can_access_all_locations = request_data.get('can_access_all_locations')
-
-        try:
-            couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
-            request.couch_user = couch_user
-        except Exception as e:
-            logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
-                            (self.name, e))
-        self.request = request
-        self._caching = True
-        self.request_params = state.get('request_params')
-        self._update_initial_context()
-
     @property
     @memoized
     def url_root(self):
@@ -670,7 +619,15 @@ class GenericReportView(object):
         """
         self.is_rendered_as_export = True
         if self.exportable_all:
-            export_all_rows_task.delay(self.__class__, self.__getstate__())
+            export_all_rows_task.delay(
+                self.request.GET.get('couch_user'),
+                self.__class__.__module__ + '.' + self.__class__.__name__,
+                self.domain,
+                self.slug,
+                self.name,
+                self.export_format,
+                self.export_table
+            )
             return HttpResponse()
         else:
             # We only want to cache the responses which serve files directly

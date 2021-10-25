@@ -519,6 +519,15 @@ def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDis
 
     request_data = request_as_dict(request)
 
+    request_data['GET'] = dict(request_data['GET'])
+
+    request_data['startdate'] = json_format_datetime(request_data['datespan'].startdate)
+    if request_data['datespan'].enddate:
+        request_data['enddate'] = json_format_datetime(request_data['datespan'].enddate)
+    else:
+        request_data['enddate'] = None
+    del request_data['datespan']
+
     report_type = dispatcher_class.prefix
     send_email_report.delay(recipient_emails, domain, report_slug, report_type,
                             request_data, once, form.cleaned_data)
