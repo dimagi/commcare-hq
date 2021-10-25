@@ -41,6 +41,7 @@ from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq import toggles
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_SAVED_UCR_FORM_ID,
     send_hubspot_form,
@@ -84,6 +85,7 @@ from corehq.apps.userreports.const import (
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
     REPORT_BUILDER_EVENTS_KEY,
+    TEMP_REPORT_PREFIX,
 )
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -144,15 +146,14 @@ from corehq.apps.userreports.util import (
     has_report_builder_add_on_privilege,
     number_of_report_builder_reports,
 )
-from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.decorators import get_permission_name, require_permission
 from corehq.apps.users.models import Permissions
+from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
-
-TEMP_REPORT_PREFIX = '__tmp'
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -213,6 +214,17 @@ class BaseUserConfigReportsView(BaseDomainView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain,))
 
+    def dispatch(self, *args, **kwargs):
+        allow_access_to_ucrs = (
+            self.request.couch_user.has_permission(
+                self.domain,
+                get_permission_name(Permissions.edit_ucrs)
+            )
+        )
+        if allow_access_to_ucrs:
+            return super().dispatch(*args, **kwargs)
+        raise Http404()
+
 
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
     urlname = 'configurable_reports_home'
@@ -246,6 +258,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.report_id
             ),
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
         }
 
     @property
@@ -611,7 +624,8 @@ class ConfigureReport(ReportBuilderView):
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.existing_report.get_id
-            ) if self.existing_report else {}
+            ) if self.existing_report else {},
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
         }
 
     def _get_bound_form(self, report_data):

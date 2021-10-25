@@ -10,7 +10,7 @@ env:
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
     - TEST=python-sharded-and-javascript JS_SETUP=yes
   global:
-    - REUSE_DB=true  # can't drop the citus DB since it's the postgres database
+    - REUSE_DB=true  # do not drop databases on completion (saves time)
 #    - JS_TEST_EXTENSIONS=icds_reports
     # DATADOG_API_KEY
     - secure: "J3mcwhMIQ14fQBRbHlYlJIkaEyDLix9ObZ5PNRrrUqGvUUmuHPMqTNNcr1u0FKVhlOHp8jnhxD60Kv5pYQ6NZj4mMnNS6KyUyVGeYaGO4FtahDwbK5wLnyiEPC1dwCH6d6mTut/76GpaiOp0QN2RAtu5NoXHv4Ju4iIGuiUz3ok="
@@ -34,7 +34,7 @@ before_script:
   - docker-compose version
 script:
   - if [[ "$DOCKER_USERNAME" && "$DOCKER_PASSWORD" ]]; then echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin; fi
-  - scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10 --max-test-time=29
+  - scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro

@@ -2,7 +2,7 @@ import json
 import math
 import warnings
 from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime
 from importlib import import_module
 
 from django.conf import settings
@@ -21,7 +21,6 @@ from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
-from corehq.util.dates import iso_string_to_datetime
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -31,23 +30,6 @@ from .analytics.esaccessors import (
     get_username_in_last_form_user_id_submitted,
 )
 from .models import HQUserType, TempCommCareUser
-
-
-def make_form_couch_key(domain, user_id=Ellipsis):
-    """
-        This sets up the appropriate query for couch based on common report parameters.
-
-        Note: Ellipsis is used as the default for user_id because
-        None is actually emitted as a user_id on occasion in couch
-    """
-    prefix = ["submission"]
-    key = [domain] if domain is not None else []
-    if user_id == "":
-        prefix.append('user')
-    elif user_id is not Ellipsis:
-        prefix.append('user')
-        key.append(user_id)
-    return [" ".join(prefix)] + key
 
 
 def user_list(domain):
@@ -331,7 +313,7 @@ def numcell(text, value=None, convert='int', raw=None):
             value = int(text) if convert == 'int' else float(text)
             if math.isnan(value):
                 text = '---'
-            elif not convert == 'int': # assume this is a percentage column
+            elif not convert == 'int':  # assume this is a percentage column
                 text = '%.f%%' % value
         except ValueError:
             value = text
@@ -412,6 +394,7 @@ class DatatablesParams(object):
     def __init__(self, count, start, desc, echo, search=None):
         self.count = count
         self.start = start
+        self.end = start + count
         self.desc = desc
         self.echo = echo
         self.search = search

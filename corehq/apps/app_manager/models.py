@@ -1166,7 +1166,7 @@ class FormBase(DocumentSchema):
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
-        xform.add_missing_instances(app)
+        xform.add_missing_instances(self, app)
 
     @memoized
     def render_xform(self, build_profile_id=None):
@@ -2483,7 +2483,8 @@ class ModuleDetailsMixin(object):
             ('ref_short', self.ref_details.short, False),
             ('ref_long', self.ref_details.long, False),
         ]
-        if module_offers_search(self) and not self.case_details.short.custom_xml:
+        custom_detail = self.case_details.short.custom_xml
+        if module_offers_search(self) and not custom_detail:
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
@@ -5813,6 +5814,9 @@ def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
             messages.warning(request, _("Copying the application succeeded, but the application will have errors "
                                         "because your application contains a Mobile Report Module that references "
                                         "a UCR configured in this project space. Multimedia may be absent."))
+    except ResourceNotFound:
+        messages.warning(request, _("Copying the application succeeded, but the application is missing "
+                                    "multimedia file(s)."))
 
     if not app.is_remote_app():
         enable_usercase_if_necessary(app)

@@ -62,6 +62,7 @@ from corehq.messaging.scheduling.models import (
     SMSCallbackContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from couchdbkit import ResourceNotFound
 from langcodes import get_name as get_language_name
 
@@ -1759,6 +1760,24 @@ class ScheduleForm(Form):
                 'recipient_types',
                 data_bind="selectedOptions: recipient_types",
                 style="width: 100%;"
+            ),
+            crispy.Div(
+                crispy.HTML(
+                    """
+                        <p id="parent-case-type-warning" class="help-block alert alert-info">
+                        <i class="fa fa-info-circle"></i>
+                            %s
+                        </p>
+                    """
+                    % _(
+                        """
+                            The "Case's Parent Case" Recipient setting only works for Parent / Child relationships,
+                            not Parent / Extension or Host / Extension relationships.
+                        """
+                    )),
+                data_bind="visible: (recipientTypeSelected('{parentCase}') && {extensionFlagEnabled})".format(
+                    parentCase=CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE,
+                    extensionFlagEnabled="true" if EXTENSION_CASES_SYNC_ENABLED.enabled(self.domain) else "false")
             ),
             crispy.Div(
                 crispy.Field(

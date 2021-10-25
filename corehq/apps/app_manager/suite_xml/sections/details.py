@@ -198,7 +198,8 @@ class DetailContributor(SectionContributor):
                         d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module):
-                    d.actions.append(self._get_case_search_action(module, in_search="search" in id))
+                    in_search = module.search_config.data_registry or "search" in id
+                    d.actions.append(self._get_case_search_action(module, in_search=in_search))
 
             try:
                 if not self.app.enable_multi_sort:

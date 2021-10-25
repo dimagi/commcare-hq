@@ -6,7 +6,8 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
@@ -107,6 +108,23 @@ def data_dictionary_json(request, domain, case_type_name=None):
             })
         props.append(p)
     return JsonResponse({'case_types': props})
+
+
+@login_and_domain_required
+@toggles.DATA_DICTIONARY.required_decorator()
+def create_case_type(request, domain):
+    name = request.POST.get("name")
+    description = request.POST.get("description")
+    if not name:
+        messages.error(request, _("Case Type 'name' is required"))
+        return redirect(DataDictionaryView.urlname, domain=domain)
+
+    CaseType.objects.get_or_create(domain=domain, name=name, defaults={
+        "description": description,
+        "fully_generated": True
+    })
+    url = reverse(DataDictionaryView.urlname, args=[domain])
+    return HttpResponseRedirect(f"{url}#{name}")
 
 
 # atomic decorator is a performance optimization for looped saves

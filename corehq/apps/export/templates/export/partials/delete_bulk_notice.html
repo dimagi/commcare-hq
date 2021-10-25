@@ -1,0 +1,31 @@
+{% load i18n %}
+<div data-bind="visible: bulkExportDownloadCount()">
+  <div class="pull-right" data-toggle="tooltip-bulkDelete" data-placement="top">
+    <input name="delete_list" type="hidden"/>
+    <p style="float:right">
+      <a class="btn btn-danger btn-primary"
+         data-toggle="modal"
+         data-bind="attr: {
+                      href: '#bulk-delete-export-modal'
+                    }">
+        <!-- ko if: isOData || isFeed -->
+          <!-- ko if: isMultiple -->
+            {% trans "Delete Selected Feeds" %}
+          <!-- /ko -->
+          <!-- ko if: !isMultiple() -->
+            {% trans "Delete Selected Feed" %}
+          <!-- /ko -->
+        <!-- /ko -->
+        <!-- ko if: !isOData && !isFeed -->
+          <!-- ko if: isMultiple -->
+            {% trans "Delete Selected Exports" %}
+          <!-- /ko -->
+          <!-- ko if: !isMultiple() -->
+            {% trans "Delete Selected Export" %}
+          <!-- /ko -->
+        <!-- /ko -->
+      </a>
+      {% include "export/dialogs/bulk_delete_custom_export_dialog.html" %}
+    </p>
+  </div>
+</div>

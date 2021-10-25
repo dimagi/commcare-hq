@@ -33,7 +33,7 @@
   <ul class="nav nav-tabs">
     <li class="active"><a data-toggle="tab" href="#tabs-configuration">{% trans "Configuration" %}</a></li>
     <li><a data-toggle="tab" href="#tabs-usage">{% trans "Usage" %}</a></li>
-    {% if request|toggle_enabled:"LINKED_DOMAINS" %}
+    {% if not has_release_management_privilege and request|toggle_enabled:"LINKED_DOMAINS" %}
       <li><a data-toggle="tab" href="#tabs-link-report">{% trans "Link Report" %}</a></li>
     {% endif %}
   </ul>
