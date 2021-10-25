@@ -1,26 +1,80 @@
 hqDefine('toggle_ui/js/flags', [
     'jquery',
     'knockout',
+    'underscore',
+    'hqwebapp/js/alert_user',
     'reports/js/config.dataTables.bootstrap',
     'hqwebapp/js/components.ko',    // select toggle widget
 ], function (
     $,
     ko,
+    _,
+    alertUser,
     datatablesConfig
 ) {
     var dataTableElem = '.datatable';
     let buildViewModel = function () {
         let self = {};
         self.tagFilter = ko.observable(null);
+        self.downloadPollUrl = ko.observable(null);
+        self.downloadPollId = ko.observable(null);
+        self.downloadContent = ko.observable(null);
 
         self.downloadFile = function () {
-            var appliedFilter = self.tagFilter();
+            self.downloadPollUrl(null);
+            self.downloadPollId(null);
+            self.downloadContent(null);
+
+            let appliedFilter = self.tagFilter();
             if (appliedFilter === "all") {
                 appliedFilter = '';
             }
-            open('export_toggles?tag=' + appliedFilter);
+            $.post({
+                url: "export_toggles/",
+                data: {"tag": appliedFilter},
+                success: function (data) {
+                    self.downloadPollUrl(data.download_url);
+                    self.downloadPollId(data.download_id);
+                    self.pollDownloadStatus();
+                },
+                error: function (resp) {
+                    self.downloadPollUrl(null);
+                    self.downloadPollId(null);
+                    self.downloadContent(null);
+                    alertUser.alert_user(resp.responseText);
+                },
+            });
         };
 
+        self.pollDownloadStatus = function () {
+            if (viewModel.downloadPollUrl()) {
+                $.ajax({
+                    url: viewModel.downloadPollUrl(),
+                    success: function (resp) {
+                        self.downloadContent(resp);
+                        if (!self.isDone(resp)) {
+                            setTimeout(self.pollDownloadStatus, 1500);
+                        } else {
+                            self.downloadPollUrl(null);
+                            self.downloadPollId(null);
+                        }
+                    },
+                    error: function (resp) {
+                        alertUser.alert_user(resp.responseText);
+                    },
+                });
+            }
+        };
+
+        self.isDone = function (progress_response) {
+            var ready_id = 'ready_' + self.downloadPollId(),
+                error_id = 'error_' + self.downloadPollId();
+            return progress_response &&
+                progress_response.trim().length &&
+                _.any([ready_id, error_id], function (el_id) {
+                    return progress_response.indexOf(el_id) >= 0;
+                });
+        };
         return self;
     };
 
