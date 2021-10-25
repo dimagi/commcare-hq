@@ -14,7 +14,7 @@ fi
 # Enabling this option skips setup and actual tests and instead runs some recon
 # commands inside the container for debugging overlay filesystem configurations,
 # owners and file modes.
-DOCKER_OVERLAY_TEST_DEBUG='no'
+DOCKER_OVERLAY_TEST_DEBUG='yes'
 
 VALID_TEST_SUITES=(
     javascript
