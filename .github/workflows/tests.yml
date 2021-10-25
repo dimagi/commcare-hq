@@ -21,6 +21,8 @@ jobs:
       REUSE_DB: true  # do not drop databases on completion to save time
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: Docker info
       run: |
         docker version
