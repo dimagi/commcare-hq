@@ -1427,14 +1427,6 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     ),
 )
 
-ICDS = StaticToggle(
-    'icds',
-    "ICDS: Enable ICDS features (necessary since features are on multiple envs)",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-staging'},
-)
-
 DATA_DICTIONARY = StaticToggle(
     'data_dictionary',
     'Project level data dictionary of cases',
@@ -1937,14 +1929,6 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Two-Stage+Mobile+Worker+Account+Creation',
-)
-
-DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
-    'download_location_reassignment_template',
-    'Allow domain users to download location reassignment template',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-staging'},
 )
 
 REFER_CASE_REPEATER = StaticToggle(
