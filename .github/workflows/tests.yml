@@ -9,10 +9,11 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-      - {TEST: python, NOSE_DIVIDED_WE_RUN: '05'}
-      - {TEST: python, NOSE_DIVIDED_WE_RUN: '6a'}
-      - {TEST: python, NOSE_DIVIDED_WE_RUN: 'bf'}
-      - {TEST: python-sharded-and-javascript}
+        include:
+        - {TEST: python, NOSE_DIVIDED_WE_RUN: '05'}
+        - {TEST: python, NOSE_DIVIDED_WE_RUN: '6a'}
+        - {TEST: python, NOSE_DIVIDED_WE_RUN: 'bf'}
+        - {TEST: python-sharded-and-javascript}
     env:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
