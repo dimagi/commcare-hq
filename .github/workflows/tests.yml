@@ -22,8 +22,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Docker info
-      run: docker version
-      run: docker-compose version
+      run: |
+        docker version
+        docker-compose version
     - name: Docker login
       uses: docker/login-action@v1
       with:
