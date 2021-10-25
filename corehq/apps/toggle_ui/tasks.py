@@ -84,8 +84,8 @@ def _get_toggle_item_count(toggles):
 
 
 def _write_toggle_data(filepath, toggles, increment_progress=None):
-    """Generate a CSV file continaing data for toggles. One row per enabled toggle item.
-    If the toggle is used a single row will still be included with the basic metadata
+    """Generate a CSV file containing data for toggles. One row per enabled toggle item.
+    If the toggle is not used a single row will still be included with the basic metadata
     """
     fieldnames = [
         "env", "slug", "label", "tag", "type", "help", "description", "randomness",
