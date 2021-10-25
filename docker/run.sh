@@ -105,6 +105,10 @@ function run_tests {
             for dirpath in $(find /mnt -mindepth 1 -maxdepth 1 -type d -not -name 'commcare-hq*'); do
                 logdo ls -la "$dirpath"
             done
+            logdo python -m site
+            logdo pip freeze
+            logdo npm config list
+            logdo yarn --version
             logdo cat -n ../run_tests
         }
         echo -e "$(func_text overlay_debug)\\noverlay_debug" | su cchq -c "/bin/bash -" || true
