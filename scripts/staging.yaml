@@ -84,4 +84,5 @@ branches:
     - sk/data-registry-form-linking+jls/smart-linking-in-web-apps-stack-jump
     - jls/smart-linking-in-web-apps-stack-jump # Jenny Oct 20
     - sk/data-registry-form-linking  # Simon Oct 22
+    - dmr/further-embed-url-validation  # Danny Oct 25
 submodules: { }
