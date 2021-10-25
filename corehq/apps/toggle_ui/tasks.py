@@ -10,12 +10,13 @@ from django.conf import settings
 
 from corehq.apps.domain.calculations import last_form_submission
 from corehq.apps.domain.models import Domain
-from corehq.apps.toggle_ui.utils import get_toggles_with_tag, has_dimagi_user, get_subscription_info
+from corehq.apps.toggle_ui.utils import has_dimagi_user, get_subscription_info
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import get_blob_db, CODES
 from corehq.const import USER_DATETIME_FORMAT
-from corehq.toggles import NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN, \
-    NAMESPACE_OTHER
+from corehq.toggles import (
+    NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN, NAMESPACE_OTHER, all_toggles
+)
 from corehq.util.files import safe_filename_header, TransientTempfile
 from corehq.util.view_utils import absolute_reverse
 from couchforms.analytics import domain_has_submission_in_last_30_days
@@ -27,7 +28,7 @@ from toggle.models import Toggle
 
 @task(bind=True)
 def generate_toggle_csv_download(self, tag, download_id, username):
-    toggles = get_toggles_with_tag(tag)
+    toggles = _get_toggles_with_tag(tag)
     total = _get_toggle_item_count(toggles)
     current_progress = [0]
 
@@ -81,6 +82,14 @@ def _get_toggle_item_count(toggles):
 
         count += len(set(toggle_doc.enabled_users))
     return count
+
+
+def _get_toggles_with_tag(tag=None):
+    toggles = []
+    for toggle in all_toggles():
+        if not tag or tag in toggle.tag.name:
+            toggles.append(toggle)
+    return toggles
 
 
 def _write_toggle_data(filepath, toggles, increment_progress=None):
