@@ -206,6 +206,8 @@
       </p>
     </div>
   {% endif %}
-  <script src="https://p3s9fvl6gvhr.statuspage.io/embed/script.js"></script>
+  {% if HQ_INSTANCE == 'www' %}
+    <script src="https://p3s9fvl6gvhr.statuspage.io/embed/script.js"></script>
+  {% endif %}
 {% endblock %}
 
