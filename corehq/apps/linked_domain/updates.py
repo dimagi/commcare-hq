@@ -425,6 +425,7 @@ def update_auto_update_rules(domain_link):
         active_only=False
     )
 
+    # Largely from data_interfacees/models.py - hard_delete()
     def _delete_rule(rule):
         rule.delete_criteria()
         rule.delete_actions()
@@ -434,7 +435,6 @@ def update_auto_update_rules(domain_link):
     def _copy_rule(rule):
         with transaction.atomic():
 
-            # Copy over AutomaticUpdateRule model
             new_rule = AutomaticUpdateRule(
                 domain=domain_link.linked_domain,
                 active=rule['rule']['active'],
@@ -447,6 +447,7 @@ def update_auto_update_rules(domain_link):
             new_rule.server_modified_boundary = rule['rule']['server_modified_boundary']
             new_rule.save()
 
+            # Largely from data_interfacees/forms.py - save_criteria()
             for criteria in rule['criteria']:
                 definition = None
 
@@ -467,6 +468,7 @@ def update_auto_update_rules(domain_link):
                 new_criteria.definition = definition
                 new_criteria.save()
 
+            # Largely from data_interfacees/forms.py - save_actions()
             for action in rule['actions']:
                 definition = None
 
@@ -498,7 +500,6 @@ def update_auto_update_rules(domain_link):
     for master_rule in master_results:
         _copy_rule(master_rule)
 
-    print(master_results)
 
 def _convert_reports_permissions(domain_link, master_results):
     """Mutates the master result docs to convert dynamic report permissions.

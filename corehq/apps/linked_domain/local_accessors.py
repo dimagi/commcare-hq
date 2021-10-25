@@ -196,5 +196,4 @@ def get_auto_update_rules(domain):
         }
         data.append(rule_data)
 
-    print(data)
     return data
