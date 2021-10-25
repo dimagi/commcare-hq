@@ -9,9 +9,22 @@ hqDefine('toggle_ui/js/flags', [
     datatablesConfig
 ) {
     var dataTableElem = '.datatable';
-    var viewModel = {
-        tagFilter: ko.observable(null),
+    let buildViewModel = function () {
+        let self = {};
+        self.tagFilter = ko.observable(null);
+
+        self.downloadFile = function () {
+            var appliedFilter = self.tagFilter();
+            if (appliedFilter === "all") {
+                appliedFilter = '';
+            }
+            open('export_toggles?tag=' + appliedFilter);
+        };
+
+        return self;
     };
+
+    let viewModel = buildViewModel();
     $.fn.dataTableExt.afnFiltering.push(
         function (oSettings, aData, iDataIndex) {
             if (viewModel.tagFilter() === 'all') {
@@ -24,7 +37,7 @@ hqDefine('toggle_ui/js/flags', [
             return tag === viewModel.tagFilter();
         }
     );
-    $('#table-filters').koApplyBindings(viewModel);
+    $('#feature_flags').koApplyBindings(viewModel);
     var table = datatablesConfig.HQReportDataTables({
         dataTableElem: dataTableElem,
         showAllRowsOption: true,
@@ -35,14 +48,4 @@ hqDefine('toggle_ui/js/flags', [
     viewModel.tagFilter.subscribe(function (value) {
         table.datatable.fnDraw();
     });
-
-    var downloadToFile = function () {
-        var appliedFilter = viewModel.tagFilter();
-        if (appliedFilter === "all") {
-            appliedFilter = '';
-        }
-        open('export_toggles?tag=' + appliedFilter);
-    };
-
-    $('#export-button').koApplyBindings({downloadFile: downloadToFile});
 });

@@ -41,11 +41,11 @@ def get_toggles_attachment_file(tag=None):
 
 
 def get_toggles_with_tag(tag=None):
-    flags = []
+    toggles = []
     for toggle in all_toggles():
         if not tag or tag in toggle.tag.name:
-            flags.append(toggle)
-    return flags
+            toggles.append(toggle)
+    return toggles
 
 
 def parse_toggles_to_file_info(toggles):
