@@ -242,6 +242,7 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
+    echo "Pulling docker containers..."
     docker-compose pull --quiet
     docker-compose run --rm web run_tests "${TEST:-python}" "$@"
 elif [ "$CMD" == "shell" ]; then
