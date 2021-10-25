@@ -66,13 +66,13 @@ hqDefine('toggle_ui/js/flags', [
             }
         };
 
-        self.isDone = function (progress_response) {
-            var ready_id = 'ready_' + self.downloadPollId(),
-                error_id = 'error_' + self.downloadPollId();
-            return progress_response &&
-                progress_response.trim().length &&
-                _.any([ready_id, error_id], function (el_id) {
-                    return progress_response.indexOf(el_id) >= 0;
+        self.isDone = function (progressResponse) {
+            var readyId = 'ready_' + self.downloadPollId(),
+                errorId = 'error_' + self.downloadPollId();
+            return progressResponse &&
+                progressResponse.trim().length &&
+                _.any([readyId, errorId], function (elid) {
+                    return progressResponse.indexOf(elid) >= 0;
                 });
         };
         return self;
