@@ -662,7 +662,7 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
     def default_indicators(self):
         default_indicators = super().default_indicators
         default_indicators.append(IndicatorFactory.from_spec({
-            "column_id": "domain",
+            "column_id": "commcare_project",
             "type": "expression",
             "display_name": "Project Space",
             "datatype": "string",
@@ -1289,7 +1289,10 @@ def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_S
             try:
                 config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
             except DocumentNotFound:
-                _raise_not_found()
+                try:
+                    config = get_document_or_not_found(RegistryDataSourceConfiguration, domain, config_id)
+                except DocumentNotFound:
+                    _raise_not_found()
         return config, is_static
     elif data_source_type == DATA_SOURCE_TYPE_AGGREGATE:
         from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
