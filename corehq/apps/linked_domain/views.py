@@ -102,7 +102,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, WebUser
 from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.timezones.utils import get_timezone_for_request
 
@@ -516,11 +516,18 @@ class DomainLinkHistoryReport(GenericTabularReport):
         return [self._make_row(record, self.selected_link) for record in rows]
 
     def _make_row(self, record, link):
+        user = WebUser.get_by_user_id(record.user_id)
+        user_column_value = user.name
+        # do not use is_member_of method because that returns true if superuser
+        # in this case, we only want to hyperlink actual web users in the domain
+        if self.domain in user.get_domains():
+            user_column_value = pretty_doc_info(get_doc_info_by_id(self.domain, record.user_id))
+
         row = [
             '{} -> {}'.format(link.master_domain, link.linked_domain),
             server_to_user_time(record.date, self.timezone),
             self._make_model_cell(record),
-            pretty_doc_info(get_doc_info_by_id(self.domain, record.user_id))
+            user_column_value
         ]
         return row
 
