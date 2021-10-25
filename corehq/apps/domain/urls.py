@@ -150,8 +150,6 @@ domain_settings = [
     url(r'^subscription/pro_bono/$', ProBonoView.as_view(), name=ProBonoView.urlname),
     url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
         name=CreditsStripePaymentView.urlname),
-    url(r'^subscription/credis/make_wire_payment/$',
-        RedirectView.as_view(pattern_name='domain_wire_payment', permanent=True)),
     url(r'^subscription/credits/make_wire_payment/$', CreditsWireInvoiceView.as_view(),
         name=CreditsWireInvoiceView.urlname),
     url(r'^billing/statements/download/(?P<statement_id>[\w-]+).pdf$',
