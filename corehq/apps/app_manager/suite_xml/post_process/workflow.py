@@ -15,7 +15,7 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_PREVIOUS,
     WORKFLOW_ROOT,
 )
-from corehq.apps.app_manager.exceptions import SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteValidationError, SuiteError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import (
     CreateFrame,
@@ -592,7 +592,7 @@ class StackFrameMeta(object):
             elif isinstance(child, (StackDatum, StackQuery)):
                 frame.add_datum(child)
             else:
-                raise Exception("Unexpected child type: {} ({})".format(type(child), child))
+                raise SuiteError("Unexpected child type: {} ({})".format(type(child), child))
 
         return frame
 
@@ -696,7 +696,7 @@ class WorkflowDatumMeta(WorkflowSessionMeta):
     @case_type.setter
     def case_type(self, case_type):
         if self.case_type and case_type != self.case_type:
-            raise Exception("Datum already has a case type")
+            raise SuiteError("Datum already has a case type")
         self._case_type = case_type
 
     def clone_to_match(self, source_id=None):
@@ -744,7 +744,7 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
     @case_type.setter
     def case_type(self, case_type):
         if self.case_type and case_type != self.case_type:
-            raise Exception("Datum already has a case type")
+            raise SuiteError("Datum already has a case type")
         self._case_type = case_type
 
     def clone_to_match(self, source_id=None):
