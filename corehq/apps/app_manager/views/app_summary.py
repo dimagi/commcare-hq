@@ -96,6 +96,16 @@ class AppCaseSummaryView(AppSummaryView):
         return context
 
 
+class AppWorkflowSummaryView(AppSummaryView):
+    urlname = 'app_workflow_summary'
+    template_name = 'app_manager/workflow_summary.html'
+
+    @property
+    def page_context(self):
+        context = super(AppWorkflowSummaryView, self).page_context
+        return context
+
+
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
     template_name = 'app_manager/form_summary.html'

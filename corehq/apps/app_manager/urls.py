@@ -87,7 +87,7 @@ from corehq.apps.app_manager.views import (
     view_module,
     view_module_legacy,
 )
-from corehq.apps.app_manager.views.app_summary import DownloadAppWorkflowDiagramView
+from corehq.apps.app_manager.views.app_summary import DownloadAppWorkflowDiagramView, AppWorkflowSummaryView
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
@@ -138,6 +138,7 @@ app_urls = [
         form_source_legacy, name='form_source_legacy'),
     url(r'^app_data/$', AppDataView.as_view(), name=AppDataView.urlname),
     url(r'^summary/$', AppFormSummaryView.as_view(), name=AppFormSummaryView.urlname),
+    url(r'^summary/app/$', AppWorkflowSummaryView.as_view(), name=AppWorkflowSummaryView.urlname),
     url(r'^summary/case/$', AppCaseSummaryView.as_view(), name=AppCaseSummaryView.urlname),
     url(r'^summary/form/$', AppFormSummaryView.as_view(), name=AppFormSummaryView.urlname),
     url(r'^summary/case/download/$', DownloadCaseSummaryView.as_view(), name=DownloadCaseSummaryView.urlname),

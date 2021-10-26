@@ -1,0 +1,23 @@
+{% extends 'app_manager/base_summary.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block title %}{% trans "Workflow Summary" %} - {% trans "Version" %} {{ app_version }}{% endblock %}
+
+{% requirejs_main 'app_manager/js/summary/workflow_summary' %}
+
+{% block content_extra %}
+  <div class="ko-template" id="app-workflow-summary">
+    <div class="page-header" style="margin-top: 0;">
+        <h3>
+          <i class="fcc fcc-fd-external-case"></i>
+          {% trans "App Workflow" %} - {% trans "Version" %} <select id="version-selector" class="form-control" data-bind="value: firstAppId"></select>
+          <a class="btn btn-default" data-bind="click: changeVersions, visible: showChangeVersions">{% trans "Go" %}</a>
+        </h3>
+    </div>
+  </div>
+  <div id="workflow-summary" class="ko-template">
+  </div>
+  <div id="workflow"/>
+
+{% endblock content_extra %}
