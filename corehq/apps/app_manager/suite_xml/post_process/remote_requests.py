@@ -2,9 +2,8 @@ from django.utils.functional import cached_property
 
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK
 from corehq.apps.app_manager.suite_xml.contributors import (
-    SuiteContributorByModule,
+    PostProcessor,
 )
 from corehq.apps.app_manager.suite_xml.post_process.endpoints import EndpointsHelper
 from corehq.apps.app_manager.suite_xml.post_process.instances import (
@@ -13,6 +12,7 @@ from corehq.apps.app_manager.suite_xml.post_process.instances import (
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowDatumMeta
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
+    CalculatedPropertyXpath,
     Command,
     Display,
     Hint,
@@ -29,6 +29,8 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Stack,
     StackJump,
     Text,
+    Xpath,
+    XpathVariable,
 )
 from corehq.apps.app_manager.util import (
     is_linked_app,
@@ -265,10 +267,17 @@ class RemoteRequestFactory(object):
             # TODO: XPath instead of string
             frame = PushFrame(if_clause=XPath("instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project != instance('commcaresession')/session/user/data/commcare_project"))
             frame.add_datum(StackJump(
-                value=f"'{self.get_smart_link()}'",
-                data=[
-                    QueryData(key="domain", ref="instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project")     # TODO: XPath not string
-                ],
+                url=Text(
+                    xpath=Xpath(
+                        function=self.get_smart_link_function(),
+                        variables=[
+                            XpathVariable(
+                                name="domain",
+                                xpath=CalculatedPropertyXpath(function="instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project"),  # TODO: xpath, not function
+                            ),
+                        ],
+                    ),
+                ),
             ))
             stack.add_frame(frame)
         frame = PushFrame()
@@ -276,11 +285,11 @@ class RemoteRequestFactory(object):
         stack.add_frame(frame)
         return stack
 
-    def get_smart_link(self):
+    def get_smart_link_function(self):
         app_id = self.app.upstream_app_id if is_linked_app(self.app) else self.app.origin_id
         url = absolute_reverse("session_endpoint", args=["---", app_id, self.module.session_endpoint_id])
-        url = url.replace("---", "{domain}")
-        return url
+        prefix, suffix = url.split("---")
+        return f"concat('{prefix}', $domain, '{suffix}')"
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
@@ -320,7 +329,7 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
         return Stack()
 
 
-class RemoteRequestContributor(SuiteContributorByModule):
+class RemoteRequestsHelper(PostProcessor):
     """
     Adds a remote-request node, which sets the URL and query details for
     synchronous searching and case claiming.
@@ -336,19 +345,20 @@ class RemoteRequestContributor(SuiteContributorByModule):
 
     @time_method()
     def get_module_contributions(self, module, detail_section_elements):
-        elements = []
-        if module_offers_search(module) or module_uses_smart_links(module):
-            elements.append(RemoteRequestFactory(
-                module, detail_section_elements).build_remote_request()
-            )
-        if module.session_endpoint_id:
-            elements.extend(self.get_endpoint_contributions(module, None, module.session_endpoint_id,
-                                                            detail_section_elements))
-        for form in module.get_forms():
-            if form.session_endpoint_id:
-                elements.extend(self.get_endpoint_contributions(module, form, form.session_endpoint_id,
-                                                                detail_section_elements))
-        return elements
+        for module in self.modules:
+            if module_offers_search(module) or module_uses_smart_links(module):
+                self.suite.remote_requests.append(RemoteRequestFactory(
+                    module, detail_section_elements).build_remote_request()
+                )
+            if module.session_endpoint_id:
+                self.suite.remote_requests.extend(
+                    self.get_endpoint_contributions(module, None, module.session_endpoint_id,
+                                                    detail_section_elements))
+            for form in module.get_forms():
+                if form.session_endpoint_id:
+                    self.suite.remote_requests.extend(
+                        self.get_endpoint_contributions(module, form, form.session_endpoint_id,
+                                                        detail_section_elements))
 
     def get_endpoint_contributions(self, module, form, endpoint_id, detail_section_elements):
         helper = EndpointsHelper(self.suite, self.app, [module])

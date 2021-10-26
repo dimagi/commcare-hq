@@ -18,6 +18,9 @@ from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
 from corehq.apps.app_manager.suite_xml.post_process.endpoints import (
     EndpointsHelper,
 )
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+    RemoteRequestsHelper,
+)
 from corehq.apps.app_manager.suite_xml.post_process.resources import (
     ResourceOverrideHelper,
 )
@@ -34,9 +37,6 @@ from corehq.apps.app_manager.suite_xml.sections.fixtures import (
     FixtureContributor,
 )
 from corehq.apps.app_manager.suite_xml.sections.menus import MenuContributor
-from corehq.apps.app_manager.suite_xml.sections.remote_requests import (
-    RemoteRequestContributor,
-)
 from corehq.apps.app_manager.suite_xml.sections.resources import (
     FormResourceContributor,
     LocaleResourceContributor,
@@ -87,7 +87,6 @@ class SuiteGenerator(object):
         # by module
         entries = EntriesContributor(self.suite, self.app, self.modules, self.build_profile_id)
         menus = MenuContributor(self.suite, self.app, self.modules, self.build_profile_id)
-        remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
 
         if any(module.is_training_module for module in self.modules):
             training_menu = LocalizedMenu(id='training-root')
@@ -95,16 +94,11 @@ class SuiteGenerator(object):
         else:
             training_menu = None
 
-        detail_section_elements = basic_elements[DetailContributor.section_name]
         for module in self.modules:
             self.suite.entries.extend(entries.get_module_contributions(module))
 
             self.suite.menus.extend(
                 menus.get_module_contributions(module, training_menu)
-            )
-
-            self.suite.remote_requests.extend(
-                remote_requests.get_module_contributions(module, detail_section_elements)
             )
 
         if training_menu:
@@ -114,6 +108,9 @@ class SuiteGenerator(object):
             FixtureContributor(self.suite, self.app, self.modules),
             SchedulerFixtureContributor(self.suite, self.app, self.modules),
         ])
+
+        detail_section_elements = basic_elements[DetailContributor.section_name]
+        RemoteRequestsHelper(self.suite, self.app, self.modules).update_suite(detail_section_elements)
 
         if self.app.supports_session_endpoints:
             EndpointsHelper(self.suite, self.app, self.modules).update_suite()
