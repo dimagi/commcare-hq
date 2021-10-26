@@ -50,9 +50,9 @@ email_validator==1.1.3
 ethiopian-date-converter==0.1.5
 eulxml==1.1.3
 Faker==5.0.2
-gevent==1.4.0
+gevent>1.4.0
 ghdiff==0.4
-greenlet==0.4.17
+greenlet>=0.4.17
 gunicorn
 hiredis==2.0.0
 httpagentparser~=1.7
