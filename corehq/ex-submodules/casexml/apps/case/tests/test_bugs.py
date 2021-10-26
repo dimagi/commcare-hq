@@ -1,8 +1,6 @@
 import uuid
-from couchdbkit.exceptions import BulkSaveError
 from django.test import TestCase, SimpleTestCase
 import os
-from django.test.utils import override_settings
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
@@ -29,21 +27,7 @@ class SimpleCaseBugTests(SimpleTestCase):
             CommCareCase(_id='test').to_xml(version)
 
 
-class CaseBugTestCouchOnly(TestCase):
-
-    def test_conflicting_ids(self):
-        """
-        If a form and a case share an ID it's a conflict
-        """
-        conflict_id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
-            case_id=conflict_id,
-            create=True,
-        ).as_text()
-        with self.assertRaises(BulkSaveError):
-            submit_case_blocks(case_block, 'test-conflicts', form_id=conflict_id)
-
-
+@sharded
 class CaseBugTest(TestCase, TestFileMixin):
     """
     Tests bugs that come up in case processing
@@ -195,10 +179,6 @@ class CaseBugTest(TestCase, TestFileMixin):
 
 
 @sharded
-class CaseBugTestSQL(CaseBugTest):
-    pass
-
-
 class TestCaseHierarchy(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -346,7 +326,7 @@ class TestCaseHierarchy(TestCase):
         ).as_text()
         submit_case_blocks(case_block, 'test-transactions', form_id=form_id)
         with self.assertRaises(CaseNotFound):
-            CaseAccessors().get_case(case_id2)
+            CaseAccessors('domain_name').get_case(case_id2)
 
         # form with same ID submitted but now has a new case transaction
         new_case_block = CaseBlock.deprecated_init(
@@ -355,20 +335,16 @@ class TestCaseHierarchy(TestCase):
             case_type='t1',
         ).as_text()
         submit_case_blocks([case_block, new_case_block], 'test-transactions', form_id=form_id)
-        case2 = CaseAccessors().get_case(case_id2)
+        case2 = CaseAccessors('test-transactions').get_case(case_id2)
         self.assertEqual([form_id], case2.xform_ids)
         self.assertEqual('t1', case2.type)
-
-
-@sharded
-class TestCaseHierarchySQL(TestCaseHierarchy):
-    pass
 
 
 def _get_case_url_blank(case_id):
     return ""
 
 
+@sharded
 class TestCaseHierarchyContext(TestCase):
     def setUp(self):
         self.factory = CaseFactory()
@@ -422,8 +398,3 @@ class TestCaseHierarchyContext(TestCase):
         accessors = CaseAccessors(self.parent.domain)
         self.parent = accessors.get_case(self.parent.case_id)
         self.child = accessors.get_case(self.child.case_id)
-
-
-@sharded
-class TestCaseHierarchyContextSQL(TestCaseHierarchyContext):
-    pass

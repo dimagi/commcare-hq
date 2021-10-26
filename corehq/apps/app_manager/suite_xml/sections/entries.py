@@ -1,6 +1,7 @@
 from collections import defaultdict, namedtuple
 from itertools import zip_longest
 
+import attr
 from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager import id_strings
@@ -18,7 +19,7 @@ from corehq.apps.app_manager.suite_xml.utils import (
     get_select_chain_meta,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import *
-from corehq.apps.app_manager.util import actions_use_usercase, module_offers_search
+from corehq.apps.app_manager.util import actions_use_usercase, module_offers_registry_search
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
     autoset_owner_id_for_open_case,
@@ -33,28 +34,39 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     session_var,
 )
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
 
-class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent')):
-    def __new__(cls, datum, case_type, requires_selection, action, from_parent=False):
-        """
-        :param datum: The actual SessionDatum object
-        :param case_type: The case type this datum represents
-        :param requires_selection: True if this datum requires the user to make a selection
-        :param action: The action that produced this datum
-        :param from_parent: True if this datum is a placeholder necessary to match the parent module's session.
-        """
-        return super(FormDatumMeta, cls).__new__(cls, datum, case_type, requires_selection, action, from_parent)
+@attr.s(repr=False)
+class FormDatumMeta:
+    """
+    :param datum: The actual SessionDatum object
+    :param case_type: The case type this datum represents
+    :param requires_selection: True if this datum requires the user to make a selection
+    :param action: The action that produced this datum
+    :param from_parent: True if this datum is a placeholder necessary to match the parent module's session.
+    :param module_id: The ID of the module where this datum comes from.
+    """
+    datum = attr.ib()
+    case_type = attr.ib()
+    requires_selection = attr.ib()
+    action = attr.ib()
+    from_parent = attr.ib(default=False)
+    module_id = attr.ib(default=None)
 
     @property
     def is_new_case_id(self):
         return self.datum.function == 'uuid()'
 
     def __repr__(self):
-        return 'FormDataumMeta(datum=<SessionDatum(id={})>, case_type={}, requires_selection={}, action={})'.format(
-            self.datum.id, self.case_type, self.requires_selection, self.action
+        if isinstance(self.datum, RemoteRequestQuery):
+            datum = f"<RemoteRequestQuery(id={self.datum.url})>"
+        else:
+            datum = f"<SessionDatum(id={self.datum.id})>"
+        return 'FormDataumMeta(datum={}, case_type={}, requires_selection={}, action={})'.format(
+            datum, self.case_type, self.requires_selection, self.action
         )
 
 
@@ -98,6 +110,18 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_nodeset_xpath(case_type, filter_xpath='', additional_types=None):
+        return EntriesHelper._get_nodeset_xpath(
+            'casedb', 'casedb', case_type, filter_xpath, additional_types
+        )
+
+    @staticmethod
+    def get_registry_nodeset_xpath(case_type, filter_xpath='', additional_types=None):
+        return EntriesHelper._get_nodeset_xpath(
+            'results', 'results', case_type, filter_xpath, additional_types
+        )
+
+    @staticmethod
+    def _get_nodeset_xpath(instance_name, root_element, case_type, filter_xpath='', additional_types=None):
         if additional_types:
             case_type_filter = " or ".join([
                 "@case_type='{case_type}'".format(case_type=case_type)
@@ -105,10 +129,7 @@ class EntriesHelper(object):
             ])
         else:
             case_type_filter = "@case_type='{case_type}'".format(case_type=case_type)
-        return "instance('casedb')/casedb/case[{case_type_filter}][@status='open']{filter_xpath}".format(
-            case_type_filter=case_type_filter,
-            filter_xpath=filter_xpath,
-        )
+        return f"instance('{instance_name}')/{root_element}/case[{case_type_filter}][@status='open']{filter_xpath}"
 
     @staticmethod
     def get_parent_filter(relationship, parent_id):
@@ -190,6 +211,9 @@ class EntriesHelper(object):
                 EntriesHelper.add_usercase_id_assertion(e)
 
             EntriesHelper.add_custom_assertions(e, form)
+
+            if module_offers_registry_search(module):
+                EntriesHelper.add_registry_search_instances(e, form)
 
             if (
                 self.app.commtrack_enabled and
@@ -289,6 +313,12 @@ class EntriesHelper(object):
         ]
 
     @staticmethod
+    def add_registry_search_instances(entry, form):
+        for prop in form.get_module().search_config.properties:
+            if prop.itemset.instance_id:
+                entry.instances.append(Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri))
+
+    @staticmethod
     def add_custom_assertions(entry, form):
         for id, assertion in enumerate(form.custom_assertions):
             locale_id = id_strings.custom_assertion_locale(form.get_module(), form, id)
@@ -383,12 +413,31 @@ class EntriesHelper(object):
                         return True
             return False
 
-        datums = self.get_case_datums_basic_module(module, form)
-        for datum in datums:
+        case_datums = self.get_case_datums_basic_module(module, form)
+        all_datums = self.add_remote_query_datums(case_datums)
+        for datum in all_datums:
             e.datums.append(datum.datum)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             EntriesHelper.add_case_sharing_assertion(e)
+
+    def add_remote_query_datums(self, datums):
+        """Add in any `query` datums that are necessary.
+        This only applies to datums that are loaded from a data registry.
+        """
+        result = []
+        for datum in datums:
+            if datum.module_id and datum.case_type:
+                module = self.app.get_module_by_unique_id(datum.module_id)
+                if module_offers_registry_search(module):
+                    result.append(self.get_data_registry_search_datums(module))
+                    result.append(datum)
+                    result.extend(self.get_data_registry_case_datums(datum, module))
+                else:
+                    result.append(datum)
+            else:
+                result.append(datum)
+        return result
 
     def get_datum_meta_module(self, module, use_filter=False):
         datums = []
@@ -450,12 +499,21 @@ class EntriesHelper(object):
 
             filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
+            instance_name, root_element = "casedb", "casedb"
+            if module_offers_registry_search(detail_module):
+                instance_name, root_element = "results", "results"
+
+            nodeset = EntriesHelper._get_nodeset_xpath(
+                instance_name, root_element,
+                datum['case_type'],
+                filter_xpath=filter_xpath,
+                additional_types=datum['module'].search_config.additional_case_types
+            )
+
             datums.append(FormDatumMeta(
                 datum=SessionDatum(
                     id=datum['session_var'],
-                    nodeset=(EntriesHelper.get_nodeset_xpath(datum['case_type'], filter_xpath=filter_xpath,
-                             additional_types=datum['module'].search_config.additional_case_types)
-                             + parent_filter + fixture_select_filter),
+                    nodeset=nodeset + parent_filter + fixture_select_filter,
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(detail_module, 'case_short'),
                     detail_confirm=(
@@ -468,35 +526,60 @@ class EntriesHelper(object):
                 ),
                 case_type=datum['case_type'],
                 requires_selection=True,
-                action='update_case'
+                action='update_case',
+                module_id=detail_module.get_or_create_unique_id()
             ))
 
-            if module_offers_search(detail_module) and detail_module.search_config.data_registry:
-                datums.append(self.get_data_registry_query_datum(datum, detail_module))
         return datums
 
-    def get_data_registry_query_datum(self, datum, module):
+    def get_data_registry_search_datums(self, module):
+        """When a data registry is the source of the search results we skip the normal case search
+        workflow and perform the search directly as part of the entry instead of via an action in the
+        details screen. The case details is then populated with data from the results of the query.
+        """
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
+        factory = RemoteRequestFactory(module, [])
+        query = factory.build_remote_request_queries()[0]
+        return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
+
+    def get_data_registry_case_datums(self, datum, module):
         """When a data registry is the source of the search results we can't assume that the case
         the user selected is in the user's casedb so we have to get the data directly from HQ before
         entering the form. This data is then available in the 'registry' instance (``instance('registry')``)
         """
-        from corehq.apps.app_manager.suite_xml.sections.remote_requests import REGISTRY_INSTANCE
-        return FormDatumMeta(
-            datum=RemoteRequestQuery(
-                url=absolute_reverse('registry_case', args=[self.app.domain, self.app.get_id]),
-                storage_instance=REGISTRY_INSTANCE,
-                template='case',
-                data=[
-                    QueryData(key='case_type', ref=f"'{datum['case_type']}'"),
-                    QueryData(key='case_id', ref=session_var(datum['session_var'])),
-                    QueryData(key='registry', ref=f"'{module.search_config.data_registry}'")
-                ],
-                default_search='true',
-            ),
-            case_type=None,
-            requires_selection=False,
-            action=None
-        )
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
+
+        def _registry_query(instance_name, case_type_xpath, case_id_xpath):
+            return FormDatumMeta(
+                datum=RemoteRequestQuery(
+                    url=absolute_reverse('registry_case', args=[self.app.domain, self.app.get_id]),
+                    storage_instance=instance_name,
+                    template='case',
+                    data=[
+                        QueryData(key='case_type', ref=case_type_xpath),
+                        QueryData(key='case_id', ref=case_id_xpath),
+                        QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
+                    ],
+                    default_search='true',
+                ),
+                case_type=None,
+                requires_selection=False,
+                action=None
+            )
+
+        datums = [_registry_query(
+            instance_name=REGISTRY_INSTANCE,
+            case_type_xpath=f"'{datum.case_type}'",
+            case_id_xpath=session_var(datum.datum.id)
+        )]
+
+        for query in module.search_config.additional_registry_queries:
+            datums.append(_registry_query(
+                instance_name=query.instance_name,
+                case_type_xpath=query.case_type_xpath,
+                case_id_xpath=query.case_id_xpath
+            ))
+        return datums
 
     @staticmethod
     def get_auto_select_datums_and_assertions(action, auto_select, form):
@@ -900,7 +983,7 @@ class EntriesHelper(object):
                 if not this_datum_meta or this_datum_meta.datum.id != parent_datum_meta.datum.id:
                     if not parent_datum_meta.requires_selection:
                         # Add parent datums of opened subcases and automatically-selected cases
-                        datums.insert(index, parent_datum_meta._replace(from_parent=True))
+                        datums.insert(index, attr.evolve(parent_datum_meta, from_parent=True))
                     elif this_datum_meta and this_datum_meta.case_type == parent_datum_meta.case_type:
                         append_update(changed_ids_by_case_tag,
                                       rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))

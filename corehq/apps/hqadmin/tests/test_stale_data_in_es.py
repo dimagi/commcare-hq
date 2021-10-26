@@ -24,6 +24,7 @@ from corehq.form_processor.utils.xform import (
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import reset_es_index
 from corehq.util.es import elasticsearch
@@ -287,12 +288,12 @@ class TestStaleDataInESSQL(TestCase):
     @classmethod
     def setUpClass(cls):
         delete_all_cases()
-        cls.project = Domain.get_or_create_with_name(
-            cls.project_name, is_active=True, use_sql_backend=True)
+        cls.project = Domain.get_or_create_with_name(cls.project_name, is_active=True)
         cls.project.save()
         cls.elasticsearch = get_es_new()
         reset_es_index(XFORM_INDEX_INFO)
         reset_es_index(CASE_INDEX_INFO)
+        reset_es_index(CASE_SEARCH_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):

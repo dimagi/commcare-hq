@@ -12,7 +12,7 @@
   <div id="ko-linked-projects" class="ko-template">
     <!-- ko if: showGetStarted -->
       {% if has_release_management_privilege %}
-        {% include 'linked_domain/get_started.html' %}
+        {% include 'linked_domain/partials/get_started.html' %}
       {% else %}
         <div class="alert alert-info">
           {% trans "This project has no links to other projects." %}
@@ -40,13 +40,13 @@
       <div id="domain_links">
         <div class="tab-content">
           <div class="tab-pane fade" id="tabs-pull-content" data-bind="class: pullTabActiveStatus">
-            {% include 'linked_domain/tabs/pull_release_content_tab.html' %}
+            {% include 'linked_domain/partials/pull_content.html' %}
           </div>
           <div class="tab-pane fade" id="tabs-manage-downstream" data-bind="class: manageTabActiveStatus">
-            {% include 'linked_domain/tabs/manage_downstream_domains_tab.html' %}
+            {% include 'linked_domain/partials/manage_downstream_domains.html' %}
           </div>
           <div class="tab-pane fade" id="tabs-push-content">
-            {% include 'linked_domain/tabs/push_release_content_tab.html' %}
+            {% include 'linked_domain/partials/push_content.html' %}
           </div>
           {% if view_data.linkable_ucr %}
             <div class="tab-pane fade" id="tabs-remote-report">
@@ -69,13 +69,17 @@
           <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
           <h4 class="modal-title">{% trans 'Add Downstream Project Space' %}</h4>
           <!-- ko if: parent.showGetStarted -->
-            <p>To make this project space an upstream project space, you need to add a downstream project space.</p>
+            <p>{% trans 'To make this project space an upstream project space, you need to add a downstream project space.' %}</p>
           <!-- /ko -->
         </div>
         <div class="modal-body">
           <div class="ko-model">
             <label >{% trans 'Project Space:' %}</label>
-            <select class="form-control" data-bind="select2: availableDomains, value: value"></select>
+            {% if is_superuser %}
+              <select class="form-control" data-bind="autocompleteSelect2: availableDomains, value: domainToAdd"></select>
+            {% else %}
+              <select class="form-control" data-bind="select2: availableDomains, value: domainToAdd"></select>
+            {% endif %}
           </div>
         </div>
         <div class="modal-footer">

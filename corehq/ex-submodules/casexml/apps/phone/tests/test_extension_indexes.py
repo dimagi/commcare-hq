@@ -101,6 +101,7 @@ class TestSequenceMeta(type):
         return type.__new__(mcs, name, bases, dict)
 
 
+@sharded
 class IndexTreeTest(BaseSyncTest, metaclass=TestSequenceMeta):
     """Fetch all testcases from data/case_relationship_tests.json and run them
 
@@ -180,14 +181,5 @@ class IndexTreeTest(BaseSyncTest, metaclass=TestSequenceMeta):
 
 
 @sharded
-class IndexTreeTestSQL(IndexTreeTest):
-    pass
-
-
 class LiveQueryIndexTreeTest(IndexTreeTest):
     restore_options = {'case_sync': LIVEQUERY}
-
-
-@sharded
-class LiveQueryIndexTreeTestSQL(LiveQueryIndexTreeTest):
-    pass

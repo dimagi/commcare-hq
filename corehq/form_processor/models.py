@@ -344,6 +344,16 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         (SUBMISSION_ERROR_LOG, 'submission_error'),
         (DELETED, 'deleted'),
     )
+    DOC_TYPE_TO_STATE = {
+        "XFormInstance": NORMAL,
+        "XFormError": ERROR,
+        "XFormDuplicate": DUPLICATE,
+        "XFormDeprecated": DEPRECATED,
+        "XFormArchived": ARCHIVED,
+        "SubmissionErrorLog": SUBMISSION_ERROR_LOG
+    }
+    ALL_DOC_TYPES = {'XFormInstance-Deleted'} | DOC_TYPE_TO_STATE.keys()
+    STATE_TO_DOC_TYPE = {v: k for k, v in DOC_TYPE_TO_STATE.items()}
 
     form_id = models.CharField(max_length=255, unique=True, db_index=True, default=None)
 
@@ -466,10 +476,9 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     @property
     def doc_type(self):
         """Comparability with couch forms"""
-        from corehq.form_processor.backends.sql.dbaccessors import state_to_doc_type
         if self.is_deleted:
             return 'XFormInstance' + DELETED_SUFFIX
-        return state_to_doc_type.get(self.state, 'XFormInstance')
+        return self.STATE_TO_DOC_TYPE.get(self.state, 'XFormInstance')
 
     @property
     @memoized
@@ -692,29 +701,9 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
             return LooseVersion(version_text)
 
 
-class SupplyPointCaseMixin(object):
-    CASE_TYPE = 'supply-point'
-
-    @property
-    @memoized
-    def location(self):
-        from corehq.apps.locations.models import SQLLocation
-        if self.location_id is None:
-            return None
-        try:
-            return self.sql_location
-        except SQLLocation.DoesNotExist:
-            return None
-
-    @property
-    def sql_location(self):
-        from corehq.apps.locations.models import SQLLocation
-        return SQLLocation.objects.get(location_id=self.location_id)
-
-
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
-                      SupplyPointCaseMixin, MessagingCaseContactMixin):
+                      MessagingCaseContactMixin):
     partition_attr = 'case_id'
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -768,6 +757,27 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     @memoized
     def xform_ids(self):
         return [t.form_id for t in self.transactions if not t.revoked and t.is_form_transaction]
+
+    @property
+    @memoized
+    def location(self):
+        """Get supply point location or `None` if it does not exist."""
+        from corehq.apps.locations.models import SQLLocation
+        if self.location_id is None:
+            return None
+        try:
+            return self.sql_location
+        except SQLLocation.DoesNotExist:
+            return None
+
+    @property
+    def sql_location(self):
+        """Get supply point location
+
+        Raises `SQLLocation.DoesNotExist` if not found.
+        """
+        from corehq.apps.locations.models import SQLLocation
+        return SQLLocation.objects.get(location_id=self.location_id)
 
     @property
     def user_id(self):
@@ -1212,11 +1222,11 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
 
     def __eq__(self, other):
         return isinstance(other, CommCareCaseIndexSQL) and (
-            self.case_id == other.case_id and
-            self.identifier == other.identifier,
-            self.referenced_id == other.referenced_id,
-            self.referenced_type == other.referenced_type,
-            self.relationship_id == other.relationship_id,
+            self.case_id == other.case_id
+            and self.identifier == other.identifier
+            and self.referenced_id == other.referenced_id
+            and self.referenced_type == other.referenced_type
+            and self.relationship_id == other.relationship_id
         )
 
     def __hash__(self):
@@ -1557,7 +1567,7 @@ class FormReprocessRebuild(CaseTransactionDetail):
 
 class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedChanges):
     """
-    Represents the current state of a ledger. Supercedes StockState
+    Represents the current state of a ledger.
     """
     partition_attr = 'case_id'
 

@@ -7,8 +7,11 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
     JsonResponse,
     HttpResponseNotFound,
+    HttpResponseForbidden,
 )
 from django.utils.translation import ugettext as _, ngettext
 from django.views.decorators.csrf import csrf_exempt
@@ -46,7 +49,7 @@ from corehq.apps.domain.decorators import (
     mobile_auth_or_formplayer,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import location_safe, location_safe_bypass
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
 from corehq.apps.registry.helper import DataRegistryHelper
@@ -65,6 +68,7 @@ from .utils import (
     handle_401_response,
     is_permitted_to_restore,
 )
+from ..case_search.const import COMMCARE_PROJECT
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
@@ -89,14 +93,16 @@ def restore(request, domain, app_id=None):
     return response
 
 
-@location_safe
+@location_safe_bypass
+@csrf_exempt
 @mobile_auth
 @check_domain_migration
 def search(request, domain):
     return app_aware_search(request, domain, None)
 
 
-@location_safe
+@location_safe_bypass
+@csrf_exempt
 @mobile_auth
 @check_domain_migration
 def app_aware_search(request, domain, app_id):
@@ -107,16 +113,17 @@ def app_aware_search(request, domain, app_id):
 
     Returns results as a fixture with the same structure as a casedb instance.
     """
-    criteria = {k: v[0] if len(v) == 1 else v for k, v in request.GET.lists()}
+    request_dict = request.GET if request.method == 'GET' else request.POST
+    criteria = {k: v[0] if len(v) == 1 else v for k, v in request_dict.lists()}
     try:
-        cases = get_case_search_results(domain, criteria, app_id)
+        cases = get_case_search_results(domain, criteria, app_id, request.couch_user)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
-@location_safe
+@location_safe_bypass
 @csrf_exempt
 @require_POST
 @mobile_auth
@@ -400,18 +407,18 @@ def recovery_measures(request, domain, build_id):
     return JsonResponse(response)
 
 
-@location_safe
+@location_safe_bypass
 @mobile_auth
 @require_GET
 def registry_case(request, domain, app_id):
     case_id = request.GET.get("case_id")
     case_type = request.GET.get("case_type")
-    registry = request.GET.get("registry")
+    registry = request.GET.get("commcare_registry")
 
     missing = [
         name
         for name, value in zip(
-            ["case_id", "case_type", "registry"],
+            ["case_id", "case_type", "commcare_registry"],
             [case_id, case_type, registry]
         )
         if not value
@@ -423,12 +430,17 @@ def registry_case(request, domain, app_id):
             len(missing)
         ).format(params="', '".join(missing)))
 
+    helper = DataRegistryHelper(domain, registry_slug=registry)
+
     app = get_app_cached(domain, app_id)
     try:
-        case = DataRegistryHelper(domain, registry).get_case(case_id, case_type, request.user, app)
+        case = helper.get_case(case_id, case_type, request.couch_user, app)
     except RegistryNotFound:
         return HttpResponseNotFound(f"Registry '{registry}' not found")
     except (CaseNotFound, RegistryAccessException):
         return HttpResponseNotFound(f"Case '{case_id}' not found")
 
-    return HttpResponse(CaseDBFixture(case).fixture, content_type="text/xml; charset=utf-8")
+    cases = helper.get_case_hierarchy(request.couch_user, case)
+    for case in cases:
+        case.case_json[COMMCARE_PROJECT] = case.domain
+    return HttpResponse(CaseDBFixture(cases).fixture, content_type="text/xml; charset=utf-8")

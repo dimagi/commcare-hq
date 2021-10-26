@@ -1,7 +1,7 @@
 from casexml.apps.case.tests.util import create_case
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import sharded, run_with_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.apps.hqcase.utils import update_case
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     save_alert_schedule_instance,
@@ -35,7 +35,6 @@ from django.test import TestCase
 from mock import patch
 
 
-@run_with_sql_backend
 class BaseScheduleTest(TestCase):
 
     @classmethod
@@ -208,7 +207,6 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
             self.assertEqual(send_patch.call_count, 0)
 
 
-@run_with_sql_backend
 class StopDateCasePropertyTest(TestCase):
 
     @classmethod

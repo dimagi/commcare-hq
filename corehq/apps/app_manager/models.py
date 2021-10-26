@@ -98,6 +98,8 @@ from corehq.apps.app_manager.exceptions import (
     XFormException,
     XFormValidationError,
     XFormValidationFailed,
+    ModuleIdMissingException,
+    AppValidationError,
 )
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.apps.app_manager.helpers.validators import (
@@ -119,7 +121,7 @@ from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
 )
-from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
@@ -787,11 +789,22 @@ class FormDatum(DocumentSchema):
 
 class FormLink(DocumentSchema):
     """
-    xpath:      xpath condition that must be true in order to open next form
-    form_id:    id of next form to open
+    FormLinks are advanced end of form navigation configuration, used when a module's
+    post_form_workflow is WORKFLOW_FORM.
+
+    They allow the user to specify one or more XPath expressions, each with either
+    a module id or form id. The user will be sent to the first module/form whose
+    expression evaluates to true. If none of the conditions is met, the workflow specified
+    in the module's post_form_workflow_fallback is executed.
+
+    xpath: XPath condition that must be true in order to execute link
+    form_id: ID of next form to open, mutually exclusive with module_unique_id
+    module_unique_id: ID of next module to open, mutually exclusive with form_id
+    datums: Any user-provided datums, necessary when HQ can't figure them out automatically
     """
     xpath = StringProperty()
     form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
+    module_unique_id = StringProperty()
     datums = SchemaListProperty(FormDatum)
 
 
@@ -1153,7 +1166,7 @@ class FormBase(DocumentSchema):
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
-        xform.add_missing_instances(app)
+        xform.add_missing_instances(self, app)
 
     @memoized
     def render_xform(self, build_profile_id=None):
@@ -2091,6 +2104,7 @@ class CaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
     hint = DictProperty()
     hidden = BooleanProperty(default=False)
+    allow_blank_value = BooleanProperty(default=False)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty()
@@ -2116,6 +2130,12 @@ class CaseSearchAgainLabel(BaseCaseSearchLabel):
     label = DictProperty(default={'en': 'Search Again'})
 
 
+class AdditionalRegistryQuery(DocumentSchema):
+    instance_name = StringProperty()
+    case_type_xpath = StringProperty()
+    case_id_xpath = StringProperty()
+
+
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
@@ -2135,6 +2155,7 @@ class CaseSearch(DocumentSchema):
     blacklisted_owner_ids_expression = StringProperty()
     additional_case_types = ListProperty(str)
     data_registry = StringProperty()
+    additional_registry_queries = SchemaListProperty(AdditionalRegistryQuery)
 
     @property
     def case_session_var(self):
@@ -2462,7 +2483,8 @@ class ModuleDetailsMixin(object):
             ('ref_short', self.ref_details.short, False),
             ('ref_long', self.ref_details.long, False),
         ]
-        if module_offers_search(self) and not self.case_details.short.custom_xml:
+        custom_detail = self.case_details.short.custom_xml
+        if module_offers_search(self) and not custom_detail:
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
@@ -4513,6 +4535,10 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
+        errors = copy.validate_app()
+        if errors:
+            raise AppValidationError(errors)
+
         if copy.create_build_files_on_build:
             copy.create_build_files()
 
@@ -5056,9 +5082,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     @memoized
     def enable_update_prompts(self):
         return (
-            # custom for ICDS until ICDS users are > 2.38
-            (self.supports_update_prompts or toggles.ICDS.enabled(self.domain)) and
-            toggles.PHONE_HEARTBEAT.enabled(self.domain)
+            self.supports_update_prompts and toggles.PHONE_HEARTBEAT.enabled(self.domain)
         )
 
     @memoized
@@ -5489,7 +5513,13 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         return forms[0].get_questions(langs or self.langs, include_triggers, include_groups, include_translations)
 
     def validate_app(self):
-        return ApplicationValidator(self).validate_app()
+        validator = ApplicationValidator(self)
+        try:
+            return validator.validate_app()
+        except ModuleIdMissingException:
+            # For apps (mainly Exchange apps) that lost unique_id attributes on Module
+            self.ensure_module_unique_ids(should_save=True)
+            return validator.validate_app()
 
     def get_profile_setting(self, s_type, s_id):
         setting = self.profile.get(s_type, {}).get(s_id)
@@ -5782,6 +5812,9 @@ def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
             messages.warning(request, _("Copying the application succeeded, but the application will have errors "
                                         "because your application contains a Mobile Report Module that references "
                                         "a UCR configured in this project space. Multimedia may be absent."))
+    except ResourceNotFound:
+        messages.warning(request, _("Copying the application succeeded, but the application is missing "
+                                    "multimedia file(s)."))
 
     if not app.is_remote_app():
         enable_usercase_if_necessary(app)
@@ -5896,6 +5929,8 @@ class ExchangeApplication(models.Model):
     app_id = models.CharField(max_length=255, null=False)
     help_link = models.CharField(max_length=255, null=True)
     changelog_link = models.CharField(max_length=255, null=True)
+    required_privileges = models.TextField(null=True, blank=True, help_text=_("Space-separated list of privilege"
+                                                                 " strings from corehq.privileges"))
 
     class Meta(object):
         unique_together = ('domain', 'app_id')

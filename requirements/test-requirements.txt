@@ -16,7 +16,7 @@ attrs==18.2.0
     #   jsonschema
 babel==2.8.0
     # via django-phonenumber-field
-beautifulsoup4==4.9.3
+beautifulsoup4==4.10.0
     # via -r test-requirements.in
 billiard==3.5.0.4
     # via
@@ -73,10 +73,8 @@ decorator==4.0.11
     #   -r base-requirements.in
     #   datadog
     #   jsonpath-ng
-defusedxml==0.5.0
-    # via
-    #   -r base-requirements.in
-    #   python3-saml
+defusedxml==0.7.1
+    # via -r base-requirements.in
 deprecated==1.2.10
     # via pygithub
 diff-match-patch==20200713
@@ -180,7 +178,7 @@ elasticsearch2==2.5.1
     # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
-email_validator==1.1.2
+email_validator==1.1.3
     # via -r base-requirements.in
 et-xmlfile==1.0.1
     # via openpyxl
@@ -202,10 +200,7 @@ gevent==1.4.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
-    #   gipc
 ghdiff==0.4
-    # via -r base-requirements.in
-gipc==1.1.0
     # via -r base-requirements.in
 greenlet==0.4.17
     # via
@@ -214,7 +209,7 @@ greenlet==0.4.17
     #   gevent
 gunicorn==20.0.4
     # via -r base-requirements.in
-hiredis==1.1.0
+hiredis==2.0.0
     # via -r base-requirements.in
 httpagentparser==1.9.0
     # via -r base-requirements.in
@@ -246,7 +241,7 @@ jsonfield==2.1.1
     # via
     #   -r base-requirements.in
     #   django-prbac
-jsonobject==0.9.9
+jsonobject==0.9.10
     # via
     #   -r base-requirements.in
     #   jsonobject-couchdbkit
@@ -270,15 +265,12 @@ lxml==4.6.3
     # via
     #   -r base-requirements.in
     #   eulxml
+    #   python3-saml
     #   xmlsec
 mako==1.1.3
     # via alembic
 mando==0.6.4
     # via radon
-markdown==2.2.1
-    # via
-    #   -r base-requirements.in
-    #   pycco
 markupsafe==1.1.1
     # via
     #   jinja2
@@ -306,7 +298,7 @@ pep517==0.10.0
     # via pip-tools
 phonenumberslite==8.12.10
     # via -r base-requirements.in
-pillow==8.2.0
+pillow==8.3.2
     # via
     #   -r base-requirements.in
     #   django-simple-captcha
@@ -331,18 +323,14 @@ psycopg2==2.8.6
     #   sqlalchemy-postgres-copy
 py-kissmetrics==1.1.0
     # via -r base-requirements.in
-pycco==0.5.1
-    # via -r base-requirements.in
 pycparser==2.20
     # via cffi
-pycryptodome==3.9.9
+pycryptodome==3.10.1
     # via -r base-requirements.in
 pygithub==1.54.1
     # via -r base-requirements.in
 pygments==2.8.1
-    # via
-    #   -r base-requirements.in
-    #   pycco
+    # via -r base-requirements.in
 pygooglechart==0.4.0
     # via -r base-requirements.in
 pyjwt==1.7.1
@@ -357,8 +345,6 @@ pyrsistent==0.17.3
     # via jsonschema
 pysocks==1.7.1
     # via twilio
-pystache==0.5.4
-    # via pycco
 python-dateutil==2.8.1
     # via
     #   -r base-requirements.in
@@ -375,7 +361,7 @@ python-magic==0.4.22
     # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
-python3-saml==1.9.0
+python3-saml==1.12.0
     # via -r sso-requirements.in
 pytz==2020.1
     # via
@@ -434,9 +420,9 @@ schema==0.7.2
     # via -r base-requirements.in
 sentry-sdk==0.19.5
     # via -r base-requirements.in
-sh==1.14.1
+sh==1.14.2
     # via -r base-requirements.in
-simpleeval==0.9.10
+git+git://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
 simplejson==3.17.2
     # via
@@ -474,8 +460,6 @@ six==1.15.0
     #   sqlalchemy-postgres-copy
     #   tenacity
     #   twilio
-smartypants==2.0.1
-    # via pycco
 socketpool==0.5.3
     # via -r base-requirements.in
 sortedcontainers==2.3.0
@@ -496,7 +480,7 @@ sqlparse==0.3.1
     # via django
 stripe==2.54.0
     # via -r base-requirements.in
-suds-jurko==0.6
+suds-py3==1.4.4.1
     # via -r base-requirements.in
 tenacity==6.2.0
     # via ddtrace

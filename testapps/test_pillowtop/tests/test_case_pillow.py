@@ -10,10 +10,7 @@ from corehq.apps.es import CaseES, CaseSearchES
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    run_with_sql_backend,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -23,7 +20,6 @@ from testapps.test_pillowtop.utils import process_pillow_changes
 
 
 @es_test
-@run_with_sql_backend
 class CasePillowTest(TestCase):
     domain = 'case-pillowtest-domain'
 

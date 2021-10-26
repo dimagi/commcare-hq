@@ -188,7 +188,11 @@
     <div data-bind="template: {name: 'remove-filter'}"></div>
     <label class="control-label col-xs-2">{% trans "Custom filter ID" %}</label>
     <div class="controls col-xs-4">
-      <input type="text" data-bind="value: name" required class="textinput form-control" placeholder="{% trans 'custom filter id' %}" />
+      <select class="select form-control" data-bind="value: name">
+        {% for custom_filter in form.custom_filters %}
+          <option value="{{ custom_filter }}">{{ custom_filter }}</option>
+        {% endfor %}
+      </select>
     </div>
     <label class="col-xs-1 control-label">
       <span class="label label-primary">Requires System Admin</span>

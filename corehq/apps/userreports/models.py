@@ -143,14 +143,8 @@ class SQLPartition(DocumentSchema):
     constraint = StringProperty()
 
 
-class CitusConfig(DocumentSchema):
-    distribution_type = StringProperty(choices=['reference', 'hash'])
-    distribution_column = StringProperty()
-
-
 class SQLSettings(DocumentSchema):
     partition_config = SchemaListProperty(SQLPartition)  # no longer used
-    citus_config = SchemaProperty(CitusConfig)
     primary_key = ListProperty()
 
 
@@ -635,7 +629,7 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
 
     @cached_property
     def registry_helper(self):
-        return DataRegistryHelper(self.domain, self.registry_slug)
+        return DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
 
     @property
     def data_domains(self):
@@ -681,9 +675,6 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
             }
         }, self.get_factory_context()))
         return default_indicators
-
-    def get_report_count(self):
-        raise NotImplementedError("TODO")
 
     @classmethod
     def by_domain(cls, domain):
@@ -884,7 +875,7 @@ class RegistryReportConfiguration(ReportConfiguration):
 
     @cached_property
     def registry_helper(self):
-        return DataRegistryHelper(self.domain, self.registry_slug)
+        return DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
 
     @property
     @memoized

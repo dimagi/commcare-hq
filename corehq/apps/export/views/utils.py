@@ -256,8 +256,9 @@ class ODataFeedMixin(object):
 class GenerateSchemaFromAllBuildsView(LoginAndDomainMixin, View):
     urlname = 'build_full_schema'
 
-    def export_cls(self, type_):
-        return CaseExportDataSchema if type_ == CASE_EXPORT else FormExportDataSchema
+    @staticmethod
+    def export_cls(export_type):
+        return CaseExportDataSchema if export_type == CASE_EXPORT else FormExportDataSchema
 
     def get(self, request, *args, **kwargs):
         download_id = request.GET.get('download_id')
@@ -279,11 +280,11 @@ class GenerateSchemaFromAllBuildsView(LoginAndDomainMixin, View):
         })
 
     def post(self, request, *args, **kwargs):
-        type_ = request.POST.get('type')
-        assert type_ in [CASE_EXPORT, FORM_EXPORT], 'Unrecogized export type {}'.format(type_)
+        export_type = request.POST.get('type')
+        assert export_type in [CASE_EXPORT, FORM_EXPORT], 'Unrecogized export type {}'.format(export_type)
         download = DownloadBase()
         download.set_task(generate_schema_for_all_builds.delay(
-            self.export_cls(type_),
+            export_type,
             request.domain,
             request.POST.get('app_id'),
             request.POST.get('identifier'),

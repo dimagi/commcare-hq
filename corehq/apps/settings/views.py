@@ -16,7 +16,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 import qrcode
 from memoized import memoized
 from two_factor.models import PhoneDevice
-from two_factor.utils import default_device
+from two_factor.utils import default_device, backup_phones
 from two_factor.views import (
     BackupTokensView,
     DisableView,
@@ -30,6 +30,7 @@ from two_factor.views import (
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
+from corehq.apps.hqwebapp.views import not_found
 from dimagi.utils.web import json_response
 
 import langcodes
@@ -187,12 +188,14 @@ class MyAccountSettingsView(BaseMyAccountView):
             user.save()
             if is_new_phone_number:
                 log_user_change(
-                    domain=None,
+                    by_domain=None,
+                    for_domain=None,
                     couch_user=user,
                     changed_by_user=user,
                     changed_via=USER_CHANGE_VIA_WEB,
-                    message=UserChangeMessage.phone_number_added(self.phone_number),
-                    domain_required_for_log=False,
+                    change_messages=UserChangeMessage.phone_numbers_added([self.phone_number]),
+                    by_domain_required_for_log=False,
+                    for_domain_required_for_log=False,
                 )
             messages.success(self.request, _("Phone number added."))
         else:
@@ -202,6 +205,16 @@ class MyAccountSettingsView(BaseMyAccountView):
 
     def process_delete_phone_number(self):
         self.request.couch_user.delete_phone_number(self.phone_number)
+        log_user_change(
+            by_domain=None,
+            for_domain=None,
+            couch_user=self.request.couch_user,
+            changed_by_user=self.request.couch_user,
+            changed_via=USER_CHANGE_VIA_WEB,
+            change_messages=UserChangeMessage.phone_numbers_removed([self.phone_number]),
+            by_domain_required_for_log=False,
+            for_domain_required_for_log=False,
+        )
         messages.success(self.request, _("Phone number deleted."))
         return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
 
@@ -272,15 +285,15 @@ class MyProjectsList(BaseMyAccountView):
     def post(self, request, *args, **kwargs):
         if self.request.couch_user.is_domain_admin(self.domain_to_remove):
             messages.error(request, _("Unable remove membership because you are the admin of %s")
-                                    % self.domain_to_remove)
+                % self.domain_to_remove)
         else:
             try:
                 self.request.couch_user.delete_domain_membership(self.domain_to_remove, create_record=True)
                 self.request.couch_user.save()
-                log_user_change(None, couch_user=request.couch_user,
+                log_user_change(by_domain=None, for_domain=self.domain_to_remove, couch_user=request.couch_user,
                                 changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                                message=UserChangeMessage.domain_removal(self.domain_to_remove),
-                                domain_required_for_log=False,
+                                change_messages=UserChangeMessage.domain_removal(self.domain_to_remove),
+                                by_domain_required_for_log=False,
                                 )
                 messages.success(request, _("You are no longer part of the project %s") % self.domain_to_remove)
             except Exception:
@@ -329,6 +342,13 @@ class ChangeMyPasswordView(BaseMyAccountView):
         return self.get(request, *args, **kwargs)
 
 
+def _user_can_use_phone(user):
+    if not settings.ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE:
+        return False
+
+    return user.belongs_to_messaging_domain()
+
+
 class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     urlname = 'two_factor_settings'
     template_name = 'two_factor/profile/profile.html'
@@ -339,18 +359,25 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
         # this is only here to add the login_required decorator
         return super(TwoFactorProfileView, self).dispatch(request, *args, **kwargs)
 
-    @property
-    def page_context(self):
-        if not is_request_using_sso(self.request):
-            return {}
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-        idp = IdentityProvider.get_active_identity_provider_by_username(
-            self.request.user.username
-        )
-        return {
-            'is_using_sso': True,
-            'idp_name': idp.name,
-        }
+        if is_request_using_sso(self.request):
+            idp = IdentityProvider.get_active_identity_provider_by_username(
+                self.request.user.username
+            )
+            context.update({
+                'is_using_sso': True,
+                'idp_name': idp.name,
+            })
+        elif context.get('default_device'):
+            # Default device means the user has 2FA already enabled
+            has_existing_backup_phones = bool(context.get('backup_phones'))
+            context.update({
+                'allow_phone_2fa': has_existing_backup_phones or _user_can_use_phone(self.request.couch_user),
+            })
+
+        return context
 
 
 class TwoFactorSetupView(BaseMyAccountView, SetupView):
@@ -371,6 +398,13 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(TwoFactorSetupView, self).dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self, step=None):
+        kwargs = super().get_form_kwargs(step)
+        if step == 'method':
+            kwargs.setdefault('allow_phone_2fa', _user_can_use_phone(self.request.couch_user))
+
+        return kwargs
 
 
 class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
@@ -443,7 +477,14 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        # this is only here to add the login_required decorator
+        has_backup_phones = bool(backup_phones(self.request.user))
+        if not (has_backup_phones or _user_can_use_phone(request.couch_user)):
+            # NOTE: this behavior could be seen as un-intuitive. If a domain is not authorized to use phone/sms,
+            # we are still allowing full functionality if they have an existing backup phone. The primary reason
+            # is so that a user can delete a backup number if needed. The ability to add in a new number is still
+            # enabled just to prevent confusion -- it is expected to be an edge case.
+            raise Http404
+
         return super(TwoFactorPhoneSetupView, self).dispatch(request, *args, **kwargs)
 
     def done(self, form_list, **kwargs):
@@ -516,6 +557,21 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
     urlname = 'enable_mobile_privs'
     page_title = ugettext_lazy("Enable Privileges on Mobile")
     template_name = 'settings/enable_superuser.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        # raises a 404 if a user tries to access this page without the right authorizations
+        if self.is_user_authorized(request.couch_user):
+            return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return not_found(request)
+
+    @staticmethod
+    def is_user_authorized(couch_user):
+        if (
+            couch_user and couch_user.is_dimagi
+            or toggles.MOBILE_PRIVILEGES_FLAG.enabled(couch_user.username)
+        ):
+            return True
+        return False
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):

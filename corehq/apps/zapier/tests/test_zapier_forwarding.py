@@ -9,7 +9,6 @@ from casexml.apps.case.util import post_case_blocks
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.motech.repeaters.dbaccessors import (
     delete_all_repeat_records,
     delete_all_repeaters,
@@ -39,27 +38,21 @@ class TestZapierCaseForwarding(TestCase):
         delete_all_repeat_records()
         ZapierSubscription.objects.all().delete()
 
-    @run_with_all_backends
     def test_create_case_forwarding(self):
         self._run_test(EventTypes.NEW_CASE, 1, 1)
 
-    @run_with_all_backends
     def test_update_case_forwarding(self):
         self._run_test(EventTypes.UPDATE_CASE, 0, 1)
 
-    @run_with_all_backends
     def test_change_case_forwarding(self):
         self._run_test(EventTypes.CHANGED_CASE, 1, 2)
 
-    @run_with_all_backends
     def test_case_forwarding_wrong_type(self):
         self._run_test(EventTypes.NEW_CASE, 0, 0, 'plant')
 
-    @run_with_all_backends
     def test_update_case_forwarding_wrong_type(self):
         self._run_test(EventTypes.UPDATE_CASE, 0, 0, 'plant')
 
-    @run_with_all_backends
     def test_change_case_forwarding_wrong_type(self):
         self._run_test(EventTypes.CHANGED_CASE, 0, 0, 'plant')
 

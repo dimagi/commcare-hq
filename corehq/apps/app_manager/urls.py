@@ -66,7 +66,7 @@ from corehq.apps.app_manager.views import (
     overwrite_module_case_list,
     paginate_releases,
     patch_xform,
-    pull_master_app,
+    pull_upstream_app,
     rearrange,
     release_build,
     revert_to_copy,
@@ -169,7 +169,7 @@ urlpatterns = [
     url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         new_form, name='new_form'),
     url(r'^drop_usercase/(?P<app_id>[\w-]+)/$', drop_usercase, name='drop_usercase'),
-    url(r'^pull_master/(?P<app_id>[\w-]+)/$', pull_master_app, name='pull_master_app'),
+    url(r'^pull_upstream_app/(?P<app_id>[\w-]+)/$', pull_upstream_app, name='pull_upstream_app'),
     url(r'^pull_missing_multimedia/(?P<app_id>[\w-]+)/$', pull_missing_multimedia,
         name='pull_missing_multimedia'),
 

@@ -877,34 +877,14 @@ class DataSourceForm(forms.Form):
             enable_raw=SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER.enabled(self.domain)
 
         )
-        self.app_source_helper.source_type_field.label = _('Forms or Cases')
-        self.app_source_helper.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
         self.app_source_helper.bootstrap(self.domain)
-        report_source_fields = self.app_source_helper.get_fields()
-        report_source_help_texts = {
-            "source_type": _(
-                "<strong>Form</strong>: Display data from form submissions.<br/>"
-                "<strong>Case</strong>: Display data from your cases. You must be using case management for this "
-                "option."),
-            "application": _("Which application should the data come from?"),
-            "source": _("Choose the case type or form from which to retrieve data for this report."),
-        }
-        self.fields.update(report_source_fields)
+        self.fields.update(self.app_source_helper.get_fields())
 
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
         self.helper.form_id = "report-builder-form"
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-
-        report_source_crispy_fields = []
-        for k in report_source_fields.keys():
-            if k in report_source_help_texts:
-                report_source_crispy_fields.append(hqcrispy.FieldWithHelpBubble(
-                    k, help_bubble_text=report_source_help_texts[k]
-                ))
-            else:
-                report_source_crispy_fields.append(k)
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -918,7 +898,7 @@ class DataSourceForm(forms.Form):
                 )
             ),
             crispy.Fieldset(
-                _('Data'), *report_source_crispy_fields
+                _('Data'), *self.app_source_helper.get_crispy_fields()
             ),
             hqcrispy.FormActions(
                 StrictButton(

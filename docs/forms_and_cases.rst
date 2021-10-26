@@ -21,15 +21,9 @@ In the codebase there are now two models for form and case data.
 +------------------------+----------------------+
 | CommCareCaseIndex      | CommCareCaseIndexSQL |
 +------------------------+----------------------+
-| XFormInstance          | XFormInstanceSQL     |
+|                        | XFormInstanceSQL     |
 +------------------------+----------------------+
-| XFormOperation         | XFormOperationSQL    |
-+------------------------+----------------------+
-| StockReport            |                      |
-+------------------------+----------------------+
-| StockTransaction       | LedgerTransaction    |
-+------------------------+----------------------+
-| StockState             | LedgerValue          |
+|                        | XFormOperationSQL    |
 +------------------------+----------------------+
 
 Some of these models define a common interface that allows you to perform the same operations
@@ -129,24 +123,10 @@ For more details see:
 
 Unit Tests
 ----------
-In most cases tests that use form / cases/ ledgers should be run on both backends as follows::
-
-    @run_with_all_backends
-    def test_my_function(self):
-        ...
-
-If you really need to run a test on only one of the backends you can do the following::
-
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-    def test_my_test(self):
-        ...
-
 To create a form in unit tests use the following pattern::
 
-    from corehq.form_processor.tests.utils import run_with_all_backends
     from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
 
-    @run_with_all_backends
     def test_my_form_function(self):
         # This TestFormMetadata specifies properties about the form to be created
         metadata = TestFormMetadata(
@@ -160,13 +140,11 @@ To create a form in unit tests use the following pattern::
 
 Creating cases can be done with the :code:`CaseFactory`::
 
-    from corehq.form_processor.tests.utils import run_with_all_backends
     from casexml.apps.case.mock import CaseFactory
 
-    @run_with_all_backends
     def test_my_case_function(self):
         factory = CaseFactory(domain='foo')
-        factory.create_case(
+        case = factory.create_case(
             case_type='my_case_type',
             owner_id='owner1',
             case_name='bar',
@@ -183,15 +161,11 @@ Cleaning up in tests can be done using the :code:`FormProcessorTestUtils1` class
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
         # OR
-        FormProcessorTestUtils.delete_all_cases(
-            domain=domain
-        )
+        FormProcessorTestUtils.delete_all_cases(domain=domain)
 
         FormProcessorTestUtils.delete_all_xforms()
         # OR
-        FormProcessorTestUtils.delete_all_xforms(
-            domain=domain
-        )
+        FormProcessorTestUtils.delete_all_xforms(domain=domain)
 
 
 

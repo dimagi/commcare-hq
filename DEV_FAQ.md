@@ -90,5 +90,9 @@ Formplayer expects HQ to be running on port 8000. If you run HQ on a different p
 
 If you run formplayer as a separate service, make sure you're not acciddentally also running it in Docker - HQ's Docker script's `up` command will start it.
 
+If you run into "Unable to connect" formplayer errors, try the following:
+- Running formplayer as a standalone service instead of in Docker
+- Visiting localhost:8000 instead of 0.0.0.0:8000 when using your locally run HQ app
+
 See the [Formplayer README](https://github.com/dimagi/formplayer/blob/master/README.md)
 and [Formplayer setup for HQ](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#formplayer).

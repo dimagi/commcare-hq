@@ -3,7 +3,6 @@ When a location type is set from stock-tracking to not stock-tracking, find all
 locations of that type and:
     close the supply point case,
     nullify the supply_point_id,
-    nullify the StockState sql_location field
 
 When a location type is set from not stock tracking to stock tracking, find all
 locations of that type and:
@@ -19,13 +18,11 @@ from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 from ..models import SQLLocation
 from .util import setup_locations_and_types
 
 
-@run_with_sql_backend
 class TestChangeStatus(TestCase):
     domain = 'test-change-administrative'
     location_type_names = ['state', 'county', 'city']

@@ -18,6 +18,7 @@ from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import validate_offsets
 
 MIN_TIMEOUT = 500
+MAX_TIMEOUT = 1000 * 60 * 60 * 24  # 1 day in ms
 
 
 class KafkaChangeFeed(ChangeFeed):
@@ -62,7 +63,7 @@ class KafkaChangeFeed(ChangeFeed):
         """
         ``since`` must be a dictionary of topic partition offsets, or None
         """
-        timeout = float('inf') if forever else MIN_TIMEOUT
+        timeout = MAX_TIMEOUT if forever else MIN_TIMEOUT
         start_from_latest = since is None
         reset = 'largest' if start_from_latest else 'smallest'
         self._init_consumer(timeout, auto_offset_reset=reset)
@@ -94,8 +95,8 @@ class KafkaChangeFeed(ChangeFeed):
                 self._processed_topic_offsets[(message.topic, message.partition)] = message.offset
                 yield change_from_kafka_message(message)
         except StopIteration:
-            assert not forever, 'Kafka pillow should not timeout when waiting forever!'
             # no need to do anything since this is just telling us we've reached the end of the feed
+            pass
 
     def get_current_checkpoint_offsets(self):
         # the way kafka works, the checkpoint should increment by 1 because

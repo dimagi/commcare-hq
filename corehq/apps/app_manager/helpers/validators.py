@@ -762,10 +762,16 @@ class FormBaseValidator(object):
             if not self.form.form_links:
                 errors.append(dict(type="no form links", **meta))
             for form_link in self.form.form_links:
-                try:
-                    self.form.get_app().get_form(form_link.form_id)
-                except FormNotFoundException:
-                    errors.append(dict(type='bad form link', **meta))
+                if form_link.form_id:
+                    try:
+                        self.form.get_app().get_form(form_link.form_id)
+                    except FormNotFoundException:
+                        errors.append(dict(type='bad form link', **meta))
+                else:
+                    try:
+                        self.form.get_app().get_module_by_unique_id(form_link.module_unique_id)
+                    except ModuleNotFoundException:
+                        errors.append(dict(type='bad form link', **meta))
         elif self.form.post_form_workflow == WORKFLOW_MODULE:
             if module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))

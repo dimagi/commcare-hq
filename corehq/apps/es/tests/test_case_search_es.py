@@ -1,12 +1,15 @@
 import uuid
 from collections import Counter
-
 from datetime import date
-from django.test.testcases import SimpleTestCase
+
 from django.test import TestCase
+from django.test.testcases import SimpleTestCase
+
 from mock import MagicMock, patch
 
 from casexml.apps.case.models import CommCareCase
+from pillowtop.es_utils import initialize_index_and_mapping
+
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearchProperty,
@@ -14,24 +17,29 @@ from corehq.apps.app_manager.models import (
     Module,
 )
 from corehq.apps.case_search.const import RELEVANCE_SCORE
-from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    FuzzyProperties,
+    IgnorePatterns,
+)
 from corehq.apps.case_search.utils import (
     CaseSearchCriteria,
+    _QueryHelper,
     get_related_case_relationships,
-    get_related_case_results, get_related_cases,
+    get_related_case_results,
+    get_related_cases,
 )
-from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
+from corehq.apps.es import queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_missing,
+    case_property_range_query,
     case_property_text_query,
     flatten_result,
 )
-from corehq.elastic import get_es_new, SIZE_LIMIT
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    run_with_sql_backend,
-)
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
+from corehq.elastic import SIZE_LIMIT, get_es_new
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -39,7 +47,6 @@ from corehq.pillows.mappings.case_search_mapping import (
 )
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import create_and_save_a_case
-from pillowtop.es_utils import initialize_index_and_mapping
 
 
 @es_test
@@ -157,51 +164,57 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                             ],
                             "should": [
                                 {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "parrot_name"
+                                    "bool": {
+                                        "should": [
+                                            {
+                                                "nested": {
+                                                    "path": "case_properties",
+                                                    "query": {
+                                                        "bool": {
+                                                            "filter": [
+                                                                {
+                                                                    "term": {
+                                                                        "case_properties.key.exact": "parrot_name"
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "must": {
+                                                                "match": {
+                                                                    "case_properties.value": {
+                                                                        "query": "polly",
+                                                                        "fuzziness": "AUTO"
+                                                                    }
+                                                                }
+                                                            }
                                                         }
                                                     }
-                                                ],
-                                                "must": {
-                                                    "match": {
-                                                        "case_properties.value": {
-                                                            "query": "polly",
-                                                            "fuzziness": "AUTO"
+                                                }
+                                            },
+                                            {
+                                                "nested": {
+                                                    "path": "case_properties",
+                                                    "query": {
+                                                        "bool": {
+                                                            "filter": [
+                                                                {
+                                                                    "term": {
+                                                                        "case_properties.key.exact": "parrot_name"
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "must": {
+                                                                "match": {
+                                                                    "case_properties.value": {
+                                                                        "query": "polly",
+                                                                        "fuzziness": "0"
+                                                                    }
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
                                             }
-                                        }
-                                    }
-                                },
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "parrot_name"
-                                                        }
-                                                    }
-                                                ],
-                                                "must": {
-                                                    "match": {
-                                                        "case_properties.value": {
-                                                            "query": "polly",
-                                                            "fuzziness": "0"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
+                                        ]
                                     }
                                 }
                             ]
@@ -252,7 +265,6 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
 
 @es_test
-@run_with_sql_backend
 class TestCaseSearchLookups(TestCase):
 
     def setUp(self):
@@ -302,6 +314,11 @@ class TestCaseSearchLookups(TestCase):
                 CaseSearchES().xpath_query(self.domain, xpath_query).get_ids(),
                 output
             )
+
+    def _create_case_search_config(self):
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self.addCleanup(config.delete)
+        return config
 
     def test_simple_case_property_query(self):
         self._assert_query_runs_correctly(
@@ -432,13 +449,16 @@ class TestCaseSearchLookups(TestCase):
                 {'_id': 'c3', 'dob': date(2020, 3, 3)},
                 {'_id': 'c4', 'dob': date(2020, 3, 4)},
             ],
-            CaseSearchES().domain(self.domain).date_range_case_property_query('dob', gte='2020-03-02', lte='2020-03-03'),
+            CaseSearchES().domain(self.domain).add_query(
+                case_property_range_query('dob', gte='2020-03-02', lte='2020-03-03'),
+                clause=queries.MUST
+            ),
             "dob >= '2020-03-02' and dob <= '2020-03-03'",
             ['c2', 'c3']
         )
 
     def test_date_range_criteria(self):
-        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self._create_case_search_config()
         self._assert_query_runs_correctly(
             self.domain,
             [
@@ -451,7 +471,6 @@ class TestCaseSearchLookups(TestCase):
             None,
             ['c2', 'c3']
         )
-        config.delete()
 
     def test_get_related_case_relationships(self):
         app = Application.new_app(self.domain, "Case Search App")
@@ -544,18 +563,54 @@ class TestCaseSearchLookups(TestCase):
                    return_value={"parent", "parent/parent"}), \
              patch("corehq.apps.case_search.utils.get_child_case_types", return_value={"c", "d"}), \
              patch("corehq.apps.case_search.utils.get_app_cached"):
-            cases = get_related_cases(self.domain, None, {"c"}, cases)
+            cases = get_related_cases(_QueryHelper(self.domain), None, {"c"}, cases)
 
         case_ids = Counter([case.case_id for case in cases])
         self.assertEqual(set(case_ids), {"a1", "d1"})  # c1, c2 excluded since they are in the initial list
         self.assertEqual(max(case_ids.values()), 1, case_ids)  # no duplicates
 
     def _assert_related_case_ids(self, cases, paths, ids):
-        results = get_related_case_results(self.domain, cases, paths)
+        results = get_related_case_results(_QueryHelper(self.domain), cases, paths)
         result_ids = Counter([result['_id'] for result in results])
         self.assertEqual(ids, set(result_ids))
         if result_ids:
             self.assertEqual(1, max(result_ids.values()), result_ids)  # no duplicates
+
+    def test_fuzzy_properties(self):
+        cases = [
+            {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
+            {'_id': 'c2', 'case_type': 'song', 'description': 'Neu York'},
+            {'_id': 'c3', 'case_type': 'show', 'description': 'Boston'},
+        ]
+        config = self._create_case_search_config()
+        fuzzy_properties = FuzzyProperties.objects.create(domain=self.domain, case_type='song', properties=['description'])
+        config.fuzzy_properties.add(fuzzy_properties)
+        self.addCleanup(fuzzy_properties.delete)
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            CaseSearchCriteria(self.domain, ['song', 'show'], {'description': 'New York'}).search_es,
+            None,
+            ['c1', 'c2']
+        )
+
+    def test_ignore_patterns(self):
+        cases = [
+            {'_id': 'c1', 'case_type': 'person', 'phone_number': '8675309'},
+            {'_id': 'c2', 'case_type': 'person', 'phone_number': '9045555555'},
+        ]
+        config = self._create_case_search_config()
+        pattern = IgnorePatterns.objects.create(
+            domain=self.domain, case_type='person', case_property='phone_number', regex="+1")
+        config.ignore_patterns.add(pattern)
+        self.addCleanup(pattern.delete)
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            CaseSearchCriteria(self.domain, ['person'], {'phone_number': '+18675309'}).search_es,
+            None,
+            ['c1']
+        )
 
     def test_multiple_case_types(self):
         cases = [
@@ -564,7 +619,7 @@ class TestCaseSearchLookups(TestCase):
             {'_id': 'c3', 'case_type': 'show', 'description': 'New York'},
             {'_id': 'c4', 'case_type': 'show', 'description': 'Boston'},
         ]
-        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self._create_case_search_config()
         self._assert_query_runs_correctly(
             self.domain,
             cases,
@@ -572,21 +627,37 @@ class TestCaseSearchLookups(TestCase):
             None,
             ['c1', 'c3']
         )
-        config.delete()
 
-    def test_blank_property_value(self):
+    def test_blank_case_search(self):
         # foo = '' should match all cases where foo is empty or absent
-        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
-        self._assert_query_runs_correctly(
-            self.domain,
-            [
-                {'_id': 'c1', 'foo': 'redbeard'},
-                {'_id': 'c2', 'foo': 'blackbeard'},
-                {'_id': 'c3', 'foo': ''},
-                {'_id': 'c4'},
-            ],
-            CaseSearchCriteria(self.domain, [self.case_type], {'foo': ''}).search_es,
-            None,
-            ['c3', 'c4']
-        )
-        config.delete()
+        self._create_case_search_config()
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'foo': 'redbeard'},
+            {'_id': 'c2', 'foo': 'blackbeard'},
+            {'_id': 'c3', 'foo': ''},
+            {'_id': 'c4'},
+        ])
+        for criteria, expected in [
+            ({'foo': ''}, ['c3', 'c4']),
+            ({'foo': ['', 'blackbeard']}, ['c2', 'c3', 'c4']),
+        ]:
+            actual = CaseSearchCriteria(self.domain, [self.case_type], criteria).search_es.get_ids()
+            msg = f"{criteria} yielded {actual}, not {expected}"
+            self.assertItemsEqual(actual, expected, msg=msg)
+
+    def test_blank_case_search_parent(self):
+        self._create_case_search_config()
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'foo': 'redbeard'},
+            {'_id': 'c2', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c1')}},
+            {'_id': 'c3', 'foo': 'blackbeard'},
+            {'_id': 'c4', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c3')}},
+            {'_id': 'c5', 'foo': ''},
+            {'_id': 'c6', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c5')}},
+            {'_id': 'c7'},
+            {'_id': 'c8', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c7')}},
+        ])
+        actual = CaseSearchCriteria(self.domain, ['child'], {
+            'parent/foo': ['', 'blackbeard'],
+        }).search_es.get_ids()
+        self.assertItemsEqual(actual, ['c4', 'c6', 'c8'])

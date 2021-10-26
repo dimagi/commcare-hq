@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
-
+from corehq.apps.users.decorators import get_permission_name
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
@@ -159,10 +159,22 @@ class ProjectReportsTab(UITab):
             'icon': 'icon-tasks fa fa-tasks',
             'show_in_dropdown': True,
         }]
-        if toggles.USER_CONFIGURABLE_REPORTS.enabled(self.couch_user.username):
-            # Only show for **users** with the flag. This flag is also available for domains
-            # but should not be granted by domain, as the feature is too advanced to turn
-            # on for all of a domain's users.
+        from corehq.apps.users.models import Permissions
+        is_ucr_toggle_enabled = (
+            toggles.USER_CONFIGURABLE_REPORTS.enabled(
+                self.domain, namespace=toggles.NAMESPACE_DOMAIN
+            )
+            or toggles.USER_CONFIGURABLE_REPORTS.enabled(
+                self.couch_user.username, namespace=toggles.NAMESPACE_USER
+            )
+        )
+        has_ucr_permissions = self.couch_user.has_permission(
+            self.domain,
+            get_permission_name(Permissions.edit_ucrs)
+        )
+
+        if is_ucr_toggle_enabled and has_ucr_permissions:
+
             from corehq.apps.userreports.views import UserConfigReportsHomeView
             tools.append({
                 'title': _(UserConfigReportsHomeView.section_name),
@@ -1015,7 +1027,7 @@ class MessagingTab(UITab):
         return (self.can_access_reminders or self.can_use_outbound_sms) and (
             self.project and not (self.project.is_snapshot or
                                   self.couch_user.is_commcare_user())
-        ) and self.couch_user.can_edit_data()
+        ) and self.couch_user.can_edit_messaging()
 
     @property
     @memoized
@@ -1133,13 +1145,13 @@ class MessagingTab(UITab):
     def contacts_urls(self):
         contacts_urls = []
 
-        if self.couch_user.can_edit_data():
+        if self.couch_user.can_edit_messaging():
             contacts_urls.append(
                 {'title': _('Chat'),
                  'url': reverse('chat_contacts', args=[self.domain])}
             )
 
-        if self.couch_user.can_edit_data():
+        if self.couch_user.can_edit_messaging():
             from corehq.apps.data_interfaces.views import CaseGroupListView, CaseGroupCaseManagementView
             contacts_urls.append({
                 'title': _(CaseGroupListView.page_title),
@@ -1737,8 +1749,8 @@ class ProjectSettingsTab(UITab):
             if integration_nav:
                 items.append((_('Integration'), integration_nav))
 
-        feature_flag_items = _get_feature_flag_items(self.domain)
-        if feature_flag_items and user_is_admin and has_project_access:
+        feature_flag_items = _get_feature_flag_items(self.domain, self.couch_user)
+        if feature_flag_items and has_project_access:
             items.append((_('Pre-release Features'), feature_flag_items))
 
         release_management_items = _get_release_management_items(self.couch_user, self.domain)
@@ -1974,22 +1986,28 @@ def _get_integration_section(domain):
     return integration
 
 
-def _get_feature_flag_items(domain):
+def _get_feature_flag_items(domain, couch_user):
+    user_is_admin = couch_user.is_domain_admin(domain)
+
     from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
     feature_flag_items = []
-    if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
+    if user_is_admin and toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({
             'title': _('Case Search'),
             'url': reverse('case_search_config', args=[domain])
         })
-    if toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
+    if user_is_admin and toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
         feature_flag_items.append({
             'title': _('Location Fixture'),
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
         })
 
     # show ERM version of linked projects if domain has privilege
-    if toggles.LINKED_DOMAINS.enabled(domain) and not domain_has_privilege(domain, RELEASE_MANAGEMENT):
+    can_access_linked_domains = (
+        user_is_admin and toggles.LINKED_DOMAINS.enabled(domain)
+        and not domain_has_privilege(domain, RELEASE_MANAGEMENT)
+    )
+    if can_access_linked_domains:
         feature_flag_items.append({
             'title': _('Linked Project Spaces'),
             'url': reverse('domain_links', args=[domain])
@@ -1998,7 +2016,10 @@ def _get_feature_flag_items(domain):
             'title': _('Linked Project Space History'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
-    if toggles.DATA_REGISTRY.enabled(domain):
+
+    from corehq.apps.registry.utils import RegistryPermissionCheck
+    permission_check = RegistryPermissionCheck(domain, couch_user)
+    if toggles.DATA_REGISTRY.enabled(domain) and permission_check.can_manage_some:
         feature_flag_items.append({
             'title': _('Data Registries'),
             'url': reverse('data_registries', args=[domain]),
@@ -2073,10 +2094,7 @@ class MySettingsTab(UITab):
             },
         ])
 
-        if (
-            self.couch_user and self.couch_user.is_dimagi or
-            toggles.MOBILE_PRIVILEGES_FLAG.enabled(self.couch_user.username)
-        ):
+        if EnableMobilePrivilegesView.is_user_authorized(self.couch_user):
             menu_items.append({
                 'title': _(EnableMobilePrivilegesView.page_title),
                 'url': reverse(EnableMobilePrivilegesView.urlname),

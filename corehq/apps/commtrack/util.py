@@ -9,8 +9,6 @@ from django.utils.translation import ugettext as _
 
 from text_unidecode import unidecode
 
-from casexml.apps.case.models import CommCareCase
-
 from corehq import feature_previews, toggles
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import (
@@ -20,7 +18,6 @@ from corehq.apps.commtrack.models import (
     ConsumptionConfig,
     StockLevelsConfig,
     StockRestoreConfig,
-    SupplyPointCase,
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
@@ -185,12 +182,6 @@ def get_commtrack_location_id(user, domain):
         return user.get_domain_membership(domain.name).location_id
     else:
         return None
-
-
-def get_case_wrapper(data):
-    return {
-        const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
-    }.get(data.get('type'), CommCareCase)
 
 
 def unicode_slug(text):

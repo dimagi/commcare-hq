@@ -13,7 +13,6 @@ from corehq.apps.es.tests.utils import (
     case_search_es_teardown,
     es_test,
 )
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.util.test_utils import generate_cases, privilege_enabled
 
 from ..api.core import UserError
@@ -24,7 +23,6 @@ BAD_GUYS_ID = str(uuid.uuid4())
 
 
 @es_test
-@run_with_sql_backend
 @privilege_enabled(privileges.API_ACCESS)
 class TestCaseListAPI(TestCase):
     domain = 'testcaselistapi'
@@ -89,11 +87,12 @@ class TestCaseListAPI(TestCase):
         self.assertIn('limit=3', cursor)
         self.assertIn('case_type=person', cursor)
         self.assertIn('indexed_on.gte', cursor)
+        self.assertIn('last_case_id', cursor)
 
         res = get_list(self.domain, res['next'])
-        self.assertEqual(res['matching_records'], 3)
+        self.assertEqual(res['matching_records'], 2)
         self.assertEqual(
-            ['laboeuf', 'chaney', 'ned'],
+            ['chaney', 'ned'],
             [c['external_id'] for c in res['cases']]
         )
         self.assertNotIn('next', res)  # No pages after this one

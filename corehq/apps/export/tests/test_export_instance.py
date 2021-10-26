@@ -326,6 +326,7 @@ class TestExportInstanceGenerationWithInferredSchema(SimpleTestCase):
     'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
+@mock.patch("couchforms.analytics.get_form_count_breakdown_for_domain", lambda *a: {})
 class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
     """Test Instance generation when the schema is made from multiple apps"""
 
@@ -480,6 +481,7 @@ class TestExportInstance(SimpleTestCase):
     'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
+@mock.patch("couchforms.analytics.get_form_count_breakdown_for_domain", lambda *a: {})
 class TestExportInstanceFromSavedInstance(TestCase):
 
     @classmethod

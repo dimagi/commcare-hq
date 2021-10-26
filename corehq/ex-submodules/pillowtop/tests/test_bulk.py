@@ -2,7 +2,6 @@ import uuid
 
 from django.test import SimpleTestCase, TestCase
 from mock import Mock, patch
-from six.moves import range
 
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
@@ -15,8 +14,6 @@ from corehq.form_processor.tests.utils import (
     create_form_for_test,
     sharded,
 )
-from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
-    clear_local_domain_sql_backend_override
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import ensure_index_deleted
@@ -192,8 +189,6 @@ class TestBulkOperationsCaseToSQL(TestCase):
 
         changes = self._changes_from_ids(self.case_ids)
 
-        set_local_domain_sql_backend_override(self.domain)
-        self.addCleanup(clear_local_domain_sql_backend_override, self.domain)
         retry, errors = processor.process_changes_chunk(changes)
         self.assertEqual([], retry)
         self.assertEqual([], errors)

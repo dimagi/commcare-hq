@@ -2,7 +2,7 @@ import decimal
 import uuid
 from datetime import datetime, timedelta
 
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 
 import mock
 from mock import patch
@@ -173,7 +173,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
         self.assertEqual(
             {data_source_1._id, data_source_2._id},
-            set([table_adapter.config._id for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+            {t.config._id for t in table_manager.table_adapters_by_domain[ds_1_domain]}
         )
 
     @patch("corehq.apps.cachehq.mixins.invalidate_document")
@@ -203,8 +203,6 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         return DataSourceConfiguration.wrap(data_source_json)
 
 
-
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ChunkedUCRProcessorTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -270,7 +268,7 @@ class ChunkedUCRProcessorTest(TestCase):
     def test_full_fallback(self, process_change_patch, process_changes_patch):
 
         process_changes_patch.side_effect = Exception
-        cases = self._create_and_process_changes()
+        self._create_and_process_changes()
 
         process_changes_patch.assert_called_once()
         # since chunked processing failed, normal processing should get called
@@ -285,7 +283,7 @@ class ChunkedUCRProcessorTest(TestCase):
             for i in range(10)
         ]
         iter_docs_patch.return_value = docs[0:6]
-        cases = self._create_and_process_changes(docs)
+        self._create_and_process_changes(docs)
 
         # since chunked processing failed, normal processing should get called
         process_change_patch.assert_has_calls([mock.call(mock.ANY)] * 4)
@@ -372,7 +370,6 @@ class ChunkedUCRProcessorTest(TestCase):
         bootstrap_if_needed.assert_called_once_with()
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class IndicatorPillowTest(TestCase):
 
     @classmethod
@@ -472,7 +469,6 @@ class IndicatorPillowTest(TestCase):
     def test_process_doc_from_sql(self, datetime_mock):
         self._test_process_doc_from_sql(datetime_mock)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def _test_process_doc_from_sql(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -498,7 +494,6 @@ class IndicatorPillowTest(TestCase):
     def test_process_deleted_doc_from_sql(self, datetime_mock):
         self._test_process_deleted_doc_from_sql(datetime_mock)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def _test_process_deleted_doc_from_sql(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -521,7 +516,6 @@ class IndicatorPillowTest(TestCase):
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_process_filter_no_longer_pass(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -536,7 +530,6 @@ class IndicatorPillowTest(TestCase):
         self.assertEqual(0, self.adapter.get_query_object().count())
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_check_if_doc_exist(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -548,7 +541,6 @@ class IndicatorPillowTest(TestCase):
         self.assertIs(self.adapter.doc_exists(sample_doc), True)
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ProcessRelatedDocTypePillowTest(TestCase):
     domain = 'bug-domain'
 
@@ -611,22 +603,24 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
         http://manage.dimagi.com/default.asp?245341
         '''
+        with mock.patch(
+                'corehq.pillows.case.KafkaCheckpointEventHandler.should_update_checkpoint',
+                return_value=False
+        ):
+            pillow = pillow or self.pillow
+            for i in range(3):
+                since = pillow.get_change_feed().get_latest_offsets()
+                form, cases = self._post_case_blocks(i)
+                with self.assertNumQueries(num_queries):
+                    pillow.process_changes(since=since, forever=False)
+                rows = self.adapter.get_query_object()
+                self.assertEqual(rows.count(), 1)
+                row = rows[0]
+                self.assertEqual(int(row.parent_property), i)
+                errors = PillowError.objects.filter(doc_id='child-id', pillow=pillow.pillow_id)
+                self.assertEqual(errors.count(), 0)
 
-        pillow = pillow or self.pillow
-        for i in range(3):
-            since = pillow.get_change_feed().get_latest_offsets()
-            form, cases = self._post_case_blocks(i)
-            with self.assertNumQueries(num_queries):
-                pillow.process_changes(since=since, forever=False)
-            rows = self.adapter.get_query_object()
-            self.assertEqual(rows.count(), 1)
-            row = rows[0]
-            self.assertEqual(int(row.parent_property), i)
-            errors = PillowError.objects.filter(doc_id='child-id', pillow=pillow.pillow_id)
-            self.assertEqual(errors.count(), 0)
 
-
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ReuseEvaluationContextTest(TestCase):
     domain = 'bug-domain'
 
@@ -675,8 +669,12 @@ class ReuseEvaluationContextTest(TestCase):
         )
 
     def _test_pillow(self, pillow, since, num_queries=12):
-        with self.assertNumQueries(num_queries):
-            pillow.process_changes(since=since, forever=False)
+        with mock.patch(
+                'corehq.pillows.case.KafkaCheckpointEventHandler.should_update_checkpoint',
+                return_value=False
+        ):
+            with self.assertNumQueries(num_queries):
+                pillow.process_changes(since=since, forever=False)
 
     def test_reuse_cache(self):
         self._test_reuse_cache()
@@ -704,7 +702,6 @@ class ReuseEvaluationContextTest(TestCase):
             self.assertEqual(int(rows[0].parent_property), 0)
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class AsyncIndicatorTest(TestCase):
     domain = 'bug-domain'
 

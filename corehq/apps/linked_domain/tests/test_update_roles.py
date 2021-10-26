@@ -5,14 +5,14 @@ from mock import patch
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.models import DomainLink
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
+from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_user_roles
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.userreports.util import get_ucr_class_name
 from corehq.apps.users.models import Permissions, UserRole
 
 
-class TestUpdateRoles(BaseLinkedAppsTest):
+class TestUpdateRoles(BaseLinkedDomainTest):
     @classmethod
     def setUpClass(cls):
         super(TestUpdateRoles, cls).setUpClass()

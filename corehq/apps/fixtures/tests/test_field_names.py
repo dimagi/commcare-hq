@@ -11,6 +11,7 @@ from corehq.apps.fixtures.models import (
     FixtureItemField,
     FixtureTypeField,
 )
+from corehq.apps.fixtures.fixturegenerators import item_lists
 from corehq.apps.fixtures.utils import is_identifier_invalid
 
 
@@ -113,6 +114,8 @@ class FieldNameCleanTest(TestCase):
         self.data_item.delete()
 
     def test_cleaner(self):
+        item_dict = self.data_item.to_json()
+        item_dict['_data_type'] = self.data_item.data_type
         check_xml_line_by_line(self, """
         <dirty_fields>
             <will_crash>yep</will_crash>
@@ -121,7 +124,7 @@ class FieldNameCleanTest(TestCase):
             <_with_>so fail</_with_>
             <_crazy___combo__d>just why</_crazy___combo__d>
         </dirty_fields>
-        """, ElementTree.tostring(self.data_item.to_xml(), encoding='utf-8'))
+        """, ElementTree.tostring(item_lists.to_xml(item_dict), encoding='utf-8'))
 
 
 class FieldNameValidationTest(SimpleTestCase):

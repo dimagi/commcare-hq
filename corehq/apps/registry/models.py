@@ -1,17 +1,16 @@
-from datetime import datetime
-
 from autoslug import AutoSlugField
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
-from django.db.models import Q
 from django.db import models, transaction
+from django.db.models import Q
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.domain.utils import domain_name_stop_words
 from corehq.apps.registry.exceptions import RegistryAccessDenied
-from corehq.apps.registry.schema import RegistrySchema
+from corehq.apps.registry.schema import RegistrySchema, REGISTRY_JSON_SCHEMA
+from corehq.util.validation import JSONSchemaValidator
 
 
 def slugify_remove_stops(text):
@@ -73,7 +72,7 @@ class DataRegistry(models.Model):
     is_active = models.BooleanField(default=True)
 
     # [{"case_type": "X"}, {"case_type": "Y"}]
-    schema = JSONField(null=True, blank=True)
+    schema = JSONField(null=True, blank=True, validators=[JSONSchemaValidator(REGISTRY_JSON_SCHEMA)])
 
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
@@ -111,7 +110,7 @@ class DataRegistry(models.Model):
         return RegistrySchema(self.schema)
 
     def get_granted_domains(self, domain):
-        self.check_access(domain)
+        self.check_domain_has_access(domain)
         return set(
             self.grants.filter(to_domains__contains=[domain])
             .values_list('from_domain', flat=True)
@@ -122,7 +121,7 @@ class DataRegistry(models.Model):
             status=RegistryInvitation.STATUS_ACCEPTED,
         ).values_list('domain', flat=True))
 
-    def check_access(self, domain):
+    def check_domain_has_access(self, domain):
         if not self.is_active:
             raise RegistryAccessDenied()
         invites = self.invitations.filter(domain=domain)
@@ -136,12 +135,6 @@ class DataRegistry(models.Model):
     def check_ownership(self, domain):
         if self.domain != domain:
             raise RegistryAccessDenied()
-
-    @property
-    def case_types(self):
-        return [
-            item["case_type"] for item in self.schema
-        ] if self.schema else []
 
     @cached_property
     def logger(self):
@@ -258,30 +251,35 @@ class RegistryAuditLog(models.Model):
     ACTION_SCHEMA_CHANGED = "schema"
     ACTION_DATA_ACCESSED = "data_accessed"
 
-    ACTION_CHOICES = (
-        (ACTION_ACTIVATED, _("Registry Activated")),
-        (ACTION_DEACTIVATED, _("Registry De-activated")),
-        (ACTION_INVITATION_ADDED, _("Invitation Added")),
-        (ACTION_INVITATION_REMOVED, _("Invitation Revoked")),
+    NON_OWNER_ACTION_CHOICES = (
         (ACTION_INVITATION_ACCEPTED, _("Invitation Accepted")),
         (ACTION_INVITATION_REJECTED, _("Invitation Rejected")),
         (ACTION_GRANT_ADDED, _("Grant created")),
         (ACTION_GRANT_REMOVED, _("Grant removed")),
-        (ACTION_SCHEMA_CHANGED, _("Schema Changed")),
         (ACTION_DATA_ACCESSED, _("Data Accessed")),
+        (ACTION_INVITATION_ADDED, _("Invitation Added")),
     )
+
+    ACTION_CHOICES = (
+        (ACTION_ACTIVATED, _("Registry Activated")),
+        (ACTION_DEACTIVATED, _("Registry De-activated")),
+        (ACTION_INVITATION_REMOVED, _("Invitation Revoked")),
+        (ACTION_SCHEMA_CHANGED, _("Schema Changed")),
+    ) + NON_OWNER_ACTION_CHOICES
 
     RELATED_OBJECT_REGISTRY = "registry"
     RELATED_OBJECT_INVITATION = "invitation"
     RELATED_OBJECT_GRANT = "grant"
     RELATED_OBJECT_UCR = "ucr"
     RELATED_OBJECT_APPLICATION = "application"  # case search
+    RELATED_OBJECT_REPEATER = "repeater"
     RELATED_OBJECT_CHOICES = (
         (RELATED_OBJECT_REGISTRY, _("Data Registry")),
         (RELATED_OBJECT_INVITATION, _("Invitation")),
         (RELATED_OBJECT_GRANT, _("Grant")),
         (RELATED_OBJECT_UCR, _("Report")),
         (RELATED_OBJECT_APPLICATION, _("Case Search")),
+        (RELATED_OBJECT_REPEATER, _("Data Forwarding")),
     )
 
     registry = models.ForeignKey("DataRegistry", related_name="audit_logs", on_delete=models.CASCADE)
@@ -302,6 +300,16 @@ class RegistryAuditLog(models.Model):
                 name="registryauditlog_rel_obj_idx"
             ),
         ]
+
+    def to_json(self):
+        return {
+            "registry_slug": self.registry.slug,
+            "date": self.date,
+            "action": self.action,
+            "action_display": self.get_action_display(),
+            "domain": self.domain,
+            "user": self.user.username,
+        }
 
 
 class RegistryAuditHelper:
@@ -350,13 +358,15 @@ class RegistryAuditHelper:
         if not related_object or not hasattr(related_object, "doc_type"):
             raise ValueError("Unexpected related object")
 
-        if related_object.doc_type == "ReportConfiguration":
-            related_object_id = related_object.get_id
-            related_object_type = RegistryAuditLog.RELATED_OBJECT_UCR
-        elif related_object.doc_type == "Application":
-            related_object_id = related_object.get_id
-            related_object_type = RegistryAuditLog.RELATED_OBJECT_APPLICATION
-        else:
+        doc_type = getattr(related_object, 'base_doc', related_object.doc_type)
+        try:
+            related_object_type = {
+                "ReportConfiguration": RegistryAuditLog.RELATED_OBJECT_UCR,
+                "Application": RegistryAuditLog.RELATED_OBJECT_APPLICATION,
+                "LinkedApplication": RegistryAuditLog.RELATED_OBJECT_APPLICATION,
+                "Repeater": RegistryAuditLog.RELATED_OBJECT_REPEATER,
+            }[doc_type]
+        except KeyError:
             raise ValueError(f"Unexpected related object type: {related_object.doc_type}")
 
         return RegistryAuditLog.objects.create(
@@ -364,7 +374,7 @@ class RegistryAuditHelper:
             user=user,
             action=RegistryAuditLog.ACTION_DATA_ACCESSED,
             domain=domain,
-            related_object_id=related_object_id,
+            related_object_id=related_object.get_id,
             related_object_type=related_object_type,
             detail=filters
         )
