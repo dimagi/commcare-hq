@@ -10,8 +10,8 @@ Linked domains have two major use cases:
 1. Setting up a practice domain and then a production domain
 1. Multi-geography projects that have one upstream domain and then a downstream domain for each of several different locations.
 
-Most domain links are _local_, meaning all domains reside in the same HQ cloud environment.
-There are also _remote_ links, where the upstream domain is in a different environment than the downstream domain(s).
+Most domain links are local, meaning all domains reside in the same HQ cloud environment.
+There are also [remote links](#remote_links), where the upstream domain is in a different environment than the downstream domain(s).
 Not all functionality is supported by remote links, but most of it is. See below for more under Remote
 Links.
 
@@ -32,31 +32,25 @@ To link two domains, copy an application from the upstream domain to the desired
 checkbox "Copy as linked application." This is a legacy workflow, leftover from when linked domains **only**
 supported applications. Remote domain linkages cannot be created via the UI; see below for details.
 
-## Data Models
+## Data Models<a name="data_models"></a>
 
-Linked domains share configuration data. Supported data types are defined in
-corehq.apps.linked_domain.const.ALL_LINKED_MODELS:
+Linked domains enable the sharing of supported data models, which are defined in
+corehq.apps.linked_domain.const.ALL_LINKED_MODELS.
 
-- Applications
-- Reports
-- Lookup tables
-- Keywords
-- User roles
-- Custom data fields for users, products, and locations
-- Feature Flags
-- Feature Previews
-- Case search settings
-- Data dictionary
-- Dialer settings
-- OTP Pass-through Settings
-- Signed Callout
-- Tableau Server and Visualizaions
+It is worth noting that some data models are only available with a specific feature flag enabled, and can be found in
+corehq.apps.linked_domain.const.FEATURE_FLAG_DATA_MODELS.
 
-Of these, apps, keywords, and reports need to be linked individually, from the app settings, keywords, and edit report UIs, and are
-overwritten individually. The rest of the data types are overwritten as entire blocks: for example, you can't
-overwrite a single user role, you update them as one unit. Lookup tables are in between: you don't need to link
-them individually, but you can update them individually (due to performance concerns around updating them as a
-block).
+Another important distinction to highlight is _individual_ data models vs _domain level_ data models. Individual data
+models refer to any model that supports linking specific instances of that type. For instance, each app needs to be
+linked _individually_. In contrast, domain level data models refer to any model that supports linking all values
+associated with that type. An example is User Roles as linking individual user roles is not supported. All custom roles
+associated with the upstream domain are linked to the downstream domain.
+
+In the case of Apps, Reports, and Keywords, a linked copy must be created in the downstream domain before updates
+can be pushed/pulled. Previously, this required explicitly creating a linked copy from data model specific UIs, but
+**now apps are the only data models that need to be linked explicitly** from the app manager settings before being able
+to push/pull updates. Reports and Keywords only require that they are **pushed** downstream first, and the link will be
+created as part of this action.
 
 The ability to edit linked data on a downstream domain depends on the data type. For example, applications are
 read-only on downstream domains, with a few settings (controlled by
@@ -70,7 +64,7 @@ Support for additional models is added as time permits. Any configuration-relate
 Project data like forms and cases would not be shared.
 
 
-## Remote Links
+## Remote Links<a name="remote_links"></a>
 
 ### Remote Link Setup
 
@@ -94,12 +88,10 @@ $ ./manage.py link_to_upstream_domain --url_base {base_url_for_upstream_domain} 
 The specified username and API key are needed to authenticate requests to the upstream environment.
 ### Pulling Changes From the Upstream Domain
 
-On downstream domain's HQ environment, enable `linked_domains` feature flag. Navigate to the `Project Settings > Linked Projects` page which has a UI to pull changes from the upstream domain for the following fields:
-- Custom data fields for Location, User and Product models
-- User Roles
-- Feature Flags
-- Feature Previews
-- Reports
+On downstream domain's HQ environment, enable `linked_domains` feature flag. Navigate to the
+`Project Settings > Linked Projects` page which has a UI to pull changes from the upstream domain for all of the
+[previously mentioned fields](#data_models) **except for keywords**. This is _likely_ just due to lack of necessity
+in the context of remote links.
 
 #### Linking Remote Applications
 
@@ -123,6 +115,10 @@ When an upstream app is pulled downstream:
    - Older downstream apps will have differing ids, while downstream apps created after the deploy of [#25998](https://github.com/dimagi/commcare-hq/pull/25998) in December 2019 will use the same ids in both the downstream and upstream apps.
    - Downstream apps that do not have form ids that match their upstream app have a mapping of upstream app form unique id => downstream app form unique id, stored as [ResourceOverride](https://github.com/dimagi/commcare-hq/blob/15ceabdccf0ed49ed306462b3a154fe14886bf27/corehq/apps/app_manager/suite_xml/post_process/resources.py#L11) objects.
    - See [#25718](https://github.com/dimagi/commcare-hq/issues/25718) for context around why this change was made.
+
+There are specific attributes set on the downstream application that are updated via the call to
+[reapply_overrides](https://github.com/dimagi/commcare-hq/blob/4c5ebc4a1b6dbd6466f074f6b7fcfe1990eea992/corehq/apps/app_manager/models.py#L5776),
+which occurs whenever an application is updated to ensure the downstream-specific attributes are not lost.
 
 ## Exclusions
 A few fields are **not** copied from the upstream app to the downstream app. They include basic metadata (doc type, name, date created, comment, etc) and some build-related fields (build profiles and practice mobile workers). For the full list, see [excluded_fields in overwrite_app](https://github.com/dimagi/commcare-hq/blob/47b197378fc196ff25a88dc5b2c56a389aaec85f/corehq/apps/app_manager/views/utils.py#L165-L169).
