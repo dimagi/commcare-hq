@@ -2104,7 +2104,7 @@ ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
 
 EMBEDDED_TABLEAU = StaticToggle(
     'embedded_tableau',
-    'Enable retrieving and embedding tableau visualizations from a Tableau Server',
+    'USH: Enable retrieving and embedding tableau visualizations from a Tableau Server',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/USH/Embedded+Tableau+Visualizations",
@@ -2155,7 +2155,7 @@ FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
 
 DATA_REGISTRY = StaticToggle(
     'data_registry',
-    'Enable Data Registries for sharing data between project spaces',
+    'USH: Enable Data Registries for sharing data between project spaces',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://docs.google.com/document/d/1h1chIrRkDtnPVQzFJHuB7JbZq8S4HNQf2dBA8z_MCkg/edit",
