@@ -17,7 +17,10 @@ from corehq.toggles import all_toggles
 class DatadogLogger:
     def __init__(self, stdout):
         self.stdout = stdout
-        self.datadog = os.environ.get("TRAVIS_EVENT_TYPE") == 'cron'
+        self.datadog = (
+            os.environ.get("TRAVIS_EVENT_TYPE") == 'cron'
+            or os.environ.get("GITHUB_EVENT_NAME") == 'schedule'
+        )
         if self.datadog:
             api_key = os.environ.get("DATADOG_API_KEY")
             app_key = os.environ.get("DATADOG_APP_KEY")
@@ -27,18 +30,22 @@ class DatadogLogger:
 
     def log(self, metric, value, tags=None):
         self.stdout.write(f"{metric}: {value} {tags or ''}")
+        if os.environ.get("GITHUB_ACTIONS"):
+            env = "github_actions"
+            host = "github.com"
+        elif os.environ.get("TRAVIS"):
+            env = "travis"
+            host = "travis-ci.org"
+        else:
+            env = "unknown"
+            host = "unknown"
         if self.datadog:
             self.metrics.append({
                 'metric': metric,
                 'points': value,
                 'type': "gauge",
-                'host': "travis-ci.org",
-                'tags': [
-                    "environment:travis",
-                    f"travis_build:{os.environ.get('TRAVIS_BUILD_ID')}",
-                    f"travis_number:{os.environ.get('TRAVIS_BUILD_NUMBER')}",
-                    f"travis_job_number:{os.environ.get('TRAVIS_JOB_NUMBER')}",
-                ] + (tags or []),
+                'host': host,
+                'tags': [f"environment:{env}"] + (tags or []),
             })
 
     def send_all(self):
