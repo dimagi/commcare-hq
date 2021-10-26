@@ -83,35 +83,34 @@
                   optionsCaption: $parent.displayUnknownForm.call($parent, formLink),
                   value: formLink.formId
                   "></select>
-        <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
-        <div class="help-block" data-bind="visible: !formLink.autoLink()">
-          {% trans "This form requires manual linking." %}
-        </div>
-        <div class="help-block" data-bind="visible: formLink.autoLink()">
-          {% trans "This form doesn't require manual linking." %}
-        </div>
-        <div class="help-block" data-bind="visible: formLink.autoLink() && !formLink.manualDatums()">
-          <span data-bind="click: enableManualDatums" class="btn btn-default btn-xs">
-            {% trans "Enable manual linking" %}
-          </span>
-        </div>
-        <div class="help-block" data-bind="visible: formLink.manualDatums">
-          <span data-bind="click: disableManualDatums" class="btn btn-danger btn-xs">
-            {% trans "Disable manual linking" %}
-          </span>
-        </div>
-        <div class="help-block" data-bind="visible: formLink.showLinkDatums()">
-          <button class="btn btn-default btn-xs" data-bind="click: formLink.fetchDatums">
-            <!-- ko if: formLink.datumsFetched() -->
-              {% trans "Refresh" %}
-            <!-- /ko -->
-            <!-- ko if: !formLink.datumsFetched() -->
-              {% trans "Continue" %}
-            <!-- /ko -->
-          </button>
-        </div>
-        <div class="help-block" data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0 && !formLink.autoLink()">
-          {% trans "No additional linking required." %}
+        <div data-bind="visible: formLink.allowManualLinking()">
+          <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
+          <div class="help-block" data-bind="visible: !formLink.autoLink()">
+            {% trans "This form requires manual linking." %}
+          </div>
+          <div class="help-block" data-bind="visible: formLink.autoLink() && !formLink.manualDatums()">
+            <span data-bind="click: enableManualDatums" class="btn btn-default btn-xs">
+              {% trans "Enable manual linking" %}
+            </span>
+          </div>
+          <div class="help-block" data-bind="visible: formLink.manualDatums">
+            <span data-bind="click: disableManualDatums" class="btn btn-danger btn-xs">
+              {% trans "Disable manual linking" %}
+            </span>
+          </div>
+          <div class="help-block" data-bind="visible: formLink.showLinkDatums()">
+            <button class="btn btn-default btn-xs" data-bind="click: formLink.fetchDatums">
+              <!-- ko if: formLink.datumsFetched() -->
+                {% trans "Refresh" %}
+              <!-- /ko -->
+              <!-- ko if: !formLink.datumsFetched() -->
+                {% trans "Continue" %}
+              <!-- /ko -->
+            </button>
+          </div>
+          <div class="help-block" data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0 && !formLink.autoLink()">
+            {% trans "No additional linking required." %}
+          </div>
         </div>
       </div>
       <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">

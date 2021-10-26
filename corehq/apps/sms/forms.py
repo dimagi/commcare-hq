@@ -1,3 +1,4 @@
+import copy
 import json
 import re
 
@@ -20,6 +21,7 @@ from crispy_forms.layout import Div
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
+from corehq.toggles import TURN_IO_BACKEND
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.groups.models import Group
@@ -1154,10 +1156,12 @@ class InitiateAddSMSBackendForm(Form):
     )
 
     def __init__(self, user: CouchUser, *args, **kwargs):
+        domain = kwargs.pop('domain', None)
         super(InitiateAddSMSBackendForm, self).__init__(*args, **kwargs)
 
         from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
-        backend_classes = get_sms_backend_classes()
+        backend_classes = self.backend_classes_for_domain(domain)
+
         backend_choices = []
         for api_id, klass in backend_classes.items():
             if is_superuser_or_contractor(user) or api_id == SQLTelerivetBackend.get_api_id():
@@ -1180,6 +1184,13 @@ class InitiateAddSMSBackendForm(Form):
                 ), css_class='col-sm-3 col-md-2 col-lg-2'),
             ),
         )
+
+    def backend_classes_for_domain(self, domain):
+        backends = copy.deepcopy(get_sms_backend_classes())
+        if (domain is not None) and (not TURN_IO_BACKEND.enabled(domain)):
+            backends.pop('TURN')
+
+        return backends
 
 
 class SubscribeSMSForm(Form):

@@ -1,5 +1,4 @@
 from django.test import SimpleTestCase
-
 from mock import patch
 
 from corehq.apps.app_manager.models import (
@@ -10,9 +9,8 @@ from corehq.apps.app_manager.models import (
     CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
-    DetailColumn,
     Itemset,
-    Module,
+    Module, DetailColumn,
 )
 from corehq.apps.app_manager.suite_xml.sections.details import (
     AUTO_LAUNCH_EXPRESSION,
@@ -27,6 +25,7 @@ from corehq.apps.app_manager.tests.util import (
     patch_get_xform_resource_overrides,
 )
 from corehq.apps.builds.models import BuildSpec
+from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'test_domain'
@@ -41,7 +40,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.app._id = '123'
         self.app.build_spec = BuildSpec(version='2.35.0', build_number=1)
         self.module = self.app.add_module(Module.new_module("Untitled Module", None))
-        self.app.new_form(0, "Untitled Form", None)
+        self.form = self.app.new_form(0, "Untitled Form", None)
+        self.form.requires = 'case'
         self.module.case_type = 'case'
 
         # chosen xpath just used to reference more instances - not considered valid to use in apps
@@ -117,9 +117,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         config = CaseSearch()
 
         config.default_relevant = True
-        self.assertEqual(config.get_relevant(), """
-            count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0
-        """.strip())
+        self.assertEqual(config.get_relevant(), "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0")  # noqa: E501
 
         config.default_relevant = False
         self.assertEqual(config.get_relevant(), "")
@@ -128,7 +126,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertEqual(config.get_relevant(), "double(now()) mod 2 = 0")
 
         config.default_relevant = True
-        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")
+        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")  # noqa: E501
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_remote_request(self, *args):
@@ -219,13 +217,43 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = parse_normalize(suite, to_string=False)
         ref_path = './remote-request[1]/session/datum/@nodeset'
         self.assertEqual(
-            "instance('{}')/{}/case[@case_type='{}'][{}]".format(
+            "instance('{}')/{}/case[@case_type='{}'][{}]{}".format(
                 RESULTS_INSTANCE,
                 RESULTS_INSTANCE,
                 self.module.case_type,
-                search_filter
+                search_filter,
+                EXCLUDE_RELATED_CASES_FILTER
             ),
             suite.xpath(ref_path)[0]
+        )
+
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_additional_types(self, *args):
+        another_case_type = "another_case_type"
+        self.module.search_config.additional_case_types = [another_case_type]
+        suite_xml = self.app.create_suite()
+        suite = parse_normalize(suite_xml, to_string=False)
+        ref_path = './remote-request[1]/session/datum/@nodeset'
+        self.assertEqual(
+            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][{}]{}".format(
+                RESULTS_INSTANCE,
+                RESULTS_INSTANCE,
+                self.module.case_type,
+                another_case_type,
+                self.module.search_config.search_filter,
+                EXCLUDE_RELATED_CASES_FILTER
+            ),
+            suite.xpath(ref_path)[0]
+        )
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <data key="case_type" ref="'case'"/>
+              <data key="case_type" ref="'another_case_type'"/>
+            </partial>
+            """,
+            suite_xml,
+            "./remote-request[1]/session/query/data[@key='case_type']"
         )
 
     def test_case_search_action_relevant_condition(self, *args):
@@ -457,7 +485,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_prompt_address_receiver(self, *args):
         """Setting the appearance to "address"
         """
-        # Shouldn't be included for versions before 2.50
         self.module.search_config.properties[0].receiver_expression = 'home-street'
         suite = self.app.create_suite()
         expected = """
@@ -476,7 +503,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_prompt_hidden(self, *args):
         """Setting the appearance to "address"
         """
-        # Shouldn't be included for versions before 2.50
         self.module.search_config.properties[0].hidden = True
         suite = self.app.create_suite()
         expected = """
@@ -495,7 +521,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_prompt_address_receiver_itemset(self, *args):
         """Setting the appearance to "address"
         """
-        # Shouldn't be included for versions before 2.50
         self.module.search_config.properties[0].receiver_expression = 'home-street'
         self.module.search_config.properties[0].input_ = 'select1'
         self.module.search_config.properties[0].itemset = Itemset(
@@ -606,6 +631,22 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         expected = """
         <partial>
           <prompt default="3" key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_allow_blank_value(self, *args):
+        self.module.search_config.properties[0].allow_blank_value = True
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" allow_blank_value="true">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>

@@ -15,6 +15,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_FIXTURE,
     MODEL_KEYWORD,
     MODEL_REPORT,
+    SUPERUSER_DATA_MODELS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_actions_in_domain_link_history,
@@ -25,29 +26,49 @@ from corehq.apps.linked_domain.models import (
     KeywordLinkDetail,
     ReportLinkDetail,
 )
-from corehq.apps.linked_domain.util import server_to_user_time
+from corehq.apps.linked_domain.util import server_to_user_time, is_keyword_linkable
 from corehq.apps.sms.models import Keyword
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.util.timezones.utils import get_timezone_for_request
+from corehq.apps.userreports.util import get_existing_reports
 
 
-def get_apps(domain):
-    master_list = {}
-    linked_list = {}
+def build_domain_link_view_model(link, timezone):
+    return {
+        'downstream_domain': link.linked_domain,
+        'upstream_domain': link.master_domain,
+        'upstream_url': link.upstream_url,
+        'downstream_url': link.downstream_url,
+        'is_remote': link.is_remote,
+        'last_update': server_to_user_time(link.last_pull, timezone) if link.last_pull else _('Never'),
+    }
+
+
+def get_upstream_and_downstream_apps(domain):
+    """
+    Return 2 lists of app_briefs
+    The upstream_list contains apps that originated in the specified domain
+    The downstream_list contains apps that have been pulled from a domain upstream of the specified domain
+    """
+    upstream_list = {}
+    downstream_list = {}
     briefs = get_brief_apps_in_domain(domain, include_remote=False)
     for brief in briefs:
         if is_linked_app(brief):
-            linked_list[brief._id] = brief
+            downstream_list[brief._id] = brief
         else:
-            master_list[brief._id] = brief
-    return master_list, linked_list
+            upstream_list[brief._id] = brief
+    return upstream_list, downstream_list
 
 
-def get_fixtures(domain, master_link):
-    master_list = get_fixtures_for_domain(domain)
-    linked_list = get_fixtures_for_domain(master_link.master_domain) if master_link else {}
-    return master_list, linked_list
+def get_upstream_and_downstream_fixtures(domain, upstream_link):
+    """
+    Return 2 lists of fixtures
+    The upstream_list contains fixtures that originated in the specified domain
+    The downstream_list contains fixtures that have been pulled from a domain upstream of the specified domain
+    """
+    upstream_list = get_fixtures_for_domain(domain)
+    downstream_list = get_fixtures_for_domain(upstream_link.master_domain) if upstream_link else {}
+    return upstream_list, downstream_list
 
 
 def get_fixtures_for_domain(domain):
@@ -55,119 +76,96 @@ def get_fixtures_for_domain(domain):
     return {f.tag: f for f in fixtures if f.is_global}
 
 
-def get_reports(domain):
-    master_list = {}
-    linked_list = {}
-    reports = get_report_configs_for_domain(domain)
+def get_upstream_and_downstream_reports(domain):
+    """
+    Return 2 lists of reports
+    The upstream_list contains reports that originated in the specified domain
+    The downstream_list contains reports that have been pulled from a domain upstream of the specified domain
+    """
+    upstream_list = {}
+    downstream_list = {}
+    reports = get_existing_reports(domain)
     for report in reports:
         if report.report_meta.master_id:
-            linked_list[report.get_id] = report
+            downstream_list[report.get_id] = report
         else:
-            master_list[report.get_id] = report
-    return master_list, linked_list
+            upstream_list[report.get_id] = report
+    return upstream_list, downstream_list
 
 
-def get_keywords(domain):
-    master_list = {}
-    linked_list = {}
+def get_upstream_and_downstream_keywords(domain):
+    """
+    Return 2 lists of keywords
+    The upstream_list contains keywords that originated in the specified domain
+    The downstream_list contains keywords that have been pulled from a domain upstream of the specified domain
+    """
+    upstream_list = {}
+    downstream_list = {}
     keywords = Keyword.objects.filter(domain=domain)
     for keyword in keywords:
         if keyword.upstream_id:
-            linked_list[str(keyword.id)] = keyword
+            downstream_list[str(keyword.id)] = keyword
         else:
-            master_list[str(keyword.id)] = keyword
-    return master_list, linked_list
+            upstream_list[str(keyword.id)] = keyword
+    return upstream_list, downstream_list
 
 
 def build_app_view_model(app, last_update=None):
-    can_update = False
-    name = _('Unknown App')
-    detail = None
+    if not app:
+        return None
 
-    if app:
-        can_update = True
-        name = app.name
-        detail = AppLinkDetail(app_id=app._id).to_json()
-
-    view_model = build_linked_data_view_model(
+    return build_linked_data_view_model(
         model_type=MODEL_APP,
-        name=f"{LINKED_MODELS_MAP[MODEL_APP]} ({name})",
-        detail=detail,
+        name=f"{LINKED_MODELS_MAP[MODEL_APP]} ({app.name})",
+        detail=AppLinkDetail(app_id=app._id).to_json(),
         last_update=last_update,
-        can_update=can_update
     )
-
-    return view_model
 
 
 def build_fixture_view_model(fixture, last_update=None):
-    can_update = False
-    name = _('Unknown Table')
-    detail = None
+    if not fixture:
+        return None
 
-    if fixture:
-        can_update = fixture.is_global
-        name = fixture.tag
-        detail = FixtureLinkDetail(tag=fixture.tag).to_json()
-
-    view_model = build_linked_data_view_model(
+    return build_linked_data_view_model(
         model_type=MODEL_FIXTURE,
-        name=f"{LINKED_MODELS_MAP[MODEL_FIXTURE]} ({name})",
-        detail=detail,
+        name=f"{LINKED_MODELS_MAP[MODEL_FIXTURE]} ({fixture.tag})",
+        detail=FixtureLinkDetail(tag=fixture.tag).to_json(),
         last_update=last_update,
-        can_update=can_update
+        can_update=fixture.is_global,
     )
-
-    return view_model
 
 
 def build_report_view_model(report, last_update=None):
-    can_update = False
-    name = _("Unknown Report")
-    detail = None
+    if not report:
+        return None
 
-    if report:
-        can_update = True
-        name = report.title
-        detail = ReportLinkDetail(report_id=report.get_id).to_json()
-
-    view_model = build_linked_data_view_model(
+    return build_linked_data_view_model(
         model_type=MODEL_REPORT,
-        name=f"{LINKED_MODELS_MAP[MODEL_REPORT]} ({name})",
-        detail=detail,
+        name=f"{LINKED_MODELS_MAP[MODEL_REPORT]} ({report.title})",
+        detail=ReportLinkDetail(report_id=report.get_id).to_json(),
         last_update=last_update,
-        can_update=can_update
     )
-
-    return view_model
 
 
 def build_keyword_view_model(keyword, last_update=None):
-    can_update = False
-    name = _("Deleted Keyword")
-    detail = None
+    if not keyword:
+        return None
 
-    if keyword:
-        can_update = True
-        name = keyword.keyword
-        detail = KeywordLinkDetail(keyword_id=str(keyword.id)).to_json()
-
-    view_model = build_linked_data_view_model(
+    return build_linked_data_view_model(
         model_type=MODEL_KEYWORD,
-        name=f"{LINKED_MODELS_MAP[MODEL_KEYWORD]} ({name})",
-        detail=detail,
+        name=f"{LINKED_MODELS_MAP[MODEL_KEYWORD]} ({keyword.keyword})",
+        detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json(),
         last_update=last_update,
-        can_update=can_update
+        is_linkable=is_keyword_linkable(keyword),
     )
 
-    return view_model
 
-
-def build_feature_flag_view_models(domain):
+def build_feature_flag_view_models(domain, ignore_models=None):
+    ignore_models = ignore_models or []
     view_models = []
 
     for model, name in FEATURE_FLAG_DATA_MODELS:
-        if FEATURE_FLAG_DATA_MODEL_TOGGLES[model].enabled(domain):
+        if model not in ignore_models and FEATURE_FLAG_DATA_MODEL_TOGGLES[model].enabled(domain):
             view_models.append(
                 build_linked_data_view_model(
                     model_type=model,
@@ -198,27 +196,51 @@ def build_domain_level_view_models(ignore_models=None):
     return view_models
 
 
-def build_linked_data_view_model(model_type, name, detail, last_update=None, can_update=True):
+def build_superuser_view_models(ignore_models=None):
+    ignore_models = ignore_models or []
+    view_models = []
+
+    for model, name in SUPERUSER_DATA_MODELS:
+        if model not in ignore_models:
+            view_models.append(
+                build_linked_data_view_model(
+                    model_type=model,
+                    name=name,
+                    detail=None,
+                    last_update=_('Never')
+                )
+            )
+
+    return view_models
+
+
+def build_linked_data_view_model(model_type, name, detail, last_update=None, can_update=True, is_linkable=True):
     return {
         'type': model_type,
         'name': name,
         'detail': detail,
         'last_update': last_update,
-        'can_update': can_update
+        'can_update': can_update,
+        'is_linkable': is_linkable,
     }
 
 
-def build_view_models_from_data_models(domain, apps, fixtures, reports, keywords, ignore_models=None):
+def build_view_models_from_data_models(domain, apps, fixtures, reports, keywords, ignore_models=None,
+                                       is_superuser=False):
     """
     Based on the provided data models, convert to view models, ignoring any models specified in ignore_models
     :return: list of view models (dicts) used to render elements on the release content page
     """
     view_models = []
 
+    if is_superuser:
+        superuser_view_models = build_superuser_view_models(ignore_models=ignore_models)
+        view_models.extend(superuser_view_models)
+
     domain_level_view_models = build_domain_level_view_models(ignore_models=ignore_models)
     view_models.extend(domain_level_view_models)
 
-    feature_flag_view_models = build_feature_flag_view_models(domain)
+    feature_flag_view_models = build_feature_flag_view_models(domain, ignore_models=ignore_models)
     view_models.extend(feature_flag_view_models)
 
     for app in apps.values():
@@ -269,10 +291,13 @@ def pop_report_for_action(action, reports):
     try:
         report = reports.get(report_id)
         del reports[report_id]
+        return report
     except KeyError:
         report = ReportConfiguration.get(report_id)
-
-    return report
+        if report.doc_type == "ReportConfiguration-Deleted":
+            return None
+        else:
+            return report
 
 
 def pop_keyword_for_action(action, keywords):
@@ -289,7 +314,8 @@ def pop_keyword_for_action(action, keywords):
     return keyword
 
 
-def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fixtures, reports, keywords):
+def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fixtures, reports, keywords,
+                                                timezone, is_superuser=False):
     """
     Data models that originated in this domain's upstream domain that are available to pull
     :return: list of view models (dicts) used to render linked data models that can be pulled
@@ -300,7 +326,6 @@ def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fix
         return linked_data_view_models
 
     models_seen = set()
-    timezone = get_timezone_for_request()
     history = get_actions_in_domain_link_history(upstream_link)
     for action in history:
         if action.row_number != 1:
@@ -313,19 +338,15 @@ def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fix
         if action.model == MODEL_APP:
             app = pop_app_for_action(action, apps)
             view_model = build_app_view_model(app, last_update=last_update)
-
         elif action.model == MODEL_FIXTURE:
             fixture = pop_fixture_for_action(action, fixtures, domain)
             view_model = build_fixture_view_model(fixture, last_update=last_update)
-
         elif action.model == MODEL_REPORT:
             report = pop_report_for_action(action, reports)
             view_model = build_report_view_model(report, last_update=last_update)
-
         elif action.model == MODEL_KEYWORD:
             keyword = pop_keyword_for_action(action, keywords)
             view_model = build_keyword_view_model(keyword, last_update=last_update)
-
         else:
             view_model = build_linked_data_view_model(
                 model_type=action.model,
@@ -333,14 +354,15 @@ def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fix
                 detail=action.model_detail,
                 last_update=last_update,
             )
-
-        linked_data_view_models.append(view_model)
+        if view_model:
+            if view_model['type'] not in dict(SUPERUSER_DATA_MODELS).keys() or is_superuser:
+                linked_data_view_models.append(view_model)
 
     # Add data models that have never been pulled into the downstream domain before
     # ignoring any models we have already added via domain history
     linked_data_view_models.extend(
         build_view_models_from_data_models(
-            domain, apps, fixtures, reports, keywords, ignore_models=models_seen)
+            domain, apps, fixtures, reports, keywords, ignore_models=models_seen, is_superuser=is_superuser)
     )
 
     return linked_data_view_models

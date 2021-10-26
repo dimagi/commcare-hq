@@ -1,13 +1,12 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 from django.core.management.base import BaseCommand, CommandError
 
 from itertools import zip_longest
 
 from corehq.util.argparse_types import date_type
-from couchforms.models import doc_types
 
-from corehq.apps.change_feed.document_types import CASE_DOC_TYPES
 from corehq.apps.data_pipeline_audit.dbacessors import (
     get_es_case_counts,
     get_es_case_ids,
@@ -23,7 +22,7 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_user_ids,
 )
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.utils import should_use_sql_backend
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.util.markup import (
     CSVRowFormatter,
     SimpleTableWriter,
@@ -61,13 +60,6 @@ class Command(BaseCommand):
         startdate = options.get('start')
         enddate = options.get('end')
 
-        form_doc_types = doc_types()
-
-        if startdate or enddate:
-            if doc_type in CASE_DOC_TYPES or doc_type in form_doc_types:
-                if not should_use_sql_backend(domain):
-                    raise CommandError("Date filtering not supported for Couch domains")
-
         if startdate and enddate and enddate <= startdate:
             raise CommandError("enddate must be after startdate")
 
@@ -78,9 +70,10 @@ class Command(BaseCommand):
             'CommCareUser-Deleted': _compare_users,
             'WebUser': _compare_users,
         }
-        handlers.update({doc_type: compare_xforms for doc_type in form_doc_types})
+        handlers.update({doc_type: compare_xforms for doc_type in XFormInstanceSQL.DOC_TYPE_TO_STATE})
         try:
-            primary_count, es_count, primary_only, es_only = handlers[doc_type](domain, doc_type, startdate, enddate)
+            primary_count, es_count, primary_only, es_only = \
+                handlers[doc_type](domain, doc_type, startdate, enddate)
         except KeyError:
             raise CommandError('Unsupported doc type. Use on of: {}'.format(', '.join(handlers)))
 
@@ -119,18 +112,17 @@ def compare_cases(domain, doc_type, startdate, enddate):
     # large domain, so break up by month
     startdate, enddate = get_es_case_range(domain)
     primary_count, es_count, primary_ids, es_ids = 0, 0, set(), set()
-    months = (enddate - startdate).days / 30 + 1
-    for month in range(0, months):
-        enddate = (startdate + timedelta(days=(month + 1) * 30)).date()
-        startdate = (startdate + timedelta(days=month * 30)).date()
+    while startdate <= enddate:
+        batch_enddate = (startdate + relativedelta(months=1))
         pc1, esc1, p1, es1 = _get_diffs(
-            get_primary_db_case_ids(domain, doc_type, startdate, enddate),
-            get_es_case_ids(domain, doc_type, startdate, enddate)
+            get_primary_db_case_ids(domain, doc_type, startdate, batch_enddate),
+            get_es_case_ids(domain, doc_type, startdate, batch_enddate)
         )
         primary_count = primary_count + pc1
         es_count = es_count + esc1
         primary_ids = primary_ids.union(p1)
         es_ids = es_ids.union(es1)
+        startdate = batch_enddate
     return primary_count, es_count, primary_ids, es_ids
 
 

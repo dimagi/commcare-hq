@@ -31,6 +31,7 @@ from django.views.decorators.http import (
     require_http_methods,
     require_POST,
 )
+from django.views.generic.edit import ModelFormMixin, ProcessFormView
 from django.views.generic import View
 from django.views.generic.base import TemplateView
 
@@ -51,7 +52,6 @@ from casexml.apps.case.util import (
 from casexml.apps.case.views import get_wrapped_case
 from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 from casexml.apps.case.xml import V2
-from casexml.apps.stock.models import StockTransaction
 from couchexport.export import Format, export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.datespan import datespan_in_request
@@ -93,6 +93,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.doc_info import DocInfo, get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.locations.permissions import (
     can_edit_form_location,
@@ -120,6 +121,7 @@ from corehq.apps.saved_reports.tasks import (
 )
 from corehq.apps.userreports.util import \
     default_language as ucr_default_language
+from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import (
     CommCareUser,
@@ -164,7 +166,9 @@ from corehq.util.view_utils import (
 from no_exceptions.exceptions import Http403
 
 from .dispatcher import ProjectReportDispatcher
-from .forms import SavedReportConfigForm
+from .forms import SavedReportConfigForm, TableauServerForm, TableauVisualizationForm
+from .lookup import ReportLookup, get_full_report_name
+from .models import TableauVisualization, TableauServer
 from .standard import ProjectReport, inspect
 from .standard.cases.basic import CaseListReport
 
@@ -224,8 +228,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
     page_title = ugettext_noop("My Saved Reports")
     template_name = 'reports/reports_home.html'
 
-    default_scheduled_report_length = 10
-
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
@@ -274,10 +276,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
         return sorted(scheduled_reports, key=self._report_sort_key())
 
     @property
-    def show_all_scheduled_reports(self):
-        return self.request.GET.get('show_all_scheduled_reports', False)
-
-    @property
     def others_scheduled_reports(self):
         def _is_valid(rn):
             # the _id check is for weird bugs we've seen in the wild that look like
@@ -298,14 +296,11 @@ class MySavedReportsView(BaseProjectReportSectionView):
                                                         include_docs=True, startkey=key, endkey=key + [{}])
         user = self.request.couch_user
         user_email = user.get_email()
-        is_admin = user.is_domain_admin(self.domain)
         for scheduled_report in all_scheduled_reports:
             if not _is_valid(scheduled_report) or user_email == scheduled_report.owner_email:
                 continue
             self._adjust_report_day_and_time(scheduled_report)
-            if is_admin:
-                ret.append(scheduled_report)
-            elif user_email in scheduled_report.all_recipient_emails:
+            if scheduled_report.can_be_viewed_by(user):
                 ret.append(scheduled_report)
         return sorted(ret, key=self._report_sort_key())
 
@@ -328,13 +323,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
     def page_context(self):
         user = self.request.couch_user
         others_scheduled_reports = self.others_scheduled_reports
-        if self.show_all_scheduled_reports:
-            num_unlisted_scheduled_reports = 0
-        else:
-            cur_len = len(others_scheduled_reports)
-            num_unlisted_scheduled_reports = max(0, cur_len - self.default_scheduled_report_length)
-            others_scheduled_reports = others_scheduled_reports[:min(self.default_scheduled_report_length,
-                                                                     cur_len)]
 
         class OthersScheduledReportWrapper(ReportNotification):
             @property
@@ -343,14 +331,22 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
         for other_report in others_scheduled_reports:
             other_report.__class__ = OthersScheduledReportWrapper
+
+        others_scheduled_reports = [
+            self.report_details(r, user.get_email(), r.context_secret) for r in others_scheduled_reports
+        ]
+
+        scheduled_reports = [
+            self.report_details(r) for r in self.scheduled_reports
+        ]
+
         return {
             'couch_user': user,
             'user_email': user.get_email(),
             'is_admin': user.is_domain_admin(self.domain),
             'configs': self.good_configs,
-            'scheduled_reports': self.scheduled_reports,
+            'scheduled_reports': scheduled_reports,
             'others_scheduled_reports': others_scheduled_reports,
-            'extra_reports': num_unlisted_scheduled_reports,
             'report': {
                 'title': self.page_title,
                 'show': True,
@@ -359,6 +355,46 @@ class MySavedReportsView(BaseProjectReportSectionView):
                 'section_name': self.section_name,
             }
         }
+
+    @staticmethod
+    def report_details(report, user_email=None, context_secret=None):
+        details = {
+            'id': report.get_id,
+            'addedToBulk': report.addedToBulk,
+            'domain': report.domain,
+            'owner_id': report.owner_id,
+            'recipient_emails': report.recipient_emails,
+            'config_ids': report.config_ids,
+            'send_to_owner': report.send_to_owner,
+            'hour': report.hour,
+            'minute': report.minute,
+            'day': report.day,
+            'uuid': report.uuid,
+            'start_date': report.start_date,
+
+            #property methods
+            'configs': [{'url': r.url,
+                         'name': r.name,
+                         'report_name': r.report_name} for r in report.configs],
+            'is_editable': report.is_editable,
+            'owner_email': report.owner_email,
+            'day_name': report.day_name,
+
+            #urls
+            'editUrl': reverse(ScheduledReportsView.urlname, args=(report.domain, report.get_id)),
+            'viewUrl': reverse(view_scheduled_report, args=(report.domain, report.get_id)),
+            'sendUrl': reverse(send_test_scheduled_report, args=(report.domain, report.get_id)),
+            'deleteUrl': reverse(delete_scheduled_report, args=(report.domain, report.get_id)),
+        }
+
+        #only for others_scheduled_reports
+        if user_email and context_secret:
+            details['unsubscribeUrl'] = reverse(ReportNotificationUnsubscribeView.urlname,
+                                                args=(report.get_id, user_email, context_secret))
+        else:
+            details['unsubscribeUrl'] = ''
+
+        return details
 
 
 def should_update_export(last_accessed):
@@ -465,15 +501,17 @@ class AddSavedReportConfigView(View):
     def user_id(self):
         return self.request.couch_user._id
 
-
 @login_and_domain_required
 @datespan_default
-def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix, once=False):
+def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
     from .forms import EmailReportForm
 
     form = EmailReportForm(request.GET)
     if not form.is_valid():
         return HttpResponseBadRequest()
+
+    if not _can_email_report(report_slug, request, dispatcher_class, domain):
+        raise Http404()
 
     recipient_emails = set(form.cleaned_data['recipient_emails'])
     if form.cleaned_data['send_to_owner']:
@@ -481,24 +519,43 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     request_data = request_as_dict(request)
 
+    report_type = dispatcher_class.prefix
     send_email_report.delay(recipient_emails, domain, report_slug, report_type,
                             request_data, once, form.cleaned_data)
     return HttpResponse()
+
+
+def _can_email_report(report_slug, request, dispatcher_class, domain):
+    dispatcher = dispatcher_class()
+    lookup = ReportLookup(dispatcher.map_name)
+    report = lookup.get_report(domain, report_slug)
+    if not report:
+        return False
+
+    report_name = get_full_report_name(report)
+    return dispatcher.permissions_check(report_name, request, domain)
 
 
 @login_and_domain_required
 @require_http_methods(['DELETE'])
 def delete_config(request, domain, config_id):
     try:
-        config = ReportConfig.get(config_id)
+        saved_report = ReportConfig.get(config_id)
     except ResourceNotFound:
         raise Http404()
 
-    config.delete()
+    if not _can_delete_saved_report(saved_report, request.couch_user, domain):
+        raise Http404()
+
+    saved_report.delete()
     ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
 
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
+
+
+def _can_delete_saved_report(report, user, domain):
+    return domain == report.domain and user._id == report.owner_id
 
 
 def normalize_hour(hour):
@@ -545,6 +602,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     page_title = _("Scheduled Report")
     template_name = 'reports/edit_scheduled_report.html'
 
+    @method_decorator(require_permission(Permissions.download_reports))
     @use_multiselect
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
@@ -638,8 +696,6 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @property
     @memoized
     def scheduled_report_form(self):
-        web_users = WebUser.view('users/web_users_by_domain', reduce=False,
-                               key=self.domain, include_docs=True).all()
         initial = self.report_notification.to_json()
         kwargs = {'initial': initial}
         if self.request.method == "POST":
@@ -649,7 +705,11 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             args = ()
             selected_emails = kwargs.get('initial', {}).get('recipient_emails', [])
 
-        web_user_emails = [u.get_email() for u in web_users]
+        web_user_emails = [
+            WebUser.wrap(row['doc']).get_email()
+            for row in get_all_user_rows(self.domain, include_web_users=True,
+                                         include_mobile_users=False, include_docs=True)
+        ]
         for email in selected_emails:
             if email not in web_user_emails:
                 web_user_emails = [email] + web_user_emails
@@ -672,7 +732,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             'report': {
                 'show': user_can_view_reports(self.request.project, self.request.couch_user),
                 'slug': None,
-                'default_url': reverse('reports_home', args=(self.domain,)),
+                'default_url': reverse('reports_home', args=(self.domain,)) + '#scheduled-reports',
                 'is_async': False,
                 'section_name': ProjectReport.section_name,
                 'title': self.page_name,
@@ -730,7 +790,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 messages.success(request, _("Scheduled report updated."))
 
             touch_saved_reports_views(request.couch_user, self.domain)
-            return HttpResponseRedirect(reverse('reports_home', args=(self.domain,)))
+            return HttpResponseRedirect(reverse('reports_home', args=(self.domain,)) + '#scheduled-reports')
 
         return self.get(request, *args, **kwargs)
 
@@ -797,33 +857,92 @@ class ReportNotificationUnsubscribeView(TemplateView):
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
     user = request.couch_user
+    delete_count = request.POST.get("bulkDeleteCount")
+
     try:
-        rep = ReportNotification.get(scheduled_report_id)
+        if delete_count:
+            delete_list = json.loads(request.POST.get("deleteList"))
+            scheduled_reports = [ReportNotification.get(report_id) for report_id in delete_list]
+        else:
+            scheduled_report = ReportNotification.get(scheduled_report_id)
     except ResourceNotFound:
         # was probably already deleted by a fast-clicker.
         pass
     else:
-        if user._id != rep.owner._id and not user.is_domain_admin(domain):
-            return HttpResponseBadRequest()
+        if delete_count:
+            for report in scheduled_reports:
+                if not _can_delete_scheduled_report(report, user, domain):
+                    raise Http404()
 
-        rep.delete()
-        messages.success(request, "Scheduled report deleted!")
-    return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+            for report in scheduled_reports:
+                report.delete()
+            if int(delete_count) > 1:
+                plural = "s were"
+            else:
+                plural = " was"
+            messages.success(
+                request,
+                format_html(_("<strong>{}</strong> Scheduled report{} deleted!"), delete_count, plural)
+            )
+            # not necessary since it just refreshes from the js
+            return HttpResponse(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
+        else:
+            if not _can_delete_scheduled_report(scheduled_report, user, domain):
+                raise Http404()
+
+            scheduled_report.delete()
+            messages.success(request, "Scheduled report deleted!")
+
+    return HttpResponseRedirect(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
+
+
+def _can_delete_scheduled_report(report, user, domain):
+    if report.domain != domain:
+        return False
+
+    return user._id == report.owner_id or user.is_domain_admin(domain)
 
 
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
+    if not _can_send_test_report(scheduled_report_id, request.couch_user, domain):
+        raise Http404()
+    send_count = request.POST.get("bulkSendCount")
 
     try:
-        send_delayed_report(scheduled_report_id)
+        if send_count:
+            for report_id in json.loads(request.POST.get("sendList")):
+                send_delayed_report(report_id)
+        else:
+            send_delayed_report(scheduled_report_id)
     except Exception as e:
         import logging
         logging.exception(e)
         messages.error(request, _("An error occurred, message unable to send"))
     else:
-        messages.success(request, _("Report sent to this report's recipients"))
+        if send_count and int(send_count) > 1:
+            messages.success(
+                request,
+                format_html(_("{} reports sent to their recipients"), send_count)
+            )
+        else:
+            messages.success(request, _("Report sent to this report's recipients"))
 
-    return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+    if send_count:
+        return HttpResponse(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
+    else:
+        return HttpResponseRedirect(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
+
+def _can_send_test_report(report_id, user, domain):
+    try:
+        report = ReportNotification.get(report_id)
+    except ResourceNotFound:
+        return False
+
+    if report.domain != domain:
+        return False
+
+    return user._id == report.owner._id or user.is_domain_admin(domain)
 
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
@@ -837,6 +956,17 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
     be sent.
     """
     # todo: clean up this API?
+    domain_obj = Domain.get_by_name(domain)
+    if not user_can_view_reports(domain_obj, couch_user):
+        raise Http404
+
+    scheduled_report = ReportNotification.get_report(scheduled_report_id)
+    if not scheduled_report:
+        raise Http404
+
+    if not (scheduled_report.domain == domain and scheduled_report.can_be_viewed_by(couch_user)):
+        raise Http404
+
     from django.http import HttpRequest
     if not request:
         request = HttpRequest()
@@ -844,19 +974,16 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
         request.user = couch_user.get_django_user()
         request.domain = domain
         request.couch_user.current_domain = domain
-    notification = ReportNotification.get(scheduled_report_id)
-    if notification.doc_type != 'ReportNotification' or notification.domain != domain:
-        raise Http404
 
     return _render_report_configs(
         request,
-        notification.configs,
-        notification.domain,
-        notification.owner_id,
+        scheduled_report.configs,
+        scheduled_report.domain,
+        scheduled_report.owner_id,
         couch_user,
         email,
         attach_excel=attach_excel,
-        lang=notification.language,
+        lang=scheduled_report.language,
         send_only_active=send_only_active,
     )
 
@@ -1376,21 +1503,23 @@ def export_case_transactions(request, domain, case_id):
             transaction.case_id,
             case.name,
             transaction.section_id,
-            transaction.report.date if transaction.report_id else '',
-            transaction.product_id,
-            products_by_id.get(transaction.product_id, _('unknown product')),
-            transaction.quantity,
+            transaction.report_date or '',
+            transaction.entry_id,
+            products_by_id.get(transaction.entry_id, _('unknown product')),
+            transaction.delta,
             transaction.type,
             transaction.stock_on_hand,
         ]
 
-    query_set = StockTransaction.objects.select_related('report')\
-        .filter(case_id=case_id).order_by('section_id', 'report__date')
+    transactions = sorted(
+        LedgerAccessors.get_ledger_transactions_for_case(case_id),
+        key=lambda tx: (tx.section_id, tx.report_date)
+    )
 
     formatted_table = [
         [
-            'stock transactions',
-            [headers] + [_make_row(txn) for txn in query_set]
+            'ledger transactions',
+            [headers] + [_make_row(txn) for txn in transactions]
         ]
     ]
     tmp = io.StringIO()
@@ -1553,10 +1682,10 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
             domain=domain,
             display='demo_user',
         )
-    elif meta_username == 'admin':
+    elif meta_username in ('admin', 'system'):
         user_info = DocInfo(
             domain=domain,
-            display='admin',
+            display=meta_username,
         )
     else:
         user_info = get_doc_info_by_id(None, meta_userID)
@@ -1807,7 +1936,7 @@ class EditFormInstance(View):
         if not user:
             return _error(_('Could not find user for this submission.'))
 
-        edit_session_data = get_user_contributions_to_touchforms_session(user)
+        edit_session_data = get_user_contributions_to_touchforms_session(domain, user)
 
         # add usercase to session
         form = self._get_form_from_instance(instance)
@@ -2079,6 +2208,9 @@ def _is_location_safe_report_class(view_fn, request, domain, export_hash, format
     return report_class_is_location_safe(meta.properties["report_class"])
 
 
+# TODO: This should be renamed to better convey what the function does.
+# Export suggests that this is exporting data, but this is actually the function
+# that retrieves the data that was previously exported.
 @conditionally_location_safe(_is_location_safe_report_class)
 @login_and_domain_required
 @require_GET
@@ -2091,6 +2223,10 @@ def export_report(request, domain, export_hash, format):
         meta = db.metadb.get(parent_id=export_hash, key=export_hash)
     except models.BlobMeta.DoesNotExist:
         return report_not_found
+
+    if domain != meta.domain:
+        raise Http404()
+
     report_class = meta.properties["report_class"]
 
     try:
@@ -2127,3 +2263,143 @@ def project_health_user_details(request, domain, user_id):
         'groups': ', '.join(g.name for g in Group.by_user_id(user_id)),
         'submission_by_form_link': submission_by_form_link,
     })
+
+
+class TableauServerView(BaseProjectReportSectionView):
+    urlname = 'tableau_server_view'
+    page_title = ugettext_lazy('Tableau Server Config')
+    template_name = 'hqwebapp/crispy/single_crispy_form.html'
+
+    @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TableauServerView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def tableau_server_form(self):
+        data = self.request.POST if self.request.method == 'POST' else None
+        return TableauServerForm(
+            data, domain=self.domain
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.domain
+        kwargs['initial'] = TableauServer.objects.get_or_create(domain=self.domain)
+        return kwargs
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.tableau_server_form
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.tableau_server_form.is_valid():
+            self.tableau_server_form.save()
+            messages.success(
+                request, ugettext_lazy("Tableau Server Settings Updated")
+            )
+        else:
+            messages.error(
+                request, ugettext_lazy("Could not update Tableau Server Settings")
+            )
+        return self.get(request, *args, **kwargs)
+
+
+class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedViewMixin):
+    urlname = 'tableau_visualization_list_view'
+    page_title = _('Tableau Visualizations')
+    template_name = 'reports/tableau_visualization.html'
+
+    @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TableauVisualizationListView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def total(self):
+        return self.base_query.count()
+
+    @property
+    def base_query(self):
+        return TableauVisualization.objects.filter(domain=self.domain)
+
+    @property
+    def column_names(self):
+        return [
+            _("Server"),
+            _("View URL"),
+        ]
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def paginated_list(self):
+        start, end = self.skip, self.skip + self.limit
+        for tableau_visualization in self.base_query.all()[start:end]:
+            yield {
+                "itemData": self._get_item_data(tableau_visualization),
+                "template": "tableau-visualization-template",
+            }
+
+    def _get_item_data(self, tableau_visualization):
+        data = {
+            'id': tableau_visualization.id,
+            'server': tableau_visualization.server.server_name,
+            'view_url': tableau_visualization.view_url,
+        }
+        return data
+
+    def get_deleted_item_data(self, item_id):
+        tableau_viz = TableauVisualization.objects.get(
+            pk=item_id,
+            domain=self.domain,
+        )
+        tableau_viz.delete()
+        return {
+            'itemData': self._get_item_data(tableau_viz),
+            'template': 'tableau-visualization-deleted-template',
+        }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+
+class TableauVisualizationDetailView(BaseProjectReportSectionView, ModelFormMixin, ProcessFormView):
+    urlname = 'tableau_visualization_detail_view'
+    page_title = _('Tableau Visualization')
+    template_name = 'hqwebapp/crispy/single_crispy_form.html'
+    model = TableauVisualization
+    form_class = TableauVisualizationForm
+
+    @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TableauVisualizationDetailView, self).dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return super().get_queryset().filter(domain=self.domain)
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object() if self.pk_url_kwarg in self.kwargs else None
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object() if self.pk_url_kwarg in self.kwargs else None
+        return super().post(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.domain
+        return kwargs
+
+    def get_success_url(self):
+        return reverse(
+            TableauVisualizationListView.urlname,
+            kwargs={'domain': self.domain},
+        )
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)

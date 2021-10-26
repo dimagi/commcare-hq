@@ -28,7 +28,6 @@ class MockDataSourceProviderTest(SimpleTestCase):
     def test_empty(self):
         provider = MockDataSourceProvider()
         self.assertEqual([], provider.get_all_data_sources())
-        self.assertEqual([], provider.by_domain('foo'))
         self.assertEqual([], provider.get_data_sources_modified_since(datetime.datetime.utcnow()))
 
     def test_with_data(self):
@@ -40,6 +39,3 @@ class MockDataSourceProviderTest(SimpleTestCase):
             'domain2': [ds_3],
         })
         self.assertEqual({ds_1, ds_2, ds_3}, set(provider.get_all_data_sources()))
-        self.assertEqual([ds_1, ds_2], provider.by_domain('domain1'))
-        self.assertEqual([ds_3], provider.by_domain('domain2'))
-        self.assertEqual([], provider.by_domain('domain3'))

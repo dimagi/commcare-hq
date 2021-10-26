@@ -10,10 +10,7 @@ from corehq.apps.es import CaseES, CaseSearchES
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    run_with_all_backends,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -49,7 +46,6 @@ class CasePillowTest(TestCase):
         PillowError.objects.all().delete()
         super(CasePillowTest, self).tearDown()
 
-    @run_with_all_backends
     def test_case_pillow(self):
         case_id, case_name = self._create_case_and_sync_to_es()
 
@@ -61,7 +57,6 @@ class CasePillowTest(TestCase):
         self.assertEqual(case_id, case_doc['_id'])
         self.assertEqual(case_name, case_doc['name'])
 
-    @run_with_all_backends
     def test_case_pillow_error_in_case_es(self):
         self.assertEqual(0, PillowError.objects.filter(pillow='case-pillow').count())
         with patch('corehq.pillows.case_search.domain_needs_search_index', return_value=True), \
@@ -81,7 +76,6 @@ class CasePillowTest(TestCase):
 
         self.assertEqual(1, PillowError.objects.filter(pillow='case-pillow').count())
 
-    @run_with_all_backends
     def test_case_soft_deletion(self):
         case_id, case_name = self._create_case_and_sync_to_es()
 

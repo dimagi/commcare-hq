@@ -17,10 +17,14 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     var clearUserDataComplete = hqImport('cloudcare/js/util').clearUserDataComplete;
     var breakLocksComplete = hqImport('cloudcare/js/util').breakLocksComplete;
     var Util = hqImport("cloudcare/js/formplayer/utils/util");
-    var WebFormSession = hqImport('cloudcare/js/form_entry/webformsession').WebFormSession;
+    var WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session').WebFormSession;
     var appcues = hqImport('analytix/js/appcues');
 
-    FormplayerFrontend.on("before:start", function () {
+    FormplayerFrontend.on("before:start", function (app, options) {
+        // Make a get call if the csrf token isn't available when the page loads.
+        if ($.cookie('XSRF-TOKEN') === undefined) {
+            $.get({url: options.formplayer_url + '/serverup', global: false, xhrFields: { withCredentials: true }});
+        }
         var RegionContainer = Marionette.View.extend({
             el: "#menu-container",
 
@@ -137,18 +141,18 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         showWarning(message, $("#cloudcare-notifications"));
     });
 
-    FormplayerFrontend.getChannel().reply('showSuccess', function (successMessage) {
+    FormplayerFrontend.on('showSuccess', function (successMessage) {
         showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
     });
 
-    FormplayerFrontend.getChannel().reply('handleNotification', function (notification) {
+    FormplayerFrontend.on('handleNotification', function (notification) {
         var type = notification.type;
         if (!type) {
             type = notification.error ? "error" : "success";
         }
 
         if (type === "success") {
-            FormplayerFrontend.getChannel().request('showSuccess', notification.message);
+            FormplayerFrontend.trigger('showSuccess', notification.message);
         } else if (type === "warning") {
             FormplayerFrontend.trigger('showWarning', notification.message);
         } else {
@@ -330,7 +334,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         if (options.allowedHost) {
             window.addEventListener(
                 "message",
-                hqImport("cloudcare/js/formplayer/hq.events").Receiver(options.allowedHost),
+                hqImport("cloudcare/js/formplayer/hq_events").Receiver(options.allowedHost),
                 false
             );
         }
@@ -364,17 +368,15 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         }
 
         var urlObject = Util.currentUrlToObject();
-        var selections = urlObject.steps;
-        var appId = urlObject.appId;
 
         $debug.html('');
         cloudCareDebugger = new CloudCareDebugger({
             baseUrl: user.formplayer_url,
-            selections: selections,
+            selections: urlObject.selections,
             username: user.username,
             restoreAs: user.restoreAs,
             domain: user.domain,
-            appId: appId,
+            appId: urlObject.appId,
             tabs: [
                 TabIDs.EVAL_XPATH,
             ],
@@ -404,9 +406,18 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.on('navigation:back', function () {
         var url = Backbone.history.getFragment();
-        if (!url.includes('single_app')) {
-            window.history.back();
+        if (url.includes('single_app')) {
+            return;
         }
+        try {
+            var options = JSON.parse(url);
+            if (_.has(options, "endpointId")) {
+                return;
+            }
+        } catch (e) {
+            // do nothing
+        }
+        window.history.back();
     });
 
     FormplayerFrontend.on('setAppDisplayProperties', function (app) {
@@ -425,6 +436,23 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             domain,
             username
         );
+    });
+
+    // Support for workflows that require Login As before moving on to the
+    // screen that the user originally requested.
+    FormplayerFrontend.on('setLoginAsNextOptions', function (options) {
+        FormplayerFrontend.LoginAsNextOptions = options;
+        if (Object.freeze) {
+            Object.freeze(FormplayerFrontend.LoginAsNextOptions);
+        }
+    });
+
+    FormplayerFrontend.on('clearLoginAsNextOptions', function () {
+        return FormplayerFrontend.LoginAsNextOptions = null;
+    });
+
+    FormplayerFrontend.getChannel().reply('getLoginAsNextOptions', function () {
+        return FormplayerFrontend.LoginAsNextOptions || null;
     });
 
     /**

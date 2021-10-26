@@ -13,7 +13,7 @@ from casexml.apps.case.tests.util import (
     delete_all_sync_logs,
 )
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from casexml.apps.phone.restore import (
     RestoreConfig,
     RestoreParams,
@@ -64,7 +64,7 @@ class BaseAsyncRestoreTest(TestCase):
         return restore_config
 
 
-class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
+class AsyncRestoreTest(BaseAsyncRestoreTest):
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
     def test_regular_restore_doesnt_start_task(self, task):
         """
@@ -168,26 +168,9 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         """
         submit_form_locally(form, self.domain)
 
-    @mock.patch.object(RestorePayloadPathCache, 'invalidate')
-    @mock.patch.object(RestorePayloadPathCache, 'exists')
-    @mock.patch.object(RestoreResponse, 'as_file')
-    @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    @override_settings(CELERY_TASK_ALWAYS_EAGER=False)
-    def test_clears_cache(self, task, response, exists_patch, invalidate):
-        delay = mock.MagicMock()
-        delay.id = 'random_task_id'
-        task.delay.return_value = delay
-        response.return_value = BytesIO(b'<restore_id>123</restore_id>')
-        exists_patch.return_value = True
 
-        self._restore_config(is_async=True, overwrite_cache=False).get_payload()
-        self.assertFalse(invalidate.called)
-
-        self._restore_config(is_async=True, overwrite_cache=True).get_payload()
-        self.assertTrue(invalidate.called)
-
-
-class AsyncRestoreTest(BaseAsyncRestoreTest):
+@sharded
+class ShardedAsyncRestoreTest(BaseAsyncRestoreTest):
 
     @flag_enabled('ASYNC_RESTORE')
     def test_restore_in_progress_form_submitted_kills_old_jobs(self):
@@ -270,11 +253,6 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
 
         self._restore_config(is_async=True, overwrite_cache=True).get_payload()
         self.assertTrue(invalidate.called)
-
-
-@use_sql_backend
-class AsyncRestoreTestSQL(AsyncRestoreTest):
-    pass
 
 
 class TestAsyncRestoreResponse(TestXmlMixin, SimpleTestCase):

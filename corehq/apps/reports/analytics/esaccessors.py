@@ -2,8 +2,6 @@ from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 from django.conf import settings
 
-from django.conf import settings
-
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
@@ -424,10 +422,7 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
 
 
 def _duration_script():
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        return "doc['form.meta.timeEnd'].value.millis - doc['form.meta.timeStart'].value.millis"
-    else:
-        return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
+    return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
 
 
 def get_form_duration_stats_by_user(
@@ -553,26 +548,6 @@ def get_case_and_action_counts_for_domains(domains):
         domain: _domain_stats(domain)
         for domain in domains
     }
-
-
-def get_form_ids_missing_from_elasticsearch(all_form_ids):
-    missing_from_elasticsearch = set()
-    for form_ids in chunked(all_form_ids, 500):
-        form_ids = set(form_ids)
-        not_missing = set(FormES().doc_id(form_ids).get_ids())
-        missing_from_elasticsearch.update(form_ids - not_missing)
-        assert not_missing - form_ids == set()
-    return list(missing_from_elasticsearch)
-
-
-def get_case_ids_missing_from_elasticsearch(all_case_ids):
-    missing_from_elasticsearch = set()
-    for case_ids in chunked(all_case_ids, 500):
-        case_ids = set(case_ids)
-        not_missing = set(CaseES().doc_id(case_ids).get_ids())
-        missing_from_elasticsearch.update(case_ids - not_missing)
-        assert not_missing - case_ids == set()
-    return list(missing_from_elasticsearch)
 
 
 def get_all_user_ids_submitted(domain, app_ids=None):

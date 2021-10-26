@@ -16,9 +16,6 @@ from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.features.scheduler import (
     schedule_detail_variables,
 )
-from corehq.apps.app_manager.suite_xml.post_process.instances import (
-    get_all_instances_referenced_in_xpaths,
-)
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Action,
@@ -48,6 +45,7 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
 )
 from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, session_var
+from corehq.util.timer import time_method
 
 AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
 
@@ -55,6 +53,7 @@ AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/ca
 class DetailContributor(SectionContributor):
     section_name = 'details'
 
+    @time_method()
     def get_section_elements(self):
         if self.app.use_custom_suite:
             return []
@@ -189,12 +188,18 @@ class DetailContributor(SectionContributor):
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
                 if module.case_list_form.form_id:
-                    target_form = self.app.get_form(module.case_list_form.form_id)
-                    if target_form.is_registration_form(module.case_type):
-                        d.actions.append(self._get_reg_form_action(module))
+                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+                    form = self.app.get_form(module.case_list_form.form_id)
+                    if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
+                        valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, module)]
+                    else:
+                        valid_forms = []
+                    if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
+                        d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module):
-                    d.actions.append(self._get_case_search_action(module, in_search="search" in id))
+                    in_search = module.search_config.data_registry or "search" in id
+                    d.actions.append(self._get_case_search_action(module, in_search=in_search))
 
             try:
                 if not self.app.enable_multi_sort:
@@ -257,9 +262,9 @@ class DetailContributor(SectionContributor):
             field=field,
         )
 
-    def _get_reg_form_action(self, module):
+    def _get_case_list_form_action(self, module):
         """
-        Returns registration form action
+        Returns registration/followup form action
         """
         form = self.app.get_form(module.case_list_form.form_id)
 
@@ -281,8 +286,12 @@ class DetailContributor(SectionContributor):
                     media_image=module.case_list_form.default_media_image,
                     media_audio=module.case_list_form.default_media_audio,
                 ),
-                stack=Stack()
+                stack=Stack(),
             )
+
+        action_relevant = module.case_list_form.relevancy_expression
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain) and action_relevant:
+            action.relevant = action_relevant
 
         frame = PushFrame()
         frame.add_command(XPath.string(id_strings.form_command(form)))
@@ -597,28 +606,6 @@ def get_detail_column_infos_for_tabs_with_sorting(detail):
             ])
 
     return columns
-
-
-def get_instances_for_module(app, module, detail_section_elements):
-    """
-    This method is used by CloudCare when filtering cases.
-    """
-    modules = list(app.get_modules())
-    helper = DetailsHelper(app, modules)
-    details = detail_section_elements
-    detail_mapping = {detail.id: detail for detail in details}
-    details_by_id = detail_mapping
-    detail_ids = [helper.get_detail_id_safe(module, detail_type)
-                  for detail_type, detail, enabled in module.get_details()
-                  if enabled]
-    detail_ids = [_f for _f in detail_ids if _f]
-    xpaths = set()
-
-    for detail_id in detail_ids:
-        xpaths.update(details_by_id[detail_id].get_all_xpaths())
-
-    instances, _ = get_all_instances_referenced_in_xpaths(app, xpaths)
-    return instances
 
 
 class CaseTileHelper(object):

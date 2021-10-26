@@ -10,13 +10,46 @@ from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
+from corehq.apps.reports.models import TableauServer, TableauVisualization
 
 
-def get_toggles_previews(domain):
+def get_tableau_server_and_visualizations(domain):
+    server, created = TableauServer.objects.get_or_create(domain=domain)
+    visualizations = TableauVisualization.objects.all().filter(domain=domain)
+    vis_list = []
+    for vis in visualizations:
+        vis_list.append({
+            'domain': domain,
+            'server': server,
+            'view_url': vis.view_url,
+            'id': vis.id,
+        })
     return {
-        'toggles': list(toggles.toggles_dict(domain=domain)),
-        'previews': list(feature_previews.previews_dict(domain=domain))
+        'server': {
+            'domain': domain,
+            'server_type': server.server_type,
+            'server_name': server.server_name,
+            'validate_hostname': server.validate_hostname,
+            'target_site': server.target_site,
+            'domain_username': server.domain_username,
+        },
+        'visualizations': vis_list,
     }
+
+
+def get_enabled_toggles_and_previews(domain):
+    return {
+        'toggles': get_enabled_toggles(domain),
+        'previews': get_enabled_previews(domain)
+    }
+
+
+def get_enabled_toggles(domain):
+    return list(toggles.toggles_dict(domain=domain))
+
+
+def get_enabled_previews(domain):
+    return list(feature_previews.previews_dict(domain=domain))
 
 
 def get_custom_data_models(domain, limit_types=None):
@@ -56,7 +89,7 @@ def get_user_roles(domain):
     def _to_json(role):
         return _clean_json(role.to_json())
 
-    return [_to_json(role) for role in UserRole.by_domain(domain)]
+    return [_to_json(role) for role in UserRole.objects.get_by_domain(domain)]
 
 
 def get_data_dictionary(domain):

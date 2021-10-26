@@ -12,11 +12,11 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.openmrs.const import (
     ADDRESS_PROPERTIES,
-    IMPORT_FREQUENCY_CHOICES,
     LOG_LEVEL_CHOICES,
     NAME_PROPERTIES,
     PERSON_PROPERTIES,
 )
+from corehq.motech.const import IMPORT_FREQUENCY_CHOICES
 from corehq.motech.repeaters.forms import CaseRepeaterForm
 
 

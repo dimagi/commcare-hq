@@ -4,7 +4,7 @@ from django.test import SimpleTestCase
 
 from mock import patch
 
-from corehq.motech.openmrs.const import (
+from corehq.motech.const import (
     IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
     IMPORT_FREQUENCY_WEEKLY,

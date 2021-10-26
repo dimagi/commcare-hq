@@ -66,7 +66,7 @@ from corehq.apps.app_manager.views import (
     overwrite_module_case_list,
     paginate_releases,
     patch_xform,
-    pull_master_app,
+    pull_upstream_app,
     rearrange,
     release_build,
     revert_to_copy,
@@ -87,6 +87,7 @@ from corehq.apps.app_manager.views import (
     view_module,
     view_module_legacy,
 )
+from corehq.apps.app_manager.views.app_summary import DownloadAppWorkflowDiagramView, AppWorkflowSummaryView
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
@@ -137,11 +138,14 @@ app_urls = [
         form_source_legacy, name='form_source_legacy'),
     url(r'^app_data/$', AppDataView.as_view(), name=AppDataView.urlname),
     url(r'^summary/$', AppFormSummaryView.as_view(), name=AppFormSummaryView.urlname),
+    url(r'^summary/app/$', AppWorkflowSummaryView.as_view(), name=AppWorkflowSummaryView.urlname),
     url(r'^summary/case/$', AppCaseSummaryView.as_view(), name=AppCaseSummaryView.urlname),
     url(r'^summary/form/$', AppFormSummaryView.as_view(), name=AppFormSummaryView.urlname),
     url(r'^summary/case/download/$', DownloadCaseSummaryView.as_view(), name=DownloadCaseSummaryView.urlname),
     url(r'^summary/form/download/$', DownloadFormSummaryView.as_view(), name=DownloadFormSummaryView.urlname),
     url(r'^summary/app/download/$', DownloadAppSummaryView.as_view(), name=DownloadAppSummaryView.urlname),
+    url(r'^summary/workflow/download/$', DownloadAppWorkflowDiagramView.as_view(),
+        name=DownloadAppWorkflowDiagramView.urlname),
     url(r'^update_build_comment/$', update_build_comment,
         name='update_build_comment'),
     url(r'^update_prompts/$', PromptSettingsUpdateView.as_view(), name=PromptSettingsUpdateView.urlname),
@@ -169,7 +173,7 @@ urlpatterns = [
     url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         new_form, name='new_form'),
     url(r'^drop_usercase/(?P<app_id>[\w-]+)/$', drop_usercase, name='drop_usercase'),
-    url(r'^pull_master/(?P<app_id>[\w-]+)/$', pull_master_app, name='pull_master_app'),
+    url(r'^pull_upstream_app/(?P<app_id>[\w-]+)/$', pull_upstream_app, name='pull_upstream_app'),
     url(r'^pull_missing_multimedia/(?P<app_id>[\w-]+)/$', pull_missing_multimedia,
         name='pull_missing_multimedia'),
 

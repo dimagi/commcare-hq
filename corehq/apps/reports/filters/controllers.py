@@ -277,7 +277,7 @@ class ReassignCaseOptionsController(CaseListFilterOptionsController):
         if self.request.can_access_all_locations:
             sources.append((self.get_sharing_groups_size, self.get_sharing_groups))
         sources.append((self.get_locations_size, self.get_locations))
-        sources.append((self.get_all_users_size, self.get_all_users))
+        sources.append((self.get_active_users_size, self.get_active_users))
         return sources
 
 

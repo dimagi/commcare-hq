@@ -1,3 +1,4 @@
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
@@ -8,12 +9,12 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
-
+from corehq.apps.users.decorators import get_permission_name
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
 )
-from corehq.apps.accounting.models import Invoice, Subscription
+from corehq.apps.accounting.models import Invoice, Subscription, BillingAccount
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
     domain_is_on_trial,
@@ -31,7 +32,6 @@ from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import (
-    ManageReleasesByAppProfile,
     ManageReleasesByLocation,
 )
 from corehq.apps.export.views.incremental import IncrementalExportView
@@ -49,6 +49,7 @@ from corehq.apps.integration.views import (
     GaenOtpServerSettingsView,
     HmacCalloutSettingsView,
 )
+from corehq.apps.linked_domain.util import can_access_release_management_feature
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -65,9 +66,11 @@ from corehq.apps.reports.dispatcher import (
     ProjectReportDispatcher,
 )
 from corehq.apps.reports.models import ReportsSidebarOrdering
+from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
@@ -96,7 +99,7 @@ from corehq.messaging.scheduling.views import (
 from corehq.motech.dhis2.views import DataSetMapListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, RELEASE_MANAGEMENT
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
     dropdown_dict,
@@ -128,12 +131,15 @@ class ProjectReportsTab(UITab):
     @property
     def sidebar_items(self):
         tools = self._get_tools_items()
+        tableau = self._get_tableau_items()
         report_builder_nav = self._get_report_builder_items()
+
         project_reports = ProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = tools + report_builder_nav + self._regroup_sidebar_items(custom_reports + project_reports)
+        sidebar_items = (tools + tableau + report_builder_nav
+                         + self._regroup_sidebar_items(custom_reports + project_reports))
         return self._filter_sidebar_items(sidebar_items)
 
     def _regroup_sidebar_items(self, sidebar_items):
@@ -153,10 +159,22 @@ class ProjectReportsTab(UITab):
             'icon': 'icon-tasks fa fa-tasks',
             'show_in_dropdown': True,
         }]
-        if toggles.USER_CONFIGURABLE_REPORTS.enabled(self.couch_user.username):
-            # Only show for **users** with the flag. This flag is also available for domains
-            # but should not be granted by domain, as the feature is too advanced to turn
-            # on for all of a domain's users.
+        from corehq.apps.users.models import Permissions
+        is_ucr_toggle_enabled = (
+            toggles.USER_CONFIGURABLE_REPORTS.enabled(
+                self.domain, namespace=toggles.NAMESPACE_DOMAIN
+            )
+            or toggles.USER_CONFIGURABLE_REPORTS.enabled(
+                self.couch_user.username, namespace=toggles.NAMESPACE_USER
+            )
+        )
+        has_ucr_permissions = self.couch_user.has_permission(
+            self.domain,
+            get_permission_name(Permissions.edit_ucrs)
+        )
+
+        if is_ucr_toggle_enabled and has_ucr_permissions:
+
             from corehq.apps.userreports.views import UserConfigReportsHomeView
             tools.append({
                 'title': _(UserConfigReportsHomeView.section_name),
@@ -164,6 +182,20 @@ class ProjectReportsTab(UITab):
                 'icon': 'icon-tasks fa fa-wrench',
             })
         return [(_("Tools"), tools)]
+
+    def _get_tableau_items(self):
+        if not toggles.EMBEDDED_TABLEAU.enabled(self.domain):
+            return []
+
+        from corehq.apps.reports.models import TableauVisualization
+        from corehq.apps.reports.standard.tableau import TableauView
+        items = [{
+            'title': viz.name,
+            'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
+            'show_in_dropdown': False,
+        } for viz in TableauVisualization.objects.filter(domain=self.domain)]
+
+        return [(_("Tableau Reports"), items)] if items else []
 
     def _get_report_builder_items(self):
         user_reports = []
@@ -954,7 +986,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user
                 and couch_user.can_view_apps()
-                and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
+                and (couch_user.is_member_of(self.domain, allow_enterprise=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
@@ -995,7 +1027,7 @@ class MessagingTab(UITab):
         return (self.can_access_reminders or self.can_use_outbound_sms) and (
             self.project and not (self.project.is_snapshot or
                                   self.couch_user.is_commcare_user())
-        ) and self.couch_user.can_edit_data()
+        ) and self.couch_user.can_edit_messaging()
 
     @property
     @memoized
@@ -1113,13 +1145,13 @@ class MessagingTab(UITab):
     def contacts_urls(self):
         contacts_urls = []
 
-        if self.couch_user.can_edit_data():
+        if self.couch_user.can_edit_messaging():
             contacts_urls.append(
                 {'title': _('Chat'),
                  'url': reverse('chat_contacts', args=[self.domain])}
             )
 
-        if self.couch_user.can_edit_data():
+        if self.couch_user.can_edit_messaging():
             from corehq.apps.data_interfaces.views import CaseGroupListView, CaseGroupCaseManagementView
             contacts_urls.append({
                 'title': _(CaseGroupListView.page_title),
@@ -1176,12 +1208,14 @@ class MessagingTab(UITab):
         from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
         from corehq.messaging.smsbackends.infobip.models import InfobipBackend
         from corehq.apps.sms.views import WhatsAppTemplatesView
+
         whatsapp_urls = []
 
         domain_has_turn_integration = (
             SQLTurnWhatsAppBackend.get_api_id() in
             (b.get_api_id() for b in
              SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
+
         domain_has_infobip_integration = (
             InfobipBackend.get_api_id() in
             (b.get_api_id() for b in
@@ -1384,11 +1418,20 @@ class ProjectUsersTab(UITab):
                     return None
 
             from corehq.apps.users.views import (
+                EnterpriseUsersView,
                 EditWebUserView,
                 ListWebUsersView,
             )
             from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
-            menu.append({
+
+            if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
+                menu.append({
+                    'title': _(EnterpriseUsersView.page_title),
+                    'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
+                    'show_in_dropdown': True,
+                })
+
+            menu = menu + [{
                 'title': _(ListWebUsersView.page_title),
                 'url': reverse(ListWebUsersView.urlname,
                                args=[self.domain]),
@@ -1413,7 +1456,7 @@ class ProjectUsersTab(UITab):
                     },
                 ],
                 'show_in_dropdown': True,
-            })
+            }]
 
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
@@ -1429,19 +1472,6 @@ class ProjectUsersTab(UITab):
                 'subpages': [],
                 'show_in_dropdown': True,
             })
-
-        if self.couch_user.is_superuser:
-            from corehq.apps.users.models import DomainPermissionsMirror
-            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
-                    or DomainPermissionsMirror.mirror_domains(self.domain):
-                from corehq.apps.users.views import DomainPermissionsMirrorView
-                menu.append({
-                    'title': _(DomainPermissionsMirrorView.page_title),
-                    'url': reverse(DomainPermissionsMirrorView.urlname, args=[self.domain]),
-                    'description': _("View project spaces where users receive automatic access"),
-                    'subpages': [],
-                    'show_in_dropdown': False,
-                })
 
         return menu
 
@@ -1535,6 +1565,17 @@ class ProjectUsersTab(UITab):
         if locations_menu:
             items.append((_('Organization'), locations_menu))
 
+        if (
+                user_can_view_reports(self.project, self.couch_user)
+                and has_privilege(self._request, privileges.PROJECT_ACCESS)
+                and toggles.USER_HISTORY_REPORT.enabled(self.couch_user.username)
+        ):
+            user_management_menu = [{
+                'title': UserHistoryReport.name,
+                'url': reverse('user_management_report_dispatcher',
+                               args=[self.domain, UserHistoryReport.slug])
+            }]
+            items.append((_('User Management'), user_management_menu))
         return items
 
 
@@ -1566,25 +1607,41 @@ class EnterpriseSettingsTab(UITab):
         enterprise_views.append({
             'title': _('Billing Statements'),
             'url': reverse('enterprise_billing_statements',
-                           args=[self.domain])
+                        args=[self.domain])
         })
-        if toggles.ENTERPRISE_SSO.enabled_for_request(self._request):
-            if IdentityProvider.domain_has_editable_identity_provider(self.domain):
-                from corehq.apps.sso.views.enterprise_admin import (
-                    ManageSSOEnterpriseView,
-                    EditIdentityProviderEnterpriseView,
-                )
+        if IdentityProvider.domain_has_editable_identity_provider(self.domain):
+            from corehq.apps.sso.views.enterprise_admin import (
+                ManageSSOEnterpriseView,
+                EditIdentityProviderEnterpriseView,
+            )
+            enterprise_views.append({
+                'title': _(ManageSSOEnterpriseView.page_title),
+                'url': reverse(ManageSSOEnterpriseView.urlname, args=(self.domain,)),
+                'subpages': [
+                    {
+                        'title': _(EditIdentityProviderEnterpriseView.page_title),
+                        'urlname': EditIdentityProviderEnterpriseView.urlname,
+                    },
+                ],
+            })
+        if self.couch_user.is_superuser:
+            from corehq.apps.enterprise.models import EnterprisePermissions
+            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
+                    or EnterprisePermissions.get_by_domain(self.domain).is_enabled:
                 enterprise_views.append({
-                    'title': _(ManageSSOEnterpriseView.page_title),
-                    'url': reverse(ManageSSOEnterpriseView.urlname, args=(self.domain,)),
-                    'subpages': [
-                        {
-                            'title': _(EditIdentityProviderEnterpriseView.page_title),
-                            'urlname': EditIdentityProviderEnterpriseView.urlname,
-                        },
-                    ],
+                    'title': _("Enterprise Permissions"),
+                    'url': reverse("enterprise_permissions", args=[self.domain]),
+                    'description': _("View project spaces where users receive automatic access"),
+                    'subpages': [],
+                    'show_in_dropdown': False,
                 })
+
         items.append((_('Manage Enterprise'), enterprise_views))
+
+        if BillingAccount.should_show_sms_billable_report(self.domain):
+            items.extend(EnterpriseReportDispatcher.navigation_sections(
+                request=self._request, domain=self.domain))
+
         return items
 
 
@@ -1641,6 +1698,7 @@ class ProjectSettingsTab(UITab):
         '/a/{domain}/motech/',
         '/a/{domain}/dhis2/',
         '/a/{domain}/openmrs/',
+        '/a/{domain}/registries/',
     )
 
     _is_viewable = False
@@ -1691,9 +1749,13 @@ class ProjectSettingsTab(UITab):
             if integration_nav:
                 items.append((_('Integration'), integration_nav))
 
-        feature_flag_items = _get_feature_flag_items(self.domain)
-        if feature_flag_items and user_is_admin and has_project_access:
+        feature_flag_items = _get_feature_flag_items(self.domain, self.couch_user)
+        if feature_flag_items and has_project_access:
             items.append((_('Pre-release Features'), feature_flag_items))
+
+        release_management_items = _get_release_management_items(self.couch_user, self.domain)
+        if release_management_items:
+            items.append((_('Enterprise Release Management'), release_management_items))
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
@@ -1908,33 +1970,83 @@ def _get_integration_section(domain):
             'url': reverse(GaenOtpServerSettingsView.urlname, args=[domain])
         })
 
+    if toggles.EMBEDDED_TABLEAU.enabled(domain):
+        from corehq.apps.reports.views import TableauServerView
+        integration.append({
+            'title': _(TableauServerView.page_title),
+            'url': reverse(TableauServerView.urlname, args=[domain])
+        })
+
+        from corehq.apps.reports.views import TableauVisualizationListView
+        integration.append({
+            'title': _(TableauVisualizationListView.page_title),
+            'url': reverse(TableauVisualizationListView.urlname, args=[domain])
+        })
+
     return integration
 
 
-def _get_feature_flag_items(domain):
+def _get_feature_flag_items(domain, couch_user):
+    user_is_admin = couch_user.is_domain_admin(domain)
+
     from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
     feature_flag_items = []
-    if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
+    if user_is_admin and toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({
             'title': _('Case Search'),
             'url': reverse('case_search_config', args=[domain])
         })
-    if toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
+    if user_is_admin and toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
         feature_flag_items.append({
             'title': _('Location Fixture'),
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
         })
 
-    if toggles.LINKED_DOMAINS.enabled(domain):
+    # show ERM version of linked projects if domain has privilege
+    can_access_linked_domains = (
+        user_is_admin and toggles.LINKED_DOMAINS.enabled(domain)
+        and not domain_has_privilege(domain, RELEASE_MANAGEMENT)
+    )
+    if can_access_linked_domains:
         feature_flag_items.append({
-            'title': _('Linked Projects'),
+            'title': _('Linked Project Spaces'),
             'url': reverse('domain_links', args=[domain])
         })
         feature_flag_items.append({
-            'title': _('Linked Project History'),
+            'title': _('Linked Project Space History'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
+
+    from corehq.apps.registry.utils import RegistryPermissionCheck
+    permission_check = RegistryPermissionCheck(domain, couch_user)
+    if toggles.DATA_REGISTRY.enabled(domain) and permission_check.can_manage_some:
+        feature_flag_items.append({
+            'title': _('Data Registries'),
+            'url': reverse('data_registries', args=[domain]),
+            'subpages': [
+                {
+                    'title': _("Manage Registry"),
+                    'urlname': "manage_registry",
+                },
+            ],
+        })
     return feature_flag_items
+
+
+def _get_release_management_items(user, domain):
+    release_management_items = []
+
+    if can_access_release_management_feature(user, domain):
+        release_management_items.append({
+            'title': _('Linked Project Spaces'),
+            'url': reverse('domain_links', args=[domain])
+        })
+        release_management_items.append({
+            'title': _('Linked Project Space History'),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
+        })
+
+    return release_management_items
 
 
 class MySettingsTab(UITab):
@@ -1982,10 +2094,7 @@ class MySettingsTab(UITab):
             },
         ])
 
-        if (
-            self.couch_user and self.couch_user.is_dimagi or
-            toggles.MOBILE_PRIVILEGES_FLAG.enabled(self.couch_user.username)
-        ):
+        if EnableMobilePrivilegesView.is_user_authorized(self.couch_user):
             menu_items.append({
                 'title': _(EnableMobilePrivilegesView.page_title),
                 'url': reverse(EnableMobilePrivilegesView.urlname),
@@ -2231,9 +2340,10 @@ class AdminTab(UITab):
 
     @property
     def _is_viewable(self):
-        return (self.couch_user and
-                (self.couch_user.is_superuser or
-                 toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))
+        return (self.couch_user
+                and (self.couch_user.is_superuser
+                     or toggles.IS_CONTRACTOR.enabled(self.couch_user.username))
+                and not is_request_using_sso(self._request))
 
 
 def _get_repeat_record_report(domain):

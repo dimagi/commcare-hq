@@ -12,14 +12,9 @@
     "data_source_table": "static_quarterly_service_delivery_dS_v1",
     "config": {
       "title": "6.4 Service Delivery Quarterly Report",
-      "aggregation_columns": [
-        "region",
-        "zone",
-        "woreda",
-        "health_center",
-        "health_post",
+      "aggregation_columns":[
         "quarterly_report_date"
-      ] ,
+      ],
       "filters": [
         {
           "datatype": "string",
@@ -41,8 +36,8 @@
           "datatype": "string",
           "type": "dynamic_choice_list",
           "required": false,
-          "slug": "quarterly_report_date_for_filter_gregorian",
-          "field": "quarterly_report_date_for_filter_gregorian",
+          "slug": "quarterly_report_date",
+          "field": "quarterly_report_date",
           "ancestor_expression": {},
           "choice_provider": {},
           "display": "Quarterly Report Date"
@@ -51,10 +46,10 @@
           "compare_as_string": false,
           "datatype": "date",
           "required": false,
-          "slug": "quarterly_report_date",
-          "field": "quarterly_report_date",
+          "slug": "quarterly_date",
+          "field": "quarterly_date",
           "type": "date",
-          "display": "Report Month (for mobile)"
+          "display": "Date(for mobile)"
         },
         {
           "display": "Test or Real",
@@ -73,45 +68,7 @@
           "field": "test_or_real",
           "type": "choice_list",
           "slug": "test_or_real"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "region",
-          "field": "region",
-          "type": "dynamic_choice_list",
-          "slug": "region"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "Zone",
-          "field": "zone",
-          "type": "dynamic_choice_list",
-          "slug": "zone"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "Woreda",
-          "field": "woreda",
-          "type": "dynamic_choice_list",
-          "slug": "woreda"
-        },
-        {
-          "datatype": "string",
-          "field": "health_center",
-          "type": "dynamic_choice_list",
-          "display": "Health Center",
-          "slug": "health_center"
-        },
-        {
-          "datatype": "string",
-          "field": "health_post",
-          "type": "dynamic_choice_list",
-          "display": "Health Post",
-          "slug": "health_post"
-        },
+        } ,
         {
           "type": "pre",
           "field": "is_closed",
@@ -119,84 +76,19 @@
           "datatype": "string",
           "pre_value": "False",
           "display": null
+        },
+        {
+          "type": "pre",
+          "field": "health_post_id",
+          "slug": "health_post_pre",
+          "datatype": "string",
+          "pre_value": "",
+          "pre_operator": "!=",
+          "display": null
         }
-      ] ,
-      "columns":[
-        {
-          "comment": null,
-          "field": "region",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "region",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Region"
-        },
-        {
-          "comment": null,
-          "field": "zone",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "zone",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Zone"
-        },
-        {
-          "comment": null,
-          "field": "woreda",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "woreda",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Woreda"
-        },
-        {
-          "comment": null,
-          "field": "health_center",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "health_center",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Health Center"
-        },
-        {
-          "comment": null,
-          "field": "health_post",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "health_post",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Health Post"
-        },
+      ],
+      "columns": [
+       
         {
           "field": "quarterly_report_date",
           "sortable": false,
@@ -206,7 +98,7 @@
           "transform": {},
           "column_id": "quarterly_report_date",
           "visible": true,
-          "display": "Quarterly Report Date",
+          "display": "Quarter",
           "calculate_total": false,
           "type": "field",
           "width": null,
@@ -223,7 +115,7 @@
           "column_id": "HSEH_ES_ALTR",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "HSEH_ES_ALTR:Proportion of households with access to any type of latrine facilities"
         },
@@ -238,12 +130,12 @@
           "column_id": "ES_ILTR_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "ES_ILTR.1:Number of HHs with improved latrinein the reporting period"
         },
         {
-          "comment": "ES_ULTR.1:Number of HHs with unimproved latrinein the reporting period",
+          "comment": "ES_ULTR.1:Number of HHs with unimproved latrine the reporting period",
           "field": "ES_ULTR_1",
           "description": "ES_ULTR.1:Number of HHs with unimproved latrinein the reporting period",
           "format": "default",
@@ -253,7 +145,7 @@
           "column_id": "ES_ULTR_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "ES_ULTR.1:Number of HHs with unimproved latrinein the reporting period"
         },
@@ -268,7 +160,7 @@
           "column_id": "ES_ALTR_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "ES_ALTR.1:Number of households with any type of latrine facilities in the reporting period (both unimproved and improved)"
         },
@@ -283,7 +175,7 @@
           "column_id": "COS_HEP_CMHH",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "COS_HEP_CMHH: Proportion of Model households graduated / Households Currently Model/"
         },
@@ -298,11 +190,11 @@
           "column_id": "COS_MHH_New_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "COS_MHH.New.1: Number of Newly graduated model households during the reporting period"
         }
-      ]  
+      ] 
     }
   }
   

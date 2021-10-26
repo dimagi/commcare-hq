@@ -1,17 +1,14 @@
 import re
 from collections import defaultdict
-from copy import deepcopy
 from datetime import date, datetime, time, timedelta
 
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models, transaction
 from django.db.models import Q
-from django.utils.translation import ugettext_lazy
 
 import jsonfield
 import pytz
-from couchdbkit.exceptions import ResourceNotFound
 from dateutil.parser import parse
 from jsonobject.api import JsonObject
 from jsonobject.properties import (
@@ -21,7 +18,6 @@ from jsonobject.properties import (
 )
 from memoized import memoized
 
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
@@ -42,7 +38,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
@@ -55,9 +50,6 @@ from corehq.messaging.scheduling.models import (
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
     get_case_timed_schedule_instances_for_schedule_id,
-)
-from corehq.messaging.scheduling.scheduling_partitioned.models import (
-    CaseScheduleInstanceMixin,
 )
 from corehq.messaging.scheduling.tasks import (
     delete_case_alert_schedule_instances,
@@ -216,10 +208,7 @@ class AutomaticUpdateRule(models.Model):
 
     @classmethod
     def iter_cases(cls, domain, case_type, boundary_date=None, db=None):
-        if should_use_sql_backend(domain):
-            return cls._iter_cases_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
-        else:
-            return cls._iter_cases_from_es(domain, case_type, boundary_date=boundary_date)
+        return cls._iter_cases_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
 
     @classmethod
     def _iter_cases_from_postgres(cls, domain, case_type, boundary_date=None, db=None):
@@ -317,7 +306,7 @@ class AutomaticUpdateRule(models.Model):
         if not self.active:
             raise self.RuleError("Attempted to call run_rule on an inactive rule")
 
-        if not isinstance(case, (CommCareCase, CommCareCaseSQL)) or case.domain != self.domain:
+        if not isinstance(case, CommCareCaseSQL) or case.domain != self.domain:
             raise self.RuleError("Invalid case given")
 
         if self.criteria_match(case, now):
@@ -339,7 +328,7 @@ class AutomaticUpdateRule(models.Model):
         for criteria in self.memoized_criteria:
             try:
                 result = criteria.definition.matches(case, now)
-            except (CaseNotFound, ResourceNotFound):
+            except CaseNotFound:
                 # This might happen if the criteria references a parent case and the
                 # parent case is not found
                 result = False
@@ -632,10 +621,7 @@ class ClosedParentDefinition(CaseRuleCriteriaDefinition):
     relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndexSQL.CHILD)
 
     def matches(self, case, now):
-        if isinstance(case, CommCareCase):
-            relationship = CommCareCase.convert_sql_relationship_id_to_couch_relationship(self.relationship_id)
-        else:
-            relationship = self.relationship_id
+        relationship = self.relationship_id
 
         for parent in case.get_parent(identifier=self.identifier, relationship=relationship):
             if parent.closed:
@@ -1159,7 +1145,7 @@ class CaseRuleSubmission(models.Model):
     # The timestamp that this record was created on
     created_on = models.DateTimeField(db_index=True)
 
-    # Reference to XFormInstance.form_id or XFormInstanceSQL.form_id
+    # Reference to XFormInstanceSQL.form_id
     form_id = models.CharField(max_length=255, unique=True, db_index=True)
 
     # A shortcut to keep track of which forms get archived

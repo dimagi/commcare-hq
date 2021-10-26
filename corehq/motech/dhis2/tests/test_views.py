@@ -1,11 +1,13 @@
 from django.test import TestCase
-from ..views import DataSetMapUpdateView
+from django.urls import reverse
+
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import WebUser
 from corehq.motech.dhis2.models import SQLDataSetMap, SQLDataValueMap
 from corehq.motech.models import ConnectionSettings
-from django.urls import reverse
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.util.test_utils import flag_enabled
-from corehq.apps.users.models import WebUser
+
+from ..views import DataSetMapUpdateView
 
 DOMAIN = 'test'
 USERNAME = 'test@testy.com'
@@ -16,7 +18,7 @@ class BaseViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain = create_domain(DOMAIN, use_sql_backend=True)
+        cls.domain = create_domain(DOMAIN)
         cls.user = WebUser.create(DOMAIN, USERNAME, PASSWORD,
                                   created_by=None, created_via=None)
         cls.user.is_superuser = True
@@ -66,7 +68,7 @@ class BaseViewTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         cls.connection_setting.delete()
         cls.dataset_map.delete()
@@ -79,9 +81,10 @@ class TestDataSetMapUpdateView(BaseViewTest):
 
     def test_user_from_other_domain_404(self):
         other_domain = 'other-domain'
-        create_domain(other_domain, use_sql_backend=True)
-        WebUser.create(other_domain, 'other@user.com', PASSWORD,
-                       created_by=None, created_via=None)
+        create_domain(other_domain)
+        user = WebUser.create(other_domain, 'other@user.com', PASSWORD,
+                              created_by=None, created_via=None)
+        self.addCleanup(user.delete, other_domain, None)
         self.client.login(username='other@user.com', password=PASSWORD)
 
         (dataset_map, datavalue_map) = (self.dataset_map, self.data_value_map)

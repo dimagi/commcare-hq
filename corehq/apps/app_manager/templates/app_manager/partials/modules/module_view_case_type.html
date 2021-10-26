@@ -5,10 +5,17 @@
 <div class="form-group" id="case_type_form_group">
   <label class="{% css_label_class %} control-label">
     {% trans "Case Type" %}
+    {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+    <span class="hq-help-template"
+          data-title="{% trans "Case Type" %}"
+          data-content="{% trans "The name for the type of case you are tracking (e.g. “pregnancy,” “farm,” “household,” etc.). All cases you register in this case list will be this type of case. Other case lists with the same case type will use the same set of case(s)." %}"
+    ></span>
+    {% else %}
     <span class="hq-help-template"
           data-title="{% trans "Case Type" %}"
           data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this case list will be this type of case, and only cases of this type will show in the case list. Other case lists with the same case type will use the same set of cases." %}"
     ></span>
+    {% endif %}
   </label>
   <div class="{% css_field_class %}">
     <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />

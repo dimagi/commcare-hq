@@ -24,6 +24,7 @@ from django_prbac.utils import has_privilege
 
 from lxml import etree
 
+from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
 
@@ -69,7 +70,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
     get_all_mobile_filter_configs,
-    get_auto_filter_configurations,
+    get_auto_filter_configurations, AdditionalRegistryQuery,
 )
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
@@ -98,6 +99,7 @@ from corehq.apps.app_manager.views.utils import (
     set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import CaseError
+from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.case_search.models import case_search_enabled_for_domain
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -114,7 +116,7 @@ from corehq.apps.hqmedia.models import (
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_types_for_domain_es
 )
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.models import (
@@ -193,12 +195,15 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     Get context items that are used by both basic and advanced modules.
     '''
     item_lists = item_lists_by_app(app) if app.enable_search_prompt_appearance else []
+    case_types = set(module.search_config.additional_case_types) | {module.case_type}
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'shadow_parent': _get_shadow_parent(app, module),
+        'case_types': {m.case_type for m in app.modules if m.case_type},
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
+        'data_registries': get_data_registry_dropdown_options(app.domain, required_case_types=case_types),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
@@ -229,6 +234,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 module.search_config.search_label.label if hasattr(module, 'search_config') else "",
             'search_again_label':
                 module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
+            'data_registry': module.search_config.data_registry,
+            'additional_registry_queries': module.search_config.additional_registry_queries,
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -431,7 +438,7 @@ def _get_shadow_parent(app, module):
 
 def _case_list_form_options(app, module, lang=None):
     options = OrderedDict()
-    forms = [
+    reg_forms = [
         form
         for mod in app.get_modules() if module.unique_id != mod.unique_id
         for form in mod.get_forms() if form.is_registration_form(module.case_type)
@@ -440,12 +447,41 @@ def _case_list_form_options(app, module, lang=None):
     options.update({f.unique_id: {
         'name': trans(f.name, langs),
         'post_form_workflow': f.post_form_workflow,
-    } for f in forms})
-
+        'is_registration_form': True,
+    } for f in reg_forms})
+    if (hasattr(module, 'parent_select') and  # AdvancedModule doesn't have parent_select
+            toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM and module.parent_select.active):
+        followup_forms = get_parent_select_followup_forms(app, module)
+        if followup_forms:
+            options.update({f.unique_id: {
+                'name': trans(f.name, langs),
+                'post_form_workflow': f.post_form_workflow,
+                'is_registration_form': False,
+            } for f in followup_forms})
     return {
         'options': options,
         'form': module.case_list_form,
     }
+
+
+def get_parent_select_followup_forms(app, module):
+    if not module.parent_select.active or not module.parent_select.module_id:
+        return []
+    parent_module = app.get_module_by_unique_id(
+        module.parent_select.module_id,
+        error=_("Case list used by Select Parent First in '{}' not found").format(
+            module.default_name()),
+    )
+    parent_case_type = parent_module.case_type
+    rel = module.parent_select.relationship
+    if (rel == 'parent' and parent_case_type != module.case_type) or rel is None:
+        return [
+            form
+            for mod in app.get_modules() if mod.case_type == parent_case_type
+            for form in mod.get_forms() if form.requires_case() and not form.is_registration_form()
+        ]
+    else:
+        return []
 
 
 def _get_module_details_context(request, app, module, case_property_builder, messages=messages):
@@ -523,12 +559,14 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         'case_list-menu_item_use_default_audio_for_all': None,
         "case_list_form_id": None,
         "case_list_form_label": None,
+        "case_list_form_expression": None,
         "case_list_form_media_audio": None,
         "case_list_form_media_image": None,
         'case_list_form_use_default_image_for_all': None,
         'case_list_form_use_default_audio_for_all': None,
         "case_list_post_form_workflow": None,
         "case_type": None,
+        "additional_case_types": [],
         'comment': None,
         "display_separately": None,
         "has_schedule": None,
@@ -642,6 +680,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module.case_list_form.form_id = request.POST.get('case_list_form_id')
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
+    if should_edit('case_list_form_expression'):
+        module.case_list_form.relevancy_expression = request.POST.get('case_list_form_expression')
     if should_edit('case_list_post_form_workflow'):
         module.case_list_form.post_form_workflow = request.POST.get('case_list_post_form_workflow')
 
@@ -683,6 +723,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             track_workflow(request.couch_user.username, "User associated module with a parent")
         elif old_root and not module['root_module_id']:
             track_workflow(request.couch_user.username, "User orphaned a child module")
+
+    if should_edit('additional_case_types'):
+        module.search_config.additional_case_types = list(set(request.POST.getlist('additional_case_types')))
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')
@@ -957,8 +1000,14 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['hint'] = hint
         if prop['hidden']:
             ret['hidden'] = prop['hidden']
+        if prop['allow_blank_value']:
+            ret['allow_blank_value'] = prop['allow_blank_value']
         if prop.get('appearance', '') == 'fixture':
-            ret['input_'] = 'select1'
+            if prop.get('is_multiselect', False):
+                ret['input_'] = 'select'
+                ret['default_value'] = prop['default_value']
+            else:
+                ret['input_'] = 'select1'
             fixture_props = json.loads(prop['fixture'])
             keys = {'instance_uri', 'instance_id', 'nodeset', 'label', 'value', 'sort'}
             missing = [key for key in keys if not fixture_props.get(key)]
@@ -1144,10 +1193,45 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 ]
             except CaseSearchConfigError as e:
                 return HttpResponseBadRequest(e)
+            xpath_props = [
+                "search_filter", "blacklisted_owner_ids_expression",
+                "search_button_display_condition", "search_additional_relevant"
+            ]
+
+            def _check_xpath(xpath, location):
+                is_valid, message = validate_xpath(xpath)
+                if not is_valid:
+                    raise ValueError(
+                        f"Please fix the errors in xpath expression '{xpath}' "
+                        f"in {location}. The error is {message}"
+                    )
+
+            for prop in xpath_props:
+                xpath = search_properties.get(prop, "")
+                if xpath:
+                    try:
+                        _check_xpath(xpath, "Search and Claim Options")
+                    except ValueError as e:
+                        return HttpResponseBadRequest(str(e))
+
+            additional_registry_queries = []
+            for query in search_properties.get('additional_registry_queries', []):
+                if not all(list(query.values())):
+                    return HttpResponseBadRequest("All fields for Additional Data Registry Queries are required")
+
+                try:
+                    _check_xpath(query["case_type_xpath"], "the Case Type of Additional Data Registry Query")
+                    _check_xpath(query["case_id_xpath"], "the Case ID of Additional Data Registry Query")
+                except ValueError as e:
+                    return HttpResponseBadRequest(str(e))
+
+                additional_registry_queries.append(AdditionalRegistryQuery.wrap(query))
+
             module.search_config = CaseSearch(
                 search_label=search_label,
                 search_again_label=search_again_label,
                 properties=properties,
+                additional_case_types=module.search_config.additional_case_types,
                 default_relevant=bool(search_properties.get('search_default_relevant')),
                 additional_relevant=search_properties.get('search_additional_relevant', ''),
                 auto_launch=bool(search_properties.get('auto_launch')),
@@ -1158,7 +1242,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 default_properties=[
                     DefaultCaseSearchProperty.wrap(p)
                     for p in search_properties.get('default_properties')
-                ]
+                ],
+                data_registry=search_properties.get('data_registry', ""),
+                additional_registry_queries=additional_registry_queries,
             )
 
     resp = {}

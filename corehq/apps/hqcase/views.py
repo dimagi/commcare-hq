@@ -1,7 +1,7 @@
 import json
 
 from django.contrib import messages
-from django.http import Http404, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -21,8 +21,6 @@ from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.utils import should_use_sql_backend
-from corehq.pillows.case_search import domain_needs_search_index
 from corehq.toggles import CASE_API_V0_6
 from corehq.util.view_utils import reverse
 
@@ -42,8 +40,6 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
         return super(ExplodeCasesView, self).dispatch(*args, **kwargs)
 
     def get(self, request, domain):
-        if not should_use_sql_backend(domain):
-            raise Http404("Domain: {} is not a SQL domain".format(domain))
         return super(ExplodeCasesView, self).get(request, domain)
 
     def get_context_data(self, **kwargs):
@@ -91,7 +87,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 def case_api(request, domain, case_id=None):
     if request.method == 'GET' and case_id:
         return _handle_individual_get(request, case_id)
-    if request.method == 'GET' and not case_id and domain_needs_search_index(domain):
+    if request.method == 'GET' and not case_id:
         return _handle_list_view(request)
     if request.method == 'POST' and not case_id:
         return _handle_case_update(request)
@@ -140,15 +136,15 @@ def _handle_case_update(request, case_id=None):
     except SubmissionError as e:
         return JsonResponse({
             'error': str(e),
-            '@form_id': e.form_id,
+            'form_id': e.form_id,
         }, status=400)
 
     if isinstance(case_or_cases, list):
         return JsonResponse({
-            '@form_id': xform.form_id,
+            'form_id': xform.form_id,
             'cases': [serialize_case(case) for case in case_or_cases],
         })
     return JsonResponse({
-        '@form_id': xform.form_id,
+        'form_id': xform.form_id,
         'case': serialize_case(case_or_cases),
     })

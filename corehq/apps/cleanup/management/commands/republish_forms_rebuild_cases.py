@@ -4,10 +4,8 @@ from django.core.management.base import BaseCommand
 
 from casexml.apps.case.xform import get_case_ids_from_form
 
-from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.change_publishers import publish_form_saved
-from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import FormReprocessRebuild
@@ -65,8 +63,4 @@ def rebuild_case_changes(form, rebuild_reason=None):
 
 
 def get_form(form_id):
-    try:
-        return FormAccessorSQL.get_form(form_id)
-    except XFormNotFound:
-        pass
-    return FormAccessorCouch.get_form(form_id)
+    return FormAccessorSQL.get_form(form_id)

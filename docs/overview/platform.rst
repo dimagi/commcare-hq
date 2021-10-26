@@ -27,7 +27,7 @@ management provides a staging-to-deploy pipeline, profile-based releases for dif
 incremental rollout and distribution for different regions.
 
 Android Mobile App Runner and Web App Engine
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Applications developed in the end user programming (EUP) content builder are deployed to users and then executed
 within the CommCare application engine, which is built on a shared Java codebase.  The application configurations
@@ -169,7 +169,7 @@ UCRs may also be used to send report data to the mobile devices. This data can t
 a report or graph.
 
 Messaging Layer
---------------
+---------------
 
 CommCare Messaging integrates with a SMS gateway purchased and maintained by the client as the processing layer for
 SMS messages. This layer manages the pipeline from a Case transaction to matching business logic rules to message

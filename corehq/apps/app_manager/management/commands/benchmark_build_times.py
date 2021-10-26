@@ -40,8 +40,6 @@ class Command(BaseCommand):
 
 def _code_to_benchmark(domain, app_id, comment, user_id):
     app = get_app(domain, app_id)
-    errors = app.validate_app()
-    assert not errors, errors
     copy = app.make_build(
         comment=comment,
         user_id=user_id,

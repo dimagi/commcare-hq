@@ -54,13 +54,23 @@ class Command(BaseCommand):
             if not domain_object:
                 raise CommandError("Domain not found")
 
-        users, super_users = get_users_to_export(user, domain)
+        users, removed_users, super_users = get_users_to_export(user, domain)
 
         with open(filename, 'w') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['Date', 'User', 'Domain', 'IP Address', 'Request Path'])
             for user in users:
                 write_log_events(writer, user, domain, start_date=options['start'], end_date=options['end'])
+
+            for user in removed_users:
+                write_log_events(
+                    writer,
+                    user,
+                    domain,
+                    override_user=f"{user} [REMOVED]",
+                    start_date=options['start'],
+                    end_date=options['end']
+                )
 
             for user in super_users:
                 write_log_events(

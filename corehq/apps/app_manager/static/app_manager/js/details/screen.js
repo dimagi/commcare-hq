@@ -198,6 +198,11 @@ hqDefine("app_manager/js/details/screen", function () {
                     errors.push(gettext("All properties must be below a tab."));
                 }
             }
+            if (self.config.search.commonProperties().length > 0) {
+                var msg = gettext("Search Properties and Default Search Filters can't have common properties. " +
+                    "Please update following properties: ");
+                errors.push(msg + self.config.search.commonProperties());
+            }
             if (errors.length) {
                 alert(gettext("There are errors in your configuration.") + "\n" + errors.join("\n"));
                 return;

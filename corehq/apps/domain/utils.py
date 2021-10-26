@@ -3,6 +3,7 @@ import re
 import sys
 from collections import Counter
 
+import simplejson
 from django.conf import settings
 
 from memoized import memoized
@@ -67,7 +68,7 @@ def get_domains_created_by_user(creating_user):
 def domain_name_stop_words():
     path = os.path.join(os.path.dirname(__file__), 'static', 'domain', 'json')
     with open(os.path.join(path, 'stop_words.yml')) as f:
-        return tuple([word.strip() for word in f.readlines() if word[0] != '#'])
+        return {word.strip() for word in f.readlines() if word[0] != '#'}
 
 
 def get_domain_url_slug(hr_name, max_length=25, separator='-'):
@@ -113,3 +114,13 @@ def clear_domain_names(*domain_names):
     for domain_names in domain_names:
         for domain in iter_all_domains_and_deleted_domains_with_name(domain_names):
             domain.delete()
+
+
+def get_serializable_wire_invoice_general_credit(general_credit):
+    if general_credit > 0:
+        return [{
+            'type': 'General Credits',
+            'amount': simplejson.dumps(general_credit, use_decimal=True)
+        }]
+
+    return []

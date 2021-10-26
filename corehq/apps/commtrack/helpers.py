@@ -1,7 +1,5 @@
 import uuid
 
-import six
-
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.commtrack import const

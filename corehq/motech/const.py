@@ -1,3 +1,5 @@
+from django.utils.translation import ugettext_lazy as _
+
 BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
@@ -21,6 +23,15 @@ READ_TIMEOUT = 5 * 60
 REQUEST_TIMEOUT = (CONNECT_TIMEOUT, READ_TIMEOUT)
 
 ALGO_AES = 'aes'
+
+IMPORT_FREQUENCY_DAILY = 'daily'
+IMPORT_FREQUENCY_WEEKLY = 'weekly'
+IMPORT_FREQUENCY_MONTHLY = 'monthly'
+IMPORT_FREQUENCY_CHOICES = (
+    (IMPORT_FREQUENCY_DAILY, _('Daily')),
+    (IMPORT_FREQUENCY_WEEKLY, _('Weekly')),
+    (IMPORT_FREQUENCY_MONTHLY, _('Monthly')),
+)
 
 DATA_TYPE_UNKNOWN = None
 

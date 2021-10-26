@@ -3,7 +3,6 @@ When a location type is set from stock-tracking to not stock-tracking, find all
 locations of that type and:
     close the supply point case,
     nullify the supply_point_id,
-    nullify the StockState sql_location field
 
 When a location type is set from not stock tracking to stock tracking, find all
 locations of that type and:
@@ -15,15 +14,10 @@ if so:
 otherwise:
     open a new supply point case as normal
 """
-import datetime
-
 from django.test import TestCase
 
-from casexml.apps.stock.const import SECTION_TYPE_STOCK
-
-from corehq.apps.commtrack.models import StockState, SupplyPointCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
-from corehq.apps.products.models import SQLProduct
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from ..models import SQLLocation
 from .util import setup_locations_and_types
@@ -92,8 +86,9 @@ class TestChangeStatus(TestCase):
 
         # Now that it's administrative, it shouldn't have one
         # The case should still exist, but be closed
+        cases = CaseAccessors(self.domain)
         self.assertHasNoSupplyPoint(self.boston)
-        self.assertTrue(SupplyPointCase.get(supply_point_id).closed)
+        self.assertTrue(cases.get_case(supply_point_id).closed)
 
         self.city_type.administrative = False
         self.city_type.save()
@@ -101,33 +96,4 @@ class TestChangeStatus(TestCase):
         # The same supply point case should be reopened
         self.assertHasSupplyPoint(self.boston)
         self.assertEqual(self.boston.supply_point_id, supply_point_id)
-        self.assertFalse(SupplyPointCase.get(supply_point_id).closed)
-
-    def test_stock_states(self):
-        def has_stock_states(location):
-            return StockState.objects.filter(sql_location=location).exists()
-
-        product = SQLProduct.objects.create(
-            domain=self.domain, product_id='foo', name='foo')
-        StockState.objects.create(
-            section_id=SECTION_TYPE_STOCK,
-            case_id=self.boston.supply_point_id,
-            product_id='foo',
-            last_modified_date=datetime.datetime.now(),
-            stock_on_hand=10,
-            sql_product=product,
-            sql_location=self.boston,
-        )
-
-        # I just created a stock state, it'd better show up
-        self.assertTrue(has_stock_states(self.boston))
-
-        # making the location administrative should hide its stock states
-        self.city_type.administrative = True
-        self.city_type.save()
-        self.assertFalse(has_stock_states(self.boston))
-
-        # tracking stock again should restore the stock states
-        self.city_type.administrative = False
-        self.city_type.save()
-        self.assertTrue(has_stock_states(self.boston))
+        self.assertFalse(cases.get_case(supply_point_id).closed)

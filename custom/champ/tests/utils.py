@@ -10,13 +10,11 @@ from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.users.models import WebUser
 
 from corehq.apps.domain.models import Domain
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.users.models import CommCareUser
-from couchforms.models import XFormInstance
 import os
 
 
@@ -41,7 +39,7 @@ class ChampTestCase(TestCase, DomainSubscriptionMixin):
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscriptions()
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
         clear_plan_version_cache()
         super().tearDownClass()
 
@@ -85,16 +83,10 @@ class TestDataSourceExpressions(SimpleTestCase):
 
     def setUp(self):
         self.database = FakeCouchDb()
-        self.case_orig_db = CommCareCase.get_db()
-        self.form_orig_db = XFormInstance.get_db()
         self.user_orig_db = CommCareUser.get_db()
-        CommCareCase.set_db(self.database)
-        XFormInstance.set_db(self.database)
         CommCareUser.set_db(self.database)
 
     def tearDown(self):
-        CommCareCase.set_db(self.case_orig_db)
-        XFormInstance.set_db(self.form_orig_db)
         CommCareUser.set_db(self.user_orig_db)
 
     def get_column(self, column_id):

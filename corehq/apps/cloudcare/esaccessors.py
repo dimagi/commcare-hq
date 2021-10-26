@@ -38,19 +38,9 @@ def login_as_user_query(
         user_es = user_es.location(list(loc_ids))
 
     if _limit_login_as(couch_user, domain):
-        user_filters = [
-            filters.AND(
-                filters.term('user_data_es.key', 'login_as_user'),
-                filters.term('user_data_es.value', couch_user.username),
-            )
-        ]
+        user_filters = [login_as_user_filter(couch_user.username)]
         if couch_user.has_permission(domain, 'access_default_login_as_user'):
-            user_filters.append(
-                filters.AND(
-                    filters.term('user_data_es.key', 'login_as_user'),
-                    filters.term('user_data_es.value', 'default'),
-                )
-            )
+            user_filters.append(login_as_user_filter('default'))
         user_es = user_es.filter(
             queries.nested(
                 'user_data_es',
@@ -60,6 +50,14 @@ def login_as_user_query(
             )
         )
     return user_es.mobile_users()
+
+
+# value may be either a single username or a list of username
+def login_as_user_filter(value):
+    return filters.AND(
+        filters.term('user_data_es.key', 'login_as_user'),
+        filters.term('user_data_es.value', value),
+    )
 
 
 def _limit_login_as(couch_user, domain):

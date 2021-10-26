@@ -5,13 +5,14 @@ from django.test import TestCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import create_and_save_a_case, create_and_save_a_form
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.sample import TestProcessor
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
+@sharded
 class KafkaPublishingTest(TestCase):
 
     domain = 'kafka-publishing-test'
@@ -84,8 +85,3 @@ class KafkaPublishingTest(TestCase):
         change_meta = self.processor.changes_seen[0].metadata
         self.assertEqual(case.case_id, change_meta.document_id)
         self.assertTrue(change_meta.is_deletion)
-
-
-@use_sql_backend
-class KafkaPublishingTestSQL(KafkaPublishingTest):
-    pass

@@ -1,10 +1,13 @@
 import json
+
+from django.conf import settings
+
 import requests
+
 from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.apps.sms.util import strip_plus
 from corehq.messaging.smsbackends.apposit.forms import AppositBackendForm
-from django.conf import settings
-
+from corehq.messaging.smsbackends.http.sms_sending import verify_sms_url
 
 ETHIOPIA_COUNTRY_CODE = '251'
 
@@ -79,6 +82,9 @@ class SQLAppositBackend(SQLSMSBackend):
             return
 
         config = self.config
+
+        verify_sms_url(self.url, msg, backend=self)
+
         data = {
             'from': config.from_number,
             'to': msg.phone_number,

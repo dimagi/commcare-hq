@@ -1,13 +1,12 @@
 from contextlib import contextmanager
 from datetime import date, datetime, time
 
-from django.test import override_settings
 from django.db.models import Q
 from django.test import TestCase
 
 from mock import call, patch
 
-from corehq import toggles
+from casexml.apps.case.tests.util import create_case
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
@@ -22,15 +21,11 @@ from corehq.apps.data_interfaces.models import (
     MatchPropertyDefinition,
     VisitSchedulerIntegrationHelper,
 )
-from corehq.apps.data_interfaces.tests.util import (
-    create_case,
-    create_empty_rule,
-)
+from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
@@ -108,7 +103,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
         super(CaseRuleSchedulingIntegrationTest, cls).tearDownClass()
 
@@ -127,7 +122,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         delete_alert_schedules(self.domain)
         delete_timed_schedules(self.domain)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_timed_schedule_instance_creation(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
@@ -186,7 +180,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_alert_schedule_instance_creation(self, utcnow_patch):
         schedule = AlertSchedule.create_simple_alert(
@@ -244,7 +237,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_alert_schedule_reset(self, utcnow_patch):
         schedule = AlertSchedule.create_simple_alert(
@@ -317,7 +309,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].last_reset_case_property_value, 'b')
             self.assertTrue(instances[0].active)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_timed_schedule_reset(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
@@ -396,7 +387,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_timed_schedule_stop_date_case_property(self, utcnow_patch, send_patch):
@@ -520,7 +510,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instance.next_event_due, datetime(2018, 7, 5, 13, 0))
             self.assertTrue(instance.active)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_timed_schedule_start_date_case_property(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
@@ -650,7 +639,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         with create_case(self.domain, 'person') as case:
             yield schedule, rule, definition, case
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_timed_schedule_specific_start_date(self, utcnow_patch):
         setup = self.setup_timed_schedule_with_case(utcnow_patch)
@@ -722,7 +710,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].next_event_due, datetime(2018, 2, 2, 14, 0))
             self.assertFalse(instances[0].active)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_sync_rule_on_hard_deleted_case(self, utcnow_patch):
         setup = self.setup_timed_schedule_with_case(utcnow_patch)
@@ -736,7 +723,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
         self.assertEqual(instances.count(), 0)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_sync_messaging_on_hard_deleted_case(self, utcnow_patch):
         setup = self.setup_timed_schedule_with_case(utcnow_patch)
@@ -750,7 +736,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
         self.assertEqual(instances.count(), 0)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_timed_schedule_case_property_timed_event(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
@@ -831,8 +816,8 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].next_event_due, datetime(2017, 5, 1, 16, 0))
             self.assertTrue(instances[0].active)
 
-    @run_with_all_backends
-    @patch('corehq.apps.data_interfaces.models.VisitSchedulerIntegrationHelper.get_visit_scheduler_module_and_form')
+    @patch('corehq.apps.data_interfaces.models.'
+           'VisitSchedulerIntegrationHelper.get_visit_scheduler_module_and_form')
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_visit_scheduler_integration(self, utcnow_patch, module_and_form_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
@@ -942,7 +927,8 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertTrue(instances[0].active)
 
             # Making an arbitrary update doesn't cause any recalculating to happen
-            with patch('corehq.messaging.scheduling.scheduling_partitioned.models.AbstractTimedScheduleInstance.recalculate_schedule') as recalculate_patch:
+            with patch('corehq.messaging.scheduling.scheduling_partitioned.models.'
+                       'AbstractTimedScheduleInstance.recalculate_schedule') as recalculate_patch:
                 update_case(self.domain, case.case_id, case_properties={'new_property': 'new value'})
                 self.assertEqual(recalculate_patch.call_count, 0)
 
@@ -966,7 +952,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_start_offset(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
@@ -1030,7 +1015,8 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertTrue(instances[0].active)
 
             # Making another arbitrary update doesn't cause any recalculating to happen
-            with patch('corehq.messaging.scheduling.scheduling_partitioned.models.AbstractTimedScheduleInstance.recalculate_schedule') as recalculate_patch:
+            with patch('corehq.messaging.scheduling.scheduling_partitioned.models.'
+                       'AbstractTimedScheduleInstance.recalculate_schedule') as recalculate_patch:
                 update_case(self.domain, case.case_id, case_properties={'new_property': 'new value 2'})
                 self.assertEqual(recalculate_patch.call_count, 0)
 
@@ -1067,24 +1053,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
         return rule.pk
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
-    @patch('corehq.messaging.tasks.sync_case_for_messaging_rule.delay')
-    @patch('corehq.apps.es.es_query.ESQuery.count', return_value=10)
-    def test_run_messaging_rule(self, es_patch, task_patch):
-        rule_id = self._setup_rule()
-        with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
-            run_messaging_rule(self.domain, rule_id)
-            self.assertEqual(task_patch.call_count, 2)
-            self.assertEqual(es_patch.call_count, 1)
-            task_patch.assert_has_calls(
-                [
-                    call(self.domain, case1.case_id, rule_id),
-                    call(self.domain, case2.case_id, rule_id),
-                ],
-                any_order=True
-            )
-
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     @patch('corehq.messaging.tasks.sync_case_chunk_for_messaging_rule.delay')
     @patch('corehq.messaging.tasks.run_messaging_rule_for_shard.delay')
     @patch('corehq.apps.es.es_query.ESQuery.count', return_value=10)
@@ -1107,7 +1075,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             )
             self.assertEqual(es_patch.call_count, 1)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_next_available_daily_slot(self, utcnow_patch, send_patch):
@@ -1186,7 +1153,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instance.schedule_revision, schedule.get_schedule_revision())
             self.assertTrue(instance.active)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_next_available_weekly_slot(self, utcnow_patch, send_patch):
@@ -1268,7 +1234,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instance.schedule_revision, schedule.get_schedule_revision())
             self.assertTrue(instance.active)
 
-    @run_with_all_backends
     @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_next_available_monthly_slot(self, utcnow_patch, send_patch):
@@ -1395,7 +1360,6 @@ class VisitSchedulerIntegrationHelperTestCase(TestCase):
                 date(2017, 8, 4)
             )
 
-    @run_with_all_backends
     def test_get_case_current_schedule_phase(self):
         with create_case(self.domain, 'person') as case:
             helper = self.get_helper(case)
@@ -1424,7 +1388,6 @@ class VisitSchedulerIntegrationHelperTestCase(TestCase):
             with self.assertRaises(VisitSchedulerIntegrationHelper.VisitSchedulerIntegrationException):
                 helper.get_visit(self.form)
 
-    @run_with_all_backends
     def test_get_anchor_date(self):
         with create_case(self.domain, 'person') as case:
             helper = self.get_helper(case)

@@ -167,7 +167,8 @@ class _AppSummaryFormDataGenerator(object):
         questions_by_path = OrderedDict(
             (question.value, question)
             for raw_question in form.get_questions(self.app.langs, include_triggers=True,
-                                                   include_groups=True, include_translations=True)
+                                                   include_groups=True, include_translations=True,
+                                                   include_fixtures=True)
             for question in self._get_question(form.unique_id, raw_question)
         )
         for path, question in questions_by_path.items():

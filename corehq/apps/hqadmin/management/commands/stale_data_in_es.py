@@ -8,35 +8,29 @@ from django.core.management.base import BaseCommand, CommandError
 
 import dateutil
 
-from casexml.apps.case.models import CommCareCase
-from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
-from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.retry import retry_on
 
-from corehq.apps.domain.models import Domain
-from corehq.apps.es import CaseES, FormES
+from corehq.apps.es import CaseES, CaseSearchES, FormES
 from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
     FormReindexAccessor,
 )
-from corehq.form_processor.utils import should_use_sql_backend
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.pillows.case_search import domains_needing_search_index
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.doc_processor.couch import resumable_view_iterator
 from corehq.util.doc_processor.progress import (
     ProcessorProgressLogger,
     ProgressManager,
 )
 from corehq.util.doc_processor.sql import resumable_sql_model_iterator
 from corehq.elastic import ESError
-from corehq.util.pagination import PaginationEventHandler
-from memoized import memoized
 
 
 CHUNK_SIZE = 1000
 
-RunConfig = namedtuple('RunConfig', ['iteration_key', 'domain', 'start_date', 'end_date', 'case_type', 'backend'])
+RunConfig = namedtuple('RunConfig', ['iteration_key', 'domain', 'start_date', 'end_date', 'case_type'])
 DataRow = namedtuple('DataRow', ['doc_id', 'doc_type', 'doc_subtype', 'domain', 'es_date', 'primary_date'])
 
 
@@ -60,6 +54,7 @@ def get_csv_args(delimiter):
 
 retry_on_es_timeout = retry_on(ESError, delays=[2**x for x in range(10)])
 
+
 class Command(BaseCommand):
     """
     Returns list of (doc_id, doc_type, doc_subtype, es_server_modified_on, primary_modified_on)
@@ -81,9 +76,6 @@ class Command(BaseCommand):
         parser.add_argument('data_models', nargs='+',
                             help='A list of data models to check. Valid options are "case" and "form".')
         parser.add_argument('--domain', default=ALL_DOMAINS)
-        parser.add_argument('--backed', choices=('couch', 'sql'),
-                            help='Limit to only domains on this backend. This is only applied if a domain name'
-                                 'is not specified.')
         parser.add_argument('--iteration_key', help='Unique slug to identify this run. Used to allow resuming.')
         parser.add_argument(
             '--start',
@@ -110,7 +102,6 @@ class Command(BaseCommand):
         end = dateutil.parser.parse(options['end']) if options['end'] else default_end
         case_type = options['case_type']
         iteration_key = options['iteration_key']
-        backend = options['backend'] if not domain else None
         if iteration_key:
             print(f'\nResuming previous run. Iteration Key:\n\t"{iteration_key}"\n', file=self.stderr)
         else:
@@ -120,15 +111,13 @@ class Command(BaseCommand):
                 f'-{start.isoformat() if start != default_start else ""}'
                 f'-{end.isoformat() if end != default_end else ""}'
                 f'-{case_type or ""}'
-                f'-{backend or ""}'
             )
             print(f'\nStarting new run. Iteration key:\n\t"{iteration_key}"\n', file=self.stderr)
 
-        run_config = RunConfig(iteration_key, domain, start, end, case_type, backend)
+        run_config = RunConfig(iteration_key, domain, start, end, case_type)
 
         if run_config.domain is ALL_DOMAINS:
-            backends = f'the "{backend}" backend' if backend else 'all backends'
-            print(f'Running for all domains on {backends}', file=self.stderr)
+            print('Running for all domains', file=self.stderr)
 
         csv_writer = csv.writer(self.stdout, **get_csv_args(delimiter))
 
@@ -150,7 +139,7 @@ class Command(BaseCommand):
 
                 for data_row in data_rows:
                     print_data_row(data_row)
-        except:
+        except:  # noqa: E722
             print(f'\nERROR: To resume the previous run add the "iteration_key" parameter to the command:\n'
                   f"\t--iteration_key '{iteration_key}'\n", file=self.stderr)
             raise
@@ -163,9 +152,10 @@ DATA_MODEL_HELPERS = {
 
 
 class CaseHelper:
+
     @classmethod
     def run(cls, run_config):
-        for chunk in _get_doc_chunks(cls, run_config):
+        for chunk in cls.get_sql_chunks(run_config):
             yield from cls._yield_missing_in_es(chunk)
 
     @staticmethod
@@ -182,47 +172,47 @@ class CaseHelper:
             matching_records = [
                 (case.case_id, case.type, case.server_modified_on, case.domain)
                 for case in chunk
-                if _should_use_sql_backend(case.domain)
             ]
             yield matching_records
 
     @staticmethod
-    def get_couch_chunks(run_config):
-        if run_config.case_type and run_config is not ALL_DOMAINS \
-                and not _should_use_sql_backend(run_config.domain):
-            raise CommandError('Case type argument is not supported for couch domains!')
-        matching_records = CaseHelper._get_couch_case_data(run_config)
-        print("Processing cases in Couch, which doesn't support nice progress bar", file=sys.stderr)
-        yield from chunked(matching_records, CHUNK_SIZE)
-
-    @staticmethod
     def _yield_missing_in_es(chunk):
-        case_ids = [val[0] for val in chunk]
+        case_ids, case_search_ids = CaseHelper._get_ids_from_chunk(chunk)
         es_modified_on_by_ids = CaseHelper._get_es_modified_dates(case_ids)
+        case_search_es_modified_on_by_ids = CaseHelper._get_case_search_es_modified_dates(case_search_ids)
         for case_id, case_type, modified_on, domain in chunk:
-            es_modified_on, es_domain = es_modified_on_by_ids.get(case_id, (None, None))
-            if (es_modified_on, es_domain) != (modified_on, domain):
-                yield DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
-                              es_date=es_modified_on, primary_date=modified_on)
+            stale, data_row = CaseHelper._check_stale(case_id, case_type, modified_on, domain,
+                                                      es_modified_on_by_ids, case_search_es_modified_on_by_ids)
+            if stale:
+                yield data_row
 
     @staticmethod
-    def _get_couch_case_data(run_config):
-        view_name = 'cases_by_server_date/by_server_modified_on'
-
-        keys = [[couch_domain] for couch_domain in _get_matching_couch_domains(run_config)]
-        if not keys:
-            return
-
-        iteration_key = f'couch_cases-{run_config.iteration_key}'
-        event_handler = ProgressEventHandler(iteration_key, 'unknown', sys.stderr)
-        iterable = resumable_view_iterator(
-            CommCareCase.get_db(), iteration_key, view_name, keys,
-            chunk_size=CHUNK_SIZE, view_event_handler=event_handler, full_row=True
-        )
-        for row in iterable:
-            case_id, domain, modified_on = row['id'], row['key'][0], iso_string_to_datetime(row['value'])
-            if run_config.start_date <= modified_on < run_config.end_date:
-                yield case_id, 'COUCH_TYPE_NOT_SUPPORTED', modified_on, domain
+    def _check_stale(case_id, case_type, modified_on, domain,
+                     es_modified_on_by_ids, case_search_es_modified_on_by_ids):
+        es_modified_on, es_domain = es_modified_on_by_ids.get(case_id, (None, None))
+        if (es_modified_on, es_domain) != (modified_on, domain):
+            # if the doc is newer in ES than sql, refetch from sql to get newest
+            if es_modified_on is not None and es_modified_on > modified_on:
+                refreshed = CaseAccessors(domain).get_case(case_id)
+                if refreshed.server_modified_on != modified_on:
+                    return CaseHelper._check_stale(case_id, case_type, refreshed.server_modified_on,
+                                                   refreshed.domain, es_modified_on_by_ids,
+                                                   case_search_es_modified_on_by_ids)
+            return True, DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type,
+                                 domain=domain, es_date=es_modified_on, primary_date=modified_on)
+        elif domain in domains_needing_search_index():
+            es_modified_on, es_domain = case_search_es_modified_on_by_ids.get(case_id, (None, None))
+            if (es_modified_on, es_domain) != (modified_on, domain):
+                # if the doc is newer in ES than sql, refetch from sql to get newest
+                if es_modified_on is not None and es_modified_on > modified_on:
+                    refreshed = CaseAccessors(domain).get_case(case_id)
+                    if refreshed.server_modified_on != modified_on:
+                        return CaseHelper._check_stale(case_id, case_type, refreshed.server_modified_on,
+                                                       refreshed.domain, es_modified_on_by_ids,
+                                                       case_search_es_modified_on_by_ids)
+                return True, DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type,
+                                     domain=domain, es_date=es_modified_on, primary_date=modified_on)
+        return False, None
 
     @staticmethod
     @retry_on_es_timeout
@@ -235,11 +225,32 @@ class CaseHelper:
         return {_id: (iso_string_to_datetime(server_modified_on), domain)
                 for _id, server_modified_on, domain in results}
 
+    @staticmethod
+    @retry_on_es_timeout
+    def _get_case_search_es_modified_dates(case_ids):
+        results = (
+            CaseSearchES(es_instance_alias=ES_EXPORT_INSTANCE)
+            .case_ids(case_ids)
+            .values_list('_id', 'server_modified_on', 'domain')
+        )
+        return {_id: (iso_string_to_datetime(server_modified_on), domain)
+                for _id, server_modified_on, domain in results}
+
+    @staticmethod
+    def _get_ids_from_chunk(chunk):
+        case_ids = []
+        case_search_ids = []
+        for val in chunk:
+            case_ids.append(val[0])
+            if val[3] in domains_needing_search_index():
+                case_search_ids.append(val[0])
+        return case_ids, case_search_ids
+
 
 class FormHelper:
     @classmethod
     def run(cls, run_config):
-        for chunk in _get_doc_chunks(cls, run_config):
+        for chunk in cls.get_sql_chunks(run_config):
             yield from cls._yield_missing_in_es(chunk)
 
     @staticmethod
@@ -255,61 +266,10 @@ class FormHelper:
             matching_records = [
                 (form.form_id, form.doc_type, form.xmlns, form.received_on, form.domain)
                 for form in chunk
-                if (
-                    _should_use_sql_backend(form.domain) and
-                    # Only check for "normal" and "archived" forms
-                    (form.is_normal or form.is_archived)
-                )
+                # Only check for "normal" and "archived" forms
+                if form.is_normal or form.is_archived
             ]
             yield matching_records
-
-    @staticmethod
-    def get_couch_chunks(run_config):
-        db = XFormInstance.get_db()
-        view_name = 'by_domain_doc_type_date/view'
-
-        keys = [
-            {
-                'startkey': [couch_domain, doc_type, json_format_datetime(run_config.start_date)],
-                'endkey': [couch_domain, doc_type, json_format_datetime(run_config.end_date)],
-            }
-            for couch_domain in _get_matching_couch_domains(run_config)
-            for doc_type in ['XFormArchived', 'XFormInstance']
-        ]
-        if not keys:
-            return
-
-        def _get_length():
-            length = 0
-            for key in keys:
-                result = db.view(view_name, reduce=True, **key).one()
-                if result:
-                    length += result['value']
-            return length
-
-        iteration_key = f'couch_forms-{run_config.iteration_key}'
-        iterable = resumable_view_iterator(
-            XFormInstance.get_db(), iteration_key, view_name, keys,
-            chunk_size=CHUNK_SIZE, full_row=True
-        )
-        progress = ProgressManager(
-            iterable,
-            total=_get_length(),
-            reset=False,
-            chunk_size=CHUNK_SIZE,
-            logger=ProcessorProgressLogger('[Couch Forms] ', sys.stderr)
-        )
-        with progress:
-            for chunk in chunked(iterable, CHUNK_SIZE):
-                records = []
-                for row in chunk:
-                    form_id = row['id']
-                    domain, doc_type, received_on = row['key']
-                    received_on = iso_string_to_datetime(received_on)
-                    assert run_config.domain in (domain, ALL_DOMAINS)
-                    records.append((form_id, doc_type, 'COUCH_XMLNS_NOT_SUPPORTED', received_on, domain))
-                yield records
-                progress.add(len(chunk))
 
     @staticmethod
     def _yield_missing_in_es(chunk):
@@ -330,39 +290,6 @@ class FormHelper:
         )
         return {_id: (iso_string_to_datetime(received_on), doc_type, domain)
                 for _id, received_on, doc_type, domain in results}
-
-
-def _get_doc_chunks(helper, run_config):
-    if not run_config.backend or run_config.backend == 'sql':
-        yield from helper.get_sql_chunks(run_config)
-    if not run_config.backend or run_config.backend == 'couch':
-        yield from helper.get_couch_chunks(run_config)
-
-
-@memoized
-def _should_use_sql_backend(domain):
-    return should_use_sql_backend(domain)
-
-
-@memoized
-def _get_matching_couch_domains(run_config):
-    if run_config.domain is ALL_DOMAINS:
-        return [domain.name for domain in Domain.get_all() if not _should_use_sql_backend(domain)]
-    elif _should_use_sql_backend(run_config.domain):
-        return []
-    else:
-        return [run_config.domain]
-
-
-class ProgressEventHandler(PaginationEventHandler):
-
-    def __init__(self, log_prefix, total, stream=None):
-        self.log_prefix = log_prefix
-        self.stream = stream
-        self.total = total
-
-    def page_end(self, total_emitted, duration, *args, **kwargs):
-        print(f'{self.log_prefix} Processed {total_emitted} of {self.total} in {duration}', file=self.stream)
 
 
 def _get_resumable_chunked_iterator(dbaccessor, iteration_key, log_prefix):

@@ -7,9 +7,13 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
     JsonResponse,
+    HttpResponseNotFound,
+    HttpResponseForbidden,
 )
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ngettext
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -37,18 +41,19 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
-from corehq.apps.case_search.filter_dsl import CaseFilterError, TooManyRelatedCasesError
-from corehq.apps.case_search.utils import CaseSearchCriteria, get_related_cases
+from corehq.apps.case_search.exceptions import CaseSearchUserError
+from corehq.apps.case_search.utils import get_case_search_results
 from corehq.apps.domain.decorators import (
     check_domain_migration,
     mobile_auth,
     mobile_auth_or_formplayer,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.case_search import flatten_result
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import location_safe, location_safe_bypass
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
+from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
@@ -63,6 +68,7 @@ from .utils import (
     handle_401_response,
     is_permitted_to_restore,
 )
+from ..case_search.const import COMMCARE_PROJECT
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
@@ -87,57 +93,37 @@ def restore(request, domain, app_id=None):
     return response
 
 
-@location_safe
+@location_safe_bypass
+@csrf_exempt
 @mobile_auth
 @check_domain_migration
 def search(request, domain):
     return app_aware_search(request, domain, None)
 
 
-@location_safe
+@location_safe_bypass
+@csrf_exempt
 @mobile_auth
 @check_domain_migration
 def app_aware_search(request, domain, app_id):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
+        Daterange can be specified in the format __range__YYYY-MM-DD__YYYY-MM-DD
+        Multiple values can be specified for a param, which will be searched with OR operator
+
     Returns results as a fixture with the same structure as a casedb instance.
     """
-    criteria = request.GET.dict()
+    request_dict = request.GET if request.method == 'GET' else request.POST
+    criteria = {k: v[0] if len(v) == 1 else v for k, v in request_dict.lists()}
     try:
-        case_type = criteria.pop('case_type')
-    except KeyError:
-        return HttpResponse('Search request must specify case type', status=400)
-
-    try:
-        case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
-    except TooManyRelatedCasesError:
-        return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
-    except CaseFilterError as e:
-        # This is an app building error, notify so we can track
-        notify_exception(request, str(e), details=dict(
-            exception_type=type(e),
-        ))
+        cases = get_case_search_results(domain, criteria, app_id, request.couch_user)
+    except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
-    search_es = case_search_criteria.search_es
-
-    try:
-        hits = search_es.run().raw_hits
-    except Exception as e:
-        notify_exception(request, str(e), details=dict(
-            exception_type=type(e),
-        ))
-        return HttpResponse(status=500)
-
-    # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
-    cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
-    if app_id:
-        cases.extend(get_related_cases(domain, app_id, case_type, cases))
-
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
-@location_safe
+@location_safe_bypass
 @csrf_exempt
 @require_POST
 @mobile_auth
@@ -159,7 +145,7 @@ def claim(request, domain):
             return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
                                 status=409)
 
-        claim_case(domain, restore_user.user_id, case_id,
+        claim_case(domain, restore_user, case_id,
                    host_type=unquote(request.POST.get('case_type', '')),
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
@@ -419,3 +405,42 @@ def recovery_measures(request, domain, build_id):
     if measures:
         response["recovery_measures"] = measures
     return JsonResponse(response)
+
+
+@location_safe_bypass
+@mobile_auth
+@require_GET
+def registry_case(request, domain, app_id):
+    case_id = request.GET.get("case_id")
+    case_type = request.GET.get("case_type")
+    registry = request.GET.get("commcare_registry")
+
+    missing = [
+        name
+        for name, value in zip(
+            ["case_id", "case_type", "commcare_registry"],
+            [case_id, case_type, registry]
+        )
+        if not value
+    ]
+    if missing:
+        return HttpResponseBadRequest(ngettext(
+            "'{params}' is a required parameter",
+            "'{params}' are required parameters",
+            len(missing)
+        ).format(params="', '".join(missing)))
+
+    helper = DataRegistryHelper(domain, registry_slug=registry)
+
+    app = get_app_cached(domain, app_id)
+    try:
+        case = helper.get_case(case_id, case_type, request.couch_user, app)
+    except RegistryNotFound:
+        return HttpResponseNotFound(f"Registry '{registry}' not found")
+    except (CaseNotFound, RegistryAccessException):
+        return HttpResponseNotFound(f"Case '{case_id}' not found")
+
+    cases = helper.get_case_hierarchy(request.couch_user, case)
+    for case in cases:
+        case.case_json[COMMCARE_PROJECT] = case.domain
+    return HttpResponse(CaseDBFixture(cases).fixture, content_type="text/xml; charset=utf-8")

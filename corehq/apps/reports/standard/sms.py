@@ -531,6 +531,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             table = list(result[0][1])
             table[0].append(_("Message Log ID"))
             result[0][1] = table
+
         return result
 
     def _get_data(self, paginate):

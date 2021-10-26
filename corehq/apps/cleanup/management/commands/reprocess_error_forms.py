@@ -2,12 +2,9 @@ from collections import defaultdict
 
 from django.core.management.base import BaseCommand
 
-from couchforms.dbaccessors import get_form_ids_by_type
-
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.reprocess import reprocess_xform_error
-from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.log import with_progress_bar
 
 
@@ -66,8 +63,4 @@ class Command(BaseCommand):
                       ("\n".join("%s: %s" % (v, k) for k, v in error_messages.items())))
 
     def _get_form_ids(self, domain):
-        if should_use_sql_backend(domain):
-            problem_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, 'XFormError')
-        else:
-            problem_ids = get_form_ids_by_type(domain, 'XFormError')
-        return problem_ids
+        return FormAccessorSQL.get_form_ids_in_domain_by_type(domain, 'XFormError')

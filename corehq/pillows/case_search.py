@@ -1,11 +1,8 @@
-from collections import OrderedDict
 from datetime import datetime
 
-from django.conf import settings
 from django.core.mail import mail_admins
 from django.db import ProgrammingError
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.case_search.const import (
     INDEXED_ON,
     SPECIAL_CASE_PROPERTIES_MAP,
@@ -22,7 +19,7 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
-from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -30,6 +27,7 @@ from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_MAPPING,
 )
 from corehq.toggles import (
+    CASE_API_V0_6,
     CASE_LIST_EXPLORER,
     EXPLORE_CASE_DATA,
     ECD_MIGRATED_DOMAINS,
@@ -38,6 +36,7 @@ from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
@@ -55,13 +54,16 @@ from pillowtop.reindexer.reindexer import (
     ResumableBulkElasticPillowReindexer,
 )
 
+_assert_string_property = soft_assert(to='{}@{}.com'.format('cellowitz', 'dimagi'), notify_admins=True)
+
 
 @quickcache([], timeout=24 * 60 * 60, memoize_timeout=60)
 def domains_needing_search_index():
     return set(list(case_search_enabled_domains())
                + CASE_LIST_EXPLORER.get_enabled_domains()
                + EXPLORE_CASE_DATA.get_enabled_domains()
-               + ECD_MIGRATED_DOMAINS.get_enabled_domains())
+               + ECD_MIGRATED_DOMAINS.get_enabled_domains()
+               + CASE_API_V0_6.get_enabled_domains())
 
 
 def domain_needs_search_index(domain):
@@ -80,19 +82,26 @@ def transform_case_for_elasticsearch(doc_dict):
     return doc
 
 
+def _format_property(key, value, case_id):
+    if not isinstance(value, str):
+        value = str(value)
+        _assert_string_property(False, f'Case {case_id} has property {key} saved in unexpected format')
+    return {
+        "key": key,
+        VALUE: value
+    }
+
 def _get_case_properties(doc_dict):
     domain = doc_dict.get('domain')
+    case_id = doc_dict.get('_id')
     assert domain
     base_case_properties = [
         {'key': base_case_property.key, 'value': base_case_property.value_getter(doc_dict)}
         for base_case_property in list(SPECIAL_CASE_PROPERTIES_MAP.values())
     ]
-    if should_use_sql_backend(domain):
-        dynamic_case_properties = OrderedDict(doc_dict['case_json'])
-    else:
-        dynamic_case_properties = CommCareCase.wrap(doc_dict).dynamic_case_properties()
+    dynamic_case_properties = dict(doc_dict['case_json'])
 
-    dynamic_mapping = [{'key': key, VALUE: value} for key, value in dynamic_case_properties.items()]
+    dynamic_mapping = [_format_property(key, value, case_id) for key, value in dynamic_case_properties.items()]
 
     return base_case_properties + dynamic_mapping
 
@@ -101,6 +110,9 @@ class CaseSearchPillowProcessor(ElasticProcessor):
 
     def process_change(self, change):
         assert isinstance(change, Change)
+        if self.change_filter_fn and self.change_filter_fn(change):
+            return
+
         if change.metadata is not None:
             # Comes from KafkaChangeFeed (i.e. running pillowtop)
             domain = change.metadata.domain
@@ -124,7 +136,8 @@ def get_case_search_processor():
     return CaseSearchPillowProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_SEARCH_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch
+        doc_prep_fn=transform_case_for_elasticsearch,
+        change_filter_fn=is_couch_change_for_sql_domain
     )
 
 
@@ -250,7 +263,6 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
         if not domain_needs_search_index(domain):
             raise CaseSearchNotEnabledException("{} does not have case search enabled".format(domain))
 
-        assert should_use_sql_backend(domain), '{} can only be used with SQL domains'.format(self.slug)
         iteration_key = "CaseSearchResumableToElasticsearchPillow_{}_reindexer_{}_{}".format(
             CASE_SEARCH_INDEX_INFO.index, limit_to_db or 'all', domain or 'all'
         )
@@ -278,8 +290,6 @@ def delete_case_search_cases(domain):
         "_index": CASE_SEARCH_INDEX_INFO.alias,
         "_type": CASE_ES_TYPE,
     }
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        op_kwargs.pop('_type')
 
     ElasticsearchInterface(get_es_new()).bulk_ops([{
         **op_kwargs,

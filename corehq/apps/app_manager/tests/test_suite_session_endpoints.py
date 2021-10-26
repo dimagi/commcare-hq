@@ -1,3 +1,5 @@
+from mock import patch
+
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.xform_builder import XFormBuilder
@@ -15,6 +17,7 @@ from .util import (
 @patch_get_xform_resource_overrides()
 @flag_enabled('SESSION_ENDPOINTS')
 class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
+    file_path = ('data',)
 
     def setUp(self):
         self.domain = 'test-domain'
@@ -39,12 +42,14 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
 
     def test_registration_form_session_endpoint_id(self):
         self.form.session_endpoint_id = 'my_form'
+        self.factory.form_opens_case(self.form, case_type=self.parent_case_type)
         self.assertXmlPartialEqual(
             """
             <partial>
                 <endpoint id="my_form">
                     <stack>
                         <push>
+                            <command value="'m0'"/>
                             <command value="'m0-f0'"/>
                         </push>
                     </stack>
@@ -58,22 +63,38 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
     def test_followup_form_session_endpoint_id(self):
         self.form.session_endpoint_id = 'my_form'
         self.factory.form_requires_case(self.form, case_type=self.parent_case_type)
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
             <partial>
                 <endpoint id="my_form">
                     <argument id="case_id"/>
                     <stack>
-                    <push>
-                        <command value="'m0-f0'"/>
-                        <datum id="case_id" value="$case_id"/>
-                    </push>
+                        <push>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'claim_command.my_form.case_id'"/>
+                        </push>
+                        <push>
+                            <command value="'m0'"/>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'m0-f0'"/>
+                        </push>
                     </stack>
                 </endpoint>
             </partial>
             """,
-            self.factory.app.create_suite(),
+            suite,
             "./endpoint",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="case_id",
+                endpoint_id="my_form",
+            ),
+            suite,
+            "./remote-request",
         )
 
     def test_child_module_form_session_endpoint_id(self):
@@ -83,6 +104,10 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             case_type=self.child_case_type,
             parent_case_type=self.parent_case_type
         )
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
+
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -90,17 +115,44 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                     <argument id="parent_id"/>
                     <argument id="case_id"/>
                     <stack>
-                    <push>
-                        <command value="'m1-f0'"/>
-                        <datum id="parent_id" value="$parent_id"/>
-                        <datum id="case_id" value="$case_id"/>
-                    </push>
+                        <push>
+                            <datum id="parent_id" value="$parent_id"/>
+                            <command value="'claim_command.my_form.parent_id'"/>
+                        </push>
+                        <push>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'claim_command.my_form.case_id'"/>
+                        </push>
+                        <push>
+                            <command value="'m0'"/>
+                            <command value="'m1'"/>
+                            <datum id="parent_id" value="$parent_id"/>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'m1-f0'"/>
+                        </push>
                     </stack>
                 </endpoint>
             </partial>
             """,
-            self.factory.app.create_suite(),
+            suite,
             "./endpoint",
+        )
+
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="parent_id",
+                endpoint_id="my_form",
+            ),
+            suite,
+            "./remote-request[1]",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="case_id",
+                endpoint_id="my_form",
+            ),
+            suite,
+            "./remote-request[2]",
         )
 
     def test_multiple_session_endpoints(self):
@@ -111,12 +163,17 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             case_type=self.child_case_type,
             parent_case_type=self.parent_case_type
         )
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
+
         self.assertXmlPartialEqual(
             """
             <partial>
                 <endpoint id="my_form">
                     <stack>
                         <push>
+                            <command value="'m0'"/>
                             <command value="'m0-f0'"/>
                         </push>
                     </stack>
@@ -125,29 +182,56 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                     <argument id="parent_id"/>
                     <argument id="case_id"/>
                     <stack>
-                    <push>
-                        <command value="'m1-f0'"/>
-                        <datum id="parent_id" value="$parent_id"/>
-                        <datum id="case_id" value="$case_id"/>
-                    </push>
+                        <push>
+                            <datum id="parent_id" value="$parent_id"/>
+                            <command value="'claim_command.my_child_form.parent_id'"/>
+                        </push>
+                        <push>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'claim_command.my_child_form.case_id'"/>
+                        </push>
+                        <push>
+                            <command value="'m0'"/>
+                            <command value="'m1'"/>
+                            <datum id="parent_id" value="$parent_id"/>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'m1-f0'"/>
+                        </push>
                     </stack>
                 </endpoint>
             </partial>
             """,
-            self.factory.app.create_suite(),
+            suite,
             "./endpoint",
         )
 
-    def test_case_list_session_endpoint_id(self):
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="parent_id",
+                endpoint_id="my_child_form",
+            ),
+            suite,
+            "./remote-request[1]",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="case_id",
+                endpoint_id="my_child_form",
+            ),
+            suite,
+            ".remote-request[2]",
+        )
+
+    def test_module_session_endpoint_id(self):
         self.module.session_endpoint_id = 'my_case_list'
         self.assertXmlPartialEqual(
             """
             <partial>
                 <endpoint id="my_case_list">
                     <stack>
-                    <push>
-                        <command value="'m0-case-list'"/>
-                    </push>
+                        <push>
+                            <command value="'m0'"/>
+                        </push>
                     </stack>
                 </endpoint>
             </partial>
@@ -157,15 +241,16 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         )
 
     def test_child_module_session_endpoint_id(self):
-        self.child_module.session_endpoint_id = 'my_case_list'
+        self.child_module.session_endpoint_id = 'my_child_module'
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_case_list">
+                <endpoint id="my_child_module">
                     <stack>
-                    <push>
-                        <command value="'m1-case-list'"/>
-                    </push>
+                        <push>
+                            <command value="'m0'"/>
+                            <command value="'m1'"/>
+                        </push>
                     </stack>
                 </endpoint>
             </partial>
@@ -173,3 +258,35 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             self.factory.app.create_suite(),
             "./endpoint",
         )
+
+    def test_shadow_module(self):
+        self.shadow_module = self.factory.new_shadow_module('shadow', self.module, with_form=False)
+        self.shadow_module.session_endpoint_id = 'my_shadow'
+
+        self.factory.form_requires_case(self.form)
+
+        self.factory.app.rearrange_modules(self.shadow_module.id, 0)
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <endpoint id="my_shadow">
+                    <argument id="case_id" />
+                    <stack>
+                        <push>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'claim_command.my_shadow.case_id'"/>
+                        </push>
+                        <push>
+                            <command value="'m0'"/>
+                            <datum id="case_id" value="$case_id"/>
+                        </push>
+                    </stack>
+                </endpoint>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./endpoint",
+        )
+
+        del self.factory.app.modules[0]

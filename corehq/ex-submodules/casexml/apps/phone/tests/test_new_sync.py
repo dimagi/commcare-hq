@@ -17,7 +17,7 @@ from casexml.apps.phone.tests.utils import (
 from casexml.apps.phone.utils import MockDevice
 
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request.api import set_request
 
@@ -47,6 +47,7 @@ class TestLiveQuery(TestCase):
             device.sync(case_sync=CLEAN_OWNERS)
 
 
+@sharded
 class TestNewSyncSpecifics(TestCase):
 
     @classmethod
@@ -110,8 +111,3 @@ class TestNewSyncSpecifics(TestCase):
             CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
             CaseStructure(case_id=parent_id, attrs={'owner_id': 'different'}),
         ], form_extras={'last_sync_token': sync_log._id})
-
-
-@use_sql_backend
-class TestNewSyncSpecificsSQL(TestNewSyncSpecifics):
-    pass

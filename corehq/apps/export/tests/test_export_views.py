@@ -61,7 +61,7 @@ class ViewTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         super(ViewTestCase, cls).tearDownClass()
 
@@ -144,6 +144,7 @@ class ExportViewTest(ViewTestCase):
     def tearDown(self):
         delete_all_export_instances()
 
+    @patch("couchforms.analytics.get_form_count_breakdown_for_domain", lambda *a: {})
     def test_create_form_export(self):
         resp = self.client.get(
             reverse(CreateNewCustomFormExportView.urlname, args=[self.domain.name]),

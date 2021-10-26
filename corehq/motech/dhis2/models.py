@@ -1,4 +1,5 @@
-from datetime import date, timedelta
+import copy
+from datetime import date, timedelta, datetime
 from itertools import chain
 from typing import Dict, List, Optional, Union
 
@@ -31,6 +32,10 @@ from .const import (
     SEND_FREQUENCY_MONTHLY,
     SEND_FREQUENCY_QUARTERLY,
     SEND_FREQUENCY_WEEKLY,
+    COMPLETE_DATE_CHOICES,
+    COMPLETE_DATE_EMPTY,
+    COMPLETE_DATE_ON_PERIOD_END,
+    COMPLETE_DATE_ON_SEND,
 )
 
 
@@ -60,6 +65,11 @@ class DataSetMap(Document):
 
     attribute_option_combo_id = StringProperty()  # Optional. DHIS2 defaults this to categoryOptionCombo
     complete_date = StringProperty()  # Optional
+    complete_date_option = StringProperty(
+        default=COMPLETE_DATE_EMPTY,
+        choices=COMPLETE_DATE_CHOICES,
+    )
+    complete_date_column = StringProperty()  # Optional
 
     datavalue_maps = SchemaListProperty(DataValueMap)
 
@@ -102,6 +112,12 @@ class SQLDataSetMap(models.Model):
     attribute_option_combo_id = models.CharField(max_length=11,
                                                  null=True, blank=True)
     complete_date = models.DateField(null=True, blank=True)
+    complete_date_option = models.CharField(
+        max_length=64,
+        default=COMPLETE_DATE_EMPTY,
+        choices=COMPLETE_DATE_CHOICES,
+    )
+    complete_date_column = models.CharField(max_length=64, null=True, blank=True)
 
     def __str__(self):
         return self.description
@@ -139,6 +155,7 @@ def get_info_for_columns(
             **_datavalue_map_to_dict(dvm),
             'is_org_unit': False,
             'is_period': False,
+            'is_complete_date': False,
         }
         for dvm in _iter_datavalue_maps(dataset_map)
     }
@@ -146,12 +163,21 @@ def get_info_for_columns(
         info_for_columns[dataset_map.org_unit_column] = {
             'is_org_unit': True,
             'is_period': False,
+            'is_complete_date': False,
         }
     if dataset_map.period_column:
         info_for_columns[dataset_map.period_column] = {
             'is_org_unit': False,
             'is_period': True,
+            'is_complete_date': False,
         }
+    if dataset_map.complete_date_column:
+        info_for_columns[dataset_map.complete_date_column] = {
+            'is_org_unit': False,
+            'is_period': False,
+            'is_complete_date': True,
+        }
+
     return info_for_columns
 
 
@@ -196,9 +222,12 @@ def get_datavalues(
 
     """
     info_for_columns = get_info_for_columns(dataset_map)
+
     datavalues = []
     org_unit = None
     period = None
+    complete_date = None
+
     # First pass is to collate data element IDs and values
     for key, value in ucr_row.items():
         if key in info_for_columns:
@@ -206,6 +235,8 @@ def get_datavalues(
                 org_unit = value
             elif info_for_columns[key]['is_period']:
                 period = value
+            elif info_for_columns[key]['is_complete_date']:
+                complete_date = value
             else:
                 datavalue = {
                     'dataElement': info_for_columns[key]['data_element_id'],
@@ -217,30 +248,40 @@ def get_datavalues(
                 if info_for_columns[key].get('comment'):
                     datavalue['comment'] = info_for_columns[key]['comment']
                 datavalues.append(datavalue)
-    # Second pass is to set period and org unit
-    if period or org_unit:
+    # Second pass is to set period, org unit and complete date
+    if period or org_unit or complete_date:
+        determine_complete_date_on_period_end = dataset_map.complete_date_option == COMPLETE_DATE_ON_PERIOD_END
+
         for datavalue in datavalues:
             if period:
                 datavalue['period'] = period
+                if determine_complete_date_on_period_end:
+                    datavalue['completeDate'] = str(get_end_of_period(dataset_map.frequency, period))
+
             if org_unit:
                 datavalue['orgUnit'] = org_unit
+
+            # This implies dataset_map.complete_date_option == COMPLETE_DATE_COLUMN
+            if complete_date:
+                datavalue['completeDate'] = complete_date
     return datavalues
 
 
-def get_dataset(
+def parse_dataset_for_request(
     dataset_map: Union[DataSetMap, SQLDataSetMap],
     send_date: date
-) -> dict:
+) -> list:
     if not dataset_map.ucr:
-        raise ValueError('UCR not found for {dataset_map!r}')
+        raise ValueError(f'UCR not found for {dataset_map!r}')
     date_filter = get_date_filter(dataset_map.ucr)
     date_range = get_date_range(dataset_map.frequency, send_date)
     ucr_data = get_ucr_data(dataset_map.ucr, date_filter, date_range)
 
     datavalues = (get_datavalues(dataset_map, row) for row in ucr_data)  # one UCR row may have many DataValues
-    dataset = {
-        'dataValues': list(chain.from_iterable(datavalues))  # get a single list of DataValues
-    }
+    datavalues_list = list(chain.from_iterable(datavalues))  # get a single list of DataValues
+
+    dataset = {}
+
     if dataset_map.data_set_id:
         dataset['dataSet'] = dataset_map.data_set_id
     if dataset_map.org_unit_id:
@@ -252,9 +293,107 @@ def get_dataset(
                                        date_range.startdate)
     if dataset_map.attribute_option_combo_id:
         dataset['attributeOptionCombo'] = dataset_map.attribute_option_combo_id
-    if dataset_map.complete_date:
-        dataset['completeDate'] = str(dataset_map.complete_date)
-    return dataset
+
+    (dataset, should_group_data) = evaluate_complete_date(dataset_map, dataset, send_date)
+
+    if should_group_data:
+        return group_dataset_datavalues(dataset, datavalues_list)
+    else:
+        dataset['dataValues'] = datavalues_list
+        return [dataset]
+
+
+def evaluate_complete_date(
+    dataset_map: SQLDataSetMap,
+    dataset: dict,
+    send_date: date,
+):
+    if dataset_map.complete_date_option == COMPLETE_DATE_EMPTY:
+        return dataset, False
+
+    if dataset_map.complete_date_option == COMPLETE_DATE_ON_SEND:
+        dataset['completeDate'] = str(send_date)
+
+    if dataset_map.complete_date_option == COMPLETE_DATE_ON_PERIOD_END and dataset_map.period:
+        dataset['completeDate'] = str(get_end_of_period(dataset_map.frequency, dataset_map.period))
+
+    return dataset, True
+
+
+def group_dataset_datavalues(
+    dataset,
+    datavalues_list
+) -> list:
+    """
+     The 'period' and 'orgUnit' must be specified when the 'completeDate' is specified (and on
+     the same level) such that the payload obeys the following format:
+        {
+            "completeDate": <completeDate>,
+            "orgUnit": <orgUnit>,
+            "period": <period>,
+            "dataValues": [...]
+        }
+
+    The problem is that either one or more of the 'period', 'orgUnit' or 'completeDate' key-value pairs
+    could be specified in the datavalues list (not on the dataset top level). We need to extract these
+    and group the data accordingly.
+
+    We can do a simple check to see which keys ('period', 'orgUnit' or 'completeDate') is not already
+    specified on the dataset top level. If any keys are missing that means that we have to group all
+    the datavalues by the specific key(s) such that the payload(s) returned obeys the structure above
+    and the values are relevant to each other.
+    """
+
+    dataset_keys = dataset.keys()
+    necessary_dataset_keys = ['orgUnit', 'period', 'completeDate']
+    group_by_keys = []
+
+    [group_by_keys.append(key) for key in necessary_dataset_keys if key not in dataset_keys]
+
+    if not group_by_keys:
+        dataset['dataValues'] = datavalues_list
+        return [dataset]
+    else:
+        return get_grouped_datavalues_sets(
+            data_list=datavalues_list,
+            group_by_keys=group_by_keys,
+            template_dataset=dataset
+        )
+
+
+def _group_data_by_keys(data: List[dict], keys: list):
+    from collections import defaultdict
+    datasets_dict = defaultdict(lambda: [])
+
+    for row in data:
+        dict_key = []
+        for k in keys:
+            dict_key.append(row[k])
+            row.pop(k)
+
+        dict_key = tuple(dict_key)
+        datasets_dict[dict_key].append(row)
+
+    return dict(datasets_dict)
+
+
+def get_grouped_datavalues_sets(
+    data_list: List[dict],
+    group_by_keys: list,
+    template_dataset: dict,
+) -> List[dict]:
+
+    datasets = []
+    for grouped_key, grouped_value in _group_data_by_keys(data_list, group_by_keys).items():
+        dataset = copy.deepcopy(template_dataset)
+
+        for key, key_value in zip(group_by_keys, grouped_key):
+            dataset[key] = key_value
+
+        dataset['dataValues'] = grouped_value
+        datasets.append(dataset)
+
+    return datasets
 
 
 def get_date_range(frequency: str, send_date: date) -> DateSpan:
@@ -373,3 +512,35 @@ def get_ucr_data(report_config, date_filter, date_span):
     filter_values = get_filter_values(report_config.ui_filters, filter_params)
     data_source.set_filter_values(filter_values)
     return data_source.get_data()
+
+
+def get_end_of_period(frequency, period):
+    """
+    period = "2004W10" for week 10, 2004, frequency = SEND_FREQUENCY_WEEKLY.
+    period = "200403" for March 2004, frequency = SEND_FREQUENCY_MONTHLY.
+    period = "2004Q1" for January-March 2004, frequency = SEND_FREQUENCY_QUARTERLY
+    """
+
+    if frequency == SEND_FREQUENCY_WEEKLY:
+        (year, week) = period.split('W')
+        start_of_year = datetime(int(year), 1, 1)
+        days_in_n_weeks = int(week) * 7
+        end_of_period = start_of_year + relativedelta(days=days_in_n_weeks)
+
+    elif frequency == SEND_FREQUENCY_MONTHLY:
+        year = period[0:4]  # '2004' in '200403'
+        month = period[4:7]  # '03' in '200403'
+        start_of_year = datetime(int(year), 1, 1)
+        end_of_period = start_of_year + relativedelta(months=int(month))
+
+    elif frequency == SEND_FREQUENCY_QUARTERLY:
+        (year, quarter) = period.split('Q')
+        start_of_year = datetime(int(year), 1, 1)
+        months = int(quarter) * 3
+        end_of_period = start_of_year + relativedelta(months=months)
+    else:
+        return None
+
+    # Subtract 1 day for last day of month/week instead of 1st day of
+    # next month/week
+    return (end_of_period - relativedelta(days=1)).date()

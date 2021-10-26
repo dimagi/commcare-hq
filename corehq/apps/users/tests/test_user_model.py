@@ -12,10 +12,7 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, DeviceAppMeta, WebUser
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    run_with_all_backends,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import (
     TestFormMetadata,
     get_simple_wrapped_form,
@@ -60,7 +57,6 @@ class UserModelTest(TestCase):
             created_via=None,
         )
 
-    @run_with_all_backends
     def test_get_form_ids(self):
         form_ids = list(self.user._get_form_ids())
         self.assertEqual(len(form_ids), 1)
@@ -176,7 +172,7 @@ class UserModelTest(TestCase):
         })
 
         definition.delete()
-        web_user.delete(deleted_by=None)
+        web_user.delete(self.domain, deleted_by=None)
 
     @patch('corehq.apps.users.models.toggles.MOBILE_LOGIN_LOCKOUT.enabled')
     def test_commcare_user_is_locked_only_with_toggle(self, mock_lockout_enabled_for_domain):

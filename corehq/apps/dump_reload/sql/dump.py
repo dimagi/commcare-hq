@@ -124,8 +124,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('cloudcare.SQLAppGroup', SimpleFilter('application_access__domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
-    FilteredModelIteratorBuilder('users.DomainPermissionsMirror', SimpleFilter('source')),
-    FilteredModelIteratorBuilder('users.SQLUserRole', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('users.UserRole', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('users.RolePermission', SimpleFilter('role__domain')),
+    FilteredModelIteratorBuilder('users.RoleAssignableBy', SimpleFilter('role__domain')),
     FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('commtrack.CommtrackConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('commtrack.ActionConfig', SimpleFilter('commtrack_config__domain')),
@@ -145,7 +146,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.ConnectionSettings', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('repeaters.RepeaterStub', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('repeaters.SQLRepeater', SimpleFilter('domain')),
     # NH (2021-01-08): Including SQLRepeatRecord because we dump (Couch)
     # RepeatRecord, but this does not seem like a good idea.
     FilteredModelIteratorBuilder('repeaters.SQLRepeatRecord', SimpleFilter('domain')),

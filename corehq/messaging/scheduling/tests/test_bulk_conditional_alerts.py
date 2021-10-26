@@ -126,7 +126,7 @@ class TestBulkConditionalAlerts(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
         super(TestBulkConditionalAlerts, cls).tearDownClass()
 

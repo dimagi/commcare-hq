@@ -1,6 +1,9 @@
 Analyzing Test Coverage
 =======================
 
+Test coverage is computed on travis using `coverage.py` and sent to codecov for
+aggregation and analysis.
+
 This page goes over some basic ways to analyze code coverage locally.
 
 Using coverage.py

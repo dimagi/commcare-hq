@@ -2,25 +2,21 @@ import decimal
 import json
 from collections import Counter
 
+from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
+from django.http import JsonResponse
 from django.http.response import Http404, HttpResponse
-from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
-
-from couchdbkit.exceptions import ResourceNotFound
-
-from corehq.apps.toggle_ui.models import ToggleAudit
-from couchforms.analytics import get_last_form_submission_received
-from toggle.models import Toggle
-from toggle.shortcuts import parse_toggle, namespaced_item
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.toggle_ui.models import ToggleAudit
+from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
 from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
@@ -36,9 +32,14 @@ from corehq.toggles import (
     all_toggles,
     NAMESPACE_EMAIL_DOMAIN,
     toggles_enabled_for_domain,
-    toggles_enabled_for_user,
+    toggles_enabled_for_user, FeatureRelease,
 )
+from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
+from couchforms.analytics import get_last_form_submission_received
+from soil import DownloadBase
+from toggle.models import Toggle
+from toggle.shortcuts import parse_toggle, namespaced_item
 
 NOT_FOUND = "Not Found"
 
@@ -136,6 +137,10 @@ class ToggleEditView(BasePageView):
     def is_random_editable(self):
         return isinstance(self.static_toggle, DynamicallyPredictablyRandomToggle)
 
+    @property
+    def is_feature_release(self):
+        return isinstance(self.static_toggle, FeatureRelease)
+
     @cached_property
     def static_toggle(self):
         """
@@ -163,6 +168,7 @@ class ToggleEditView(BasePageView):
             'server_environment': settings.SERVER_ENVIRONMENT,
             'is_random': self.is_random_editable,
             'is_random_editable': self.is_random_editable,
+            'is_feature_release': self.is_feature_release,
             'allows_items': all(n in ALL_NAMESPACES for n in namespaces)
         }
         if self.usage_info:
@@ -363,3 +369,19 @@ def set_toggle(request, toggle_slug):
     _clear_cache_for_toggle(namespace, item)
 
     return HttpResponse(json.dumps({'success': True}), content_type="application/json")
+
+
+@require_superuser_or_contractor
+@require_POST
+def export_toggles(request):
+    tag = request.POST['tag'] or None
+
+    download = DownloadBase()
+    download.set_task(generate_toggle_csv_download.delay(
+        tag, download.download_id, request.couch_user.username
+    ))
+
+    return JsonResponse({
+        "download_url": reverse("ajax_job_poll", kwargs={"download_id": download.download_id}),
+        "download_id": download.download_id,
+    })

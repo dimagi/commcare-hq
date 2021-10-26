@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db.models import Min
 from django.db import connections, router
 
@@ -11,6 +11,8 @@ from django.conf import settings
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
 from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.logging import notify_exception
+
+from corehq.util.metrics import metrics_gauge
 
 log = logging.getLogger(__name__)
 
@@ -92,18 +94,24 @@ def update_celery_state(sender=None, headers=None, **kwargs):
 )
 def prune_synclogs():
     """
-    Drops all partition tables containing data that's older than 63 days (7 weeks)
+    Drops all partition tables containing data that's older than 63 days (9 weeks)
     """
-    oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
-    while oldest_synclog and (datetime.today() - oldest_synclog).days > SYNCLOG_RETENTION_DAYS:
-        year, week, _ = oldest_synclog.isocalendar()
+    db = router.db_for_write(SyncLogSQL)
+    oldest_date = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
+    while oldest_date and (datetime.today() - oldest_date).days > SYNCLOG_RETENTION_DAYS:
+        year, week, _ = oldest_date.isocalendar()
         table_name = "{base_name}_y{year}w{week}".format(
             base_name=SyncLogSQL._meta.db_table,
             year=year,
             week="%02d" % week
         )
         drop_query = "DROP TABLE IF EXISTS {}".format(table_name)
-        db = router.db_for_write(SyncLogSQL)
         with connections[db].cursor() as cursor:
             cursor.execute(drop_query)
-        oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
+        oldest_date += timedelta(weeks=1)
+
+    # find and log synclogs for which the trigger did not function properly
+    with connections[db].cursor() as cursor:
+        cursor.execute("select count(*) from only phone_synclogsql")
+        orphaned_synclogs = cursor.fetchone()[0]
+        metrics_gauge('commcare.orphaned_synclogs', orphaned_synclogs)

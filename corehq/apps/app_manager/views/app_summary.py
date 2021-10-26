@@ -1,12 +1,17 @@
 import io
 from collections import namedtuple
+from wsgiref.util import FileWrapper
+
 from django.conf import settings
-from django.http import Http404
+from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 from django.contrib import messages
+
+from corehq.apps.app_manager.app_schemas.workflow_visualization import WORKFLOW_DIAGRAM_NAME, \
+    generate_app_workflow_diagram, generate_app_workflow_diagram_source
 from corehq.toggles import VIEW_APP_CHANGES
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -30,6 +35,7 @@ from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
+from soil import CHUNK_SIZE
 
 
 class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
@@ -90,6 +96,17 @@ class AppCaseSummaryView(AppSummaryView):
         return context
 
 
+class AppWorkflowSummaryView(AppSummaryView):
+    urlname = 'app_workflow_summary'
+    template_name = 'app_manager/workflow_summary.html'
+
+    @property
+    def page_context(self):
+        context = super(AppWorkflowSummaryView, self).page_context
+        context["workflow_dot"] = generate_app_workflow_diagram_source(self.app)
+        return context
+
+
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
     template_name = 'app_manager/form_summary.html'
@@ -101,7 +118,7 @@ class AppFormSummaryView(AppSummaryView):
             messages.warning(
                 self.request,
                 'Hey Dimagi User! Have you tried out '
-                '<a href="https://confluence.dimagi.com/display/ccinternal/Viewing+App+Changes+between+versions" '
+                '<a href="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions" '
                 'target="_blank">Viewing App Changes between Versions</a> yet? It might be just what you are '
                 'looking for!',
                 extra_tags='html'
@@ -239,6 +256,12 @@ def _get_translated_module_name(app, module_id, language):
     return _translate_name(_get_name_map(app)[module_id]['module_name'], language)
 
 
+def _get_translated_form_link_name(app, form_link, language):
+    if form_link.module_unique_id:
+        return _get_translated_module_name(app, form_link.module_unique_id, language)
+    return _get_translated_form_name(app, form_link.form_id, language)
+
+
 APP_SUMMARY_EXPORT_HEADER_NAMES = [
     'app',
     'module',
@@ -297,10 +320,10 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             for form in module.get_forms():
                 post_form_workflow = form.post_form_workflow
                 if form.post_form_workflow == WORKFLOW_FORM:
-                    post_form_workflow = "form:\n{}".format(
+                    post_form_workflow = "link:\n{}".format(
                         "\n".join(
                             ["{form}: {xpath} [{datums}]".format(
-                                form=_get_translated_form_name(self.app, link.form_id, language),
+                                form=_get_translated_form_link_name(self.app, link, language),
                                 xpath=link.xpath,
                                 datums=", ".join(
                                     "{}: {}".format(
@@ -596,3 +619,23 @@ class DownloadCaseSummaryView(ApplicationViewMixin, View):
             ) if save_question.condition else "",
             save_question.question.calculate,
         )
+
+
+class DownloadAppWorkflowDiagramView(ApplicationViewMixin, View):
+    urlname = 'download_workflow_diagram'
+    http_method_names = ['get']
+
+    @method_decorator(login_or_api_key)
+    def get(self, request, domain, app_id):
+        if WORKFLOW_DIAGRAM_NAME not in self.app.lazy_list_attachments():
+            content = generate_app_workflow_diagram(self.app)
+        else:
+            content = self.app.fetch_attachment(WORKFLOW_DIAGRAM_NAME, stream=True)
+        response = StreamingHttpResponse(
+            FileWrapper(content, CHUNK_SIZE),
+            content_type="image/png"
+        )
+
+        filename = f"application_workflow_{app_id}_v{self.app.version}.png"
+        response['Content-Disposition'] = f"attachment; filename={filename}"
+        return response

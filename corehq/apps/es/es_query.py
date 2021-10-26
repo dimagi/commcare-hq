@@ -123,19 +123,21 @@ from .utils import flatten_field_dict, values_list
 class ESQuery(object):
     """
     This query builder only outputs the following query structure::
+
         {
-            "query": {
-                "bool": {
-                    "filter": {
-                        "and": [
-                            <filters>
-                        ]
-                    },
-                    "query": <query>
-                }
-            },
-            <size, sort, other params>
+          "query": {
+            "bool": {
+              "filter": {
+                "and": [
+                  <filters>
+                ]
+              },
+              "query": <query>
+            }
+          },
+          <size, sort, other params>
         }
+
     """
     index = None
     _exclude_source = None
@@ -212,10 +214,6 @@ class ESQuery(object):
             start = sliced_or_int.start or 0
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
-
-    @property
-    def is_es7(self):
-        return settings.ELASTICSEARCH_MAJOR_VERSION == 7
 
     def run(self, include_hits=False):
         """Actually run the query.  Returns an ESQuerySet object."""

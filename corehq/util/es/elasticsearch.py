@@ -24,10 +24,10 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 2:
         SnapshotClient,
     )
     from elasticsearch2.helpers import bulk, scan
-elif settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-    import elasticsearch7 as elasticsearch
-    from elasticsearch7.exceptions import AuthorizationException
-    from elasticsearch7 import (
+elif settings.ELASTICSEARCH_MAJOR_VERSION == 5:
+    import elasticsearch5 as elasticsearch
+    from elasticsearch5.exceptions import AuthorizationException
+    from elasticsearch5 import (
         ConnectionError,
         ConflictError,
         ConnectionTimeout,
@@ -38,13 +38,13 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 7:
         TransportError,
         RequestError,
     )
-    from elasticsearch7.client import (
+    from elasticsearch5.client import (
         IndicesClient,
         SnapshotClient,
     )
-    from elasticsearch7.helpers import bulk, scan
+    from elasticsearch5.helpers import bulk, scan
 else:
-    raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 2 or 7, given {}".format(
+    raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 2 or 5, given {}".format(
         settings.ELASTICSEARCH_MAJOR_VERSION))
 
 

@@ -160,8 +160,7 @@ class AutoFilterTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super(AutoFilterTests, cls).setUpClass()
-        cls.domain = Domain(name=DOMAIN)
-        cls.domain.save()
+        cls.domain = Domain.get_or_create_with_name(DOMAIN, is_active=True)
 
         cls.country = LocationType(domain=DOMAIN, name='country')
         cls.country.save()
@@ -263,7 +262,7 @@ class AutoFilterTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.sheel.delete(deleted_by=None)
+        cls.sheel.delete(DOMAIN, deleted_by=None)
         cls.nyc.delete()
         cls.somerville.delete()
         cls.cambridge.delete()

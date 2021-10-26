@@ -1,10 +1,14 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
+{% load compress %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-  <script src="{% static "userreports/js/data_source_from_app.js" %}"></script>
+  {% compress js %}
+  <script src="{% static 'userreports/js/data_source_select_model.js' %}"></script>
+  <script src="{% static 'userreports/js/data_source_from_app.js' %}"></script>
+  {% endcompress %}
 {% endblock %}
 
 {% block page_content %}

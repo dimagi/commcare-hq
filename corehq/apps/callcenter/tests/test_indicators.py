@@ -3,7 +3,6 @@ from collections import namedtuple
 from django.core import cache
 from django.db import DEFAULT_DB_ALIAS
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from mock import patch
 
@@ -35,7 +34,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends, use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.sql_db.connections import connection_manager, override_engine
 from corehq.sql_db.tests.utils import temporary_database
 
@@ -48,7 +47,7 @@ def create_domain_and_user(domain_name, username):
     domain = create_domain(domain_name)
     user = CommCareUser.get_by_username(username)
     if user:
-        user.delete(deleted_by=None)
+        user.delete(domain_name, deleted_by=None)
     user = CommCareUser.create(domain_name, username, '***', None, None)
 
     domain.call_center_config.enabled = True
@@ -84,7 +83,8 @@ def get_indicators(prefix, values, case_type=None, is_legacy=False, limit_ranges
 StaticIndicators = namedtuple('StaticIndicators', 'name, values, is_legacy, infix')
 
 
-def expected_standard_indicators(no_data=False, include_legacy=True, include_totals=True, case_types=None, limit_ranges=None):
+def expected_standard_indicators(
+        no_data=False, include_legacy=True, include_totals=True, case_types=None, limit_ranges=None):
     case_types = case_types if case_types is not None else ['person', 'dog']
     expected = {}
     expected_values = []
@@ -98,7 +98,7 @@ def expected_standard_indicators(no_data=False, include_legacy=True, include_tot
         ])
 
     if 'dog' in case_types:
-        expected_values.extend ([
+        expected_values.extend([
             StaticIndicators('cases_total', [3, 3, 3, 5], False, 'dog'),
             StaticIndicators('cases_opened', [0, 0, 0, 5], False, 'dog'),
             StaticIndicators('cases_closed', [0, 0, 0, 2], False, 'dog'),
@@ -106,7 +106,7 @@ def expected_standard_indicators(no_data=False, include_legacy=True, include_tot
         ])
 
     if 'person' in case_types:
-        expected_values.extend ([
+        expected_values.extend([
             StaticIndicators('cases_total', [1, 1, 3, 0], False, 'person'),
             StaticIndicators('cases_opened', [0, 1, 3, 0], False, 'person'),
             StaticIndicators('cases_closed', [0, 0, 2, 0], False, 'person'),
@@ -177,10 +177,10 @@ class CallCenterTests(BaseCCTests):
     def tearDownClass(cls):
         clear_data(cls.aarohi_domain.name)
         clear_data(cls.cc_domain.name)
-        cls.cc_user.delete(deleted_by=None)
-        cls.cc_user_no_data.delete(deleted_by=None)
+        cls.cc_user.delete(cls.cc_domain.name, deleted_by=None)
+        cls.cc_user_no_data.delete(cls.cc_domain.name, deleted_by=None)
         cls.cc_domain.delete()
-        cls.aarohi_user.delete(deleted_by=None)
+        cls.aarohi_user.delete(cls.aarohi_domain.name, deleted_by=None)
         cls.aarohi_domain.delete()
         super(CallCenterTests, cls).tearDownClass()
 
@@ -436,14 +436,6 @@ class CallCenterTests(BaseCCTests):
         self.assertEqual(indicator_set.get_data(), {})
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class CallCenterTestsSQL(CallCenterTests):
-    """Run all tests in ``CallCenterTests`` with SQL backend
-    """
-    domain_name = "cc_test_sql"
-    pass
-
-
 class CallCenterSupervisorGroupTest(BaseCCTests):
     domain_name = 'cc_supervisor'
 
@@ -476,7 +468,6 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         self.domain.delete()
         super(CallCenterSupervisorGroupTest, self).tearDown()
 
-    @run_with_all_backends
     @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})
     def test_users_assigned_via_group(self, mock):
@@ -533,7 +524,6 @@ class CallCenterCaseSharingTest(BaseCCTests):
         clear_data(self.domain.name)
         self.domain.delete()
 
-    @run_with_all_backends
     @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})
     def test_cases_owned_by_group(self, mock):
@@ -577,7 +567,6 @@ class CallCenterTestOpenedClosed(BaseCCTests):
         clear_data(self.domain.name)
         self.domain.delete()
 
-    @run_with_all_backends
     @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})
     def test_opened_closed(self, mock):
@@ -601,6 +590,7 @@ class CallCenterTestOpenedClosed(BaseCCTests):
         self._test_indicators(self.user, indicator_set.get_data(), expected)
 
 
+@sharded
 class TestSavingToUCRDatabase(BaseCCTests):
     domain_name = 'callcenterucrtest'
 
@@ -619,7 +609,7 @@ class TestSavingToUCRDatabase(BaseCCTests):
     def tearDown(self):
         super(TestSavingToUCRDatabase, self).tearDown()
         clear_data(self.cc_domain.name)
-        self.cc_user.delete(deleted_by=None)
+        self.cc_user.delete(self.cc_domain.name, deleted_by=None)
         self.cc_domain.delete()
 
         connection_manager.dispose_engine('ucr')
@@ -639,8 +629,3 @@ class TestSavingToUCRDatabase(BaseCCTests):
                 custom_cache=locmem_cache
             )
             self._test_indicators(self.cc_user, indicator_set.get_data(), expected_standard_indicators())
-
-
-@use_sql_backend
-class TestSavingToUCRDatabaseSQL(TestSavingToUCRDatabase):
-    pass

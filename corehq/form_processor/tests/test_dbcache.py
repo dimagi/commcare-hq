@@ -2,45 +2,14 @@ import uuid
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
-from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 
 
-class CaseDbCacheCouchOnlyTest(TestCase):
-
-    def setUp(self):
-        super(CaseDbCacheCouchOnlyTest, self).setUp()
-        self.interface = FormProcessorInterface()
-
-    def testDocTypeCheck(self):
-        id = uuid.uuid4().hex
-        CommCareCase.get_db().save_doc({
-            "_id": id,
-            "doc_type": "AintNoCasesHere"
-        })
-        doc_back = CommCareCase.get_db().get(id)
-        self.assertEqual("AintNoCasesHere", doc_back['doc_type'])
-
-        cache = CaseDbCacheCouch()
-        try:
-            cache.get(id)
-            self.fail('doc type security check failed to raise exception')
-        except IllegalCaseId:
-            pass
-
-    def test_nowrap(self):
-        case_ids = _make_some_cases(1)
-        cache = self.interface.casedb_cache(wrap=False)
-        case = cache.get(case_ids[0])
-        self.assertTrue(isinstance(case, dict))
-        self.assertFalse(isinstance(case, CommCareCase))
-
-
+@sharded
 class CaseDbCacheTest(TestCase):
     """
     Tests the functionality of the CaseDbCache object
@@ -89,7 +58,7 @@ class CaseDbCacheTest(TestCase):
             self.assertFalse(cache.in_cache(id))
 
         for id in case_ids:
-            cache.set(id, CaseAccessors().get_case(id))
+            cache.set(id, CaseAccessors('dbcache-test').get_case(id))
 
         for i, id in enumerate(case_ids):
             self.assertTrue(cache.in_cache(id))
@@ -112,26 +81,7 @@ class CaseDbCacheTest(TestCase):
             self.assertEqual(str(i), case.dynamic_case_properties()['my_index'])
 
 
-@use_sql_backend
-class CaseDbCacheTestSQL(CaseDbCacheTest):
-    pass
-
-
 class CaseDbCacheNoDbTest(SimpleTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(CaseDbCacheNoDbTest, cls).setUpClass()
-        cls.interface = FormProcessorInterface()
-
-    def test_couch_wrap_lock_dependency_couch(self):
-        # valid combinations
-        CaseDbCacheCouch(domain='some-domain', lock=False, wrap=True)
-        CaseDbCacheCouch(domain='some-domain', lock=False, wrap=False)
-        CaseDbCacheCouch(domain='some-domain', lock=True, wrap=True)
-        with self.assertRaises(ValueError):
-            # invalid
-            CaseDbCacheCouch(domain='some-domain', lock=True, wrap=False)
 
     def test_sql_wrap_support(self):
         CaseDbCacheSQL(domain='some-domain', wrap=True)

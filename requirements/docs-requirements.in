@@ -1,9 +1,8 @@
 -r base-requirements.in
 
 django-extensions
-Sphinx~=4.0
-sphinx-rtd-theme~=0.5
-docutils==0.16
-sphinxcontrib-django~=0.3
-recommonmark
-
+docutils
+myst-parser
+Sphinx
+sphinxcontrib-django
+sphinx-rtd-theme

@@ -1,7 +1,6 @@
-from .maps import ReportingStatusMapReport, StockStatusMapReport
-from .standard import (
+from .maps import StockStatusMapReport  # noqa: F401
+from .standard import (  # noqa: F401
     CurrentStockStatusReport,
     InventoryReport,
-    ReportingRatesReport,
     SimplifiedInventoryReport,
 )

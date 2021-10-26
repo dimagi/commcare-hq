@@ -22,14 +22,16 @@ hqDefine('registration/js/user_login_form', [
             'passwordField',
             'passwordFormGroup',
             'nextUrl',
+            'isSessionExpiration',
         ]);
         var self = {};
 
         self.checkSsoLoginStatusUrl = initialPageData.reverse('check_sso_login_status');
+        self.sessionExpirationSsoIframeUrl = initialPageData.reverse('iframe_sso_login_pending');
         self.nextUrl = options.nextUrl;
+        self.isSessionExpiration = options.isSessionExpiration;
         self.passwordField = options.passwordField;
         self.passwordFormGroup = options.passwordFormGroup;
-        self.passwordFormGroup.hide();
 
         self.authUsername = ko.observable(options.initialUsername);
         self.authUsername.subscribe(function (newValue) {
@@ -44,14 +46,14 @@ hqDefine('registration/js/user_login_form', [
         self.continueTextPromise = null;
         self.defaultContinueText = gettext("Continue");
         self.continueButtonText = ko.observable(self.defaultContinueText);
-        self.showContinueButton = ko.observable(true);
+        self.showContinueButton = ko.observable(false);
         self.showContinueSpinner = ko.observable(false);
 
         self.isContinueDisabled = ko.computed(function () {
             return !emailUtils.validateEmail(self.authUsername());
         });
 
-        self.showSignInButton = ko.observable(false);
+        self.showSignInButton = ko.observable(true);
 
         /**
          * This updates the "Continue" Button text with either "Continue"
@@ -130,7 +132,14 @@ hqDefine('registration/js/user_login_form', [
                 // note ssoUrl already contains ?username=foo
                 ssoUrl = ssoUrl + "&next=" + self.nextUrl;
             }
-            window.location = ssoUrl;
+            if (self.isSessionExpiration) {
+                // the reason why we do this for the session expiration popup
+                // is that Azure AD does not load in cross origin iframes.
+                window.open(ssoUrl);
+                window.location = self.sessionExpirationSsoIframeUrl;
+            } else {
+                window.location = ssoUrl;
+            }
         };
 
         self.continueToPasswordLogin = function () {

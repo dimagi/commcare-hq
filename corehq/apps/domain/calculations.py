@@ -329,7 +329,7 @@ def dom_calc(calc_tag, dom, extra_arg=''):
     return ans
 
 
-@quickcache([], timeout=60 * 60)
+@quickcache([], timeout=23 * 60 * 60)
 def all_domain_stats():
     webuser_counts = defaultdict(int)
     commcare_counts = defaultdict(int)
@@ -442,12 +442,11 @@ def use_domain_security_settings(domain_obj):
 
 
 def num_custom_roles(domain):
-    custom_roles = [r for r in get_custom_roles_for_domain(domain) if not r.is_archived]
-    return len(custom_roles)
+    return len(get_custom_roles_for_domain(domain))
 
 
 def num_location_restricted_roles(domain):
-    roles = [r for r in UserRole.by_domain(domain)
+    roles = [r for r in UserRole.objects.get_by_domain(domain)
              if not r.permissions.access_all_locations]
     return len(roles)
 

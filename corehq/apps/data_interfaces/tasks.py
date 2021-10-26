@@ -18,7 +18,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.motech.repeaters.dbaccessors import (
     get_couch_repeat_record_ids_by_payload_id,
     get_sql_repeat_records_by_payload_id,
@@ -148,12 +147,8 @@ def run_case_update_rules_for_domain(domain, now=None):
             case_type=case_type
         )
 
-        if should_use_sql_backend(domain):
-            for db in get_db_aliases_for_partitioned_query():
-                run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk, case_type, db=db)
-        else:
-            # explicitly pass db=None so that the serial task decorator has access to db in the key generation
-            run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk, case_type, db=None)
+        for db in get_db_aliases_for_partitioned_query():
+            run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk, case_type, db=db)
 
 
 @serial_task(
@@ -268,7 +263,7 @@ def _get_repeat_record_ids(
         if use_sql:
             queryset = SQLRepeatRecord.objects.filter(
                 domain=domain,
-                repeater_stub__repeater_id=repeater_id,
+                repeater__repeater_id=repeater_id,
             )
             return [r['id'] for r in queryset.values('id')]
         else:

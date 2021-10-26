@@ -84,6 +84,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
             label: '',
             hint: '',
             appearance: '',
+            isMultiselect: false,
+            allowBlankValue: false,
             defaultValue: '',
             hidden: false,
             receiverExpression: '',
@@ -95,6 +97,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.label = ko.observable(options.label);
         self.hint = ko.observable(options.hint);
         self.appearance = ko.observable(options.appearance);
+        self.isMultiselect = ko.observable(options.isMultiselect);
+        self.allowBlankValue = ko.observable(options.allowBlankValue);
         self.defaultValue = ko.observable(options.defaultValue);
         self.hidden = ko.observable(options.hidden);
         self.appearanceFinal = ko.computed(function () {
@@ -146,9 +150,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
         });
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
-        subscribeToSave(self,
-            ['name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden', 'receiverExpression'], saveButton);
-
+        subscribeToSave(self, [
+            'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
+            'receiverExpression', 'isMultiselect', 'allowBlankValue',
+        ], saveButton);
         return self;
     };
 
@@ -164,20 +169,50 @@ hqDefine("app_manager/js/details/case_claim", function () {
         return self;
     };
 
+    var additionalQueryModel = function (options, saveButton) {
+        options = _.defaults(options, {
+            instance_name: '',
+            case_type_xpath: '',
+            case_id_xpath: '',
+        });
+        var self = {};
+        self.uniqueId = generateSemiRandomId();
+        self.instanceName = ko.observable(options.instance_name);
+        self.caseTypeXpath = ko.observable(options.case_type_xpath);
+        self.caseIdXpath = ko.observable(options.case_id_xpath);
+        subscribeToSave(self, ['instanceName', 'caseTypeXpath', 'caseIdXpath'], saveButton);
+        return self;
+    };
+
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchLabel', 'searchFilter', 'searchDefaultRelevant',
-        'searchAdditionalRelevant',
+        'searchAdditionalRelevant', 'dataRegistry', 'additionalRegistryQueries',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
 
         options.searchLabel = options.searchLabel[lang] || "";
         options.searchAgainLabel = options.searchAgainLabel[lang] || "";
-        var self = ko.mapping.fromJS(options);
+        var mapping = {
+            'additionalRegistryQueries': {
+                create: function(options) {
+                    return additionalQueryModel(options.data, saveButton);
+                },
+            },
+        };
+        var self = ko.mapping.fromJS(options, mapping);
 
         self.workflow = ko.computed({
             read: function () {
+                if (self.dataRegistry()) {
+                    if (self.autoLaunch()) {
+                        if (self.defaultSearch()) {
+                            return "es_only";
+                        }
+                    }
+                    return "auto_launch";
+                }
                 if (self.autoLaunch()) {
                     if (self.defaultSearch()) {
                         return "es_only";
@@ -215,6 +250,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
             saveButton.fire('change');
         });
 
+        self.addRegistryQuery = function () {
+            self.additionalRegistryQueries.push(additionalQueryModel({}, saveButton));
+        };
+
+        self.removeRegistryQuery = function (query) {
+            self.additionalRegistryQueries.remove(query);
+        };
+
         self.serialize = function () {
             return {
                 auto_launch: self.autoLaunch(),
@@ -222,6 +265,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 search_default_relevant: self.searchDefaultRelevant(),
                 search_additional_relevant: self.searchAdditionalRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
+                data_registry: self.dataRegistry(),
                 search_label: self.searchLabel(),
                 search_label_image:
                     $("#case_search-search_label_media_media_image input[type=hidden][name='case_search-search_label_media_media_image']").val() || null,
@@ -242,6 +286,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_use_default_audio_for_all']").val() || null,
                 search_filter: self.searchFilter(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
+                additional_registry_queries: self.additionalRegistryQueries().map((query) => {
+                    return {
+                        instance_name: query.instanceName(),
+                        case_type_xpath: query.caseTypeXpath(),
+                        case_id_xpath: query.caseIdXpath(),
+                    };
+                }),
             };
         };
 
@@ -257,11 +308,12 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
+                // searchProperties is a list of CaseSearchProperty objects
                 // property labels/hints come in keyed by lang.
                 var label = searchProperties[i].label[lang];
                 var hint = searchProperties[i].hint[lang] || "";
                 var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
-                if (searchProperties[i].input_ === "select1") {
+                if (searchProperties[i].input_ === "select1" || searchProperties[i].input_ === "select") {
                     var uri = searchProperties[i].itemset.instance_uri;
                     if (uri !== null && uri.includes("commcare-reports")) {
                         appearance = "report_fixture";
@@ -276,11 +328,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "daterange") {
                     appearance = "daterange";
                 }
+                var isMultiselect = searchProperties[i].input_ === "select";
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: label,
                     hint: hint,
                     appearance: appearance,
+                    isMultiselect: isMultiselect,
+                    allowBlankValue: searchProperties[i].allow_blank_value,
                     defaultValue: searchProperties[i].default_value,
                     hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
@@ -317,6 +372,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
                         hint: p.hint(),
                         appearance: p.appearanceFinal(),
+                        is_multiselect: p.isMultiselect(),
+                        allow_blank_value: p.allowBlankValue(),
                         default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
@@ -355,6 +412,25 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     };
                 }
             );
+        };
+
+        self.commonProperties = ko.computed(function () {
+            var defaultProperties = _.map(self._getDefaultProperties(), function (p) {
+                return p.property;
+            });
+            var commonProperties = self.searchProperties().filter(function (n) {
+                return n.name().length > 0 && defaultProperties.indexOf(n.name()) !== -1;
+            });
+            return _.map(
+                commonProperties,
+                function (p) {
+                    return p.name();
+                }
+            );
+        });
+
+        self.isCommon = function (prop) {
+            return self.commonProperties().indexOf(prop) !== -1;
         };
 
         self.serialize = function () {

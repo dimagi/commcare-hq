@@ -383,6 +383,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     )
     is_active = models.BooleanField(default=True)
     is_customer_billing_account = models.BooleanField(default=False, db_index=True)
+    is_sms_billable_report_visible = models.BooleanField(default=False)
     enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
     enterprise_restricted_signup_domains = ArrayField(models.CharField(max_length=128), default=list, blank=True)
     invoicing_plan = models.CharField(
@@ -507,6 +508,10 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         return StripePaymentMethod.objects.get(web_user=self.auto_pay_user).get_autopay_card(self)
 
+    def get_domains(self):
+        return list(Subscription.visible_objects.filter(account_id=self.id, is_active=True).values_list(
+                    'subscriber__domain', flat=True))
+
     def has_enterprise_admin(self, email):
         return self.is_customer_billing_account and email in self.enterprise_admin_emails
 
@@ -579,6 +584,11 @@ class BillingAccount(ValidateModelMixin, models.Model):
             render_to_string('accounting/email/invoice_autopay_setup.html', context),
             text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
         )
+
+    @staticmethod
+    def should_show_sms_billable_report(domain):
+        account = BillingAccount.get_account_by_domain(domain)
+        return account.is_sms_billable_report_visible
 
 
 class BillingContactInfo(models.Model):
@@ -1766,6 +1776,16 @@ class Subscription(models.Model):
         if no_current_entry_point and self_serve and not self.is_trial:
             self.account.entry_point = EntryPoint.SELF_STARTED
             self.account.save()
+
+    @classmethod
+    def get_active_domains_for_account(cls, account_name):
+        try:
+            return cls.visible_objects.filter(
+                is_active=True,
+                account=account_name,
+            ).values_list('subscriber__domain', flat=True).distinct()
+        except cls.DoesNotExist:
+            return None
 
     @classmethod
     def get_active_subscription_by_domain(cls, domain_name_or_obj):

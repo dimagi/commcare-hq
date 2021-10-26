@@ -32,7 +32,6 @@ from corehq.form_processor.exceptions import (
     LedgerSaveError,
     LedgerValueNotFound,
     MissingFormXml,
-    NotAllowed,
     XFormNotFound,
     XFormSaveError,
 )
@@ -66,16 +65,7 @@ from corehq.sql_db.util import (
 from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
 
-doc_type_to_state = {
-    "XFormInstance": XFormInstanceSQL.NORMAL,
-    "XFormError": XFormInstanceSQL.ERROR,
-    "XFormDuplicate": XFormInstanceSQL.DUPLICATE,
-    "XFormDeprecated": XFormInstanceSQL.DEPRECATED,
-    "XFormArchived": XFormInstanceSQL.ARCHIVED,
-    "SubmissionErrorLog": XFormInstanceSQL.SUBMISSION_ERROR_LOG
-}
-
-state_to_doc_type = {v: k for k, v in doc_type_to_state.items()}
+doc_type_to_state = XFormInstanceSQL.DOC_TYPE_TO_STATE
 
 
 def iter_all_rows(reindex_accessor):
@@ -551,7 +541,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         from corehq.form_processor.change_publishers import publish_form_saved
 
         assert isinstance(form_ids, list)
-        NotAllowed.check(domain)
         problem = 'Restored on {}'.format(datetime.utcnow())
         with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
@@ -584,7 +573,6 @@ class FormAccessorSQL(AbstractFormAccessor):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         from corehq.form_processor.change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
-        NotAllowed.check(domain)
         deletion_date = deletion_date or datetime.utcnow()
         with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
@@ -1178,7 +1166,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         from corehq.form_processor.change_publishers import publish_case_saved
 
         assert isinstance(case_ids, list)
-        NotAllowed.check(domain)
 
         with CommCareCaseSQL.get_plproxy_cursor() as cursor:
             cursor.execute(

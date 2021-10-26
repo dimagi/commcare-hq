@@ -97,7 +97,6 @@ from corehq.apps.users.event_handlers import handle_email_invite_message
 from corehq.apps.users.landing_pages import get_redirect_url
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import format_username
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.email_event_utils import handle_email_sns_event
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
@@ -105,11 +104,13 @@ from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
+from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception, notify_error
-from dimagi.utils.web import get_site_domain, get_url_base
+from dimagi.utils.web import get_url_base
 from no_exceptions.exceptions import Http403
 from soil import DownloadBase
 from soil import views as soil_views
@@ -211,7 +212,7 @@ def redirect_to_default(req, domain=None):
     else:
         domains = Domain.active_for_user(req.user)
 
-    if not domains and not req.user.is_superuser:
+    if not domains:
         return redirect('registration_domain')
 
     if len(domains) > 1:
@@ -262,18 +263,6 @@ def _two_factor_needed(domain_name, request):
             and not request.couch_user.two_factor_disabled
             and not request.user.is_verified()
         )
-
-
-def yui_crossdomain(req):
-    x_domain = """<?xml version="1.0"?>
-<!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
-<cross-domain-policy>
-    <allow-access-from domain="yui.yahooapis.com"/>
-    <allow-access-from domain="%s"/>
-    <site-control permitted-cross-domain-policies="master-only"/>
-</cross-domain-policy>""" % get_site_domain()
-    return HttpResponse(x_domain, content_type="application/xml")
-
 
 @login_required()
 def password_change(req):
@@ -471,6 +460,12 @@ def iframe_domain_login(req, domain):
     })
 
 
+@xframe_options_sameorigin
+@location_safe
+def iframe_sso_login_pending(request):
+    return TemplateView.as_view(template_name='hqwebapp/iframe_sso_login_pending.html')(request)
+
+
 class HQLoginView(LoginView):
     form_list = [
         ('auth', EmailAuthenticationForm),
@@ -501,6 +496,11 @@ class HQLoginView(LoginView):
             settings.ENFORCE_SSO_LOGIN
             and self.steps.current == 'auth'
         )
+        domain = context.get('domain')
+        if domain and not is_domain_using_sso(domain):
+            # ensure that domain login pages not associated with SSO do not
+            # enforce SSO on the login screen
+            context['enforce_sso_login'] = False
         return context
 
 
@@ -551,8 +551,11 @@ def login_new_window(request):
 @xframe_options_sameorigin
 @location_safe
 @login_required
-def iframe_domain_login_new_window(request):
-    return TemplateView.as_view(template_name='hqwebapp/iframe_close_window.html')(request)
+def domain_login_new_window(request):
+    template = ('hqwebapp/iframe_sso_login_success.html'
+                if is_request_using_sso(request)
+                else 'hqwebapp/iframe_close_window.html')
+    return TemplateView.as_view(template_name=template)(request)
 
 
 @login_and_domain_required
@@ -744,7 +747,6 @@ class BugReportView(View):
         debug_context = {
             'datetime': datetime.utcnow(),
             'self_started': '<unknown>',
-            'scale_backend': '<unknown>',
             'has_handoff_info': '<unknown>',
             'project_description': '<unknown>',
             'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL', ''), report['sentry_id'])
@@ -765,7 +767,6 @@ class BugReportView(View):
 
             debug_context.update({
                 'self_started': domain_object.internal.self_started,
-                'scale_backend': should_use_sql_backend(domain),
                 'has_handoff_info': bool(domain_object.internal.partner_contact),
                 'project_description': domain_object.project_description,
             })
@@ -789,7 +790,6 @@ class BugReportView(View):
             extra_debug_info = (
                 "datetime: {datetime}\n"
                 "Is self start: {self_started}\n"
-                "Is scale backend: {scale_backend}\n"
                 "Has Support Hand-off Info: {has_handoff_info}\n"
                 "Project description: {project_description}\n"
                 "Sentry Error: {sentry_error}\n"
@@ -1195,7 +1195,7 @@ def quick_find(request):
     if not result:
         raise Http404()
 
-    is_member = result.domain and request.couch_user.is_member_of(result.domain, allow_mirroring=True)
+    is_member = result.domain and request.couch_user.is_member_of(result.domain, allow_enterprise=True)
     if is_member or request.couch_user.is_superuser:
         doc_info = get_doc_info(result.doc)
     else:
@@ -1396,6 +1396,7 @@ class OauthApplicationRegistration(BasePageView):
         return HttpResponseRedirect(reverse('oauth2_provider:detail', args=[str(base_application.id)]))
 
 
+@csrf_exempt
 @require_POST
 def check_sso_login_status(request):
     """

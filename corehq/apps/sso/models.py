@@ -202,6 +202,8 @@ class IdentityProvider(models.Model):
         """
         IdentityProvider.does_domain_trust_this_idp.clear(self, domain)
         IdentityProvider.is_domain_an_active_member.clear(self, domain)
+        from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
+        is_domain_using_sso.clear(domain)
 
     @staticmethod
     def clear_email_domain_caches(email_domain):
@@ -224,9 +226,18 @@ class IdentityProvider(models.Model):
         for email_domain in all_email_domains_for_idp:
             self.clear_email_domain_caches(email_domain)
 
+    def clear_all_domain_subscriber_caches(self):
+        """
+        Ensure that we clear all domain caches tied to the Subscriptions
+        associated with the BillingAccount owner of this IdentityProvider.
+        """
+        for domain in self.get_active_projects():
+            self.clear_domain_caches(domain)
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.clear_all_email_domain_caches()
+        self.clear_all_domain_subscriber_caches()
 
     def create_trust_with_domain(self, domain, username):
         """
@@ -332,12 +343,8 @@ def clear_caches_when_subscription_status_changes(sender, instance, **kwargs):
     :param instance: Subscription - the instance being saved/deleted
     :param kwargs:
     """
-    try:
-        for identity_provider in IdentityProvider.objects.filter(owner=instance.account):
-            identity_provider.clear_domain_caches(instance.subscriber.domain)
-    except BillingAccount.DoesNotExist:
-        # for community subscriptions that might not have a BillingAccount set up
-        pass
+    for identity_provider in IdentityProvider.objects.filter(owner=instance.account):
+        identity_provider.clear_domain_caches(instance.subscriber.domain)
 
 
 class AuthenticatedEmailDomain(models.Model):

@@ -1,19 +1,19 @@
 from django.test import TestCase
 import os
-from django.test.utils import override_settings
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 
 TEST_DOMAIN = 'test-domain'
 
 
+@sharded
 class CaseExclusionTest(TestCase):
     """
     Tests the exclusion of device logs from case processing
     """
-    
+
     def setUp(self):
         super(CaseExclusionTest, self).setUp()
         delete_all_cases()
@@ -39,8 +39,3 @@ class CaseExclusionTest(TestCase):
         result = submit_form_locally(xml_data, TEST_DOMAIN)
         self.assertEqual(['case_in_form'], CaseAccessors(TEST_DOMAIN).get_case_ids_in_domain())
         self.assertEqual("form case", result.case.name)
-
-
-@use_sql_backend
-class CaseExclusionTestSQL(CaseExclusionTest):
-    pass

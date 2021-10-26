@@ -44,16 +44,19 @@ from corehq.apps.hqadmin.reports import (
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports import commtrack
-from corehq.apps.reports.standard import deployments, inspect, monitoring, sms
+from corehq.apps.reports.standard import deployments, inspect, monitoring, sms, tableau
 from corehq.apps.reports.standard.cases.case_list_explorer import (
     CaseListExplorer,
 )
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
+from corehq.apps.reports.standard.users.reports import UserHistoryReport
+from corehq.apps.reports.standard.web_user_activity import WebUserActivityReport
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
 )
+from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
 from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
@@ -64,8 +67,7 @@ from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
 )
-from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
-from corehq.form_processor.utils import should_use_sql_backend
+from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
 from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,
@@ -86,6 +88,7 @@ def REPORTS(project):
     reports.extend(_get_configurable_reports(project))
 
     monitoring_reports = (
+        WebUserActivityReport,
         monitoring.WorkerActivityReport,
         monitoring.DailyFormStatsReport,
         monitoring.SubmissionsByFormReport,
@@ -125,11 +128,6 @@ def REPORTS(project):
             commtrack.CurrentStockStatusReport,
             commtrack.StockStatusMapReport,
         )
-        if not should_use_sql_backend(project):
-            supply_reports = supply_reports + (
-                commtrack.ReportingRatesReport,
-                commtrack.ReportingStatusMapReport,
-            )
         supply_reports = _filter_reports(report_set, supply_reports)
         reports.insert(0, (ugettext_lazy("CommCare Supply"), supply_reports))
 
@@ -347,6 +345,12 @@ SMS_ADMIN_INTERFACES = (
     )),
 )
 
+ENTERPRISE_INTERFACES = (
+    (_("Manage Billing Details"), (
+        EnterpriseSMSBillablesReport,
+    )),
+)
+
 
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
@@ -364,5 +368,12 @@ DOMAIN_REPORTS = (
         SQLRepeatRecordReport,
         DomainLinkHistoryReport,
         IncrementalExportLogView,
+    )),
+)
+
+
+USER_MANAGEMENT_REPORTS = (
+    (_("User Management"), (
+        UserHistoryReport,
     )),
 )

@@ -48,7 +48,8 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.util import log_user_change
 from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import (
@@ -329,7 +330,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     usercase_enabled = BooleanProperty(default=False)
     hipaa_compliant = BooleanProperty(default=False)
     use_livequery = BooleanProperty(default=False)
-    use_sql_backend = BooleanProperty(default=False)
     first_domain_for_user = BooleanProperty(default=False)
 
     # CommConnect settings
@@ -638,7 +638,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return domain
 
     @classmethod
-    def get_or_create_with_name(cls, name, is_active=False, secure_submissions=True, use_sql_backend=False):
+    def get_or_create_with_name(cls, name, is_active=False, secure_submissions=True):
         result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
         if result:
             return result
@@ -649,7 +649,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 date_created=datetime.utcnow(),
                 secure_submissions=secure_submissions,
                 use_livequery=True,
-                use_sql_backend=use_sql_backend,
             )
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
@@ -724,8 +723,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         if not self._rev:
             if domain_or_deleted_domain_exists(self.name):
                 raise NameUnavailableException(self.name)
-            # mark any new domain as timezone migration complete
-            set_tz_migration_complete(self.name)
         super(Domain, self).save(**params)
 
         from corehq.apps.domain.signals import commcare_domain_post_save
@@ -982,7 +979,7 @@ class TransferDomainRequest(models.Model):
             text_content=text_content)
 
     @requires_active_transfer
-    def transfer_domain(self, *args, **kwargs):
+    def transfer_domain(self, by_user, *args, transfer_via=None, **kwargs):
 
         self.confirm_time = datetime.utcnow()
         if 'ip' in kwargs:
@@ -990,6 +987,13 @@ class TransferDomainRequest(models.Model):
 
         self.from_user.transfer_domain_membership(self.domain, self.to_user, is_admin=True)
         self.from_user.save()
+        if by_user:
+            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.from_user,
+                            changed_by_user=by_user, changed_via=transfer_via,
+                            change_messages=UserChangeMessage.domain_removal(self.domain))
+            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.to_user,
+                            changed_by_user=by_user, changed_via=transfer_via,
+                            change_messages=UserChangeMessage.domain_addition(self.domain))
         self.to_user.save()
         self.active = False
         self.save()

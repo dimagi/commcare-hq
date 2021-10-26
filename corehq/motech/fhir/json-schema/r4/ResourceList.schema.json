@@ -295,7 +295,7 @@
           "$ref": "QuestionnaireResponse.schema.json#/definitions/QuestionnaireResponse"
         },
         {
-          "$ref": "ReferralRequest.schema.json#/definitions/ReferralRequest"
+          "$ref": "ServiceRequest.schema.json#/definitions/ServiceRequest"
         },
         {
           "$ref": "RelatedPerson.schema.json#/definitions/RelatedPerson"

@@ -9,10 +9,13 @@ from corehq import toggles
 from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
+from corehq.util.timer import time_method
 
 
 class EntryInstances(PostProcessor):
+    """Adds instance declarations to the suite file"""
 
+    @time_method()
     def update_suite(self):
         for entry in self.suite.entries:
             self.add_entry_instances(entry)
@@ -41,6 +44,9 @@ class EntryInstances(PostProcessor):
             detail_ids.add(datum.detail_persistent)
             xpaths.add(datum.nodeset)
             xpaths.add(datum.function)
+        for query in entry.queries:
+            xpaths.update({data.ref for data in query.data})
+
         details = [details_by_id[detail_id] for detail_id in detail_ids if detail_id]
 
         entry_id = entry.command.id
@@ -123,6 +129,8 @@ INSTANCE_KWARGS_BY_ID = {
     'ledgerdb': dict(id='ledgerdb', src='jr://instance/ledgerdb'),
     'casedb': dict(id='casedb', src='jr://instance/casedb'),
     'commcaresession': dict(id='commcaresession', src='jr://instance/session'),
+    'registry': dict(id='registry', src='jr://instance/remote'),
+    'results': dict(id='results', src='jr://instance/remote'),
 }
 
 
@@ -176,7 +184,7 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
     instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
     instances = set()
     unknown_instance_ids = set()
-    for xpath in xpaths:
+    for xpath in set(xpaths):
         if not xpath:
             continue
 

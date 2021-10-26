@@ -7,6 +7,7 @@
 
 {% block page_content %}
   {% initial_page_data "invitations" invitations %}
+  {% initial_page_data "fromAddress" from_address %}
   {% registerurl "delete_invitation" domain %}
   {% registerurl "delete_request" domain %}
   {% registerurl "paginate_web_users" domain %}
@@ -144,13 +145,11 @@
           <tr>
             <td>
               <a data-bind="attr: {href: editUrl}, text: email"></a>
-              {% if request|toggle_enabled:"ENTERPRISE_SSO" %}
                 <span class="label label-warning"
                       data-bind="if: isUntrustedIdentityProvider">
                   <i class="fa fa-warning"></i>
                   {% trans "SSO Identity Provider is not trusted." %}
                 </span>
-              {% endif %}
             </td>
             <td data-bind="text: role"></td>
             <td data-bind="text: name"></td>
@@ -272,7 +271,7 @@
             <tr data-bind="visible: visible">
               <td>
                 <!-- ko text: email --><!-- /ko -->
-                <span class="label label-danger" data-bind="visible: email_marked_as_bounced">{% trans "Blocked" %}</span>
+                <span class="label label-danger undeliverable-label" data-bind="visible: email_marked_as_bounced">{% trans "Undeliverable" %}</span>
               </td>
               <td data-bind="text: role_label"></td>
               <td>

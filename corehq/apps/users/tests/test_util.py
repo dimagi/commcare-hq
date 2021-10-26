@@ -17,12 +17,13 @@ class TestUsernameToUserID(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestUsernameToUserID, cls).setUpClass()
-        cls.user = CommCareUser.create('scale-domain', 'scale', 'dude', None, None)
+        cls.domain = 'scale-domain'
+        cls.user = CommCareUser.create(cls.domain, 'scale', 'dude', None, None)
         cache.clear()
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         cache.clear()
         super(TestUsernameToUserID, cls).tearDownClass()
 
@@ -39,12 +40,13 @@ class TestUserIdToUsernameToUserName(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestUserIdToUsernameToUserName, cls).setUpClass()
-        cls.user_without_name = CommCareUser.create('test-domain', 'no_name', 'a_secret', None, None)
-        cls.user_with_first_name = CommCareUser.create('test-domain', 'first_name', 'a_secret', None, None,
+        cls.domain = 'test-domain'
+        cls.user_without_name = CommCareUser.create(cls.domain, 'no_name', 'a_secret', None, None)
+        cls.user_with_first_name = CommCareUser.create(cls.domain, 'first_name', 'a_secret', None, None,
                                                        first_name='Alice')
-        cls.user_with_last_name = CommCareUser.create('test-domain', 'last_name', 'a_secret', None, None,
+        cls.user_with_last_name = CommCareUser.create(cls.domain, 'last_name', 'a_secret', None, None,
                                                       last_name='Jones')
-        cls.user_with_full_name = CommCareUser.create('test-domain', 'full_name', 'a_secret', None, None,
+        cls.user_with_full_name = CommCareUser.create(cls.domain, 'full_name', 'a_secret', None, None,
                                                       first_name='Alice', last_name='Jones')
         cls.users = [
             cls.user_without_name,
@@ -57,7 +59,7 @@ class TestUserIdToUsernameToUserName(TestCase):
     @classmethod
     def tearDownClass(cls):
         for user in cls.users:
-            user.delete(deleted_by=None)
+            user.delete(cls.domain, deleted_by=None)
         cache.clear()
         super(TestUserIdToUsernameToUserName, cls).tearDownClass()
 

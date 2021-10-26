@@ -5,20 +5,20 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, N
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from custom.common.filters import RestrictedAsyncLocationFilter
 from custom.m4change.constants import FOLLOW_UP_FORMS
 from custom.m4change.models import McctStatus
 from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id
 from custom.m4change.reports.reports import M4ChangeReport
 from custom.m4change.reports.sql_data import McctMonthlyAggregateFormSqlData
-from couchforms.models import XFormInstance
 
 
 def _get_rows(row_data, form_data, key):
     data = form_data.get(key)
     rows = dict([(row_key, data.get(row_key, 0)) for row_key in row_data])
     for key in rows:
-        if rows.get(key) == None:
+        if rows.get(key) is None:
             rows[key] = 0
     rows["all_eligible_clients_total"] += \
         rows["status_eligible_due_to_registration"] + \
@@ -61,9 +61,10 @@ def _add_eligible_9months(row_data, start_date, end_date, domain):
         .filter(immunized=False)\
         .filter(is_booking=False)\
         .filter(received_on__range=(start_date, end_date))
-    forms = [form for form in [XFormInstance.get(status.form_id) for status in eligible_9months]
-             if form.xmlns in FOLLOW_UP_FORMS]
-    forms_4th_visit = [form for form in forms if form.form.get("visits", "") == "4"]
+    form_ids = [status.form_id for status in eligible_9months]
+    eligible_forms = FormAccessors(domain).get_forms(form_ids)
+    forms = [form for form in eligible_forms if form.xmlns in FOLLOW_UP_FORMS]
+    forms_4th_visit = [form for form in forms if form.form_data.get("visits", "") == "4"]
     row_data["all_eligible_clients_total"]["value"] += len(forms) - len(forms_4th_visit)
     row_data["status_eligible_due_to_4th_visit"]["value"] += len(forms_4th_visit)
 

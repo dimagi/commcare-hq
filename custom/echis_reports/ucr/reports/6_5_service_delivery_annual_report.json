@@ -12,15 +12,10 @@
     "data_source_table": "static_annual_service_delivery_dS_v1",
     "config": {
       "title": "6.5 Service Delivery Annual Report",
-      "aggregation_columns":[
-        "region",
-        "zone",
-        "woreda",
-        "health_center",
-        "health_post",
+      "aggregation_columns":[ 
         "annual_report_date"
-      ]  ,
-      "filters":  [
+      ] ,
+      "filters":   [
         {
           "datatype": "string",
           "choice_provider": {
@@ -51,10 +46,10 @@
           "compare_as_string": false,
           "datatype": "date",
           "required": false,
-          "slug": "annual_report_date",
-          "field": "annual_report_date",
+          "slug": "annual_date",
+          "field": "annual_date",
           "type": "date",
-          "display": "Report Month (for mobile)"
+          "display": "Annual Date(for mobile)"
         },
         {
           "display": "Test or Real",
@@ -73,45 +68,7 @@
           "field": "test_or_real",
           "type": "choice_list",
           "slug": "test_or_real"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "region",
-          "field": "region",
-          "type": "dynamic_choice_list",
-          "slug": "region"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "Zone",
-          "field": "zone",
-          "type": "dynamic_choice_list",
-          "slug": "zone"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "Woreda",
-          "field": "woreda",
-          "type": "dynamic_choice_list",
-          "slug": "woreda"
-        },
-        {
-          "datatype": "string",
-          "field": "health_center",
-          "type": "dynamic_choice_list",
-          "display": "Health Center",
-          "slug": "health_center"
-        },
-        {
-          "datatype": "string",
-          "field": "health_post",
-          "type": "dynamic_choice_list",
-          "display": "Health Post",
-          "slug": "health_post"
-        },
+        } ,
         {
           "type": "pre",
           "field": "is_closed",
@@ -119,98 +76,33 @@
           "datatype": "string",
           "pre_value": "False",
           "display": null
+        },
+        {
+          "type": "pre",
+          "field": "health_post",
+          "slug": "health_post_pre",
+          "datatype": "string",
+          "pre_value": "",
+          "pre_operator": "!=",
+          "display": null
         }
       ],
       "columns":  [
+        
         {
           "comment": null,
-          "field": "region",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "region",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Region"
-        },
-        {
-          "comment": null,
-          "field": "zone",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "zone",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Zone"
-        },
-        {
-          "comment": null,
-          "field": "woreda",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "woreda",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Woreda"
-        },
-        {
-          "comment": null,
-          "field": "health_center",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "health_center",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Health Center"
-        },
-        {
-          "comment": null,
-          "field": "health_post",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "health_post",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Health Post"
-        },
-        {
           "field": "annual_report_date",
-          "sortable": false,
           "description": null,
           "format": "default",
           "css_class": null,
-          "transform": {},
+          "width": null,
+          "aggregation": "simple",
           "column_id": "annual_report_date",
           "visible": true,
-          "display": "annual Report Date",
+          "transform": {},
           "calculate_total": false,
           "type": "field",
-          "width": null,
-          "aggregation": "simple"
+          "display": "Annual Report Date"
         },
         {
           "comment": "FP_CYP.1:Male Condom (number of condoms distributed)",
@@ -223,7 +115,7 @@
           "column_id": "FP_CYP_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "FP_CYP.1:Male Condom (number of condoms distributed)"
         },
@@ -238,7 +130,7 @@
           "column_id": "FP_CYP_3",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "FP_CYP.3:Oral contraceptives (number of monthly cycles distributed)"
         },
@@ -253,7 +145,7 @@
           "column_id": "FP_CYP_5",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "FP_CYP.5:Injectable (Depo provera) (number of injections)"
         },
@@ -268,7 +160,7 @@
           "column_id": "FP_CYP_8",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "FP_CYP.8:Implanon (number of Implanon insertions)"
         },
@@ -283,7 +175,7 @@
           "column_id": "FP_CYP_9",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "FP_CYP.9:Jadelle (number of Jadelle insertions)"
         },
@@ -298,7 +190,7 @@
           "column_id": "FP_CYP_10",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "FP_CYP.10:IUCD (number of IUCDs inserted)"
         },
@@ -313,7 +205,7 @@
           "column_id": "Mal_LLITN_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "Mal_LLITN.1:Number of targeted HH received at least one LLITN in the last 12 month"
         },
@@ -328,7 +220,7 @@
           "column_id": "Mal_ELLITN_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "Mal_ELLITN.1:Number of HHs that need LLITN in the last 12 month"
         }

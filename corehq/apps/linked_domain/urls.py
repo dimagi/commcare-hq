@@ -8,6 +8,7 @@ from corehq.apps.linked_domain.views import (
     custom_data_models,
     data_dictionary,
     fixture,
+    linkable_ucr,
     ucr_config,
     get_latest_released_app_source,
     released_app_versions,
@@ -16,6 +17,7 @@ from corehq.apps.linked_domain.views import (
     dialer_settings,
     otp_settings,
     hmac_callout_settings,
+    tableau_server_and_visualizations,
 )
 
 app_name = 'linked_domain'
@@ -29,6 +31,7 @@ urlpatterns = [
     url(r'^data_dictionary/$', data_dictionary, name='data_dictionary'),
     url(r'^fixture/(?P<tag>[\w_-]+)$', fixture, name='fixture'),
     url(r'^ucr_config/(?P<config_id>[\w-]+)/$', ucr_config, name='ucr_config'),
+    url(r'^linkable_ucr/$', linkable_ucr, name='linkable_ucr'),
     url(r'^toggles/$', toggles_and_previews, name='toggles'),
     url(r'^released_app_versions/$', released_app_versions, name='released_app_versions'),
     url(r'^release_source/(?P<app_id>[\w-]+)/$', get_latest_released_app_source,
@@ -38,4 +41,6 @@ urlpatterns = [
     url(r'^dialer_settings/$', dialer_settings, name='dialer_settings'),
     url(r'^otp_settings/$', otp_settings, name='otp_settings'),
     url(r'^hmac_callout_settings/$', hmac_callout_settings, name='hmac_callout_settings'),
+    url(r'^tableau_server_and_visualizatons/$', tableau_server_and_visualizations,
+        name='tableau_server_and_visualizations'),
 ]

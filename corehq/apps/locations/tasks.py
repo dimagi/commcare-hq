@@ -8,12 +8,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
-from corehq.apps.commtrack.models import (
-    StockState,
-    close_supply_point_case,
-    sync_supply_point,
-)
-from corehq.apps.es.users import UserES
+from corehq.apps.commtrack.models import close_supply_point_case
 from corehq.apps.locations.bulk_management import (
     LocationUploadResult,
     new_locations_import,
@@ -23,8 +18,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import dump_locations
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.tasks import rebuild_indicators_in_place
-from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.models import CouchUser
 from corehq.toggles import LOCATIONS_IN_UCR
 from corehq.util.decorators import serial_task
 from corehq.util.workbook_json.excel_importer import MultiExcelImporter
@@ -32,67 +26,16 @@ from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 
 @serial_task("{location_type.domain}-{location_type.pk}",
              default_retry_delay=30, max_retries=3)
-def sync_administrative_status(location_type, sync_supply_points=True):
+def sync_administrative_status(location_type):
     """Updates supply points of locations of this type"""
-    if sync_supply_points:
-        for location in SQLLocation.objects.filter(location_type=location_type):
-            # Saving the location should be sufficient for it to pick up the
-            # new supply point.  We'll need to save it anyways to store the new
-            # supply_point_id.
-            location.save()
-    if location_type.administrative:
-        _hide_stock_states(location_type)
-    else:
-        _unhide_stock_states(location_type)
-
-
-def _hide_stock_states(location_type):
-    (StockState.objects
-     .filter(sql_location__location_type=location_type)
-     .update(sql_location=None))
-
-
-def _unhide_stock_states(location_type):
     for location in SQLLocation.objects.filter(location_type=location_type):
-        (StockState.objects
-         .filter(case_id=location.supply_point_id)
-         .update(sql_location=location))
-
-
-@serial_task("{domain}", default_retry_delay=30, max_retries=3)
-def sync_supply_points(location_type):
-    for location in SQLLocation.objects.filter(location_type=location_type):
-        sync_supply_point(location)
+        # Saving the location should be sufficient for it to pick up the
+        # new supply point.  We'll need to save it anyways to store the new
+        # supply_point_id.
         location.save()
 
 
-def _get_users_by_loc_id(location_type):
-    """Find any existing users previously assigned to this type"""
-    loc_ids = SQLLocation.objects.filter(location_type=location_type).location_ids()
-    user_ids = list(UserES()
-                    .domain(location_type.domain)
-                    .show_inactive()
-                    .term('user_location_id', list(loc_ids))
-                    .values_list('_id', flat=True))
-    return {
-        user_doc['user_location_id']: CommCareUser.wrap(user_doc)
-        for user_doc in iter_docs(CommCareUser.get_db(), user_ids)
-        if 'user_location_id' in user_doc
-    }
-
-
-def _get_unique_username(domain, base, suffix=0, tries_left=3):
-    if tries_left == 0:
-        raise AssertionError("Username {} on domain {} exists in multiple variations, "
-                             "what's up with that?".format(base, domain))
-    with_suffix = "{}{}".format(base, suffix) if suffix else base
-    username = format_username(with_suffix, domain)
-    if not CommCareUser.username_exists(username):
-        return username
-    return _get_unique_username(domain, base, suffix + 1, tries_left - 1)
-
-
-@task(serializer='pickle')
+@task
 def download_locations_async(domain, download_id, include_consumption,
                              headers_only, owner_id, root_location_id=None):
     DownloadBase.set_progress(download_locations_async, 0, 100)
@@ -150,7 +93,7 @@ def import_locations_async(domain, file_ref_id, user_id):
     }
 
 
-@task(serializer='pickle')
+@task
 def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_ids):
     """
     Update location fixtures for users given locations

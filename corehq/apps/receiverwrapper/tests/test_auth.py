@@ -16,7 +16,7 @@ from corehq.apps.receiverwrapper.views import secure_post
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 
 
 class FakeFile(object):
@@ -265,7 +265,7 @@ class AuthCouchOnlyTest(TestCase, AuthTestMixin, _AuthTestsCouchOnly):
         super(AuthCouchOnlyTest, self)._set_up_auth_test()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         super(AuthCouchOnlyTest, self).tearDown()
 
 
@@ -283,10 +283,11 @@ class InsecureAuthCouchOnlyTest(TestCase, AuthTestMixin, _AuthTestsCouchOnly):
         super(InsecureAuthCouchOnlyTest, self)._set_up_auth_test()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         super(InsecureAuthCouchOnlyTest, self).tearDown()
 
 
+@sharded
 class AuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
 
     domain = 'my-crazy-domain'
@@ -301,10 +302,11 @@ class AuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
         super(AuthTest, self)._set_up_auth_test()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         super(AuthTest, self).tearDown()
 
 
+@sharded
 class InsecureAuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
 
     domain = 'my-crazy-insecure-domain'
@@ -319,15 +321,5 @@ class InsecureAuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
         super(InsecureAuthTest, self)._set_up_auth_test()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         super(InsecureAuthTest, self).tearDown()
-
-
-@use_sql_backend
-class AuthTestSQL(AuthTest):
-    pass
-
-
-@use_sql_backend
-class InsecureAuthTestSQL(InsecureAuthTest):
-    pass

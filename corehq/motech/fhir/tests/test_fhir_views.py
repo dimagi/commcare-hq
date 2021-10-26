@@ -24,16 +24,16 @@ FHIR_VERSION = 'R4'
 BASE_URL = f'http://localhost:8000/a/{DOMAIN}/fhir/{FHIR_VERSION}/'
 USERNAME = f'admin@{DOMAIN}.commcarehq.org'
 PASSWORD = 'Passw0rd!'
-PERSON_CASE_ID = uuid4().hex
-DELETED_CASE_ID = uuid4().hex
-TEST_CASE_ID = uuid4().hex
+PERSON_CASE_ID = str(uuid4())
+DELETED_CASE_ID = str(uuid4())
+TEST_CASE_ID = str(uuid4())
 
 
 class BaseFHIRViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain_obj = create_domain(DOMAIN, use_sql_backend=True)
+        cls.domain_obj = create_domain(DOMAIN)
         cls.user = WebUser.create(DOMAIN, USERNAME, PASSWORD,
                                   created_by=None, created_via=None)
         # ToDo: to be removed according to authentication updates by Smart-On-Fhir work
@@ -50,9 +50,15 @@ class BaseFHIRViewTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_cases()
-        cls.user.delete(deleted_by=None)
+        delete_username(cls.domain_obj.name, USERNAME)
         cls.domain_obj.delete()
         super().tearDownClass()
+
+
+def delete_username(domain, username):
+    user = WebUser.get_by_username(username)
+    if user:
+        user.delete(domain, deleted_by=None)
 
 
 class TestFHIRGetView(BaseFHIRViewTest):

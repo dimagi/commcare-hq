@@ -13,7 +13,6 @@ from corehq.apps.hqadmin.views.data import lookup_doc_in_es
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, capture_log_output
-from corehq.pillows.mappings.utils import transform_for_es7
 from pillowtop.es_utils import (
     assume_alias,
     initialize_index,
@@ -62,7 +61,7 @@ class ElasticPillowTest(SimpleTestCase):
         mapping = get_index_mapping(self.es, self.index, TEST_INDEX_INFO.type)
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
-            transform_for_es7(TEST_INDEX_INFO.mapping)['properties']['doc_type'],
+            TEST_INDEX_INFO.mapping['properties']['doc_type'],
             mapping['properties']['doc_type']
         )
 
@@ -196,16 +195,7 @@ class TestSendToElasticsearch(SimpleTestCase):
         if update and es_merge_update:
             old_doc = self.es_interface.get_doc(self.es_alias, TEST_INDEX_INFO.type, doc['_id'])
 
-        send_to_elasticsearch(
-            TEST_INDEX_INFO,
-            doc_type=TEST_INDEX_INFO.type,
-            doc_id=doc['_id'],
-            es_getter=esgetter or get_es_new,
-            name='test',
-            data=doc,
-            es_merge_update=es_merge_update,
-            delete=delete
-        )
+        self._send_to_es(doc, es_merge_update=es_merge_update, delete=delete, esgetter=esgetter)
 
         if not delete:
             self.assertEqual(1, get_doc_count(self.es, self.index))
@@ -220,6 +210,19 @@ class TestSendToElasticsearch(SimpleTestCase):
                 self.assertTrue(all(prop in doc for prop in es_doc))
         else:
             self.assertEqual(0, get_doc_count(self.es, self.index))
+
+    def _send_to_es(self, doc, es_merge_update=False, delete=False,
+                    esgetter=None):
+        send_to_elasticsearch(
+            TEST_INDEX_INFO,
+            doc_type=TEST_INDEX_INFO.type,
+            doc_id=doc['_id'],
+            es_getter=esgetter or get_es_new,
+            name='test',
+            data=doc,
+            es_merge_update=es_merge_update,
+            delete=delete
+        )
 
     def test_update_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
@@ -327,3 +330,19 @@ class TestSendToElasticsearch(SimpleTestCase):
 
         # attempt to create the same doc twice shouldn't fail
         self._send_to_es_and_check(doc)
+
+    def test_retry_on_conflict_absent_on_index(self):
+        args, kw = self._send_to_es_and_get_interface_args(False, "index_doc")
+        self.assertNotIn("retry_on_conflict", kw.get("params", {}))
+
+    def test_retry_on_conflict_present_on_update(self):
+        args, kw = self._send_to_es_and_get_interface_args(True, "update_doc_fields")
+        self.assertIn("retry_on_conflict", kw.get("params", {}))
+
+    def _send_to_es_and_get_interface_args(self, update, method):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
+        path = f"pillowtop.processors.elastic.ElasticsearchInterface.{method}"
+        with mock.patch(path) as mock_meth:
+            self._send_to_es(doc, es_merge_update=update)
+            mock_meth.assert_called_once()
+            return mock_meth.call_args

@@ -36,10 +36,8 @@ from corehq.apps.analytics.utils import (
     get_instance_string,
     get_meta,
     get_blocked_hubspot_domains,
-    get_blocked_hubspot_email_domains,
     hubspot_enabled_for_user,
     hubspot_enabled_for_email,
-    remove_blocked_email_domains_from_hubspot,
     remove_blocked_domain_contacts_from_hubspot,
     MAX_API_RETRIES,
 )
@@ -47,6 +45,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
+from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.models import WebUser
 from corehq.toggles import deterministic_random
 from corehq.util.dates import unix_time
@@ -242,9 +241,8 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
     if ((webuser and not hubspot_enabled_for_user(webuser))
             or (not webuser and not hubspot_enabled_for_email(email))):
         # This user has analytics disabled
-        metrics_gauge(
+        metrics_counter(
             'commcare.hubspot_data.rejected.send_form_to_hubspot',
-            1,
             tags={
                 'username': webuser.username if webuser else email,
             }
@@ -484,6 +482,8 @@ def track_periodic_data():
     if not KISSMETRICS_ENABLED and not HUBSPOT_ENABLED:
         return
 
+    time_started = datetime.utcnow()
+
     three_months_ago = date.today() - timedelta(days=90)
 
     user_query = (UserES()
@@ -498,11 +498,11 @@ def track_periodic_data():
     num_chunks = int(math.ceil(float(total_users) / float(chunk_size)))
 
     # Track no of users and domains with max_forms greater than HUBSPOT_THRESHOLD
-    hubspot_number_of_users = 0
+    hubspot_number_of_users_processed = 0
     hubspot_number_of_domains_with_forms_gt_threshold = 0
+    hubspot_number_of_users_blocked = 0
 
     blocked_domains = get_blocked_hubspot_domains()
-    blocked_email_domains = get_blocked_hubspot_email_domains()
 
     for chunk in range(num_chunks):
         users_to_domains = (user_query
@@ -541,29 +541,6 @@ def track_periodic_data():
             if not _email_is_valid(email):
                 continue
 
-            email_domain = email.split('@')[-1]
-            if email_domain in blocked_email_domains:
-                metrics_gauge(
-                    'commcare.hubspot_data.rejected.periodic_task.email_domain',
-                    1,
-                    tags={
-                        'email_domain': email_domain,
-                    }
-                )
-                continue
-
-            username_email_domain = user.get('username').split('@')[-1]
-            if username_email_domain in blocked_email_domains:
-                metrics_gauge(
-                    'commcare.hubspot_data.rejected.periodic_task.username',
-                    1,
-                    tags={
-                        'username': username_email_domain,
-                    }
-                )
-                continue
-
-            hubspot_number_of_users += 1
             date_created = user.get('date_joined')
             max_forms = 0
             max_workers = 0
@@ -573,9 +550,8 @@ def track_periodic_data():
             is_member_of_blocked_domain = False
             for domain in user['domains']:
                 if domain in blocked_domains:
-                    metrics_gauge(
+                    metrics_counter(
                         'commcare.hubspot_data.rejected.periodic_task.domain',
-                        1,
                         tags={
                             'domain': domain,
                         }
@@ -592,7 +568,13 @@ def track_periodic_data():
                     max_report = _get_report_count(domain)
 
             if is_member_of_blocked_domain:
+                # user is a member of a project space whose Billing Account
+                # has blocked HubSpot analytics, so we must not send any data
+                # about them.
+                hubspot_number_of_users_blocked += 1
                 continue
+
+            hubspot_number_of_users_processed += 1
 
             project_spaces_created = ", ".join(get_domains_created_by_user(email))
 
@@ -634,16 +616,25 @@ def track_periodic_data():
         submit_json = json.dumps(submit)
         submit_data_to_hub_and_kiss(submit_json)
 
-    metrics_gauge('commcare.hubspot.web_users_processed', hubspot_number_of_users,
+    metrics_gauge('commcare.hubspot.web_users_processed', hubspot_number_of_users_processed,
+        multiprocess_mode=MPM_LIVESUM)
+    metrics_gauge('commcare.hubspot.web_users_blocked', hubspot_number_of_users_blocked,
         multiprocess_mode=MPM_LIVESUM)
     metrics_gauge(
         'commcare.hubspot.domains_with_forms_gt_threshold', hubspot_number_of_domains_with_forms_gt_threshold,
         multiprocess_mode=MPM_MAX
     )
 
+    task_time = datetime.utcnow() - time_started
+    metrics_gauge(
+        'commcare.hubspot.runtimes.track_periodic_data',
+        task_time.seconds,
+        multiprocess_mode=MPM_LIVESUM
+    )
+
 
 def _email_is_valid(email):
-    if not email:
+    if not email or _is_suspicious_email(email):
         return False
 
     try:
@@ -653,6 +644,19 @@ def _email_is_valid(email):
         return False
 
     return True
+
+
+# These domains provide disposable email addresses which attract scammers
+# AWS Guard Duty triggers alerts for these domains. The below list is likely incomplete --
+# if a Guard Duty alert is triggered for a domain not seen below, please add it
+SUSPICIOUS_DOMAINS = [
+    'mailna.me',
+    'mozej.com'
+]
+
+
+def _is_suspicious_email(email):
+    return any(email.endswith(domain) for domain in SUSPICIOUS_DOMAINS)
 
 
 def submit_data_to_hub_and_kiss(submit_json):
@@ -751,11 +755,9 @@ def get_ab_test_properties(user):
 def update_subscription_properties_by_domain(domain):
     domain_obj = Domain.get_by_name(domain)
     if domain_obj:
-        affected_users = WebUser.view(
-            'users/web_users_by_domain', reduce=False, key=domain, include_docs=True
-        ).all()
-
-        for web_user in affected_users:
+        for row in get_all_user_rows(domain, include_web_users=True,
+                                     include_mobile_users=False, include_docs=True):
+            web_user = WebUser.wrap(row['doc'])
             properties = get_subscription_properties_by_user(web_user)
             update_subscription_properties_by_user.delay(web_user.get_id, properties)
 
@@ -843,5 +845,4 @@ def cleanup_blocked_hubspot_contacts():
     if not HUBSPOT_ENABLED:
         return
 
-    remove_blocked_email_domains_from_hubspot()
     remove_blocked_domain_contacts_from_hubspot()
