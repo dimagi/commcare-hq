@@ -61,6 +61,8 @@ urlpatterns = [
         {'repeater_type': 'SearchByParamsRepeater'}, name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/ReferCaseRepeater/$', AddCaseRepeaterView.as_view(),
         {'repeater_type': 'ReferCaseRepeater'}, name=AddCaseRepeaterView.urlname),
+    url(r'^forwarding/new/DataRegistryCaseUpdateRepeater/$', AddCaseRepeaterView.as_view(),
+        {'repeater_type': 'DataRegistryCaseUpdateRepeater'}, name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
 
     url(r'^forwarding/edit/CaseRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
@@ -69,6 +71,8 @@ urlpatterns = [
         {'repeater_type': 'FormRepeater'}, name=EditFormRepeaterView.urlname),
     url(r'^forwarding/edit/ReferCaseRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
         {'repeater_type': 'ReferCaseRepeater'}, name=EditCaseRepeaterView.urlname),
+    url(r'^forwarding/edit/DataRegistryCaseUpdateRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
+        {'repeater_type': 'DataRegistryCaseUpdateRepeater'}, name=EditCaseRepeaterView.urlname),
     url(r'^forwarding/edit/OpenmrsRepeater/(?P<repeater_id>\w+)/$', EditOpenmrsRepeaterView.as_view(),
         {'repeater_type': 'OpenmrsRepeater'}, name=EditOpenmrsRepeaterView.urlname),
     url(r'^forwarding/edit/Dhis2Repeater/(?P<repeater_id>\w+)/$', EditDhis2RepeaterView.as_view(),

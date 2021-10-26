@@ -68,7 +68,7 @@ def process_xform_xml(domain, instance_xml, attachments=None, auth_context=None)
     key is parameter name, value is
     `django.core.files.uploadedfile.UploadedFile` object.
 
-    :returns: FormProcessingResult containing the new XFormInstance(SQL)
+    :returns: FormProcessingResult containing the new XFormInstanceSQL
     or raises an exception if anything goes wrong.
     """
     attachments = attachments or {}
@@ -171,15 +171,7 @@ def _handle_duplicate(new_doc):
     """
     interface = FormProcessorInterface(new_doc.domain)
     conflict_id = new_doc.form_id
-    try:
-        existing_doc = FormAccessors(new_doc.domain).get_with_attachments(conflict_id)
-    except ResourceNotFound:
-        # Original form processing failed but left behind a form doc with no
-        # attachments. It's safe to delete this now since we're going to re-process
-        # the form anyway.
-        from couchforms.models import XFormInstance
-        XFormInstance.get_db().delete_doc(conflict_id)
-        return new_doc, None
+    existing_doc = FormAccessors(new_doc.domain).get_with_attachments(conflict_id)
 
     is_icds = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
     try:

@@ -344,6 +344,16 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         (SUBMISSION_ERROR_LOG, 'submission_error'),
         (DELETED, 'deleted'),
     )
+    DOC_TYPE_TO_STATE = {
+        "XFormInstance": NORMAL,
+        "XFormError": ERROR,
+        "XFormDuplicate": DUPLICATE,
+        "XFormDeprecated": DEPRECATED,
+        "XFormArchived": ARCHIVED,
+        "SubmissionErrorLog": SUBMISSION_ERROR_LOG
+    }
+    ALL_DOC_TYPES = {'XFormInstance-Deleted'} | DOC_TYPE_TO_STATE.keys()
+    STATE_TO_DOC_TYPE = {v: k for k, v in DOC_TYPE_TO_STATE.items()}
 
     form_id = models.CharField(max_length=255, unique=True, db_index=True, default=None)
 
@@ -466,10 +476,9 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     @property
     def doc_type(self):
         """Comparability with couch forms"""
-        from corehq.form_processor.backends.sql.dbaccessors import state_to_doc_type
         if self.is_deleted:
             return 'XFormInstance' + DELETED_SUFFIX
-        return state_to_doc_type.get(self.state, 'XFormInstance')
+        return self.STATE_TO_DOC_TYPE.get(self.state, 'XFormInstance')
 
     @property
     @memoized

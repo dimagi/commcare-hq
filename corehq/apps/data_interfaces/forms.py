@@ -403,6 +403,8 @@ class CaseRuleCriteriaForm(forms.Form):
             )
         )
 
+        self.custom_filters = settings.AVAILABLE_CUSTOM_RULE_CRITERIA.keys()
+
     @property
     @memoized
     def requires_system_admin_to_edit(self):
@@ -462,8 +464,6 @@ class CaseRuleCriteriaForm(forms.Form):
                 self._json_fail_hard()
 
             name = obj['name'].strip()
-            if not name or name not in settings.AVAILABLE_CUSTOM_RULE_CRITERIA:
-                raise ValidationError(_("Invalid custom filter id reference"))
 
             result.append({
                 'name': name
@@ -656,6 +656,8 @@ class CaseRuleActionsForm(forms.Form):
             ),
         )
 
+        self.custom_actions = settings.AVAILABLE_CUSTOM_RULE_ACTIONS.keys()
+
     @property
     def constants(self):
         return {
@@ -746,8 +748,6 @@ class CaseRuleActionsForm(forms.Form):
                 self._json_fail_hard()
 
             name = obj['name'].strip()
-            if not name or name not in settings.AVAILABLE_CUSTOM_RULE_ACTIONS:
-                raise ValidationError(_("Invalid custom action ID reference"))
 
             result.append({
                 'name': name

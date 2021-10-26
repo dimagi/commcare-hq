@@ -10,18 +10,18 @@ env:
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
     - TEST=python-sharded-and-javascript JS_SETUP=yes
   global:
-    - REUSE_DB=true  # can't drop the citus DB since it's the postgres database
+    - REUSE_DB=true  # do not drop databases on completion (saves time)
 #    - JS_TEST_EXTENSIONS=icds_reports
     # DATADOG_API_KEY
-    - secure: "IDSCI7WXoTowmqcPM6Ip5I8iNu+utvLgzhpuI55Imi0kT6DEgqhYmRzHGY2AfSNKlhClYiGSGzWfqub3/0KyxXSkJB7VcqPQR6CToRfR9zgnu92e9yqmOwMsi5wXxQ0ZRt8l2Oh+WiTtLjGwkD3bvUAHDq2fk9bU7aE03562MTE="
+    - secure: "J3mcwhMIQ14fQBRbHlYlJIkaEyDLix9ObZ5PNRrrUqGvUUmuHPMqTNNcr1u0FKVhlOHp8jnhxD60Kv5pYQ6NZj4mMnNS6KyUyVGeYaGO4FtahDwbK5wLnyiEPC1dwCH6d6mTut/76GpaiOp0QN2RAtu5NoXHv4Ju4iIGuiUz3ok="
     # DATADOG_APP_KEY
-    - secure: "fMA0EchlDhjjKn7oo451vfOhYSJyvm4cL+qi46nx4EbPNhYhBafz8uplgrTodSJccLohioRWsu2HAxN/oAOIp4fWzomnGXCe5c/M4dGTqo5CksOG95C9kkGsaq8xyhYRGplI9iCQHwGbjipvEbtg0n2lfirlLV+DHhNGzDCCM78="
+    - secure: "MsIDRluQpO98ipEBwsUm6W838z7jdT5dQ9dLgcq3jKLBU1j+4XZMZA0zPrswUBbZbNsvgSurDqHvRCJGY7UZ9HQrEdQC24Fk5Up6ZUv77GNHglJ01nIkTAE1t+mYJc29fpiMIaPduLU6dYMdy1hdysdlXBRCNWNvAVSAFHqWgYs="
     # DOCKER_USERNAME
-    - secure: "YJYYdkYEzN33IwHGMhFy8NIKy5fm3IjCSngwYSLTF2wwmtVTdDSObQbRwvU8zN7aziAbyYvfDQjrQZ+XG8q7RhcirqBkV8Odvzc+OxyRqw2m5Rmr6IU/Cjdja5BXuKuZBlmNmh0fzZguH7EwteAh8lKwzPs+05WCbjZ2cA5YupE="
+    - secure: "Nzvnk+NDF3XaPSKRpEnZinsjwKHJ7W6et5fDvuCGD9lvPI00a75G2rhxwO6iNOGdu3YABfERgpTIOcneFGn49+tbQKbP/GETVlKr2AUgDKpSFZEQogM/QOz4OKq1YWUAK4JLX/IvgJjuV/eLnjSx2Nl1eWrBxJEP5Yn9vIH0hxg="
     # DOCKER_PASSWORD
-    - secure: "P6wHEvcVIStEeWPVyS7DY5dEEhCTxMlQ0K6e35Q/4tj1kBvrVMquCs1r5i6TWSpVSYrEePvMabqRljShpyKJhjSJCyP4BkqXVsu9VWpI29qROEZeIGMxu2X80LfpPsvxhZeQ9dGtIUyUgSRxgwnSNI1m8Tzk8vptuDD3bX26NCQ="
+    - secure: "ccELswO6fEqO/jgqr02ItTpn2lm9uW2EXXXWlxssMm+iGX2apRfLKfRCyUcuUUSGll5wBmict8jY0mDN72IYGovvPFLQGOW4Po8E5jc1Z847ZGMTgLR4Zg7/go98UkMxepcmDyy4YPFeGWtJo6m5Ocp3usifHvPuMQ0LgsYdZzo="
     # CODECOV_TOKEN
-    - secure: "b5cW5K0gK6wUqZh8lKZSmsj7Bxyh7vaGMtBOnIAWZ+ksvE1SExahvpQ/ANI+9zczBxhluFiVFgPwdmWZ0nAi4gKsmSLEigu7nQJLkeWxcfzQj8KJXtoM+Z7ykDPKP117p5Sp0GN+XhBvih/JUqRMFLp8xtIQZGYevtqqZwHm9ms="
+    - secure: "ae0iiAahjQMG+0qt+UMk3aKDIsKf7kdGoa7NACl/lhToH90AalF5206fpj7++pakWhO5prHLRgD/KQxplWRm6SVCHsZLSVq/vz//Ooc+ne6dzFSey0vystEpOlBwEpxPiWJV01Ows8t56SlOwm6zVOxKsxTLt9pfzeNsiw4Vdk0="
 before_install:
   # get newer version of docker-compose for variable substitution in compose files
   - curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-`uname -s`-`uname -m` > docker-compose
@@ -34,7 +34,7 @@ before_script:
   - docker-compose version
 script:
   - if [[ "$DOCKER_USERNAME" && "$DOCKER_PASSWORD" ]]; then echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin; fi
-  - scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10 --max-test-time=29
+  - scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro

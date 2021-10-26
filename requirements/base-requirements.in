@@ -12,7 +12,7 @@ csiphash==0.0.5
 datadog==0.39.0
 ddtrace==0.44.0
 decorator==4.0.11  # required by django-digest
-defusedxml==0.5.0
+defusedxml>0.5.0
 diff-match-patch==20200713
 dimagi-memoized==1.1.3
 django-angular~=2.2.0
@@ -61,7 +61,7 @@ Jinja2~=2.11.3
 json-delta==2.0
 jsonfield==2.1.1
 jsonobject-couchdbkit~=1.0.1
-jsonobject==0.9.9
+jsonobject>0.9.9
 # jsonpath-ng with support for "wherenot" operator, and building documents
 # Upgrade when changes merged upstream
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
@@ -71,7 +71,6 @@ kombu==4.2.2.post1
 billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
 laboratory==0.2.0
 lxml~=4.6.3
-markdown==2.2.1
 mock==2.0.0
 openpyxl~=3.0
 phonenumberslite~=8.12
@@ -101,15 +100,16 @@ requests_toolbelt==0.9.1
 requests~=2.20
 schema
 sentry-sdk==0.19.5
-sh==1.14.1
-simpleeval~=0.9
+sh==1.14.2
+# Package has an unfixed issue https://github.com/danthedeckie/simpleeval/issues/90 Can use that once https://github.com/danthedeckie/simpleeval/pull/91 is merged
+simpleeval @ git+git://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
 simplejson~=3.11
 six~=1.11
 socketpool==0.5.3
 sqlagg==0.17.2
 SQLAlchemy~=1.3.0
 stripe==2.54.0
-suds-jurko==0.6
+suds-py3==1.4.4.1
 text-unidecode>=1.2
 tinys3==0.1.12
 tropo-webapi-python==0.1.3

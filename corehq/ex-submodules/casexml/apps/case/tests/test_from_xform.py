@@ -32,7 +32,7 @@ class CaseFromXFormTest(TestCase):
 
         xform2, case = bootstrap_case_from_xml(self, "update.xml", original_case.case_id)
         # fetch the case from the DB to ensure it is property wrapped
-        case = CaseAccessors().get_case(case.case_id)
+        case = CaseAccessors(case.domain).get_case(case.case_id)
         self.assertEqual(False, case.closed)
 
         self._check_transactions(case, [xform1, xform2])

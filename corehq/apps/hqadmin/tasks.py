@@ -164,13 +164,6 @@ def _mass_email_attachment(name, rows):
     return attachment
 
 
-@periodic_task_when_true(settings.IS_SAAS_ENVIRONMENT, run_every=crontab(minute="0", hour="*/4"),
-                         queue='background_queue')
-def cleanup_stale_es_on_couch_domains_task():
-    from corehq.apps.hqadmin.couch_domain_utils import cleanup_stale_es_on_couch_domains
-    cleanup_stale_es_on_couch_domains()
-
-
 @periodic_task(queue='background_queue', run_every=crontab(minute="*/5"))
 def track_es_doc_counts():
     es = get_es_new()
@@ -277,12 +270,12 @@ def _reconcile_es_data(data_type, metric, blob_parent_id, start=None, end=None, 
         with open(file_path, 'rb') as f:
             blob_db = get_blob_db()
             key = f'{blob_parent_id}_{today.isoformat()}'
-            thirty_days = 60 * 24 * 30
+            six_years = 60 * 24 * 365 * 6
             blob_db.put(
                 f,
                 type_code=CODES.tempfile,
                 domain='<unknown>',
                 parent_id=blob_parent_id,
                 key=key,
-                timeout=thirty_days
+                timeout=six_years
             )

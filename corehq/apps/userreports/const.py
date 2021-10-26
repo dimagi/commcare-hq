@@ -5,6 +5,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.change_feed import topics
 
+
+TEMP_REPORT_PREFIX = '__tmp'  # reports made by the report bulider use this
+
 REPORT_BUILDER_EVENTS_KEY = 'REPORT_BUILDER_EVENTS_KEY'
 
 DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE = _(

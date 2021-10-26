@@ -257,12 +257,12 @@ class RegistryAuditLog(models.Model):
         (ACTION_GRANT_ADDED, _("Grant created")),
         (ACTION_GRANT_REMOVED, _("Grant removed")),
         (ACTION_DATA_ACCESSED, _("Data Accessed")),
+        (ACTION_INVITATION_ADDED, _("Invitation Added")),
     )
 
     ACTION_CHOICES = (
         (ACTION_ACTIVATED, _("Registry Activated")),
         (ACTION_DEACTIVATED, _("Registry De-activated")),
-        (ACTION_INVITATION_ADDED, _("Invitation Added")),
         (ACTION_INVITATION_REMOVED, _("Invitation Revoked")),
         (ACTION_SCHEMA_CHANGED, _("Schema Changed")),
     ) + NON_OWNER_ACTION_CHOICES
@@ -272,12 +272,14 @@ class RegistryAuditLog(models.Model):
     RELATED_OBJECT_GRANT = "grant"
     RELATED_OBJECT_UCR = "ucr"
     RELATED_OBJECT_APPLICATION = "application"  # case search
+    RELATED_OBJECT_REPEATER = "repeater"
     RELATED_OBJECT_CHOICES = (
         (RELATED_OBJECT_REGISTRY, _("Data Registry")),
         (RELATED_OBJECT_INVITATION, _("Invitation")),
         (RELATED_OBJECT_GRANT, _("Grant")),
         (RELATED_OBJECT_UCR, _("Report")),
         (RELATED_OBJECT_APPLICATION, _("Case Search")),
+        (RELATED_OBJECT_REPEATER, _("Data Forwarding")),
     )
 
     registry = models.ForeignKey("DataRegistry", related_name="audit_logs", on_delete=models.CASCADE)
@@ -356,13 +358,15 @@ class RegistryAuditHelper:
         if not related_object or not hasattr(related_object, "doc_type"):
             raise ValueError("Unexpected related object")
 
-        if related_object.doc_type == "ReportConfiguration":
-            related_object_id = related_object.get_id
-            related_object_type = RegistryAuditLog.RELATED_OBJECT_UCR
-        elif related_object.doc_type in ["Application", "LinkedApplication"]:
-            related_object_id = related_object.get_id
-            related_object_type = RegistryAuditLog.RELATED_OBJECT_APPLICATION
-        else:
+        doc_type = getattr(related_object, 'base_doc', related_object.doc_type)
+        try:
+            related_object_type = {
+                "ReportConfiguration": RegistryAuditLog.RELATED_OBJECT_UCR,
+                "Application": RegistryAuditLog.RELATED_OBJECT_APPLICATION,
+                "LinkedApplication": RegistryAuditLog.RELATED_OBJECT_APPLICATION,
+                "Repeater": RegistryAuditLog.RELATED_OBJECT_REPEATER,
+            }[doc_type]
+        except KeyError:
             raise ValueError(f"Unexpected related object type: {related_object.doc_type}")
 
         return RegistryAuditLog.objects.create(
@@ -370,7 +374,7 @@ class RegistryAuditHelper:
             user=user,
             action=RegistryAuditLog.ACTION_DATA_ACCESSED,
             domain=domain,
-            related_object_id=related_object_id,
+            related_object_id=related_object.get_id,
             related_object_type=related_object_type,
             detail=filters
         )

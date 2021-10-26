@@ -205,6 +205,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.workflow = ko.computed({
             read: function () {
+                if (self.dataRegistry()) {
+                    if (self.autoLaunch()) {
+                        if (self.defaultSearch()) {
+                            return "es_only";
+                        }
+                    }
+                    return "auto_launch";
+                }
                 if (self.autoLaunch()) {
                     if (self.defaultSearch()) {
                         return "es_only";
@@ -282,7 +290,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     return {
                         instance_name: query.instanceName(),
                         case_type_xpath: query.caseTypeXpath(),
-                        case_id_xpath: query.caseTypeXpath(),
+                        case_id_xpath: query.caseIdXpath(),
                     };
                 }),
             };
