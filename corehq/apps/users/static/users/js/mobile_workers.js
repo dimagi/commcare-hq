@@ -121,8 +121,6 @@ hqDefine("users/js/mobile_workers",[
         self.sendConfirmationEmail = function () {
             var urlName = 'send_confirmation_email';
             var $modal = $('#confirm_' + self.user_id());
-
-            $modal.find(".btn").addSpinnerToButton();
             $.ajax({
                 method: 'POST',
                 url: initialPageData.reverse(urlName, self.user_id()),
