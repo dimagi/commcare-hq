@@ -37,6 +37,11 @@ class Command(BaseCommand):
             type=int,
             help="Number of documents to query from couch"
         )
+        parser.add_argument(
+            '--cancelled',
+            action="store_true",
+            help="Will start cancelled batches"
+        )
 
     def handle(self, **options):
         workers = options['workers']
@@ -50,6 +55,11 @@ class Command(BaseCommand):
                     batches = util.get_errored_keys(5)
                     if not batches:
                         print("No errored keys present")
+                        return
+                elif options['cancelled']:
+                    batches = util.get_cancelled_keys(5)
+                    if not batches:
+                        print("No cancelled keys present")
                         return
                 else:
                     batches = util.generate_batches(workers, batch_by)
