@@ -136,7 +136,7 @@ class FormattedDetailColumn(object):
         )
 
         if self.column.useXpathExpression:
-            xpath = sx.CalculatedPropertyXpath(function=self.xpath)
+            xpath = sx.CalculatedPropertyXPath(function=self.xpath)
             if re.search(r'\$lang', self.xpath):
                 xpath.variables.node.append(
                     sx.CalculatedPropertyXPathVariable(
@@ -176,7 +176,7 @@ class FormattedDetailColumn(object):
             )
 
             if self.column.useXpathExpression:
-                xpath = sx.CalculatedPropertyXpath(function=self.xpath)
+                xpath = sx.CalculatedPropertyXPath(function=self.xpath)
                 if re.search(r'\$lang', self.xpath):
                     xpath.variables.node.append(
                         sx.CalculatedPropertyXPathVariable(
@@ -206,7 +206,7 @@ class FormattedDetailColumn(object):
                     type=sort_type,
                 )
                 if not sort_calculation and self.column.useXpathExpression:
-                    xpath = sx.CalculatedPropertyXpath(function=self.xpath)
+                    xpath = sx.CalculatedPropertyXPath(function=self.xpath)
                     if re.search(r'\$lang', self.xpath):
                         xpath.variables.node.append(
                             sx.CalculatedPropertyXPathVariable(

@@ -49,7 +49,7 @@ class CalculatedPropertyXPathVariable(XmlObject):
     locale_id = StringField('locale/@id')
 
 
-class CalculatedPropertyXpath(XmlObject):
+class CalculatedPropertyXPath(XmlObject):
     ROOT_NAME = 'xpath'
     function = XPathField('@function')
     variables = NodeListField('variable', CalculatedPropertyXPathVariable)
@@ -60,7 +60,7 @@ class XPathVariable(XmlObject):
     name = StringField('@name')
 
     locale_id = StringField('locale/@id')
-    xpath = NodeField('xpath', CalculatedPropertyXpath)
+    xpath = NodeField('xpath', CalculatedPropertyXPath)
 
     @property
     def value(self):
