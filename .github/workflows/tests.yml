@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-18.04
     timeout-minutes: 60
     strategy:
+      fail-fast: false
       matrix:
         include:
         - {TEST: python, NOSE_DIVIDED_WE_RUN: '05'}
