@@ -83,7 +83,7 @@ class ImporterTest(TestCase):
         # by using a made up upload_id, we ensure it's not referencing any real file
         case_upload = CaseUploadRecord(upload_id=str(uuid.uuid4()), task_id=str(uuid.uuid4()))
         case_upload.save()
-        res = bulk_import_async.delay(self._config(['anything']), self.domain, case_upload.upload_id)
+        res = bulk_import_async.delay(self._config(['anything']).to_json(), self.domain, case_upload.upload_id)
         self.assertIsInstance(res.result, Ignore)
         update_state.assert_called_with(
             state=states.FAILURE,

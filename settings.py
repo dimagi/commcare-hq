@@ -373,10 +373,8 @@ HQ_APPS = (
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.succeed',
     'custom.ucla',
 
-    'custom.intrahealth',
     'custom.up_nrhm',
 
     'custom.common',
@@ -1089,7 +1087,6 @@ DEFAULT_COMMCARE_EXTENSIONS = [
     "custom.abt.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
-    "custom.succeed.commcare_extensions",
     "custom.nutrition_project.commcare_extensions"
 ]
 COMMCARE_EXTENSIONS = []
@@ -1555,7 +1552,6 @@ COUCHDB_APPS = [
     # custom reports
     'pact',
     'accounting',
-    'succeed',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
@@ -1854,8 +1850,6 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.m4change.models.M4ChangeFormFluffPillow',
-        'custom.intrahealth.models.RecouvrementFluffPillow',
-        'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
         {
@@ -1890,8 +1884,6 @@ STATIC_UCR_REPORTS = [
 STATIC_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
-    os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
-    os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
@@ -1903,18 +1895,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'livraison_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined2.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'rapture_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'recouvrement_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_product_consumption.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'indicateurs_de_base.json'),
     os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
@@ -1943,7 +1923,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
     'commtrack-public-demo',
     'crs-remind',
-    'succeed',
 ]
 
 # Custom fully indexed domains for ReportXForm index/pillowtop --
@@ -1953,7 +1932,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'pact',
-    'succeed'
 ]
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -1971,20 +1949,14 @@ DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
     'pact': 'pact',
 
-    'ipm-senegal': 'custom.intrahealth',
-    'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
 
     'crs-remind': 'custom.apps.crs_reports',
 
-    'succeed': 'custom.succeed',
     'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',
-
-    # From DOMAIN_MODULE_CONFIG on production
-    'test-pna': 'custom.intrahealth',
 
     #vectorlink domains
     'abtmali': 'custom.abt',

@@ -34,7 +34,7 @@ before_script:
   - docker-compose version
 script:
   - if [[ "$DOCKER_USERNAME" && "$DOCKER_PASSWORD" ]]; then echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin; fi
-  - scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10 --max-test-time=29
+  - scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
