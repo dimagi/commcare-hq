@@ -37,10 +37,6 @@ hqDefine('app_manager/js/summary/workflow_summary',[
             },
         })
         $("#app-workflow-summary").koApplyBindings(workflowSummaryController);
-        models.initVersionsBox(
-            $("#version-selector"),
-            {id: initialPageData.get("app_id"), text: initialPageData.get("app_version")}
-        );
         models.initMenu([workflowSummaryContent], summaryMenu);
         models.initSummary(workflowSummaryContent, workflowSummaryController, "#workflow-summary");
 
