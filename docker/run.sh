@@ -183,6 +183,8 @@ function _run_tests {
             logmsg INFO "./manage.py test ${py_test_args[*]}"
             ./manage.py test "${py_test_args[@]}"
         fi
+        echo "pwd: `pwd`"
+        ls -la
     }
 
     function _test_javascript {

@@ -36,12 +36,16 @@ jobs:
         TEST: ${{ matrix.TEST }}
         NOSE_DIVIDED_WE_RUN: ${{ matrix.NOSE_DIVIDED_WE_RUN }}
         JS_SETUP: yes
-      run: scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
+      run: |
+        scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
+        echo "pwd: `pwd`"
+        ls -la .
+        echo "---"
+        ls -la ..
     - name: "Codecov upload"
       uses: codecov/codecov-action@v2
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        directory: /mnt/commcare-hq-ro
         fail_ci_if_error: true
         verbose: true
     - name: Stop containers
