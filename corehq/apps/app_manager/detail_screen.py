@@ -365,7 +365,7 @@ class Phone(FormattedDetailColumn):
 @register_format_type('enum')
 class Enum(FormattedDetailColumn):
     def _make_xpath(self, type):
-        return sx.XpathEnum.build(
+        return sx.XPathEnum.build(
             enum=self.column.enum,
             template=self._xpath_template(type),
             get_template_context=self._xpath_template_context(type),

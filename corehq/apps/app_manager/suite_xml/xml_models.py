@@ -84,7 +84,7 @@ class Id(XmlObject):
     xpath = NodeField('xpath', Xpath)
 
 
-class XpathEnum(Xpath):
+class XPathEnum(Xpath):
     @classmethod
     def build(cls, enum, template, get_template_context, get_value):
         variables = []
