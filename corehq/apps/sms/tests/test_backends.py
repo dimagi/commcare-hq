@@ -64,7 +64,7 @@ from corehq.messaging.smsbackends.vertex.models import VertexBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from corehq.messaging.smsbackends.infobip.models import InfobipBackend
 from corehq.messaging.smsbackends.amazon_pinpoint.models import PinpointBackend
-from corehq.util.test_utils import create_test_case
+from corehq.util.test_utils import create_test_case, flaky_slow
 
 
 class AllBackendTest(DomainSubscriptionMixin, TestCase):
@@ -919,6 +919,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args[0][0].pk, self.backend3.pk)
 
+    @flaky_slow
     def test_choosing_appropriate_backend_for_outgoing(self):
         with create_test_case(
                 self.domain,

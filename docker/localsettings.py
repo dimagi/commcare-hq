@@ -65,26 +65,7 @@ if USE_PARTITIONED_DATABASE:
         },
     })
 
-# See CITUSDB_SETUP.md for explanation
-DATABASES.update({
-    'icds-ucr': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'DISABLE_SERVER_SIDE_CURSORS': True,
-        'NAME': os.environ.get('UCR_CITUS_DB', 'commcare_ucr_citus'),
-        'USER': 'commcarehq',
-        'PASSWORD': 'commcarehq',
-        'HOST': 'citus_master',
-        'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-            'NAME': 'test_commcare_ucr_citus'
-        },
-    },
-})
-
-ICDS_USE_CITUS = True
-
-####### Couch Config ######
+####### Couch Config ###### noqa: E266
 COUCH_DATABASES = {
     'default': {
         # for production this ought to be set to true on your configured couch instance
@@ -239,5 +220,4 @@ REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
     'aaa-data': 'default',
-    'icds-ucr-citus': 'icds-ucr'
 }

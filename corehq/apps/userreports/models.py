@@ -143,14 +143,8 @@ class SQLPartition(DocumentSchema):
     constraint = StringProperty()
 
 
-class CitusConfig(DocumentSchema):
-    distribution_type = StringProperty(choices=['reference', 'hash'])
-    distribution_column = StringProperty()
-
-
 class SQLSettings(DocumentSchema):
     partition_config = SchemaListProperty(SQLPartition)  # no longer used
-    citus_config = SchemaProperty(CitusConfig)
     primary_key = ListProperty()
 
 
@@ -668,7 +662,7 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
     def default_indicators(self):
         default_indicators = super().default_indicators
         default_indicators.append(IndicatorFactory.from_spec({
-            "column_id": "domain",
+            "column_id": "commcare_project",
             "type": "expression",
             "display_name": "Project Space",
             "datatype": "string",
@@ -683,9 +677,6 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
             }
         }, self.get_factory_context()))
         return default_indicators
-
-    def get_report_count(self):
-        raise NotImplementedError("TODO")
 
     @classmethod
     def by_domain(cls, domain):
@@ -1298,7 +1289,10 @@ def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_S
             try:
                 config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
             except DocumentNotFound:
-                _raise_not_found()
+                try:
+                    config = get_document_or_not_found(RegistryDataSourceConfiguration, domain, config_id)
+                except DocumentNotFound:
+                    _raise_not_found()
         return config, is_static
     elif data_source_type == DATA_SOURCE_TYPE_AGGREGATE:
         from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition

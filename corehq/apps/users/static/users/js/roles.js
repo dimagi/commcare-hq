@@ -247,6 +247,22 @@ hqDefine('users/js/roles',[
                     },
                     {
                         showOption: true,
+                        editPermission: self.permissions.edit_messaging,
+                        viewPermission: null,
+                        text: gettext("<strong>Messaging</strong> &mdash; configure and send conditional alerts"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-messaging-checkbox",
+                        showViewCheckbox: false,
+                        viewCheckboxLabel: "view-messaging-checkbox",
+                        screenReaderEditAndViewText: gettext("Access Messaging"),
+                        screenReaderViewOnlyText: null,
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
+                    },
+                    {
+                        showOption: true,
                         editPermission: self.permissions.access_api,
                         viewPermission: null,
                         text: gettext("<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update data. Specific APIs may require additional permissions."),
@@ -341,6 +357,13 @@ hqDefine('users/js/roles',[
                         checkboxPermission: self.reportPermissions.all,
                         checkboxText: gettext("Allow role to access all reports."),
                     }];
+                self.ucrs = [{
+                    visibilityRestraint: self.permissions.access_all_locations,
+                    text: gettext("Create and Edit Configurable Reports"),
+                    checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                    checkboxPermission: self.permissions.edit_ucrs,
+                    checkboxText: gettext("Allow role to create and edit configurable reports."),
+                }];
 
                 self.registryPermissions = [
                     selectPermissionModel(

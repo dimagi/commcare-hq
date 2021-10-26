@@ -266,8 +266,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         };
         var sess = WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
-        var notifications = hqImport('notifications/js/notifications_service_main');
-        notifications.initNotifications();
+        if (user.environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT) {
+            var notifications = hqImport('notifications/js/notifications_service_main');
+            notifications.initNotifications();
+        }
         $('.menu-scrollable-container').addClass('hide');
     });
 

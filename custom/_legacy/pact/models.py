@@ -3,7 +3,6 @@ import uuid
 import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqwebapp.templatetags.proptable_tags import DisplayConfig
-from couchforms.models import XFormInstance
 from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 from pact import enums

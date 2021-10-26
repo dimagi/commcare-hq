@@ -19,7 +19,7 @@ from corehq.apps.app_manager.suite_xml.utils import (
     get_select_chain_meta,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import *
-from corehq.apps.app_manager.util import actions_use_usercase, module_offers_search
+from corehq.apps.app_manager.util import actions_use_usercase, module_offers_registry_search
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
     autoset_owner_id_for_open_case,
@@ -110,6 +110,18 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_nodeset_xpath(case_type, filter_xpath='', additional_types=None):
+        return EntriesHelper._get_nodeset_xpath(
+            'casedb', 'casedb', case_type, filter_xpath, additional_types
+        )
+
+    @staticmethod
+    def get_registry_nodeset_xpath(case_type, filter_xpath='', additional_types=None):
+        return EntriesHelper._get_nodeset_xpath(
+            'results', 'results', case_type, filter_xpath, additional_types
+        )
+
+    @staticmethod
+    def _get_nodeset_xpath(instance_name, root_element, case_type, filter_xpath='', additional_types=None):
         if additional_types:
             case_type_filter = " or ".join([
                 "@case_type='{case_type}'".format(case_type=case_type)
@@ -117,10 +129,7 @@ class EntriesHelper(object):
             ])
         else:
             case_type_filter = "@case_type='{case_type}'".format(case_type=case_type)
-        return "instance('casedb')/casedb/case[{case_type_filter}][@status='open']{filter_xpath}".format(
-            case_type_filter=case_type_filter,
-            filter_xpath=filter_xpath,
-        )
+        return f"instance('{instance_name}')/{root_element}/case[{case_type_filter}][@status='open']{filter_xpath}"
 
     @staticmethod
     def get_parent_filter(relationship, parent_id):
@@ -202,6 +211,9 @@ class EntriesHelper(object):
                 EntriesHelper.add_usercase_id_assertion(e)
 
             EntriesHelper.add_custom_assertions(e, form)
+
+            if module_offers_registry_search(module):
+                EntriesHelper.add_registry_search_instances(e, form)
 
             if (
                 self.app.commtrack_enabled and
@@ -299,6 +311,12 @@ class EntriesHelper(object):
                 'case_autoload.{0}.case_missing'.format(mode),
             )
         ]
+
+    @staticmethod
+    def add_registry_search_instances(entry, form):
+        for prop in form.get_module().search_config.properties:
+            if prop.itemset.instance_id:
+                entry.instances.append(Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri))
 
     @staticmethod
     def add_custom_assertions(entry, form):
@@ -409,11 +427,16 @@ class EntriesHelper(object):
         """
         result = []
         for datum in datums:
-            result.append(datum)
             if datum.module_id and datum.case_type:
                 module = self.app.get_module_by_unique_id(datum.module_id)
-                if module_offers_search(module) and module.search_config.data_registry:
-                    result.extend(self.get_data_registry_query_datums(datum, module))
+                if module_offers_registry_search(module):
+                    result.append(self.get_data_registry_search_datums(module))
+                    result.append(datum)
+                    result.extend(self.get_data_registry_case_datums(datum, module))
+                else:
+                    result.append(datum)
+            else:
+                result.append(datum)
         return result
 
     def get_datum_meta_module(self, module, use_filter=False):
@@ -476,12 +499,21 @@ class EntriesHelper(object):
 
             filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
+            instance_name, root_element = "casedb", "casedb"
+            if module_offers_registry_search(detail_module):
+                instance_name, root_element = "results", "results"
+
+            nodeset = EntriesHelper._get_nodeset_xpath(
+                instance_name, root_element,
+                datum['case_type'],
+                filter_xpath=filter_xpath,
+                additional_types=datum['module'].search_config.additional_case_types
+            )
+
             datums.append(FormDatumMeta(
                 datum=SessionDatum(
                     id=datum['session_var'],
-                    nodeset=(EntriesHelper.get_nodeset_xpath(datum['case_type'], filter_xpath=filter_xpath,
-                             additional_types=datum['module'].search_config.additional_case_types)
-                             + parent_filter + fixture_select_filter),
+                    nodeset=nodeset + parent_filter + fixture_select_filter,
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(detail_module, 'case_short'),
                     detail_confirm=(
@@ -500,12 +532,22 @@ class EntriesHelper(object):
 
         return datums
 
-    def get_data_registry_query_datums(self, datum, module):
+    def get_data_registry_search_datums(self, module):
+        """When a data registry is the source of the search results we skip the normal case search
+        workflow and perform the search directly as part of the entry instead of via an action in the
+        details screen. The case details is then populated with data from the results of the query.
+        """
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
+        factory = RemoteRequestFactory(module, [])
+        query = factory.build_remote_request_queries()[0]
+        return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
+
+    def get_data_registry_case_datums(self, datum, module):
         """When a data registry is the source of the search results we can't assume that the case
         the user selected is in the user's casedb so we have to get the data directly from HQ before
         entering the form. This data is then available in the 'registry' instance (``instance('registry')``)
         """
-        from corehq.apps.app_manager.suite_xml.sections.remote_requests import REGISTRY_INSTANCE
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
 
         def _registry_query(instance_name, case_type_xpath, case_id_xpath):
             return FormDatumMeta(

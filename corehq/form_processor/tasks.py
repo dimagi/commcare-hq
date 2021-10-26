@@ -17,7 +17,7 @@ from dimagi.utils.logging import notify_exception
 SUBMISSION_REPROCESS_CELERY_QUEUE = 'submission_reprocessing_queue'
 
 
-@no_result_task(serializer='pickle', queue=SUBMISSION_REPROCESS_CELERY_QUEUE, acks_late=True)
+@no_result_task(queue=SUBMISSION_REPROCESS_CELERY_QUEUE, acks_late=True)
 def reprocess_submission(submssion_stub_id):
     with CriticalSection(['reprocess_submission_%s' % submssion_stub_id]):
         try:

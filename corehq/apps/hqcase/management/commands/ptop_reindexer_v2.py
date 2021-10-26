@@ -1,7 +1,6 @@
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand
 
 from corehq.pillows.app_submission_tracker import (
-    CouchAppFormSubmissionTrackerReindexerFactory,
     SqlAppFormSubmissionTrackerReindexerFactory,
     UserAppFormSubmissionReindexerFactory,
 )
@@ -22,10 +21,7 @@ from corehq.pillows.reportxform import ReportFormReindexerFactory
 from corehq.pillows.sms import SmsReindexerFactory
 from corehq.pillows.synclog import UpdateUserSyncHistoryReindexerFactory
 from corehq.pillows.user import UserReindexerFactory
-from corehq.pillows.xform import (
-    CouchFormReindexerFactory,
-    SqlFormReindexerFactory,
-)
+from corehq.pillows.xform import SqlFormReindexerFactory
 from corehq.util.test_utils import unit_testing_only
 
 USAGE = """Reindex a pillowtop index.
@@ -42,7 +38,6 @@ FACTORIES = [
     GroupReindexerFactory,
     GroupToUserReindexerFactory,
     CouchCaseReindexerFactory,
-    CouchFormReindexerFactory,
     SqlCaseReindexerFactory,
     SqlFormReindexerFactory,
     CaseSearchReindexerFactory,
@@ -51,7 +46,6 @@ FACTORIES = [
     ReportCaseReindexerFactory,
     ReportFormReindexerFactory,
     AppReindexerFactory,
-    CouchAppFormSubmissionTrackerReindexerFactory,
     SqlAppFormSubmissionTrackerReindexerFactory,
     UpdateUserSyncHistoryReindexerFactory,
     UserAppFormSubmissionReindexerFactory,

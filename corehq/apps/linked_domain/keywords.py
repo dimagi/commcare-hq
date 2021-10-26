@@ -3,13 +3,19 @@ import uuid
 from django.utils.translation import ugettext as _
 
 from corehq.apps.linked_domain.applications import get_downstream_app_id
-from corehq.apps.linked_domain.const import MODEL_KEYWORD
 from corehq.apps.linked_domain.exceptions import (
     DomainLinkError,
     MultipleDownstreamAppsError,
+    MultipleDownstreamKeywordsError,
 )
-from corehq.apps.linked_domain.models import KeywordLinkDetail
 from corehq.apps.sms.models import Keyword
+
+
+def get_downstream_keyword(downstream_domain, upstream_keyword_id):
+    keywords = Keyword.objects.filter(domain=downstream_domain, upstream_id=str(upstream_keyword_id))
+    if len(keywords) > 1:
+        raise MultipleDownstreamKeywordsError
+    return keywords[0] if keywords else None
 
 
 def create_linked_keyword(domain_link, keyword_id):
@@ -46,7 +52,7 @@ def create_linked_keyword(domain_link, keyword_id):
     return keyword.id
 
 
-def update_keyword(domain_link, keyword_id, user_id):
+def update_keyword(domain_link, keyword_id):
     try:
         linked_keyword = Keyword.objects.get(id=keyword_id)
     except Keyword.DoesNotExist:
@@ -66,12 +72,6 @@ def update_keyword(domain_link, keyword_id, user_id):
     linked_keyword.save()
 
     _update_actions(domain_link, linked_keyword, upstream_keyword.keywordaction_set.all())
-
-    domain_link.update_last_pull(
-        MODEL_KEYWORD,
-        user_id,
-        model_detail=KeywordLinkDetail(keyword_id=str(linked_keyword.id)).to_json(),
-    )
 
 
 def _update_actions(domain_link, linked_keyword, keyword_actions):
