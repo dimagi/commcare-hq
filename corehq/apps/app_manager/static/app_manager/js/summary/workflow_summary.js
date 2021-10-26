@@ -2,13 +2,15 @@ hqDefine('app_manager/js/summary/workflow_summary',[
     'jquery',
     'underscore',
     'knockout',
+    'd3/d3.min',
+    'd3-graphviz',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'app_manager/js/summary/models',
     'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
     'hqwebapp/js/knockout_bindings.ko', // popover
     'hqwebapp/js/components.ko',    // search box
-], function ($, _, ko, initialPageData, assertProperties, models) {
+], function ($, _, ko, d3, d3Graphviz, initialPageData, assertProperties, models) {
 
     $(function () {
         let summaryMenu = models.menuModel({
@@ -41,5 +43,13 @@ hqDefine('app_manager/js/summary/workflow_summary',[
         );
         models.initMenu([workflowSummaryContent], summaryMenu);
         models.initSummary(workflowSummaryContent, workflowSummaryController, "#workflow-summary");
+
+        d3Graphviz.graphviz("#workflow").renderDot(initialPageData.get("workflow_dot"));
+        // this doesn't work for some reason
+        // https://github.com/magjac/d3-graphviz/issues/94
+        // d3.select("#workflow")
+        //   .graphviz()
+        //     .dot('digraph {a -> b}')
+        //     .render();
     });
 });

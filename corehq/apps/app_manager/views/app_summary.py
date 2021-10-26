@@ -11,7 +11,7 @@ from django.views.generic import View
 from django.contrib import messages
 
 from corehq.apps.app_manager.app_schemas.workflow_visualization import WORKFLOW_DIAGRAM_NAME, \
-    generate_app_workflow_diagram
+    generate_app_workflow_diagram, generate_app_workflow_diagram_source
 from corehq.toggles import VIEW_APP_CHANGES
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -103,6 +103,7 @@ class AppWorkflowSummaryView(AppSummaryView):
     @property
     def page_context(self):
         context = super(AppWorkflowSummaryView, self).page_context
+        context["workflow_dot"] = generate_app_workflow_diagram_source(self.app)
         return context
 
 
