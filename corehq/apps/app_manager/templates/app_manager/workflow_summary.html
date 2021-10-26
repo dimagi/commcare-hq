@@ -8,6 +8,7 @@
 
 {% block content_extra %}
   {% initial_page_data 'workflow_dot' workflow_dot %}
+  {% registerurl "download_workflow_diagram" domain app_id %}
   <div class="ko-template" id="app-workflow-summary">
     <div class="page-header" style="margin-top: 0;">
         <h3>
@@ -17,6 +18,7 @@
     </div>
   </div>
   <div id="workflow-summary" class="ko-template">
+    <a class="btn btn-default" data-bind="click: download">{% trans "Download" %}</a>
   </div>
   <div id="workflow"/>
 

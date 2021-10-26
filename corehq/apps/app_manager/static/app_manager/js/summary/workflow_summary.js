@@ -13,12 +13,22 @@ hqDefine('app_manager/js/summary/workflow_summary',[
 ], function ($, _, ko, d3, d3Graphviz, initialPageData, assertProperties, models) {
 
     $(function () {
+        let workflowModel = function (options) {
+            let self = models.contentModel(options);
+
+            self.download = function () {
+                open(initialPageData.reverse("download_workflow_diagram"));
+            };
+
+            return self;
+        };
+
         let summaryMenu = models.menuModel({
             items: [],
             viewAllItems: gettext("App Workflow"),
         });
 
-        let workflowSummaryContent = models.contentModel({
+        let workflowSummaryContent = workflowModel({
             form_name_map: initialPageData.get("form_name_map"),
             lang: initialPageData.get("lang"),
             langs: initialPageData.get("langs"),
