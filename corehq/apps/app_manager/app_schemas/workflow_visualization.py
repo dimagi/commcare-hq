@@ -1,3 +1,5 @@
+from io import BytesIO
+
 import graphviz
 
 from corehq.apps.app_manager.const import (
@@ -8,18 +10,21 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 
+WORKFLOW_DIAGRAM_NAME = "workflow_diagram.png"
+
 
 def generate_app_workflow_diagram(app):
     source = generate_app_workflow_diagram_source(app)
-    path = graphviz.Source(source).render()
+    path = graphviz.Source(source).render(filename=f"{app.get_id}_workflow", format="png")
     with open(path, 'rb') as f:
-        app.lazy_put_attachment(f.read(), content_type="")
+        content = f.read()
+        app.put_attachment(content, name=WORKFLOW_DIAGRAM_NAME, content_type="image/png")
+        return BytesIO(content)
 
 
 def generate_app_workflow_diagram_source(app):
     graph = graphviz.Digraph(
         app.name,
-        format='png',
         graph_attr={"rankdir": "LR"},
     )
 

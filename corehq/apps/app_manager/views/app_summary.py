@@ -1,12 +1,17 @@
 import io
 from collections import namedtuple
+from wsgiref.util import FileWrapper
+
 from django.conf import settings
-from django.http import Http404
+from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 from django.contrib import messages
+
+from corehq.apps.app_manager.app_schemas.workflow_visualization import WORKFLOW_DIAGRAM_NAME, \
+    generate_app_workflow_diagram
 from corehq.toggles import VIEW_APP_CHANGES
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -30,6 +35,7 @@ from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
+from soil import CHUNK_SIZE
 
 
 class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
@@ -602,3 +608,23 @@ class DownloadCaseSummaryView(ApplicationViewMixin, View):
             ) if save_question.condition else "",
             save_question.question.calculate,
         )
+
+
+class DownloadAppWorkflowDiagramView(ApplicationViewMixin, View):
+    urlname = 'download_workflow_diagram'
+    http_method_names = ['get']
+
+    @method_decorator(login_or_api_key)
+    def get(self, request, domain, app_id):
+        if WORKFLOW_DIAGRAM_NAME not in self.app.lazy_list_attachments():
+            content = generate_app_workflow_diagram(self.app)
+        else:
+            content = self.app.fetch_attachment(WORKFLOW_DIAGRAM_NAME, stream=True)
+        response = StreamingHttpResponse(
+            FileWrapper(content, CHUNK_SIZE),
+            content_type="image/png"
+        )
+
+        filename = f"application_workflow_{app_id}_v{self.app.version}.png"
+        response['Content-Disposition'] = f"attachment; filename={filename}"
+        return response

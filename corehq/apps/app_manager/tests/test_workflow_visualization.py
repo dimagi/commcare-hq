@@ -65,7 +65,6 @@ def test_workflow_diagram_child_module_form_links():
         "child visit_form_0" -> "visit history_form_0" [label="(today() - dob) &lt; 7" style=dotted]
     }
     """))
-    graphviz.Source(source).render(view=True)
 
 
 def test_workflow_diagram_post_form_workflow_root():
