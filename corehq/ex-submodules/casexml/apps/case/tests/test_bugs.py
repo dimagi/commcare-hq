@@ -326,7 +326,7 @@ class TestCaseHierarchy(TestCase):
         ).as_text()
         submit_case_blocks(case_block, 'test-transactions', form_id=form_id)
         with self.assertRaises(CaseNotFound):
-            CaseAccessors().get_case(case_id2)
+            CaseAccessors('domain_name').get_case(case_id2)
 
         # form with same ID submitted but now has a new case transaction
         new_case_block = CaseBlock.deprecated_init(
@@ -335,7 +335,7 @@ class TestCaseHierarchy(TestCase):
             case_type='t1',
         ).as_text()
         submit_case_blocks([case_block, new_case_block], 'test-transactions', form_id=form_id)
-        case2 = CaseAccessors().get_case(case_id2)
+        case2 = CaseAccessors('test-transactions').get_case(case_id2)
         self.assertEqual([form_id], case2.xform_ids)
         self.assertEqual('t1', case2.type)
 

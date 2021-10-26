@@ -66,6 +66,9 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         self.evalXPath = new EvaluateXPath(options);
         self.isMinimized = ko.observable(true);
 
+        self.expandAriaLabel = gettext('Expand Data Preview');
+        self.collapseAriaLabel = gettext('Collapse Data Preview');
+
         // Whether or not the debugger is in the middle of updating from an ajax request
         self.updating = ko.observable(false);
 
@@ -82,6 +85,8 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             }
             hqImport('analytix/js/kissmetrix').track.event('[app-preview] User toggled CloudCare debugger');
         };
+
+
         self.collapseNavbar = function () {
             $('.navbar-collapse').collapse('hide');
         };

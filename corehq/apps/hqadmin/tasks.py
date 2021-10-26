@@ -270,12 +270,12 @@ def _reconcile_es_data(data_type, metric, blob_parent_id, start=None, end=None, 
         with open(file_path, 'rb') as f:
             blob_db = get_blob_db()
             key = f'{blob_parent_id}_{today.isoformat()}'
-            thirty_days = 60 * 24 * 30
+            six_years = 60 * 24 * 365 * 6
             blob_db.put(
                 f,
                 type_code=CODES.tempfile,
                 domain='<unknown>',
                 parent_id=blob_parent_id,
                 key=key,
-                timeout=thirty_days
+                timeout=six_years
             )
