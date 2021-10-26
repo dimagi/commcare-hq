@@ -159,6 +159,8 @@ class DataSourceBuildInformation(DocumentSchema):
     app_id = StringProperty()
     # The version of the app at the time of the data source's configuration.
     app_version = IntegerProperty()
+    # The registry_slug associated with the registry of the report.
+    registry_slug = StringProperty()
     # True if the data source has been built, that is, if the corresponding SQL table has been populated.
     finished = BooleanProperty(default=False)
     # Start time of the most recent build SQL table celery task.
