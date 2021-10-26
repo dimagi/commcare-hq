@@ -387,6 +387,19 @@ class StackDatum(IdNode):
     value = XPathField('@value')
 
 
+class QueryData(XmlObject):
+    ROOT_NAME = 'data'
+
+    key = StringField('@key')
+    ref = XPathField('@ref')
+
+
+class StackQuery(StackDatum):
+    ROOT_NAME = 'query'
+
+    data = NodeListField('data', QueryData)
+
+
 class StackCommand(XmlObject):
     ROOT_NAME = 'command'
 
@@ -450,6 +463,12 @@ class Stack(XmlObject):
         self.node.append(frame.node)
 
 
+class StackJump(XmlObject):
+    ROOT_NAME = 'jump'
+
+    url = NodeField('url/text', Text)
+
+
 class Argument(IdNode):
     ROOT_NAME = 'argument'
 
@@ -467,13 +486,6 @@ class Assertion(XmlObject):
 
     test = XPathField('@test')
     text = NodeListField('text', Text)
-
-
-class QueryData(XmlObject):
-    ROOT_NAME = 'data'
-
-    key = StringField('@key')
-    ref = XPathField('@ref')
 
 
 class QueryPrompt(DisplayNode):
@@ -501,6 +513,17 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     prompts = NodeListField('prompt', QueryPrompt)
     default_search = BooleanField("@default_search")
 
+    @property
+    def id(self):
+        return self.storage_instance
+
+
+def _wrap_session_datums(datum):
+    return {
+        'datum': SessionDatum,
+        'query': RemoteRequestQuery
+    }[datum.tag](datum)
+
 
 class Entry(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'entry'
@@ -512,10 +535,12 @@ class Entry(OrderedXmlObject, XmlObject):
 
     datums = NodeListField('session/datum', SessionDatum)
     queries = NodeListField('session/query', RemoteRequestQuery)
+    session_children = NodeListField('session/*', _wrap_session_datums)
 
     stack = NodeField('stack', Stack)
 
     assertions = NodeListField('assertions/assert', Assertion)
+
 
     def require_instances(self, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in self.instances}
