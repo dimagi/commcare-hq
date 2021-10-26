@@ -21,7 +21,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Template,
     Text,
     Xpath,
-    XpathVariable,
+    XPathVariable,
 )
 from corehq.apps.reports_core.filters import (
     ChoiceListFilter,
@@ -399,7 +399,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                     function=xpath_function.format(
                         column_id=col.column_id
                     ),
-                    variables=[XpathVariable(name='lang', locale_id='lang.current')],
+                    variables=[XPathVariable(name='lang', locale_id='lang.current')],
                 )
             else:
                 return get_xpath(col.column_id)

@@ -37,7 +37,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Template,
     Text,
     Xpath,
-    XpathVariable,
+    XPathVariable,
 )
 from corehq.apps.app_manager.util import (
     create_temp_sort_column,
@@ -448,7 +448,7 @@ class DetailContributor(SectionContributor):
                 header=Header(text=Text()),
                 template=Template(text=Text(xpath=Xpath(
                     function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",
-                    variables=[XpathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
+                    variables=[XPathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
                 ))),
             )]
         )
@@ -698,7 +698,7 @@ class CaseTileHelper(object):
         variables = []
         for i, mapping in enumerate(column.enum):
             variables.append(
-                XpathVariable(
+                XPathVariable(
                     name=mapping.key_as_variable,
                     locale_id=id_strings.detail_column_enum_variable(
                         self.module, self.detail_type, column, mapping.key_as_variable

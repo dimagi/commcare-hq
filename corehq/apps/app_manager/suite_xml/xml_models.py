@@ -43,7 +43,7 @@ class IdNode(XmlObject):
     id = StringField('@id')
 
 
-class CalculatedPropertyXpathVariable(XmlObject):
+class CalculatedPropertyXPathVariable(XmlObject):
     ROOT_NAME = 'variable'
     name = StringField('@name')
     locale_id = StringField('locale/@id')
@@ -52,10 +52,10 @@ class CalculatedPropertyXpathVariable(XmlObject):
 class CalculatedPropertyXpath(XmlObject):
     ROOT_NAME = 'xpath'
     function = XPathField('@function')
-    variables = NodeListField('variable', CalculatedPropertyXpathVariable)
+    variables = NodeListField('variable', CalculatedPropertyXPathVariable)
 
 
-class XpathVariable(XmlObject):
+class XPathVariable(XmlObject):
     ROOT_NAME = 'variable'
     name = StringField('@name')
 
@@ -70,7 +70,7 @@ class XpathVariable(XmlObject):
 class Xpath(XmlObject):
     ROOT_NAME = 'xpath'
     function = XPathField('@function')
-    variables = NodeListField('variable', XpathVariable)
+    variables = NodeListField('variable', XPathVariable)
 
 
 class LocaleArgument(XmlObject):
@@ -91,7 +91,7 @@ class XPathEnum(Xpath):
         for item in enum:
             v_key = item.key_as_variable
             v_val = get_value(v_key)
-            variables.append(XpathVariable(name=v_key, locale_id=v_val))
+            variables.append(XPathVariable(name=v_key, locale_id=v_val))
 
         parts = []
         for i, item in enumerate(enum):
