@@ -26,9 +26,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '--only_errored',
-            default=False,
-            type=bool,
-            choices=[True, False],
+            action="store_true",
             help="Will try to process batches that have been errored"
         )
         parser.add_argument(
