@@ -9,6 +9,8 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.xform import get_add_case_preloads_case_id_xpath
+from corehq.apps.app_manager.xpath import UsercaseXPath
 
 WORKFLOW_DIAGRAM_NAME = "workflow_diagram.png"
 
@@ -69,10 +71,27 @@ def generate_app_workflow_diagram_source(app):
             # if form.post_form_workflow == WORKFLOW_PREVIOUS:
             #     graph.edge(form.get_unique_id(), module.get_or_create_unique_id())
             if form.post_form_workflow == WORKFLOW_FORM:
-                eof_nav.extend([(form.get_unique_id(), link.form_id, link.xpath) for link in form.form_links])
+                eof_nav.extend([
+                    (form.get_unique_id(), link.form_id, _substitute_hashtags(module, form, link.xpath))
+                    for link in form.form_links
+                ])
 
     graph.edges(model_form_edges)
 
     for tail, head, label in eof_nav:
         graph.edge(tail, head, label=label, style="dotted")
     return graph.source
+
+
+def _substitute_hashtags(module, form, xpath_expression):
+    """Replace xpath expressions with simpler hashtag expressions"""
+    case_id_xpath = get_add_case_preloads_case_id_xpath(module, form)
+    print(case_id_xpath.case())
+    hashtags = {
+        UsercaseXPath().case(): "#user",
+        case_id_xpath.case(): "#case",
+        # "": "#parent",
+    }
+    for xpath, hashtag in hashtags.items():
+        xpath_expression = xpath_expression.replace(xpath, hashtag)
+    return xpath_expression
