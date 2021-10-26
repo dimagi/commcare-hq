@@ -80,12 +80,10 @@ branches:
     - dm/upgrade-gevent # Daniel Oct 19
     - dm/upgrade-xlrd # Daniel Oct 21
     - ml/remove-pickles-reports # Minha Oct 21
-    - sk/data-registry-form-linking+jls/smart-linking-in-web-apps-stack-jump+jls/remote-request-postprocessor
     - sk/data-registry-form-linking+jls/smart-linking-in-web-apps-stack-jump
     - jls/smart-linking-in-web-apps-stack-jump # Jenny Oct 20
     - sk/data-registry-form-linking  # Simon Oct 22
     - dmr/further-embed-url-validation  # Danny Oct 25
     - ad/auto-update-rules-for-linked-spaces # Addison Oct 25
-    - jls/remote-request-postprocessor # Jenny Oct 25
     - gh/do-not-hyperlink-superusers # Graham Oct 25
 submodules: { }
