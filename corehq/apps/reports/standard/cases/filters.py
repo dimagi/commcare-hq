@@ -12,7 +12,11 @@ from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES,
 )
-from corehq.apps.reports.filters.base import BaseSimpleFilter
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.reports.filters.base import (
+    BaseSimpleFilter,
+    BaseSingleOptionFilter,
+)
 
 # TODO: Replace with library method
 mark_safe_lazy = lazy(mark_safe, str)
@@ -26,6 +30,28 @@ class CaseSearchFilter(BaseSimpleFilter):
         '<a href="https://wiki.commcarehq.org/display/commcarepublic/'
         'Advanced+Case+Search" target="_blank">Case Search</a> help page'
     ))
+
+
+class DuplicateCaseRuleFilter(BaseSingleOptionFilter):
+    slug = 'duplicate_case_rule'
+    label = ugettext_lazy("Duplicate Case Rule")
+    help_text = ugettext_lazy(
+        """Show cases that are determined to be duplicates based on this rule.
+        You can further filter them with a targeted search below."""
+    )
+
+    @property
+    def options(self):
+        rules = AutomaticUpdateRule.objects.filter(
+            domain=self.domain,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            active=True,
+            deleted=False,
+        )
+        return [(
+            str(rule.id),
+            "{name} ({case_type})".format(name=rule.name, case_type=rule.case_type)
+        ) for rule in rules]
 
 
 class XpathCaseSearchFilter(BaseSimpleFilter):
