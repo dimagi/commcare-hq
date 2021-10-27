@@ -85,6 +85,15 @@ class CloudCareAuthenticationForm(EmailAuthenticationForm):
     username = forms.CharField(label=_("Username"), max_length=75,
                                widget=forms.TextInput(attrs={'class': 'form-control'}))
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if settings.ENFORCE_SSO_LOGIN:
+            self.fields['username'].widget = forms.TextInput(attrs={
+                'class': 'form-control',
+                'data-bind': 'textInput: authUsername, onEnterKey: continueOnEnter',
+                'placeholder': _("Enter username or email address"),
+            })
+
 
 class BulkUploadForm(forms.Form):
     bulk_upload_file = forms.FileField(label="")
