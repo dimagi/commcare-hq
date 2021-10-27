@@ -89,4 +89,5 @@ branches:
     - gh/do-not-hyperlink-superusers # Graham Oct 25
 #    - sk/app-workflow-visualization # Simon Oct 26
     - dmr/add-metric-for-case-load-counter  # Danny Oct 26
+    - ce/delete-couch-topics # Cal Oct 27
 submodules: { }
