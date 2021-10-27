@@ -12,17 +12,6 @@ from corehq.apps.users.management.commands.clone_web_users import (
     transfer_scheduled_reports,
 )
 from corehq.apps.users.models import WebUser
-# class TestCloneUser(TestCase):
-#
-#     def setUp(self):
-#         self.existing_user = WebUser.create(
-#             domain=None,
-#             username='existing-user@dimagi.com',
-#             email='existing-user@dimagi.com',
-#             password=User.objects.make_random_password(),
-#             created_by='gherceg@dimagi.com',
-#             created_via=''
-#         )
 from corehq.const import USER_CHANGE_VIA_CLONE
 
 
