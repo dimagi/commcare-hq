@@ -34,7 +34,7 @@
               {% if is_rebuilding %}
                 <span class="hq-help-template"
                   data-title="{% trans_html_attr "Rebuilding Data Source" %}"
-                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this data source. Next rebuild will start when the previous rebuilds finishes." %}"
+                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this data source. Next rebuild will start when the previous rebuild(s) finishes." %}"
                   data-placement="left"></span>
               {% endif %}
             </div>
@@ -67,7 +67,7 @@
                   data-toggle="popover"
                   title="Warning"
                   data-container="body"
-                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this data source. Next rebuild will start when the previous rebuilds finishes." %}"
+                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this data source. Next rebuild will start when the previous rebuild(s) finishes." %}"
                   data-trigger="hover"
                 {% endif %}
                  data-action="{% url 'build_in_place' domain data_source.get_id %}">
