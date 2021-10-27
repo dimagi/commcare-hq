@@ -176,6 +176,7 @@ function _run_tests {
             logmsg INFO "coverage run --parallel-mode manage.py test ${py_test_args[*]}"
             # `coverage` generates a file that's then sent to codecov
             coverage run --parallel-mode manage.py test "${py_test_args[@]}"
+            coverage xml --ignore-errors
             if [ -n "$TRAVIS" ]; then
                 bash <(curl -s https://codecov.io/bash)
             fi
