@@ -36,8 +36,6 @@ class DBAccessorsTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         super(DBAccessorsTest, cls).tearDownClass()
-        for snapshot in cls.project.snapshots():
-            snapshot.delete()
         cls.project.delete()
 
     def test_get_doc_count_in_domain_by_class(self):
