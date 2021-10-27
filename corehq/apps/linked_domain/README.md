@@ -132,3 +132,11 @@ The `MULTI_MASTER_LINKED_DOMAINS` feature flag allows a downstream app to pull c
 A downstream app may pull from all multiple upstream apps within a single "family." Families are created by copying apps; when an app is copied, its `family_id` is set to the id of the app it was copied from.
 
 When this flag is on, different builds of the same downstream app may have different values for `upstream_app_id`. This id reflects the app that specific build was pulled from.
+
+## Removing a link
+
+Use the `unlink_apps` management command to convert a linked application to a regular application. 
+
+```
+$ ./manage.py unlink_apps {downstream_app_id} {downstream_domain_name} {upstream_domain_name}
+```
