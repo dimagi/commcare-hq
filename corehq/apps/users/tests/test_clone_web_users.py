@@ -112,16 +112,15 @@ class TestCloneWebUsers(TestCase):
         self.assertEqual(export.owner_id, self.new_user._id)
 
     def test_transfer_scheduled_reports(self):
-        scheduled_report = ReportNotification(owner_id=self.old_user._id, config_ids=['test'])
+        scheduled_report = ReportNotification(owner_id=self.old_user._id, domain=self.domain)
         scheduled_report.save()
+        expected_id = scheduled_report._id
         self.addCleanup(scheduled_report.delete)
-        self.assertEqual(scheduled_report.owner_id, self.old_user._id)
-        self.assertEqual(1, len(ReportNotification.by_owner(self.old_user._id)))
-        self.assertEqual([], ReportNotification.by_owner(self.new_user._id))
 
-        transfer_scheduled_reports(self.old_user._id, self.new_user._id)
+        transfer_scheduled_reports(self.old_user, self.new_user._id)
 
-        self.assertEqual(1, len(ReportNotification.by_owner(self.new_user._id)))
+        actual_id = ReportNotification.by_domain_and_owner(self.domain, self.new_user._id, stale=False)[0]._id
+        self.assertEqual(expected_id, actual_id)
 
     def test_transfer_saved_reports(self):
         saved_report = ReportConfig(
@@ -131,8 +130,9 @@ class TestCloneWebUsers(TestCase):
             report_type='project_report',
             domain=self.domain)
         saved_report.save()
+        expected_id = saved_report._id
         self.addCleanup(saved_report.delete)
-        self.assertEqual(1, len(ReportConfig.by_domain_and_owner(self.domain, self.old_user._id)))
         transfer_saved_reports(self.old_user, self.new_user)
 
-        self.assertEqual(1, len(ReportConfig.by_domain_and_owner(self.domain, self.new_user._id)))
+        actual_id = ReportConfig.by_domain_and_owner(self.domain, self.new_user._id, stale=False)[0]._id
+        self.assertEqual(expected_id, actual_id)
