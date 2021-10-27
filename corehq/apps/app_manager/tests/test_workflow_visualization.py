@@ -8,12 +8,14 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
     WORKFLOW_ROOT,
     WORKFLOW_MODULE,
-    WORKFLOW_PREVIOUS
+    WORKFLOW_PREVIOUS, WORKFLOW_PARENT_MODULE
 )
 from corehq.apps.app_manager.models import FormLink
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import patch_get_xform_resource_overrides
 
 
+@patch_get_xform_resource_overrides()
 def test_workflow_diagram_child_module_form_links():
     factory = AppFactory(build_version='2.9.0')
     m0, m0f0 = factory.new_basic_module('enroll child', 'child')
@@ -36,33 +38,55 @@ def test_workflow_diagram_child_module_form_links():
     m1f0.form_links = [
         FormLink(xpath="(today() - dob) &lt; 7", form_id=m2f0.unique_id),
     ]
+    m1f0.post_form_workflow_fallback = WORKFLOW_MODULE
+
     source = generate_app_workflow_diagram_source(factory.app)
     eq(_normalize(source), inspect.cleandoc("""
     digraph "Untitled Application" {
         graph [rankdir=LR]
-        root [label=Home]
+        root [label=Root]
         start [label=Start]
         root -> start
-        start -> "enroll child_module"
-        start -> "child visit_module"
+        start -> m0
+        start -> m1
         {
             rank=same
-            "enroll child_module" [label="enroll child module [en] "]
-            "child visit_module" [label="child visit module [en] "]
+            m0 [label="enroll child module [en] "]
+            m1 [label="child visit module [en] "]
         }
-        "visit history_module" [label="visit history module [en] "]
-        "child visit_module" -> "visit history_module"
+        m0 -> "m0-f0"
+        "m1.case_id" -> "m1-f0"
+        "m1.case_id" -> m2
         {
             rank=same
-            "enroll child_form_0" [label="enroll child form 0 [en] " shape=box]
-            "child visit_form_0" [label="child visit form 0 [en] " shape=box]
-            "visit history_form_0" [label="visit history form 0 [en] " shape=box]
+            "m0-f0" [label="enroll child form 0 [en] "]
+            "m1-f0" [label="child visit form 0 [en] "]
+            m2 [label="visit history module [en] "]
         }
-        "enroll child_module" -> "enroll child_form_0"
-        "child visit_module" -> "child visit_form_0"
-        "visit history_module" -> "visit history_form_0"
-        "enroll child_form_0" -> "child visit_form_0" [label="true()" style=dotted]
-        "child visit_form_0" -> "visit history_form_0" [label="(today() - dob) &lt; 7" style=dotted]
+        "m1.case_id.m2.case_id_load_visit_0" -> "m2-f0"
+        {
+            rank=same
+            "m2-f0" [label="visit history form 0 [en] "]
+        }
+        "m0-f0" -> "form_entry_m0-f0"
+        "m1-f0" -> "form_entry_m1-f0"
+        {
+            rank=same
+            "form_entry_m0-f0" [label="enroll child form 0 [en] " shape=box]
+            "form_entry_m1-f0" [label="child visit form 0 [en] " shape=box]
+        }
+        "m2-f0" -> "form_entry_m2-f0"
+        {
+            rank=same
+            "form_entry_m2-f0" [label="visit history form 0 [en] " shape=box]
+        }
+        "m1.case_id" [label="Select 'child' case" shape=folder]
+        "m1.case_id.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
+        "form_entry_m0-f0" -> "form_entry_m1-f0" [label="true()" color=grey]
+        m1 -> "m1.case_id"
+        "form_entry_m1-f0" -> "form_entry_m2-f0" [label="(today() - dob) &lt; 7" color=grey]
+        "form_entry_m1-f0" -> m1 [label="not((today() - dob) &lt; 7)" color=grey]
+        m2 -> "m1.case_id.m2.case_id_load_visit_0"
     }
     """))
 
@@ -73,25 +97,38 @@ def test_workflow_diagram_post_form_workflow_root():
     eq(_normalize(source), inspect.cleandoc("""
     digraph "Untitled Application" {
         graph [rankdir=LR]
-        root [label=Home]
+        root [label=Root]
         start [label=Start]
         root -> start
-        start -> m0_module
+        start -> m0
         {
             rank=same
-            m0_module [label="m0 module [en] "]
+            m0 [label="m0 module [en] "]
         }
-        m1_module [label="m1 module [en] "]
-        m0_module -> m1_module
+        m0 -> "m0-f0"
+        m0 -> m1
         {
             rank=same
-            m0_form_0 [label="m0 form 0 [en] " shape=box]
-            m1_form_0 [label="m1 form 0 [en] " shape=box]
+            "m0-f0" [label="m0 form 0 [en] "]
+            m1 [label="m1 module [en] "]
         }
-        m0_module -> m0_form_0
-        m1_module -> m1_form_0
-        m0_form_0 -> start [style=dotted]
-        m1_form_0 -> start [style=dotted]
+        m1 -> "m1-f0"
+        {
+            rank=same
+            "m1-f0" [label="m1 form 0 [en] "]
+        }
+        "m0-f0" -> "form_entry_m0-f0"
+        {
+            rank=same
+            "form_entry_m0-f0" [label="m0 form 0 [en] " shape=box]
+        }
+        "m1-f0" -> "form_entry_m1-f0"
+        {
+            rank=same
+            "form_entry_m1-f0" [label="m1 form 0 [en] " shape=box]
+        }
+        "form_entry_m0-f0" -> start [color=grey]
+        "form_entry_m1-f0" -> start [color=grey]
     }
     """))
 
@@ -99,38 +136,108 @@ def test_workflow_diagram_post_form_workflow_root():
 def test_workflow_diagram_post_form_workflow_module():
     app = _build_workflow_app(WORKFLOW_MODULE)
     source = generate_app_workflow_diagram_source(app)
+    print(source)
+    graphviz.Source(source).render(view=True)
     eq(_normalize(source), inspect.cleandoc("""
     digraph "Untitled Application" {
         graph [rankdir=LR]
-        root [label=Home]
+        root [label=Root]
         start [label=Start]
         root -> start
-        start -> m0_module
+        start -> m0
         {
             rank=same
-            m0_module [label="m0 module [en] "]
+            m0 [label="m0 module [en] "]
         }
-        m1_module [label="m1 module [en] "]
-        m0_module -> m1_module
+        m0 -> "m0-f0"
+        m0 -> m1
         {
             rank=same
-            m0_form_0 [label="m0 form 0 [en] " shape=box]
-            m1_form_0 [label="m1 form 0 [en] " shape=box]
+            "m0-f0" [label="m0 form 0 [en] "]
+            m1 [label="m1 module [en] "]
         }
-        m0_module -> m0_form_0
-        m1_module -> m1_form_0
-        m0_form_0 -> m0_module [style=dotted]
-        m1_form_0 -> m1_module [style=dotted]
+        m1 -> "m1-f0"
+        {
+            rank=same
+            "m1-f0" [label="m1 form 0 [en] "]
+        }
+        "m0-f0" -> "form_entry_m0-f0"
+        {
+            rank=same
+            "form_entry_m0-f0" [label="m0 form 0 [en] " shape=box]
+        }
+        "m1-f0" -> "form_entry_m1-f0"
+        {
+            rank=same
+            "form_entry_m1-f0" [label="m1 form 0 [en] " shape=box]
+        }
+        "form_entry_m0-f0" -> m0 [color=grey]
+        "form_entry_m1-f0" -> m1 [color=grey]
     }
     """))
 
 
-def test_workflow_diagram_post_form_workflow_parent():
+def test_workflow_diagram_post_form_workflow_previous():
     app = _build_workflow_app(WORKFLOW_PREVIOUS)
     source = generate_app_workflow_diagram_source(app)
-    # TODO
-    graphviz.Source(source).render(view=True)
+    eq(_normalize(source), inspect.cleandoc("""
+    digraph "Untitled Application" {
+        graph [rankdir=LR]
+        root [label=Root]
+        start [label=Start]
+        root -> start
+        start -> m0
+        {
+            rank=same
+            m0 [label="m0 module [en] "]
+        }
+        m0 -> "m0-f0"
+        m0 -> m1
+        {
+            rank=same
+            "m0-f0" [label="m0 form 0 [en] "]
+            m1 [label="m1 module [en] "]
+        }
+        m1 -> "m1-f0"
+        {
+            rank=same
+            "m1-f0" [label="m1 form 0 [en] "]
+        }
+        "m0-f0" -> "form_entry_m0-f0"
+        {
+            rank=same
+            "form_entry_m0-f0" [label="m0 form 0 [en] " shape=box]
+        }
+        "m1-f0" -> "form_entry_m1-f0"
+        {
+            rank=same
+            "form_entry_m1-f0" [label="m1 form 0 [en] " shape=box]
+        }
+        "form_entry_m0-f0" -> m0 [color=grey]
+        "form_entry_m1-f0" -> m1 [color=grey]
+    }"""))
 
+
+def test_workflow_diagram_post_form_workflow_parent():
+    factory = AppFactory(build_version='2.9.0')
+    m0, m0f0 = factory.new_basic_module('enroll child', 'child')
+    factory.form_opens_case(m0f0)
+
+    m1, m1f0 = factory.new_basic_module('child visit', 'child')
+    factory.form_requires_case(m1f0)
+    factory.form_opens_case(m1f0, case_type='visit', is_subcase=True)
+
+    m2, m2f0 = factory.new_advanced_module('visit history', 'visit', parent_module=m1)
+    factory.form_requires_case(m2f0, 'child')
+    factory.form_requires_case(m2f0, 'visit', parent_case_type='child')
+
+    m2f0.post_form_workflow = WORKFLOW_PARENT_MODULE
+    source = generate_app_workflow_diagram_source(factory.app)
+    print(source)
+    graphviz.Source(source).view(directory="/tmp")
+
+# TODO: module.put_in_root
+# TODO: module.case_list_form
 
 def _build_workflow_app(mode):
     factory = AppFactory(build_version='2.9.0')
