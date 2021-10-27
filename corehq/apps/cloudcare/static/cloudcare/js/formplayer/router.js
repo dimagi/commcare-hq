@@ -142,7 +142,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.landingPageApp(appId);
     });
 
-    FormplayerFrontend.on("menu:select", function (index) {
+    FormplayerFrontend.on("menu:select", function (index, smartLinkTemplate) {
         var urlObject = Util.currentUrlToObject();
         if (index === undefined) {
             urlObject.setQueryData(undefined, false);
@@ -150,6 +150,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         } else {
             urlObject.addSelection(index);
             urlObject.setForceManualAction(false);
+        }
+        if (smartLinkTemplate) {
+            urlObject.setSmartLinkTemplate(smartLinkTemplate);
         }
         Util.setUrlToObject(urlObject);
         API.listMenus();
