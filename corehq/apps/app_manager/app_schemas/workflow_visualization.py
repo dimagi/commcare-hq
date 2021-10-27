@@ -82,7 +82,7 @@ class AppWorkflowVisualizer:
         self.stack_append(Node(unique_id, name, parent_id))
 
     def add_form_entry(self, unique_id, name, parent_id):
-        self.stack_append(Node(f"form_entry_{unique_id}", name, parent_id, attrs={"shape": "box"}))
+        self.stack_append(Node(f"{unique_id}_form_entry", name, parent_id, attrs={"shape": "box"}))
 
     def add_case_list(self, node_id, case_type, has_search, parents=None):
         # TODO: make parents compulsory
@@ -97,11 +97,11 @@ class AppWorkflowVisualizer:
         return node_id
 
     def add_eof_workflow(self, form_id, target_node, label=None):
-        self.edges.append(Edge(f"form_entry_{form_id}", target_node, label, attrs={"color": "grey"}))
+        self.edges.append(Edge(f"{form_id}_form_entry", target_node, label, attrs={"color": "grey"}))
 
     def add_eof_form_link(self, tail_form_id, head_form_id, label=None):
         self.edges.append(Edge(
-            f"form_entry_{tail_form_id}", f"form_entry_{head_form_id}", label, attrs={"color": "grey"}
+            f"{tail_form_id}_form_entry", f"{head_form_id}_form_entry", label, attrs={"color": "grey"}
         ))
 
     def render(self, name):
@@ -218,6 +218,11 @@ def generate_app_workflow_diagram_source(app):
                     if conditions:
                         no_conditions_match = ' and '.join(f'not({condition})' for condition in conditions)
                         _add_eof_workflow(form.post_form_workflow_fallback, no_conditions_match)
+
+        if hasattr(module, 'case_list') and module.case_list.show:
+            case_list_id = id_strings.case_list_command(module)
+            workflow.add_module(case_list_id, f"{trans(module.name)} Case List")
+            workflow.add_case_list(f"case_list_id.case_id", module.case_type, False, parents=[case_list_id])
 
     return workflow.render(app.name)
 
