@@ -65,7 +65,7 @@ hqDefine("app_manager/js/forms/form_view", function () {
                 error: function () {
                     self.enableUsercaseInProgress(false);
                     self.enableUsercaseError(gettext("Could not enable user properties, please try again later."));
-                }
+                },
             });
         };
 
