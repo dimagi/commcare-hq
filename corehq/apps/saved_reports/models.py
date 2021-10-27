@@ -610,19 +610,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                                         wrapper=cls.wrap, **kwargs)
         return result
 
-    @classmethod
-    def by_owner(cls, owner_id, stale=True, **kwargs):
-        if stale:
-            kwargs['stale'] = settings.COUCH_STALE_QUERY
-
-        key = [owner_id]
-        db = cls.get_db()
-        result = cache_core.cached_view(db, "reportconfig/user_notifications", reduce=False,
-                                        include_docs=True, startkey=key, endkey=key + [{}],
-                                        wrapper=cls.wrap, **kwargs)
-
-        return result
-
     @property
     @memoized
     def all_recipient_emails(self):
