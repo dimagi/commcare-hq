@@ -16,9 +16,8 @@ from corehq.motech.openmrs.atom_feed import (
     get_case_block_kwargs_from_bahmni_diagnoses,
     get_case_block_kwargs_from_observations,
     get_diagnosis_mappings,
-    get_encounter_uuid,
+    get_entry_url,
     get_observation_mappings,
-    get_patient_uuid,
     get_timestamp,
     import_encounter,
 )
@@ -73,7 +72,7 @@ class GetTimestampTests(SimpleTestCase):
         self.assertEqual(timestamp, datetime(2018, 5, 15, 14, 2, 8, tzinfo=tzoffset(None, 5 * 60 * 60)))
 
 
-class GetPatientUuidTests(SimpleTestCase):
+class GetPatientUrlTests(SimpleTestCase):
 
     def setUp(self):
         self.feed_xml = inspect.cleandoc("""<?xml version="1.0" encoding="UTF-8"?>
@@ -91,44 +90,45 @@ class GetPatientUuidTests(SimpleTestCase):
         xml = re.sub(r'<content.*</content>', '', self.feed_xml, flags=re.DOTALL)
         feed_elem = etree.XML(xml.encode('utf-8'))
         entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
-        with self.assertRaisesRegex(ValueError, r'^Patient UUID not found$'):
-            get_patient_uuid(entry_elem)
-
-    def test_bad_cdata(self):
-        xml = re.sub(r'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4', 'mary-mallon', self.feed_xml)
-        feed_elem = etree.XML(xml.encode('utf-8'))
-        entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
-        with self.assertRaisesRegex(ValueError, r'^Patient UUID not found$'):
-            get_patient_uuid(entry_elem)
+        with self.assertRaisesRegex(ValueError, r'^Unable to parse Atom feed content$'):
+            get_entry_url(entry_elem)
 
     def test_success(self):
         feed_elem = etree.XML(self.feed_xml.encode('utf-8'))
         entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
-        patient_uuid = get_patient_uuid(entry_elem)
-        self.assertEqual(patient_uuid, 'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4')
+        patient_url = get_entry_url(entry_elem)
+        self.assertEqual(patient_url, '/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full')
+
+    def test_mirebalais_patient(self):
+        cdata = (
+            '<![CDATA[{'
+            '"rest":"/ws/rest/v1/patient/43292c56-0a9a-4979-b711-f1ad8092a5d1?v=full",'
+            '"fhir":"/ws/fhir/Patient/43292c56-0a9a-4979-b711-f1ad8092a5d1"'
+            '}]]>'
+        )
+        xml = re.sub(r'<!\[CDATA\[.*?\]\]>', cdata, self.feed_xml)
+        feed_elem = etree.XML(xml.encode('utf-8'))
+        entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
+        patient_url = get_entry_url(entry_elem)
+        self.assertEqual(patient_url, '/ws/rest/v1/patient/43292c56-0a9a-4979-b711-f1ad8092a5d1?v=full')
 
 
-class GetEncounterUuidTests(SimpleTestCase):
+class GetEncounterUrlTests(SimpleTestCase):
 
-    def test_bed_assignment(self):
-        element = etree.XML("""<entry>
-          <title>Bed-Assignment</title>
-          <content type="application/vnd.atomfeed+xml">
-            <![CDATA[/openmrs/ws/rest/v1/bedPatientAssignment/fed0d6f9-e76c-4a8e-a10d-c8e98c7d258f?v=custom:(uuid,startDatetime,endDatetime,bed,patient,encounter:(uuid,encounterDatetime,encounterType:(uuid,name),visit:(uuid,startDatetime,visitType)))]]>
-          </content>
-        </entry>""")
-        encounter_uuid = get_encounter_uuid(element)
-        self.assertIsNone(encounter_uuid)
-
-    def test_unknown_entry(self):
-        element = etree.XML("""<entry>
-          <title>UnExPeCtEd</title>
-          <content type="application/vnd.atomfeed+xml">
-            <![CDATA[/openmrs/ws/rest/v1/UNKNOWN/0f54fe40-89af-4412-8dd4-5eaebe8684dc]]>
-          </content>
-        </entry>""")
-        with self.assertRaises(ValueError):
-            get_encounter_uuid(element)
+    def test_mirebalais_encounter(self):
+        element = etree.XML(
+            '<entry>'
+            '<title>Encounter</title>'
+            '<content type="application/vnd.atomfeed+xml">'
+            '<![CDATA[{'
+            '"rest":"/ws/rest/v1/encounter/187b6940-e25b-4160-9f19-59bb46e8f51b?v=full",'
+            '"fhir":"/ws/fhir/Encounter/187b6940-e25b-4160-9f19-59bb46e8f51b"'
+            '}]]>'
+            '</content>'
+            '</entry>'
+        )
+        encounter_uuid = get_entry_url(element)
+        self.assertEqual(encounter_uuid, "/ws/rest/v1/encounter/187b6940-e25b-4160-9f19-59bb46e8f51b?v=full")
 
 
 class ImportEncounterTest(TestCase, TestFileMixin):
@@ -311,6 +311,19 @@ class ImportEncounterTest(TestCase, TestFileMixin):
             }
         }
 
+    def test_import_bed_assignment(self):
+        """
+        Trying to import a bed assignment does nothing
+        """
+        self.setUpRepeater()
+        url = (
+            '/ws/rest/v1/bedPatientAssignment/fed0d6f9-e76c-4a8e-a10d-c8e98c7d'
+            '258f?v=custom:(uuid,startDatetime,endDatetime,bed,patient,encount'
+            'er:(uuid,encounterDatetime,encounterType:(uuid,name),visit:(uuid,'
+            'startDatetime,visitType)))'
+        )
+        import_encounter(self.repeater, url)
+
     def test_import_encounter(self):
         """
         Importing the given encounter should update the case's "height" property
@@ -326,7 +339,10 @@ class ImportEncounterTest(TestCase, TestFileMixin):
             get_patch.return_value = response
             importer_util_patch.lookup_case.return_value = (self.case, None)
 
-            import_encounter(self.repeater, 'c719b87f-d221-493b-bec7-c212aa813f5d')
+            import_encounter(
+                self.repeater,
+                '/ws/rest/v1/bahmnicore/bahmniencounter/c719b87f-d221-493b-bec7-c212aa813f5d?includeAll=true'
+            )
 
             case_block_re = """
                 <case case_id="abcdef" »

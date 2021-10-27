@@ -27,6 +27,10 @@ ATOM_FEED_NAMES = (
     ATOM_FEED_NAME_ENCOUNTER,
 )
 
+# Regex patterns to identify UUIDs in URLs
+PATIENT_URL_UUID_RE = r'/patient/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b'
+ENCOUNTER_URL_UUID_RE = r'/(?:bahmni)?encounter/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b'
+
 # The Location property to store the OpenMRS location UUID in
 LOCATION_OPENMRS_UUID = 'openmrs_uuid'
 

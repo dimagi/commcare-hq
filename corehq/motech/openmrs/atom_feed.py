@@ -1,3 +1,4 @@
+import json
 import re
 import uuid
 from collections import defaultdict
@@ -33,11 +34,16 @@ from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.motech.exceptions import ConfigurationError, JsonpathError
+from corehq.motech.exceptions import (
+    ConfigurationError,
+    JsonpathError,
+    ParseError,
+)
 from corehq.motech.openmrs.const import (
-    ATOM_FEED_NAME_PATIENT,
     ATOM_FEED_NAMES,
+    ENCOUNTER_URL_UUID_RE,
     OPENMRS_ATOM_FEED_DEVICE_ID,
+    PATIENT_URL_UUID_RE,
     XMLNS_OPENMRS,
 )
 from corehq.motech.openmrs.exceptions import (
@@ -118,7 +124,7 @@ def get_timestamp(element, xpath='./atom:updated'):
     return dateutil_parser.parse(timestamp_elems[0].text, tzinfos=tzinfos)
 
 
-def get_patient_uuid(element):
+def get_entry_url(element):
     """
     Extracts the UUID of a patient from an entry's "content" node.
 
@@ -127,49 +133,24 @@ def get_patient_uuid(element):
     ...         <![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]>
     ...     </content>
     ... </entry>''')
-    >>> get_patient_uuid(element)
-    'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4'
+    >>> get_entry_url(element)
+    '/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full'
 
     """
     # "./*[local-name()='content']" ignores namespaces and matches all
     # child nodes with tag name "content". This lets us traverse the
     # feed regardless of whether the Atom namespace is explicitly given.
     content = element.xpath("./*[local-name()='content']")
-    pattern = re.compile(r'/patient/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b')
     if content and len(content) == 1:
-        cdata = content[0].text
-        matches = pattern.search(cdata)
-        if matches:
-            return matches.group(1)
-    raise ValueError('Patient UUID not found')
-
-
-def get_encounter_uuid(element):
-    """
-    Extracts the UUID of an encounter from an entry's "content" node.
-
-    >>> element = etree.XML('''<entry>
-    ...   <title>Encounter</title>
-    ...   <content type="application/vnd.atomfeed+xml">
-    ...     <![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true]]>
-    ...   </content>
-    ... </entry>''')
-    >>> get_encounter_uuid(element)
-    '0f54fe40-89af-4412-8dd4-5eaebe8684dc'
-
-    """
-    content = element.xpath("./*[local-name()='content']")
-    pattern = re.compile(r'/bahmniencounter/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b')
-    if content and len(content) == 1:
-        cdata = content[0].text
-        matches = pattern.search(cdata)
-        if matches:
-            return matches.group(1)
-        # Not everything in the Encounter atom feed is an Encounter. It
-        # also includes bed assignments.
-        if 'bedPatientAssignment' in cdata:
-            return None
-    raise ValueError('Unrecognised Encounter atom feed entry')
+        cdata = content[0].text.strip()
+        try:
+            urls_dict = json.loads(cdata)
+            # See unit tests for an example of a JSON value in CDATA
+            return urls_dict['rest']
+        except json.JSONDecodeError:
+            index = cdata.index('/ws/rest/v1/')  # Raises ValueError if not found
+            return cdata[index:]
+    raise ParseError('Unable to parse Atom feed content')
 
 
 def get_feed_updates(repeater, feed_name):
@@ -184,7 +165,6 @@ def get_feed_updates(repeater, feed_name):
     atom_feed_status = repeater.atom_feed_status.get(feed_name, AtomFeedStatus())
     last_polled_at = atom_feed_status['last_polled_at']
     page = atom_feed_status['last_page']
-    get_uuid = get_patient_uuid if feed_name == ATOM_FEED_NAME_PATIENT else get_encounter_uuid
     # The OpenMRS Atom feeds' timestamps are timezone-aware. So when we
     # compare timestamps in has_new_entries_since(), this timestamp
     # must also be timezone-aware. repeater.patients_last_polled_at is
@@ -198,9 +178,9 @@ def get_feed_updates(repeater, feed_name):
             if has_new_entries_since(last_polled_at, feed_xml):
                 for entry in feed_xml.xpath('./atom:entry', namespaces={'atom': 'http://www.w3.org/2005/Atom'}):
                     if has_new_entries_since(last_polled_at, entry, './atom:published'):
-                        entry_uuid = get_uuid(entry)
-                        if entry_uuid:
-                            yield entry_uuid
+                        entry_url = get_entry_url(entry)
+                        if entry_url:
+                            yield entry_url
             next_page = feed_xml.xpath(
                 './atom:link[@rel="next-archive"]',
                 namespaces={'atom': 'http://www.w3.org/2005/Atom'}
@@ -219,6 +199,10 @@ def get_feed_updates(repeater, feed_name):
                 break
     except (RequestException, HTTPError):
         # Don't update repeater if OpenMRS is offline
+        return
+    except ValueError as err:
+        repeater.requests.notify_error(str(err))
+        # Don't update repeater if parsing needs to be extended
         return
     except OpenmrsFeedDoesNotExist:
         repeater.atom_feed_status[feed_name] = AtomFeedStatus()
@@ -296,7 +280,7 @@ def get_case_block_kwargs_from_patient(patient, repeater, case=None):
     return case_block_kwargs
 
 
-def update_patient(repeater, patient_uuid):
+def update_patient(repeater, patient_url):
     """
     Fetch patient from OpenMRS, submit case update for all mapped case
     properties.
@@ -310,6 +294,7 @@ def update_patient(repeater, patient_uuid):
             f'patients from OpenMRS unless only one case type is specified.'
         ))
     case_type = repeater.white_listed_case_types[0]
+    patient_uuid = get_uuid_from_url(PATIENT_URL_UUID_RE, patient_url)
     try:
         patient = get_patient_by_uuid(repeater.requests, patient_uuid)
     except (RequestException, ValueError) as err:
@@ -356,9 +341,13 @@ def update_patient(repeater, patient_uuid):
         )
 
 
-def import_encounter(repeater, encounter_uuid):
+def import_encounter(repeater, encounter_url):
+    if 'bedPatientAssignment' in encounter_url:
+        # Ignore bed assignments
+        return
+    encounter_uuid = get_uuid_from_url(ENCOUNTER_URL_UUID_RE, encounter_url)
     try:
-        encounter = get_encounter(repeater, encounter_uuid)
+        encounter = get_encounter(repeater, encounter_url)
     except (RequestException, ValueError) as err:
         raise OpenmrsException(_(
             f'{repeater.domain}: {repeater}: Error fetching Encounter '
@@ -381,6 +370,24 @@ def import_encounter(repeater, encounter_uuid):
     case_blocks.extend(more_case_blocks)
     if has_case_updates(case_block_kwargs) or case_blocks:
         update_case(repeater, patient_case_id, case_block_kwargs, case_blocks)
+
+
+def get_uuid_from_url(pattern, url):
+    """
+    Returns the UUID of an Encounter, given its URL
+
+    >>> url = '/ws/rest/v1/encounter/187b6940-e25b-4160-9f19-59bb46e8f51b?v=full'
+    >>> get_uuid_from_url(ENCOUNTER_URL_UUID_RE, url)
+    '187b6940-e25b-4160-9f19-59bb46e8f51b'
+    >>> url = '/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true'
+    >>> get_uuid_from_url(ENCOUNTER_URL_UUID_RE, url)
+    '0f54fe40-89af-4412-8dd4-5eaebe8684dc'
+
+    """
+    try:
+        return re.search(pattern, url).group(1)
+    except AttributeError:
+        raise ParseError(f'UUID not found in URL {url!r}')
 
 
 def get_case_block_kwargs_from_encounter(
@@ -436,7 +443,7 @@ def get_case_block_kwargs_from_encounter(
     return case_block_kwargs, case_blocks
 
 
-def get_encounter(repeater, encounter_uuid):
+def get_encounter(repeater, encounter_url):
     """
     Fetches an Encounter by its UUID
 
@@ -444,11 +451,7 @@ def get_encounter(repeater, encounter_uuid):
     :raises ValueError: If the response body does not contain valid JSON.
     :return: Encounter dict
     """
-    response = repeater.requests.get(
-        '/ws/rest/v1/bahmnicore/bahmniencounter/' + encounter_uuid,
-        {'includeAll': 'true'},
-        raise_for_status=True
-    )
+    response = repeater.requests.get(encounter_url, raise_for_status=True)
     return response.json()
 
 
