@@ -60,9 +60,7 @@ class Command(BaseCommand):
                     bad_domains, available_domains
                 ))
 
-        if pillow.kafka_topic in (topics.CASE, topics.FORM):
-            couch_db = couch_config.get_db(None)
-        elif pillow.kafka_topic == topics.COMMCARE_USER:
+        if pillow.kafka_topic == topics.COMMCARE_USER:
             couch_db = couch_config.get_db(settings.USERS_GROUPS_DB)
         else:
             raise CommandError('Reindexer not configured for topic: {}'.format(pillow.kafka_topic))
