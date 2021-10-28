@@ -85,7 +85,7 @@ def test_workflow_diagram_child_module_form_links():
         "m0-f0_form_entry" -> "m1-f0_form_entry" [label="true()" color=grey]
         m1 -> "m1.case_id"
         "m1-f0_form_entry" -> "m2-f0_form_entry" [label="(today() - dob) &lt; 7" color=grey]
-        "m1-f0_form_entry" -> m1 [label="not((today() - dob) &lt; 7)" color=grey]
+        "m1-f0_form_entry" -> m1 [label="not((today() - dob) &lt; 7)" color=grey constraint=false]
         m2 -> "m1.case_id.m2.case_id_load_visit_0"
     }
     """))
@@ -128,8 +128,8 @@ def test_workflow_diagram_post_form_workflow_root():
             rank=same
             "m1-f0_form_entry" [label="m1 form 0 [en] " shape=box]
         }
-        "m0-f0_form_entry" -> start [color=grey]
-        "m1-f0_form_entry" -> start [color=grey]
+        "m0-f0_form_entry" -> start [color=grey constraint=false]
+        "m1-f0_form_entry" -> start [color=grey constraint=false]
     }
     """))
 
@@ -171,8 +171,8 @@ def test_workflow_diagram_post_form_workflow_module():
             rank=same
             "m1-f0_form_entry" [label="m1 form 0 [en] " shape=box]
         }
-        "m0-f0_form_entry" -> m0 [color=grey]
-        "m1-f0_form_entry" -> m1 [color=grey]
+        "m0-f0_form_entry" -> m0 [color=grey constraint=false]
+        "m1-f0_form_entry" -> m1 [color=grey constraint=false]
     }
     """))
 
@@ -214,8 +214,8 @@ def test_workflow_diagram_post_form_workflow_previous():
             rank=same
             "m1-f0_form_entry" [label="m1 form 0 [en] " shape=box]
         }
-        "m0-f0_form_entry" -> m0 [color=grey]
-        "m1-f0_form_entry" -> m1 [color=grey]
+        "m0-f0_form_entry" -> m0 [color=grey constraint=false]
+        "m1-f0_form_entry" -> m1 [color=grey constraint=false]
     }"""))
 
 
@@ -269,7 +269,7 @@ def test_workflow_diagram_post_form_workflow_parent():
         "m0.case_id.m1.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
         m0 -> "m0.case_id"
         m1 -> "m0.case_id.m1.case_id_load_visit_0"
-        "m1-f0_form_entry" -> m0 [color=grey]
+        "m1-f0_form_entry" -> m0 [color=grey constraint=false]
     }
     """))
 
@@ -310,8 +310,54 @@ def test_workflow_diagram_module_case_list():
     }
     """))
 
+
+@patch_get_xform_resource_overrides()
+def test_workflow_diagram_case_list_form():
+    factory = AppFactory(build_version='2.9.0')
+    m0, m0f0 = factory.new_basic_module("register", "case")
+    factory.form_opens_case(m0f0, "case")
+
+    m1, m1f0 = factory.new_basic_module("followup", "case", case_list_form=m0f0)
+    factory.form_requires_case(m1f0)
+    # m1f1 = factory.new_form(m1)
+    # factory.form_opens_case(m1f1, "case")
+    source = generate_app_workflow_diagram_source(factory.app)
+    eq(_normalize(source), inspect.cleandoc("""
+    digraph "Untitled Application" {
+        graph [rankdir=LR]
+        root [label=Root]
+        start [label=Start]
+        root -> start
+        start -> m0
+        start -> m1
+        {
+            rank=same
+            m0 [label="register module [en] "]
+            m1 [label="followup module [en] "]
+        }
+        m0 -> "m0-f0"
+        "m1.case_id" -> "m1-f0"
+        {
+            rank=same
+            "m0-f0" [label="register form 0 [en] "]
+            "m1-f0" [label="followup form 0 [en] "]
+        }
+        "m0-f0" -> "m0-f0_form_entry"
+        "m1-f0" -> "m1-f0_form_entry"
+        {
+            rank=same
+            "m0-f0_form_entry" [label="register form 0 [en] " shape=box]
+            "m1-f0_form_entry" [label="followup form 0 [en] " shape=box]
+        }
+        "m1.case_id" [label="Select 'case' case" shape=folder]
+        "m0-f0_form_entry" -> "m1.case_id" [label="Case Created" color=grey constraint=false]
+        "m0-f0_form_entry" -> m1 [label="Case Not Created" color=grey constraint=false]
+        m1 -> "m1.case_id"
+        "m1.case_id" -> "m0-f0_form_entry" [label="" color=grey constraint=false]
+    }"""))
+
+
 # TODO: module.put_in_root
-# TODO: module.case_list_form
 
 def _build_workflow_app(mode):
     factory = AppFactory(build_version='2.9.0')

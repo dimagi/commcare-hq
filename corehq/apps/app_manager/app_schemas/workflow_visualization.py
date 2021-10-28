@@ -1,3 +1,4 @@
+import re
 from contextlib import contextmanager
 from io import BytesIO
 
@@ -9,11 +10,12 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_ROOT,
     WORKFLOW_PARENT_MODULE,
     WORKFLOW_MODULE,
-    WORKFLOW_FORM, WORKFLOW_PREVIOUS,
+    WORKFLOW_FORM, WORKFLOW_PREVIOUS, WORKFLOW_CASE_LIST,
 )
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowHelper, CommandId, \
-    prepend_parent_frame_children
+    prepend_parent_frame_children, CaseListFormWorkflow
+from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import module_offers_search
@@ -50,6 +52,8 @@ class Edge:
 class AppWorkflowVisualizer:
     ROOT = "root"
     START = "start"
+    WORKFLOW_STYLE = {"color": "grey", "constraint": "false"}
+    FORM_LINK_STYLE = {"color": "grey"}
 
     def __init__(self):
         self.global_nodes = []
@@ -97,11 +101,16 @@ class AppWorkflowVisualizer:
         return node_id
 
     def add_eof_workflow(self, form_id, target_node, label=None):
-        self.edges.append(Edge(f"{form_id}_form_entry", target_node, label, attrs={"color": "grey"}))
+        self.edges.append(Edge(f"{form_id}_form_entry", target_node, label, attrs=self.WORKFLOW_STYLE))
 
     def add_eof_form_link(self, tail_form_id, head_form_id, label=None):
         self.edges.append(Edge(
-            f"{tail_form_id}_form_entry", f"{head_form_id}_form_entry", label, attrs={"color": "grey"}
+            f"{tail_form_id}_form_entry", f"{head_form_id}_form_entry", label, attrs=self.FORM_LINK_STYLE
+        ))
+
+    def add_case_list_form_link(self, tail_id, form_id, label):
+        self.edges.append(Edge(
+            tail_id, f"{form_id}_form_entry", label, attrs=self.WORKFLOW_STYLE
         ))
 
     def render(self, name):
@@ -176,19 +185,22 @@ def generate_app_workflow_diagram_source(app):
                             added.append(item_id)
                             if item.from_parent_module:
                                 current_module = app.get_module_by_unique_id(module.root_module_id)
-                                has_search = module_offers_search(current_module)
                             else:
-                                has_search = module_offers_search(module)
+                                current_module = module
+                            has_search = module_offers_search(current_module)
                             workflow.add_case_list(item_id, item.case_type, has_search, parents=[previous])
+                            add_case_list_form_edge(item_id, app, current_module, workflow)
                         id_stack.append(item_id)
 
             form_id = id_strings.form_command(form, module)
             with workflow.next_stack_level(len(commands) + 1):
                 workflow.add_form_entry(form_id, trans(form.name), id_stack[-1])
 
+            form_has_eof = False
             def _add_eof_workflow(workflow_option, condition=None):
                 # TODO: label = _substitute_hashtags(app, form, condition or "")
                 # frame_children
+                form_has_eof = True
                 label = condition
                 if workflow_option == WORKFLOW_ROOT:
                     workflow.add_eof_workflow(form_id, "start", label)
@@ -213,11 +225,15 @@ def generate_app_workflow_diagram_source(app):
                     to_form = app.get_form(link.form_id)
                     to_id = id_strings.form_command(to_form, to_form.get_module())
                     workflow.add_eof_form_link(form_id, to_id, link.xpath)
+                    form_has_eof = True
                 if form.post_form_workflow_fallback:
                     conditions = [link.xpath for link in form.form_links if link.xpath.strip()]
                     if conditions:
                         no_conditions_match = ' and '.join(f'not({condition})' for condition in conditions)
                         _add_eof_workflow(form.post_form_workflow_fallback, no_conditions_match)
+
+            if not form_has_eof:
+                add_case_list_form_eof_edges(module, form, helper, workflow)
 
         if hasattr(module, 'case_list') and module.case_list.show:
             case_list_id = id_strings.case_list_command(module)
@@ -225,6 +241,37 @@ def generate_app_workflow_diagram_source(app):
             workflow.add_case_list(f"case_list_id.case_id", module.case_type, False, parents=[case_list_id])
 
     return workflow.render(app.name)
+
+
+def add_case_list_form_eof_edges(module, form, workflow_helper, graph):
+    form_id = id_strings.form_command(form, module)
+    for frame in CaseListFormWorkflow(workflow_helper).case_list_forms_frames(form):
+        if not frame.children:
+            continue
+
+        label = None
+        if frame.if_clause:
+            case_xpath = r".*count\(instance\('casedb'\)/casedb/case\[.*\]\)"
+            if re.match(f"{case_xpath} > 0", frame.if_clause):
+                label = "Case Created"
+            elif re.match(f"{case_xpath} = 0", frame.if_clause):
+                label = "Case Not Created"
+            else:
+                label = frame.if_clause
+
+        if isinstance(frame.children[-1], CommandId):
+            graph.add_eof_workflow(form_id, frame.children[-1].id, label)
+        else:
+            ids = [d.id for d in frame.children]
+            graph.add_eof_workflow(form_id, f"{'.'.join(ids)}", label)
+
+
+def add_case_list_form_edge(item_id, app, module, graph):
+    if module.case_list_form.form_id:
+        case_list_form = app.get_form(module.case_list_form.form_id)
+        if DetailContributor.form_is_valid_for_case_list_action(app, case_list_form, module):
+            form_id = id_strings.form_command(case_list_form, case_list_form.get_module())
+            graph.add_case_list_form_link(item_id, form_id, trans(module.case_list_form.label))
 
 
 def _substitute_hashtags(app, form, xpath_expression):
