@@ -237,6 +237,8 @@ gitpython==3.1.14
     # via transifex-client
 gnureadline==8.0.0
     # via -r dev-requirements.in
+graphviz==0.17
+    # via -r base-requirements.in
 greenlet==1.1.2
     # via
     #   -r base-requirements.in
