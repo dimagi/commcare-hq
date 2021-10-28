@@ -81,13 +81,12 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
                     });
 
                 }
-                if (map_key) {
-                    this.$noedit_view.html('<strong>' + $('<div>').text(map_key).html() + '</strong> &rarr; ' + (
-                        map_val ? $('<div>').text(map_val).html() : django.gettext('(empty)')
-                    ));
-                } else {
-                    this.$noedit_view.text("");
-                }
+                let left_side = map_key ?
+                    '<strong>' + $('<div>').text(map_key).html() + '</strong>' :
+                    '<i>' + django.gettext('blank') + '</i>';
+                this.$noedit_view.html(left_side + ' &rarr; ' + (
+                    map_val ? $('<div>').text(map_val).html() : django.gettext('(empty)')
+                ));
                 return this;
             }
         },
