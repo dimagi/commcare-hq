@@ -1,7 +1,6 @@
 import inspect
 from unittest import skip
 
-import graphviz
 from testil import eq
 
 from corehq.apps.app_manager.app_schemas.workflow_visualization import generate_app_workflow_diagram_source
