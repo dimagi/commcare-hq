@@ -200,42 +200,7 @@ def generate_app_workflow_diagram_source(app):
             with workflow.next_stack_level(len(commands) + 1):
                 workflow.add_form_entry(form_id, trans(form.name), id_stack[-1])
 
-            form_has_eof = False
-            def _add_eof_workflow(workflow_option, condition=None):
-                # TODO: label = _substitute_hashtags(app, form, condition or "")
-                # frame_children
-                form_has_eof = True
-                label = condition
-                if workflow_option == WORKFLOW_ROOT:
-                    workflow.add_eof_workflow(form_id, "start", label)
-                if workflow_option == WORKFLOW_PARENT_MODULE:
-                    try:
-                        module.root_module
-                    except ModuleNotFoundError:
-                        pass
-                    else:
-                        module_command = id_strings.menu_id(app.get_module_by_unique_id(module.root_module_id))
-                        workflow.add_eof_workflow(form_id, module_command, label)
-                if workflow_option == WORKFLOW_MODULE:
-                    workflow.add_eof_workflow(form_id, id_strings.menu_id(module), label)
-                if workflow_option == WORKFLOW_PREVIOUS:
-                    workflow.add_eof_workflow(form_id, id_stack[-2], label)
-
-            _add_eof_workflow(form.post_form_workflow)
-
-            if form.post_form_workflow == WORKFLOW_FORM:
-                for link in form.form_links:
-                    # label = _substitute_hashtags(app, form, link.xpath)
-                    to_form = app.get_form(link.form_id)
-                    to_id = id_strings.form_command(to_form, to_form.get_module())
-                    workflow.add_eof_form_link(form_id, to_id, link.xpath)
-                    form_has_eof = True
-                if form.post_form_workflow_fallback:
-                    conditions = [link.xpath for link in form.form_links if link.xpath.strip()]
-                    if conditions:
-                        no_conditions_match = ' and '.join(f'not({condition})' for condition in conditions)
-                        _add_eof_workflow(form.post_form_workflow_fallback, no_conditions_match)
-
+            form_has_eof = add_eof_edges(app, module, form, workflow, id_stack)
             if not form_has_eof:
                 add_case_list_form_eof_edges(module, form, helper, workflow)
 
@@ -245,6 +210,52 @@ def generate_app_workflow_diagram_source(app):
             workflow.add_case_list(f"{case_list_id}.case_id", module.case_type, False, case_list_id)
 
     return workflow.render(app.name)
+
+
+def add_eof_edges(app, module, form, graph, id_stack, workflow_option=None, label=None):
+    form_id = id_strings.form_command(form, module)
+
+    workflow_option = workflow_option or form.post_form_workflow
+    # TODO: label = _substitute_hashtags(app, form, condition or "")
+    # frame_children
+    if workflow_option == WORKFLOW_ROOT:
+        graph.add_eof_workflow(form_id, "start", label)
+        return True
+
+    if workflow_option == WORKFLOW_PARENT_MODULE:
+        try:
+            module.root_module
+        except ModuleNotFoundError:
+            return False
+        else:
+            module_command = id_strings.menu_id(app.get_module_by_unique_id(module.root_module_id))
+            graph.add_eof_workflow(form_id, module_command, label)
+            return True
+
+    if workflow_option == WORKFLOW_MODULE:
+        graph.add_eof_workflow(form_id, id_strings.menu_id(module), label)
+        return True
+
+    if workflow_option == WORKFLOW_PREVIOUS:
+        graph.add_eof_workflow(form_id, id_stack[-2], label)
+        return True
+
+    if form.post_form_workflow == WORKFLOW_FORM:
+        for link in form.form_links:
+            # label = _substitute_hashtags(app, form, link.xpath)
+            to_form = app.get_form(link.form_id)
+            to_id = id_strings.form_command(to_form, to_form.get_module())
+            graph.add_eof_form_link(form_id, to_id, link.xpath)
+        if form.post_form_workflow_fallback:
+            conditions = [link.xpath for link in form.form_links if link.xpath.strip()]
+            if conditions:
+                no_conditions_match = ' and '.join(f'not({condition})' for condition in conditions)
+                add_eof_edges(
+                    app, module, form, graph, id_stack,
+                    workflow_option=form.post_form_workflow_fallback,
+                    label=no_conditions_match
+                )
+        return True
 
 
 def add_case_list_form_eof_edges(module, form, workflow_helper, graph):
