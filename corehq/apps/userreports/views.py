@@ -103,7 +103,6 @@ from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
-    StaticDataSourceConfiguration,
     StaticReportConfiguration,
     get_datasource_config,
     get_report_config,
@@ -1049,11 +1048,24 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
     @property
     def page_context(self):
+        is_rebuilding = (
+            self.config.meta.build.initiated
+            and (
+                not self.config.meta.build.finished
+                and not self.config.meta.build.rebuilt_asynchronously
+            )
+        )
+        is_rebuilding_inplace = (
+            self.config.meta.build.initiated_in_place
+            and not self.config.meta.build.finished_in_place
+        )
         return {
             'form': self.edit_form,
             'data_source': self.config,
             'read_only': self.read_only,
             'used_by_reports': self.get_reports(),
+            'is_rebuilding': is_rebuilding,
+            'is_rebuilding_inplace': is_rebuilding_inplace,
         }
 
     @property
@@ -1255,7 +1267,6 @@ def build_data_source_in_place(request, domain, config_id):
             config.display_name
         )
     )
-
     rebuild_indicators_in_place.delay(config_id, request.user.username, source='edit_data_source_build_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
