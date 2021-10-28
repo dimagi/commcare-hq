@@ -255,6 +255,7 @@ class WrappedNode(object):
         return self.xml is not None
 
     def render(self):
+        ET.indent(self.xml, level=0)
         return ET.tostring(self.xml, encoding='utf-8')
 
 

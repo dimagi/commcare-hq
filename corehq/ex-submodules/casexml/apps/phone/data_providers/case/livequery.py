@@ -37,7 +37,7 @@ from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
-from corehq.util.metrics import metrics_histogram
+from corehq.util.metrics import metrics_histogram, metrics_counter
 from corehq.util.metrics.load_counters import case_load_counter
 
 
@@ -95,6 +95,7 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
                     'restore_type': 'incremental' if restore_state.last_sync_log else 'fresh'
                 }
             )
+            metrics_counter('commcare.restore.case_load.count', len(sync_ids), {'domain': accessor.domain})
             compile_response(
                 timing_context,
                 restore_state,

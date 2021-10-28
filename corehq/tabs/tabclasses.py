@@ -2109,10 +2109,7 @@ class MySettingsTab(UITab):
             },
         ])
 
-        if (
-            self.couch_user and self.couch_user.is_dimagi or
-            toggles.MOBILE_PRIVILEGES_FLAG.enabled(self.couch_user.username)
-        ):
+        if EnableMobilePrivilegesView.is_user_authorized(self.couch_user):
             menu_items.append({
                 'title': _(EnableMobilePrivilegesView.page_title),
                 'url': reverse(EnableMobilePrivilegesView.urlname),

@@ -22,7 +22,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import SafeCaseDisplay
 from corehq.apps.reports.standard.cases.filters import (
     CaseListExplorerColumns,
-    XpathCaseSearchFilter,
+    XPathCaseSearchFilter,
 )
 from corehq.elastic import iter_es_docs_from_query
 from corehq.util.metrics import metrics_histogram_timer
@@ -40,7 +40,7 @@ class CaseListExplorer(CaseListReport):
     _is_exporting = False
 
     fields = [
-        XpathCaseSearchFilter,
+        XPathCaseSearchFilter,
         CaseListExplorerColumns,
         CaseListFilter,
         CaseTypeFilter,
@@ -65,7 +65,7 @@ class CaseListExplorer(CaseListReport):
     def _build_query(self, sort=True):
         query = super(CaseListExplorer, self)._build_query()
         query = self._populate_sort(query, sort)
-        xpath = XpathCaseSearchFilter.get_value(self.request, self.domain)
+        xpath = XPathCaseSearchFilter.get_value(self.request, self.domain)
         if xpath:
             try:
                 query = query.xpath_query(self.domain, xpath)

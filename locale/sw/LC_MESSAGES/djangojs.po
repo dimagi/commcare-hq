@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-20 18:46+0000\n"
+"POT-Creation-Date: 2021-10-27 20:24+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Swahili (https://www.transifex.com/dimagi/teams/9388/sw/)\n"
@@ -2765,26 +2765,26 @@ msgstr ""
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:343
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:345
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:352
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:354
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:501
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:503
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:529
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:531
 msgid "Please wait..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:681
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:683
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
@@ -4317,10 +4317,6 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/web_users.js:199
 msgid "Are you sure you want to delete this request?"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/web_users.js:208
-msgid "s email server"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/web_users_list.js:41
