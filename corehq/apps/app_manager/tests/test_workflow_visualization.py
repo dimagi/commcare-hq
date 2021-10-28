@@ -534,8 +534,8 @@ def test_workflow_diagram_module_case_list():
             rank=same
             "m0-f0_form_entry" [label="person form 0 [en] " shape=box]
         }
-        "case_list_id.case_id" [label="Select 'person' case" shape=folder]
-        "m0-case-list" -> "case_list_id.case_id"
+        "m0-case-list.case_id" [label="Select 'person' case" shape=folder]
+        "m0-case-list" -> "m0-case-list.case_id"
     }
     """))
 
