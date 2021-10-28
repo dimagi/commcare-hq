@@ -6,7 +6,7 @@ from corehq.apps.reports.standard.cases.case_list_explorer import (
 from corehq.apps.reports.standard.cases.filters import (
     CaseListExplorerColumns,
     DuplicateCaseRuleFilter,
-    XpathCaseSearchFilter,
+    XPathCaseSearchFilter,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.data_interfaces.models import CaseDuplicate
@@ -18,7 +18,7 @@ class DuplicateCasesExplorer(CaseListExplorer):
 
     fields = [
         DuplicateCaseRuleFilter,
-        XpathCaseSearchFilter,
+        XPathCaseSearchFilter,
         CaseListExplorerColumns,
         CaseListFilter,
     ]
