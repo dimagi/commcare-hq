@@ -2,6 +2,7 @@ hqDefine('app_manager/js/summary/workflow_summary',[
     'jquery',
     'underscore',
     'knockout',
+    '@hpcc-js/wasm',
     'd3/d3.min',
     'd3-graphviz',
     'hqwebapp/js/initial_page_data',
@@ -10,9 +11,11 @@ hqDefine('app_manager/js/summary/workflow_summary',[
     'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
     'hqwebapp/js/knockout_bindings.ko', // popover
     'hqwebapp/js/components.ko',    // search box
-], function ($, _, ko, d3, d3Graphviz, initialPageData, assertProperties, models) {
+], function ($, _, ko, wasm, d3, d3Graphviz, initialPageData, assertProperties, models) {
 
     $(function () {
+        // tell wasm where to find it's resources
+        wasm.wasmFolder(initialPageData.get("hpcc_base_url"));
         let workflowModel = function (options) {
             let self = models.contentModel(options);
 
