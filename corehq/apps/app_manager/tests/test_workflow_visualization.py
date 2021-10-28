@@ -1,4 +1,5 @@
 import inspect
+from unittest import skip
 
 import graphviz
 from testil import eq
@@ -16,18 +17,138 @@ from corehq.apps.app_manager.tests.util import patch_get_xform_resource_override
 
 
 @patch_get_xform_resource_overrides()
-def test_workflow_diagram_child_module_form_links():
+def test_workflow_diagram_modules():
+    """This test reveals"""
+    app = _build_test_app()
+
+    source = generate_app_workflow_diagram_source(app)
+    eq(_normalize(source), inspect.cleandoc("""
+    digraph "Untitled Application" {
+        graph [rankdir=LR]
+        root [label=Root]
+        start [label=Start]
+        root -> start
+        start -> m0
+        start -> m1
+        {
+            rank=same
+            m0 [label="enroll child module [en] "]
+            m1 [label="child visit module [en] "]
+        }
+        m0 -> "m0-f0"
+        "m1.case_id" -> "m1-f0"
+        "m1.case_id" -> m2
+        {
+            rank=same
+            "m0-f0" [label="enroll child form 0 [en] "]
+            "m1-f0" [label="child visit form 0 [en] "]
+            m2 [label="visit history module [en] "]
+        }
+        "m1.case_id.m2.case_id_load_visit_0" -> "m2-f0"
+        {
+            rank=same
+            "m2-f0" [label="visit history form 0 [en] "]
+        }
+        "m0-f0" -> "m0-f0_form_entry"
+        "m1-f0" -> "m1-f0_form_entry"
+        {
+            rank=same
+            "m0-f0_form_entry" [label="enroll child form 0 [en] " shape=box]
+            "m1-f0_form_entry" [label="child visit form 0 [en] " shape=box]
+        }
+        "m2-f0" -> "m2-f0_form_entry"
+        {
+            rank=same
+            "m2-f0_form_entry" [label="visit history form 0 [en] " shape=box]
+        }
+        "m1.case_id" [label="Select 'child' case" shape=folder]
+        "m1.case_id.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
+        m1 -> "m1.case_id"
+        m2 -> "m1.case_id.m2.case_id_load_visit_0"
+    }"""))
+
+
+@patch_get_xform_resource_overrides()
+def test_workflow_diagram_modules_put_in_root():
+    """This test reveals"""
     factory = AppFactory(build_version='2.9.0')
     m0, m0f0 = factory.new_basic_module('enroll child', 'child')
     factory.form_opens_case(m0f0)
+    m0.put_in_root = True
+    source = generate_app_workflow_diagram_source(factory.app)
+    eq(_normalize(source), inspect.cleandoc("""
+    digraph "Untitled Application" {
+        graph [rankdir=LR]
+        root [label=Root]
+        start [label=Start]
+        root -> start
+        start -> "m0-f0"
+        {
+            rank=same
+            "m0-f0" [label="enroll child form 0 [en] "]
+        }
+        "m0-f0" -> "m0-f0_form_entry"
+        {
+            rank=same
+            "m0-f0_form_entry" [label="enroll child form 0 [en] " shape=box]
+        }
+    }"""))
 
-    m1, m1f0 = factory.new_basic_module('child visit', 'child')
-    factory.form_requires_case(m1f0)
-    factory.form_opens_case(m1f0, case_type='visit', is_subcase=True)
 
-    m2, m2f0 = factory.new_advanced_module('visit history', 'visit', parent_module=m1)
-    factory.form_requires_case(m2f0, 'child')
-    factory.form_requires_case(m2f0, 'visit', parent_case_type='child')
+@patch_get_xform_resource_overrides()
+@skip("child module in root is currently broken")
+def test_workflow_diagram_modules_child_module_put_in_root():
+    app = _build_test_app()
+    # child module in root
+    app.get_module(2).put_in_root = True
+
+    source = generate_app_workflow_diagram_source(app)
+    eq(_normalize(source), inspect.cleandoc("""
+    digraph "Untitled Application" {
+        graph [rankdir=LR]
+        root [label=Root]
+        start [label=Start]
+        root -> start
+        start -> m0
+        start -> m1
+        {
+            rank=same
+            m0 [label="enroll child module [en] "]
+            m1 [label="child visit module [en] "]
+        }
+        m0 -> "m0-f0"
+        "m1.case_id" -> "m1-f0"
+        "m1.case_id" -> "m2-f0"
+        {
+            rank=same
+            "m0-f0" [label="enroll child form 0 [en] "]
+            "m1-f0" [label="child visit form 0 [en] "]
+            "m2-f0" [label="visit history form 0 [en] "]
+        }
+        "m0-f0" -> "m0-f0_form_entry"
+        "m1-f0" -> "m1-f0_form_entry"
+        "m2-f0" -> "m1.case_id.m2-f0.case_id_load_visit_0"
+        "m1.case_id.m2-f0.case_id_load_visit_0" -> "m2-f0_form_entry"
+        {
+            rank=same
+            "m0-f0_form_entry" [label="enroll child form 0 [en] " shape=box]
+            "m1-f0_form_entry" [label="child visit form 0 [en] " shape=box]
+            "m2-f0_form_entry" [label="visit history form 0 [en] " shape=box]
+        }
+        "m1.case_id" [label="Select 'child' case" shape=folder]
+        "m1.case_id.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
+        m1 -> "m1.case_id"
+        "m1.case_id" -> "m1.case_id.case_id_load_visit_0"
+    }"""))
+
+
+@patch_get_xform_resource_overrides()
+def test_workflow_diagram_child_module_form_links():
+    app = _build_test_app()
+
+    m0f0 = app.get_module(0).get_form(0)
+    m1f0 = app.get_module(1).get_form(0)
+    m2f0 = app.get_module(2).get_form(0)
 
     m0f0.post_form_workflow = WORKFLOW_FORM
     m0f0.form_links = [
@@ -40,7 +161,7 @@ def test_workflow_diagram_child_module_form_links():
     ]
     m1f0.post_form_workflow_fallback = WORKFLOW_MODULE
 
-    source = generate_app_workflow_diagram_source(factory.app)
+    source = generate_app_workflow_diagram_source(app)
     eq(_normalize(source), inspect.cleandoc("""
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -357,7 +478,20 @@ def test_workflow_diagram_case_list_form():
     }"""))
 
 
-# TODO: module.put_in_root
+def _build_test_app():
+    factory = AppFactory(build_version='2.9.0')
+    m0, m0f0 = factory.new_basic_module('enroll child', 'child')
+    factory.form_opens_case(m0f0)
+
+    m1, m1f0 = factory.new_basic_module('child visit', 'child')
+    factory.form_requires_case(m1f0)
+    factory.form_opens_case(m1f0, case_type='visit', is_subcase=True)
+
+    m2, m2f0 = factory.new_advanced_module('visit history', 'visit', parent_module=m1)
+    factory.form_requires_case(m2f0, 'child')
+    factory.form_requires_case(m2f0, 'visit', parent_case_type='child')
+    return factory.app
+
 
 def _build_workflow_app(mode):
     factory = AppFactory(build_version='2.9.0')

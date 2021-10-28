@@ -83,7 +83,7 @@ class AppWorkflowVisualizer:
         self.stack_append(Node(unique_id, name, parent_id or self.START))
 
     def add_form_menu_item(self, unique_id, name, parent_id):
-        self.stack_append(Node(unique_id, name, parent_id))
+        self.stack_append(Node(unique_id, name, parent_id or self.START))
 
     def add_form_entry(self, unique_id, name, parent_id):
         self.stack_append(Node(f"{unique_id}_form_entry", name, parent_id, attrs={"shape": "box"}))
