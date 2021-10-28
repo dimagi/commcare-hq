@@ -16,6 +16,115 @@ from corehq.apps.app_manager.tests.util import patch_get_xform_resource_override
 
 
 @patch_get_xform_resource_overrides()
+def test_workflow_diagram_not_all_forms_require_case():
+    factory = AppFactory(build_version='2.9.0')
+    m0, m0f0 = factory.new_basic_module('case', 'case')
+    factory.form_opens_case(m0f0)
+    for i in range(2):
+        form = factory.new_form(m0)
+        factory.form_requires_case(form)
+    source = generate_app_workflow_diagram_source(factory.app)
+    eq(_normalize(source), inspect.cleandoc("""
+    digraph "Untitled Application" {
+        graph [rankdir=LR]
+        root [label=Root]
+        start [label=Start]
+        root -> start
+        start -> m0
+        {
+            rank=same
+            m0 [label="case module [en] "]
+        }
+        m0 -> "m0-f0"
+        m0 -> "m0-f1"
+        m0 -> "m0-f2"
+        {
+            rank=same
+            "m0-f0" [label="case form 0 [en] "]
+            "m0-f1" [label="case form 1 [en] "]
+            "m0-f2" [label="case form 2 [en] "]
+        }
+        "m0-f0" -> "m0-f0_form_entry"
+        "m0.case_id" -> "m0-f1_form_entry"
+        "m0.case_id" -> "m0-f2_form_entry"
+        {
+            rank=same
+            "m0-f0_form_entry" [label="case form 0 [en] " shape=box]
+            "m0-f1_form_entry" [label="case form 1 [en] " shape=box]
+            "m0-f2_form_entry" [label="case form 2 [en] " shape=box]
+        }
+        "m0.case_id" [label="Select 'case' case" shape=folder]
+        "m0-f1" -> "m0.case_id"
+        "m0-f2" -> "m0.case_id"
+    }"""))
+
+
+@patch_get_xform_resource_overrides()
+def test_workflow_diagram_not_all_forms_require_case_child_module():
+    factory = AppFactory(build_version='2.9.0')
+
+    m1, m1f0 = factory.new_basic_module('child visit', 'child')
+    factory.form_requires_case(m1f0)
+    factory.form_opens_case(m1f0, case_type='visit', is_subcase=True)
+
+    m2, m2f0 = factory.new_advanced_module('visit history', 'visit', parent_module=m1)
+    for i in range(2):
+        form = factory.new_form(m2)
+        factory.form_requires_case(form, 'child')
+        factory.form_requires_case(form, 'visit', parent_case_type='child')
+
+    source = generate_app_workflow_diagram_source(factory.app)
+    eq(_normalize(source), inspect.cleandoc("""
+    digraph "Untitled Application" {
+        graph [rankdir=LR]
+        root [label=Root]
+        start [label=Start]
+        root -> start
+        start -> m0
+        {
+            rank=same
+            m0 [label="child visit module [en] "]
+        }
+        "m0.case_id" -> "m0-f0"
+        "m0.case_id" -> m1
+        {
+            rank=same
+            "m0-f0" [label="child visit form 0 [en] "]
+            m1 [label="visit history module [en] "]
+        }
+        m1 -> "m1-f0"
+        m1 -> "m1-f1"
+        m1 -> "m1-f2"
+        {
+            rank=same
+            "m1-f0" [label="visit history form 0 [en] "]
+            "m1-f1" [label="visit history form 1 [en] "]
+            "m1-f2" [label="visit history form 2 [en] "]
+        }
+        "m0-f0" -> "m0-f0_form_entry"
+        {
+            rank=same
+            "m0-f0_form_entry" [label="child visit form 0 [en] " shape=box]
+        }
+        "m1-f0" -> "m1-f0_form_entry"
+        "m0.m1.case_id_load_visit_0" -> "m1-f1_form_entry"
+        "m0.m1.case_id_load_visit_0" -> "m1-f2_form_entry"
+        {
+            rank=same
+            "m1-f0_form_entry" [label="visit history form 0 [en] " shape=box]
+            "m1-f1_form_entry" [label="visit history form 1 [en] " shape=box]
+            "m1-f2_form_entry" [label="visit history form 2 [en] " shape=box]
+        }
+        "m0.case_id" [label="Select 'child' case" shape=folder]
+        "m0.m1.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
+        m0 -> "m0.case_id"
+        "m1-f1" -> "m0.m1.case_id_load_visit_0"
+        "m1-f2" -> "m0.m1.case_id_load_visit_0"
+    }
+    """))
+
+
+@patch_get_xform_resource_overrides()
 def test_workflow_diagram_modules():
     """This test reveals"""
     app = _build_test_app()
@@ -43,7 +152,7 @@ def test_workflow_diagram_modules():
             "m1-f0" [label="child visit form 0 [en] "]
             m2 [label="visit history module [en] "]
         }
-        "m1.case_id.m2.case_id_load_visit_0" -> "m2-f0"
+        "m1.m2.case_id_load_visit_0" -> "m2-f0"
         {
             rank=same
             "m2-f0" [label="visit history form 0 [en] "]
@@ -61,9 +170,9 @@ def test_workflow_diagram_modules():
             "m2-f0_form_entry" [label="visit history form 0 [en] " shape=box]
         }
         "m1.case_id" [label="Select 'child' case" shape=folder]
-        "m1.case_id.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
+        "m1.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
         m1 -> "m1.case_id"
-        m2 -> "m1.case_id.m2.case_id_load_visit_0"
+        m2 -> "m1.m2.case_id_load_visit_0"
     }"""))
 
 
@@ -183,7 +292,7 @@ def test_workflow_diagram_child_module_form_links():
             "m1-f0" [label="child visit form 0 [en] "]
             m2 [label="visit history module [en] "]
         }
-        "m1.case_id.m2.case_id_load_visit_0" -> "m2-f0"
+        "m1.m2.case_id_load_visit_0" -> "m2-f0"
         {
             rank=same
             "m2-f0" [label="visit history form 0 [en] "]
@@ -201,12 +310,12 @@ def test_workflow_diagram_child_module_form_links():
             "m2-f0_form_entry" [label="visit history form 0 [en] " shape=box]
         }
         "m1.case_id" [label="Select 'child' case" shape=folder]
-        "m1.case_id.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
+        "m1.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
         "m0-f0_form_entry" -> "m1-f0_form_entry" [label="true()" color=grey]
         m1 -> "m1.case_id"
         "m1-f0_form_entry" -> "m2-f0_form_entry" [label="(today() - dob) &lt; 7" color=grey]
         "m1-f0_form_entry" -> m1 [label="not((today() - dob) &lt; 7)" color=grey constraint=false]
-        m2 -> "m1.case_id.m2.case_id_load_visit_0"
+        m2 -> "m1.m2.case_id_load_visit_0"
     }
     """))
 
@@ -370,7 +479,7 @@ def test_workflow_diagram_post_form_workflow_parent():
             "m0-f0" [label="child visit form 0 [en] "]
             m1 [label="visit history module [en] "]
         }
-        "m0.case_id.m1.case_id_load_visit_0" -> "m1-f0"
+        "m0.m1.case_id_load_visit_0" -> "m1-f0"
         {
             rank=same
             "m1-f0" [label="visit history form 0 [en] "]
@@ -386,9 +495,9 @@ def test_workflow_diagram_post_form_workflow_parent():
             "m1-f0_form_entry" [label="visit history form 0 [en] " shape=box]
         }
         "m0.case_id" [label="Select 'child' case" shape=folder]
-        "m0.case_id.m1.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
+        "m0.m1.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
         m0 -> "m0.case_id"
-        m1 -> "m0.case_id.m1.case_id_load_visit_0"
+        m1 -> "m0.m1.case_id_load_visit_0"
         "m1-f0_form_entry" -> m0 [color=grey constraint=false]
     }
     """))

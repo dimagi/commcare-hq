@@ -46,7 +46,7 @@ class Edge:
     tail = attr.ib()
     head = attr.ib()
     label = attr.ib(default=None)
-    attrs = attr.ib(default={})
+    attrs = attr.ib(default={}, cmp=False)
 
 
 class AppWorkflowVisualizer:
@@ -82,7 +82,7 @@ class AppWorkflowVisualizer:
     def add_module(self, unique_id, name, parent_id=None):
         self.stack_append(Node(unique_id, name, parent_id or self.START))
 
-    def add_form_menu_item(self, unique_id, name, parent_id):
+    def add_form_menu_item(self, unique_id, name, parent_id=None):
         self.stack_append(Node(unique_id, name, parent_id or self.START))
 
     def add_form_entry(self, unique_id, name, parent_id):
@@ -95,23 +95,27 @@ class AppWorkflowVisualizer:
             node_id, f"Select '{case_type}' case", parent_id, attrs={"shape": "folder"}
         ))
         if has_search:
-            self.edges.append(Edge(node_id, node_id, "Search"))
+            self.add_edge(Edge(node_id, node_id, "Search"))
         for parent in (parents or []):
-            self.edges.append(Edge(parent, node_id))
+            self.add_edge(Edge(parent, node_id))
         return node_id
 
     def add_eof_workflow(self, form_id, target_node, label=None):
-        self.edges.append(Edge(f"{form_id}_form_entry", target_node, label, attrs=self.WORKFLOW_STYLE))
+        self.add_edge(Edge(f"{form_id}_form_entry", target_node, label, attrs=self.WORKFLOW_STYLE))
 
     def add_eof_form_link(self, tail_form_id, head_form_id, label=None):
-        self.edges.append(Edge(
+        self.add_edge(Edge(
             f"{tail_form_id}_form_entry", f"{head_form_id}_form_entry", label, attrs=self.FORM_LINK_STYLE
         ))
 
     def add_case_list_form_link(self, tail_id, form_id, label):
-        self.edges.append(Edge(
+        self.add_edge(Edge(
             tail_id, f"{form_id}_form_entry", label, attrs=self.WORKFLOW_STYLE
         ))
+
+    def add_edge(self, edge):
+        if edge not in self.edges:
+            self.edges.append(edge)
 
     def render(self, name):
         root_graph = graphviz.Digraph(
@@ -179,8 +183,8 @@ def generate_app_workflow_diagram_source(app):
                         id_stack.append(item.id)
                         commands.append(item)
                     else:
-                        prevs = tuple([i.id for i in stack[:index + 1]])
-                        item_id = f"{'.'.join(prevs)}"
+                        module_commands = [c.id for c in commands if '-f' not in c.id]
+                        item_id = f"{'.'.join(module_commands + [item.id])}"
                         if item_id not in added:
                             added.append(item_id)
                             if item.from_parent_module:
@@ -190,6 +194,8 @@ def generate_app_workflow_diagram_source(app):
                             has_search = module_offers_search(current_module)
                             workflow.add_case_list(item_id, item.case_type, has_search, parents=[previous])
                             add_case_list_form_edge(item_id, app, current_module, workflow)
+                        else:
+                            workflow.add_edge(Edge(previous, item_id))
                         id_stack.append(item_id)
 
             form_id = id_strings.form_command(form, module)
