@@ -127,6 +127,12 @@ class WorkflowHelper(PostProcessor):
 
         return frame_children
 
+    def get_frame_children_for_navigation(self, module, form):
+        frame_children = self.get_frame_children(module, form)
+        if module.root_module_id:
+            frame_children = prepend_parent_frame_children(self, frame_children, module.root_module)
+        return frame_children
+
     def get_form_datums(self, form):
         """
         :return: List of DatumMeta objects for this form
