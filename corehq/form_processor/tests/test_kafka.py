@@ -30,13 +30,13 @@ class KafkaPublishingTest(TestCase):
         cls.form_pillow = ConstructedPillow(
             name='test-kafka-form-feed',
             checkpoint=None,
-            change_feed=KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], client_id='test-kafka-form-feed'),
+            change_feed=KafkaChangeFeed(topics=[topics.FORM_SQL], client_id='test-kafka-form-feed'),
             processor=cls.processor
         )
         cls.case_pillow = ConstructedPillow(
             name='test-kafka-case-feed',
             checkpoint=None,
-            change_feed=KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], client_id='test-kafka-case-feed'),
+            change_feed=KafkaChangeFeed(topics=[topics.CASE_SQL], client_id='test-kafka-case-feed'),
             processor=cls.processor
         )
         cls.process_form_changes = process_pillow_changes('DefaultChangeFeedPillow')

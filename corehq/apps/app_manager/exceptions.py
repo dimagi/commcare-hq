@@ -116,7 +116,7 @@ class SuiteValidationError(SuiteError):
     pass
 
 
-class LocationXpathValidationError(AppManagerException):
+class LocationXPathValidationError(AppManagerException):
     pass
 
 
