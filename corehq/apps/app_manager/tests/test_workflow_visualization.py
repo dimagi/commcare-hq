@@ -4,8 +4,10 @@ from unittest import skip
 
 from testil import eq
 
-from corehq.apps.app_manager.app_schemas.workflow_visualization import generate_app_workflow_diagram_source, \
-    _substitute_hashtags
+from corehq.apps.app_manager.app_schemas.workflow_visualization import (
+    generate_app_workflow_diagram_source,
+    _substitute_hashtags,
+)
 from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
     WORKFLOW_ROOT,
@@ -27,7 +29,7 @@ def test_workflow_diagram_not_all_forms_require_case():
     for i in range(2):
         form = factory.new_form(m0)
         factory.form_requires_case(form)
-    source = generate_app_workflow_diagram_source(factory.app)
+    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -37,25 +39,25 @@ def test_workflow_diagram_not_all_forms_require_case():
         start -> m0
         {
             rank=same
-            m0 [label="case module [en] "]
+            m0 [label="case module [en] " shape=box]
         }
         m0 -> "m0-f0"
         m0 -> "m0-f1"
         m0 -> "m0-f2"
         {
             rank=same
-            "m0-f0" [label="case form 0 [en] "]
-            "m0-f1" [label="case form 1 [en] "]
-            "m0-f2" [label="case form 2 [en] "]
+            "m0-f0" [label="case form 0 [en] " shape=ellipse]
+            "m0-f1" [label="case form 1 [en] " shape=ellipse]
+            "m0-f2" [label="case form 2 [en] " shape=ellipse]
         }
         "m0-f0" -> "m0-f0_form_entry"
         "m0.case_id" -> "m0-f1_form_entry"
         "m0.case_id" -> "m0-f2_form_entry"
         {
             rank=same
-            "m0-f0_form_entry" [label="case form 0 [en] " shape=box]
-            "m0-f1_form_entry" [label="case form 1 [en] " shape=box]
-            "m0-f2_form_entry" [label="case form 2 [en] " shape=box]
+            "m0-f0_form_entry" [label="case form 0 [en] " shape=oval]
+            "m0-f1_form_entry" [label="case form 1 [en] " shape=oval]
+            "m0-f2_form_entry" [label="case form 2 [en] " shape=oval]
         }
         "m0.case_id" [label="Select 'case' case" shape=folder]
         "m0-f1" -> "m0.case_id"
@@ -77,7 +79,7 @@ def test_workflow_diagram_not_all_forms_require_case_child_module():
         factory.form_requires_case(form, 'child')
         factory.form_requires_case(form, 'visit', parent_case_type='child')
 
-    source = generate_app_workflow_diagram_source(factory.app)
+    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -87,37 +89,37 @@ def test_workflow_diagram_not_all_forms_require_case_child_module():
         start -> m0
         {
             rank=same
-            m0 [label="child visit module [en] "]
+            m0 [label="child visit module [en] " shape=box]
         }
         "m0.case_id" -> "m0-f0"
         "m0.case_id" -> m1
         {
             rank=same
-            "m0-f0" [label="child visit form 0 [en] "]
-            m1 [label="visit history module [en] "]
+            "m0-f0" [label="child visit form 0 [en] " shape=ellipse]
+            m1 [label="visit history module [en] " shape=box]
         }
         m1 -> "m1-f0"
         m1 -> "m1-f1"
         m1 -> "m1-f2"
         {
             rank=same
-            "m1-f0" [label="visit history form 0 [en] "]
-            "m1-f1" [label="visit history form 1 [en] "]
-            "m1-f2" [label="visit history form 2 [en] "]
+            "m1-f0" [label="visit history form 0 [en] " shape=ellipse]
+            "m1-f1" [label="visit history form 1 [en] " shape=ellipse]
+            "m1-f2" [label="visit history form 2 [en] " shape=ellipse]
         }
         "m0-f0" -> "m0-f0_form_entry"
         {
             rank=same
-            "m0-f0_form_entry" [label="child visit form 0 [en] " shape=box]
+            "m0-f0_form_entry" [label="child visit form 0 [en] " shape=oval]
         }
         "m1-f0" -> "m1-f0_form_entry"
         "m0.m1.case_id_load_visit_0" -> "m1-f1_form_entry"
         "m0.m1.case_id_load_visit_0" -> "m1-f2_form_entry"
         {
             rank=same
-            "m1-f0_form_entry" [label="visit history form 0 [en] " shape=box]
-            "m1-f1_form_entry" [label="visit history form 1 [en] " shape=box]
-            "m1-f2_form_entry" [label="visit history form 2 [en] " shape=box]
+            "m1-f0_form_entry" [label="visit history form 0 [en] " shape=oval]
+            "m1-f1_form_entry" [label="visit history form 1 [en] " shape=oval]
+            "m1-f2_form_entry" [label="visit history form 2 [en] " shape=oval]
         }
         "m0.case_id" [label="Select 'child' case" shape=folder]
         "m0.m1.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
@@ -133,7 +135,7 @@ def test_workflow_diagram_modules():
     """This test reveals"""
     app = _build_test_app()
 
-    source = generate_app_workflow_diagram_source(app)
+    source = generate_app_workflow_diagram_source(app, TestStyle)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -144,34 +146,34 @@ def test_workflow_diagram_modules():
         start -> m1
         {
             rank=same
-            m0 [label="enroll child module [en] "]
-            m1 [label="child visit module [en] "]
+            m0 [label="enroll child module [en] " shape=box]
+            m1 [label="child visit module [en] " shape=box]
         }
         m0 -> "m0-f0"
         "m1.case_id" -> "m1-f0"
         "m1.case_id" -> m2
         {
             rank=same
-            "m0-f0" [label="enroll child form 0 [en] "]
-            "m1-f0" [label="child visit form 0 [en] "]
-            m2 [label="visit history module [en] "]
+            "m0-f0" [label="enroll child form 0 [en] " shape=ellipse]
+            "m1-f0" [label="child visit form 0 [en] " shape=ellipse]
+            m2 [label="visit history module [en] " shape=box]
         }
         "m1.m2.case_id_load_visit_0" -> "m2-f0"
         {
             rank=same
-            "m2-f0" [label="visit history form 0 [en] "]
+            "m2-f0" [label="visit history form 0 [en] " shape=ellipse]
         }
         "m0-f0" -> "m0-f0_form_entry"
         "m1-f0" -> "m1-f0_form_entry"
         {
             rank=same
-            "m0-f0_form_entry" [label="enroll child form 0 [en] " shape=box]
-            "m1-f0_form_entry" [label="child visit form 0 [en] " shape=box]
+            "m0-f0_form_entry" [label="enroll child form 0 [en] " shape=oval]
+            "m1-f0_form_entry" [label="child visit form 0 [en] " shape=oval]
         }
         "m2-f0" -> "m2-f0_form_entry"
         {
             rank=same
-            "m2-f0_form_entry" [label="visit history form 0 [en] " shape=box]
+            "m2-f0_form_entry" [label="visit history form 0 [en] " shape=oval]
         }
         "m1.case_id" [label="Select 'child' case" shape=folder]
         "m1.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
@@ -187,7 +189,7 @@ def test_workflow_diagram_modules_put_in_root():
     m0, m0f0 = factory.new_basic_module('enroll child', 'child')
     factory.form_opens_case(m0f0)
     m0.put_in_root = True
-    source = generate_app_workflow_diagram_source(factory.app)
+    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -197,12 +199,12 @@ def test_workflow_diagram_modules_put_in_root():
         start -> "m0-f0"
         {
             rank=same
-            "m0-f0" [label="enroll child form 0 [en] "]
+            "m0-f0" [label="enroll child form 0 [en] " shape=ellipse]
         }
         "m0-f0" -> "m0-f0_form_entry"
         {
             rank=same
-            "m0-f0_form_entry" [label="enroll child form 0 [en] " shape=box]
+            "m0-f0_form_entry" [label="enroll child form 0 [en] " shape=oval]
         }
     }""")
 
@@ -214,7 +216,7 @@ def test_workflow_diagram_modules_child_module_put_in_root():
     # child module in root
     app.get_module(2).put_in_root = True
 
-    source = generate_app_workflow_diagram_source(app)
+    source = generate_app_workflow_diagram_source(app, TestStyle)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -225,17 +227,17 @@ def test_workflow_diagram_modules_child_module_put_in_root():
         start -> m1
         {
             rank=same
-            m0 [label="enroll child module [en] "]
-            m1 [label="child visit module [en] "]
+            m0 [label="enroll child module [en] " shape=box]
+            m1 [label="child visit module [en] " shape=box]
         }
         m0 -> "m0-f0"
         "m1.case_id" -> "m1-f0"
         "m1.case_id" -> "m2-f0"
         {
             rank=same
-            "m0-f0" [label="enroll child form 0 [en] "]
-            "m1-f0" [label="child visit form 0 [en] "]
-            "m2-f0" [label="visit history form 0 [en] "]
+            "m0-f0" [label="enroll child form 0 [en] " shape=ellipse]
+            "m1-f0" [label="child visit form 0 [en] " shape=ellipse]
+            "m2-f0" [label="visit history form 0 [en] " shape=ellipse]
         }
         "m0-f0" -> "m0-f0_form_entry"
         "m1-f0" -> "m1-f0_form_entry"
@@ -243,9 +245,9 @@ def test_workflow_diagram_modules_child_module_put_in_root():
         "m1.case_id.m2-f0.case_id_load_visit_0" -> "m2-f0_form_entry"
         {
             rank=same
-            "m0-f0_form_entry" [label="enroll child form 0 [en] " shape=box]
-            "m1-f0_form_entry" [label="child visit form 0 [en] " shape=box]
-            "m2-f0_form_entry" [label="visit history form 0 [en] " shape=box]
+            "m0-f0_form_entry" [label="enroll child form 0 [en] " shape=oval]
+            "m1-f0_form_entry" [label="child visit form 0 [en] " shape=oval]
+            "m2-f0_form_entry" [label="visit history form 0 [en] " shape=oval]
         }
         "m1.case_id" [label="Select 'child' case" shape=folder]
         "m1.case_id.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
@@ -273,7 +275,7 @@ def test_workflow_diagram_child_module_form_links():
     ]
     m1f0.post_form_workflow_fallback = WORKFLOW_MODULE
 
-    source = generate_app_workflow_diagram_source(app)
+    source = generate_app_workflow_diagram_source(app, TestStyle)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -284,41 +286,41 @@ def test_workflow_diagram_child_module_form_links():
         start -> m1
         {
             rank=same
-            m0 [label="enroll child module [en] "]
-            m1 [label="child visit module [en] "]
+            m0 [label="enroll child module [en] " shape=box]
+            m1 [label="child visit module [en] " shape=box]
         }
         m0 -> "m0-f0"
         "m1.case_id" -> "m1-f0"
         "m1.case_id" -> m2
         {
             rank=same
-            "m0-f0" [label="enroll child form 0 [en] "]
-            "m1-f0" [label="child visit form 0 [en] "]
-            m2 [label="visit history module [en] "]
+            "m0-f0" [label="enroll child form 0 [en] " shape=ellipse]
+            "m1-f0" [label="child visit form 0 [en] " shape=ellipse]
+            m2 [label="visit history module [en] " shape=box]
         }
         "m1.m2.case_id_load_visit_0" -> "m2-f0"
         {
             rank=same
-            "m2-f0" [label="visit history form 0 [en] "]
+            "m2-f0" [label="visit history form 0 [en] " shape=ellipse]
         }
         "m0-f0" -> "m0-f0_form_entry"
         "m1-f0" -> "m1-f0_form_entry"
         {
             rank=same
-            "m0-f0_form_entry" [label="enroll child form 0 [en] " shape=box]
-            "m1-f0_form_entry" [label="child visit form 0 [en] " shape=box]
+            "m0-f0_form_entry" [label="enroll child form 0 [en] " shape=oval]
+            "m1-f0_form_entry" [label="child visit form 0 [en] " shape=oval]
         }
         "m2-f0" -> "m2-f0_form_entry"
         {
             rank=same
-            "m2-f0_form_entry" [label="visit history form 0 [en] " shape=box]
+            "m2-f0_form_entry" [label="visit history form 0 [en] " shape=oval]
         }
         "m1.case_id" [label="Select 'child' case" shape=folder]
         "m1.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
-        "m0-f0_form_entry" -> "m1-f0_form_entry" [label="true()" color=grey]
+        "m0-f0_form_entry" -> "m1-f0_form_entry" [label="true()" color=red]
         m1 -> "m1.case_id"
-        "m1-f0_form_entry" -> "m2-f0_form_entry" [label="(today() - dob) &lt; 7" color=grey]
-        "m1-f0_form_entry" -> m1 [label="not((today() - dob) &lt; 7)" color=grey constraint=false]
+        "m1-f0_form_entry" -> "m2-f0_form_entry" [label="(today() - dob) &lt; 7" color=red]
+        "m1-f0_form_entry" -> m1 [label="not((today() - dob) &lt; 7)" color=red constraint=false]
         m2 -> "m1.m2.case_id_load_visit_0"
     }
     """)
@@ -327,7 +329,7 @@ def test_workflow_diagram_child_module_form_links():
 @patch_get_xform_resource_overrides()
 def test_workflow_diagram_post_form_workflow_root():
     app = _build_workflow_app(WORKFLOW_ROOT)
-    source = generate_app_workflow_diagram_source(app)
+    source = generate_app_workflow_diagram_source(app, TestStyle)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -337,32 +339,32 @@ def test_workflow_diagram_post_form_workflow_root():
         start -> m0
         {
             rank=same
-            m0 [label="m0 module [en] "]
+            m0 [label="m0 module [en] " shape=box]
         }
         m0 -> "m0-f0"
         m0 -> m1
         {
             rank=same
-            "m0-f0" [label="m0 form 0 [en] "]
-            m1 [label="m1 module [en] "]
+            "m0-f0" [label="m0 form 0 [en] " shape=ellipse]
+            m1 [label="m1 module [en] " shape=box]
         }
         m1 -> "m1-f0"
         {
             rank=same
-            "m1-f0" [label="m1 form 0 [en] "]
+            "m1-f0" [label="m1 form 0 [en] " shape=ellipse]
         }
         "m0-f0" -> "m0-f0_form_entry"
         {
             rank=same
-            "m0-f0_form_entry" [label="m0 form 0 [en] " shape=box]
+            "m0-f0_form_entry" [label="m0 form 0 [en] " shape=oval]
         }
         "m1-f0" -> "m1-f0_form_entry"
         {
             rank=same
-            "m1-f0_form_entry" [label="m1 form 0 [en] " shape=box]
+            "m1-f0_form_entry" [label="m1 form 0 [en] " shape=oval]
         }
-        "m0-f0_form_entry" -> start [color=grey constraint=false]
-        "m1-f0_form_entry" -> start [color=grey constraint=false]
+        "m0-f0_form_entry" -> start [color=red constraint=false]
+        "m1-f0_form_entry" -> start [color=red constraint=false]
     }
     """)
 
@@ -370,7 +372,7 @@ def test_workflow_diagram_post_form_workflow_root():
 @patch_get_xform_resource_overrides()
 def test_workflow_diagram_post_form_workflow_module():
     app = _build_workflow_app(WORKFLOW_MODULE)
-    source = generate_app_workflow_diagram_source(app)
+    source = generate_app_workflow_diagram_source(app, TestStyle)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -380,32 +382,32 @@ def test_workflow_diagram_post_form_workflow_module():
         start -> m0
         {
             rank=same
-            m0 [label="m0 module [en] "]
+            m0 [label="m0 module [en] " shape=box]
         }
         m0 -> "m0-f0"
         m0 -> m1
         {
             rank=same
-            "m0-f0" [label="m0 form 0 [en] "]
-            m1 [label="m1 module [en] "]
+            "m0-f0" [label="m0 form 0 [en] " shape=ellipse]
+            m1 [label="m1 module [en] " shape=box]
         }
         m1 -> "m1-f0"
         {
             rank=same
-            "m1-f0" [label="m1 form 0 [en] "]
+            "m1-f0" [label="m1 form 0 [en] " shape=ellipse]
         }
         "m0-f0" -> "m0-f0_form_entry"
         {
             rank=same
-            "m0-f0_form_entry" [label="m0 form 0 [en] " shape=box]
+            "m0-f0_form_entry" [label="m0 form 0 [en] " shape=oval]
         }
         "m1-f0" -> "m1-f0_form_entry"
         {
             rank=same
-            "m1-f0_form_entry" [label="m1 form 0 [en] " shape=box]
+            "m1-f0_form_entry" [label="m1 form 0 [en] " shape=oval]
         }
-        "m0-f0_form_entry" -> m0 [color=grey constraint=false]
-        "m1-f0_form_entry" -> m1 [color=grey constraint=false]
+        "m0-f0_form_entry" -> m0 [color=red constraint=false]
+        "m1-f0_form_entry" -> m1 [color=red constraint=false]
     }
     """)
 
@@ -413,7 +415,7 @@ def test_workflow_diagram_post_form_workflow_module():
 @patch_get_xform_resource_overrides()
 def test_workflow_diagram_post_form_workflow_previous():
     app = _build_workflow_app(WORKFLOW_PREVIOUS)
-    source = generate_app_workflow_diagram_source(app)
+    source = generate_app_workflow_diagram_source(app, TestStyle)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -423,32 +425,32 @@ def test_workflow_diagram_post_form_workflow_previous():
         start -> m0
         {
             rank=same
-            m0 [label="m0 module [en] "]
+            m0 [label="m0 module [en] " shape=box]
         }
         m0 -> "m0-f0"
         m0 -> m1
         {
             rank=same
-            "m0-f0" [label="m0 form 0 [en] "]
-            m1 [label="m1 module [en] "]
+            "m0-f0" [label="m0 form 0 [en] " shape=ellipse]
+            m1 [label="m1 module [en] " shape=box]
         }
         m1 -> "m1-f0"
         {
             rank=same
-            "m1-f0" [label="m1 form 0 [en] "]
+            "m1-f0" [label="m1 form 0 [en] " shape=ellipse]
         }
         "m0-f0" -> "m0-f0_form_entry"
         {
             rank=same
-            "m0-f0_form_entry" [label="m0 form 0 [en] " shape=box]
+            "m0-f0_form_entry" [label="m0 form 0 [en] " shape=oval]
         }
         "m1-f0" -> "m1-f0_form_entry"
         {
             rank=same
-            "m1-f0_form_entry" [label="m1 form 0 [en] " shape=box]
+            "m1-f0_form_entry" [label="m1 form 0 [en] " shape=oval]
         }
-        "m0-f0_form_entry" -> m0 [color=grey constraint=false]
-        "m1-f0_form_entry" -> m1 [color=grey constraint=false]
+        "m0-f0_form_entry" -> m0 [color=red constraint=false]
+        "m1-f0_form_entry" -> m1 [color=red constraint=false]
     }""")
 
 
@@ -464,7 +466,7 @@ def test_workflow_diagram_post_form_workflow_parent():
     factory.form_requires_case(m2f0, 'visit', parent_case_type='child')
 
     m2f0.post_form_workflow = WORKFLOW_PARENT_MODULE
-    source = generate_app_workflow_diagram_source(factory.app)
+    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -474,35 +476,35 @@ def test_workflow_diagram_post_form_workflow_parent():
         start -> m0
         {
             rank=same
-            m0 [label="child visit module [en] "]
+            m0 [label="child visit module [en] " shape=box]
         }
         "m0.case_id" -> "m0-f0"
         "m0.case_id" -> m1
         {
             rank=same
-            "m0-f0" [label="child visit form 0 [en] "]
-            m1 [label="visit history module [en] "]
+            "m0-f0" [label="child visit form 0 [en] " shape=ellipse]
+            m1 [label="visit history module [en] " shape=box]
         }
         "m0.m1.case_id_load_visit_0" -> "m1-f0"
         {
             rank=same
-            "m1-f0" [label="visit history form 0 [en] "]
+            "m1-f0" [label="visit history form 0 [en] " shape=ellipse]
         }
         "m0-f0" -> "m0-f0_form_entry"
         {
             rank=same
-            "m0-f0_form_entry" [label="child visit form 0 [en] " shape=box]
+            "m0-f0_form_entry" [label="child visit form 0 [en] " shape=oval]
         }
         "m1-f0" -> "m1-f0_form_entry"
         {
             rank=same
-            "m1-f0_form_entry" [label="visit history form 0 [en] " shape=box]
+            "m1-f0_form_entry" [label="visit history form 0 [en] " shape=oval]
         }
         "m0.case_id" [label="Select 'child' case" shape=folder]
         "m0.m1.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
         m0 -> "m0.case_id"
         m1 -> "m0.m1.case_id_load_visit_0"
-        "m1-f0_form_entry" -> m0 [color=grey constraint=false]
+        "m1-f0_form_entry" -> m0 [color=red constraint=false]
     }
     """)
 
@@ -514,7 +516,7 @@ def test_workflow_diagram_module_case_list():
     factory.form_opens_case(m0f0)
     m0.case_list.show = True
     m0.case_list.label = {"en": "Al People"}
-    source = generate_app_workflow_diagram_source(factory.app)
+    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -525,18 +527,18 @@ def test_workflow_diagram_module_case_list():
         start -> "m0-case-list"
         {
             rank=same
-            m0 [label="person module [en] "]
-            "m0-case-list" [label="person module [en]  Case List"]
+            m0 [label="person module [en] " shape=box]
+            "m0-case-list" [label="person module [en]  Case List" shape=box]
         }
         m0 -> "m0-f0"
         {
             rank=same
-            "m0-f0" [label="person form 0 [en] "]
+            "m0-f0" [label="person form 0 [en] " shape=ellipse]
         }
         "m0-f0" -> "m0-f0_form_entry"
         {
             rank=same
-            "m0-f0_form_entry" [label="person form 0 [en] " shape=box]
+            "m0-f0_form_entry" [label="person form 0 [en] " shape=oval]
         }
         "m0-case-list.case_id" [label="Select 'person' case" shape=folder]
         "m0-case-list" -> "m0-case-list.case_id"
@@ -552,7 +554,7 @@ def test_workflow_diagram_case_list_form():
 
     m1, m1f0 = factory.new_basic_module("followup", "case", case_list_form=m0f0)
     factory.form_requires_case(m1f0)
-    source = generate_app_workflow_diagram_source(factory.app)
+    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -563,28 +565,28 @@ def test_workflow_diagram_case_list_form():
         start -> m1
         {
             rank=same
-            m0 [label="register module [en] "]
-            m1 [label="followup module [en] "]
+            m0 [label="register module [en] " shape=box]
+            m1 [label="followup module [en] " shape=box]
         }
         m0 -> "m0-f0"
         "m1.case_id" -> "m1-f0"
         {
             rank=same
-            "m0-f0" [label="register form 0 [en] "]
-            "m1-f0" [label="followup form 0 [en] "]
+            "m0-f0" [label="register form 0 [en] " shape=ellipse]
+            "m1-f0" [label="followup form 0 [en] " shape=ellipse]
         }
         "m0-f0" -> "m0-f0_form_entry"
         "m1-f0" -> "m1-f0_form_entry"
         {
             rank=same
-            "m0-f0_form_entry" [label="register form 0 [en] " shape=box]
-            "m1-f0_form_entry" [label="followup form 0 [en] " shape=box]
+            "m0-f0_form_entry" [label="register form 0 [en] " shape=oval]
+            "m1-f0_form_entry" [label="followup form 0 [en] " shape=oval]
         }
         "m1.case_id" [label="Select 'case' case" shape=folder]
-        "m0-f0_form_entry" -> "m1.case_id" [label="Case Created" color=grey constraint=false]
-        "m0-f0_form_entry" -> m1 [label="Case Not Created" color=grey constraint=false]
+        "m0-f0_form_entry" -> "m1.case_id" [label="Case Created" color=red constraint=false]
+        "m0-f0_form_entry" -> m1 [label="Case Not Created" color=red constraint=false]
         m1 -> "m1.case_id"
-        "m1.case_id" -> "m0-f0_form_entry" [color=grey constraint=false]
+        "m1.case_id" -> "m0-f0_form_entry" [color=blue constraint=false]
     }""")
 
 
@@ -652,3 +654,13 @@ def _normalize(source):
 
 def _check_output(actual, expected):
     check_output(_normalize(actual), inspect.cleandoc(expected), OutputChecker(), "dot")
+
+
+class TestStyle:
+    """Styles to use for tests (so that tests don't fail if the styles change)"""
+    module_shape = "box"
+    form_menu_shape = "ellipse"
+    form_entry_shape = "oval"
+    case_list_shape = "folder"
+    eof_color = "red"
+    case_list_form_color = "blue"

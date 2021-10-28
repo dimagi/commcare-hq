@@ -51,18 +51,35 @@ class Edge:
     attrs = attr.ib(default={}, cmp=False)
 
 
+@attr.s
+class DefaultStyle:
+    module_shape = "box3d"
+    form_menu_shape = "ellipse"
+    form_entry_shape = "box"
+    case_list_shape = "folder"
+    eof_color = "#0066CC"
+    case_list_form_color = "#663399"
+
+
 class AppWorkflowVisualizer:
     ROOT = "root"
     START = "start"
-    WORKFLOW_STYLE = {"color": "grey", "constraint": "false"}
-    FORM_LINK_STYLE = {"color": "grey"}
 
-    def __init__(self):
+    def __init__(self, styles=None):
         self.global_nodes = []
         self.node_stack = []
         self.edges = []
         self.pos = 0
         self.fill_stack()
+        self.styles = styles or DefaultStyle
+
+        self.module_attrs = {"shape": self.styles.module_shape}
+        self.form_menu_attrs = {"shape": self.styles.form_menu_shape}
+        self.form_entry_attrs = {"shape": self.styles.form_entry_shape}
+        self.case_list_attrs = {"shape": self.styles.case_list_shape}
+        self.eof_attrs = {"color": self.styles.eof_color, "constraint": "false"}
+        self.form_link_attrs = {"color": self.styles.eof_color}
+        self.case_list_form_link_attrs = {"color": self.styles.case_list_form_color, "constraint": "false"}
 
     def stack_append(self, node):
         """Append node to the current stack frame"""
@@ -82,17 +99,17 @@ class AppWorkflowVisualizer:
         self.pos -= levels_to_move
 
     def add_module(self, unique_id, name, parent_id=None):
-        self.stack_append(Node(unique_id, name, parent_id or self.START))
+        self.stack_append(Node(unique_id, name, parent_id or self.START, attrs=self.module_attrs))
 
     def add_form_menu_item(self, unique_id, name, parent_id=None):
-        self.stack_append(Node(unique_id, name, parent_id or self.START))
+        self.stack_append(Node(unique_id, name, parent_id or self.START, attrs=self.form_menu_attrs))
 
     def add_form_entry(self, unique_id, name, parent_id):
-        self.stack_append(Node(f"{unique_id}_form_entry", name, parent_id, attrs={"shape": "box"}))
+        self.stack_append(Node(f"{unique_id}_form_entry", name, parent_id, attrs=self.form_entry_attrs))
 
     def add_case_list(self, node_id, case_type, has_search, parent):
         self.global_nodes.append(Node(
-            node_id, f"Select '{case_type}' case", attrs={"shape": "folder"}
+            node_id, f"Select '{case_type}' case", attrs=self.case_list_attrs
         ))
         self.add_edge(Edge(parent, node_id))
         if has_search:
@@ -100,16 +117,16 @@ class AppWorkflowVisualizer:
         return node_id
 
     def add_eof_workflow(self, form_id, target_node, label=None):
-        self.add_edge(Edge(f"{form_id}_form_entry", target_node, label, attrs=self.WORKFLOW_STYLE))
+        self.add_edge(Edge(f"{form_id}_form_entry", target_node, label, attrs=self.eof_attrs))
 
     def add_eof_form_link(self, tail_form_id, head_form_id, label=None):
         self.add_edge(Edge(
-            f"{tail_form_id}_form_entry", f"{head_form_id}_form_entry", label, attrs=self.FORM_LINK_STYLE
+            f"{tail_form_id}_form_entry", f"{head_form_id}_form_entry", label, attrs=self.form_link_attrs
         ))
 
     def add_case_list_form_link(self, tail_id, form_id, label):
         self.add_edge(Edge(
-            tail_id, f"{form_id}_form_entry", label, attrs=self.WORKFLOW_STYLE
+            tail_id, f"{form_id}_form_entry", label, attrs=self.case_list_form_link_attrs
         ))
 
     def add_edge(self, edge):
@@ -147,12 +164,12 @@ class AppWorkflowVisualizer:
         return root_graph.source
 
 
-def generate_app_workflow_diagram_source(app):
+def generate_app_workflow_diagram_source(app, style=None):
     generator = SuiteGenerator(app)
     generator.generate_suite()
     suite = generator.suite
 
-    workflow = AppWorkflowVisualizer()
+    workflow = AppWorkflowVisualizer(style)
     helper = WorkflowHelper(suite, app, list(app.get_modules()))
     added = []
     for module in app.get_modules():
