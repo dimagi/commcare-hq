@@ -143,7 +143,7 @@ class AppWorkflowVisualizer:
             _add_node(root_graph, node)
 
         for edge in self.edges:
-            root_graph.edge(edge.tail, edge.head, label=edge.label, **edge.attrs)
+            root_graph.edge(edge.tail, edge.head, label=edge.label or None, **edge.attrs)
         return root_graph.source
 
 
@@ -214,7 +214,7 @@ def add_eof_edges(app, module, form, graph, id_stack, workflow_option=None, labe
     form_id = id_strings.form_command(form, module)
 
     workflow_option = workflow_option or form.post_form_workflow
-    # TODO: label = _substitute_hashtags(app, form, condition or "")
+    label = _substitute_hashtags(app, form, label or "")
     # frame_children
     if workflow_option == WORKFLOW_ROOT:
         graph.add_eof_workflow(form_id, "start", label)
@@ -240,10 +240,10 @@ def add_eof_edges(app, module, form, graph, id_stack, workflow_option=None, labe
 
     if form.post_form_workflow == WORKFLOW_FORM:
         for link in form.form_links:
-            # label = _substitute_hashtags(app, form, link.xpath)
+            label = _substitute_hashtags(app, form, link.xpath)
             to_form = app.get_form(link.form_id)
             to_id = id_strings.form_command(to_form, to_form.get_module())
-            graph.add_eof_form_link(form_id, to_id, link.xpath)
+            graph.add_eof_form_link(form_id, to_id, label)
         if form.post_form_workflow_fallback:
             conditions = [link.xpath for link in form.form_links if link.xpath.strip()]
             if conditions:
@@ -293,10 +293,11 @@ def _substitute_hashtags(app, form, xpath_expression):
         UsercaseXPath().case(): "#user",
     }
     for datum_meta in EntriesHelper(app).get_datums_meta_for_form_generic(form):
-        if datum_meta.requires_selection and datum_meta.case_type and not datum_meta.is_new_case_id:
-            xpath = CaseIDXPath(session_var(datum_meta.datum.id)).case()
-            hashtag = "#parent_case" if datum_meta.from_parent else "#case"
-            hashtags[xpath] = hashtag
+        xpath = CaseIDXPath(session_var(datum_meta.datum.id)).case()
+        hashtag = "#case"
+        if datum_meta.case_type:
+            hashtag = f"{hashtag}:{datum_meta.case_type}"
+        hashtags[xpath] = hashtag
 
     for xpath, hashtag in hashtags.items():
         xpath_expression = xpath_expression.replace(xpath, hashtag)

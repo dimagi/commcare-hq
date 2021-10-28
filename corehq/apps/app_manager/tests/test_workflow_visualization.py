@@ -2,8 +2,10 @@ import inspect
 from doctest import OutputChecker
 from unittest import skip
 
+from testil import eq
 
-from corehq.apps.app_manager.app_schemas.workflow_visualization import generate_app_workflow_diagram_source
+from corehq.apps.app_manager.app_schemas.workflow_visualization import generate_app_workflow_diagram_source, \
+    _substitute_hashtags
 from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
     WORKFLOW_ROOT,
@@ -13,6 +15,7 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.models import FormLink
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import patch_get_xform_resource_overrides
+from corehq.apps.app_manager.xpath import CaseIDXPath, session_var
 from corehq.tests.util import check_output
 
 
@@ -581,8 +584,39 @@ def test_workflow_diagram_case_list_form():
         "m0-f0_form_entry" -> "m1.case_id" [label="Case Created" color=grey constraint=false]
         "m0-f0_form_entry" -> m1 [label="Case Not Created" color=grey constraint=false]
         m1 -> "m1.case_id"
-        "m1.case_id" -> "m0-f0_form_entry" [label="" color=grey constraint=false]
+        "m1.case_id" -> "m0-f0_form_entry" [color=grey constraint=false]
     }""")
+
+
+def test_substitute_hashtags_new_case():
+    factory = AppFactory(build_version='2.9.0')
+    m0, m0f0 = factory.new_basic_module('module', 'butterfly')
+    factory.form_opens_case(m0f0)
+
+    xpath = CaseIDXPath(session_var(m0f0.session_var_for_action("open_case"))).case().slash("myprop")
+    eq(_substitute_hashtags(factory.app, m0f0, xpath), "#case:butterfly/myprop")
+
+
+def test_substitute_hashtags_existing_case():
+    factory = AppFactory(build_version='2.9.0')
+    m0, m0f0 = factory.new_basic_module('module', 'fish')
+    factory.form_requires_case(m0f0)
+
+    xpath = CaseIDXPath(session_var("case_id")).case().slash("myprop")
+    eq(_substitute_hashtags(factory.app, m0f0, xpath), "#case:fish/myprop")
+
+
+def test_substitute_hashtags_parent_case():
+    factory = AppFactory(build_version='2.9.0')
+    factory.new_basic_module('parent', 'parent')
+    m1, m1f0 = factory.new_basic_module('child', 'child')
+    factory.form_requires_case(m1f0, parent_case_type="parent")
+
+    xpath = CaseIDXPath(session_var("case_id")).case().slash("myprop")
+    eq(_substitute_hashtags(factory.app, m1f0, xpath), "#case:child/myprop")
+
+    parent_xpath = CaseIDXPath(session_var("parent_id")).case().slash("parent_prop")
+    eq(_substitute_hashtags(factory.app, m1f0, parent_xpath), "#case:parent/parent_prop")
 
 
 def _build_test_app():
