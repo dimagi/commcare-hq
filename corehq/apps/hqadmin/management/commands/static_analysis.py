@@ -55,7 +55,7 @@ class DatadogLogger:
 
 
 class Command(BaseCommand):
-    help = ("Display a variety of code-quality metrics. This is run on every travis "
+    help = ("Display a variety of code-quality metrics. This is run on every CI "
             "build, but only submitted to datadog during the daily cron job.")
 
     def handle(self, **options):
