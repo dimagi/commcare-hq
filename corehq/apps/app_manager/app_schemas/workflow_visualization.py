@@ -10,7 +10,8 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_ROOT,
     WORKFLOW_PARENT_MODULE,
     WORKFLOW_MODULE,
-    WORKFLOW_FORM, WORKFLOW_PREVIOUS, WORKFLOW_CASE_LIST,
+    WORKFLOW_FORM,
+    WORKFLOW_PREVIOUS,
 )
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowHelper, CommandId, \
@@ -88,16 +89,13 @@ class AppWorkflowVisualizer:
     def add_form_entry(self, unique_id, name, parent_id):
         self.stack_append(Node(f"{unique_id}_form_entry", name, parent_id, attrs={"shape": "box"}))
 
-    def add_case_list(self, node_id, case_type, has_search, parents=None):
-        # TODO: make parents compulsory
-        parent_id = node_id if not parents else None
+    def add_case_list(self, node_id, case_type, has_search, parent):
         self.global_nodes.append(Node(
-            node_id, f"Select '{case_type}' case", parent_id, attrs={"shape": "folder"}
+            node_id, f"Select '{case_type}' case", attrs={"shape": "folder"}
         ))
+        self.add_edge(Edge(parent, node_id))
         if has_search:
             self.add_edge(Edge(node_id, node_id, "Search"))
-        for parent in (parents or []):
-            self.add_edge(Edge(parent, node_id))
         return node_id
 
     def add_eof_workflow(self, form_id, target_node, label=None):
@@ -192,7 +190,7 @@ def generate_app_workflow_diagram_source(app):
                             else:
                                 current_module = module
                             has_search = module_offers_search(current_module)
-                            workflow.add_case_list(item_id, item.case_type, has_search, parents=[previous])
+                            workflow.add_case_list(item_id, item.case_type, has_search, previous)
                             add_case_list_form_edge(item_id, app, current_module, workflow)
                         else:
                             workflow.add_edge(Edge(previous, item_id))
@@ -244,7 +242,7 @@ def generate_app_workflow_diagram_source(app):
         if hasattr(module, 'case_list') and module.case_list.show:
             case_list_id = id_strings.case_list_command(module)
             workflow.add_module(case_list_id, f"{trans(module.name)} Case List")
-            workflow.add_case_list(f"case_list_id.case_id", module.case_type, False, parents=[case_list_id])
+            workflow.add_case_list(f"{case_list_id}.case_id", module.case_type, False, case_list_id)
 
     return workflow.render(app.name)
 
