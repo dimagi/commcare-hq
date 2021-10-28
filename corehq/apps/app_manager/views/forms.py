@@ -22,6 +22,8 @@ from django.views.decorators.http import require_GET
 
 from diff_match_patch import diff_match_patch
 from lxml import etree
+from defusedxml import ElementTree
+from defusedxml.common import DefusedXmlException
 from text_unidecode import unidecode
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
@@ -252,6 +254,17 @@ def edit_form_attr(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
+def _is_valid_xform(raw_form_str):
+    try:
+        ElementTree.fromstring(raw_form_str)
+    except ElementTree.ParseError:
+        return False
+    except DefusedXmlException:
+        return False
+
+    return True
+
+
 @no_conflict_require_POST
 @require_permission(Permissions.edit_apps, login_decorator=None)
 def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
@@ -307,6 +320,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     xform = str(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
+
             if request.POST.get('cleanup', False):
                 try:
                     # First, we strip all newlines and reformat the DOM.
@@ -319,6 +333,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     pass
             if xform:
                 if isinstance(xform, str):
+                    if not _is_valid_xform(xform):
+                        raise Exception("Invalid Xform specified")
                     xform = xform.encode('utf-8')
                 save_xform(app, form, xform)
             else:
