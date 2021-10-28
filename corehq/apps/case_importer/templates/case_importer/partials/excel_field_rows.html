@@ -76,7 +76,8 @@
 
   <td>
       <ul class="list-unstyled" data-bind="visible: valuesHints().length, foreach: valuesHints">
-        <li data-bind="text: $data"></li>
+        <!--ko if: $data--><li data-bind="text: $data"></li><!--/ko-->
+        <!--ko if: !$data--><li data-bind="html: '<i>{% trans "blank" %}</i>'"></li><!--/ko-->
       </ul>
   </td>
 
