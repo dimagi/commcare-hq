@@ -14,8 +14,9 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_PREVIOUS,
 )
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator
-from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowHelper, CommandId, \
-    prepend_parent_frame_children, CaseListFormWorkflow
+from corehq.apps.app_manager.suite_xml.post_process.workflow import (
+    WorkflowHelper, CommandId, CaseListFormWorkflow
+)
 from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -156,10 +157,7 @@ def generate_app_workflow_diagram_source(app):
     added = []
     for module in app.get_modules():
         for form in module.get_suite_forms():
-            frame_children = helper.get_frame_children(form.get_module(), form)
-            if form.get_module().root_module_id:
-                root_module = helper.app.get_module_by_unique_id(form.get_module().root_module_id)
-                frame_children = prepend_parent_frame_children(helper, frame_children, root_module)
+            frame_children = helper.get_frame_children_for_navigation(form.get_module(), form)
 
             stack = [d for d in frame_children if getattr(d, "requires_selection", True)]
             id_stack = []
