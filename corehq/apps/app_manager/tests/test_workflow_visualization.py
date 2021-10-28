@@ -1,7 +1,7 @@
 import inspect
+from doctest import OutputChecker
 from unittest import skip
 
-from testil import eq
 
 from corehq.apps.app_manager.app_schemas.workflow_visualization import generate_app_workflow_diagram_source
 from corehq.apps.app_manager.const import (
@@ -13,6 +13,7 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.models import FormLink
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import patch_get_xform_resource_overrides
+from corehq.tests.util import check_output
 
 
 @patch_get_xform_resource_overrides()
@@ -24,7 +25,7 @@ def test_workflow_diagram_not_all_forms_require_case():
         form = factory.new_form(m0)
         factory.form_requires_case(form)
     source = generate_app_workflow_diagram_source(factory.app)
-    eq(_normalize(source), inspect.cleandoc("""
+    _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
         root [label=Root]
@@ -56,7 +57,7 @@ def test_workflow_diagram_not_all_forms_require_case():
         "m0.case_id" [label="Select 'case' case" shape=folder]
         "m0-f1" -> "m0.case_id"
         "m0-f2" -> "m0.case_id"
-    }"""))
+    }""")
 
 
 @patch_get_xform_resource_overrides()
@@ -74,7 +75,7 @@ def test_workflow_diagram_not_all_forms_require_case_child_module():
         factory.form_requires_case(form, 'visit', parent_case_type='child')
 
     source = generate_app_workflow_diagram_source(factory.app)
-    eq(_normalize(source), inspect.cleandoc("""
+    _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
         root [label=Root]
@@ -121,7 +122,7 @@ def test_workflow_diagram_not_all_forms_require_case_child_module():
         "m1-f1" -> "m0.m1.case_id_load_visit_0"
         "m1-f2" -> "m0.m1.case_id_load_visit_0"
     }
-    """))
+    """)
 
 
 @patch_get_xform_resource_overrides()
@@ -130,7 +131,7 @@ def test_workflow_diagram_modules():
     app = _build_test_app()
 
     source = generate_app_workflow_diagram_source(app)
-    eq(_normalize(source), inspect.cleandoc("""
+    _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
         root [label=Root]
@@ -173,7 +174,7 @@ def test_workflow_diagram_modules():
         "m1.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
         m1 -> "m1.case_id"
         m2 -> "m1.m2.case_id_load_visit_0"
-    }"""))
+    }""")
 
 
 @patch_get_xform_resource_overrides()
@@ -184,7 +185,7 @@ def test_workflow_diagram_modules_put_in_root():
     factory.form_opens_case(m0f0)
     m0.put_in_root = True
     source = generate_app_workflow_diagram_source(factory.app)
-    eq(_normalize(source), inspect.cleandoc("""
+    _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
         root [label=Root]
@@ -200,7 +201,7 @@ def test_workflow_diagram_modules_put_in_root():
             rank=same
             "m0-f0_form_entry" [label="enroll child form 0 [en] " shape=box]
         }
-    }"""))
+    }""")
 
 
 @patch_get_xform_resource_overrides()
@@ -211,7 +212,7 @@ def test_workflow_diagram_modules_child_module_put_in_root():
     app.get_module(2).put_in_root = True
 
     source = generate_app_workflow_diagram_source(app)
-    eq(_normalize(source), inspect.cleandoc("""
+    _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
         root [label=Root]
@@ -247,7 +248,7 @@ def test_workflow_diagram_modules_child_module_put_in_root():
         "m1.case_id.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
         m1 -> "m1.case_id"
         "m1.case_id" -> "m1.case_id.case_id_load_visit_0"
-    }"""))
+    }""")
 
 
 @patch_get_xform_resource_overrides()
@@ -270,7 +271,7 @@ def test_workflow_diagram_child_module_form_links():
     m1f0.post_form_workflow_fallback = WORKFLOW_MODULE
 
     source = generate_app_workflow_diagram_source(app)
-    eq(_normalize(source), inspect.cleandoc("""
+    _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
         root [label=Root]
@@ -317,14 +318,14 @@ def test_workflow_diagram_child_module_form_links():
         "m1-f0_form_entry" -> m1 [label="not((today() - dob) &lt; 7)" color=grey constraint=false]
         m2 -> "m1.m2.case_id_load_visit_0"
     }
-    """))
+    """)
 
 
 @patch_get_xform_resource_overrides()
 def test_workflow_diagram_post_form_workflow_root():
     app = _build_workflow_app(WORKFLOW_ROOT)
     source = generate_app_workflow_diagram_source(app)
-    eq(_normalize(source), inspect.cleandoc("""
+    _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
         root [label=Root]
@@ -360,14 +361,14 @@ def test_workflow_diagram_post_form_workflow_root():
         "m0-f0_form_entry" -> start [color=grey constraint=false]
         "m1-f0_form_entry" -> start [color=grey constraint=false]
     }
-    """))
+    """)
 
 
 @patch_get_xform_resource_overrides()
 def test_workflow_diagram_post_form_workflow_module():
     app = _build_workflow_app(WORKFLOW_MODULE)
     source = generate_app_workflow_diagram_source(app)
-    eq(_normalize(source), inspect.cleandoc("""
+    _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
         root [label=Root]
@@ -403,14 +404,14 @@ def test_workflow_diagram_post_form_workflow_module():
         "m0-f0_form_entry" -> m0 [color=grey constraint=false]
         "m1-f0_form_entry" -> m1 [color=grey constraint=false]
     }
-    """))
+    """)
 
 
 @patch_get_xform_resource_overrides()
 def test_workflow_diagram_post_form_workflow_previous():
     app = _build_workflow_app(WORKFLOW_PREVIOUS)
     source = generate_app_workflow_diagram_source(app)
-    eq(_normalize(source), inspect.cleandoc("""
+    _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
         root [label=Root]
@@ -445,7 +446,7 @@ def test_workflow_diagram_post_form_workflow_previous():
         }
         "m0-f0_form_entry" -> m0 [color=grey constraint=false]
         "m1-f0_form_entry" -> m1 [color=grey constraint=false]
-    }"""))
+    }""")
 
 
 @patch_get_xform_resource_overrides()
@@ -461,7 +462,7 @@ def test_workflow_diagram_post_form_workflow_parent():
 
     m2f0.post_form_workflow = WORKFLOW_PARENT_MODULE
     source = generate_app_workflow_diagram_source(factory.app)
-    eq(_normalize(source), inspect.cleandoc("""
+    _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
         root [label=Root]
@@ -500,7 +501,7 @@ def test_workflow_diagram_post_form_workflow_parent():
         m1 -> "m0.m1.case_id_load_visit_0"
         "m1-f0_form_entry" -> m0 [color=grey constraint=false]
     }
-    """))
+    """)
 
 
 @patch_get_xform_resource_overrides()
@@ -511,7 +512,7 @@ def test_workflow_diagram_module_case_list():
     m0.case_list.show = True
     m0.case_list.label = {"en": "Al People"}
     source = generate_app_workflow_diagram_source(factory.app)
-    eq(_normalize(source), inspect.cleandoc("""
+    _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
         root [label=Root]
@@ -537,7 +538,7 @@ def test_workflow_diagram_module_case_list():
         "m0-case-list.case_id" [label="Select 'person' case" shape=folder]
         "m0-case-list" -> "m0-case-list.case_id"
     }
-    """))
+    """)
 
 
 @patch_get_xform_resource_overrides()
@@ -548,10 +549,8 @@ def test_workflow_diagram_case_list_form():
 
     m1, m1f0 = factory.new_basic_module("followup", "case", case_list_form=m0f0)
     factory.form_requires_case(m1f0)
-    # m1f1 = factory.new_form(m1)
-    # factory.form_opens_case(m1f1, "case")
     source = generate_app_workflow_diagram_source(factory.app)
-    eq(_normalize(source), inspect.cleandoc("""
+    _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
         root [label=Root]
@@ -583,7 +582,7 @@ def test_workflow_diagram_case_list_form():
         "m0-f0_form_entry" -> m1 [label="Case Not Created" color=grey constraint=false]
         m1 -> "m1.case_id"
         "m1.case_id" -> "m0-f0_form_entry" [label="" color=grey constraint=false]
-    }"""))
+    }""")
 
 
 def _build_test_app():
@@ -615,3 +614,7 @@ def _build_workflow_app(mode):
 
 def _normalize(source):
     return source.replace("\t", "    ")
+
+
+def _check_output(actual, expected):
+    check_output(_normalize(actual), inspect.cleandoc(expected), OutputChecker(), "dot")
