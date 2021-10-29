@@ -15,12 +15,16 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_PREVIOUS,
     WORKFLOW_ROOT,
 )
-from corehq.apps.app_manager.exceptions import SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteValidationError, SuiteError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import (
     CreateFrame,
     Stack,
     StackDatum,
+    SessionDatum,
+    RemoteRequestQuery,
+    StackQuery,
+    QueryData,
 )
 from corehq.apps.app_manager.xpath import CaseIDXPath, XPath, session_var
 from corehq.util.timer import time_method
@@ -165,11 +169,17 @@ class WorkflowHelper(PostProcessor):
             command = e.command.id
             module_id, form_id = command.split('-', maxsplit=1)
             entries[command] = e
-            if not e.datums:
+            if not e.session_children:
                 datums[module_id][form_id] = []
             else:
-                for d in e.datums:
-                    datums[module_id][form_id].append(WorkflowDatumMeta.from_session_datum(d))
+                session_children = list(e.session_children)
+                for index, d in enumerate(session_children):
+                    next_index = index + 1
+                    next_meta = (
+                        workflow_meta_from_session_datum(session_children[next_index], None)
+                        if next_index < len(session_children) else None
+                    )
+                    datums[module_id][form_id].append(workflow_meta_from_session_datum(d, next_meta))
 
         for module_id, form_datum_map in datums.items():
             for form_id, entry_datums in form_datum_map.items():
@@ -209,7 +219,7 @@ def _get_datums_matched_to_manual_values(target_frame_elements, manual_values, f
     """
     manual_values_by_name = {datum.name: datum.xpath for datum in manual_values}
     for child in target_frame_elements:
-        if not isinstance(child, WorkflowDatumMeta) or not child.requires_selection:
+        if not isinstance(child, WorkflowSessionMeta) or not child.requires_selection:
             yield child
         else:
             manual_value = manual_values_by_name.get(child.id)
@@ -228,7 +238,17 @@ def _get_datums_matched_to_source(target_frame_elements, source_datums):
     """
     unused_source_datums = list(source_datums)
     for target_datum in target_frame_elements:
-        if not isinstance(target_datum, WorkflowDatumMeta) or not target_datum.requires_selection:
+        if isinstance(target_datum, WorkflowQueryMeta) and isinstance(target_datum.next_datum, WorkflowDatumMeta):
+            next_datum = target_datum.next_datum
+            if target_datum.is_case_search and next_datum.requires_selection:
+                # This query is populating an instance which will be used by the next datum
+                # so we need to use the correct case_id session var
+                # see RemoteRequestSuiteTest.test_form_linking_to_registry_module
+                match = _find_best_match(next_datum, unused_source_datums)
+                if match:
+                    target_datum.source_id = match.source_id
+            yield target_datum
+        elif not isinstance(target_datum, WorkflowSessionMeta) or not target_datum.requires_selection:
             yield target_datum
         else:
             match = _find_best_match(target_datum, unused_source_datums)
@@ -243,6 +263,8 @@ def _find_best_match(target_datum, source_datums):
     """
     candidate = None
     for source_datum in source_datums:
+        if isinstance(source_datum, WorkflowQueryMeta):
+            continue
         if source_datum.from_parent_module:
             # if the datum is only there as a placeholder then we should ignore it
             continue
@@ -309,7 +331,7 @@ class EndOfFormNavigationWorkflow(object):
             # since we want to go the 'previous' screen we need to drop the last
             # datum
             last = frame_children.pop()
-            while isinstance(last, WorkflowDatumMeta) and not last.requires_selection:
+            while isinstance(last, WorkflowSessionMeta) and not last.requires_selection:
                 # keep removing last element until we hit a command
                 # or a non-autoselect datum
                 last = frame_children.pop()
@@ -342,6 +364,7 @@ class EndOfFormNavigationWorkflow(object):
         elif link.module_unique_id:
             target_module = self.helper.app.get_module_by_unique_id(link.module_unique_id)
             target_frame_children = self._frame_children_for_module(target_module, include_user_selections=False)
+
         if link.datums:
             frame_children = _get_datums_matched_to_manual_values(target_frame_children, link.datums, form)
         else:
@@ -351,7 +374,7 @@ class EndOfFormNavigationWorkflow(object):
             root_module = self.helper.app.get_module_by_unique_id(target_module.root_module_id)
             frame_children = prepend_parent_frame_children(self.helper, frame_children, root_module)
 
-        return StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums)
+        return StackFrameMeta(link.xpath, list(frame_children), current_session=source_form_datums)
 
     def _get_fallback_frame(self, form, module):
         if form.post_form_workflow_fallback:
@@ -557,7 +580,7 @@ class StackFrameMeta(object):
                 self.add_child(child)
 
     def add_child(self, child):
-        if isinstance(child, WorkflowDatumMeta):
+        if isinstance(child, WorkflowSessionMeta):
             child = child.to_stack_datum()
         self.children.append(child)
 
@@ -572,10 +595,10 @@ class StackFrameMeta(object):
         for child in children:
             if isinstance(child, CommandId):
                 frame.add_command(child.to_command())
-            elif isinstance(child, StackDatum):
+            elif isinstance(child, (StackDatum, StackQuery)):
                 frame.add_datum(child)
             else:
-                raise Exception("Unexpected child type: {} ({})".format(type(child), child))
+                raise SuiteError("Unexpected child type: {} ({})".format(type(child), child))
 
         return frame
 
@@ -601,8 +624,49 @@ class CommandId(object):
         return XPath.string(self.id)
 
 
+def workflow_meta_from_session_datum(session_datum, next_datum):
+    if isinstance(session_datum, SessionDatum):
+        return WorkflowDatumMeta(session_datum.id, session_datum.nodeset, session_datum.function)
+    if isinstance(session_datum, RemoteRequestQuery):
+        return WorkflowQueryMeta(session_datum, next_datum)
+    raise ValueError
+
+
 @total_ordering
-class WorkflowDatumMeta(object):
+class WorkflowSessionMeta:
+    """Base class for session datum metadata"""
+    def __init__(self, datum_id):
+        self.id = datum_id
+        self._case_type = None
+        # indicates whether this datum is here as a placeholder to match the parent module's datum
+        self.from_parent_module = False
+
+        self.source_id = self.id  # can be changed if the source datum has a different ID
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    __hash__ = None
+
+    @property
+    def requires_selection(self):
+        raise NotImplementedError
+
+    @property
+    def case_type(self):
+        raise NotImplementedError
+
+    def clone_to_match(self, source_id=None):
+        raise NotImplementedError
+
+    def to_stack_datum(self):
+        raise NotImplementedError
+
+
+class WorkflowDatumMeta(WorkflowSessionMeta):
     """
     Class used in computing the form workflow. Allows comparison by SessionDatum.id and reference
     to SessionDatum.nodeset and SessionDatum.function attributes.
@@ -610,18 +674,10 @@ class WorkflowDatumMeta(object):
     type_regex = re.compile(r"\[@case_type='([\w-]+)'\]")
 
     def __init__(self, datum_id, nodeset, function):
-        self.id = datum_id
+        super().__init__(datum_id)
+
         self.nodeset = nodeset
         self.function = function
-        self._case_type = None
-        # indicates whether this datum is here as a placeholder to match the parent module's datum
-        self.from_parent_module = False
-
-        self.source_id = self.id  # can be changed if the source datum has a different ID
-
-    @classmethod
-    def from_session_datum(cls, session_datum):
-        return cls(session_datum.id, session_datum.nodeset, session_datum.function)
 
     @property
     def requires_selection(self):
@@ -646,7 +702,7 @@ class WorkflowDatumMeta(object):
     @case_type.setter
     def case_type(self, case_type):
         if self.case_type and case_type != self.case_type:
-            raise Exception("Datum already has a case type")
+            raise SuiteError("Datum already has a case type")
         self._case_type = case_type
 
     def clone_to_match(self, source_id=None):
@@ -658,16 +714,68 @@ class WorkflowDatumMeta(object):
         value = session_var(self.source_id) if self.requires_selection else self.function
         return StackDatum(id=self.id, value=value)
 
-    def __lt__(self, other):
-        return self.id < other.id
-
-    def __eq__(self, other):
-        return self.id == other.id
-
-    __hash__ = None
-
     def __repr__(self):
         return 'WorkflowDatumMeta(id={}, case_type={})'.format(self.id, self.case_type)
+
+
+class WorkflowQueryMeta(WorkflowSessionMeta):
+    """This class represents metadata about session query datums and is used
+    for computing form workflows.
+    """
+    def __init__(self, query, next_datum):
+        super().__init__(query.storage_instance)
+        self.query = query
+        self.next_datum = next_datum
+        self.is_case_search = '/phone/search/' in self.query.url
+        self.source_id = self.id
+        if next_datum and self.is_case_search and isinstance(next_datum, WorkflowDatumMeta):
+            # set source_id to the id of the next datum since that's what we'll use
+            # to build the query
+            self.source_id = self.next_datum.id
+
+    @property
+    def requires_selection(self):
+        return not self.query.prompts and self.query.default_search
+
+    @property
+    def case_type(self):
+        if not self._case_type:
+            # currently only supports a single case type
+            type_data = [el for el in self.query.data if el.key == 'case_type']
+            if type_data:
+                self._case_type = type_data[0].ref.replace("'", "")  # TODO: what if this is dynamic
+
+        return self._case_type
+
+    @case_type.setter
+    def case_type(self, case_type):
+        if self.case_type and case_type != self.case_type:
+            raise SuiteError("Datum already has a case type")
+        self._case_type = case_type
+
+    def clone_to_match(self, source_id=None):
+        new_meta = WorkflowQueryMeta(self.query, self.next_datum)
+        new_meta.source_id = source_id or self.id
+        return new_meta
+
+    def to_stack_datum(self):
+        wanted = ("commcare_registry", "case_type", "case_id")
+        data_by_key = {el.key: el for el in self.query.data}
+        data = [QueryData(key=el.key, ref=el.ref) for key, el in data_by_key.items() if key in wanted]
+        if "case_id" not in data_by_key and self.next_datum:
+            data.append(QueryData(key="case_id", ref=session_var(self.source_id)))
+        url = self.query.url
+        if self.is_case_search:
+            # we don't need the full search results, just the case that's been selected
+            url = url.replace('/phone/search/', '/phone/registry_case/')
+        return StackQuery(id=self.query.storage_instance, value=url, data=data)
+
+    def __repr__(self):
+        return (f"WorkflowQueryMeta("
+                f"url={self.query.url}, "
+                f"instance_id={self.query.storage_instance}, "
+                f"source_id={self.source_id}"
+                ")")
 
 
 session_var_regex = re.compile(r"instance\('commcaresession'\)/session/data/(\w+)")
@@ -691,16 +799,23 @@ def _replace_session_references_in_stack(stack_children, current_session=None):
     clean_children = []
     child_map = {}
     for child in stack_children:
-        if not isinstance(child, StackDatum):
+        if isinstance(child, StackQuery):
+            for data in child.data:
+                session_vars = session_var_regex.findall(data.ref)
+                for var in session_vars:
+                    if var in child_map and var not in current_session_vars:
+                        data.ref = data.ref.replace(session_var(var), child_map[var])
             clean_children.append(child)
-            continue
-        session_vars = session_var_regex.findall(child.value)
-        new_value = child.value
-        for var in session_vars:
-            if var in child_map and var not in current_session_vars:
-                new_value = new_value.replace(session_var(var), child_map[var])
+        elif isinstance(child, StackDatum):
+            session_vars = session_var_regex.findall(child.value)
+            new_value = child.value
+            for var in session_vars:
+                if var in child_map and var not in current_session_vars:
+                    new_value = new_value.replace(session_var(var), child_map[var])
 
-        child_map[child.id] = new_value
-        clean_children.append(StackDatum(id=child.id, value=new_value))
+            child_map[child.id] = new_value
+            clean_children.append(StackDatum(id=child.id, value=new_value))
+        else:
+            clean_children.append(child)
 
     return clean_children
