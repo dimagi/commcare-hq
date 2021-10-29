@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.const import WORKFLOW_FORM
+from corehq.apps.app_manager.const import WORKFLOW_FORM, REGISTRY_WORKFLOW_LOAD_CASE
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
@@ -50,7 +50,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     nodeset="instance('colors')/colors_list/colors", label='name', sort='name', value='value'),
                 )
             ],
-            data_registry="myregistry"
+            data_registry="myregistry",
+            data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE
         )
 
         # wrap to have assign_references called
