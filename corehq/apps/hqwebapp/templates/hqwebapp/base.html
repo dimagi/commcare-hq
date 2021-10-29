@@ -337,7 +337,7 @@
       {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
         <script src="{% static 'nvd3/lib/fisheye.js' %}"></script>
-        <script src="{% static 'd3/d3.min.js' %}"></script>
+        <script src="{% static 'd3/dist/d3.min.js' %}"></script>
         <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
       {% endcompress %}
     {% endif %}
@@ -345,7 +345,7 @@
     {% if request.use_nvd3_v3 and not requirejs_main %}
       {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
-        <script src="{% static 'd3/d3.min.js' %}"></script>
+        <script src="{% static 'd3/dist/d3.min.js' %}"></script>
         <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
       {% endcompress %}
     {% endif %}
