@@ -211,6 +211,7 @@ def generate_app_workflow_diagram_source(app, style=None):
     workflow = AppWorkflowVisualizer(style)
     helper = WorkflowHelper(suite, app, list(app.get_modules()))
     added = []
+    stacks_by_form = {}
     for module in app.get_modules():
         for form in module.get_suite_forms():
             frame_children = helper.get_frame_children_for_navigation(form.get_module(), form)
@@ -218,6 +219,8 @@ def generate_app_workflow_diagram_source(app, style=None):
             stack = [d for d in frame_children if getattr(d, "requires_selection", True)]
             id_stack = []
             commands = []
+            form_id = id_strings.form_command(form, module)
+            stacks_by_form[form_id] = id_stack
             for index, item in enumerate(stack):
                 previous = id_stack[-1] if id_stack else None
                 with workflow.next_stack_level(len(commands)):
@@ -250,18 +253,22 @@ def generate_app_workflow_diagram_source(app, style=None):
                             workflow.add_edge(Edge(previous, item_id))
                         id_stack.append(item_id)
 
-            form_id = id_strings.form_command(form, module)
             with workflow.next_stack_level(len(commands) + 1):
                 workflow.add_form_entry(form_id, trans(form.name), id_stack[-1])
-
-            form_has_eof = add_eof_edges(app, module, form, workflow, id_stack)
-            if not form_has_eof:
-                add_case_list_form_eof_edges(module, form, helper, workflow)
 
         if hasattr(module, 'case_list') and module.case_list.show:
             case_list_id = id_strings.case_list_command(module)
             workflow.add_module(case_list_id, f"{trans(module.name)} Case List")
             workflow.add_case_list(f"{case_list_id}.case_id", module.case_type, False, case_list_id)
+
+    # leave workflow nav to the end to ensure all nodes exist
+    for module in app.get_modules():
+        for form in module.get_suite_forms():
+            form_id = id_strings.form_command(form, module)
+            id_stack = stacks_by_form[form_id]
+            form_has_eof = add_eof_edges(app, module, form, workflow, id_stack)
+            if not form_has_eof:
+                add_case_list_form_eof_edges(module, form, helper, workflow)
 
     return workflow.render(app.name)
 
