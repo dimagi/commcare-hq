@@ -1,5 +1,6 @@
 import re
 from contextlib import contextmanager
+from enum import Enum
 from io import BytesIO
 
 import attr
@@ -39,8 +40,19 @@ def generate_app_workflow_diagram(app):
 class Node:
     id = attr.ib()
     label = attr.ib()
+    type = attr.ib()
     parent = attr.ib(default=None)
-    attrs = attr.ib(default={})
+    attrs = attr.ib(factory=dict)
+    children = attr.ib(factory=list)
+
+
+class NodeType(Enum):
+    ROOT = "root"
+    START = "start"
+    MODULE = "module"
+    FORM_MENU = "form_menu"
+    FORM_ENTRY = "form_entry"
+    CASE_LIST = "case_list"
 
 
 @attr.s
@@ -69,6 +81,14 @@ class AppWorkflowVisualizer:
         self.global_nodes = []
         self.node_stack = []
         self.edges = []
+
+        start = Node(self.START, "Start", NodeType.START, parent=self.ROOT)
+        self.nodes_by_id = {
+            "root": Node(self.ROOT, "Root", NodeType.ROOT, children=[start]),
+            "start": start
+        }
+        self.pending_reverse = []
+
         self.pos = 0
         self.fill_stack()
         self.styles = styles or DefaultStyle
@@ -81,9 +101,25 @@ class AppWorkflowVisualizer:
         self.form_link_attrs = {"color": self.styles.eof_color}
         self.case_list_form_link_attrs = {"color": self.styles.case_list_form_color, "constraint": "false"}
 
-    def stack_append(self, node):
+    def stack_append(self, node, is_global=False):
         """Append node to the current stack frame"""
-        self.node_stack[self.pos].append(node)
+        if is_global:
+            self.global_nodes.append(node)
+        else:
+            self.node_stack[self.pos].append(node)
+        self.nodes_by_id[node.id] = node
+
+        for pending in list(self.pending_reverse):
+            if pending.parent == node.id:
+                node.children.append(pending)
+                self.pending_reverse.remove(pending)
+
+        if node.parent:
+            self.add_edge(Edge(node.parent, node.id))
+            try:
+                self.nodes_by_id[node.parent].children.append(node)
+            except KeyError:
+                self.pending_reverse.append(node)
 
     def fill_stack(self):
         """Fill the stack up to the given position (or the current position)"""
@@ -99,24 +135,28 @@ class AppWorkflowVisualizer:
         self.pos -= levels_to_move
 
     def add_module(self, unique_id, name, parent_id=None):
-        self.stack_append(Node(unique_id, name, parent_id or self.START, attrs=self.module_attrs))
+        self.stack_append(Node(unique_id, name, NodeType.MODULE, parent_id or self.START, attrs=self.module_attrs))
 
     def add_form_menu_item(self, unique_id, name, parent_id=None):
-        self.stack_append(Node(unique_id, name, parent_id or self.START, attrs=self.form_menu_attrs))
+        self.stack_append(
+            Node(unique_id, name, NodeType.FORM_MENU, parent_id or self.START, attrs=self.form_menu_attrs))
 
     def add_form_entry(self, unique_id, name, parent_id):
-        self.stack_append(Node(f"{unique_id}_form_entry", name, parent_id, attrs=self.form_entry_attrs))
+        self.stack_append(
+            Node(f"{unique_id}_form_entry", name, NodeType.FORM_ENTRY, parent_id, attrs=self.form_entry_attrs))
 
     def add_case_list(self, node_id, case_type, has_search, parent):
-        self.global_nodes.append(Node(
-            node_id, f"Select '{case_type}' case", attrs=self.case_list_attrs
-        ))
-        self.add_edge(Edge(parent, node_id))
+        self.stack_append(Node(
+            node_id, f"Select '{case_type}' case", NodeType.CASE_LIST, parent, attrs=self.case_list_attrs
+        ), is_global=True)
         if has_search:
             self.add_edge(Edge(node_id, node_id, "Search"))
         return node_id
 
     def add_eof_workflow(self, form_id, target_node, label=None):
+        target = self.nodes_by_id[target_node]
+        if len(target.children) == 1 and target.children[0].type == NodeType.CASE_LIST:
+            target_node = target.children[0].id
         self.add_edge(Edge(f"{form_id}_form_entry", target_node, label, attrs=self.eof_attrs))
 
     def add_eof_form_link(self, tail_form_id, head_form_id, label=None):
@@ -141,11 +181,9 @@ class AppWorkflowVisualizer:
 
         def _add_node(graph, node):
             graph.node(node.id, node.label, **node.attrs)
-            if node.parent:
-                root_graph.edge(node.parent, node.id)
 
-        _add_node(root_graph, Node(self.ROOT, "Root"))
-        _add_node(root_graph, Node(self.START, "Start", parent=self.ROOT))
+        root_graph.node(self.ROOT, "Root")
+        root_graph.node(self.START, "Start")
 
         for pos, nodes in enumerate(self.node_stack):
             if not nodes:
@@ -159,6 +197,7 @@ class AppWorkflowVisualizer:
         for node in self.global_nodes:
             _add_node(root_graph, node)
 
+        root_graph.edge("root", "start")
         for edge in self.edges:
             root_graph.edge(edge.tail, edge.head, label=edge.label or None, **edge.attrs)
         return root_graph.source
@@ -172,6 +211,7 @@ def generate_app_workflow_diagram_source(app, style=None):
     workflow = AppWorkflowVisualizer(style)
     helper = WorkflowHelper(suite, app, list(app.get_modules()))
     added = []
+    stacks_by_form = {}
     for module in app.get_modules():
         for form in module.get_suite_forms():
             frame_children = helper.get_frame_children_for_navigation(form.get_module(), form)
@@ -179,6 +219,8 @@ def generate_app_workflow_diagram_source(app, style=None):
             stack = [d for d in frame_children if getattr(d, "requires_selection", True)]
             id_stack = []
             commands = []
+            form_id = id_strings.form_command(form, module)
+            stacks_by_form[form_id] = id_stack
             for index, item in enumerate(stack):
                 previous = id_stack[-1] if id_stack else None
                 with workflow.next_stack_level(len(commands)):
@@ -211,18 +253,22 @@ def generate_app_workflow_diagram_source(app, style=None):
                             workflow.add_edge(Edge(previous, item_id))
                         id_stack.append(item_id)
 
-            form_id = id_strings.form_command(form, module)
             with workflow.next_stack_level(len(commands) + 1):
                 workflow.add_form_entry(form_id, trans(form.name), id_stack[-1])
-
-            form_has_eof = add_eof_edges(app, module, form, workflow, id_stack)
-            if not form_has_eof:
-                add_case_list_form_eof_edges(module, form, helper, workflow)
 
         if hasattr(module, 'case_list') and module.case_list.show:
             case_list_id = id_strings.case_list_command(module)
             workflow.add_module(case_list_id, f"{trans(module.name)} Case List")
             workflow.add_case_list(f"{case_list_id}.case_id", module.case_type, False, case_list_id)
+
+    # leave workflow nav to the end to ensure all nodes exist
+    for module in app.get_modules():
+        for form in module.get_suite_forms():
+            form_id = id_strings.form_command(form, module)
+            id_stack = stacks_by_form[form_id]
+            form_has_eof = add_eof_edges(app, module, form, workflow, id_stack)
+            if not form_has_eof:
+                add_case_list_form_eof_edges(module, form, helper, workflow)
 
     return workflow.render(app.name)
 
@@ -251,7 +297,7 @@ def add_eof_edges(app, module, form, graph, id_stack, workflow_option=None, labe
         graph.add_eof_workflow(form_id, id_strings.menu_id(module), label)
         return True
 
-    if workflow_option == WORKFLOW_PREVIOUS:
+    if workflow_option == WORKFLOW_PREVIOUS and len(id_stack) > 1:
         graph.add_eof_workflow(form_id, id_stack[-2], label)
         return True
 
@@ -276,7 +322,7 @@ def add_eof_edges(app, module, form, graph, id_stack, workflow_option=None, labe
 def add_case_list_form_eof_edges(module, form, workflow_helper, graph):
     form_id = id_strings.form_command(form, module)
     for frame in CaseListFormWorkflow(workflow_helper).case_list_forms_frames(form):
-        if not frame.children:
+        if not frame or not frame.children:
             continue
 
         label = None
@@ -286,6 +332,9 @@ def add_case_list_form_eof_edges(module, form, workflow_helper, graph):
                 label = "Case Created"
             elif re.match(f"{case_xpath} = 0", frame.if_clause):
                 label = "Case Not Created"
+            elif re.match(r"^count\(instance\('commcaresession'\)/session/data/return_to\) = 1 "
+                          r"and instance\('commcaresession'\)/session/data/return_to = 'm\d+'$", frame.if_clause):
+                label = None
             else:
                 label = frame.if_clause
 
