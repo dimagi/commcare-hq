@@ -11,6 +11,7 @@ from corehq.apps.app_manager.suite_xml.post_process.instances import (
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowDatumMeta, WorkflowHelper
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
+    CalculatedPropertyXpath,
     Command,
     Display,
     Hint,
@@ -25,14 +26,22 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     RemoteRequestSession,
     SessionDatum,
     Stack,
+    StackJump,
     Text,
+    Xpath,
+    XpathVariable,
 )
-from corehq.apps.app_manager.util import module_offers_search
+from corehq.apps.app_manager.util import (
+    is_linked_app,
+    module_offers_search,
+    module_uses_smart_links,
+)
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
     CaseTypeXpath,
     InstanceXpath,
     interpolate_xpath,
+    XPath,
 )
 from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
@@ -253,10 +262,33 @@ class RemoteRequestFactory(object):
 
     def build_stack(self):
         stack = Stack()
+        if module_uses_smart_links(self.module):
+            # TODO: XPath instead of string
+            frame = PushFrame(if_clause=XPath("instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project != instance('commcaresession')/session/user/data/commcare_project"))
+            frame.add_datum(StackJump(
+                url=Text(
+                    xpath=Xpath(
+                        function=self.get_smart_link_function(),
+                        variables=[
+                            XpathVariable(
+                                name="domain",
+                                xpath=CalculatedPropertyXpath(function="instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project"),  # TODO: xpath, not function
+                            ),
+                        ],
+                    ),
+                ),
+            ))
+            stack.add_frame(frame)
         frame = PushFrame()
         frame.add_rewind(QuerySessionXPath(self.case_session_var).instance())
         stack.add_frame(frame)
         return stack
+
+    def get_smart_link_function(self):
+        app_id = self.app.upstream_app_id if is_linked_app(self.app) else self.app.origin_id
+        url = absolute_reverse("session_endpoint", args=["---", app_id, self.module.session_endpoint_id])
+        prefix, suffix = url.split("---")
+        return f"concat('{prefix}', $domain, '{suffix}')"
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
@@ -313,7 +345,7 @@ class RemoteRequestsHelper(PostProcessor):
     @time_method()
     def update_suite(self, detail_section_elements):
         for module in self.modules:
-            if module_offers_search(module):
+            if module_offers_search(module) or module_uses_smart_links(module):
                 self.suite.remote_requests.append(RemoteRequestFactory(
                     module, detail_section_elements).build_remote_request()
                 )

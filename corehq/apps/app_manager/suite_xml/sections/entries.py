@@ -1,4 +1,4 @@
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from itertools import zip_longest
 
 import attr
@@ -19,7 +19,11 @@ from corehq.apps.app_manager.suite_xml.utils import (
     get_select_chain_meta,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import *
-from corehq.apps.app_manager.util import actions_use_usercase, module_offers_registry_search
+from corehq.apps.app_manager.util import (
+    actions_use_usercase,
+    module_loads_registry_case,
+    module_offers_registry_search,
+)
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
     autoset_owner_id_for_open_case,
@@ -212,7 +216,7 @@ class EntriesHelper(object):
 
             EntriesHelper.add_custom_assertions(e, form)
 
-            if module_offers_registry_search(module):
+            if module_loads_registry_case(module):
                 EntriesHelper.add_registry_search_instances(e, form)
 
             if (
@@ -430,9 +434,11 @@ class EntriesHelper(object):
             if datum.module_id and datum.case_type:
                 module = self.app.get_module_by_unique_id(datum.module_id)
                 if module_offers_registry_search(module):
-                    result.append(self.get_data_registry_search_datums(module))
+                    if module_loads_registry_case(module):
+                        result.append(self.get_data_registry_search_datums(module))
                     result.append(datum)
-                    result.extend(self.get_data_registry_case_datums(datum, module))
+                    if module_loads_registry_case(module):
+                        result.extend(self.get_data_registry_case_datums(datum, module))
                 else:
                     result.append(datum)
             else:
@@ -500,7 +506,7 @@ class EntriesHelper(object):
             filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
             instance_name, root_element = "casedb", "casedb"
-            if module_offers_registry_search(detail_module):
+            if module_loads_registry_case(detail_module):
                 instance_name, root_element = "results", "results"
 
             nodeset = EntriesHelper._get_nodeset_xpath(
