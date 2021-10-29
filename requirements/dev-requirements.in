@@ -8,7 +8,7 @@ ipython==7.16.1
 wheel==0.37.0
 transifex-client==0.14.3
 gnureadline==8.0.0
-git-build-branch
+git-build-branch>0.1.11
 
 # documentation
 Sphinx~=4.1.2
