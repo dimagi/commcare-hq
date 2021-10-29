@@ -332,6 +332,9 @@ def add_case_list_form_eof_edges(module, form, workflow_helper, graph):
                 label = "Case Created"
             elif re.match(f"{case_xpath} = 0", frame.if_clause):
                 label = "Case Not Created"
+            elif re.match(r"^count\(instance\('commcaresession'\)/session/data/return_to\) = 1 "
+                          r"and instance\('commcaresession'\)/session/data/return_to = 'm\d+'$", frame.if_clause):
+                label = None
             else:
                 label = frame.if_clause
 
