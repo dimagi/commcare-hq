@@ -157,7 +157,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_case_detail_tabs_with_registry_module(self, *args):
         self.app.get_module(0).case_details.long.tabs = [
-            DetailTab(starting_index=1)
+            DetailTab(starting_index=0),
+            DetailTab(starting_index=1, has_nodeset=True, nodeset_case_type="child")
         ]
 
         self.assertXmlPartialEqual(
