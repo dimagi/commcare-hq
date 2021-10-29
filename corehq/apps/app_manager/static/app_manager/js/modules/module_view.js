@@ -9,7 +9,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             moduleType = moduleBrief.module_type,
             options = initial_page_data('js_options') || {};
 
-        hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
+        hqImport('app_manager/js/app_manager').setAppendedPageTitle(gettext("Menu Settings"));
         // Set up details
         if (moduleBrief.case_type) {
             var details = initial_page_data('details');
