@@ -147,9 +147,8 @@ class AppWorkflowVisualizer:
 
     def add_case_list(self, node_id, case_type, has_search, parent):
         self.stack_append(Node(
-            node_id, f"Select '{case_type}' case", NodeType.CASE_LIST, attrs=self.case_list_attrs
+            node_id, f"Select '{case_type}' case", NodeType.CASE_LIST, parent, attrs=self.case_list_attrs
         ), is_global=True)
-        self.add_edge(Edge(parent, node_id))
         if has_search:
             self.add_edge(Edge(node_id, node_id, "Search"))
         return node_id
