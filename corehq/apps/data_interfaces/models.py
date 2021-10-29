@@ -106,6 +106,7 @@ class AutomaticUpdateRule(models.Model):
     # that this rule belongs to.
     workflow = models.CharField(max_length=126)
 
+    upstream_id = models.CharField(max_length=32, null=True)
     locked_for_editing = models.BooleanField(default=False)
 
     class Meta(object):
