@@ -251,7 +251,7 @@ def add_eof_edges(app, module, form, graph, id_stack, workflow_option=None, labe
         graph.add_eof_workflow(form_id, id_strings.menu_id(module), label)
         return True
 
-    if workflow_option == WORKFLOW_PREVIOUS:
+    if workflow_option == WORKFLOW_PREVIOUS and len(id_stack) > 1:
         graph.add_eof_workflow(form_id, id_stack[-2], label)
         return True
 
