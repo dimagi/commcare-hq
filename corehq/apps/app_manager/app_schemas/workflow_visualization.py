@@ -115,6 +115,7 @@ class AppWorkflowVisualizer:
                 self.pending_reverse.remove(pending)
 
         if node.parent:
+            self.add_edge(Edge(node.parent, node.id))
             try:
                 self.nodes_by_id[node.parent].children.append(node)
             except KeyError:
@@ -178,11 +179,9 @@ class AppWorkflowVisualizer:
 
         def _add_node(graph, node):
             graph.node(node.id, node.label, **node.attrs)
-            if node.parent:
-                root_graph.edge(node.parent, node.id)
 
-        _add_node(root_graph, Node(self.ROOT, "Root"))
-        _add_node(root_graph, Node(self.START, "Start", parent=self.ROOT))
+        root_graph.node(self.ROOT, "Root")
+        root_graph.node(self.START, "Start")
 
         for pos, nodes in enumerate(self.node_stack):
             if not nodes:
@@ -196,6 +195,7 @@ class AppWorkflowVisualizer:
         for node in self.global_nodes:
             _add_node(root_graph, node)
 
+        root_graph.edge("root", "start")
         for edge in self.edges:
             root_graph.edge(edge.tail, edge.head, label=edge.label or None, **edge.attrs)
         return root_graph.source
