@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-06 19:18+0000\n"
+"POT-Creation-Date: 2021-10-27 20:24+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -2635,7 +2635,15 @@ msgstr ""
 msgid "Evaluate XPath"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:270
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:69
+msgid "Expand Data Preview"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:70
+msgid "Collapse Data Preview"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:275
 msgid "Error evaluating expression."
 msgstr ""
 
@@ -2757,26 +2765,26 @@ msgstr ""
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:343
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:345
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:352
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:354
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:501
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:503
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:529
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:531
 msgid "Please wait..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:681
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:683
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
@@ -2839,15 +2847,27 @@ msgstr "हॉ"
 msgid "No"
 msgstr "नहीं"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:55
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:25
+msgid "Working as <b><%- restoreAs %></b> in <b><%- domain %></b>."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:27
+msgid "Working as <b><%- restoreAs %></b>."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:29
+msgid "Use <%- username %>."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:68
 msgid "Log in as <%= username %>?"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:59
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:72
 msgid "Yes, log in as this user"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:137
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:150
 msgid "Page <%- num %>"
 msgstr ""
 
@@ -3772,6 +3792,14 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js:183
 msgid "We were unsuccessful loading the report:"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js:120
+msgid "My Scheduled Reports"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js:126
+msgid "Other Scheduled Reports"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/single_form.js:64

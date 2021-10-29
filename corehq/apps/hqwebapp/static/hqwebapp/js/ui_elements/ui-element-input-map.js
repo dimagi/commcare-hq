@@ -13,8 +13,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
         hqMain.eventize(this);
         if (!placeholders) {
             placeholders = {};
-            placeholders.key = django.gettext('key');
-            placeholders.value = django.gettext('value');
+            placeholders.key = gettext('key');
+            placeholders.value = gettext('value');
         }
         this.ui = $('<div class="form-group hq-input-map" />');
         this.value = {
@@ -44,7 +44,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
         this.$edit_view.append(val_input);
         if (this.show_delete) {
             var $deleteButton = $('<a href="#" data-enum-action="remove" class="btn btn-danger" />');
-            $deleteButton.append('<i class="fa fa-remove"></i> ' + django.gettext('Delete'));
+            $deleteButton.append('<i class="fa fa-remove"></i> ' + gettext('Delete'));
             $deleteButton.click(function () {
                 that.fire('remove');
                 return false;

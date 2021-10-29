@@ -69,11 +69,11 @@ hqDefine("groups/js/group_members", [
                 var alertClass, message;
                 if (isSuccess) {
                     alertClass = 'alert-success';
-                    message = django.gettext('Successfully saved ') + name.toLowerCase() + '.';
+                    message = gettext('Successfully saved ') + name.toLowerCase() + '.';
                     unsavedChanges[name] = false;
                 } else {
                     alertClass = 'alert-danger';
-                    message = django.gettext('Failed to save ') + name.toLowerCase() + '.';
+                    message = gettext('Failed to save ') + name.toLowerCase() + '.';
                 }
                 $(id).find(':button').enableButton();
                 $('#save-alert').removeClass('alert-danger alert-success alert-info').addClass(alertClass);

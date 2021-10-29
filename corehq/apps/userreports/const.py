@@ -30,9 +30,7 @@ UCR_CELERY_QUEUE = 'ucr_queue'
 UCR_INDICATOR_CELERY_QUEUE = 'ucr_indicator_queue'
 
 KAFKA_TOPICS = (
-    topics.CASE,
     topics.CASE_SQL,
-    topics.FORM,
     topics.FORM_SQL,
     topics.LOCATION,
     topics.COMMCARE_USER,

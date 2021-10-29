@@ -1145,7 +1145,7 @@ class CaseRuleSubmission(models.Model):
     # The timestamp that this record was created on
     created_on = models.DateTimeField(db_index=True)
 
-    # Reference to XFormInstance.form_id or XFormInstanceSQL.form_id
+    # Reference to XFormInstanceSQL.form_id
     form_id = models.CharField(max_length=255, unique=True, db_index=True)
 
     # A shortcut to keep track of which forms get archived

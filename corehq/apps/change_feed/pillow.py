@@ -52,7 +52,7 @@ class KafkaProcessor(PillowProcessor):
 
 
 def get_default_couch_db_change_feed_pillow(pillow_id, **kwargs):
-    return get_change_feed_pillow_for_db(pillow_id, CommCareCase.get_db(), topics.CASE)
+    return get_change_feed_pillow_for_db(pillow_id, CommCareCase.get_db())
 
 
 def get_user_groups_db_kafka_pillow(pillow_id, **kwargs):

@@ -134,7 +134,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         for month_num in range(2, 5):
             invoice_date = utils.months_from_date(self.subscription.date_start, month_num)
             tasks.calculate_users_in_all_domains(invoice_date)
-            tasks.generate_invoices(invoice_date)
+            tasks.generate_invoices_based_on_date(invoice_date)
             invoice = self.subscription.invoice_set.latest('date_end')
 
             line_item = get_line_item_from_invoice(invoice)
@@ -235,7 +235,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         for month_num in range(2, 5):
             invoice_date = utils.months_from_date(self.subscription.date_start, month_num)
             tasks.calculate_users_in_all_domains(invoice_date)
-            tasks.generate_invoices(invoice_date)
+            tasks.generate_invoices_based_on_date(invoice_date)
             invoice = self.subscription.invoice_set.latest('date_end')
 
             if month_num < 4:
@@ -543,7 +543,7 @@ class TestUserSubscriptionChangeTransfers(BaseAccountingTest):
             num_users=0,
             record_date=user_record_date
         )
-        tasks.generate_invoices(utils.months_from_date(first_sub.date_start, 1))
+        tasks.generate_invoices_based_on_date(utils.months_from_date(first_sub.date_start, 1))
 
         self.assertEqual(first_sub.invoice_set.count(), 1)
         self.assertEqual(second_sub.invoice_set.count(), 1)

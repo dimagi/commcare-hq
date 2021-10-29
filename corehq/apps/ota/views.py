@@ -68,6 +68,7 @@ from .utils import (
     handle_401_response,
     is_permitted_to_restore,
 )
+from ..case_search.const import COMMCARE_PROJECT
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
@@ -440,4 +441,6 @@ def registry_case(request, domain, app_id):
         return HttpResponseNotFound(f"Case '{case_id}' not found")
 
     cases = helper.get_case_hierarchy(request.couch_user, case)
+    for case in cases:
+        case.case_json[COMMCARE_PROJECT] = case.domain
     return HttpResponse(CaseDBFixture(cases).fixture, content_type="text/xml; charset=utf-8")

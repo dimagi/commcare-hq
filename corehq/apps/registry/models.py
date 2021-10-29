@@ -257,12 +257,12 @@ class RegistryAuditLog(models.Model):
         (ACTION_GRANT_ADDED, _("Grant created")),
         (ACTION_GRANT_REMOVED, _("Grant removed")),
         (ACTION_DATA_ACCESSED, _("Data Accessed")),
+        (ACTION_INVITATION_ADDED, _("Invitation Added")),
     )
 
     ACTION_CHOICES = (
         (ACTION_ACTIVATED, _("Registry Activated")),
         (ACTION_DEACTIVATED, _("Registry De-activated")),
-        (ACTION_INVITATION_ADDED, _("Invitation Added")),
         (ACTION_INVITATION_REMOVED, _("Invitation Revoked")),
         (ACTION_SCHEMA_CHANGED, _("Schema Changed")),
     ) + NON_OWNER_ACTION_CHOICES

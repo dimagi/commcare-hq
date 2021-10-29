@@ -41,6 +41,7 @@ from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq import toggles
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_SAVED_UCR_FORM_ID,
     send_hubspot_form,
@@ -102,7 +103,6 @@ from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
-    StaticDataSourceConfiguration,
     StaticReportConfiguration,
     get_datasource_config,
     get_report_config,
@@ -147,6 +147,7 @@ from corehq.apps.userreports.util import (
 )
 from corehq.apps.users.decorators import get_permission_name, require_permission
 from corehq.apps.users.models import Permissions
+from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
@@ -256,6 +257,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.report_id
             ),
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
         }
 
     @property
@@ -621,7 +623,8 @@ class ConfigureReport(ReportBuilderView):
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.existing_report.get_id
-            ) if self.existing_report else {}
+            ) if self.existing_report else {},
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
         }
 
     def _get_bound_form(self, report_data):
@@ -1045,11 +1048,24 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
     @property
     def page_context(self):
+        is_rebuilding = (
+            self.config.meta.build.initiated
+            and (
+                not self.config.meta.build.finished
+                and not self.config.meta.build.rebuilt_asynchronously
+            )
+        )
+        is_rebuilding_inplace = (
+            self.config.meta.build.initiated_in_place
+            and not self.config.meta.build.finished_in_place
+        )
         return {
             'form': self.edit_form,
             'data_source': self.config,
             'read_only': self.read_only,
             'used_by_reports': self.get_reports(),
+            'is_rebuilding': is_rebuilding,
+            'is_rebuilding_inplace': is_rebuilding_inplace,
         }
 
     @property
@@ -1251,7 +1267,6 @@ def build_data_source_in_place(request, domain, config_id):
             config.display_name
         )
     )
-
     rebuild_indicators_in_place.delay(config_id, request.user.username, source='edit_data_source_build_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]

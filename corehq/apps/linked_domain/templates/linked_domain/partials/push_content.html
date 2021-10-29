@@ -25,7 +25,9 @@
                                  searchItemTitle: '{% trans_html_attr "Search content" %}',
                             }">
             {% for model in view_data.view_models_to_push %}
-              <option value="{% html_attr model %}">{{ model.name }}</option>
+              <option value="{% html_attr model %}" {% if not model.is_linkable %} disabled {% endif %}>
+                {{ model.name }} {% if not model.is_linkable %}({% trans 'unlinkable'%}){% endif %}
+              </option>
             {% endfor %}
           </select>
         </div>
