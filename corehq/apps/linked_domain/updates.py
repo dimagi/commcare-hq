@@ -415,40 +415,46 @@ def update_hmac_callout_settings(domain_link):
 
 def update_auto_update_rules(domain_link):
     if domain_link.is_remote:
-        master_results = remote_get_auto_update_rules(domain_link)
+        upstream_rules = remote_get_auto_update_rules(domain_link)
     else:
-        master_results = local_get_auto_update_rules(domain_link.master_domain)
+        upstream_rules = local_get_auto_update_rules(domain_link.master_domain)
 
-    local_rules = AutomaticUpdateRule.by_domain(
+    downstream_rules = AutomaticUpdateRule.by_domain(
         domain_link.linked_domain,
         AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         active_only=False
     )
 
-    # Largely from data_interfacees/models.py - hard_delete()
-    def _delete_rule(rule):
-        rule.delete_criteria()
-        rule.delete_actions()
-        CaseRuleSubmission.objects.filter(rule=rule).delete()
-        rule.delete()
+    for upstream_rule_def in upstream_rules:
+        # Grab local rule by upstream ID (preferred) or by name
+        downstream_rule = (downstream_rules.filter(upstream_id=upstream_rule_def['rule']['id']).first()
+            or downstream_rules.filter(name=upstream_rule_def['rule']['name']).first())
 
-    def _copy_rule(rule):
-        with transaction.atomic():
-
-            new_rule = AutomaticUpdateRule(
+        # If no corresponding local rule, make a new rule
+        if not downstream_rule:
+            downstream_rule = AutomaticUpdateRule(
                 domain=domain_link.linked_domain,
-                active=rule['rule']['active'],
+                active=upstream_rule_def['rule']['active'],
                 workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
             )
 
-            new_rule.name = rule['rule']['name']
-            new_rule.case_type = rule['rule']['case_type']
-            new_rule.filter_on_server_modified = rule['rule']['filter_on_server_modified']
-            new_rule.server_modified_boundary = rule['rule']['server_modified_boundary']
-            new_rule.save()
+        # Copy all the contents from old rule to new rule
+        with transaction.atomic():
 
-            # Largely from data_interfacees/forms.py - save_criteria()
-            for criteria in rule['criteria']:
+            downstream_rule.name = upstream_rule_def['rule']['name']
+            downstream_rule.case_type = upstream_rule_def['rule']['case_type']
+            downstream_rule.filter_on_server_modified = upstream_rule_def['rule']['filter_on_server_modified']
+            downstream_rule.server_modified_boundary = upstream_rule_def['rule']['server_modified_boundary']
+            downstream_rule.save()
+
+            # Delete criteria and actions if they exist
+            if CaseRuleCriteria.objects.filter(rule_id=downstream_rule.id).first():
+                downstream_rule.delete_criteria()
+            if CaseRuleAction.objects.filter(rule_id=downstream_rule.id).first():
+                downstream_rule.delete_actions()
+
+            # Largely from data_interfaces/forms.py - save_criteria()
+            for criteria in upstream_rule_def['criteria']:
                 definition = None
 
                 if criteria['match_property_definition']:
@@ -464,12 +470,12 @@ def update_auto_update_rules(domain_link):
                 elif criteria['closed_parent_definition']:
                     definition = ClosedParentDefinition.objects.create()
 
-                new_criteria = CaseRuleCriteria(rule=new_rule)
+                new_criteria = CaseRuleCriteria(rule=downstream_rule)
                 new_criteria.definition = definition
                 new_criteria.save()
 
             # Largely from data_interfacees/forms.py - save_actions()
-            for action in rule['actions']:
+            for action in upstream_rule_def['actions']:
                 definition = None
 
                 if action['update_case_definition']:
@@ -490,15 +496,9 @@ def update_auto_update_rules(domain_link):
                         name=action['custom_action_definition']['name'],
                     )
 
-                action = CaseRuleAction(rule=new_rule)
+                action = CaseRuleAction(rule=downstream_rule)
                 action.definition = definition
                 action.save()
-
-    for local_rule in local_rules:
-        _delete_rule(local_rule)
-
-    for master_rule in master_results:
-        _copy_rule(master_rule)
 
 
 def _convert_reports_permissions(domain_link, master_results):
