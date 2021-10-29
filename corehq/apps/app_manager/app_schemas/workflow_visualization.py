@@ -154,6 +154,9 @@ class AppWorkflowVisualizer:
         return node_id
 
     def add_eof_workflow(self, form_id, target_node, label=None):
+        target = self.nodes_by_id[target_node]
+        if len(target.children) == 1 and target.children[0].type == NodeType.CASE_LIST:
+            target_node = target.children[0].id
         self.add_edge(Edge(f"{form_id}_form_entry", target_node, label, attrs=self.eof_attrs))
 
     def add_eof_form_link(self, tail_form_id, head_form_id, label=None):
@@ -312,7 +315,7 @@ def add_eof_edges(app, module, form, graph, id_stack, workflow_option=None, labe
 def add_case_list_form_eof_edges(module, form, workflow_helper, graph):
     form_id = id_strings.form_command(form, module)
     for frame in CaseListFormWorkflow(workflow_helper).case_list_forms_frames(form):
-        if not frame.children:
+        if not frame or not frame.children:
             continue
 
         label = None

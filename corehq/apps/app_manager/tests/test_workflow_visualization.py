@@ -12,7 +12,7 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
     WORKFLOW_ROOT,
     WORKFLOW_MODULE,
-    WORKFLOW_PREVIOUS, WORKFLOW_PARENT_MODULE
+    WORKFLOW_PREVIOUS, WORKFLOW_PARENT_MODULE, WORKFLOW_CASE_LIST
 )
 from corehq.apps.app_manager.models import FormLink
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -589,6 +589,50 @@ def test_workflow_diagram_case_list_form():
         "m1-f0" -> "m1-f0_form_entry"
         "m0-f0_form_entry" -> "m1.case_id" [label="Case Created" color=red constraint=false]
         "m0-f0_form_entry" -> "m1.case_id" [label="Case Not Created" color=red constraint=false]
+    }""")
+
+
+@patch_get_xform_resource_overrides()
+def test_workflow_diagram_case_list_form_return_to_case_list():
+    factory = AppFactory(build_version='2.9.0')
+    m0, m0f0 = factory.new_basic_module("register", "case")
+    factory.form_opens_case(m0f0, "case")
+
+    m1, m1f0 = factory.new_basic_module("followup", "case", case_list_form=m0f0)
+    m1.case_list_form.post_form_workflow = WORKFLOW_CASE_LIST
+    factory.form_requires_case(m1f0)
+    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
+    _check_output(source, """
+    digraph "Untitled Application" {
+        graph [rankdir=LR]
+        root [label=Root]
+        start [label=Start]
+        {
+            rank=same
+            m0 [label="register module [en] " shape=box]
+            m1 [label="followup module [en] " shape=box]
+        }
+        {
+            rank=same
+            "m0-f0" [label="register form 0 [en] " shape=ellipse]
+            "m1-f0" [label="followup form 0 [en] " shape=ellipse]
+        }
+        {
+            rank=same
+            "m0-f0_form_entry" [label="register form 0 [en] " shape=oval]
+            "m1-f0_form_entry" [label="followup form 0 [en] " shape=oval]
+        }
+        "m1.case_id" [label="Select 'case' case" shape=folder]
+        root -> start
+        start -> m0
+        m0 -> "m0-f0"
+        "m0-f0" -> "m0-f0_form_entry"
+        start -> m1
+        m1 -> "m1.case_id"
+        "m1.case_id" -> "m0-f0_form_entry" [color=blue constraint=false]
+        "m1.case_id" -> "m1-f0"
+        "m1-f0" -> "m1-f0_form_entry"
+        "m0-f0_form_entry" -> "m1.case_id" [color=red constraint=false]
     }""")
 
 
