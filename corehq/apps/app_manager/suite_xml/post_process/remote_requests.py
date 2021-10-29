@@ -29,7 +29,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Stack,
     StackJump,
     Text,
-    XPath,
+    XPath as SuiteXPath,
     XPathVariable,
 )
 from corehq.apps.app_manager.util import (
@@ -268,7 +268,7 @@ class RemoteRequestFactory(object):
             frame = PushFrame(if_clause=XPath("instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project != instance('commcaresession')/session/user/data/commcare_project"))
             frame.add_datum(StackJump(
                 url=Text(
-                    xpath=XPath(
+                    xpath=SuiteXPath(
                         function=self.get_smart_link_function(),
                         variables=[
                             XPathVariable(
