@@ -160,13 +160,7 @@ def get_auto_update_rules(domain):
         caseRuleActions = CaseRuleAction.objects.filter(rule=rule)
 
         rule_data = {
-            "rule": {
-                "name": rule.name,
-                "case_type": rule.case_type,
-                "filter_on_server_modified": rule.filter_on_server_modified,
-                "server_modified_boundary": rule.server_modified_boundary,
-                "active": rule.active
-            },
+            "rule": rule.to_json(),
 
             "criteria": [
                 {
