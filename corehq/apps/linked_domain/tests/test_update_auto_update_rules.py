@@ -10,9 +10,6 @@ from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTes
 
 
 class TestUpdateAutoUpdateRules(BaseLinkedDomainTest):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
 
     def setUp(self):
 
@@ -21,32 +18,31 @@ class TestUpdateAutoUpdateRules(BaseLinkedDomainTest):
                 domain=self.domain,
                 active=True,
                 workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                name="Norway rule",
+                case_type="person",
+                filter_on_server_modified=True,
+                server_modified_boundary=None
             ),
             AutomaticUpdateRule(
                 domain=self.domain,
                 active=True,
                 workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                name="Is it hot enough?",
+                case_type="person",
+                filter_on_server_modified=False,
+                server_modified_boundary=2
             ),
             AutomaticUpdateRule(
                 domain=self.domain,
                 active=False,
                 workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                name="Closed parent case",
+                case_type="family_member",
+                filter_on_server_modified=True,
+                server_modified_boundary=None
             ),
         ]
 
-        test_rules[0].name = "Norway rule"
-        test_rules[1].name = "Is it hot enough?"
-        test_rules[2].name = "Closed parent case"
-
-        test_rules[0].case_type = "person"
-        test_rules[1].case_type = "person"
-        test_rules[2].case_type = "family_member"
-        test_rules[0].filter_on_server_modified = True
-        test_rules[1].filter_on_server_modified = False
-        test_rules[2].filter_on_server_modified = True
-        test_rules[0].server_modified_boundary = None
-        test_rules[1].server_modified_boundary = 2
-        test_rules[2].server_modified_boundary = None
         test_rules[0].save()
         test_rules[1].save()
         test_rules[2].save()
@@ -55,7 +51,7 @@ class TestUpdateAutoUpdateRules(BaseLinkedDomainTest):
         definition = MatchPropertyDefinition.objects.create(
             property_name="place",
             property_value="Norway",
-            match_type="EQUAL",
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
         )
         criteria = CaseRuleCriteria(rule=test_rules[0])
         criteria.definition = definition
@@ -64,7 +60,7 @@ class TestUpdateAutoUpdateRules(BaseLinkedDomainTest):
         definition = MatchPropertyDefinition.objects.create(
             property_name="temperature",
             property_value="96",
-            match_type="EQUAL",
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
         )
         criteria = CaseRuleCriteria(rule=test_rules[1])
         criteria.definition = definition
@@ -146,7 +142,8 @@ class TestUpdateAutoUpdateRules(BaseLinkedDomainTest):
                 criteria = caseRuleCriterias.first()
                 self.assertEqual(criteria.match_property_definition.property_name, "temperature")
                 self.assertEqual(criteria.match_property_definition.property_value, "96")
-                self.assertEqual(criteria.match_property_definition.match_type, "EQUAL")
+                self.assertEqual(criteria.match_property_definition.match_type,
+                    MatchPropertyDefinition.MATCH_EQUAL)
                 self.assertFalse(criteria.closed_parent_definition)
             elif(rule.name == "Norway rule"):
                 self.assertEqual(2, caseRuleCriterias.count())
