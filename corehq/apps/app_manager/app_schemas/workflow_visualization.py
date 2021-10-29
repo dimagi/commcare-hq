@@ -1,5 +1,6 @@
 import re
 from contextlib import contextmanager
+from enum import Enum
 from io import BytesIO
 
 import attr
@@ -39,8 +40,19 @@ def generate_app_workflow_diagram(app):
 class Node:
     id = attr.ib()
     label = attr.ib()
+    type = attr.ib()
     parent = attr.ib(default=None)
-    attrs = attr.ib(default={})
+    attrs = attr.ib(factory=dict)
+    children = attr.ib(factory=list)
+
+
+class NodeType(Enum):
+    ROOT = "root"
+    START = "start"
+    MODULE = "module"
+    FORM_MENU = "form_menu"
+    FORM_ENTRY = "form_entry"
+    CASE_LIST = "case_list"
 
 
 @attr.s
@@ -69,6 +81,14 @@ class AppWorkflowVisualizer:
         self.global_nodes = []
         self.node_stack = []
         self.edges = []
+
+        start = Node(self.START, "Start", NodeType.START, parent=self.ROOT)
+        self.nodes_by_id = {
+            "root": Node(self.ROOT, "Root", NodeType.ROOT, children=[start]),
+            "start": start
+        }
+        self.pending_reverse = []
+
         self.pos = 0
         self.fill_stack()
         self.styles = styles or DefaultStyle
@@ -81,9 +101,24 @@ class AppWorkflowVisualizer:
         self.form_link_attrs = {"color": self.styles.eof_color}
         self.case_list_form_link_attrs = {"color": self.styles.case_list_form_color, "constraint": "false"}
 
-    def stack_append(self, node):
+    def stack_append(self, node, is_global=False):
         """Append node to the current stack frame"""
-        self.node_stack[self.pos].append(node)
+        if is_global:
+            self.global_nodes.append(node)
+        else:
+            self.node_stack[self.pos].append(node)
+        self.nodes_by_id[node.id] = node
+
+        for pending in list(self.pending_reverse):
+            if pending.parent == node.id:
+                node.children.append(pending)
+                self.pending_reverse.remove(pending)
+
+        if node.parent:
+            try:
+                self.nodes_by_id[node.parent].children.append(node)
+            except KeyError:
+                self.pending_reverse.append(node)
 
     def fill_stack(self):
         """Fill the stack up to the given position (or the current position)"""
@@ -99,18 +134,20 @@ class AppWorkflowVisualizer:
         self.pos -= levels_to_move
 
     def add_module(self, unique_id, name, parent_id=None):
-        self.stack_append(Node(unique_id, name, parent_id or self.START, attrs=self.module_attrs))
+        self.stack_append(Node(unique_id, name, NodeType.MODULE, parent_id or self.START, attrs=self.module_attrs))
 
     def add_form_menu_item(self, unique_id, name, parent_id=None):
-        self.stack_append(Node(unique_id, name, parent_id or self.START, attrs=self.form_menu_attrs))
+        self.stack_append(
+            Node(unique_id, name, NodeType.FORM_MENU, parent_id or self.START, attrs=self.form_menu_attrs))
 
     def add_form_entry(self, unique_id, name, parent_id):
-        self.stack_append(Node(f"{unique_id}_form_entry", name, parent_id, attrs=self.form_entry_attrs))
+        self.stack_append(
+            Node(f"{unique_id}_form_entry", name, NodeType.FORM_ENTRY, parent_id, attrs=self.form_entry_attrs))
 
     def add_case_list(self, node_id, case_type, has_search, parent):
-        self.global_nodes.append(Node(
-            node_id, f"Select '{case_type}' case", attrs=self.case_list_attrs
-        ))
+        self.stack_append(Node(
+            node_id, f"Select '{case_type}' case", NodeType.CASE_LIST, attrs=self.case_list_attrs
+        ), is_global=True)
         self.add_edge(Edge(parent, node_id))
         if has_search:
             self.add_edge(Edge(node_id, node_id, "Search"))
