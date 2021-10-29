@@ -229,7 +229,7 @@ gevent==1.4.0
     #   git-build-branch
 ghdiff==0.4
     # via -r base-requirements.in
-git-build-branch==0.1.10
+git-build-branch==0.1.12
     # via -r dev-requirements.in
 gitdb==4.0.7
     # via gitpython
