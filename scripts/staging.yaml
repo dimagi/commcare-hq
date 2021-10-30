@@ -81,9 +81,9 @@ branches:
     - dm/upgrade-gevent # Daniel Oct 19
     - dm/upgrade-xlrd # Daniel Oct 21
 #    - ml/remove-pickles-reports # Minha Oct 21
+    - sk/data-registry-form-linking+sk/app-workflow-visualization # Simon oct 30
     - sk/data-registry-form-linking+jls/smart-linking-in-web-apps-stack-jump
     - jls/smart-linking-in-web-apps-stack-jump # Jenny Oct 20
-    - sk/data-registry-form-linking+sk/app-workflow-visualization # Simon oct 30
     - sk/data-registry-form-linking  # Simon Oct 22
     - ad/auto-update-rules-for-linked-spaces # Addison Oct 25
     - sk/app-workflow-visualization # Simon Oct 26
