@@ -59,6 +59,13 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             defer.reject();
 
                         } else {
+                            if (response.smartLinkRedirect) {
+                                // TODO: this is really slow
+                                console.log("Redirecting to " + response.smartLinkRedirect);
+                                document.location = response.smartLinkRedirect;
+                                return;
+                            }
+
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
@@ -110,6 +117,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "force_manual_action": params.forceManualAction,
                     "query_data": params.queryData,
                     "cases_per_page": casesPerPage,
+                    "smart_link_template": params.smartLinkTemplate,
                     "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                     "isPersistent": params.isPersistent,
                     "useLiveQuery": user.useLiveQuery,
