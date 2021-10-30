@@ -244,8 +244,7 @@ def generate_app_workflow_diagram_source(app, style=None):
                         id_stack.append(item.id)
                         commands.append(item)
                     else:
-                        module_commands = [c.id for c in commands if '-f' not in c.id]
-                        item_id = f"{'.'.join(module_commands + [item.id])}"
+                        item_id = _get_case_list_id([c.id for c in commands], item.id)
                         if item_id not in added:
                             added.append(item_id)
                             if item.from_parent_module:
@@ -277,6 +276,11 @@ def generate_app_workflow_diagram_source(app, style=None):
                 add_case_list_form_eof_edges(module, form, helper, workflow)
 
     return workflow.render(app.name)
+
+
+def _get_case_list_id(id_stack, next_item_id):
+    module_commands = [cid for cid in id_stack if re.match(r'm\d+', cid)]
+    return f"{'.'.join(module_commands + [next_item_id])}"
 
 
 def add_eof_edges(app, module, form, graph, id_stack, workflow_option=None, label=None):
@@ -348,7 +352,8 @@ def add_case_list_form_eof_edges(module, form, workflow_helper, graph):
             graph.add_eof_workflow(form_id, frame.children[-1].id, label)
         else:
             ids = [d.id for d in frame.workflow_children if getattr(d, "requires_selection", True)]
-            graph.add_eof_workflow(form_id, f"{'.'.join(ids)}", label)
+            item_id = _get_case_list_id(ids, ids[-1])
+            graph.add_eof_workflow(form_id, item_id, label)
 
 
 def add_case_list_form_edge(item_id, app, module, graph):
