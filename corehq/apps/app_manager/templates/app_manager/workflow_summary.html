@@ -3,12 +3,14 @@
 {% load i18n %}
 
 {% block title %}{% trans "Workflow Summary" %} - {% trans "Version" %} {{ app_version }}{% endblock %}
-
 {% requirejs_main 'app_manager/js/summary/workflow_summary' %}
 
 {% block content_extra %}
   {% initial_page_data 'workflow_dot' workflow_dot %}
   {% registerurl "download_workflow_diagram" domain app_id %}
+  <div class="initial-page-data hide">
+    <div data-name="hpcc_base_url" data-value="{% static '@hpcc-js/wasm/dist/' %}"></div>
+  </div>
   <div class="ko-template" id="app-workflow-summary">
     <div class="page-header" style="margin-top: 0;">
         <h3>

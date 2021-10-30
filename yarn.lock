@@ -1535,6 +1535,10 @@ datatables-colreorder@DataTables/ColReorder#^1.5.1:
   version "0.0.0"
   resolved "https://codeload.github.com/DataTables/ColReorder/tar.gz/f0e558a1f38919fa95d82700aeea7ce3ca6fbfd5"
 
+datatables-fixedcolumns@DataTables/FixedColumns#3.2.0:
+  version "0.0.0"
+  resolved "https://codeload.github.com/DataTables/FixedColumns/tar.gz/a87428accba62d881e14fa2710bcc035a6efbbb6"
+
 datatables-fixedheader@DataTables/FixedHeader#^3.1.3:
   version "0.0.0"
   resolved "https://codeload.github.com/DataTables/FixedHeader/tar.gz/314b2ee32502c1ecc82c7a37e7bfa0f1eea92a23"
@@ -1784,10 +1788,6 @@ duplexify@^3.4.2, duplexify@^3.6.0:
     inherits "^2.0.1"
     readable-stream "^2.0.0"
     stream-shift "^1.0.0"
-
-dyaratatables-fixedcolumns@DataTables/FixedColumns#3.2.0:
-  version "0.0.0"
-  resolved "https://codeload.github.com/DataTables/FixedColumns/tar.gz/a87428accba62d881e14fa2710bcc035a6efbbb6"
 
 ecc-jsbn@~0.1.1:
   version "0.1.2"
