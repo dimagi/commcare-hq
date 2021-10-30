@@ -587,7 +587,7 @@ def test_workflow_diagram_case_list_form():
         "m1.case_id" -> "m0-f0_form_entry" [color=blue constraint=false]
         "m1.case_id" -> "m1-f0"
         "m1-f0" -> "m1-f0_form_entry"
-        "m0-f0_form_entry" -> "m1.case_id" [label="Case Created" color=red constraint=false]
+        "m0-f0_form_entry" -> "m1-f0_form_entry" [label="Case Created" color=red constraint=false]
         "m0-f0_form_entry" -> "m1.case_id" [label="Case Not Created" color=red constraint=false]
     }""")
 
@@ -677,7 +677,7 @@ def test_workflow_diagram_case_list_form_child_case():
         "m1.case_id" -> "m0-f0_form_entry" [color=blue constraint=false]
         "m1.case_id" -> "m1-f0"
         "m1-f0" -> "m1-f0_form_entry"
-        "m0-f0_form_entry" -> "m1.case_id" [label="Case Created" color=red constraint=false]
+        "m0-f0_form_entry" -> "m1-f0_form_entry" [label="Case Created" color=red constraint=false]
         "m0-f0_form_entry" -> "m1.case_id" [label="Case Not Created" color=red constraint=false]
     }""")
 

@@ -155,8 +155,14 @@ class AppWorkflowVisualizer:
 
     def add_eof_workflow(self, form_id, target_node, label=None):
         target = self.nodes_by_id[target_node]
-        if len(target.children) == 1 and target.children[0].type == NodeType.CASE_LIST:
-            target_node = target.children[0].id
+        if len(target.children) == 1:
+            # advance to next node
+            target_child = target.children[0]
+            if target_child.type == NodeType.CASE_LIST:
+                target_node = target_child.id
+            elif target.type == NodeType.CASE_LIST and target_child.type == NodeType.FORM_MENU:
+                # advance to form entry if case has been created
+                target_node = target_child.children[0].id
         self.add_edge(Edge(f"{form_id}_form_entry", target_node, label, attrs=self.eof_attrs))
 
     def add_eof_form_link(self, tail_form_id, head_form_id, label=None):
