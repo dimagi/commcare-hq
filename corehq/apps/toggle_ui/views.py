@@ -2,26 +2,22 @@ import decimal
 import json
 from collections import Counter
 
+from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
+from django.http import JsonResponse
 from django.http.response import Http404, HttpResponse
-from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
-
-from couchdbkit.exceptions import ResourceNotFound
-
-from corehq.apps.toggle_ui.models import ToggleAudit
-from couchforms.analytics import get_last_form_submission_received
-from toggle.models import Toggle
-from toggle.shortcuts import parse_toggle, namespaced_item
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.toggle_ui.utils import find_static_toggle, get_toggles_attachment_file
+from corehq.apps.toggle_ui.models import ToggleAudit
+from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
+from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     ALL_NAMESPACES,
@@ -38,8 +34,12 @@ from corehq.toggles import (
     toggles_enabled_for_domain,
     toggles_enabled_for_user, FeatureRelease,
 )
+from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
-from couchexport.models import Format
+from couchforms.analytics import get_last_form_submission_received
+from soil import DownloadBase
+from toggle.models import Toggle
+from toggle.shortcuts import parse_toggle, namespaced_item
 
 NOT_FOUND = "Not Found"
 
@@ -372,12 +372,16 @@ def set_toggle(request, toggle_slug):
 
 
 @require_superuser_or_contractor
+@require_POST
 def export_toggles(request):
-    tag = request.GET['tag'] or None
+    tag = request.POST['tag'] or None
 
-    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
-    response['Content-Disposition'] = 'attachment; filename="flags.xlsx"'
-    outfile = get_toggles_attachment_file(tag)
-    response.write(outfile.getvalue())
+    download = DownloadBase()
+    download.set_task(generate_toggle_csv_download.delay(
+        tag, download.download_id, request.couch_user.username
+    ))
 
-    return response
+    return JsonResponse({
+        "download_url": reverse("ajax_job_poll", kwargs={"download_id": download.download_id}),
+        "download_id": download.download_id,
+    })

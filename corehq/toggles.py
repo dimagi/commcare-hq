@@ -1212,9 +1212,8 @@ NON_PARENT_MENU_SELECTION = StaticToggle(
     'Allow selecting of module of any case-type in select-parent workflow',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Allow selecting of module of any case-type in select-parent workflow
-    """,
+    description="Allow selecting of module of any case-type in select-parent workflow",
+    help_link="https://confluence.dimagi.com/display/USH/Selecting+any+case+in+%27select+parent+first%27+workflow"
 )
 
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(

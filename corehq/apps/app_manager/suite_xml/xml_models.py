@@ -856,13 +856,13 @@ class Detail(OrderedXmlObject, IdNode):
         # can't check len(self.variables) directly since NodeList uses an
         # xpath to find its children which doesn't work here since
         # each node has a custom name
-        return self._variables is not None and len(self.variables.node.getchildren()) > 0
+        return self._variables is not None and len(self.variables.node) > 0
 
     def get_variables(self):
         """
         :returns: List of DetailVariable objects
         """
-        return [self.variables.mapper.to_python(node) for node in self.variables.node.getchildren()]
+        return [self.variables.mapper.to_python(node) for node in self.variables.node]
 
     def get_all_xpaths(self):
         result = set()

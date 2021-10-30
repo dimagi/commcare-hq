@@ -131,6 +131,12 @@ class WorkflowHelper(PostProcessor):
 
         return frame_children
 
+    def get_frame_children_for_navigation(self, module, form):
+        frame_children = self.get_frame_children(module, form)
+        if module.root_module_id:
+            frame_children = prepend_parent_frame_children(self, frame_children, module.root_module)
+        return frame_children
+
     def get_form_datums(self, form):
         """
         :return: List of DatumMeta objects for this form
@@ -567,6 +573,7 @@ class StackFrameMeta(object):
         self.current_session = current_session
         self.if_clause = unescape(if_clause) if if_clause else None
         self.children = []
+        self.workflow_children = []
         self.allow_empty_frame = allow_empty_frame
 
         if children:
@@ -574,6 +581,7 @@ class StackFrameMeta(object):
                 self.add_child(child)
 
     def add_child(self, child):
+        self.workflow_children.append(child)
         if isinstance(child, WorkflowSessionMeta):
             child = child.to_stack_datum()
         self.children.append(child)
