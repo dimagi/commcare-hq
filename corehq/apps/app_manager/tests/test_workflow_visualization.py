@@ -51,17 +51,17 @@ def test_workflow_diagram_not_all_forms_require_case():
             "m0-f1_form_entry" [label="case form 1 [en] " shape=oval]
             "m0-f2_form_entry" [label="case form 2 [en] " shape=oval]
         }
-        "m0.case_id" [label="Select 'case' case" shape=folder]
+        "m0.m0-f*.case_id" [label="Select 'case' case" shape=folder]
         root -> start
         start -> m0
         m0 -> "m0-f0"
         "m0-f0" -> "m0-f0_form_entry"
         m0 -> "m0-f1"
-        "m0-f1" -> "m0.case_id"
-        "m0.case_id" -> "m0-f1_form_entry"
+        "m0-f1" -> "m0.m0-f*.case_id"
+        "m0.m0-f*.case_id" -> "m0-f1_form_entry"
         m0 -> "m0-f2"
-        "m0-f2" -> "m0.case_id"
-        "m0.case_id" -> "m0-f2_form_entry"
+        "m0-f2" -> "m0.m0-f*.case_id"
+        "m0.m0-f*.case_id" -> "m0-f2_form_entry"
     }""")
 
 
@@ -111,7 +111,7 @@ def test_workflow_diagram_not_all_forms_require_case_child_module():
             "m1-f2_form_entry" [label="visit history form 2 [en] " shape=oval]
         }
         "m0.case_id" [label="Select 'child' case" shape=folder]
-        "m0.m1.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
+        "m0.case_id.m1.m1-f*.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
         root -> start
         start -> m0
         m0 -> "m0.case_id"
@@ -121,11 +121,11 @@ def test_workflow_diagram_not_all_forms_require_case_child_module():
         m1 -> "m1-f0"
         "m1-f0" -> "m1-f0_form_entry"
         m1 -> "m1-f1"
-        "m1-f1" -> "m0.m1.case_id_load_visit_0"
-        "m0.m1.case_id_load_visit_0" -> "m1-f1_form_entry"
+        "m1-f1" -> "m0.case_id.m1.m1-f*.case_id_load_visit_0"
+        "m0.case_id.m1.m1-f*.case_id_load_visit_0" -> "m1-f1_form_entry"
         m1 -> "m1-f2"
-        "m1-f2" -> "m0.m1.case_id_load_visit_0"
-        "m0.m1.case_id_load_visit_0" -> "m1-f2_form_entry"
+        "m1-f2" -> "m0.case_id.m1.m1-f*.case_id_load_visit_0"
+        "m0.case_id.m1.m1-f*.case_id_load_visit_0" -> "m1-f2_form_entry"
     }
     """)
 
@@ -166,7 +166,7 @@ def test_workflow_diagram_modules():
             "m2-f0_form_entry" [label="visit history form 0 [en] " shape=oval]
         }
         "m1.case_id" [label="Select 'child' case" shape=folder]
-        "m1.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
+        "m1.case_id.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
         root -> start
         start -> m0
         m0 -> "m0-f0"
@@ -176,8 +176,8 @@ def test_workflow_diagram_modules():
         "m1.case_id" -> "m1-f0"
         "m1-f0" -> "m1-f0_form_entry"
         "m1.case_id" -> m2
-        m2 -> "m1.m2.case_id_load_visit_0"
-        "m1.m2.case_id_load_visit_0" -> "m2-f0"
+        m2 -> "m1.case_id.m2.case_id_load_visit_0"
+        "m1.case_id.m2.case_id_load_visit_0" -> "m2-f0"
         "m2-f0" -> "m2-f0_form_entry"
     }
     """)
@@ -308,7 +308,7 @@ def test_workflow_diagram_child_module_form_links():
             "m2-f0_form_entry" [label="visit history form 0 [en] " shape=oval]
         }
         "m1.case_id" [label="Select 'child' case" shape=folder]
-        "m1.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
+        "m1.case_id.m2.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
         root -> start
         start -> m0
         m0 -> "m0-f0"
@@ -318,8 +318,8 @@ def test_workflow_diagram_child_module_form_links():
         "m1.case_id" -> "m1-f0"
         "m1-f0" -> "m1-f0_form_entry"
         "m1.case_id" -> m2
-        m2 -> "m1.m2.case_id_load_visit_0"
-        "m1.m2.case_id_load_visit_0" -> "m2-f0"
+        m2 -> "m1.case_id.m2.case_id_load_visit_0"
+        "m1.case_id.m2.case_id_load_visit_0" -> "m2-f0"
         "m2-f0" -> "m2-f0_form_entry"
         "m0-f0_form_entry" -> "m1-f0_form_entry" [label="true()" color=red]
         "m1-f0_form_entry" -> "m2-f0_form_entry" [label="(today() - dob) &lt; 7" color=red]
@@ -496,15 +496,15 @@ def test_workflow_diagram_post_form_workflow_parent():
             "m1-f0_form_entry" [label="visit history form 0 [en] " shape=oval]
         }
         "m0.case_id" [label="Select 'child' case" shape=folder]
-        "m0.m1.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
+        "m0.case_id.m1.case_id_load_visit_0" [label="Select 'visit' case" shape=folder]
         root -> start
         start -> m0
         m0 -> "m0.case_id"
         "m0.case_id" -> "m0-f0"
         "m0-f0" -> "m0-f0_form_entry"
         "m0.case_id" -> m1
-        m1 -> "m0.m1.case_id_load_visit_0"
-        "m0.m1.case_id_load_visit_0" -> "m1-f0"
+        m1 -> "m0.case_id.m1.case_id_load_visit_0"
+        "m0.case_id.m1.case_id_load_visit_0" -> "m1-f0"
         "m1-f0" -> "m1-f0_form_entry"
         "m1-f0_form_entry" -> "m0.case_id" [color=red constraint=false]
     }
@@ -675,7 +675,7 @@ def test_workflow_diagram_case_list_form_child_case_parent_selection():
         }
         "m1.case_id" [label="Select 'parent' case" shape=folder]
         "m2.parent_id" [label="Select 'parent' case" shape=folder]
-        "m2.case_id" [label="Select 'child' case" shape=folder]
+        "m2.parent_id.case_id" [label="Select 'child' case" shape=folder]
         root -> start
         start -> m0
         m0 -> "m0-f0"
@@ -688,14 +688,14 @@ def test_workflow_diagram_case_list_form_child_case_parent_selection():
         start -> m2
         m2 -> "m2.parent_id"
         "m2.parent_id" -> "m1-f0_form_entry" [color=blue constraint=false]
-        "m2.parent_id" -> "m2.case_id"
-        "m2.case_id" -> "m1-f0_form_entry" [color=blue constraint=false]
-        "m2.case_id" -> "m2-f0"
+        "m2.parent_id" -> "m2.parent_id.case_id"
+        "m2.parent_id.case_id" -> "m1-f0_form_entry" [color=blue constraint=false]
+        "m2.parent_id.case_id" -> "m2-f0"
         "m2-f0" -> "m2-f0_form_entry"
         "m0-f0_form_entry" -> "m1-f0_form_entry" [label="Case Created" color=red constraint=false]
         "m0-f0_form_entry" -> "m1.case_id" [label="Case Not Created" color=red constraint=false]
         "m1-f0_form_entry" -> "m2-f0_form_entry" [label="Case Created" color=red constraint=false]
-        "m1-f0_form_entry" -> "m2.case_id" [label="Case Not Created" color=red constraint=false]
+        "m1-f0_form_entry" -> "m2.parent_id.case_id" [label="Case Not Created" color=red constraint=false]
     }""")
 
 
