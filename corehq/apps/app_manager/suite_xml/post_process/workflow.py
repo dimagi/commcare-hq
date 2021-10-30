@@ -550,6 +550,7 @@ class StackFrameMeta(object):
         self.current_session = current_session
         self.if_clause = unescape(if_clause) if if_clause else None
         self.children = []
+        self.workflow_children = []
         self.allow_empty_frame = allow_empty_frame
 
         if children:
@@ -557,6 +558,7 @@ class StackFrameMeta(object):
                 self.add_child(child)
 
     def add_child(self, child):
+        self.workflow_children.append(child)
         if isinstance(child, WorkflowDatumMeta):
             child = child.to_stack_datum()
         self.children.append(child)

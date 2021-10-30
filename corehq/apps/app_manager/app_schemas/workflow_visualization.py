@@ -338,10 +338,10 @@ def add_case_list_form_eof_edges(module, form, workflow_helper, graph):
             else:
                 label = frame.if_clause
 
-        if isinstance(frame.children[-1], CommandId):
+        if isinstance(frame.workflow_children[-1], CommandId):
             graph.add_eof_workflow(form_id, frame.children[-1].id, label)
         else:
-            ids = [d.id for d in frame.children]
+            ids = [d.id for d in frame.workflow_children if getattr(d, "requires_selection", True)]
             graph.add_eof_workflow(form_id, f"{'.'.join(ids)}", label)
 
 

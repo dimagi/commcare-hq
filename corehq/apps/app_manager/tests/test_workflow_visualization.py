@@ -636,6 +636,58 @@ def test_workflow_diagram_case_list_form_return_to_case_list():
     }""")
 
 
+@patch_get_xform_resource_overrides()
+def test_workflow_diagram_case_list_form_child_case():
+    factory = AppFactory(build_version='2.9.0')
+    m0, m0f0 = factory.new_basic_module("register parent", "parent")
+    factory.form_opens_case(m0f0, "case")
+
+    m1, m1f0 = factory.new_basic_module("register child", "parent", case_list_form=m0f0)
+    factory.form_requires_case(m1f0, "parent")
+    factory.form_opens_case(m1f0, "child", is_subcase=True)
+
+    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
+    _check_output(source, """
+    digraph "Untitled Application" {
+        graph [rankdir=LR]
+        root [label=Root]
+        start [label=Start]
+        {
+            rank=same
+            m0 [label="register parent module [en] " shape=box]
+            m1 [label="register child module [en] " shape=box]
+        }
+        {
+            rank=same
+            "m0-f0" [label="register parent form 0 [en] " shape=ellipse]
+            "m1-f0" [label="register child form 0 [en] " shape=ellipse]
+        }
+        {
+            rank=same
+            "m0-f0_form_entry" [label="register parent form 0 [en] " shape=oval]
+            "m1-f0_form_entry" [label="register child form 0 [en] " shape=oval]
+        }
+        "m1.case_id" [label="Select 'parent' case" shape=folder]
+        root -> start
+        start -> m0
+        m0 -> "m0-f0"
+        "m0-f0" -> "m0-f0_form_entry"
+        start -> m1
+        m1 -> "m1.case_id"
+        "m1.case_id" -> "m0-f0_form_entry" [color=blue constraint=false]
+        "m1.case_id" -> "m1-f0"
+        "m1-f0" -> "m1-f0_form_entry"
+        "m0-f0_form_entry" -> "m1.case_id" [label="Case Created" color=red constraint=false]
+        "m0-f0_form_entry" -> "m1.case_id" [label="Case Not Created" color=red constraint=false]
+    }""")
+
+
+# TODO: filter modules & forms
+#  - select all forms, expand to parents, expand to linked nodes
+#  - different styling for nodes that aren't directly part of the flow
+
+# TODO: refactor rendering - extract graphviz renderer
+
 def test_substitute_hashtags_new_case():
     factory = AppFactory(build_version='2.9.0')
     m0, m0f0 = factory.new_basic_module('module', 'butterfly')
