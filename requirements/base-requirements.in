@@ -37,7 +37,7 @@ django-simple-captcha==0.5.13
 django-statici18n==1.9.0
 django-tastypie==0.14.3
 django-transfer==0.4
-django-two-factor-auth~=1.12
+django-two-factor-auth~=1.13
 django-user-agents==0.4.0
 django-websocket-redis==0.6.0
 django~=2.2.21
