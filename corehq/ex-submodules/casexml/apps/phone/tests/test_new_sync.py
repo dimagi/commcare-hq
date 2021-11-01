@@ -6,7 +6,6 @@ from jsonobject import JsonObject
 from six.moves import range
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from casexml.apps.phone.const import LIVEQUERY
 from casexml.apps.phone.exceptions import RestoreException
 from casexml.apps.phone.models import SimplifiedSyncLog
 from casexml.apps.phone.restore import RestoreConfig
