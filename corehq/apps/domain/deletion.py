@@ -348,7 +348,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('ota', 'DeviceLogRequest', 'domain'),
-    ModelDeletion('phone', 'OwnershipCleanlinessFlag', 'domain'),
     ModelDeletion('phone', 'SyncLogSQL', 'domain'),
     CustomDeletion('ota', _delete_demo_user_restores, ['DemoUserRestore']),
     ModelDeletion('phonelog', 'ForceCloseEntry', 'domain'),

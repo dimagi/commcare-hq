@@ -6,7 +6,7 @@ from jsonobject import JsonObject
 from six.moves import range
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from casexml.apps.phone.const import CLEAN_OWNERS, LIVEQUERY
+from casexml.apps.phone.const import LIVEQUERY
 from casexml.apps.phone.exceptions import RestoreException
 from casexml.apps.phone.models import SimplifiedSyncLog
 from casexml.apps.phone.restore import RestoreConfig
@@ -39,12 +39,6 @@ class TestLiveQuery(TestCase):
     def tearDownClass(cls):
         cls.project.delete()
         super(TestLiveQuery, cls).tearDownClass()
-
-    def test_clean_owners_after_livequery(self):
-        device = MockDevice(self.project, self.user, {"case_sync": LIVEQUERY})
-        device.sync()
-        with self.assertRaises(RestoreException):
-            device.sync(case_sync=CLEAN_OWNERS)
 
 
 @sharded
