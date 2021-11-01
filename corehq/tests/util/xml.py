@@ -1,22 +1,22 @@
 """XML test utilities"""
-import difflib
-
 import lxml
 from lxml.doctestcompare import LHTMLOutputChecker, LXMLOutputChecker
+
+from corehq.tests.util import check_output
 
 
 def assert_xml_equal(expected, actual, normalize=True):
     if normalize:
         expected = parse_normalize(expected)
         actual = parse_normalize(actual)
-    _check_shared(expected, actual, LXMLOutputChecker(), "xml")
+    check_output(expected, actual, LXMLOutputChecker(), "xml")
 
 
 def assert_html_equal(expected, actual, normalize=True):
     if normalize:
         expected = parse_normalize(expected, is_html=True)
         actual = parse_normalize(actual, is_html=True)
-    _check_shared(expected, actual, LHTMLOutputChecker(), "html")
+    check_output(expected, actual, LHTMLOutputChecker(), "html")
 
 
 def parse_normalize(xml, to_string=True, is_html=False):
@@ -40,25 +40,3 @@ def normalize_attributes(xml):
             node.attrib.clear()
             node.attrib.update(attrs)
     return xml
-
-
-def _check_shared(expected, actual, checker, extension):
-    # snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
-    if isinstance(expected, bytes):
-        expected = expected.decode('utf-8')
-    if isinstance(actual, bytes):
-        actual = actual.decode('utf-8')
-    if not checker.check_output(expected, actual, 0):
-        original_message = message = "{} mismatch\n\n".format(extension.upper())
-        diff = difflib.unified_diff(
-            expected.splitlines(keepends=True),
-            actual.splitlines(keepends=True),
-            fromfile='want.{}'.format(extension),
-            tofile='got.{}'.format(extension)
-        )
-        for line in diff:
-            message += line
-        if message != original_message:
-            # check that there was actually a diff, because checker.check_output
-            # doesn't work with unicode characters in xml node names
-            raise AssertionError(message)
