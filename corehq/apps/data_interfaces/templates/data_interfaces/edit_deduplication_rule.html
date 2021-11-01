@@ -17,6 +17,7 @@
       <p class="help-block alert alert-info"><i class="fa fa-info-circle"></i>
         {% blocktrans %}
           This deduplication rule is currently backfilling. You will be able to edit it once it has completed. <strong>{{ progress }}%</strong> ({{ complete }} / {{ total }}) cases processed.
+          Reload the page to see the updated progress.
         {% endblocktrans %}
       </p>
     {% endif %}
@@ -63,7 +64,7 @@
         <div data-bind="template: {name: 'dedupe-case-property', foreach: caseProperties, as: 'caseProperty'} "></div>
         <div class="form-group">
           <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
-            {% trans "Add Filter" %}
+            {% trans "Add Case Property" %}
           </label>
           <button class="btn btn-default" type="button" data-bind="click: addCaseProperty">
             <i class="fa fa-plus"></i>

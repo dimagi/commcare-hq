@@ -967,8 +967,39 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         context['case_types'] = sorted(list(get_case_types_for_domain(self.domain)))
         return context
 
+    def get_context_data(self, **kwargs):
+        context = super(DeduplicationRuleCreateView, self).get_context_data(**kwargs)
+        if 'error' in kwargs and kwargs['error']:
+            rule = kwargs['rule_params']
+            action = kwargs['action_params']
+            context.update(
+                {
+                    "name": rule['name'],
+                    "case_type": rule['case_type'],
+                    "match_type": action['match_type'],
+                    "case_properties": action['case_properties'],
+                    "include_closed": action['include_closed'],
+                    "properties_to_update": [
+                        {"name": prop["name"], "valueType": prop["value_type"], "value": prop["value"]}
+                        for prop in action['properties_to_update']
+                    ],
+                }
+            )
+        return context
+
     def post(self, request, *args, **kwargs):
         rule_params, action_params = self.parse_params(request)
+        errors = self.validate_action_params(action_params)
+        if errors:
+            error_message = _("Deduplication rule not saved. ")
+            messages.error(request, error_message + "; ".join(errors))
+            kwargs.update({
+                'error': True,
+                'rule_params': rule_params,
+                'action_params': action_params,
+            })
+            return self.get(request, *args, **kwargs)
+
         with transaction.atomic():
             rule = self._create_rule(request.domain, **rule_params)
             action, action_definition = rule.add_action(
@@ -1001,6 +1032,20 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             ],
         }
         return rule_params, action_params
+
+    def validate_action_params(self, action_params):
+        errors = []
+        case_properties = action_params['case_properties']
+        if len(set(case_properties)) != len(case_properties):
+            errors.append(_("Matching case properties must be unique"))
+
+        update_properties = [prop['name'] for prop in action_params['properties_to_update']]
+        if len(set(update_properties)) != len(update_properties):
+            errors.append(_("Action case properties must be unique"))
+
+        if set(case_properties) & set(update_properties):
+            errors.append(_("You cannot update properties that are used to match a duplicate."))
+        return errors
 
     def _create_rule(self, domain, name, case_type):
         return AutomaticUpdateRule.objects.create(
@@ -1083,6 +1128,17 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
             )
 
         rule_params, action_params = self.parse_params(request)
+        errors = self.validate_action_params(action_params)
+        if errors:
+            error_message = _("Deduplication rule not saved. ")
+            messages.error(request, error_message + "; ".join(errors))
+            kwargs.update({
+                'error': True,
+                'rule_params': rule_params,
+                'action_params': action_params,
+            })
+            return self.get(request, *args, **kwargs)
+
         with transaction.atomic():
             rule_modified = self._update_model_instance(self.rule, rule_params)
             action_modified = self._update_model_instance(self.dedupe_action, action_params)
