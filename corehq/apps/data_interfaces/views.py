@@ -26,6 +26,7 @@ from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
 from corehq.apps.casegroups.dbaccessors import (
     get_case_groups_in_domain,
     get_number_of_case_groups_in_domain,
@@ -48,8 +49,8 @@ from corehq.apps.data_interfaces.forms import (
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
-    CaseDuplicate,
     CaseDeduplicationActionDefinition,
+    CaseDuplicate,
 )
 from corehq.apps.data_interfaces.tasks import (
     bulk_form_management_async,
@@ -1040,10 +1041,20 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             errors.append(_("Matching case properties must be unique"))
 
         update_properties = [prop['name'] for prop in action_params['properties_to_update']]
-        if len(set(update_properties)) != len(update_properties):
+        update_properties_set = set(update_properties)
+
+        reserved_properties_updated = (
+            set(prop.replace("@", "") for prop in SPECIAL_CASE_PROPERTIES) & update_properties_set
+        )
+        if reserved_properties_updated:
+            errors.append(
+                _("You cannot update reserved property: {}").format(
+                    ",".join(reserved_properties_updated))
+            )
+        if len(update_properties_set) != len(update_properties):
             errors.append(_("Action case properties must be unique"))
 
-        if set(case_properties) & set(update_properties):
+        if set(case_properties) & update_properties_set:
             errors.append(_("You cannot update properties that are used to match a duplicate."))
         return errors
 
