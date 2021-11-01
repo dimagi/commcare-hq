@@ -220,7 +220,7 @@ def generate_app_workflow_diagram_source(app, style=None):
     stacks_by_form = {}
     for module in app.get_modules():
         for form in module.get_suite_forms():
-            frame_children = helper.get_frame_children_for_navigation(form.get_module(), form)
+            frame_children = helper.get_frame_children_for_navigation(module, form)
 
             stack = [d for d in frame_children if getattr(d, "requires_selection", True)]
             id_stack = []
@@ -233,13 +233,9 @@ def generate_app_workflow_diagram_source(app, style=None):
                     if isinstance(item, CommandId):
                         if item.id not in added:
                             added.append(item.id)
-                            if '-f' in item.id:
-                                m_id, f_id = item.id.split("-")
-                                module = app.get_module(int(m_id[1:]))
-                                form = module.get_form(int(f_id[1:]))
+                            if re.match(r"m\d+-f\d+", item.id):
                                 workflow.add_form_menu_item(item.id, trans(form.name), previous)
                             else:
-                                module = app.get_module(int(item.id[1:]))
                                 workflow.add_module(item.id, trans(module.name), previous)
                         id_stack.append(item.id)
                         commands.append(item)
