@@ -463,6 +463,12 @@ class Stack(XmlObject):
         self.node.append(frame.node)
 
 
+class StackJump(XmlObject):
+    ROOT_NAME = 'jump'
+
+    url = NodeField('url/text', Text)
+
+
 class Argument(IdNode):
     ROOT_NAME = 'argument'
 
