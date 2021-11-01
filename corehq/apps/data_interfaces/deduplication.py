@@ -55,7 +55,7 @@ def reset_and_backfill_deduplicate_rule(rule):
         return
 
     if rule.workflow != AutomaticUpdateRule.WORKFLOW_DEDUPLICATE:
-        raise AttributeError
+        raise ValueError("You can only backfill a rule with workflow DEDUPLICATE")
 
     rule.locked_for_editing = True
     rule.save()
