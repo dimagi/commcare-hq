@@ -7,7 +7,6 @@ from corehq.apps.data_interfaces.models import (
     DEDUPE_XMLNS,
     AutomaticUpdateRule,
 )
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import CASE_DEDUPE
 
@@ -55,10 +54,6 @@ class CaseDeduplicationProcessor(PillowProcessor):
 
     def _process_action(self, domain, rule, action, changed_properties, case_id):
         if action.definition.properties_fit_definition(changed_properties):
-            try:
-                case = CaseAccessors(domain).get_case(case_id)
-            except CaseNotFound:
-                return
-
+            case = CaseAccessors(domain).get_case(case_id)
             if case.type == rule.case_type:
                 rule.run_rule(case, datetime.utcnow())
