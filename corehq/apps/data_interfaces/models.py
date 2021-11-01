@@ -787,7 +787,7 @@ class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
         result = []
         for p in properties:
             if not isinstance(p, self.PropertyDefinition):
-                raise ValueError("Expected {}.PropertyDefinition".format(self.__class__.__name__))
+                raise ValueError(f"Expected {self.__class__.__name__}.PropertyDefinition")
 
             result.append(p.to_json())
 
