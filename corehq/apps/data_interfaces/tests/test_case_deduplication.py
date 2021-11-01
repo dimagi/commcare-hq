@@ -21,7 +21,6 @@ from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.xform import get_xform_pillow
@@ -46,7 +45,6 @@ class FindingDuplicatesTest(TestCase):
         self.factory = CaseFactory(self.domain)
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases()
         ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
         super().tearDown()
 
@@ -208,16 +206,6 @@ class CaseDeduplicationActionTest(TestCase):
             )
         ])
         cls.action.save()
-
-    @classmethod
-    def tearDownClass(cls, *args, **kwargs):
-        cls.rule.hard_delete()
-        super().tearDownClass()
-
-    def tearDown(self):
-        CaseDuplicate.objects.all().delete()
-        FormProcessorTestUtils.delete_all_cases()
-        super().tearDown()
 
     def _create_cases(self, num_cases=5):
         faker = Faker()
