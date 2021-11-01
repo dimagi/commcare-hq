@@ -74,8 +74,19 @@ def _get_es_query(domain, user_type, user_filters):
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
     location_id = user_filters.get('location_id', None)
+    # The following two filters applies only to MOBILE_USER_TYPE
+    selected_location_only = user_filters.get('selected_location_only', False)
+    user_active_status = user_filters.get('user_active_status', None)
 
-    query = UserES().domain(domain).remove_default_filter('active')
+    if user_active_status is None:
+        # Show all users in domain - will always be true for WEB_USER_TYPE
+        query = UserES().domain(domain).remove_default_filter('active')
+    elif user_active_status:
+        # Active users filtered by default
+        query = UserES().domain(domain)
+    else:
+        query = UserES().domain(domain).show_only_inactive()
+
     if user_type == MOBILE_USER_TYPE:
         query = query.mobile_users()
     if user_type == WEB_USER_TYPE:
@@ -85,8 +96,14 @@ def _get_es_query(domain, user_type, user_filters):
         query = query.role_id(role_id)
     if search_string:
         query = query.search_string_query(search_string, default_fields=['first_name', 'last_name', 'username'])
+
     if location_id:
-        location_ids = SQLLocation.objects.get_locations_and_children_ids([location_id])
+        if selected_location_only:
+            # This block will never execute for WEB_USER_TYPE
+            location_ids = [location_id]
+        else:
+            location_ids = SQLLocation.objects.get_locations_and_children_ids([location_id])
+
         query = query.location(location_ids)
     return query
 
@@ -117,7 +134,10 @@ def _get_users_by_filters(domain, user_type, user_filters, count_only=False):
         user_filters: a dict with below structure.
             {'role_id': <Role ID to filter users by>,
              'search_string': <string to search users by username>,
-             'location_id': <Location ID to filter users by>}
+             'location_id': <Location ID to filter users by>,
+             'selected_location_only: <Select only users at specific location, not descendants also>,
+             'user_active_status': <User status (active/inactive) to filter by>
+             }
     kwargs:
         count_only: If True, returns count of search results
     """
