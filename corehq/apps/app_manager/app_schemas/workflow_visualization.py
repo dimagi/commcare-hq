@@ -312,7 +312,7 @@ def add_eof_edges(app, module, form, graph, id_stack, workflow_option=None, labe
         graph.add_eof_workflow(form_id, id_stack[-2], label)
         return True
 
-    if form.post_form_workflow == WORKFLOW_FORM:
+    if workflow_option == WORKFLOW_FORM:
         for link in form.form_links:
             label = _substitute_hashtags(app, form, link.xpath)
             to_form = app.get_form(link.form_id)
