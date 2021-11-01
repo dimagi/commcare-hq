@@ -21,6 +21,7 @@ class Command(BaseCommand):
 
 
 def migrate(user_history):
+    was_change = False
     if user_history.changed_by == SYSTEM_USER_ID:
         changed_by_repr = SYSTEM_USER_ID
     else:
@@ -28,9 +29,11 @@ def migrate(user_history):
 
     user_repr = cached_user_id_to_username(user_history.user_id)
 
-    if changed_by_repr and user_history.changed_by_repr != changed_by_repr:
+    if user_history.changed_by_repr != changed_by_repr or user_history.user_repr != user_repr:
+        was_change = True
+    if changed_by_repr:
         user_history.changed_by_repr = changed_by_repr
-    if user_repr and user_history.user_repr != user_repr:
+    if user_repr:
         user_history.user_repr = user_repr
-    if changed_by_repr or user_repr:
+    if was_change:
         user_history.save()
