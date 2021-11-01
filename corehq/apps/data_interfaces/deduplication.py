@@ -83,25 +83,26 @@ def backfill_deduplicate_rule(domain, rule):
     total_cases_count = CaseES().domain(domain).case_type(rule.case_type).count()
     progress_helper.set_total_cases_to_be_processed(total_cases_count)
     now = datetime.utcnow()
-
-    run_record = DomainCaseRuleRun.objects.create(
-        domain=domain,
-        started_on=now,
-        status=DomainCaseRuleRun.STATUS_RUNNING,
-        case_type=rule.case_type,
-    )
-    case_iterator = AutomaticUpdateRule.iter_cases(domain, rule.case_type)
-    iter_cases_and_run_rules(
-        domain,
-        case_iterator,
-        [rule],
-        now,
-        run_record.id,
-        rule.case_type,
-        progress_helper=progress_helper,
-    )
-    progress_helper.set_rule_complete()
-    AutomaticUpdateRule.objects.filter(pk=rule.pk).update(
-        locked_for_editing=False,
-        last_run=now,
-    )
+    try:
+        run_record = DomainCaseRuleRun.objects.create(
+            domain=domain,
+            started_on=now,
+            status=DomainCaseRuleRun.STATUS_RUNNING,
+            case_type=rule.case_type,
+        )
+        case_iterator = AutomaticUpdateRule.iter_cases(domain, rule.case_type)
+        iter_cases_and_run_rules(
+            domain,
+            case_iterator,
+            [rule],
+            now,
+            run_record.id,
+            rule.case_type,
+            progress_helper=progress_helper,
+        )
+    finally:
+        progress_helper.set_rule_complete()
+        AutomaticUpdateRule.objects.filter(pk=rule.pk).update(
+            locked_for_editing=False,
+            last_run=now,
+        )
