@@ -8,6 +8,7 @@ from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
 
 DUPLICATE_LIMIT = 1000
+DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
 
 
 def find_duplicate_case_ids(domain, case, case_properties, include_closed=False, match_type="ALL"):
@@ -106,3 +107,11 @@ def backfill_deduplicate_rule(domain, rule):
             locked_for_editing=False,
             last_run=now,
         )
+
+
+def get_dedupe_xmlns(rule):
+    return f"{DEDUPE_XMLNS}__{rule.name}-{rule.case_type}"
+
+
+def is_dedupe_xmlns(xmlns):
+    return xmlns.split("__")[0] == DEDUPE_XMLNS

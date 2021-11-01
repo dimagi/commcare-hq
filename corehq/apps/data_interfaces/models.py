@@ -29,6 +29,7 @@ from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.data_interfaces.deduplication import (
     find_duplicate_case_ids,
+    get_dedupe_xmlns,
     reset_and_backfill_deduplicate_rule,
     reset_deduplicate_rule,
 )
@@ -70,7 +71,6 @@ from corehq.util.test_utils import unit_testing_only
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
-DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
 
 
 def _try_date_conversion(date_or_string):
@@ -1024,7 +1024,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 domain,
                 case_update_batch,
                 device_id="CaseDeduplicationActionDefinition-update-cases",
-                xmlns=DEDUPE_XMLNS,
+                xmlns=get_dedupe_xmlns(rule),
             )
             rule.log_submission(result[0].form_id)
         return len(case_updates)
