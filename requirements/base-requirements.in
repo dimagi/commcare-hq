@@ -29,7 +29,7 @@ django-logentry-admin==1.0.6
 django-oauth-toolkit==1.5.0
 django-otp~=0.9.3
 django-partial-index~=0.6.0
-django-phonenumber-field==2.3.1  # remove after upgrade >=3.0.1 is deemed safe
+django-phonenumber-field==5.2.0
 django-prbac>=0.0.8
 django-redis-sessions==0.6.1
 django-redis==4.12.1
