@@ -1,14 +1,22 @@
+from datetime import datetime, timedelta
 from typing import List, Optional
 
+from django.conf import settings
 from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound
 
+from dimagi.utils.logging import notify_error
 from soil import DownloadBase
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 
 
@@ -206,3 +214,71 @@ def _get_sql_repeat_record(domain, record_id):
         return SQLRepeatRecord.objects.get(domain=domain, pk=record_id)
     except SQLRepeatRecord.DoesNotExist:
         return None
+
+
+def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_type, db=None, progress_helper=None):
+    from corehq.apps.data_interfaces.models import (
+        CaseRuleActionResult,
+        DomainCaseRuleRun,
+    )
+    HALT_AFTER = 23 * 60 * 60
+
+    domain_obj = Domain.get_by_name(domain)
+    max_allowed_updates = domain_obj.auto_case_update_limit or settings.MAX_RULE_UPDATES_IN_ONE_RUN
+    start_run = datetime.utcnow()
+    case_update_result = CaseRuleActionResult()
+
+    cases_checked = 0
+    last_migration_check_time = None
+
+    for case in case_iterator:
+        migration_in_progress, last_migration_check_time = _check_data_migration_in_progress(
+            domain, last_migration_check_time
+        )
+
+        time_elapsed = datetime.utcnow() - start_run
+        if (
+            time_elapsed.seconds > HALT_AFTER or case_update_result.total_updates >= max_allowed_updates
+            or migration_in_progress
+        ):
+            notify_error("Halting rule run for domain %s and case type %s." % (domain, case_type))
+
+            return DomainCaseRuleRun.done(
+                run_id, DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result, db=db
+            )
+
+        case_update_result.add_result(run_rules_for_case(case, rules, now))
+        if progress_helper is not None:
+            progress_helper.increment_current_case_count()
+        cases_checked += 1
+    return DomainCaseRuleRun.done(
+        run_id, DomainCaseRuleRun.STATUS_FINISHED, cases_checked, case_update_result, db=db
+    )
+
+
+def _check_data_migration_in_progress(domain, last_migration_check_time):
+    utcnow = datetime.utcnow()
+    if last_migration_check_time is None or (utcnow - last_migration_check_time) > timedelta(minutes=1):
+        return any_migrations_in_progress(domain), utcnow
+
+    return False, last_migration_check_time
+
+
+def run_rules_for_case(case, rules, now):
+    from corehq.apps.data_interfaces.models import CaseRuleActionResult
+    aggregated_result = CaseRuleActionResult()
+    last_result = None
+    for rule in rules:
+        if last_result:
+            if (
+                last_result.num_updates > 0 or last_result.num_related_updates > 0
+                or last_result.num_related_closes > 0
+            ):
+                case = CaseAccessors(case.domain).get_case(case.case_id)
+
+        last_result = rule.run_rule(case, now)
+        aggregated_result.add_result(last_result)
+        if last_result.num_closes > 0:
+            break
+
+    return aggregated_result
