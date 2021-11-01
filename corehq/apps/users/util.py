@@ -360,13 +360,13 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
         changed_by_repr = SYSTEM_USER_ID
     else:
         changed_by_id = changed_by_user.get_id
-        changed_by_repr = cached_user_id_to_username(changed_by_id)
+        changed_by_repr = changed_by_user.raw_username
 
     return UserHistory.objects.create(
         by_domain=by_domain,
         for_domain=for_domain,
         user_type=couch_user.doc_type,
-        user_repr=cached_user_id_to_username(couch_user.get_id),
+        user_repr=couch_user.raw_username,
         changed_by_repr=changed_by_repr,
         user_id=couch_user.get_id,
         changed_by=changed_by_id,
