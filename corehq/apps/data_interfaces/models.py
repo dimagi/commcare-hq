@@ -1001,7 +1001,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             # This is no longer a duplicate, so check that there aren't any
             # other cases that are no longer duplicates
             CaseDuplicate.remove_unique_cases(action=self, case_id=case_id)
-            CaseDuplicate.objects.filter(action=self, case_id=case_id).delete()
+            CaseDuplicate.remove_duplicates_for_action(action=self, case_id=case_id)
             return True
 
         if new_duplicate_case_ids == existing_duplicate_case_ids:
@@ -1009,7 +1009,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             return True
 
         # Delete all CaseDuplicates with this case_id, we'll recreate them later
-        CaseDuplicate.objects.filter(action=self, case_id=case_id).delete()
+        CaseDuplicate.remove_duplicates_for_action(action=self, case_id=case_id)
         return False
 
     def _update_cases(self, domain, rule, duplicate_case_ids):
@@ -1076,6 +1076,10 @@ class CaseDuplicate(models.Model):
             .filter(potential_duplicates_count=1)
             .delete()
         )
+
+    @classmethod
+    def remove_duplicates_for_action(cls, action, case_id):
+        return cls.objects.filter(action=action, case_id=case_id).delete()
 
     @classmethod
     def bulk_create_duplicate_relationships(cls, action, initial_case, duplicate_case_ids):
