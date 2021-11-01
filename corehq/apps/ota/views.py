@@ -184,7 +184,6 @@ def get_restore_params(request, domain):
         'openrosa_version': openrosa_version,
         'device_id': request.GET.get('device_id'),
         'user_id': request.GET.get('user_id'),
-        'case_sync': request.GET.get('case_sync'),
         'skip_fixtures': skip_fixtures,
         'auth_type': getattr(request, 'auth_type', None),
     }
@@ -195,7 +194,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          as_user=None, device_id=None, user_id=None,
-                         openrosa_version=None, case_sync=None,
+                         openrosa_version=None,
                          skip_fixtures=False, auth_type=None):
     """
     :param domain: Domain being restored from
@@ -212,7 +211,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     :param device_id: ID of device performing restore
     :param user_id: ID of user performing restore (used in case of deleted user with same username)
     :param openrosa_version:
-    :param case_sync: Override default case sync algorithm
     :param skip_fixtures: Do not include fixtures in sync payload
     :param auth_type: The type of auth that was used to authenticate the request.
         Used to determine if the request is coming from an actual user or as part of some automation.
@@ -282,7 +280,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             overwrite_cache=overwrite_cache
         ),
         is_async=async_restore_enabled,
-        case_sync=case_sync,
         skip_fixtures=skip_fixtures,
         auth_type=auth_type
     )
