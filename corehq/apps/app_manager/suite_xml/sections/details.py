@@ -188,13 +188,8 @@ class DetailContributor(SectionContributor):
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
                 if module.case_list_form.form_id:
-                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
                     form = self.app.get_form(module.case_list_form.form_id)
-                    if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
-                        valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, module)]
-                    else:
-                        valid_forms = []
-                    if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
+                    if self.form_is_valid_for_case_list_action(self.app, form, module):
                         d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module):
@@ -209,6 +204,16 @@ class DetailContributor(SectionContributor):
             else:
                 # only yield the Detail if it has Fields
                 return d
+
+    @staticmethod
+    def form_is_valid_for_case_list_action(app, form, module):
+        from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+            valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, module)]
+        else:
+            valid_forms = []
+        is_valid = form.is_registration_form(module.case_type) or form.unique_id in valid_forms
+        return is_valid
 
     def _add_custom_variables(self, detail, d):
         custom_variables = detail.custom_variables

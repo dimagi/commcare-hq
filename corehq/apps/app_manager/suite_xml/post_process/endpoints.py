@@ -5,7 +5,6 @@ from corehq.apps.app_manager.suite_xml.post_process.workflow import (
     CommandId,
     WorkflowDatumMeta,
     WorkflowHelper,
-    prepend_parent_frame_children,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Argument,
@@ -89,7 +88,4 @@ class EndpointsHelper(PostProcessor):
 
     def get_frame_children(self, module, form):
         helper = WorkflowHelper(self.suite, self.app, self.app.get_modules())
-        frame_children = helper.get_frame_children(module, form)
-        if module.root_module_id:
-            frame_children = prepend_parent_frame_children(helper, frame_children, module.root_module)
-        return frame_children
+        return helper.get_frame_children_for_navigation(module, form)
