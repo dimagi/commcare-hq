@@ -368,6 +368,39 @@ class CaseDeduplicationActionTest(TestCase):
         self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), num_duplicates)
         self._assert_potential_duplicates(duplicates[1].case_id, duplicates)
 
+    @patch.object(CaseDeduplicationActionDefinition, '_update_cases')
+    @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
+    def test_cases_not_fetched_no_updates(self, find_duplicates_mock, update_cases_mock):
+        """Test that running a rule that has no updates doesn't fetch all the cases
+        """
+        duplicates, uniques = self._create_cases()
+        find_duplicates_mock.return_value = [duplicate.case_id for duplicate in duplicates]
+        update_cases_mock.return_value = 1
+
+        no_update_rule = AutomaticUpdateRule.objects.create(
+            domain=self.domain,
+            name='test',
+            case_type=self.case_type,
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )
+        _, self.action = self.rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=["name", "age"],
+        )
+
+        no_update_rule.run_actions_when_case_matches(duplicates[0])
+        update_cases_mock.assert_not_called()
+
+        self.rule.run_actions_when_case_matches(duplicates[0])
+        update_cases_mock.assert_called_with(
+            self.domain, self.rule, set(duplicate.case_id for duplicate in duplicates)
+        )
+
     def test_rule_activation(self):
         """Test that activating or deactivating a rule will trigger the right action
         """
