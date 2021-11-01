@@ -5,6 +5,7 @@ from corehq.apps.users.models import UserHistory
 from corehq.apps.users.util import user_id_to_username
 
 from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
@@ -12,7 +13,7 @@ class Command(BaseCommand):
 
     def handle(self):
         records = UserHistory.objects
-        for user_history in records.order_by('pk').iterator():
+        for user_history in with_progress_bar(records.order_by('pk').iterator(), 185):
             if user_history.changed_by_repr is None or user_history.user_repr is None:
                 try:
                     migrate(user_history)
