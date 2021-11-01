@@ -699,6 +699,45 @@ def test_workflow_diagram_case_list_form_child_case_parent_selection():
     }""")
 
 
+@patch_get_xform_resource_overrides()
+def test_workflow_diagram_shadow_module():
+    factory = AppFactory(build_version='2.9.0')
+    m0, m0f0 = factory.new_basic_module("register parent", "parent")
+    factory.form_opens_case(m0f0, "case")
+
+    factory.new_shadow_module("shadow parent", m0, with_form=False)
+
+    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
+    _check_output(source, """
+    digraph "Untitled Application" {
+        graph [rankdir=LR]
+        root [label=Root]
+        start [label=Start]
+        {
+            rank=same
+            m0 [label="register parent module [en] " shape=box]
+            m1 [label="shadow parent module [en] " shape=box]
+        }
+        {
+            rank=same
+            "m0-f0" [label="register parent form 0 [en] " shape=ellipse]
+            "m1-f0" [label="register parent form 0 [en] " shape=ellipse]
+        }
+        {
+            rank=same
+            "m0-f0_form_entry" [label="register parent form 0 [en] " shape=oval]
+            "m1-f0_form_entry" [label="register parent form 0 [en] " shape=oval]
+        }
+        root -> start
+        start -> m0
+        m0 -> "m0-f0"
+        "m0-f0" -> "m0-f0_form_entry"
+        start -> m1
+        m1 -> "m1-f0"
+        "m1-f0" -> "m1-f0_form_entry"
+    }""")
+
+
 # TODO: filter modules & forms
 #  - select all forms, expand to parents, expand to linked nodes
 #  - different styling for nodes that aren't directly part of the flow
