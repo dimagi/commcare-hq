@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseFactory
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.topics import get_multi_topic_offset
+from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.data_interfaces.deduplication import find_duplicate_case_ids
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
@@ -473,7 +473,7 @@ class DeduplicationPillowTest(TestCase):
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
     def test_pillow_processes_changes(self, find_duplicate_cases_mock):
-        kafka_sec = get_multi_topic_offset([topics.FORM, topics.FORM_SQL])
+        kafka_sec = get_topic_offset(topics.FORM_SQL)
 
         case1 = self.factory.create_case(case_name="foo", case_type=self.case_type, update={"age": 2})
         case2 = self.factory.create_case(case_name="foo", case_type=self.case_type, update={"age": 2})
@@ -481,7 +481,7 @@ class DeduplicationPillowTest(TestCase):
 
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
 
-        new_kafka_sec = get_multi_topic_offset([topics.FORM, topics.FORM_SQL])
+        new_kafka_sec = get_topic_offset(topics.FORM_SQL)
         self.pillow.process_changes(since=kafka_sec, forever=False)
 
         self._assert_case_duplicate_pair(case1.case_id, [case2.case_id])
