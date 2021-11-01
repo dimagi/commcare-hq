@@ -178,8 +178,3 @@ class IndexTreeTest(BaseSyncTest, metaclass=TestSequenceMeta):
             ))
 
         self.device.post_changes(case_structures)
-
-
-@sharded
-class LiveQueryIndexTreeTest(IndexTreeTest):
-    restore_options = {'case_sync': LIVEQUERY}

@@ -146,14 +146,13 @@ def get_cached_items_with_count(cached_bytes):
 
 def get_restore_config(project, user, restore_id="", version=V1, state_hash="",
                        items=False, overwrite_cache=False, force_cache=False,
-                       device_id=None, case_sync=None, app=None, skip_fixtures=False):
+                       device_id=None, app=None, skip_fixtures=False):
     from casexml.apps.phone.restore import (
         RestoreCacheSettings, RestoreConfig, RestoreParams)
 
     return RestoreConfig(
         project=project,
         restore_user=user,
-        case_sync=case_sync,
         params=RestoreParams(
             sync_log_id=restore_id,
             version=version,
