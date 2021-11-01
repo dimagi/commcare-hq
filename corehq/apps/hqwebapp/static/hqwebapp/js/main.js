@@ -295,19 +295,19 @@ hqDefine('hqwebapp/js/main', [
     };
 
     var SaveButton = makeSaveButton({
-        SAVE: django.gettext("Save"),
-        SAVING: django.gettext("Saving..."),
-        SAVED: django.gettext("Saved"),
-        RETRY: django.gettext("Try Again"),
-        ERROR_SAVING: django.gettext("There was an error saving"),
+        SAVE: gettext("Save"),
+        SAVING: gettext("Saving..."),
+        SAVED: gettext("Saved"),
+        RETRY: gettext("Try Again"),
+        ERROR_SAVING: gettext("There was an error saving"),
     }, 'btn btn-primary');
 
     var DeleteButton = makeSaveButton({
-        SAVE: django.gettext("Delete"),
-        SAVING: django.gettext("Deleting..."),
-        SAVED: django.gettext("Deleted"),
-        RETRY: django.gettext("Try Again"),
-        ERROR_SAVING: django.gettext("There was an error deleting"),
+        SAVE: gettext("Delete"),
+        SAVING: gettext("Deleting..."),
+        SAVED: gettext("Deleted"),
+        RETRY: gettext("Try Again"),
+        ERROR_SAVING: gettext("There was an error deleting"),
     }, 'btn btn-danger', 'savebtn-bar-danger');
 
     ko.bindingHandlers.saveButton = {
