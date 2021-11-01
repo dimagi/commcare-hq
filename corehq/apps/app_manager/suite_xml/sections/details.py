@@ -143,7 +143,7 @@ class DetailContributor(SectionContributor):
                     title=Text(locale_id=id_strings.detail_tab_title_locale(
                         module, detail_type, tab
                     )),
-                    nodeset=self._get_detail_tab_nodeset(detail, tab),
+                    nodeset=self._get_detail_tab_nodeset(module, detail, tab),
                     start=tab_spans[tab.id][0],
                     end=tab_spans[tab.id][1],
                     relevant=tab_relevant,
@@ -228,7 +228,7 @@ class DetailContributor(SectionContributor):
                 for e in custom_variable_elements
             ])
 
-    def _get_detail_tab_nodeset(self, detail, tab):
+    def _get_detail_tab_nodeset(self, module, detail, tab):
         if not tab.has_nodeset:
             return None
 
@@ -237,7 +237,7 @@ class DetailContributor(SectionContributor):
 
         if tab.nodeset_case_type:
             nodeset = CaseTypeXpath(tab.nodeset_case_type)
-            nodeset = nodeset.case(instance_name=detail.instance_name)
+            nodeset = nodeset.case(instance_name=detail.get_instance_name(module))
             nodeset = nodeset.select(CaseXPath().parent_id(),
                                      CaseXPath("current()").property("@case_id"))
             nodeset = nodeset.select("@status", "open")
