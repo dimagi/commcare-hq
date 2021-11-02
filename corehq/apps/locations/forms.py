@@ -647,6 +647,8 @@ class LocationFilterForm(forms.Form):
             # Superusers may not have domain_membership
             if domain_membership and domain_membership.assigned_location_ids:
                 location_ids = domain_membership.assigned_location_ids
+        else:
+            location_ids = [location_id]
 
         filters = {
             'location_ids': location_ids,

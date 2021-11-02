@@ -1354,6 +1354,14 @@ def _count_users(request, domain, user_type):
     else:
         return HttpResponseBadRequest("Invalid Request")
 
+    if not user_filters.get('location_id'):
+        # Add (web) user assigned_location_ids so as to
+        # 1) reflect all locations user is assigned to ('All' option)
+        # 2) restrict user access
+        domain_membership = request.couch_user.get_domain_membership(domain)
+        if domain_membership.assigned_location_ids:
+            user_filters['web_user_assigned_location_ids'] = domain_membership.assigned_location_ids
+
     user_count = 0
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
     for current_domain in domains_list:
