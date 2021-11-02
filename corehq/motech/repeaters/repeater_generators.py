@@ -446,8 +446,6 @@ class CaseUpdateConfig:
 
         if self.includes is not None and self.excludes is not None:
             raise DataRegistryCaseUpdateError("Both exclude and include lists specified. Only one is allowed.")
-        if self.includes is None and self.excludes is None:
-            raise DataRegistryCaseUpdateError("Neither exclude and include lists specified. One is required.")
 
     def get_case_block(self, target_case):
         return CaseBlock(
@@ -459,11 +457,12 @@ class CaseUpdateConfig:
 
     def get_case_updates(self):
         case_json = self.intent_case.case_json
-        update_props = []
         if self.excludes is not None:
             update_props = set(case_json) - set(self.excludes.split())
-        if self.includes is not None:
+        elif self.includes is not None:
             update_props = set(case_json) & set(self.includes.split())
+        else:
+            update_props = set(case_json)
 
         update_props.difference_update(set(self.PROPS.values()))
         return {

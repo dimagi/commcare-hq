@@ -51,7 +51,7 @@ def test_generator_exclude_list():
 
 
 def test_generator_update_create_index_to_parent():
-    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
     def _get_case(case_id):
         assert case_id == "case2"
@@ -63,7 +63,7 @@ def test_generator_update_create_index_to_parent():
 
 
 def test_generator_update_create_index_to_host():
-    builder = IntentCaseBuilder().create_index("case2", "parent_type", "extension").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "extension")
 
     def _get_case(case_id):
         assert case_id == "case2"
@@ -75,7 +75,7 @@ def test_generator_update_create_index_to_host():
 
 
 def test_generator_update_create_index_not_found():
-    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
     with assert_raises(DataRegistryCaseUpdateError, msg="Index case not found: case2"):
         with patch.object(CaseAccessorSQL, 'get_case', side_effect=CaseNotFound):
@@ -83,7 +83,7 @@ def test_generator_update_create_index_not_found():
 
 
 def test_generator_update_create_index_domain_mismatch():
-    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
     def _get_case(case_id):
         assert case_id == "case2"
@@ -95,7 +95,7 @@ def test_generator_update_create_index_domain_mismatch():
 
 
 def test_generator_update_create_index_case_type_mismatch():
-    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
     def _get_case(case_id):
         assert case_id == "case2"
@@ -107,19 +107,17 @@ def test_generator_update_create_index_case_type_mismatch():
 
 
 def test_generator_update_multiple_cases():
-    main_case_builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").exclude_props([])
+    main_case_builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val")
     subcase1 = (
         IntentCaseBuilder()
         .target_case(case_id="sub1")
         .case_properties(sub1_prop="sub1_val")
-        .exclude_props([])
         .get_case()
     )
     subcase2 = (
         IntentCaseBuilder()
         .target_case(case_id="sub2")
         .case_properties(sub2_prop="sub2_val")
-        .exclude_props([])
         .get_case()
     )
     main_case_builder.set_subcases([subcase1, subcase2])
