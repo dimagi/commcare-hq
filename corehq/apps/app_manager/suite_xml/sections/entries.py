@@ -22,7 +22,6 @@ from corehq.apps.app_manager.suite_xml.xml_models import *
 from corehq.apps.app_manager.util import (
     actions_use_usercase,
     module_loads_registry_case,
-    module_offers_registry_search,
 )
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
