@@ -377,7 +377,11 @@ def prefix_usercase_properties(properties):
 
 
 def module_offers_registry_search(module):
-    return module_offers_search(module) and module.search_config.data_registry
+    return (
+        module_offers_search(module)
+        and module.get_app().supports_data_registry
+        and module.search_config.data_registry
+    )
 
 
 def module_offers_search(module):
