@@ -48,7 +48,6 @@ from casexml.apps.phone.const import (
     INITIAL_SYNC_CACHE_THRESHOLD,
     INITIAL_ASYNC_TIMEOUT_THRESHOLD,
     ASYNC_RETRY_AFTER,
-    LIVEQUERY,
 )
 from casexml.apps.phone.xml import get_sync_element, get_progress_element
 from corehq.blobs import CODES, get_blob_db
@@ -361,8 +360,6 @@ class RestoreState(object):
         self.overwrite_cache = overwrite_cache
         self.auth_type = auth_type
         self._last_sync_log = Ellipsis
-
-        self._case_sync = LIVEQUERY
 
     def validate_state(self):
         check_version(self.params.version)
