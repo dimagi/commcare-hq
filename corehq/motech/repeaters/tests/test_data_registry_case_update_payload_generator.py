@@ -106,6 +106,60 @@ def test_generator_update_create_index_case_type_mismatch():
             _test_payload_generator(intent_case=builder.get_case())
 
 
+def test_generator_update_create_index_bad_relationship():
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "cousin")
+    msg = "Index relationships must be either 'child' or 'extension'"
+    with assert_raises(DataRegistryCaseUpdateError, msg=msg):
+        _test_payload_generator(intent_case=builder.get_case())
+
+
+def test_generator_update_remove_index_bad_relationship():
+    builder = IntentCaseBuilder().remove_index("case2", "cousin")
+    msg = "Index relationships must be either 'child' or 'extension'"
+    with assert_raises(DataRegistryCaseUpdateError, msg=msg):
+        _test_payload_generator(intent_case=builder.get_case())
+
+
+def test_generator_update_remove_index():
+    builder = IntentCaseBuilder().remove_index("parent_case_id", "child")
+
+    _test_payload_generator(intent_case=builder.get_case(), expected_indices={
+        "1": {"parent": IndexAttrs("parent_type", None, "child")}})
+
+
+def test_generator_update_create_and_remove_index():
+    builder = IntentCaseBuilder() \
+        .create_index("case2", "host_type", "extension") \
+        .remove_index("parent_case_id", "child")
+
+    def _get_case(case_id):
+        assert case_id == "case2"
+        return Mock(domain=TARGET_DOMAIN, case_type="host_type")
+
+    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+        _test_payload_generator(intent_case=builder.get_case(), expected_indices={
+            "1": {
+                "host": IndexAttrs("host_type", "case2", "extension"),
+                "parent": IndexAttrs("parent_type", None, "child")
+            }})
+
+
+def test_generator_update_create_and_remove_same_index():
+    builder = IntentCaseBuilder() \
+        .create_index("case2", "new_parent_type", "child") \
+        .remove_index("parent_case_id", "child")
+
+    def _get_case(case_id):
+        assert case_id == "case2"
+        return Mock(domain=TARGET_DOMAIN, case_type="new_parent_type")
+
+    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+        _test_payload_generator(intent_case=builder.get_case(), expected_indices={
+            "1": {
+                "parent": IndexAttrs("new_parent_type", "case2", "child")
+            }})
+
+
 def test_generator_update_multiple_cases():
     main_case_builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val")
     subcase1 = (
@@ -161,7 +215,12 @@ def _test_payload_generator(intent_case, expected_updates=None, expected_indices
         return Mock(domain=TARGET_DOMAIN, case_type=case_type, case_id=case_id, case_json={
             "existing_prop": uuid.uuid4().hex,
             "existing_blank_prop": ""
-        })
+        }, live_indices=[
+            Mock(
+                identifier="parent", referenced_type="parent_type",
+                referenced_id="parent_case_id", relationship_id="child"
+            )
+        ])
 
     with patch.object(DataRegistryHelper, "get_case", new=_get_case), \
          patch.object(CouchUser, "get_by_user_id", return_value=Mock(username="local_user")):
@@ -235,6 +294,13 @@ class IntentCaseBuilder:
             "target_index_create_case_id": case_id,
             "target_index_create_case_type": case_type,
             "target_index_create_relationship": relationship,
+        })
+        return self
+
+    def remove_index(self, case_id, relationship):
+        self.props.update({
+            "target_index_remove_case_id": case_id,
+            "target_index_remove_relationship": relationship,
         })
         return self
 

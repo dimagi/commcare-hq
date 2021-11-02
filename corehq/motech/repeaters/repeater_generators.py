@@ -406,6 +406,8 @@ class CaseUpdateConfig:
         "index_create_case_id": "target_index_create_case_id",
         "index_create_case_type": "target_index_create_case_type",
         "index_create_relationship": "target_index_create_relationship",
+        "index_remove_case_id": "target_index_remove_case_id",
+        "index_remove_relationship": "target_index_remove_relationship",
     }
     REQUIRED_FIELDS = [
         "registry_slug",
@@ -424,6 +426,8 @@ class CaseUpdateConfig:
     index_create_case_id = attr.ib()
     index_create_case_type = attr.ib()
     index_create_relationship = attr.ib()
+    index_remove_case_id = attr.ib()
+    index_remove_relationship = attr.ib()
 
     @classmethod
     def from_payload(cls, payload_doc):
@@ -432,9 +436,21 @@ class CaseUpdateConfig:
             for attr, prop_name in cls.PROPS.items()
         }
         kwargs["intent_case"] = payload_doc
+        if "index_create_relationship" not in kwargs:
+            kwargs["index_create_relationship"] = "child"
+        if "index_remove_relationship" not in kwargs:
+            kwargs["index_remove_relationship"] = "child"
         config = CaseUpdateConfig(**kwargs)
         config.validate()
         return config
+
+    @property
+    def index_remove_identifier(self):
+        return "parent" if self.index_remove_relationship == "child" else "host"
+
+    @property
+    def index_create_identifier(self):
+        return "parent" if self.index_create_relationship == "child" else "host"
 
     def validate(self):
         missing = [
@@ -447,12 +463,18 @@ class CaseUpdateConfig:
         if self.includes is not None and self.excludes is not None:
             raise DataRegistryCaseUpdateError("Both exclude and include lists specified. Only one is allowed.")
 
+    @index_create_relationship.validator
+    @index_remove_relationship.validator
+    def _check_index_relationship(self, attribute, value):
+        if value and value not in ("child", "extension"):
+            raise DataRegistryCaseUpdateError("Index relationships must be either 'child' or 'extension'")
+
     def get_case_block(self, target_case):
         return CaseBlock(
             create=False,
             case_id=target_case.case_id,
             update=self.get_case_updates(),
-            index=self.get_case_index(target_case)
+            index=self.get_case_indices(target_case)
         ).as_text()
 
     def get_case_updates(self):
@@ -470,9 +492,19 @@ class CaseUpdateConfig:
             for prop in update_props
         }
 
-    def get_case_index(self, target_case):
+    def get_case_indices(self, target_case):
+        indices = self.get_create_case_index(target_case)
+        if not self.index_remove_case_id:
+            return indices
+
+        if self.index_remove_identifier not in indices:
+            indices.update(self.get_remove_case_index(target_case))
+
+        return indices
+
+    def get_create_case_index(self, target_case):
         if not (self.index_create_case_id and self.index_create_case_type):
-            return
+            return {}
 
         try:
             index_case = CaseAccessors(self.domain).get_case(self.index_create_case_id)
@@ -485,10 +517,23 @@ class CaseUpdateConfig:
         if index_case.case_type != self.index_create_case_type:
             raise DataRegistryCaseUpdateError("Index case type does not match")
 
-        relationship = self.index_create_relationship or "child"
-        key = "parent" if relationship == "child" else "host"
         return {
-            key: (self.index_create_case_type, self.index_create_case_id, relationship)
+            self.index_create_identifier: (
+                self.index_create_case_type, self.index_create_case_id, self.index_create_relationship
+            )
+        }
+
+    def get_remove_case_index(self, target_case):
+        identifier = "parent" if self.index_remove_relationship == "child" else "host"
+        indices = [index for index in target_case.live_indices if index.identifier == identifier]
+        if not indices:
+            return {}
+        assert len(indices) == 1
+        index = indices[0]
+        if index.referenced_id != self.index_remove_case_id:
+            raise DataRegistryCaseUpdateError("Index case ID does not match for index to remove")
+        return {
+            identifier: (index.referenced_type, "", self.index_remove_relationship)
         }
 
 
