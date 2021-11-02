@@ -136,7 +136,7 @@ class CaseRepeaterForm(GenericRepeaterForm):
         required=False,
         label=_('Users to exclude'),
         widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
-        help_text=_('Case creations and updates submitted by these users will not be forwarded')
+        help_text=_('Form creations and updates submitted by these users will not be forwarded')
     )
 
     @property
