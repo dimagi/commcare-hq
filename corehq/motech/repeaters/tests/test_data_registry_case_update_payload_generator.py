@@ -247,9 +247,9 @@ class IntentCaseBuilder:
 
     def create_index(self, case_id, case_type, relationship="child"):
         self.props.update({
-            "target_index_case_id": case_id,
-            "target_index_case_type": case_type,
-            "target_index_relationship": relationship,
+            "target_index_create_case_id": case_id,
+            "target_index_create_case_type": case_type,
+            "target_index_create_relationship": relationship,
         })
         return self
 

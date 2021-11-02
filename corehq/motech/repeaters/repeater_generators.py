@@ -404,9 +404,9 @@ class CaseUpdateConfig:
         "includes": "target_property_includelist",
         "excludes": "target_property_excludelist",
         "override_props": "target_property_override",
-        "index_case_id": "target_index_case_id",
-        "index_case_type": "target_index_case_type",
-        "index_relationship": "target_index_relationship",
+        "index_create_case_id": "target_index_create_case_id",
+        "index_create_case_type": "target_index_create_case_type",
+        "index_create_relationship": "target_index_create_relationship",
     }
     REQUIRED_FIELDS = [
         "registry_slug",
@@ -423,9 +423,9 @@ class CaseUpdateConfig:
     includes = attr.ib()
     excludes = attr.ib()
     override_props = attr.ib()
-    index_case_id = attr.ib()
-    index_case_type = attr.ib()
-    index_relationship = attr.ib()
+    index_create_case_id = attr.ib()
+    index_create_case_type = attr.ib()
+    index_create_relationship = attr.ib()
 
     @classmethod
     def from_payload(cls, payload_doc):
@@ -479,24 +479,24 @@ class CaseUpdateConfig:
         }
 
     def get_case_index(self, target_case):
-        if not (self.index_case_id and self.index_case_type):
+        if not (self.index_create_case_id and self.index_create_case_type):
             return
 
         try:
-            index_case = CaseAccessors(self.domain).get_case(self.index_case_id)
+            index_case = CaseAccessors(self.domain).get_case(self.index_create_case_id)
         except CaseNotFound:
-            raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_case_id}")
+            raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
         if index_case.domain != target_case.domain:
-            raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_case_id}")
+            raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
-        if index_case.case_type != self.index_case_type:
+        if index_case.case_type != self.index_create_case_type:
             raise DataRegistryCaseUpdateError("Index case type does not match")
 
-        relationship = self.index_relationship or "child"
+        relationship = self.index_create_relationship or "child"
         key = "parent" if relationship == "child" else "host"
         return {
-            key: (self.index_case_type, self.index_case_id, relationship)
+            key: (self.index_create_case_type, self.index_create_case_id, relationship)
         }
 
 
