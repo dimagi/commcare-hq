@@ -166,6 +166,9 @@ class CaseBlock(object):
                 # can this be a hierarchical structure? if yes, how to decode?
                 updates[tag] = node.text
 
+        if case.find(NS + "close") is not None:
+            fields["close"] = True
+
         if case.get("date_modified"):
             fields['date_modified'] = string_to_datetime(case.get("date_modified")).replace(tzinfo=None)
 

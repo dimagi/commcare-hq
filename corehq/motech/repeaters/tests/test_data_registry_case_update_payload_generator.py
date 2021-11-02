@@ -59,6 +59,15 @@ def test_generator_create_case():
     )
 
 
+def test_generator_create_close():
+    builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").close_case()
+    _test_payload_generator(
+        intent_case=builder.get_case(),
+        expected_updates={"1": {"new_prop": "new_prop_val"}},
+        expected_close=["1"],
+    )
+
+
 def test_generator_update_create_index_to_parent():
     builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
@@ -211,7 +220,8 @@ def test_generator_required_fields():
 
 
 def _test_payload_generator(intent_case, target_case_exists=True,
-                            expected_updates=None, expected_indices=None, expected_creates=None):
+                            expected_updates=None, expected_indices=None,
+                            expected_creates=None, expected_close=None):
     # intent case is the case created in the source domain which is used to trigger the repeater
     # and which contains the config for updating the case in the target domain
 
@@ -249,6 +259,8 @@ def _test_payload_generator(intent_case, target_case_exists=True,
             form.assert_case_index(expected_indices)
         if expected_creates:
             form.assert_case_create(expected_creates)
+        if expected_close:
+            form.assert_case_close(expected_close)
 
 
 class DataRegistryUpdateForm:
@@ -291,6 +303,10 @@ class DataRegistryUpdateForm:
             for key, val in create.items():
                 eq(getattr(self.cases[case_id], key), val)
 
+    def assert_case_close(self, case_ids):
+        for case_id in case_ids:
+            eq(self.cases[case_id].close, True)
+
 
 class IntentCaseBuilder:
     CASE_TYPE = "registry_case_update"
@@ -314,6 +330,12 @@ class IntentCaseBuilder:
         self.props.update({
             "target_case_create": "1",
             "target_case_owner_id": owner_id
+        })
+        return self
+
+    def close_case(self):
+        self.props.update({
+            "target_case_close": "1",
         })
         return self
 

@@ -403,6 +403,7 @@ class CaseUpdateConfig:
         "case_id": "target_case_id",
         "owner_id": "target_case_owner_id",
         "create_case": "target_case_create",
+        "close_case": "target_case_close",
         "includes": "target_property_includelist",
         "excludes": "target_property_excludelist",
         "index_create_case_id": "target_index_create_case_id",
@@ -425,6 +426,7 @@ class CaseUpdateConfig:
     case_id = attr.ib()
     owner_id = attr.ib()
     create_case = attr.ib()
+    close_case = attr.ib()
     includes = attr.ib()
     excludes = attr.ib()
     index_create_case_id = attr.ib()
@@ -491,6 +493,7 @@ class CaseUpdateConfig:
             owner_id=self.owner_id,
             update=self.get_case_updates(),
             index=self.get_case_indices(target_case),
+            close=bool(self.close_case),
             **kwargs
         ).as_text()
 
