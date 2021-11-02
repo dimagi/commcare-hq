@@ -42,6 +42,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import XPath as XPathEl
 from corehq.apps.app_manager.util import (
     create_temp_sort_column,
     get_sort_and_sort_only_columns,
+    module_loads_registry_case,
     module_offers_search,
 )
 from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, session_var
@@ -142,7 +143,7 @@ class DetailContributor(SectionContributor):
                     title=Text(locale_id=id_strings.detail_tab_title_locale(
                         module, detail_type, tab
                     )),
-                    nodeset=self._get_detail_tab_nodeset(detail, tab),
+                    nodeset=self._get_detail_tab_nodeset(module, detail, tab),
                     start=tab_spans[tab.id][0],
                     end=tab_spans[tab.id][1],
                     relevant=tab_relevant,
@@ -193,7 +194,7 @@ class DetailContributor(SectionContributor):
                         d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module):
-                    in_search = module.search_config.data_registry or "search" in id
+                    in_search = module_loads_registry_case(module) or "search" in id
                     d.actions.append(self._get_case_search_action(module, in_search=in_search))
 
             try:
@@ -227,7 +228,7 @@ class DetailContributor(SectionContributor):
                 for e in custom_variable_elements
             ])
 
-    def _get_detail_tab_nodeset(self, detail, tab):
+    def _get_detail_tab_nodeset(self, module, detail, tab):
         if not tab.has_nodeset:
             return None
 
@@ -236,7 +237,7 @@ class DetailContributor(SectionContributor):
 
         if tab.nodeset_case_type:
             nodeset = CaseTypeXpath(tab.nodeset_case_type)
-            nodeset = nodeset.case(instance_name=detail.instance_name)
+            nodeset = nodeset.case(instance_name=detail.get_instance_name(module))
             nodeset = nodeset.select(CaseXPath().parent_id(),
                                      CaseXPath("current()").property("@case_id"))
             nodeset = nodeset.select("@status", "open")

@@ -164,7 +164,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.endpointArgs = options.endpointArgs;
         this.page = options.page;
         this.search = options.search;
-        this.smartLinkTemplate = options.smartLinkTemplate;
         this.casesPerPage = options.casesPerPage;
         this.queryData = options.queryData;
         this.singleApp = options.singleApp;
@@ -208,10 +207,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             //clear out pagination on search
             this.page = null;
             this.sortIndex = null;
-        };
-
-        this.setSmartLinkTemplate = function (smartLinkTemplate) {
-            this.smartLinkTemplate = smartLinkTemplate;
         };
 
         this.setQueryData = function (queryDict, execute) {
@@ -290,7 +285,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             selections: self.selections,
             page: self.page,
             search: self.search,
-            smartLinkTemplate: self.smartLinkTemplate,
             queryData: self.queryData || {},    // formplayer can't handle a null
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
@@ -313,7 +307,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'search': data.search,
             'queryData': data.queryData,
             'singleApp': data.singleApp,
-            'smartLinkTemplate': data.smartLinkTemplate,
             'sortIndex': data.sortIndex,
             'forceLoginAs': data.forceLoginAs,
             'forceManualAction': data.forceManualAction,

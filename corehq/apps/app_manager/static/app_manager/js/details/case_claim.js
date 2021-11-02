@@ -287,13 +287,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_use_default_audio_for_all']").val() || null,
                 search_filter: self.searchFilter(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
-                additional_registry_queries: self.additionalRegistryQueries().map((query) => {
+                additional_registry_queries: self.dataRegistryWorkflow() == "load_case" ? self.additionalRegistryQueries().map((query) => {
                     return {
                         instance_name: query.instanceName(),
                         case_type_xpath: query.caseTypeXpath(),
                         case_id_xpath: query.caseIdXpath(),
                     };
-                }),
+                }) : [],
             };
         };
 
