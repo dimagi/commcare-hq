@@ -1105,10 +1105,11 @@ def count_locations(request, domain):
     if location_filters.pop('selected_location_only'):
         locations_count = 1
     else:
-        root_location_id = location_filters.pop('location_id')
+        root_location_ids = location_filters.pop('location_ids')
+
         locations_count = get_filtered_locations_count(
             domain,
-            root_location_id=root_location_id,
+            root_location_ids=root_location_ids,
             **location_filters
         )
 
