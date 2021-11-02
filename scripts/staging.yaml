@@ -56,12 +56,10 @@ branches:
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
     - sr/cs-multiselect  # Sravan May 31
-    - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - ce/bulk-case-search # Cal July 6
     - rp/enterprize-sms-report # Rynhard July 12
     #- sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
-    - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
     - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
