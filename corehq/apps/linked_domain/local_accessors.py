@@ -189,6 +189,11 @@ def get_auto_update_rules(domain):
                 } for case_rule_action in actions
             ]
         }
+
+        # Delete unnecessary data for running rules
+        del rule_data['rule']['last_run']
+        del rule_data['rule']['locked_for_editing']
+
         data.append(rule_data)
 
     return data
