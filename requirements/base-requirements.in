@@ -50,9 +50,9 @@ email_validator==1.1.3
 ethiopian-date-converter==0.1.5
 eulxml==1.1.3
 Faker==5.0.2
-gevent==1.4.0
+gevent>1.4.0
 ghdiff==0.4
-greenlet==0.4.17
+greenlet>=0.4.17
 gunicorn
 hiredis==2.0.0
 httpagentparser~=1.7
@@ -102,7 +102,7 @@ schema
 sentry-sdk==0.19.5
 sh==1.14.2
 # Package has an unfixed issue https://github.com/danthedeckie/simpleeval/issues/90 Can use that once https://github.com/danthedeckie/simpleeval/pull/91 is merged
-simpleeval @ git+git://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
 simplejson~=3.11
 six~=1.11
 socketpool==0.5.3
@@ -116,5 +116,5 @@ tropo-webapi-python==0.1.3
 turn-python==0.0.1
 twilio==6.5.1
 werkzeug==1.0.1
-xlrd==1.0.0
+xlrd>1.0.0
 xlwt==1.3.0

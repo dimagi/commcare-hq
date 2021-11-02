@@ -222,7 +222,7 @@ freezegun==1.1.0
     # via -r test-requirements.in
 future==0.18.2
     # via radon
-gevent==1.4.0
+gevent==21.8.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -237,7 +237,7 @@ gitpython==3.1.14
     # via transifex-client
 gnureadline==8.0.0
     # via -r dev-requirements.in
-greenlet==0.4.17
+greenlet==1.1.2
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -505,7 +505,7 @@ sh==1.14.2
     # via
     #   -r base-requirements.in
     #   git-build-branch
-git+git://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
 simplejson==3.17.2
     # via
@@ -645,7 +645,7 @@ wheel==0.37.0
     #   pip-tools
 wrapt==1.12.1
     # via deprecated
-xlrd==1.0.0
+xlrd==2.0.1
     # via -r base-requirements.in
 xlwt==1.3.0
     # via -r base-requirements.in
@@ -657,6 +657,10 @@ zipp==3.2.0
     # via
     #   importlib-metadata
     #   pep517
+zope.event==4.5.0
+    # via gevent
+zope.interface==5.4.0
+    # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==21.2.4
@@ -664,6 +668,7 @@ pip==21.2.4
 setuptools==50.3.0
     # via
     #   django-websocket-redis
+    #   gevent
     #   gunicorn
     #   ipython
     #   jsonschema
@@ -671,3 +676,5 @@ setuptools==50.3.0
     #   protobuf
     #   python-termstyle
     #   sphinx
+    #   zope.event
+    #   zope.interface
