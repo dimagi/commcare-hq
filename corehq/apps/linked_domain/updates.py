@@ -9,7 +9,7 @@ from toggle.shortcuts import set_toggle
 
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
-    CaseRuleSubmission, ClosedParentDefinition, CustomActionDefinition,
+    ClosedParentDefinition, CustomActionDefinition,
     CustomMatchDefinition, MatchPropertyDefinition, UpdateCaseDefinition
 )
 from corehq.apps.case_search.models import CaseSearchConfig
