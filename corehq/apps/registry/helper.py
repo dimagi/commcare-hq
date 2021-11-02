@@ -1,7 +1,7 @@
 from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.utils import RegistryPermissionCheck
-from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.exceptions import CaseTypeMismatch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.timer import TimingContext
 
@@ -54,7 +54,7 @@ class DataRegistryHelper:
 
         case = CaseAccessorSQL.get_case(case_id)
         if case.type != case_type:
-            raise CaseNotFound("Case type mismatch")
+            raise CaseTypeMismatch("Case type mismatch")
 
         self.check_data_access(couch_user, [case.type], case.domain)
         self.log_data_access(couch_user.get_django_user(), case.domain, accessing_object, filters={
