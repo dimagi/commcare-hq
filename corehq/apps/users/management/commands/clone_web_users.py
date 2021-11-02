@@ -38,19 +38,9 @@ class Command(BaseCommand):
 
     def iterate_usernames_to_update(self, file):
         with open(file, newline='') as csvfile:
-            reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
-            header = next(reader)
-            header_values = header[0].split(',')
-            try:
-                old_user_index = header_values.index(OLD_USERNAME)
-                new_user_index = header_values.index(NEW_USERNAME)
-            except ValueError:
-                logger.error(f'The provided csv file should contain both a {OLD_USERNAME} and {NEW_USERNAME} '
-                             'header column')
-                return
+            reader = csv.DictReader(csvfile)
             for row in reader:
-                row_values = row[0].split(',')
-                yield row_values[old_user_index], row_values[new_user_index]
+                yield row[OLD_USERNAME], row[NEW_USERNAME]
 
 
 def clone_user(old_username, new_username):
