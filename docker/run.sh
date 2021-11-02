@@ -105,6 +105,10 @@ function run_tests {
             for dirpath in $(find /mnt -mindepth 1 -maxdepth 1 -type d -not -name 'commcare-hq*'); do
                 logdo ls -la "$dirpath"
             done
+            logdo python -m site
+            logdo pip freeze
+            logdo npm config list
+            logdo yarn --version
             logdo cat -n ../run_tests
         }
         echo -e "$(func_text overlay_debug)\\noverlay_debug" | su cchq -c "/bin/bash -" || true
@@ -168,11 +172,14 @@ function _run_tests {
 
     function _test_python {
         ./manage.py create_kafka_topics
-        if [ -n "$TRAVIS_EVENT_TYPE" ]; then
-            logmsg INFO "coverage run --parallel-mode manage.py test ${py_test_args[*]}"
+        if [ -n "$CI" ]; then
+            logmsg INFO "coverage run manage.py test ${py_test_args[*]}"
             # `coverage` generates a file that's then sent to codecov
-            coverage run --parallel-mode manage.py test "${py_test_args[@]}"
-            bash <(curl -s https://codecov.io/bash)
+            coverage run manage.py test "${py_test_args[@]}"
+            coverage xml
+            if [ -n "$TRAVIS" ]; then
+                bash <(curl -s https://codecov.io/bash)
+            fi
         else
             logmsg INFO "./manage.py test ${py_test_args[*]}"
             ./manage.py test "${py_test_args[@]}"

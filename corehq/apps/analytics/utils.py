@@ -26,7 +26,6 @@ ALLOWED_CONVERSIONS = [
     'Outbound',
     'Paid Ads',
     'Video',
-    None
 ]
 
 

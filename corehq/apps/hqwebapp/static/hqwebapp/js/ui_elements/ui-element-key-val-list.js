@@ -26,7 +26,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
         this.$noedit_view = $('<div />');
         this.$formatted_view = $('<input type="hidden" />');
         this.$modal_trigger = $('<a class="btn btn-default enum-edit" href="#' + this.modal_id + '" ' +
-            'data-toggle="modal" />').html('<i class="fa fa-pencil"></i> ' + django.gettext('Edit'));
+            'data-toggle="modal" />').html('<i class="fa fa-pencil"></i> ' + gettext('Edit'));
 
         // Create new modal controller for this element
         var $enumModal = $('<div id="' + this.modal_id + '" class="modal fade hq-enum-modal" />');
@@ -34,16 +34,16 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
         var $modalContent = $('<div class="modal-content" />');
 
         $modalContent.prepend('<div class="modal-header"><a class="close" data-dismiss="modal">×</a><h4 class="modal-title">'
-            + django.gettext('Edit Mapping for ') + this.modal_title + '</h4></div>');
+            + gettext('Edit Mapping for ') + this.modal_title + '</h4></div>');
         var $modal_form = $('<form class="form-horizontal hq-enum-editor" action="" />'),
             $modal_body = $('<div class="modal-body" style="max-height:372px; overflow-y: scroll;" />');
         $modal_body.append($('<fieldset />'));
         $modal_body.append('<a href="#" class="btn btn-primary" data-enum-action="add"><i class="fa fa-plus"></i> ' +
-            django.gettext('Add Key &rarr; Value Mapping') + '</a>');
+            gettext('Add Key &rarr; Value Mapping') + '</a>');
 
         $modal_form.append($modal_body);
         $modal_form.append('<div class="modal-footer"><button class="btn btn-primary" data-dismiss="modal">' +
-            django.gettext('Done') + '</button></div>');
+            gettext('Done') + '</button></div>');
         $modalContent.append($modal_form);
         $modalDialog.append($modalContent);
         $enumModal.append($modalDialog);
@@ -84,7 +84,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
                 var $modal_fields = $('#' + this.modal_id + ' form fieldset');
                 $modal_fields.text('');
                 this.$noedit_view.text('');
-                this.$edit_view.html(django.gettext('Click <strong>Edit</strong> below to add mappings'));
+                this.$edit_view.html(gettext('Click <strong>Edit</strong> below to add mappings'));
 
                 this.value = original_pairs;
                 if (translated_pairs !== undefined) {

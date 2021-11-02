@@ -87,8 +87,13 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
 
         # create form and case ucrs
         cls.form_data_source = get_form_data_source(cls.app, cls.followup_form)
+        cls.form_data_source.save()
+
         cls.case_data_source = get_case_data_source(cls.app, cls.case_type)
+        cls.case_data_source.save()
+
         cls.parent_case_data_source = get_case_data_source(cls.app, cls.parent_case_type)
+        cls.parent_case_data_source.save()
 
         # create some data - first just create the case
         cls.parent_case_id = cls._create_parent_case(cls.parent_name)

@@ -20,12 +20,12 @@ class ChunkedPorcessingTest(TestCase):
         for i in range(count):
             meta = ChangeMeta(document_id=uuid.uuid4().hex,
                 data_source_type='dummy-type', data_source_name='dummy-name')
-            producer.send_change(topics.CASE, meta)
+            producer.send_change(topics.CASE_SQL, meta)
 
     @trap_extra_setup(KafkaUnavailableError)
     def test_basic(self):
         # setup
-        feed = KafkaChangeFeed(topics=[topics.CASE], client_id='test-kafka-feed')
+        feed = KafkaChangeFeed(topics=[topics.CASE_SQL], client_id='test-kafka-feed')
         pillow_name = 'test-chunked-processing'
         checkpoint = PillowCheckpoint(pillow_name, feed.sequence_format)
         processor = ChunkedCountProcessor()
