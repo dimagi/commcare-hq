@@ -154,7 +154,7 @@ def copy_user_fields(from_user, to_user):
 
 def send_deprecation_email(old_user, new_user):
     context = {
-        'greeting': _("Dear %s,") % new_user.first_name if new_user.first_name else _("Hello,"),
+        'greeting': _("Dear {name},").format(name=new_user.first_name) if new_user.first_name else _("Hello,"),
         'old_username': old_user.username,
         'new_username': new_user.username,
     }
