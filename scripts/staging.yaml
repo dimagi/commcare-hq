@@ -92,4 +92,5 @@ branches:
     - bmb/upgrade-babel-2.9.1  # Biyeun Nov 1 (touches 2FA, phone number validation, going into QA)
     - bmb/update-datatables-dt  # Biyeun Nov 2
     - cs/SC-1828-fix_lru_locations_info-v2  # Charl Nov 2
+    - jls/registry-cc-253 # Jenny Nov 2
 submodules: { }
