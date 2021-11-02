@@ -6,7 +6,6 @@ from itertools import count
 from nose.tools import nottest
 
 from casexml.apps.case.mock import CaseIndex, CaseStructure
-from casexml.apps.phone.restore import LIVEQUERY
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import softer_assert
