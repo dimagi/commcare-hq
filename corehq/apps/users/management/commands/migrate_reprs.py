@@ -8,6 +8,7 @@ from corehq.apps.users.util import cached_user_id_to_username
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.util.log import with_progress_bar
 
+
 class Command(BaseCommand):
     help = "Adds user_repr and changed_by_repr to UserHistory log if not already present"
 
