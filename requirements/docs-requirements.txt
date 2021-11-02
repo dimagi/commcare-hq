@@ -196,6 +196,8 @@ gevent==21.8.0
     #   django-websocket-redis
 ghdiff==0.4
     # via -r base-requirements.in
+graphviz==0.17
+    # via -r base-requirements.in
 greenlet==1.1.2
     # via
     #   -r base-requirements.in
