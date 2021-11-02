@@ -114,14 +114,14 @@ def transfer_exports(from_user, to_user):
 
 def transfer_scheduled_reports(from_user, to_user_id):
     for domain in from_user.domains:
-        for scheduled_report in ReportNotification.by_domain_and_owner(domain, from_user._id):
+        for scheduled_report in ReportNotification.by_domain_and_owner(domain, from_user._id, stale=False):
             scheduled_report.owner_id = to_user_id
             scheduled_report.save()
 
 
 def transfer_saved_reports(from_user, to_user):
     for domain in from_user.domains:
-        for saved_report in ReportConfig.by_domain_and_owner(domain, from_user.get_id):
+        for saved_report in ReportConfig.by_domain_and_owner(domain, from_user.get_id, stale=False):
             saved_report.owner_id = to_user.get_id
             saved_report.save()
 
