@@ -1004,9 +1004,9 @@ def location_export(request, domain):
     else:
         return HttpResponseBadRequest('Location filters invalid')
 
-    root_location_id = location_filters.pop('location_id')
+    root_location_ids = location_filters.pop('location_ids')
     res = download_locations_async.delay(domain, download.download_id, include_consumption,
-                                         headers_only, owner_id, root_location_id, **location_filters)
+                                         headers_only, owner_id, root_location_ids, **location_filters)
     download.set_task(res)
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
