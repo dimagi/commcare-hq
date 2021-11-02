@@ -499,6 +499,10 @@ class CaseUpdateConfig:
 
     def get_case_updates(self):
         case_json = self.intent_case.case_json
+        if self.intent_case.name:
+            case_json["case_name"] = self.intent_case.name
+        if self.intent_case.external_id:
+            case_json["external_id"] = self.intent_case.external_id
         if self.excludes is not None:
             update_props = set(case_json) - set(self.excludes.split())
         elif self.includes is not None:
