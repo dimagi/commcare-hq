@@ -39,12 +39,13 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
+    CaseIDXPath,
     CaseTypeXpath,
     InstanceXpath,
     interpolate_xpath,
-    XPath,
+    session_var,
 )
-from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
+from corehq.apps.case_search.const import COMMCARE_PROJECT, EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
@@ -264,8 +265,10 @@ class RemoteRequestFactory(object):
     def build_stack(self):
         stack = Stack()
         if module_uses_smart_links(self.module):
-            # TODO: XPath instead of string
-            frame = PushFrame(if_clause=XPath("instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project != instance('commcaresession')/session/user/data/commcare_project"))
+            case_id_xpath = CaseIDXPath(session_var(self.case_session_var))
+            case_domain_xpath = case_id_xpath.case(instance_name=RESULTS_INSTANCE).slash(COMMCARE_PROJECT)
+            user_domain_xpath = session_var(COMMCARE_PROJECT, path="user/data")
+            frame = PushFrame(if_clause=case_domain_xpath.neq(user_domain_xpath))
             frame.add_datum(StackJump(
                 url=Text(
                     xpath=SuiteXPath(
@@ -273,7 +276,7 @@ class RemoteRequestFactory(object):
                         variables=[
                             XPathVariable(
                                 name="domain",
-                                xpath=CalculatedPropertyXPath(function="instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project"),  # TODO: xpath, not function
+                                xpath=CalculatedPropertyXPath(function=case_domain_xpath),
                             ),
                         ],
                     ),
