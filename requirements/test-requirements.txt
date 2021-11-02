@@ -422,7 +422,7 @@ sentry-sdk==0.19.5
     # via -r base-requirements.in
 sh==1.14.2
     # via -r base-requirements.in
-git+git://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
 simplejson==3.17.2
     # via
