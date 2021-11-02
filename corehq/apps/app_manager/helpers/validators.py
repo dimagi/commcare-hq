@@ -26,7 +26,7 @@ from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     CaseXPathValidationError,
     FormNotFoundException,
-    LocationXpathValidationError,
+    LocationXPathValidationError,
     ModuleIdMissingException,
     ModuleNotFoundException,
     ParentModuleReferenceError,
@@ -389,13 +389,13 @@ class ModuleBaseValidator(object):
                 try:
                     if not should_sync_hierarchical_fixture(domain_obj, self.module.get_app()):
                         # discontinued feature on moving to flat fixture format
-                        raise LocationXpathValidationError(
+                        raise LocationXPathValidationError(
                             _('That format is no longer supported. To reference the location hierarchy you need to'
                               ' use the "Custom Calculations in Case List" feature preview. For more information '
                               'see: https://confluence.dimagi.com/pages/viewpage.action?pageId=38276915'))
                     hierarchy = hierarchy or parent_child(domain)
                     LocationXpath('').validate(column.field_property, hierarchy)
-                except LocationXpathValidationError as e:
+                except LocationXPathValidationError as e:
                     yield {
                         'type': 'invalid location xpath',
                         'details': str(e),

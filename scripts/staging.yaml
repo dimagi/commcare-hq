@@ -56,12 +56,10 @@ branches:
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
     - sr/cs-multiselect  # Sravan May 31
-    - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - ce/bulk-case-search # Cal July 6
     - rp/enterprize-sms-report # Rynhard July 12
     #- sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
-    - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
     - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
@@ -69,17 +67,29 @@ branches:
     - jm/remove-es-scan  # Joel Sep 17 [QA]
     - jls/smart-linking-in-web-apps # Jenny Sept 22
     - dmr/throttle-system-forms  # Danny Sept 24
-    - dependabot/npm_and_yarn/datatables.net-1.11.3 # Amit Oct 6
     - smh/remove-extra-spinner-icons # Steph Oct 6
-    - ap/ucr-rebuild-btn # Amit Oct 7
     - ml/remove-pickles-phonelog # Minha Oct 7
+    - dependabot/npm_and_yarn/moment-2.29.1+sk/app-workflow-visualization
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
-    - ml/make-mobile-privileges-unreachable # Minha Oct 12
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
     - rp/insert-status-embed # Rynhard Oct 15
-    - gh/remove-pickles-from-messaging+fr/dedupe # Daniel Oct 19
-    - gh/remove-pickles-from-messaging # Grahan Oct 15
+    - fr/dedupe+ad/auto-update-rules-for-linked-spaces
     - fr/dedupe  # Farid Sept 17
+    - ad/auto-update-rules-for-linked-spaces # Addison Oct 25
+    - dm/upgrade-gevent+sk/app-workflow-visualization
     - dm/upgrade-gevent # Daniel Oct 19
+    - dm/upgrade-xlrd # Daniel Oct 21
+#    - ml/remove-pickles-reports # Minha Oct 21
+    - sk/data-registry-form-linking+sk/app-workflow-visualization # Simon oct 30
+    - sk/data-registry-form-linking+jls/smart-linking-in-web-apps-stack-jump
+    - jls/smart-linking-in-web-apps-stack-jump # Jenny Oct 20
+    - sk/data-registry-form-linking  # Simon Oct 22
+    - sk/app-workflow-visualization # Simon Oct 26
+    - jls/enable-usercase-button # Jenny Oct 27
+    - do/exclude-users-forward-forms # Dominic Oct 29
+    - ap/resume-cancelled-batches # Amit Nov 1
+    - bmb/upgrade-babel-2.9.1  # Biyeun Nov 1 (touches 2FA, phone number validation, going into QA)
+    - bmb/update-datatables-dt  # Biyeun Nov 2
+    - cs/SC-1828-fix_lru_locations_info-v2  # Charl Nov 2
 submodules: { }

@@ -30,6 +30,7 @@ from two_factor.views import (
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
+from corehq.apps.hqwebapp.views import not_found
 from dimagi.utils.web import json_response
 
 import langcodes
@@ -556,6 +557,21 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
     urlname = 'enable_mobile_privs'
     page_title = ugettext_lazy("Enable Privileges on Mobile")
     template_name = 'settings/enable_superuser.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        # raises a 404 if a user tries to access this page without the right authorizations
+        if self.is_user_authorized(request.couch_user):
+            return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return not_found(request)
+
+    @staticmethod
+    def is_user_authorized(couch_user):
+        if (
+            couch_user and couch_user.is_dimagi
+            or toggles.MOBILE_PRIVILEGES_FLAG.enabled(couch_user.username)
+        ):
+            return True
+        return False
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):

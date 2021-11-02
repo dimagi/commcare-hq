@@ -1,3 +1,10 @@
+"""DO NOT ADD NEW THINGS TO THIS MODULE
+
+New test utilities should be added to a module in the
+`corehq.tests.util` package. Things in this module may be moved there as
+it makes sense to do so. See the docstring on that package for important
+guidelines.
+"""
 import functools
 import json
 import logging

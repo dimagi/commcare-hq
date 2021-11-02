@@ -103,7 +103,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, WebUser
 from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.timezones.utils import get_timezone_for_request
 
@@ -527,9 +527,17 @@ class DomainLinkHistoryReport(GenericTabularReport):
             '{} -> {}'.format(link.master_domain, link.linked_domain),
             server_to_user_time(record.date, self.timezone),
             self._make_model_cell(record),
-            pretty_doc_info(get_doc_info_by_id(self.domain, record.user_id))
+            self._make_user_cell(record)
         ]
         return row
+
+    def _make_user_cell(self, record):
+        doc_info = get_doc_info_by_id(self.domain, record.user_id)
+        user = WebUser.get_by_user_id(record.user_id)
+        if self.domain not in user.get_domains() and 'link' in doc_info:
+            doc_info['link'] = None
+
+        return pretty_doc_info(doc_info)
 
     @memoized
     def linked_app_names(self, domain):

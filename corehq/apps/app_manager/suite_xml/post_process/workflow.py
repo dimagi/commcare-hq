@@ -120,7 +120,7 @@ class WorkflowHelper(PostProcessor):
         frame_children.extend(common_datums)
 
         if form:
-            frame_children.append(CommandId(id_strings.form_command(form)))
+            frame_children.append(CommandId(id_strings.form_command(form, module)))
             form_datums = module_datums[f'f{form.id}']
             remaining_datums = form_datums[len(common_datums):]
             frame_children.extend(remaining_datums)
