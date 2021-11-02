@@ -436,6 +436,7 @@ def update_auto_update_rules(domain_link):
                 domain=domain_link.linked_domain,
                 active=upstream_rule_def['rule']['active'],
                 workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                upstream_id=upstream_rule_def['rule']['id']
             )
 
         # Copy all the contents from old rule to new rule
