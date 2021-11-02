@@ -433,12 +433,10 @@ class EntriesHelper(object):
         for datum in datums:
             if datum.module_id and datum.case_type:
                 module = self.app.get_module_by_unique_id(datum.module_id)
-                if module_offers_registry_search(module):
-                    if module_loads_registry_case(module):
-                        result.append(self.get_data_registry_search_datums(module))
+                if module_loads_registry_case(module):
+                    result.append(self.get_data_registry_search_datums(module))
                     result.append(datum)
-                    if module_loads_registry_case(module):
-                        result.extend(self.get_data_registry_case_datums(datum, module))
+                    result.extend(self.get_data_registry_case_datums(datum, module))
                 else:
                     result.append(datum)
             else:
