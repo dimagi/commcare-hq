@@ -28,14 +28,14 @@ class CaseSearchFilter(BaseSimpleFilter):
     ))
 
 
-class XpathCaseSearchFilter(BaseSimpleFilter):
+class XPathCaseSearchFilter(BaseSimpleFilter):
     slug = 'search_xpath'
     label = ugettext_lazy("Search")
     template = "reports/filters/xpath_textarea.html"
 
     @property
     def filter_context(self):
-        context = super(XpathCaseSearchFilter, self).filter_context
+        context = super(XPathCaseSearchFilter, self).filter_context
         context.update({
             'placeholder': "e.g. name = 'foo' and dob <= '2017-02-12'",
             'text': self.get_value(self.request, self.domain) or '',
