@@ -174,13 +174,13 @@ class TestFilteredLocationsCount(TestCase):
         filters = {}
         self.assertEqual(get_filtered_locations_count(
             self.ccdomain.name,
-            root_location_id=self.loc1._id,
+            root_location_ids=[self.loc1._id],
             **filters), 2)
 
         filters = {}
         self.assertEqual(get_filtered_locations_count(
             self.ccdomain.name,
-            root_location_id=self.loc2._id,
+            root_location_ids=[self.loc2._id],
             **filters), 1)
 
         # can filter by location active status
@@ -191,7 +191,7 @@ class TestFilteredLocationsCount(TestCase):
         filters = {'is_archived': False}
         self.assertEqual(get_filtered_locations_count(
             self.ccdomain.name,
-            root_location_id=self.loc1._id,
+            root_location_ids=[self.loc1._id],
             **filters), 1)
 
         filters = {'is_archived': True}
