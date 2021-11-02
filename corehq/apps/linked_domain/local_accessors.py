@@ -11,7 +11,7 @@ from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
 from corehq.apps.reports.models import TableauServer, TableauVisualization
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 
 
 def get_tableau_server_and_visualizations(domain):
