@@ -234,7 +234,7 @@ class LocationsListView(BaseLocationView):
             )
             return list(map(to_json, locs))
         else:
-            return [to_json(user.get_sql_location(self.domain))]
+            return [to_json(location) for location in user.get_sql_locations(self.domain)]
 
 
 @location_safe
@@ -1004,9 +1004,9 @@ def location_export(request, domain):
     else:
         return HttpResponseBadRequest('Location filters invalid')
 
-    root_location_id = location_filters.pop('location_id')
+    root_location_ids = location_filters.pop('location_ids')
     res = download_locations_async.delay(domain, download.download_id, include_consumption,
-                                         headers_only, owner_id, root_location_id, **location_filters)
+                                         headers_only, owner_id, root_location_ids, **location_filters)
     download.set_task(res)
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
@@ -1105,10 +1105,11 @@ def count_locations(request, domain):
     if location_filters.pop('selected_location_only'):
         locations_count = 1
     else:
-        root_location_id = location_filters.pop('location_id')
+        root_location_ids = location_filters.pop('location_ids')
+
         locations_count = get_filtered_locations_count(
             domain,
-            root_location_id=root_location_id,
+            root_location_ids=root_location_ids,
             **location_filters
         )
 

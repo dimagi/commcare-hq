@@ -37,11 +37,11 @@ def sync_administrative_status(location_type):
 
 @task
 def download_locations_async(domain, download_id, include_consumption,
-                             headers_only, owner_id, root_location_id=None, **kwargs):
+                             headers_only, owner_id, root_location_ids=None, **kwargs):
     DownloadBase.set_progress(download_locations_async, 0, 100)
     dump_locations(domain, download_id,
                    include_consumption=include_consumption, owner_id=owner_id,
-                   root_location_id=root_location_id,
+                   root_location_ids=root_location_ids,
                    headers_only=headers_only, task=download_locations_async, **kwargs)
     DownloadBase.set_progress(download_locations_async, 100, 100)
 

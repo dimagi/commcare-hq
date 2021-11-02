@@ -112,7 +112,7 @@ class TestLocationsExport(LocationHierarchyTestCase):
         location = SQLLocation.objects.get(domain=self.domain, name='Suffolk')
         exporter = LocationExporter(
             self.domain,
-            root_location_id=location.location_id,
+            root_location_ids=[location.location_id],
         )
 
         self.assertEqual(exporter.base_query.count(), 2)
@@ -121,7 +121,7 @@ class TestLocationsExport(LocationHierarchyTestCase):
         location = SQLLocation.objects.get(domain=self.domain, name='Suffolk')
         exporter = LocationExporter(
             self.domain,
-            root_location_id=location.location_id,
+            root_location_ids=[location.location_id],
             selected_location_only=True,
         )
 
@@ -144,7 +144,7 @@ class TestLocationsExport(LocationHierarchyTestCase):
         exporter = LocationExporter(
             self.domain,
             is_archived=True,
-            root_location_id=location.location_id,
+            root_location_ids=[location.location_id],
         )
 
         self.assertEqual(exporter.base_query.count(), 1)
@@ -163,7 +163,7 @@ class TestLocationsExport(LocationHierarchyTestCase):
         exporter = LocationExporter(
             self.domain,
             is_archived=False,
-            root_location_id=location.location_id,
+            root_location_ids=[location.location_id],
         )
 
         self.assertEqual(exporter.base_query.count(), 1)
