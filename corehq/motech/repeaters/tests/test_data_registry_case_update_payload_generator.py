@@ -50,18 +50,6 @@ def test_generator_exclude_list():
         }})
 
 
-def test_generator_dont_override_existing():
-    builder = (
-        IntentCaseBuilder(override_properties=False)
-        .case_properties(new_prop="new_prop_val", existing_prop="try override", existing_blank_prop="not blank")
-        .exclude_props([])
-    )
-    _test_payload_generator(intent_case=builder.get_case(), expected_updates={
-        "1": {
-            "new_prop": "new_prop_val",
-        }})
-
-
 def test_generator_update_create_index_to_parent():
     builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
 
@@ -229,10 +217,9 @@ class DataRegistryUpdateForm:
 class IntentCaseBuilder:
     CASE_TYPE = "registry_case_update"
 
-    def __init__(self, registry="registry1", override_properties=True):
+    def __init__(self, registry="registry1"):
         self.props: dict = {
             "target_data_registry": registry,
-            "target_property_override": str(int(override_properties)),
         }
         self.target_case()
         self.subcases = []

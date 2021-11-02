@@ -403,7 +403,6 @@ class CaseUpdateConfig:
         "case_id": "target_case_id",
         "includes": "target_property_includelist",
         "excludes": "target_property_excludelist",
-        "override_props": "target_property_override",
         "index_create_case_id": "target_index_create_case_id",
         "index_create_case_type": "target_index_create_case_type",
         "index_create_relationship": "target_index_create_relationship",
@@ -422,7 +421,6 @@ class CaseUpdateConfig:
     case_id = attr.ib()
     includes = attr.ib()
     excludes = attr.ib()
-    override_props = attr.ib()
     index_create_case_id = attr.ib()
     index_create_case_type = attr.ib()
     index_create_relationship = attr.ib()
@@ -455,11 +453,11 @@ class CaseUpdateConfig:
         return CaseBlock(
             create=False,
             case_id=target_case.case_id,
-            update=self.get_case_updates(target_case),
+            update=self.get_case_updates(),
             index=self.get_case_index(target_case)
         ).as_text()
 
-    def get_case_updates(self, target_case):
+    def get_case_updates(self):
         case_json = self.intent_case.case_json
         update_props = []
         if self.excludes is not None:
@@ -468,11 +466,6 @@ class CaseUpdateConfig:
             update_props = set(case_json) & set(self.includes.split())
 
         update_props.difference_update(set(self.PROPS.values()))
-        override = self.override_props is None or self.override_props.lower() in ("1", "true")
-        if not override:
-            target_props = set(target_case.case_json)
-            update_props.difference_update(target_props)
-
         return {
             prop: case_json[prop]
             for prop in update_props
