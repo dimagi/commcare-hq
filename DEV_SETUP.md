@@ -844,15 +844,6 @@ files from Vellum directly, do the following.
     ```
 
 
-## Airflow
-
-It is usually not required to have a local airflow environment running.
-
-However, if you do need to get setup on Airflow (which is used to back some
-reporting infrastructure) you can follow the instructions in the
-[pipes repository](https://github.com/dimagi/pipes/).
-
-
 ## Running Tests
 
 To run the standard tests for CommCare HQ, run
