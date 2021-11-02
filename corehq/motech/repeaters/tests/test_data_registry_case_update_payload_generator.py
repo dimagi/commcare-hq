@@ -50,6 +50,15 @@ def test_generator_exclude_list():
         }})
 
 
+def test_generator_create_case():
+    builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").create_case("123")
+    _test_payload_generator(
+        intent_case=builder.get_case(), target_case_exists=False,
+        expected_updates={"1": {"new_prop": "new_prop_val"}},
+        expected_creates={"1": {"case_type": "patient", "owner_id": "123"}},
+    )
+
+
 def test_generator_update_create_index_to_parent():
     builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
@@ -201,7 +210,8 @@ def test_generator_required_fields():
         _test_payload_generator(intent_case=intent_case)
 
 
-def _test_payload_generator(intent_case, expected_updates=None, expected_indices=None):
+def _test_payload_generator(intent_case, target_case_exists=True,
+                            expected_updates=None, expected_indices=None, expected_creates=None):
     # intent case is the case created in the source domain which is used to trigger the repeater
     # and which contains the config for updating the case in the target domain
 
@@ -212,6 +222,9 @@ def _test_payload_generator(intent_case, expected_updates=None, expected_indices
 
     # target_case is the case in the target domain which is being updated
     def _get_case(self, case_id, case_type, *args, **kwargs):
+        if not target_case_exists:
+            raise CaseNotFound
+
         return Mock(domain=TARGET_DOMAIN, case_type=case_type, case_id=case_id, case_json={
             "existing_prop": uuid.uuid4().hex,
             "existing_blank_prop": ""
@@ -234,6 +247,8 @@ def _test_payload_generator(intent_case, expected_updates=None, expected_indices
         form.assert_case_updates(expected_updates or {})
         if expected_indices:
             form.assert_case_index(expected_indices)
+        if expected_creates:
+            form.assert_case_create(expected_creates)
 
 
 class DataRegistryUpdateForm:
@@ -270,6 +285,12 @@ class DataRegistryUpdateForm:
         }
         eq(actual, expected)
 
+    def assert_case_create(self, expected_creates):
+        for case_id, create in expected_creates.items():
+            eq(self.cases[case_id].create, True)
+            for key, val in create.items():
+                eq(getattr(self.cases[case_id], key), val)
+
 
 class IntentCaseBuilder:
     CASE_TYPE = "registry_case_update"
@@ -286,6 +307,13 @@ class IntentCaseBuilder:
             "target_case_id": case_id,
             "target_domain": domain,
             "target_case_type": case_type,
+        })
+        return self
+
+    def create_case(self, owner_id):
+        self.props.update({
+            "target_case_create": "1",
+            "target_case_owner_id": owner_id
         })
         return self
 

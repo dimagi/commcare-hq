@@ -401,6 +401,8 @@ class CaseUpdateConfig:
         "domain": "target_domain",
         "case_type": "target_case_type",
         "case_id": "target_case_id",
+        "owner_id": "target_case_owner_id",
+        "create_case": "target_case_create",
         "includes": "target_property_includelist",
         "excludes": "target_property_excludelist",
         "index_create_case_id": "target_index_create_case_id",
@@ -421,6 +423,8 @@ class CaseUpdateConfig:
     domain = attr.ib()
     case_type = attr.ib()
     case_id = attr.ib()
+    owner_id = attr.ib()
+    create_case = attr.ib()
     includes = attr.ib()
     excludes = attr.ib()
     index_create_case_id = attr.ib()
@@ -470,11 +474,24 @@ class CaseUpdateConfig:
             raise DataRegistryCaseUpdateError("Index relationships must be either 'child' or 'extension'")
 
     def get_case_block(self, target_case):
+        kwargs = {}
+        if target_case is None:
+            if not self.create_case:
+                # should never get here but added as a precaution
+                raise DataRegistryCaseUpdateError("Target case not found")
+            if not self.owner_id:
+                raise DataRegistryCaseUpdateError("'owner_id' required when creating cases")
+
+            kwargs = {
+                "case_type": self.case_type,
+            }
         return CaseBlock(
-            create=False,
-            case_id=target_case.case_id,
+            create=target_case is None,
+            case_id=self.case_id,
+            owner_id=self.owner_id,
             update=self.get_case_updates(),
-            index=self.get_case_indices(target_case)
+            index=self.get_case_indices(target_case),
+            **kwargs
         ).as_text()
 
     def get_case_updates(self):
@@ -585,10 +602,10 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         main_config = configs[0]
         registry_slug = main_config.registry_slug
         helper = DataRegistryHelper(main_config.intent_case.domain, registry_slug=registry_slug)
-        return [
+        return list(filter(None, [
             self._get_case(helper, repeat_record, config, couch_user)
             for config in configs
-        ]
+        ]))
 
     def _get_case(self, registry_helper, repeat_record, config, couch_user):
         try:
@@ -596,6 +613,8 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         except RegistryAccessException:
             raise DataRegistryCaseUpdateError("User does not have permission to access the registry")
         except CaseNotFound:
+            if config.create_case:
+                return
             raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
 
         if case.domain != config.domain:
@@ -608,7 +627,7 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
             case.case_id: case for case in target_cases
         }
         return [
-            config.get_case_block(targets_by_id[config.case_id])
+            config.get_case_block(targets_by_id.get(config.case_id, None))
             for config in configs
         ]
 
