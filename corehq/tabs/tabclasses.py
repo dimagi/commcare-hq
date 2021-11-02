@@ -550,6 +550,11 @@ class ProjectDataTab(UITab):
                 is_eligible_for_ecd_preview(self._request))
 
     @property
+    @memoized
+    def can_deduplicate_cases(self):
+        return toggles.CASE_DEDUPE.enabled_for_request(self._request)
+
+    @property
     def _is_viewable(self):
         return self.domain and (
             self.can_edit_commcare_data
@@ -836,7 +841,17 @@ class ProjectDataTab(UITab):
                     edit_section[0][1].append(automatic_update_rule_list_view)
                 else:
                     edit_section = [(ugettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
+
+            if self.can_deduplicate_cases:
+                from corehq.apps.data_interfaces.views import DeduplicationRuleListView
+                deduplication_list_view = {
+                    'title': _(DeduplicationRuleListView.page_title),
+                    'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
+                }
+                edit_section[0][1].append(deduplication_list_view)
+
             items.extend(edit_section)
+
 
         explore_data_views = []
         if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
