@@ -240,6 +240,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 module.search_config.search_label.label if hasattr(module, 'search_config') else "",
             'search_again_label':
                 module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
+            'data_registry_enabled': app.supports_data_registry,
             'data_registry': module.search_config.data_registry,
             'data_registry_workflow': module.search_config.data_registry_workflow,
             'additional_registry_queries': module.search_config.additional_registry_queries,
