@@ -152,6 +152,7 @@ class CaseBlock(object):
         fields = {"update": updates}
         for node in case.find(NS + "create") or []:
             tag = tag_of(node)
+            fields["create"] = True
             if tag in cls._built_ins:
                 fields[tag] = node.text
             # can create node have date_opened child node?
