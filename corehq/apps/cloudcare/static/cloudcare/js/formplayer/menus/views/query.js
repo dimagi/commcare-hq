@@ -249,6 +249,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     oldValue = $input.val(),
                     parts = _.map(oldValue.split(separator), function (v) { return moment(v); }),
                     newValue = '';
+                // conditions where only one valid date is typed in rather than a range
+                if (parts.length === 1 && function (parts) { return parts.isValid(); }) {
+                    $input.val(oldValue + separator + oldValue).trigger('change');
+                }
                 if (parts.length === 2 && _.every(parts, function (part) { return part.isValid(); })) {
                     newValue = parts[0].format(dateFormat) + separator + parts[1].format(dateFormat);
                 }
