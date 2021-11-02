@@ -8,6 +8,7 @@ from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
 
 DUPLICATE_LIMIT = 1000
+DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
 
 
 def find_duplicate_case_ids(domain, case, case_properties, include_closed=False, match_type="ALL"):
@@ -55,7 +56,7 @@ def reset_and_backfill_deduplicate_rule(rule):
         return
 
     if rule.workflow != AutomaticUpdateRule.WORKFLOW_DEDUPLICATE:
-        raise AttributeError
+        raise ValueError("You can only backfill a rule with workflow DEDUPLICATE")
 
     rule.locked_for_editing = True
     rule.save()
@@ -83,25 +84,34 @@ def backfill_deduplicate_rule(domain, rule):
     total_cases_count = CaseES().domain(domain).case_type(rule.case_type).count()
     progress_helper.set_total_cases_to_be_processed(total_cases_count)
     now = datetime.utcnow()
+    try:
+        run_record = DomainCaseRuleRun.objects.create(
+            domain=domain,
+            started_on=now,
+            status=DomainCaseRuleRun.STATUS_RUNNING,
+            case_type=rule.case_type,
+        )
+        case_iterator = AutomaticUpdateRule.iter_cases(domain, rule.case_type)
+        iter_cases_and_run_rules(
+            domain,
+            case_iterator,
+            [rule],
+            now,
+            run_record.id,
+            rule.case_type,
+            progress_helper=progress_helper,
+        )
+    finally:
+        progress_helper.set_rule_complete()
+        AutomaticUpdateRule.objects.filter(pk=rule.pk).update(
+            locked_for_editing=False,
+            last_run=now,
+        )
 
-    run_record = DomainCaseRuleRun.objects.create(
-        domain=domain,
-        started_on=now,
-        status=DomainCaseRuleRun.STATUS_RUNNING,
-        case_type=rule.case_type,
-    )
-    case_iterator = AutomaticUpdateRule.iter_cases(domain, rule.case_type)
-    iter_cases_and_run_rules(
-        domain,
-        case_iterator,
-        [rule],
-        now,
-        run_record.id,
-        rule.case_type,
-        progress_helper=progress_helper,
-    )
-    progress_helper.set_rule_complete()
-    AutomaticUpdateRule.objects.filter(pk=rule.pk).update(
-        locked_for_editing=False,
-        last_run=now,
-    )
+
+def get_dedupe_xmlns(rule):
+    return f"{DEDUPE_XMLNS}__{rule.name}-{rule.case_type}"
+
+
+def is_dedupe_xmlns(xmlns):
+    return xmlns.split("__")[0] == DEDUPE_XMLNS
