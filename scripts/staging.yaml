@@ -92,4 +92,5 @@ branches:
     - do/exclude-users-forward-forms # Dominic Oct 29
     - ap/resume-cancelled-batches # Amit Nov 1
     - bmb/upgrade-babel-2.9.1  # Biyeun Nov 1 (touches 2FA, phone number validation, going into QA)
+    - bmb/update-datatables-dt  # Biyeun Nov 2
 submodules: { }
