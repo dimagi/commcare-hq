@@ -1067,6 +1067,20 @@ class CaseDuplicate(models.Model):
         return list(cls.objects.filter(action_id=action_id).values_list('case_id', flat=True))
 
     @classmethod
+    def bulk_remove_unique_cases(cls, case_ids):
+        """Given a list of case_ids that are deleted, make sure there are no
+        other CaseDuplicates pointing to them
+
+        """
+        return (
+            cls.objects
+            .filter(Q(potential_duplicates__case_id__in=case_ids))
+            .annotate(potential_duplicates_count=models.Count("potential_duplicates"))
+            .filter(potential_duplicates_count=1)
+            .delete()
+        )
+
+    @classmethod
     def remove_unique_cases(cls, action, case_id):
         # Given a case_id that is no longer a duplicate, ensure there are no
         # other CaseDuplicates that were only pointing to this case
@@ -1082,6 +1096,12 @@ class CaseDuplicate(models.Model):
     @classmethod
     def remove_duplicates_for_action(cls, action, case_id):
         return cls.objects.filter(action=action, case_id=case_id).delete()
+
+    @classmethod
+    def remove_duplicates_for_case_ids(cls, case_ids):
+        return cls.objects.filter(
+            case_id__in=case_ids
+        ).delete()
 
     @classmethod
     def bulk_create_duplicate_relationships(cls, action, initial_case, duplicate_case_ids):

@@ -1,3 +1,4 @@
+from datetime import datetime
 from itertools import chain
 
 from django.test import TestCase, override_settings
@@ -19,16 +20,14 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import (
-    flag_enabled,
-    trap_extra_setup,
-)
+from corehq.util.test_utils import flag_enabled, trap_extra_setup
 
 
 @es_test
@@ -427,6 +426,24 @@ class CaseDeduplicationActionTest(TestCase):
 
         self.rule.deleted = False
         self.rule.save()
+
+    @flag_enabled('CASE_DEDUPE')
+    def test_case_deletion(self):
+        """Test that deleting cases also deletes Duplicate Relationships
+        """
+        duplicates, uniques = self._create_cases()
+        duplicate_case_ids = [c.case_id for c in duplicates]
+        CaseDuplicate.bulk_create_duplicate_relationships(
+            self.action, duplicates[0], duplicate_case_ids
+        )
+
+        # Delete all cases except the last one, which is now no longer a duplicate.
+        tag_cases_as_deleted_and_remove_indices(
+            self.domain, duplicate_case_ids[0:-1], "deletion", datetime.utcnow()
+        )
+
+        # All CaseDuplicates should be deleted (including the last one)
+        self.assertFalse(CaseDuplicate.objects.filter(case_id__in=duplicate_case_ids).count())
 
     @es_test
     def test_integration_test(self):
