@@ -234,7 +234,7 @@ class LocationsListView(BaseLocationView):
             )
             return list(map(to_json, locs))
         else:
-            return [to_json(user.get_sql_location(self.domain))]
+            return [to_json(location) for location in user.get_sql_locations(self.domain)]
 
 
 @location_safe
