@@ -211,21 +211,10 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
-            "smart_link_template": _smart_link_template(),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
         )
-
-
-# Template is manipulated both by javascript in web apps and java in formplayer.
-# It uses Java's URIComponentsBuilder syntax.
-def _smart_link_template():
-    template = absolute_reverse("session_endpoint", args=["---", "---", "---"])
-    template = template.replace("---", "{domain}", 1)
-    template = template.replace("---", "{app_id}", 1)
-    template = template.replace("---", "{endpoint_id}", 1)
-    return template
 
 
 def _fetch_build(domain, username, app_id):
@@ -287,7 +276,6 @@ class FormplayerPreviewSingleApp(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
-            "smart_link_template": _smart_link_template(),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 

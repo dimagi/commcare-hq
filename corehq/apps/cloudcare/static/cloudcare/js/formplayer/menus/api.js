@@ -60,6 +60,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                         } else {
                             if (response.smartLinkRedirect) {
+                                if (user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
+                                    FormplayerFrontend.trigger('showSuccess', gettext("You have selected a case in a different domain. App Preview does not support this feature.", 5000));
+                                    FormplayerFrontend.trigger('navigateHome');
+                                    return;
+                                }
                                 // TODO: this is really slow
                                 console.log("Redirecting to " + response.smartLinkRedirect);
                                 document.location = response.smartLinkRedirect;
@@ -117,7 +122,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "force_manual_action": params.forceManualAction,
                     "query_data": params.queryData,
                     "cases_per_page": casesPerPage,
-                    "smart_link_template": params.smartLinkTemplate,
                     "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                     "isPersistent": params.isPersistent,
                     "useLiveQuery": user.useLiveQuery,
