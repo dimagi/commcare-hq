@@ -149,33 +149,42 @@ class ApplicationDataSourceUIHelper(object):
 
         # NOTE: This corresponds to a view-model that must be initialized in your template.
         # See the doc string of this class for more information.
-        self.application_field.widget.attrs = {'data-bind': 'value: application'}
-        self.registry_slug_field.widget.attrs = {'data-bind': '''
-            optionsText: function(item){return item.text},
-            optionsValue: function(item){return item.value},
-            value: registrySlug
-            '''}
         self.source_type_field.widget.attrs = {'data-bind': 'value: sourceType'}
-        self.source_field.widget.attrs = {'data-bind': '''
-            optionsText: function(item){return item.text},
-            optionsValue: function(item){return item.value},
-            value: sourceId
-        '''}
 
         if self.enable_registry:
-            self.application_field.widget.attrs['data-bind'] += ", disable:" \
-                                                                "isDataFromOneProject() != 'true'," \
-                                                                "optionsText: function(item){return item.text}," \
-                                                                "optionsValue: function(item){return item.value}," \
-                                                                "options: dropdownMap['app'][isDataFromOneProject()]"
-            self.registry_slug_field.widget.attrs['data-bind'] += ", disable: sourceType() != 'case' || " \
-                                                                  "isDataFromOneProject() != 'false'," \
-                                                                  "options: dropdownMap['registry'][isDataFromOneProject()]"
-            self.source_field.widget.attrs['data-bind'] += ", options: _.union(" \
-                                                           "sourcesMap[application()][sourceType()], " \
-                                                           "sourcesMap[registrySlug()][sourceType()])"
+            self.application_field.widget.attrs = {'data-bind': '''
+                value: application,
+                disable: isDataFromOneProject() != 'true',
+                optionsText: function(item){return item.text},
+                optionsValue: function(item){return item.value},
+                options: dropdownMap['app'][isDataFromOneProject()]
+            '''}
+            self.registry_slug_field.widget.attrs = {'data-bind': '''
+                optionsText: function(item){return item.text},
+                optionsValue: function(item){return item.value},
+                value: registrySlug,
+                disable: sourceType() != 'case' || isDataFromOneProject() != 'false',
+                options: dropdownMap['registry'][isDataFromOneProject()]
+                '''}
+            self.source_field.widget.attrs = {'data-bind': '''
+                optionsText: function(item){return item.text},
+                optionsValue: function(item){return item.value},
+                value: sourceId,
+                options: _.union(sourcesMap[application()][sourceType()], sourcesMap[registrySlug()][sourceType()])
+            '''}
         else:
-            self.source_field.widget.attrs['data-bind'] += ", options: sourcesMap[application()][sourceType()]"
+            self.application_field.widget.attrs = {'data-bind': 'value: application'}
+            self.registry_slug_field.widget.attrs = {'data-bind': '''
+                optionsText: function(item){return item.text},
+                optionsValue: function(item){return item.value},
+                value: registrySlug
+                '''}
+            self.source_field.widget.attrs = {'data-bind': '''
+                optionsText: function(item){return item.text},
+                optionsValue: function(item){return item.value},
+                value: sourceId
+                options: sourcesMap[application()][sourceType()]
+            '''}
 
     def get_fields(self):
         fields = collections.OrderedDict()
