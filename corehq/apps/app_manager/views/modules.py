@@ -205,6 +205,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'shadow_parent': _get_shadow_parent(app, module),
         'case_types': {m.case_type for m in app.modules if m.case_type},
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
+        'data_registry_enabled': app.supports_data_registry,
         'data_registries': get_data_registry_dropdown_options(app.domain, required_case_types=case_types),
         'data_registry_workflow_choices': (
             (REGISTRY_WORKFLOW_LOAD_CASE, _("Load external case into form")),
