@@ -633,7 +633,7 @@ event="xforms-revalidate"/>""" in
         self.assertTrue("<orx:drift/>" in self.form.render_xform().decode('utf-8'))
 
 
-@patch("corehq.apps.app_manager.xform._module_offers_registry_search", new=lambda x: True)
+@patch("corehq.apps.app_manager.xform._module_loads_registry_case", new=lambda x: True)
 class FormPreparationV2TestDataRegistry(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'form_preparation_v2'
 
