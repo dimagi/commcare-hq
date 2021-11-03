@@ -5,7 +5,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-    var separator = " to ";
+    var separator = " to ",
         dateFormat = "YYYY-MM-DD";
     var selectDelimiter = "#,#"; // Formplayer also uses this
     var Const = hqImport("cloudcare/js/form_entry/const"),
@@ -249,8 +249,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     oldValue = $input.val(),
                     parts = _.map(oldValue.split(separator), function (v) { return moment(v); }),
                     newValue = '';
-                if (parts.length === 2 && _.every(parts, function (part) { return part.isValid(); })) {
-                    newValue = parts[0].format(dateFormat) + separator + parts[1].format(dateFormat);
+
+                if (_.every(parts, function (part) { return part.isValid(); }))  {
+                    if (parts.length === 1) { // condition where only one valid date is typed in rather than a range
+                        $input.val(oldValue + separator + oldValue).trigger('change');
+                    } else if (parts.length === 2) {
+                        newValue = parts[0].format(dateFormat) + separator + parts[1].format(dateFormat);
+                    }
                 }
                 if (oldValue !== newValue) {
                     $input.val(newValue).trigger('change');
