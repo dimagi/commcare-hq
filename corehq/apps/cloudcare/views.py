@@ -86,7 +86,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.util.view_utils import absolute_reverse
 from xml2json.lib import xml2json
 
 
