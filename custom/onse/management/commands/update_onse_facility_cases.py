@@ -1,6 +1,9 @@
 from django.core.management import BaseCommand
 
-from custom.onse.tasks import update_facility_cases_from_dhis2_data_elements
+from custom.onse.tasks import (
+    execute_update_facility_cases_from_dhis2_data_elements,
+    get_dhis2_server,
+)
 
 
 class Command(BaseCommand):
@@ -15,7 +18,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        update_facility_cases_from_dhis2_data_elements.apply(kwargs={
-            'period': options.get('period'),
-            'print_notifications': True,
-        })
+        period = options.get('period')
+        print_notifications = True
+        dhis2_server = get_dhis2_server(print_notifications)
+        execute_update_facility_cases_from_dhis2_data_elements(
+            dhis2_server,
+            period,
+            print_notifications,
+        )

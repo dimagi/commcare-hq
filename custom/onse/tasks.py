@@ -71,21 +71,8 @@ class CassiusMarcellus:  # TODO: Come up with a better name. Please!
                       hour=22, minute=30),
     queue='background_queue',
 )
-def update_facility_cases_from_dhis2_data_elements(
-    period: Optional[str] = None,
-    print_notifications: bool = False,
-):
-    """
-    Update facility_supervision cases with indicators collected in DHIS2
-    over the last quarter.
-
-    :param period: The period of data to import. e.g. "2020Q1". Defaults
-        to last quarter.
-    :param print_notifications: If True, notifications are printed,
-        otherwise they are emailed.
-
-    """
-    _update_facility_cases_from_dhis2_data_elements.delay(period, print_notifications)
+def update_facility_cases_from_dhis2_data_elements():
+    _update_facility_cases_from_dhis2_data_elements.delay()
 
 
 @task(bind=True, max_retries=MAX_RETRY_ATTEMPTS)
@@ -96,7 +83,7 @@ def _update_facility_cases_from_dhis2_data_elements(self, period, print_notifica
     server_status = _check_server_status(dhis2_server)
 
     if server_status['ready']:
-        _execute_update_facility_cases_from_dhis2_data_elements(dhis2_server, period, print_notifications)
+        execute_update_facility_cases_from_dhis2_data_elements(dhis2_server, period, print_notifications)
     else:
         exception = server_status['error']
         retry_days = 2 ** self.request.retries
@@ -127,11 +114,23 @@ def _check_server_status(dhis2_server: ConnectionSettings):
     return server_status
 
 
-def _execute_update_facility_cases_from_dhis2_data_elements(
+def execute_update_facility_cases_from_dhis2_data_elements(
     dhis2_server: ConnectionSettings,
     period: Optional[str] = None,
     print_notifications: bool = False,
 ):
+    """
+    Update facility_supervision cases with indicators collected in DHIS2
+    over the last quarter.
+
+    :param dhis2_server: The ConnectionSettings instance to connect to
+        the remote API.
+    :param period: The period of data to import. e.g. "2020Q1". Defaults
+        to last quarter.
+    :param print_notifications: If True, notifications are printed,
+        otherwise they are emailed.
+
+    """
     try:
         clays = get_clays()
         with ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor:
