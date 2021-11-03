@@ -67,6 +67,7 @@ hqDefine("users/js/roles_and_permissions",[
             webAppsPrivilege: initialPageData.get("web_apps_privilege"),
             DataFileDownloadEnabled: initialPageData.get("data_file_download_enabled"),
             ExportOwnershipEnabled: initialPageData.get("export_ownership_enabled"),
+            dataRegistryChoices: initialPageData.get("data_registry_choices"),
         });
     });
 });

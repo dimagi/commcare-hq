@@ -299,33 +299,6 @@ class FixtureDataItem(Document):
         if fields:
             raise FixtureTypeCheckError("fields %s from fixture data %s not in fixture data type" % (', '.join(fields), self.get_id))
 
-    def to_xml(self):
-        xData = ElementTree.Element(self.data_type.tag)
-        for attribute in self.data_type.item_attributes:
-            try:
-                xData.attrib[attribute] = serialize(self.item_attributes[attribute])
-            except KeyError as e:
-                # This should never occur, buf if it does, the OTA restore on mobile will fail and
-                # this error would have been raised and email-logged.
-                raise FixtureTypeCheckError(
-                    "Table with tag %s has an item with id %s that doesn't have an attribute as defined in its types definition"
-                    % (self.data_type.tag, self.get_id)
-                )
-        for field in self.data_type.fields:
-            escaped_field_name = clean_fixture_field_name(field.field_name)
-            if field.field_name not in self.fields:
-                xField = ElementTree.SubElement(xData, escaped_field_name)
-                xField.text = ""
-            else:
-                for field_with_attr in self.fields[field.field_name].field_list:
-                    xField = ElementTree.SubElement(xData, escaped_field_name)
-                    xField.text = serialize(field_with_attr.field_value)
-                    for attribute in field_with_attr.properties:
-                        val = field_with_attr.properties[attribute]
-                        xField.attrib[attribute] = serialize(val)
-
-        return xData
-
     def get_groups(self, wrap=True):
         group_ids = get_owner_ids_by_type(self.domain, 'group', self.get_id)
         if wrap:
@@ -374,7 +347,12 @@ class FixtureDataItem(Document):
         return SQLLocation.objects.filter(location_id__in=loc_ids)
 
     @classmethod
-    def by_user(cls, user, wrap=True):
+    def by_user(cls, user, include_docs=True):
+        """
+        This method returns all fixture data items owned by the user, their location, or their group.
+
+        :param include_docs: whether to return the fixture data item dicts or just a set of ids
+        """
         group_ids = Group.by_user_id(user.user_id, wrap=False)
         loc_ids = user.sql_location.path if user.sql_location else []
 
@@ -391,7 +369,7 @@ class FixtureDataItem(Document):
                 wrapper=lambda r: r['value'],
             )
         )
-        if wrap:
+        if include_docs:
             results = cls.get_db().view('_all_docs', keys=list(fixture_ids), include_docs=True)
 
             # sort the results into those corresponding to real documents
@@ -401,7 +379,7 @@ class FixtureDataItem(Document):
 
             for result in results:
                 if result.get('doc'):
-                    docs.append(cls.wrap(result['doc']))
+                    docs.append(result['doc'])
                 elif result.get('error'):
                     assert result['error'] == 'not_found'
                     deleted_fixture_ids.add(result['key'])

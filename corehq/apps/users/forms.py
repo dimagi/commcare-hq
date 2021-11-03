@@ -171,13 +171,17 @@ class BaseUpdateUserForm(forms.Form):
         if is_update_successful and save:
             self.existing_user.save()
             if props_updated:
+                # This form is used either by a web user to edit their info where there is no domain or
+                # to edit a web/commcare user on a domain, so by_ and for_domain would be the same domain
                 log_user_change(
-                    self.domain if self.domain else None,
+                    by_domain=self.request.domain if self.domain else None,
+                    for_domain=self.request.domain if self.domain else None,
                     couch_user=self.existing_user,
                     changed_by_user=self.request.couch_user,
                     changed_via=USER_CHANGE_VIA_WEB,
                     fields_changed=props_updated,
-                    domain_required_for_log=bool(self.domain),
+                    by_domain_required_for_log=bool(self.domain),
+                    for_domain_required_for_log=bool(self.domain)
                 )
         return is_update_successful, props_updated
 
@@ -209,24 +213,26 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             self.existing_user.save()
 
         if is_update_successful and (props_updated or role_updated or metadata_updated):
-            messages = []
+            change_messages = {}
             profile_id = self.existing_user.user_data.get(PROFILE_SLUG)
             if role_updated:
-                messages.append(UserChangeMessage.role_change(user_new_role))
+                change_messages.update(UserChangeMessage.role_change(user_new_role))
             if metadata_updated:
                 props_updated['user_data'] = self.existing_user.user_data
             if profile_updated:
                 profile_name = None
                 if profile_id:
                     profile_name = CustomDataFieldsProfile.objects.get(id=profile_id).name
-                messages.append(UserChangeMessage.profile_info(profile_name))
+                change_messages.update(UserChangeMessage.profile_info(profile_id, profile_name))
+            # this form is used to edit a web/commcare user on a domain so set domain for both by_ and for_domain
             log_user_change(
-                self.request.domain,
+                by_domain=self.request.domain,
+                for_domain=self.domain,
                 couch_user=self.existing_user,
                 changed_by_user=self.request.couch_user,
                 changed_via=USER_CHANGE_VIA_WEB,
                 fields_changed=props_updated,
-                message=". ".join(messages)
+                change_messages=change_messages
             )
         return is_update_successful
 
@@ -853,9 +859,9 @@ class MultipleSelectionForm(forms.Form):
                 var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
                 multiselect_utils.createFullMultiselectWidget(
                     'id_of_multiselect_field',
-                    django.gettext("Available Things"),
-                    django.gettext("Things Selected"),
-                    django.gettext("Search Things...")
+                    gettext("Available Things"),
+                    gettext("Things Selected"),
+                    gettext("Search Things...")
                 );
             });
         });
@@ -982,7 +988,8 @@ class CommtrackUserForm(forms.Form):
     def save(self, user):
         # todo: Avoid multiple user.save
         user_change_logger = UserChangeLogger(
-            self.domain,
+            upload_domain=self.domain,
+            user_domain=self.domain,
             user=user,
             is_new_user=False,
             changed_by_user=self.request.couch_user,
@@ -1053,20 +1060,25 @@ class CommtrackUserForm(forms.Form):
             location_ids = location_updates['location_ids']
             user_change_logger.add_changes({'assigned_location_ids': location_ids})
             if location_ids:
-                location_names = list(SQLLocation.objects.filter(location_id__in=location_ids).values_list(
-                    'name', flat=True))
+                locations = SQLLocation.objects.filter(location_id__in=location_ids)
                 user_change_logger.add_info(
-                    UserChangeMessage.commcare_user_assigned_locations_info(location_names)
+                    UserChangeMessage.assigned_locations_info(locations)
+                )
+            else:
+                user_change_logger.add_info(
+                    UserChangeMessage.assigned_locations_info([])
                 )
 
         if 'location_id' in location_updates:
             location_id = location_updates['location_id']
             user_change_logger.add_changes({'location_id': location_id})
             if location_id:
-                primary_location_name = SQLLocation.objects.get(location_id=location_id).name
+                primary_location = SQLLocation.objects.get(location_id=location_id)
                 user_change_logger.add_info(
-                    UserChangeMessage.commcare_user_primary_location_info(primary_location_name)
+                    UserChangeMessage.primary_location_info(primary_location)
                 )
+            else:
+                user_change_logger.add_info(UserChangeMessage.primary_location_removed())
 
         if program_id is not None:
             self._log_program_changes(user_change_logger, program_id)
@@ -1084,16 +1096,13 @@ class CommtrackUserForm(forms.Form):
         if 'location_ids' in location_updates:
             location_ids = location_updates['location_ids']
             if location_ids:
-                locations_info = ", ".join([
-                    f"{location.name}[{location.location_id}]"
-                    for location in SQLLocation.objects.filter(location_id__in=location_ids)
-                ])
+                locations = SQLLocation.objects.filter(location_id__in=location_ids)
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_assigned_locations_info(locations_info)
+                    UserChangeMessage.assigned_locations_info(locations)
                 )
             else:
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_assigned_locations_info([])
+                    UserChangeMessage.assigned_locations_info([])
                 )
 
         if 'location_id' in location_updates:
@@ -1101,11 +1110,11 @@ class CommtrackUserForm(forms.Form):
             if location_id:
                 primary_location = SQLLocation.objects.get(location_id=location_id)
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_primary_location_info(primary_location)
+                    UserChangeMessage.primary_location_info(primary_location)
                 )
             else:
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_primary_location_info(None)
+                    UserChangeMessage.primary_location_removed()
                 )
 
         if program_id is not None:

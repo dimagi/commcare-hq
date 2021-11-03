@@ -65,16 +65,7 @@ from corehq.sql_db.util import (
 from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
 
-doc_type_to_state = {
-    "XFormInstance": XFormInstanceSQL.NORMAL,
-    "XFormError": XFormInstanceSQL.ERROR,
-    "XFormDuplicate": XFormInstanceSQL.DUPLICATE,
-    "XFormDeprecated": XFormInstanceSQL.DEPRECATED,
-    "XFormArchived": XFormInstanceSQL.ARCHIVED,
-    "SubmissionErrorLog": XFormInstanceSQL.SUBMISSION_ERROR_LOG
-}
-
-state_to_doc_type = {v: k for k, v in doc_type_to_state.items()}
+doc_type_to_state = XFormInstanceSQL.DOC_TYPE_TO_STATE
 
 
 def iter_all_rows(reindex_accessor):

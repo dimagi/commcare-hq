@@ -17,7 +17,6 @@ from corehq.form_processor.parsers.ledgers.helpers import (
     StockReportHelper,
     StockTransactionHelper,
 )
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.xform import TestFormMetadata
 
@@ -31,7 +30,6 @@ def _get_name_for_domain():
     )
 
 
-@run_with_sql_backend
 class StockReportDomainTest(TestCase):
     def create_report(self, transactions=None, tag=None, date=None):
         form = get_simple_wrapped_form(uuid.uuid4().hex, metadata=TestFormMetadata(domain=self.domain))

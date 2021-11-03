@@ -8,6 +8,7 @@ import attr
 import requests
 from oauthlib.oauth2 import LegacyApplicationClient
 from requests import Session
+from requests.adapters import HTTPAdapter
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import RequestException
 from requests_oauthlib import OAuth1, OAuth2Session
@@ -113,6 +114,31 @@ class HTTPBearerAuth(AuthBase):
         return r
 
 
+class PublicOnlyHttpAdapter(HTTPAdapter):
+    def __init__(self, domain_name, src):
+        self.domain_name = domain_name
+        self.src = src
+        super().__init__()
+
+    def get_connection(self, url, proxies=None):
+        from corehq.motech.requests import validate_user_input_url_for_repeaters
+        validate_user_input_url_for_repeaters(url, domain=self.domain_name, src=self.src)
+        return super().get_connection(url, proxies=proxies)
+
+
+def make_session_public_only(session, domain_name, src):
+    """
+    Modifies `session` to validate urls before sending and accept only hosts resolving to public IPs
+
+    Once this function has been called on a session, session.request, etc., will
+    raise PossibleSSRFAttempt whenever called with a url host that resolves to a non-public IP.
+    """
+    # the following two lines entirely replace the default adapters with our custom ones
+    # by redefining the adapter to use for the two default prefixes
+    session.mount('http://', PublicOnlyHttpAdapter(domain_name=domain_name, src=src))
+    session.mount('https://', PublicOnlyHttpAdapter(domain_name=domain_name, src=src))
+
+
 class AuthManager:
 
     def get_auth(self) -> Optional[AuthBase]:
@@ -122,12 +148,13 @@ class AuthManager:
         """
         return None
 
-    def get_session(self) -> Session:
+    def get_session(self, domain_name: str) -> Session:
         """
         Returns an instance of requests.Session. Manages authentication
         tokens, if applicable.
         """
         session = Session()
+        make_session_public_only(session, domain_name, src='sent_attempt')
         session.auth = self.get_auth()
         return session
 
@@ -238,7 +265,7 @@ class OAuth2PasswordGrantManager(AuthManager):
         self.connection_settings.last_token = value
         self.connection_settings.save()
 
-    def get_session(self):
+    def get_session(self, domain_name: str) -> Session:
 
         def set_last_token(token):
             # Used by OAuth2Session
@@ -275,10 +302,12 @@ class OAuth2PasswordGrantManager(AuthManager):
             'client_id': self.client_id,
             'client_secret': self.client_secret,
         }
-        return OAuth2Session(
+        session = OAuth2Session(
             self.client_id,
             token=self.last_token,
             auto_refresh_url=refresh_url,
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )
+        make_session_public_only(session, domain_name, src='oauth_sent_attempt')
+        return session

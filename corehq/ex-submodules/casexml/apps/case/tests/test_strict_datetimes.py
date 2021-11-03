@@ -24,6 +24,7 @@ CASE_BLOCK = """
 """.format(case_id=CASE_ID)
 
 
+@sharded
 class StrictDatetimesTest(TestCase):
 
     @classmethod
@@ -39,11 +40,6 @@ class StrictDatetimesTest(TestCase):
             with self.interface.casedb_cache(domain=self.domain) as case_db:
                 with self.assertRaises(PhoneDateValueError):
                     process_cases_with_casedb(xforms, case_db)
-
-
-@sharded
-class StrictDatetimesTestSQL(StrictDatetimesTest):
-    pass
 
 
 def _make_form_from_case_blocks(case_blocks):

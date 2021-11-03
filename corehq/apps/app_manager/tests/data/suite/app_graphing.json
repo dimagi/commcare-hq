@@ -283,7 +283,7 @@
                            "enum": [
                            ],
                            "header": {
-                               "en": "Xy Xpath Function"
+                               "en": "XY XPath Function"
                            },
                            "time_ago_interval": 365.25,
                            "calc_xpath": ".",

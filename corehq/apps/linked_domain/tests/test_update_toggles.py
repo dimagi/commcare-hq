@@ -1,7 +1,7 @@
 from unittest import mock
 
 from corehq.apps.linked_domain.local_accessors import get_enabled_toggles
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
+from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_toggles
 from toggle.shortcuts import set_toggle
 from corehq.toggles import NAMESPACE_DOMAIN, StaticToggle, TAG_INTERNAL
@@ -15,7 +15,7 @@ TEST_TOGGLE = StaticToggle(
 
 
 @mock.patch('corehq.toggles.all_toggles_by_name', mock.Mock(return_value={'TEST_TOGGLE': TEST_TOGGLE}))
-class TestUpdateToggles(BaseLinkedAppsTest):
+class TestUpdateToggles(BaseLinkedDomainTest):
 
     def tearDown(self):
         super(TestUpdateToggles, self).tearDown()

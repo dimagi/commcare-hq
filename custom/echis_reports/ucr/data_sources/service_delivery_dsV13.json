@@ -9,7 +9,7 @@
     "echis"
   ],
   "config": {
-    	"base_item_expression": {
+    	"base_item_expression":  {
 			"test": {
 			  "filter": {
 				"operator": "in",
@@ -780,7 +780,7 @@
 			],
 			"type": "iterator"
 		  },
-	"configured_filter": {
+	"configured_filter":  {
 		"type": "or",
 		"filters": [
 		  {
@@ -1049,196 +1049,148 @@
 		  "type": "expression",
 		  "column_id": "opened_on"
 		},
+	 
 		{
-		  "comment": null,
-		  "create_index": false,
-		  "display_name": "region_name",
-		  "datatype": "string",
-		  "type": "expression",
-		  "transform": {},
-		  "is_primary_key": false,
-		  "is_nullable": true,
-		  "expression": {
+			"type": "expression",
+			"column_id": "health_post_id",
+			"datatype": "string",
+			"display_name": "health_post_id",
 			"expression": {
-			  "datatype": null,
-			  "type": "property_name",
-			  "property_name": "region"
+			  "test": {
+				"comment": "Check if the case is a child case or not by using owner_id is null",
+				"operator": "eq",
+				"expression": {
+				  "type": "root_doc",
+				  "expression": {
+					"type": "property_name",
+					"property_name": "owner_id",
+					"datatype": null
+				  }
+				},
+				"type": "boolean_expression",
+				"property_value": "-"
+			  },
+			  "type": "conditional",
+			  "expression_if_true": {
+				"value_expression": {
+				  "value_expression": {
+					"type": "property_name",
+					"property_name": "_id",
+					"datatype": null
+				  },
+				  "type": "related_doc",
+				  "related_doc_type": "Location",
+				  "doc_id_expression": {
+					"test": {
+					  "comment": "case has owner id bc its partent, check if the owner_id location exists( not deleted), if exists take owner id get the id if not asssign -",
+					  "operator": "eq",
+					  "type": "boolean_expression",
+					  "expression": {
+						"type": "location_parent_id",
+						"location_id_expression": {
+						  "type": "root_doc",
+						  "expression": {
+							"type": "property_name",
+							"property_name": "owner_id",
+							"datatype": null
+						  }
+						}
+					  },
+					  "property_value": ""
+					},
+					"expression_if_false": {
+					  "type": "root_doc",
+					  "expression": {
+						"type": "property_name",
+						"property_name": "owner_id",
+						"datatype": null
+					  }
+					},
+					"type": "conditional",
+					"expression_if_true": {
+					  "constant": "-",
+					  "type": "constant"
+					}
+				  }
+				},
+				"type": "related_doc",
+				"related_doc_type": "CommCareCase",
+				"doc_id_expression": {
+					"value_expression": {
+						"datatype": null,
+						"type": "property_name",
+						"property_name": "referenced_id"
+					  },
+					  "type": "nested",
+					  "argument_expression": {
+						"type": "array_index",
+						"array_expression": {
+						  "type": "root_doc",
+						  "expression": {
+							"type": "property_name",
+							"property_name": "indices",
+							"datatype": null
+						  }
+						},
+						"index_expression": {
+						  "type": "constant",
+						  "constant": 0
+						}
+					  }
+				}
+			  },
+			  "expression_if_false": {
+				"value_expression": {
+				  "type": "root_doc",
+				  "expression": {
+					"type": "property_name",
+					"property_name": "_id",
+					"datatype": null
+				  }
+				},
+				"type": "related_doc",
+				"related_doc_type": "Location",
+				"doc_id_expression": {
+				  "comment": "case is parent , check if the location exists for the owner id, retrun the id of the location if exists",
+				  "test": {
+					"operator": "eq",
+					"type": "boolean_expression",
+					"expression": {
+					  "type": "location_parent_id",
+					  "location_id_expression": {
+						"type": "root_doc",
+						"expression": {
+						  "type": "property_name",
+						  "property_name": "owner_id",
+						  "datatype": null
+						}
+					  }
+					},
+					"comment": null,
+					"property_value": ""
+				  },
+				  "expression_if_false": {
+					"type": "root_doc",
+					"expression": {
+					  "type": "property_name",
+					  "property_name": "owner_id",
+					  "datatype": null
+					}
+				  },
+				  "type": "conditional",
+				  "expression_if_true": {
+					"constant": "-",
+					"type": "constant"
+				  }
+				}
+			  }
 			},
-			"type": "root_doc"
+			"is_nullable": true,
+			"is_primary_key": false,
+			"create_index": false,
+			"transform": {},
+			"comment": null
 		  },
-		  "column_id": "region"
-		},
-		{
-		  "comment": null,
-		  "create_index": false,
-		  "display_name": "region_id",
-		  "datatype": "string",
-		  "type": "expression",
-		  "transform": {},
-		  "is_primary_key": false,
-		  "is_nullable": true,
-		  "expression": {
-			"expression": {
-			  "datatype": null,
-			  "type": "property_name",
-			  "property_name": "region_id"
-			},
-			"type": "root_doc"
-		  },
-		  "column_id": "region_id"
-		},
-		{
-		  "comment": null,
-		  "create_index": false,
-		  "display_name": "zone_name",
-		  "datatype": "string",
-		  "type": "expression",
-		  "transform": {},
-		  "is_primary_key": false,
-		  "is_nullable": true,
-		  "expression": {
-			"expression": {
-			  "datatype": null,
-			  "type": "property_name",
-			  "property_name": "zone"
-			},
-			"type": "root_doc"
-		  },
-		  "column_id": "zone"
-		},
-		{
-		  "comment": null,
-		  "create_index": false,
-		  "display_name": "zone_id",
-		  "datatype": "string",
-		  "type": "expression",
-		  "transform": {},
-		  "is_primary_key": false,
-		  "is_nullable": true,
-		  "expression": {
-			"expression": {
-			  "datatype": null,
-			  "type": "property_name",
-			  "property_name": "zone_id"
-			},
-			"type": "root_doc"
-		  },
-		  "column_id": "zone_id"
-		},
-		{
-		  "comment": null,
-		  "create_index": false,
-		  "display_name": "woreda_name",
-		  "datatype": "string",
-		  "type": "expression",
-		  "transform": {},
-		  "is_primary_key": false,
-		  "is_nullable": true,
-		  "expression": {
-			"expression": {
-			  "datatype": null,
-			  "type": "property_name",
-			  "property_name": "woreda"
-			},
-			"type": "root_doc"
-		  },
-		  "column_id": "woreda"
-		},
-		{
-		  "comment": null,
-		  "create_index": false,
-		  "display_name": "woreda_id",
-		  "datatype": "string",
-		  "type": "expression",
-		  "transform": {},
-		  "is_primary_key": false,
-		  "is_nullable": true,
-		  "expression": {
-			"expression": {
-			  "datatype": null,
-			  "type": "property_name",
-			  "property_name": "woreda_id"
-			},
-			"type": "root_doc"
-		  },
-		  "column_id": "woreda_id"
-		},
-		{
-		  "comment": null,
-		  "create_index": false,
-		  "display_name": "health_center_name",
-		  "datatype": "string",
-		  "type": "expression",
-		  "transform": {},
-		  "is_primary_key": false,
-		  "is_nullable": true,
-		  "expression": {
-			"expression": {
-			  "datatype": null,
-			  "type": "property_name",
-			  "property_name": "health_center"
-			},
-			"type": "root_doc"
-		  },
-		  "column_id": "health_center"
-		},
-		{
-		  "comment": null,
-		  "create_index": false,
-		  "display_name": "health_center_id",
-		  "datatype": "string",
-		  "type": "expression",
-		  "transform": {},
-		  "is_primary_key": false,
-		  "is_nullable": true,
-		  "expression": {
-			"expression": {
-			  "datatype": null,
-			  "type": "property_name",
-			  "property_name": "health_center_id"
-			},
-			"type": "root_doc"
-		  },
-		  "column_id": "health_center_id"
-		},
-		{
-		  "comment": null,
-		  "create_index": false,
-		  "display_name": "health_post_name",
-		  "datatype": "string",
-		  "type": "expression",
-		  "transform": {},
-		  "is_primary_key": false,
-		  "is_nullable": true,
-		  "expression": {
-			"expression": {
-			  "datatype": null,
-			  "type": "property_name",
-			  "property_name": "health_post"
-			},
-			"type": "root_doc"
-		  },
-		  "column_id": "health_post"
-		},
-		{
-		  "comment": null,
-		  "create_index": true,
-		  "display_name": "health_post_id",
-		  "datatype": "string",
-		  "type": "expression",
-		  "transform": {},
-		  "is_primary_key": false,
-		  "is_nullable": true,
-		  "expression": {
-			"expression": {
-			  "datatype": null,
-			  "type": "property_name",
-			  "property_name": "health_post_id"
-			},
-			"type": "root_doc"
-		  },
-		  "column_id": "health_post_id"
-		},
 		{
 		  "comment": null,
 		  "create_index": true,

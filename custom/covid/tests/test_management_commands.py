@@ -95,7 +95,7 @@ class CaseCommandsTest(TestCase):
         )
         checkin_case = self.case_accessor.get_case(checkin_case_id)
         self.assertEqual('', checkin_case.get_case_property('hq_user_id'))
-        self.assertEqual(checkin_case.username, 'mobile_worker')
+        self.assertEqual(checkin_case.case_json["username"], 'mobile_worker')
 
         call_command('add_hq_user_id_to_case', self.domain, 'checkin')
 
@@ -103,8 +103,8 @@ class CaseCommandsTest(TestCase):
         checkin_case_no_username = self.case_accessor.get_case(checkin_case_no_username_id)
         lab_result_case = self.case_accessor.get_case(lab_result_case_id)
         self.assertEqual(checkin_case.get_case_property('hq_user_id'), user_id)
-        self.assertEqual(checkin_case_no_username.hq_user_id, '')
-        self.assertEqual(lab_result_case.hq_user_id, '')
+        self.assertEqual(checkin_case_no_username.case_json['hq_user_id'], '')
+        self.assertEqual(lab_result_case.case_json['hq_user_id'], '')
 
     def test_update_case_index_relationship(self):
         patient_case_id = uuid.uuid4().hex

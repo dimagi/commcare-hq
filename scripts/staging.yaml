@@ -10,7 +10,7 @@
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
 #     $ scripts/rebuildstaging
-#     $ commcare-cloud staging deploy
+#     $ commcare-cloud --control staging deploy
 # Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
@@ -53,37 +53,45 @@ branches:
     # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-    #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
-    - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-    - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
-    - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
-    - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - ce/bulk-case-search # Cal July 6
     - rp/enterprize-sms-report # Rynhard July 12
-    - ml/add-bulk-delete-form-export-report # Minha July 20
-    - sr/memoized-toggle # Sravan July 26
+    #- sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
-    - sk/data-registry-view  # Simon July 29
-    - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
-    - jls/smart-linking-mvp  # Jenny Aug 9
-    - jls/smart-linking-mvp-content-type # Jenny Aug 23
-    - caktus:allowed_values_ui # Jenny Aug 13
-    - cs/SC-1697_new-custom-recipient  # Charl Aug 11
-    - dependabot/npm_and_yarn/path-parse-1.0.7 # Graham Aug 17
-    - rc/audit-log-ux # Robert Aug 22
-    - es/blank-case-search  # Ethan Aug 23
-    - erroredQuestionMessagingFix # Shubham Aug 24
-    - mk/user-history/track-api-updates # MK Aug 24
-    - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
-    - errorJumpFix # Shubham Aug 25
+    - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - sk/prevent-duplicate-role-names  # Simon Aug 30
-    - ml/add-bulk-action-scheduled-reports # Minha Aug 30
-    - ce/fixture-restore # Cal Aug 31
-    - rc/audit-log-ux+mk/user-history/structured-messages-v2 # MK Sep 1
-    - mk/user-history/structured-messages-v2 # MK Sep 1
-    - mk/user-history/add-for-domain # MK Sep 1
+    - smh/cross-domain-ucr-ui-updates # Steph Sept 14
+    - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
+    - jm/remove-es-scan  # Joel Sep 17 [QA]
+    - jls/smart-linking-in-web-apps # Jenny Sept 22
+    - jls/smart-linking-in-web-apps-no-app-preview # Jenny Nov 2
+    - dmr/throttle-system-forms  # Danny Sept 24
+    - smh/remove-extra-spinner-icons # Steph Oct 6
+    - ml/remove-pickles-phonelog # Minha Oct 7
+    - dependabot/npm_and_yarn/moment-2.29.1+sk/app-workflow-visualization
+    - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
+    - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
+    - ml/remove-pickles-user-importer # Minha Oct 13
+    - rp/insert-status-embed # Rynhard Oct 15
+    - fr/dedupe+ad/auto-update-rules-for-linked-spaces
+    - fr/dedupe  # Farid Sept 17
+    - ad/auto-update-rules-for-linked-spaces # Addison Oct 25
+    - dm/upgrade-gevent+sk/app-workflow-visualization
+    - dm/upgrade-gevent # Daniel Oct 19
+    - dm/upgrade-xlrd # Daniel Oct 21
+#    - ml/remove-pickles-reports # Minha Oct 21
+    - sk/data-registry-form-linking+sk/app-workflow-visualization # Simon oct 30
+    - sk/data-registry-form-linking+jls/smart-linking-in-web-apps-stack-jump
+    - jls/smart-linking-in-web-apps-stack-jump # Jenny Oct 20
+    - sk/data-registry-form-linking  # Simon Oct 22
+    - sk/app-workflow-visualization # Simon Oct 26
+    - jls/enable-usercase-button # Jenny Oct 27
+    - do/exclude-users-forward-forms # Dominic Oct 29
+    - ap/resume-cancelled-batches # Amit Nov 1
+    - bmb/upgrade-babel-2.9.1  # Biyeun Nov 1 (touches 2FA, phone number validation, going into QA)
+    - bmb/update-datatables-dt  # Biyeun Nov 2
+    - cs/SC-1828-fix_lru_locations_info-v2  # Charl Nov 2
+    - jls/registry-cc-253 # Jenny Nov 2
 submodules: { }

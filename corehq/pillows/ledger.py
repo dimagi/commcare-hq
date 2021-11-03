@@ -71,6 +71,9 @@ class LedgerProcessor(PillowProcessor):
     """
 
     def process_change(self, change):
+        if change.deleted:
+            return
+
         ledger = change.get_document()
         from corehq.apps.commtrack.models import CommtrackConfig
         commtrack_config = CommtrackConfig.for_domain(ledger['domain'])

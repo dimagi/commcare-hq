@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime
 
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 
 from decorator import contextmanager
 
 from casexml.apps.phone.document_store import SyncLogDocumentStore
+from corehq.apps.domain.tests.test_utils import test_domain
 from dimagi.utils.couch.database import get_db
 from pillowtop.dao.couch import CouchDocumentStore
 
@@ -22,7 +23,6 @@ from corehq.form_processor.document_stores import (
     CaseDocumentStore,
     DocStoreLoadTracker,
     FormDocumentStore,
-    LedgerV1DocumentStore,
     LedgerV2DocumentStore,
 )
 from corehq.form_processor.tests.utils import sharded
@@ -44,26 +44,23 @@ class DocumentStoreTests(SimpleTestCase):
     (data_sources.SOURCE_COUCH, 'test_commcarehq', CouchDocumentStore),
 
     # legacy
-    (data_sources.CASE_SQL, '', CaseDocumentStore, True),
-    (data_sources.FORM_SQL, '', FormDocumentStore, True),
-    (data_sources.LEDGER_V1, '', LedgerV1DocumentStore),
-    (data_sources.LEDGER_V2, '', LedgerV2DocumentStore, True),
+    (data_sources.CASE_SQL, '', CaseDocumentStore),
+    (data_sources.FORM_SQL, '', FormDocumentStore),
+    (data_sources.LEDGER_V2, '', LedgerV2DocumentStore),
     (data_sources.LOCATION, '', LocationDocumentStore),
     (data_sources.SYNCLOG_SQL, '', SyncLogDocumentStore),
     (data_sources.SMS, '', SMSDocumentStore),
 
-    (data_sources.SOURCE_SQL, data_sources.CASE_SQL, CaseDocumentStore, True),
-    (data_sources.SOURCE_SQL, data_sources.FORM_SQL, FormDocumentStore, True),
-    (data_sources.SOURCE_SQL, data_sources.LEDGER_V1, LedgerV1DocumentStore),
-    (data_sources.SOURCE_SQL, data_sources.LEDGER_V2, LedgerV2DocumentStore, True),
+    (data_sources.SOURCE_SQL, data_sources.CASE_SQL, CaseDocumentStore),
+    (data_sources.SOURCE_SQL, data_sources.FORM_SQL, FormDocumentStore),
+    (data_sources.SOURCE_SQL, data_sources.LEDGER_V2, LedgerV2DocumentStore),
     (data_sources.SOURCE_SQL, data_sources.LOCATION, LocationDocumentStore),
     (data_sources.SOURCE_SQL, data_sources.SYNCLOG_SQL, SyncLogDocumentStore),
     (data_sources.SOURCE_SQL, data_sources.SMS, SMSDocumentStore),
 
 ], DocumentStoreTests)
-def test_get_document_store(self, source_type, source_name, expected, sql_domain=False):
-    with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=sql_domain):
-        store = get_document_store(source_type, source_name, 'domain')
+def test_get_document_store(self, source_type, source_name, expected):
+    store = get_document_store(source_type, source_name, 'domain')
     if isinstance(store, DocStoreLoadTracker):
         store = store.store
     self.assertEqual(store.__class__, expected)
@@ -106,16 +103,6 @@ def case_form_data():
     finally:
         FormAccessorSQL.hard_delete_forms('domain', form_ids)
         CaseAccessorSQL.hard_delete_cases('domain', case_ids)
-
-
-@contextmanager
-def test_domain():
-    from corehq.apps.domain.shortcuts import create_domain
-    domain = create_domain('domain')
-    try:
-        yield domain
-    finally:
-        domain.delete()
 
 
 @contextmanager

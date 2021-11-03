@@ -5,6 +5,7 @@ from corehq.apps.linked_domain.models import DomainLink
 
 
 class LinkedDomainTests(TestCase):
+
     def tearDown(self):
         DomainLink.all_objects.all().delete()
         super(LinkedDomainTests, self).tearDown()

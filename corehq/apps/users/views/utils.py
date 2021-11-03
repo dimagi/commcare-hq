@@ -32,10 +32,10 @@ def get_editable_role_choices(domain, couch_user, allow_admin_role):
         ]
     elif allow_admin_role:
         roles = [StaticRole.domain_admin(domain)] + roles
-    return [
+    return sorted([
         (role.get_qualified_id(), role.name or _('(No Name)'))
         for role in roles
-    ]
+    ], key=lambda c: c[1].lower())
 
 
 class BulkUploadResponseWrapper(object):
@@ -67,46 +67,44 @@ class BulkUploadResponseWrapper(object):
 
 
 def log_user_groups_change(domain, request, user, group_ids=None):
-    if group_ids is None:
-        group_ids = user.get_group_ids()
-    groups_info = []
-    if group_ids:
-        groups_info = ", ".join(
-            f"{group.name}[{group.get_id}]"
-            for group in Group.by_user_id(user.get_id)
-        )
+    groups = []
+    # no groups assigned would be group ids as []
+    # so if group ids were NOT passed or if some were passed, get groups for user
+    if group_ids is None or group_ids:
+        groups = Group.by_user_id(user.get_id)
     log_user_change(
-        domain,
+        by_domain=domain,
+        for_domain=domain,  # Groups are bound to a domain, so use domain
         couch_user=user,
         changed_by_user=request.couch_user,
         changed_via=USER_CHANGE_VIA_WEB,
-        message=UserChangeMessage.groups_info(groups_info)
+        change_messages=UserChangeMessage.groups_info(groups)
     )
 
 
-def log_commcare_user_locations_changes(domain, request, user, old_location_id, old_assigned_location_ids):
-    messages = []
+def log_commcare_user_locations_changes(request, user, old_location_id, old_assigned_location_ids):
+    change_messages = {}
     fields_changed = {}
     if old_location_id != user.location_id:
-        location_name = None
+        location = None
         fields_changed['location_id'] = user.location_id
         if user.location_id:
-            location_name = SQLLocation.objects.get(location_id=user.location_id).name
-        messages.append(UserChangeMessage.commcare_user_primary_location_info(location_name))
+            location = SQLLocation.objects.get(location_id=user.location_id)
+        change_messages.update(UserChangeMessage.primary_location_info(location))
     if old_assigned_location_ids != user.assigned_location_ids:
-        location_names = []
+        locations = []
         fields_changed['assigned_location_ids'] = user.assigned_location_ids
         if user.assigned_location_ids:
-            location_names = [loc.name
-                              for loc in SQLLocation.objects.filter(location_id__in=user.assigned_location_ids)]
-        messages.append(UserChangeMessage.commcare_user_assigned_locations_info(location_names))
+            locations = SQLLocation.objects.filter(location_id__in=user.assigned_location_ids)
+        change_messages.update(UserChangeMessage.assigned_locations_info(locations))
 
-    if messages:
+    if change_messages:
         log_user_change(
-            domain,
+            by_domain=request.domain,
+            for_domain=user.domain,
             couch_user=user,
             changed_by_user=request.couch_user,
             changed_via=USER_CHANGE_VIA_WEB,
             fields_changed=fields_changed,
-            message=". ".join(messages)
+            change_messages=change_messages
         )

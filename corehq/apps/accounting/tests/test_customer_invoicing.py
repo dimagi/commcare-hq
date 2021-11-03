@@ -134,7 +134,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(3, self.subscription_length))
         calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
@@ -155,7 +155,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         """
         invoice_date = utils.months_from_date(self.sub2.date_end, 1)
         calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
@@ -173,7 +173,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         Test that an invoice is not created if its subscriptions didn't start in the previous month.
         """
         calculate_users_in_all_domains(self.subscription.date_start)
-        tasks.generate_invoices(self.subscription.date_start)
+        tasks.generate_invoices_based_on_date(self.subscription.date_start)
         self.assertEqual(CustomerInvoice.objects.count(), 0)
 
     def test_no_invoice_after_end(self):
@@ -182,7 +182,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         """
         invoice_date = utils.months_from_date(self.sub2.date_end, 2)
         calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 0)
 
     def test_deleted_domain_in_multiple_subscription_invoice(self):
@@ -199,7 +199,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         domain_to_be_deleted.delete(leave_tombstone=True)
 
         calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
@@ -222,7 +222,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
         calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -243,7 +243,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
             user_date = date(invoice_date.year, invoice_date.month, 1)
             user_date -= relativedelta.relativedelta(months=months_before_invoice_date)
             calculate_users_in_all_domains(user_date)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
@@ -264,7 +264,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
             user_date = date(invoice_date.year, invoice_date.month, 1)
             user_date -= relativedelta.relativedelta(months=months_before_invoice_date)
             calculate_users_in_all_domains(user_date)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
@@ -282,7 +282,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
 
         invoice_date = utils.months_from_date(self.sub2.date_end, 1)
         calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
@@ -312,7 +312,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
         calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
@@ -332,7 +332,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
         calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
@@ -359,7 +359,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         generator.arbitrary_commcare_users_for_domain(self.domain2.name, num_users_advanced)
 
         calculate_users_in_all_domains(self.invoice_date)
-        tasks.generate_invoices(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -383,7 +383,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         generator.arbitrary_commcare_users_for_domain(self.domain2.name, num_users_advanced)
 
         calculate_users_in_all_domains(self.invoice_date)
-        tasks.generate_invoices(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -418,7 +418,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         )
 
         calculate_users_in_all_domains(self.invoice_date)
-        tasks.generate_invoices(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal(1509.0000))
@@ -444,7 +444,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         )
 
         calculate_users_in_all_domains(self.invoice_date)
-        tasks.generate_invoices(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal(1500.0000))
@@ -466,7 +466,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
         calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal(1507.0000))
@@ -564,7 +564,7 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
         )
 
         calculate_users_in_all_domains(self.invoice_date)
-        tasks.generate_invoices(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal('1500.0000'))
@@ -586,7 +586,7 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
         )
 
         calculate_users_in_all_domains(self.invoice_date)
-        tasks.generate_invoices(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal('1507.5000'))
@@ -608,14 +608,14 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
         )
 
         calculate_users_in_all_domains(self.invoice_date)
-        tasks.generate_invoices(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal('1507.7500'))
 
     def _create_sms_line_items(self):
         calculate_users_in_all_domains(self.invoice_date)
-        tasks.generate_invoices(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)
@@ -690,7 +690,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
         self.account.invoicing_plan = InvoicingPlan.QUARTERLY
         self.account.save()
         invoice_date = utils.months_from_date(self.subscription.date_start, 14)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -712,7 +712,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
         self.account.invoicing_plan = InvoicingPlan.YEARLY
         self.account.save()
         invoice_date = utils.months_from_date(self.subscription.date_start, 14)
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -735,7 +735,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
             self.domain2, self.sms_date, num_sms_advanced
         )
 
-        tasks.generate_invoices(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
 
@@ -770,7 +770,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
             self.domain2, self.sms_date, num_sms_advanced
         )
 
-        tasks.generate_invoices(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
 
@@ -795,7 +795,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
             self.assertEqual(sms_line_item.total, sms_cost)
 
     def _create_sms_line_items_for_quarter(self):
-        tasks.generate_invoices(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)

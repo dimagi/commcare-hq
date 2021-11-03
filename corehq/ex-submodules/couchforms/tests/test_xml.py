@@ -7,6 +7,7 @@ from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import TestFileMixin
 
 
+@sharded
 class XMLElementTest(TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
@@ -29,8 +30,3 @@ class XMLElementTest(TestCase, TestFileMixin):
             self.assertEqual(value, xform.form_data['test'])
             elem = xform.get_xml_element()
             self.assertEqual(value, elem.find('{http://commcarehq.org/couchforms-tests}test').text)
-
-
-@sharded
-class XMLElementTestSQL(XMLElementTest):
-    pass

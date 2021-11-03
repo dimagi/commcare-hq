@@ -95,17 +95,23 @@
           <div class="form-group">
             {% if show_search_workflow %}
               <div class="form-group">
-                <label class="control-label {% css_label_class %}" for="search-workflow">
+                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="hidden: dataRegistry">
                   {% trans "Web Apps Search Workflow" %}
                   <span class="hq-help-template" data-title="{% trans "Web Apps Search Workflow" %}"
                         data-content="{% trans_html_attr "<strong>Normal Case List</strong> is the &quot;classic&quot; case search workflow.  <br><br><strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is typically used for a &quot;Search Cases&quot; module.  <br><br><strong>See More</strong> is the same functionality as Normal Case List, except clicking the search button runs the default searches and returns the results. The user doesn't get to change the search criteria. This enables a workflow where the user sees what's in the local casedb then clicks &quot;See More&quot; to view all cases that fit the criteria.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search. The user never sees the results of the casedb." %}">
                   </span>
                 </label>
+                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="visible: dataRegistry">
+                  {% trans "Web Apps Search Workflow" %}
+                  <span class="hq-help-template" data-title="{% trans "Web Apps Search Workflow (Data Registry)" %}"
+                        data-content="{% trans_html_attr "<strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is the default for Data Registry search.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search." %}">
+                  </span>
+                </label>
                 <div class="{% css_field_class %}">
                   <select class="form-control" data-bind="value: workflow" id="search-workflow">
-                    <option value="classic">{% trans "Normal Case List" %}</option>
+                    <option value="classic" data-bind="hidden: dataRegistry">{% trans "Normal Case List" %}</option>
                     <option value="auto_launch">{% trans "Search First" %}</option>
-                    <option value="see_more">{% trans "See More" %}</option>
+                    <option value="see_more" data-bind="hidden: dataRegistry">{% trans "See More" %}</option>
                     <option value="es_only">{% trans "Skip to Default Case Search Results" %}</option>
                   </select>
                 </div>
@@ -146,23 +152,6 @@
             <!-- ko stopBinding: true -->
               {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
             <!-- /ko -->
-          </div>
-          {% endif %}
-          {% if request|toggle_enabled:'DATA_REGISTRY' %}
-          <div class="form-group">
-              <label for="data-registry" class="{% css_label_class %} control-label">
-                  {% trans "Data Registry" %}
-                  <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
-                        data-content="{% trans_html_attr "Select a Data Registry to use for searching.  Users with access will see results from the registry when performing this search." %}">
-              </label>
-              <div class="{% css_field_class %}">
-                  <select class="form-control" id="data-registry" data-bind="value: dataRegistry">
-                      <option value/>
-                      {% for value, name in data_registries %}
-                          <option value="{{ value }}">{{ name }}</option>
-                      {% endfor %}
-                  </select>
-              </div>
           </div>
           {% endif %}
           <div class="form-group" data-bind="slideVisible: !autoLaunch()">
@@ -248,6 +237,66 @@
               </p>
             </div>
           </div>
+          {% if request|toggle_enabled:'DATA_REGISTRY' %}
+          <div class="form-group">
+              <label for="data-registry" class="{% css_label_class %} control-label">
+                  {% trans "Data Registry" %}
+                  <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
+                        data-content="{% trans_html_attr "Select a Data Registry to use for searching.  Users with access will see results from the registry when performing this search." %}">
+              </label>
+              <div class="{% css_field_class %}">
+                  <select class="form-control" id="data-registry" data-bind="value: dataRegistry">
+                      <option value/>
+                      {% for registry in data_registries %}
+                          <option value="{{ registry.slug }}">{{ registry.name }}</option>
+                      {% endfor %}
+                  </select>
+              </div>
+          </div>
+          <div class="form-group">
+              <label for="data-registry" class="{% css_label_class %} control-label">
+                  {% trans "Additional Data Registry Queries" %}
+                  <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
+                        data-content="{% trans_html_attr "Load additional data into forms in this module by performing extra queries against the data registry." %}">
+              </label>
+              <div class="{% css_field_class %}">
+                  <table class="table table-condensed">
+                    <thead data-bind="visible: additionalRegistryQueries().length > 0">
+                    <tr>
+                      <th class="col-sm-1"></th>
+                      <th class="col-sm-4">{% trans "Instance Name" %}</th>
+                      <th class="col-sm-4">{% trans "Case Type" %}</th>
+                      <th class="col-sm-4">{% trans "Case ID" %}</th>
+                      <th class="col-sm-1"></th>
+                    </tr>
+                    </thead>
+                    <tbody data-bind="foreach: additionalRegistryQueries, sortableList: additionalRegistryQueries">
+                      <tr>
+                        <td class="text-center">
+                          <i class="grip sortable-handle hq-icon-full fa fa-arrows-v"></i>
+                        </td>
+                        <td>
+                          <input class="form-control" type="text" data-bind="value: instanceName"/>
+                        </td>
+                        <td>
+                          <input class="form-control" type="text" data-bind="value: caseTypeXpath"/>
+                        </td>
+                        <td>
+                          <input class="form-control" type="text" data-bind="value: caseIdXpath"/>
+                        </td>
+                        <td>
+                          <i style="cursor: pointer;" class="fa fa-remove"
+                             data-bind="click: $parent.removeRegistryQuery"></i>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <button type="button" class="btn btn-default" data-bind="click: addRegistryQuery">
+                    <i class="fa fa-plus"></i> {% trans "Add Data Registry Query" %}
+                  </button>
+              </div>
+          </div>
+          {% endif %}
           <span class="hide" id="searchFilterXpathErrorHtml">
             {% blocktrans %}
               This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.

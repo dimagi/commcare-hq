@@ -2,7 +2,7 @@ import re
 import sys
 import uuid
 from collections import defaultdict
-from contextlib import contextmanager, ExitStack
+from contextlib import contextmanager
 from io import BytesIO
 from hashlib import sha1
 from itertools import chain
@@ -544,42 +544,6 @@ def get_short_identifier():
     http://preshing.com/20110504/hash-collision-probabilities/
     """
     return random_url_id(8)
-
-
-@contextmanager
-def bulk_atomic_blobs(docs):
-    """Atomic blobs persistence to be used with ``db.bulk_save(docs)``
-
-    Blobs may be added to or deleted from objects within the context
-    body. Blobs previously added with
-    ``DeferredBlobMixin.deferred_put_attachment`` will be persisted
-    automatically. NOTE this method will persist attachments, but it
-    does not save the documents to couch. Call `db.bulk_save(docs)`
-    within the context to do that.
-
-    :param docs: A list of model objects.
-    """
-    save = lambda: None
-    contexts = [d.atomic_blobs(save) for d in docs if hasattr(d, "atomic_blobs")]
-    with ExitStack() as stack:
-        for mgr in contexts:
-            stack.enter_context(mgr)
-        delete_blobs = []
-        for doc in docs:
-            if isinstance(doc, DeferredBlobMixin) and doc._deferred_blobs:
-                for name, info in list(doc._deferred_blobs.items()):
-                    if info is not None:
-                        doc.put_attachment(name=name, **info)
-                    else:
-                        meta = doc.external_blobs.pop(name, None)
-                        if meta is not None:
-                            delete_blobs.append(meta.key)
-                        doc._deferred_blobs.pop(name)
-                assert not doc._deferred_blobs, doc._deferred_blobs
-        yield
-        db = get_blob_db()
-        for key in delete_blobs:
-            db.delete(key=key)
 
 
 @memoized

@@ -226,6 +226,7 @@ class HqdbContext(DatabaseContext):
             # that already exist
             self.runner.keepdb = True
         super(HqdbContext, self).setup()
+        temporary_db_setup()
 
     def reset_databases(self):
         self.delete_couch_databases()
@@ -291,6 +292,31 @@ class HqdbContext(DatabaseContext):
         # tear down in reverse order
         self.old_names = reversed(self.old_names)
         super(HqdbContext, self).teardown()
+
+
+def temporary_db_setup():
+    """Temporary setup while V1 ledger models are being removed
+
+    Can be removed when migrations are added to delete the tables.
+    """
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("""
+        /*
+        StockState table must be deleted so TransactionTestCase can flush
+        the db. See commit 07329e61fefaf1c563c998a164029d735d11a4fd
+
+        Prevents CommandError: Database test_commcarehq couldn't be flushed.
+
+        SQL error:
+        ERROR:  cannot truncate a table referenced in a foreign key constraint
+        DETAIL:  Table "commtrack_stockstate" references "products_sqlproduct".
+        */
+        DROP TABLE IF EXISTS commtrack_stockstate;
+        DROP TABLE IF EXISTS stock_stocktransaction;
+        DROP TABLE IF EXISTS stock_stockreport;
+        DROP TABLE IF EXISTS stock_docdomainmapping;
+        """)
 
 
 def print_imports_until_thread_change():

@@ -11,6 +11,7 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.tests.utils import sharded
 
 
+@sharded
 class StockStatusDataSourceTests(TestCase):
 
     @classmethod
@@ -99,8 +100,3 @@ class StockStatusDataSourceTests(TestCase):
                 'product_name': self.product.name,
                 'resupply_quantity_needed': None}]
         )
-
-
-@sharded
-class StockStatusDataSourceSQLTests(StockStatusDataSourceTests):
-    pass

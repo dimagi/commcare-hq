@@ -78,8 +78,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
-from requests.exceptions import ConnectionError, Timeout, RequestException
+from requests.exceptions import ConnectionError, RequestException, Timeout
 
+from casexml.apps.case.const import CASE_INDEX_IDENTIFIER_HOST
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.ext.couchdbkit import (
@@ -126,6 +127,8 @@ from corehq.util.couch import stale_ok
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 
+from ...util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from ..repeater_helpers import RepeaterResponse
 from .const import (
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
@@ -149,6 +152,7 @@ from .repeater_generators import (
     AppStructureGenerator,
     CaseRepeaterJsonPayloadGenerator,
     CaseRepeaterXMLPayloadGenerator,
+    DataRegistryCaseUpdatePayloadGenerator,
     FormRepeaterJsonPayloadGenerator,
     FormRepeaterXMLPayloadGenerator,
     LocationPayloadGenerator,
@@ -156,8 +160,6 @@ from .repeater_generators import (
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
-from ..repeater_helpers import RepeaterResponse
-from ...util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -411,11 +413,15 @@ class Repeater(QuickCachedDocumentMixin, Document):
         return get_cancelled_repeat_record_count(self.domain, self._id)
 
     def _format_or_default_format(self):
-        from corehq.motech.repeaters.repeater_generators import RegisterGenerator
+        from corehq.motech.repeaters.repeater_generators import (
+            RegisterGenerator,
+        )
         return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
 
     def _get_payload_generator(self, payload_format):
-        from corehq.motech.repeaters.repeater_generators import RegisterGenerator
+        from corehq.motech.repeaters.repeater_generators import (
+            RegisterGenerator,
+        )
         gen = RegisterGenerator.generator_class_by_repeater_format(self.__class__, payload_format)
         return gen(self)
 
@@ -828,27 +834,65 @@ class ReferCaseRepeater(CreateCaseRepeater):
 
     def send_request(self, repeat_record, payload):
         """Add custom response handling to allow more nuanced handling of form errors"""
-        response = super().send_request(repeat_record, payload)
-        return self.get_response(response)
+        return get_repeater_response_from_submission_response(
+            super().send_request(repeat_record, payload)
+        )
 
-    @staticmethod
-    def get_response(response):
-        from couchforms.openrosa_response import ResponseNature, parse_openrosa_response
-        openrosa_response = parse_openrosa_response(response.text)
-        if not openrosa_response:
-            # unable to parse response so just let normal handling take place
-            return response
 
-        if response.status_code == 422:
-            # openrosa v3
-            retry = openrosa_response.nature != ResponseNature.PROCESSING_FAILURE
-            return RepeaterResponse(422, openrosa_response.nature, openrosa_response.message, retry)
-
-        if response.status_code == 201 and openrosa_response.nature == ResponseNature.SUBMIT_ERROR:
-            # openrosa v2
-            return RepeaterResponse(422, ResponseNature.SUBMIT_ERROR, openrosa_response.message, False)
-
+def get_repeater_response_from_submission_response(response):
+    from couchforms.openrosa_response import (
+        ResponseNature,
+        parse_openrosa_response,
+    )
+    openrosa_response = parse_openrosa_response(response.text)
+    if not openrosa_response:
+        # unable to parse response so just let normal handling take place
         return response
+
+    if response.status_code == 422:
+        # openrosa v3
+        retry = openrosa_response.nature != ResponseNature.PROCESSING_FAILURE
+        return RepeaterResponse(422, openrosa_response.nature, openrosa_response.message, retry)
+
+    if response.status_code == 201 and openrosa_response.nature == ResponseNature.SUBMIT_ERROR:
+        # openrosa v2
+        return RepeaterResponse(422, ResponseNature.SUBMIT_ERROR, openrosa_response.message, False)
+
+    return response
+
+
+class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
+    """
+    A repeater that triggers off case creation but sends a form to update cases in
+    another commcare project space.
+    """
+    friendly_name = _("Update Cases in another CommCare Project via a Data Registry")
+    payload_generator_classes = (DataRegistryCaseUpdatePayloadGenerator,)
+
+    def form_class_name(self):
+        return 'DataRegistryCaseUpdateRepeater'
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return toggles.DATA_REGISTRY_CASE_UPDATE_REPEATER.enabled(domain)
+
+    def get_url(self, repeat_record):
+        new_domain = self.payload_doc(repeat_record).get_case_property('target_domain')
+        return self.connection_settings.url.format(domain=new_domain)
+
+    def send_request(self, repeat_record, payload):
+        return get_repeater_response_from_submission_response(
+            super().send_request(repeat_record, payload)
+        )
+
+    def allowed_to_forward(self, payload):
+        if not super().allowed_to_forward(payload):
+            return False
+
+        # Exclude extension cases where the host is also a case type that this repeater
+        # would act on since they get forwarded along with their host
+        host_index = payload.get_index(CASE_INDEX_IDENTIFIER_HOST)
+        return not host_index or host_index.referenced_type not in self.white_listed_case_types
 
 
 class ShortFormRepeater(Repeater):
@@ -1173,7 +1217,10 @@ class RepeatRecord(Document):
         self.cancelled = True
 
     def attempt_forward_now(self, is_retry=False):
-        from corehq.motech.repeaters.tasks import process_repeat_record, retry_process_repeat_record
+        from corehq.motech.repeaters.tasks import (
+            process_repeat_record,
+            retry_process_repeat_record,
+        )
 
         def is_ready():
             return self.next_check < datetime.utcnow()
@@ -1506,8 +1553,3 @@ def domain_can_forward(domain):
         domain_has_privilege(domain, ZAPIER_INTEGRATION)
         or domain_has_privilege(domain, DATA_FORWARDING)
     )
-
-
-# import signals
-# Do not remove this import, its required for the signals code to run even though not explicitly used in this file
-from corehq.motech.repeaters import signals  # pylint: disable=unused-import,F401

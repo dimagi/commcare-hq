@@ -1,9 +1,13 @@
-from corehq.apps.sms.forms import BackendForm
-from corehq.util.validation import is_url_or_host_banned
-from dimagi.utils.django.fields import TrimmedCharField
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
 from crispy_forms import layout as crispy
-from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy, ugettext as _
+
+from dimagi.utils.django.fields import TrimmedCharField
+
+from corehq.apps.sms.forms import BackendForm
+
+from ..http.form_handling import form_clean_url
 
 
 class AppositBackendForm(BackendForm):
@@ -31,7 +35,5 @@ class AppositBackendForm(BackendForm):
         )
 
     def clean_host(self):
-        value = self.cleaned_data.get("host")
-        if is_url_or_host_banned(value):
-            raise ValidationError(_("Invalid Host"))
-        return value
+        host = self.cleaned_data.get("host")
+        return form_clean_url(host)

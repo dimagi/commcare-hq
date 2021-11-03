@@ -92,12 +92,7 @@ class TestDownloadWebUsers(TestCase):
             role=cls.other_role.get_qualified_id()
         )
 
-        populate_user_index([
-            cls.user1.to_json(),
-            cls.user2.to_json(),
-            cls.user10.to_json(),
-            cls.user11.to_json(),
-        ])
+        populate_user_index([cls.user1, cls.user2, cls.user10, cls.user11])
 
     @classmethod
     def tearDownClass(cls):

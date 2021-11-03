@@ -65,7 +65,6 @@ API_LIST = (
         v0_5.WebUserResource,
         v0_5.GroupResource,
         v0_5.BulkUserResource,
-        v0_5.StockTransactionResource,
         InternalFixtureResource,
         FixtureResource,
         v0_5.DeviceReportResource,

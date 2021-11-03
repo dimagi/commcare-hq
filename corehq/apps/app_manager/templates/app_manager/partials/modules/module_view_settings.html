@@ -53,11 +53,11 @@
               {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
               <div class="form-group">
                 <label class="{% css_label_class %} control-label">
-                  {% trans "Case List and Case Search Types" %}
+                  {% trans "Additional Case List and Case Search Types" %}
                   <span class="hq-help-template"
-                        data-title="{% trans "Case List and Case Search Types" %}"
+                        data-title="{% trans "Additional Case List and Case Search Types" %}"
                         data-content="{% blocktrans %}
-                             Cases of these types will be displayed in Case List  and Case Search screens.
+                             Cases of these types will be displayed in Case List and Case Search screens, in addition to the Case Type inputted above.
                              <a target='_blank'
                              href='https://confluence.dimagi.com/display/ccinternal/Case+Search+and+Claim'>(More   Information)</a>
                               {% endblocktrans %}">

@@ -5,7 +5,7 @@ updates:
   schedule:
     interval: daily
     time: "10:00"
-  open-pull-requests-limit: 5
+  open-pull-requests-limit: 7
   labels:
   - product/invisible
 - package-ecosystem: npm

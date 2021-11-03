@@ -12,6 +12,7 @@ from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.dbaccessors import delete_all_users
 
 
+@sharded
 class AutoCloseExtensionsTest(TestCase):
 
     @classmethod
@@ -290,8 +291,3 @@ class AutoCloseExtensionsTest(TestCase):
         self.assertEqual(1, len(cases[self.host_id].get_closing_transactions()))
         self.assertEqual(1, len(cases[self.extension_ids[0]].get_closing_transactions()))
         self.assertEqual(1, len(cases[self.extension_ids[1]].get_closing_transactions()))
-
-
-@sharded
-class AutoCloseExtensionsTestSQL(AutoCloseExtensionsTest):
-    pass

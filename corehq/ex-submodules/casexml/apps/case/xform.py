@@ -14,7 +14,6 @@ from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
-from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import InvalidCaseIndex, IllegalCaseId
 from django.conf import settings
 
@@ -57,7 +56,8 @@ class CaseProcessingResult(object):
             return
 
         domain_obj = Domain.get_by_name(self.domain)
-        if domain_obj is not None and domain_obj.use_livequery:
+        if domain_obj is not None \
+           and (domain_obj.use_livequery or toggles.LIVEQUERY_SYNC.enabled(self.domain, toggles.NAMESPACE_DOMAIN)):
             return
 
         flags_to_save = self.get_flags_to_save()
@@ -152,7 +152,8 @@ def _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases):
     # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
     if domain:
         domain_obj = Domain.get_by_name(domain)
-        if domain_obj and domain_obj.use_livequery:
+        if domain_obj and (domain_obj.use_livequery
+                           or toggles.LIVEQUERY_SYNC.enabled(domain, toggles.NAMESPACE_DOMAIN)):
             return []
 
     dirtiness_flags = list(_get_dirtiness_flags_for_reassigned_case(list(touched_cases.values())))
@@ -336,9 +337,7 @@ def extract_case_blocks(doc, include_path=False):
 
     Repeat nodes will all share the same path.
     """
-    if isinstance(doc, XFormInstance):
-        form = doc.to_json()['form']
-    elif isinstance(doc, dict):
+    if isinstance(doc, dict):
         form = doc
     else:
         form = doc.form_data

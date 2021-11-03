@@ -15,58 +15,70 @@
 		"title": "6.1 Maternal Health (ANC,BA,FP)",
 		"data_source_type": "standard",
 		"visible": true,
-		"filters": [
+		"filters":  [
 			{
-				"datatype": "string",
-				"choice_provider": {
-					"include_descendants": true,
-					"type": "location",
-					"show_full_path": true
+			  "datatype": "string",
+			  "choice_provider": {
+				"include_descendants": true,
+				"type": "location",
+				"show_full_path": false
+			  },
+			  "show_all": true,
+			  "slug": "health_post",
+			  "field": "health_post_id",
+			  "ancestor_expression": {},
+			  "type": "dynamic_choice_list",
+			  "display": "Location"
+			},
+			{
+			  "compare_as_string": false,
+			  "show_all": true,
+			  "datatype": "string",
+			  "type": "dynamic_choice_list",
+			  "required": false,
+			  "slug": "report_month_date",
+			  "field": "report_month_date",
+			  "ancestor_expression": {},
+			  "choice_provider": {},
+			  "display": "Reporting Month"
+			},
+			{
+			  "compare_as_string": false,
+			  "datatype": "date",
+			  "required": false,
+			  "slug": "report_month_date_for_filter_gregorian",
+			  "field": "report_month_date_for_filter_gregorian",
+			  "type": "date",
+			  "display": "Report Month (for mobile)"
+			},
+			{
+			  "display": "Test or Real",
+			  "datatype": "string",
+			  "show_all": true,
+			  "choices": [
+				{
+				  "display": "Test",
+				  "value": "Test"
 				},
-				"show_all": true,
-				"slug": "health_post_id",
-				"field": "health_post_id",
-				"ancestor_expression": {},
-				"type": "dynamic_choice_list",
-				"display": "Location"
-			},
-			{
-				"compare_as_string": false,
-				"datatype": "date",
-				"required": false,
-				"slug": "opened_on",
-				"field": "opened_on",
-				"type": "date",
-				"display": "Report Month"
-			},
-			{
-				"display": "Test or Real",
-				"datatype": "string",
-				"show_all": true,
-				"choices": [
-					{
-						"display": "Test",
-						"value": "Test"
-					},
-					{
-						"display": "Real",
-						"value": "Real"
-					}
-				],
-				"field": "test_or_real",
-				"type": "choice_list",
-				"slug": "test_or_real"
+				{
+				  "display": "Real",
+				  "value": "Real"
+				}
+			  ],
+			  "field": "test_or_real",
+			  "type": "choice_list",
+			  "slug": "test_or_real"
 			},
 			{
 			  "type": "pre",
-			  "field": "health_post",
+			  "field": "health_post_id",
 			  "slug": "health_post_pre",
 			  "datatype": "string",
 			  "pre_value": "",
 			  "pre_operator": "!=",
 			  "display": null
 			}
-		],
+		  ],
 		"configured_charts": [],
 		"aggregation_columns": [
 			"report_month_date"
