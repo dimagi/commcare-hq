@@ -201,7 +201,7 @@ def get_sql_start_date():
         return fixed_sql_start
     manager = NavigationEventAudit.objects
     row = manager.order_by("event_date").values("event_date")[:1].first()
-    return row["event_date"] if row else None
+    return row["event_date"] if row else datetime.utcnow()
 
 
 class CouchAuditEvent:

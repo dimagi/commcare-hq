@@ -251,6 +251,16 @@ class TestNavigationEventsQueries(AuditcareTest):
         self.assertEqual(get_sql_start_date(), datetime(2021, 2, 1, 3))
 
 
+class TestNavigationEventsQueriesWithoutData(AuditcareTest):
+
+    def test_get_all_log_events_returns_empty(self):
+        start = end = datetime.utcnow()
+        self.assertEqual(list(get_all_log_events(start, end)), [])
+
+    def test_get_sql_start_date_returns_datetime(self):
+        self.assertIsInstance(get_sql_start_date(), datetime)
+
+
 @contextmanager
 def patch_window_size(size):
     with patch.object(AuditWindowQuery.__init__, "__defaults__", (size,)):
