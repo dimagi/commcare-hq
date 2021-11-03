@@ -5,11 +5,10 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import (
     PostProcessor,
 )
-from corehq.apps.app_manager.suite_xml.post_process.endpoints import EndpointsHelper
 from corehq.apps.app_manager.suite_xml.post_process.instances import (
     get_all_instances_referenced_in_xpaths,
 )
-from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowDatumMeta
+from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowDatumMeta, WorkflowHelper
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     CalculatedPropertyXPath,
@@ -364,8 +363,8 @@ class RemoteRequestsHelper(PostProcessor):
                                                         detail_section_elements))
 
     def get_endpoint_contributions(self, module, form, endpoint_id, detail_section_elements):
-        helper = EndpointsHelper(self.suite, self.app, [module])
-        children = helper.get_frame_children(module, form)
+        helper = WorkflowHelper(self.suite, self.app, self.app.get_modules())
+        children = helper.get_frame_children_for_navigation(module, form)
         elements = []
         for child in children:
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
