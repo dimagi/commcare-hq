@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-27 20:24+0000\n"
+"POT-Creation-Date: 2021-11-03 15:11+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -145,17 +145,17 @@ msgstr ""
 msgid "See Past Versions"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:143
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:35
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
 msgid "Add"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:396
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:395
 msgid "Moved successfully."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:417
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:416
 msgid "You have unsaved changes"
 msgstr ""
 
@@ -3078,15 +3078,15 @@ msgstr ""
 msgid "There is an issue communicating with the server at this time."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_data_files.js:26
+#: corehq/apps/export/static/export/js/download_data_files.js:25
 msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_data_files.js:35
+#: corehq/apps/export/static/export/js/download_data_files.js:34
 msgid "Data file URL copied to clipboard."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_data_files.js:61
+#: corehq/apps/export/static/export/js/download_data_files.js:60
 msgid "Data file deleted."
 msgstr ""
 
@@ -3942,47 +3942,47 @@ msgid ""
 "the dropdown in the top left."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:376
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:391
-#: corehq/apps/userreports/static/userreports/js/report_config.js:305
-#: corehq/apps/userreports/static/userreports/js/report_config.js:333
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:375
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:390
+#: corehq/apps/userreports/static/userreports/js/report_config.js:304
+#: corehq/apps/userreports/static/userreports/js/report_config.js:332
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:377
-#: corehq/apps/userreports/static/userreports/js/report_config.js:306
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:376
+#: corehq/apps/userreports/static/userreports/js/report_config.js:305
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:378
-#: corehq/apps/userreports/static/userreports/js/report_config.js:307
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:377
+#: corehq/apps/userreports/static/userreports/js/report_config.js:306
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
 "the property is text or multiple choice."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:392
-#: corehq/apps/userreports/static/userreports/js/report_config.js:334
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:391
+#: corehq/apps/userreports/static/userreports/js/report_config.js:333
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
 "Select this to filter the property by a single value."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:393
-#: corehq/apps/userreports/static/userreports/js/report_config.js:335
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:392
+#: corehq/apps/userreports/static/userreports/js/report_config.js:334
 msgid "What value or date range must the property be equal to?"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:404
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:403
 msgid ""
 "Column format selection will determine how each row's value is calculated."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:433
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:432
 msgid "Please check above for any errors in your configuration."
 msgstr ""
 

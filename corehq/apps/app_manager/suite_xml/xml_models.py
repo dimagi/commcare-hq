@@ -67,7 +67,7 @@ class XPathVariable(XmlObject):
         return self.locale_id or self.xpath
 
 
-class XPath(XmlObject):
+class TextXPath(XmlObject):
     ROOT_NAME = 'xpath'
     function = XPathField('@function')
     variables = NodeListField('variable', XPathVariable)
@@ -81,10 +81,10 @@ class LocaleArgument(XmlObject):
 
 class Id(XmlObject):
     ROOT_NAME = 'id'
-    xpath = NodeField('xpath', XPath)
+    xpath = NodeField('xpath', TextXPath)
 
 
-class XPathEnum(XPath):
+class XPathEnum(TextXPath):
     @classmethod
     def build(cls, enum, template, get_template_context, get_value):
         variables = []
@@ -129,7 +129,7 @@ class Text(XmlObject):
 
     ROOT_NAME = 'text'
 
-    xpath = NodeField('xpath', XPath)
+    xpath = NodeField('xpath', TextXPath)
     xpath_function = XPathField('xpath/@function')
 
     locale = NodeField('locale', Locale)
@@ -279,7 +279,7 @@ class MediaText(XmlObject):
     ROOT_NAME = 'text'
     form_name = StringField('@form', choices=['image', 'audio'])  # Nothing XForm-y about this 'form'
     locale = NodeField('locale', LocaleId)
-    xpath = NodeField('xpath', XPath)
+    xpath = NodeField('xpath', TextXPath)
     xpath_function = XPathField('xpath/@function')
 
 

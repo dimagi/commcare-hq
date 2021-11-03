@@ -1,3 +1,5 @@
+from mock import patch
+
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.const import WORKFLOW_FORM, REGISTRY_WORKFLOW_LOAD_CASE
@@ -21,6 +23,7 @@ DOMAIN = 'test_domain'
 
 
 @patch_get_xform_resource_overrides()
+@patch.object(Application, 'supports_data_registry', lambda: True)
 class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite_registry')
 

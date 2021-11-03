@@ -36,9 +36,9 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Style,
     Template,
     Text,
+    TextXPath,
     XPathVariable,
 )
-from corehq.apps.app_manager.suite_xml.xml_models import XPath as XPathEl
 from corehq.apps.app_manager.util import (
     create_temp_sort_column,
     get_sort_and_sort_only_columns,
@@ -447,7 +447,7 @@ class DetailContributor(SectionContributor):
                     grid_y=0,
                 ),
                 header=Header(text=Text()),
-                template=Template(text=Text(xpath=XPathEl(
+                template=Template(text=Text(xpath=TextXPath(
                     function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",
                     variables=[XPathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
                 ))),
@@ -460,7 +460,7 @@ class DetailContributor(SectionContributor):
             id=id_strings.fixture_detail(module),
             title=Text(),
         )
-        xpath = XPathEl(function=module.fixture_select.display_column)
+        xpath = TextXPath(function=module.fixture_select.display_column)
         if module.fixture_select.localize:
             template_text = Text(locale=Locale(child_id=Id(xpath=xpath)))
         else:
