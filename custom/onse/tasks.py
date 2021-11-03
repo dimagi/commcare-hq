@@ -80,7 +80,7 @@ def _update_facility_cases_from_dhis2_data_elements(self, period, print_notifica
     if not domain_exists(DOMAIN):
         return
     dhis2_server = get_dhis2_server(print_notifications)
-    server_status = _check_server_status(dhis2_server)
+    server_status = check_server_status(dhis2_server)
 
     if server_status['ready']:
         execute_update_facility_cases_from_dhis2_data_elements(dhis2_server, period, print_notifications)
@@ -95,7 +95,7 @@ def _update_facility_cases_from_dhis2_data_elements(self, period, print_notifica
         self.retry(countdown=(retry_days * TASK_RETRY_FACTOR))
 
 
-def _check_server_status(dhis2_server: ConnectionSettings):
+def check_server_status(dhis2_server: ConnectionSettings):
     server_status = {
         'ready': True,
         'error': None

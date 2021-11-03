@@ -1,6 +1,9 @@
+import sys
+
 from django.core.management import BaseCommand
 
 from custom.onse.tasks import (
+    check_server_status,
     execute_update_facility_cases_from_dhis2_data_elements,
     get_dhis2_server,
 )
@@ -21,6 +24,12 @@ class Command(BaseCommand):
         period = options.get('period')
         print_notifications = True
         dhis2_server = get_dhis2_server(print_notifications)
+
+        server_status = check_server_status(dhis2_server)
+        if server_status['error']:
+            print(str(server_status['error']), file=sys.stderr)
+            sys.exit(1)
+
         execute_update_facility_cases_from_dhis2_data_elements(
             dhis2_server,
             period,
