@@ -16,9 +16,9 @@ attrs==18.2.0
     # via
     #   -r base-requirements.in
     #   jsonschema
-babel==2.8.0
+babel==2.9.1
     # via
-    #   django-phonenumber-field
+    #   -r base-requirements.in
     #   sphinx
 backcall==0.2.0
     # via ipython
@@ -157,7 +157,7 @@ django-otp==0.9.4
     #   django-two-factor-auth
 django-partial-index==0.6.0
     # via -r base-requirements.in
-django-phonenumber-field==2.3.1
+django-phonenumber-field==5.2.0
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -177,7 +177,7 @@ django-tastypie==0.14.3
     # via -r base-requirements.in
 django-transfer==0.4
     # via -r base-requirements.in
-django-two-factor-auth==1.12.1
+django-two-factor-auth==1.13.1
     # via -r base-requirements.in
 django-user-agents==0.4.0
     # via -r base-requirements.in
