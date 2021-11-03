@@ -237,7 +237,7 @@
               </p>
             </div>
           </div>
-          {% if request|toggle_enabled:'DATA_REGISTRY' %}
+          {% if data_registry_enabled %}
           <div class="form-group">
               <label for="data-registry" class="{% css_label_class %} control-label">
                   {% trans "Data Registry" %}
