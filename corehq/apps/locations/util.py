@@ -117,7 +117,7 @@ def get_location_data_model(domain):
 
 class LocationExporter(object):
 
-    def __init__(self, domain, include_consumption=False, root_location_id=None,
+    def __init__(self, domain, include_consumption=False, root_location_ids=None,
                  headers_only=False, async_task=None, **kwargs):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
@@ -134,14 +134,14 @@ class LocationExporter(object):
 
         if headers_only:
             self.base_query = SQLLocation.objects.none()
-        elif root_location_id:
+        elif root_location_ids:
             if selected_location_only:
                 # Use filter so base_query is a LocationQuerySet
-                self.base_query = SQLLocation.objects.filter(location_id=root_location_id)
+                self.base_query = SQLLocation.objects.filter(location_id__in=root_location_ids)
             else:
-                root_location = SQLLocation.objects.get(location_id=root_location_id)
+                root_location_ids = SQLLocation.objects.filter(location_id__in=root_location_ids).values('id')
                 self.base_query = SQLLocation.objects.get_descendants(
-                    Q(domain=self.domain, id=root_location.id)
+                    Q(domain=self.domain, id__in=[root_location_ids])
                 ).filter(**additional_filters)
         else:
             self.base_query = SQLLocation.objects.filter(
@@ -292,8 +292,8 @@ class LocationExporter(object):
 
 
 def dump_locations(domain, download_id, include_consumption, headers_only,
-                   owner_id, root_location_id=None, task=None, **kwargs):
-    exporter = LocationExporter(domain, include_consumption=include_consumption, root_location_id=root_location_id,
+                   owner_id, root_location_ids=None, task=None, **kwargs):
+    exporter = LocationExporter(domain, include_consumption=include_consumption, root_location_ids=root_location_ids,
                                 headers_only=headers_only, async_task=task, **kwargs)
 
     fd, path = tempfile.mkstemp()

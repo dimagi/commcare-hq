@@ -97,14 +97,21 @@ def _get_es_query(domain, user_type, user_filters):
     if search_string:
         query = query.search_string_query(search_string, default_fields=['first_name', 'last_name', 'username'])
 
-    if location_id:
+    location_ids = []
+    if 'web_user_assigned_location_ids' in user_filters.keys():
+        location_ids = SQLLocation.objects.get_locations_and_children_ids(
+            user_filters['web_user_assigned_location_ids']
+        )
+    elif location_id:
         if selected_location_only:
             # This block will never execute for WEB_USER_TYPE
             location_ids = [location_id]
         else:
             location_ids = SQLLocation.objects.get_locations_and_children_ids([location_id])
 
+    if location_ids:
         query = query.location(location_ids)
+
     return query
 
 
@@ -136,7 +143,8 @@ def _get_users_by_filters(domain, user_type, user_filters, count_only=False):
              'search_string': <string to search users by username>,
              'location_id': <Location ID to filter users by>,
              'selected_location_only: <Select only users at specific location, not descendants also>,
-             'user_active_status': <User status (active/inactive) to filter by>
+             'user_active_status': <User status (active/inactive) to filter by>,
+             'web_user_assigned_location_ids': <Web User assigned locations>
              }
     kwargs:
         count_only: If True, returns count of search results
