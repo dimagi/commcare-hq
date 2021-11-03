@@ -1,7 +1,8 @@
 import os.path
+import uuid
 from contextlib import contextmanager
 from csv import DictReader
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import chain
 from unittest.mock import patch
 
@@ -13,6 +14,7 @@ from ..utils.export import (
     AuditWindowQuery,
     ForeignKeyAccessError,
     get_all_log_events,
+    get_domain_first_access_times,
     get_foreign_names,
     get_sql_start_date,
     navigation_events_by_user,
@@ -249,6 +251,41 @@ class TestNavigationEventsQueries(AuditcareTest):
 
     def test_get_sql_start_date(self):
         self.assertEqual(get_sql_start_date(), datetime(2021, 2, 1, 3))
+
+    def test_get_domain_first_access_times(self):
+
+        def create_session_events(domain):
+            login_event = dict(
+                user=self.username,
+                domain=domain,
+                session_key=uuid.uuid4().hex,
+                event_date=datetime.utcnow(),
+            )
+            for domain, minutes in [(None, -1),
+                                    (domain, 0),
+                                    (domain, 1)]:
+                fields = login_event.copy()
+                # save one event with domain/date changed by loop params:
+                fields["domain"] = domain
+                fields['event_date'] += timedelta(minutes=minutes)
+                NavigationEventAudit(**fields).save()
+                # update the fields and save another:
+                #   - same session
+                #   - different domain
+                #   - 5 minutes ealier
+                fields["domain"] = "not-queried"
+                fields["event_date"] += timedelta(minutes=-5)
+                NavigationEventAudit(**fields).save()
+            return login_event
+
+        domain = "delmar"
+        login_events = []
+        for x in range(2):
+            login_event = create_session_events(domain)
+            # rename `access_time` to `event_date`
+            login_event["access_time"] = login_event.pop("event_date")
+            login_events.append(login_event)
+        self.assertEqual(list(get_domain_first_access_times([domain])), login_events)
 
 
 class TestNavigationEventsQueriesWithoutData(AuditcareTest):

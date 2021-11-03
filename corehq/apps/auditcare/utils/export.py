@@ -4,7 +4,7 @@ from itertools import chain
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db.models import ForeignKey
+from django.db.models import ForeignKey, Min
 
 import attr
 from couchdbkit.ext.django.loading import get_db
@@ -66,6 +66,48 @@ def get_all_log_events(start_date=None, end_date=None):
         AuditWindowQuery(AccessAudit.objects.filter(**where)),
         AuditWindowQuery(NavigationEventAudit.objects.filter(**where)),
     )
+
+
+def get_domain_first_access_times(domains, start_date=None, end_date=None):
+    """Query NavigationEventAudit events for _first event matching any of
+    `domains` within each authenticated session_.
+
+    NOTE: This function does _not_ query couch.
+
+    NOTE: This function may return multiple "access events" from the same
+          session (if multiple of `domains` were accessed in the same session).
+
+    Resulting SQL query:
+
+    ```sql
+    SELECT
+        MIN(event_date) AS access_time,
+        "user",
+        domain,
+        session_key
+    FROM auditcare_navigationeventaudit
+    WHERE (
+        domain IN ( {domains} )
+        AND event_date > {start_date}
+        AND event_date < {end_date}
+        AND "user" IS NOT NULL
+        AND session_key IS NOT NULL
+    )
+    GROUP BY ("user", domain, session_key)
+    ORDER BY access_time ASC;
+    ```
+    """
+    sql_start_date = determine_sql_start_date(start_date)
+    where = get_date_range_where(sql_start_date, end_date)
+    where["domain__in"] = domains
+    where["user__isnull"] = False
+    where["session_key__isnull"] = False
+    return (NavigationEventAudit.objects
+            .values("user", "domain", "session_key")
+            .annotate(access_time=Min("event_date"))
+            .filter(**where)
+            .order_by("access_time")
+            .iterator())
 
 
 def write_generic_log_event(writer, event):
