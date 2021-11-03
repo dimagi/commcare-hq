@@ -102,7 +102,7 @@ def check_server_status(dhis2_server: ConnectionSettings):
     }
     requests = dhis2_server.get_requests()
     try:
-        requests.send_request_unlogged("HEAD", dhis2_server.url, raise_for_status=True)
+        requests.send_request("HEAD", dhis2_server.url, raise_for_status=True)
     except HTTPError as e:
         if e.response.status_code != 405:  # ignore method not allowed
             server_status['ready'] = False
