@@ -265,7 +265,7 @@
                   </select>
               </div>
           </div>
-          <div class="form-group">
+          <div class="form-group" data-bind="visible: dataRegistryWorkflow() == 'load_case'">
               <label for="data-registry" class="{% css_label_class %} control-label">
                   {% trans "Additional Data Registry Queries" %}
                   <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
