@@ -316,8 +316,8 @@ def dump_locations(domain, download_id, include_consumption, headers_only,
 
         file_format = Format.from_format(Excel2007ExportWriter.format)
         filename = '{}_locations'.format(domain)
-        if root_location_id:
-            root_location = SQLLocation.objects.get(location_id=root_location_id)
+        if len(root_location_ids) == 1:
+            root_location = SQLLocation.objects.get(location_id=root_location_ids[0])
             filename += '_{}'.format(root_location.name)
         expose_blob_download(
             download_id,

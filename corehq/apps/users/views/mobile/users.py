@@ -1352,17 +1352,9 @@ def _count_users(request, domain, user_type):
     form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=user_type)
 
     if form.is_valid():
-        user_filters = form.cleaned_data
+        user_filters = form.get_cleaned_data()
     else:
         return HttpResponseBadRequest("Invalid Request")
-
-    if not user_filters.get('location_id'):
-        # Add (web) user assigned_location_ids so as to
-        # 1) reflect all locations user is assigned to ('All' option)
-        # 2) restrict user access
-        domain_membership = request.couch_user.get_domain_membership(domain)
-        if domain_membership.assigned_location_ids:
-            user_filters['web_user_assigned_location_ids'] = domain_membership.assigned_location_ids
 
     user_count = 0
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
@@ -1391,7 +1383,7 @@ def download_users(request, domain, user_type):
 
     form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=user_type)
     if form.is_valid():
-        user_filters = form.cleaned_data
+        user_filters = form.get_cleaned_data()
     else:
         view = FilteredCommCareUserDownload if user_type == MOBILE_USER_TYPE else FilteredWebUserDownload
         return HttpResponseRedirect(reverse(view, args=[domain]) + "?" + request.GET.urlencode())
