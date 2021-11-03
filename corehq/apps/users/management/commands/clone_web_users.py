@@ -29,18 +29,17 @@ class Command(BaseCommand):
 
     def handle(self, file, **options):
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
-        for old_username, new_username in self.iterate_usernames_to_update(file):
+        for old_username, new_username in iterate_usernames_to_update(file):
             old_user, new_user = clone_user(old_username, new_username)
-            logger.info(f'Created new user {new_user.username}.')
-            # TODO: create entry in postgres to ensure the old user is deleted when the new user logs in
-            # send notice email to both the old and new user
+            deactivate_user(old_user)
             send_deprecation_email(old_user, new_user)
 
-    def iterate_usernames_to_update(self, file):
-        with open(file, newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                yield row[OLD_USERNAME], row[NEW_USERNAME]
+
+def iterate_usernames_to_update(file):
+    with open(file, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            yield row[OLD_USERNAME], row[NEW_USERNAME]
 
 
 def clone_user(old_username, new_username):
@@ -55,6 +54,7 @@ def clone_user(old_username, new_username):
     transfer_scheduled_reports(old_user, new_user.get_id)
     transfer_saved_reports(old_user, new_user)
 
+    logger.info(f'Created new user {new_user.username}.')
     return old_user, new_user
 
 
@@ -73,6 +73,12 @@ def create_new_user_from_old_user(old_user, new_username):
     new_user.save()
 
     return WebUser.get_by_username(new_user.username, strict=True)
+
+
+def deactivate_user(user):
+    user.is_active = False
+    user.save()
+    logger.info(f'Deactivated user {user.username}.')
 
 
 def copy_domain_memberships(from_user, to_user):
