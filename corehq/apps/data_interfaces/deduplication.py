@@ -1,11 +1,12 @@
-
 from datetime import datetime
 
+from django.utils.text import slugify
+
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
+from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
 from corehq.apps.es import CaseES, queries
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.messaging.util import MessagingRuleProgressHelper
-from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
 
 DUPLICATE_LIMIT = 1000
 DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
@@ -50,7 +51,9 @@ def find_duplicate_case_ids(domain, case, case_properties, include_closed=False,
 
 def reset_and_backfill_deduplicate_rule(rule):
     from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-    from corehq.apps.data_interfaces.tasks import reset_and_backfill_deduplicate_rule_task
+    from corehq.apps.data_interfaces.tasks import (
+        reset_and_backfill_deduplicate_rule_task,
+    )
 
     if not rule.active or rule.deleted:
         return
@@ -110,8 +113,9 @@ def backfill_deduplicate_rule(domain, rule):
 
 
 def get_dedupe_xmlns(rule):
-    return f"{DEDUPE_XMLNS}__{rule.name}-{rule.case_type}"
+    name_slug = slugify(rule.name)
+    return f"{DEDUPE_XMLNS}__{name_slug}-{rule.case_type}"
 
 
 def is_dedupe_xmlns(xmlns):
-    return xmlns.split("__")[0] == DEDUPE_XMLNS
+    return xmlns.startswith(DEDUPE_XMLNS)
