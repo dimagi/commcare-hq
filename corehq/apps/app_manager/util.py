@@ -397,7 +397,6 @@ def module_uses_smart_links(module):
     return (
         module_offers_registry_search(module)
         and module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_SMART_LINK
-        and module.session_endpoint_id
     )
 
 
