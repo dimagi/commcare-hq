@@ -45,12 +45,15 @@ class DuplicateCaseRuleFilter(BaseSingleOptionFilter):
         rules = AutomaticUpdateRule.objects.filter(
             domain=self.domain,
             workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
-            active=True,
             deleted=False,
         )
         return [(
             str(rule.id),
-            "{name} ({case_type})".format(name=rule.name, case_type=rule.case_type)
+            "{name} ({case_type}){active}".format(
+                name=rule.name,
+                case_type=rule.case_type,
+                active="" if rule.active else ugettext_lazy(" (Inactive)")
+            )
         ) for rule in rules]
 
 
