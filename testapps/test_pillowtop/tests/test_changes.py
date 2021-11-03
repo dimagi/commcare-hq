@@ -1,16 +1,19 @@
 import uuid
-from django.test import TestCase
 from mock import MagicMock
-from couchforms.models import XFormInstance
+
+from django.test import TestCase
+
 from pillowtop.feed.couch import get_current_seq
 from pillowtop.tests.utils import FakeConstructedPillow
+
+from corehq.util.couchdb_management import couch_config
 
 
 class ChangeFeedDbTest(TestCase):
 
     def setUp(self):
         super(ChangeFeedDbTest, self).setUp()
-        self.couch_db = XFormInstance.get_db()
+        self.couch_db = couch_config.get_db(None)
         self.update_seq = get_current_seq(self.couch_db)
 
     def test_basic_functionality(self):
@@ -26,21 +29,6 @@ class ChangeFeedDbTest(TestCase):
         doc = [change['doc'] for change in changes if change['doc']['_id'] == doc_id][0]
         self.assertEqual(doc_id, doc['_id'])
         self.assertEqual('property_value', doc['property'])
-
-    def test_couch_filter(self):
-        pillow = _make_couch_pillow(self.couch_db)
-        pillow.couch_filter = 'couchforms/xforms'
-        # save a random doc, then a form-looking thing
-        self.couch_db.save_doc({'_id': uuid.uuid4().hex, 'property': 'property_value'})
-        form = XFormInstance(domain='test-domain')
-        form.save()
-        pillow.process_changes(since=self.update_seq, forever=False)
-
-        changes = self._extract_changes_from_call_args(pillow.process_change.call_args_list)
-        change_ids = {change['id'] for change in changes}
-        change_domains = {change['doc'].get('domain', None) for change in changes}
-        self.assertIn(form._id, change_ids)
-        self.assertIn(form.domain, change_domains)
 
     def _extract_changes_from_call_args(self, call_args_list):
         ret = []

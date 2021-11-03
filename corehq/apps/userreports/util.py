@@ -8,7 +8,7 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, TEMP_REPORT_PREFIX
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
@@ -135,19 +135,23 @@ def allowed_report_builder_reports(request):
     return 0
 
 
-def _get_existing_reports(domain):
+def get_configurable_and_static_reports(domain):
+    from corehq.apps.userreports.models import StaticReportConfiguration
+    return get_existing_reports(domain) + StaticReportConfiguration.by_domain(domain)
+
+
+def get_existing_reports(domain):
     from corehq.apps.userreports.models import ReportConfiguration
-    from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
     existing_reports = ReportConfiguration.by_domain(domain)
     return [
         report for report in existing_reports
-        if not report.title.startswith(TEMP_REPORT_PREFIX)
+        if not (report.title and report.title.startswith(TEMP_REPORT_PREFIX))
     ]
 
 
 def number_of_report_builder_reports(domain):
     builder_reports = [
-        report for report in _get_existing_reports(domain)
+        report for report in get_existing_reports(domain)
         if report.report_meta.created_by_builder
     ]
     return len(builder_reports)
@@ -155,7 +159,7 @@ def number_of_report_builder_reports(domain):
 
 def number_of_ucr_reports(domain):
     ucr_reports = [
-        report for report in _get_existing_reports(domain)
+        report for report in get_existing_reports(domain)
         if not report.report_meta.created_by_builder
     ]
     return len(ucr_reports)
@@ -198,10 +202,6 @@ def get_table_name(domain, table_id, max_length=50, prefix=UCR_TABLE_PREFIX):
         max_length=max_length,
         from_left=False
     )
-
-
-def is_ucr_table(table_name):
-    return table_name.startswith(UCR_TABLE_PREFIX)
 
 
 def truncate_value(value, max_length=63, from_left=True):

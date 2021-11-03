@@ -43,34 +43,34 @@ class IdNode(XmlObject):
     id = StringField('@id')
 
 
-class CalculatedPropertyXpathVariable(XmlObject):
+class CalculatedPropertyXPathVariable(XmlObject):
     ROOT_NAME = 'variable'
     name = StringField('@name')
     locale_id = StringField('locale/@id')
 
 
-class CalculatedPropertyXpath(XmlObject):
+class CalculatedPropertyXPath(XmlObject):
     ROOT_NAME = 'xpath'
     function = XPathField('@function')
-    variables = NodeListField('variable', CalculatedPropertyXpathVariable)
+    variables = NodeListField('variable', CalculatedPropertyXPathVariable)
 
 
-class XpathVariable(XmlObject):
+class XPathVariable(XmlObject):
     ROOT_NAME = 'variable'
     name = StringField('@name')
 
     locale_id = StringField('locale/@id')
-    xpath = NodeField('xpath', CalculatedPropertyXpath)
+    xpath = NodeField('xpath', CalculatedPropertyXPath)
 
     @property
     def value(self):
         return self.locale_id or self.xpath
 
 
-class Xpath(XmlObject):
+class TextXPath(XmlObject):
     ROOT_NAME = 'xpath'
     function = XPathField('@function')
-    variables = NodeListField('variable', XpathVariable)
+    variables = NodeListField('variable', XPathVariable)
 
 
 class LocaleArgument(XmlObject):
@@ -81,17 +81,17 @@ class LocaleArgument(XmlObject):
 
 class Id(XmlObject):
     ROOT_NAME = 'id'
-    xpath = NodeField('xpath', Xpath)
+    xpath = NodeField('xpath', TextXPath)
 
 
-class XpathEnum(Xpath):
+class XPathEnum(TextXPath):
     @classmethod
     def build(cls, enum, template, get_template_context, get_value):
         variables = []
         for item in enum:
             v_key = item.key_as_variable
             v_val = get_value(v_key)
-            variables.append(XpathVariable(name=v_key, locale_id=v_val))
+            variables.append(XPathVariable(name=v_key, locale_id=v_val))
 
         parts = []
         for i, item in enumerate(enum):
@@ -129,7 +129,7 @@ class Text(XmlObject):
 
     ROOT_NAME = 'text'
 
-    xpath = NodeField('xpath', Xpath)
+    xpath = NodeField('xpath', TextXPath)
     xpath_function = XPathField('xpath/@function')
 
     locale = NodeField('locale', Locale)
@@ -279,7 +279,7 @@ class MediaText(XmlObject):
     ROOT_NAME = 'text'
     form_name = StringField('@form', choices=['image', 'audio'])  # Nothing XForm-y about this 'form'
     locale = NodeField('locale', LocaleId)
-    xpath = NodeField('xpath', Xpath)
+    xpath = NodeField('xpath', TextXPath)
     xpath_function = XPathField('xpath/@function')
 
 
@@ -519,6 +519,8 @@ class Entry(OrderedXmlObject, XmlObject):
     def require_instances(self, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in self.instances}
         for instance in instances:
+            if 'remote' in instance.src:
+                continue
             if (instance.id, instance.src) not in used:
                 self.instances.append(
                     # it's important to make a copy,
@@ -539,10 +541,10 @@ class Entry(OrderedXmlObject, XmlObject):
         for instance_id in instance_ids:
             if instance_id not in covered_ids:
                 raise UnknownInstanceError(
-                    "Instance reference not recognized: {} in xpath \"{}\""
+                    "Instance reference not recognized: {} in XPath \"{}\""
                     # to get xpath context to show in this error message
                     # make instance_id a unicode subclass with an xpath property
-                    .format(instance_id, getattr(instance_id, 'xpath', "(Xpath Unknown)")))
+                    .format(instance_id, getattr(instance_id, 'xpath', "(XPath Unknown)")))
 
         sorted_instances = sorted(self.instances,
                                   key=lambda instance: instance.id)
@@ -835,13 +837,13 @@ class Detail(OrderedXmlObject, IdNode):
         # can't check len(self.variables) directly since NodeList uses an
         # xpath to find its children which doesn't work here since
         # each node has a custom name
-        return self._variables is not None and len(self.variables.node.getchildren()) > 0
+        return self._variables is not None and len(self.variables.node) > 0
 
     def get_variables(self):
         """
         :returns: List of DetailVariable objects
         """
-        return [self.variables.mapper.to_python(node) for node in self.variables.node.getchildren()]
+        return [self.variables.mapper.to_python(node) for node in self.variables.node]
 
     def get_all_xpaths(self):
         result = set()

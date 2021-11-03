@@ -10,6 +10,7 @@ from corehq.apps.users.util import WEIRD_USER_IDS
 from django.conf import settings
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.toggles import LIVEQUERY_SYNC, NAMESPACE_DOMAIN
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
 import six
@@ -49,7 +50,7 @@ def set_cleanliness_flags_for_all_domains(force_full=False):
     Updates cleanliness for all domains
     """
     for domain_obj in Domain.get_all():
-        if domain_obj.use_livequery:
+        if domain_obj.use_livequery or LIVEQUERY_SYNC.enabled(domain_obj.name, NAMESPACE_DOMAIN):
             continue
         try:
             set_cleanliness_flags_for_domain(domain_obj.name, force_full=force_full)

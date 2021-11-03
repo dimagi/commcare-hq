@@ -81,7 +81,7 @@ from corehq.apps.app_manager.util import (
     advanced_actions_use_usercase,
     enable_usercase,
     is_usercase_in_use,
-    save_xform,
+    save_xform, module_offers_registry_search,
 )
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
@@ -778,6 +778,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         ],
         'form_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
+        'module_offers_registry_search': module_offers_registry_search(module),
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):

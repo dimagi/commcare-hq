@@ -1,5 +1,4 @@
-from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_daily_consumption,
-    compute_consumption_or_default)
+from casexml.apps.stock.consumption import ConsumptionConfiguration, compute_daily_consumption
 from casexml.apps.stock.tests.mock_consumption import now
 from casexml.apps.stock.tests.base import StockTestBase
 from corehq.form_processor.tests.utils import sharded
@@ -29,17 +28,6 @@ class ConsumptionCaseTest(StockTestBase):
         self._stock_report(10, 0)
 
         self.assertEqual(None, compute_daily_consumption(
-            self.domain.name, self.case_id, self.product_id,
-            now, configuration=ConsumptionConfiguration(min_periods=4))
-        )
-        _ten = lambda case_id, product_id: 10
-        self.assertAlmostEqual(10., compute_consumption_or_default(
-            self.domain.name,
-            self.case_id,
-            self.product_id,
-            now,
-            configuration=ConsumptionConfiguration(
-                min_periods=4,
-                default_monthly_consumption_function=_ten
-            )
+            self.domain.name, self.case_id, self.product_id, now,
+            configuration=ConsumptionConfiguration(min_periods=4)
         ))

@@ -74,6 +74,69 @@ hqDefine("users/js/enterprise_users", [
             self.toggleDeactivated();
         });
 
+        self.sortBy = ko.observable('');
+
+        self.ascending = ko.observable(false);
+
+        self.sortByColumn = function (data, event) {
+            var el = event.target;
+            var column = el.getAttribute('data-name');
+            var webUsers = [];
+            var mobileWorkersMap = {};
+            var allSortedUsers = [];
+            // Change target el icon depending on self.ascending() and revert all other icons
+            var resetColumnIcons = function (ascending) {
+                var allColumns = $('.sort-icon');
+                allColumns.removeClass('glyphicon-sort-by-attributes glyphicon-sort-by-attributes-alt');
+                allColumns.addClass('glyphicon-sort');
+                $(el).addClass(ascending ? 'glyphicon-sort-by-attributes' : 'glyphicon-sort-by-attributes-alt');
+            };
+
+            var columnSort = function (userArr, ascending) {
+                resetColumnIcons(ascending);
+                userArr.sort(function (a, b) {
+                    if (!a[column]) {
+                        return 1;
+                    }
+                    if (!b[column]) {
+                        return -1;
+                    }
+
+                    return ascending ? a[column].localeCompare(b[column]) : b[column].localeCompare(a[column]);
+                });
+
+                return userArr;
+            };
+
+            // Map mobile workers to web users to maintain ordering
+            _.each(data.users(), function (user) {
+                if (!user.loginAsUser) {
+                    webUsers.push(user);
+                } else {
+                    if (!mobileWorkersMap[user.loginAsUser]) {
+                        mobileWorkersMap[user.loginAsUser] = [user];
+                    } else {
+                        mobileWorkersMap[user.loginAsUser].push(user);
+                    }
+                }
+            });
+
+            self.ascending(column !== self.sortBy());
+
+            self.sortBy(column === self.sortBy() ? '' : column);
+
+            columnSort(webUsers, self.ascending());
+
+            // Update observable array with sorted web and associated mobile users
+            _.each(webUsers, function (user) {
+                allSortedUsers.push(user);
+                var sortedMobileWorkers = columnSort(mobileWorkersMap[user.username], self.ascending());
+                allSortedUsers = allSortedUsers.concat(sortedMobileWorkers);
+            });
+
+            data.users(allSortedUsers);
+        };
+
         return self;
     };
 

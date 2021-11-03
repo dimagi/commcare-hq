@@ -77,25 +77,6 @@ function usage() {
             echo "Remove all containers, images and volumes"
             echo ""
             ;;
-        citus)
-            echo "Manage citus containers"
-            echo ""
-            echo "$0 citus [COMMAND]"
-            echo ""
-            echo "OPTIONS are passed to docker compose."
-            echo ""
-            echo "Examples:"
-            echo ""
-            echo "  # run citus containers in the background
-            echo "  $0 citus up -d"
-            echo ""
-            echo "  # list citus containers"
-            echo "  $0 citus ps"
-            echo ""
-            echo "  # stop citus containers"
-            echo "  $0 citus stop"
-            echo ""
-            ;;
         *)
             echo "Manage docker services for CommCare HQ"
             echo ""
@@ -143,7 +124,6 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
     fi
     export COMPOSE_FILE=docker/hq-compose.yml
     export COMPOSE_PROJECT_NAME=hqtest
-    export UCR_CITUS_DB="${UCR_CITUS_DB:-test_commcare_ucr_citus}"
     if [ -n "$TRAVIS_BUILD_DIR" ]; then
         export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
     else
@@ -179,13 +159,6 @@ else
                 CMD="up"
             fi
         fi
-    elif [ "$CMD" == "citus" ]; then
-        SERVICES="citus"
-        CMD="$1"
-        shift
-        if [ -z "$CMD" ]; then
-            CMD="help"
-        fi
     else
         SERVICES="services"
         if [ -z "$CMD" ]; then
@@ -219,6 +192,8 @@ export DATADOG_API_KEY="$DATADOG_API_KEY"
 export DATADOG_APP_KEY="$DATADOG_APP_KEY"
 export DOCKERFILE="${DOCKERFILE:-Dockerfile}"
 export DOCKER_HQ_OVERLAYFS_METACOPY="${DOCKER_HQ_OVERLAYFS_METACOPY:-off}"
+export GITHUB_ACTIONS="$GITHUB_ACTIONS"
+export GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME"
 export JS_SETUP="${JS_SETUP:-no}"
 export JS_TEST_EXTENSIONS="$JS_TEST_EXTENSIONS"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
@@ -235,10 +210,9 @@ export TRAVIS_PULL_REQUEST="$TRAVIS_PULL_REQUEST"
 export TRAVIS_PULL_REQUEST_BRANCH="$TRAVIS_PULL_REQUEST_BRANCH"
 export TRAVIS_PULL_REQUEST_SHA="$TRAVIS_PULL_REQUEST_SHA"
 export TRAVIS_REPO_SLUG="$TRAVIS_REPO_SLUG"
-export UCR_CITUS_DB="${UCR_CITUS_DB:-commcare_ucr_citus}"
 
-if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
-    # don't mount /mnt/commcare-hq-ro volume read-only on travis
+if [ "$CI" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
+    # don't mount /mnt/commcare-hq-ro volume read-only on CI
     # overwrite of localsettings.py, etc. doesn't matter here
     export RO=""
     export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-none}"
@@ -270,7 +244,8 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
-    docker-compose pull
+    echo "Pulling docker containers..."
+    docker-compose pull --quiet
     docker-compose run --rm web run_tests "${TEST:-python}" "$@"
 elif [ "$CMD" == "shell" ]; then
     docker-compose run --rm web ./manage.py $CMD "$@"

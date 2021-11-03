@@ -36,8 +36,8 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Style,
     Template,
     Text,
-    Xpath,
-    XpathVariable,
+    TextXPath,
+    XPathVariable,
 )
 from corehq.apps.app_manager.util import (
     create_temp_sort_column,
@@ -198,7 +198,8 @@ class DetailContributor(SectionContributor):
                         d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module):
-                    d.actions.append(self._get_case_search_action(module, in_search="search" in id))
+                    in_search = module.search_config.data_registry or "search" in id
+                    d.actions.append(self._get_case_search_action(module, in_search=in_search))
 
             try:
                 if not self.app.enable_multi_sort:
@@ -445,9 +446,9 @@ class DetailContributor(SectionContributor):
                     grid_y=0,
                 ),
                 header=Header(text=Text()),
-                template=Template(text=Text(xpath=Xpath(
+                template=Template(text=Text(xpath=TextXPath(
                     function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",
-                    variables=[XpathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
+                    variables=[XPathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
                 ))),
             )]
         )
@@ -458,7 +459,7 @@ class DetailContributor(SectionContributor):
             id=id_strings.fixture_detail(module),
             title=Text(),
         )
-        xpath = Xpath(function=module.fixture_select.display_column)
+        xpath = TextXPath(function=module.fixture_select.display_column)
         if module.fixture_select.localize:
             template_text = Text(locale=Locale(child_id=Id(xpath=xpath)))
         else:
@@ -697,7 +698,7 @@ class CaseTileHelper(object):
         variables = []
         for i, mapping in enumerate(column.enum):
             variables.append(
-                XpathVariable(
+                XPathVariable(
                     name=mapping.key_as_variable,
                     locale_id=id_strings.detail_column_enum_variable(
                         self.module, self.detail_type, column, mapping.key_as_variable

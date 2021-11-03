@@ -184,7 +184,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         current_stock: The current stock level
         consumption: The current monthly consumption rate
         months_remaining: The number of months remaining until stock out
-        category: The status category. See casexml.apps.stock.models.StockState.stock_category
+        category: The status category. See casexml.apps.stock.utils.stock_category
         resupply_quantity_needed: Max amount - current amount
 
     """

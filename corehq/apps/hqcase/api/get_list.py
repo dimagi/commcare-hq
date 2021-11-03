@@ -8,13 +8,15 @@ from corehq.apps.case_search.filter_dsl import (
     CaseFilterError,
     build_filter_from_xpath,
 )
-from corehq.apps.es import case_search
+from corehq.apps.es import case_search, filters
 from corehq.apps.es import cases as case_es
 from dimagi.utils.parsing import FALSE_STRINGS
 from .core import UserError, serialize_es_case
 
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
+INDEXED_AFTER = 'indexed_on.gte'
+LAST_CASE_ID = 'last_case_id'
 
 
 def _to_boolean(val):
@@ -70,8 +72,13 @@ def get_list(domain, params):
     if 'cursor' in params:
         params_string = b64decode(params['cursor']).decode('utf-8')
         params = QueryDict(params_string).dict()
+        last_date = params.pop(INDEXED_AFTER, None)
+        last_id = params.pop(LAST_CASE_ID, None)
+        query = _get_cursor_query(domain, params, last_date, last_id)
+    else:
+        query = _get_query(domain, params)
 
-    es_result = _run_query(domain, params)
+    es_result = query.run()
     hits = es_result.hits
     ret = {
         "matching_records": es_result.total,
@@ -80,35 +87,54 @@ def get_list(domain, params):
 
     cases_in_result = len(hits)
     if cases_in_result and es_result.total > cases_in_result:
-        cursor = urlencode({**params, **{'indexed_on.gte': hits[-1]["@indexed_on"]}})
+        cursor = urlencode({**params, **{
+            INDEXED_AFTER: hits[-1]["@indexed_on"],
+            LAST_CASE_ID: hits[-1]["_id"],
+        }})
         ret['next'] = {'cursor': b64encode(cursor.encode('utf-8'))}
 
     return ret
 
 
-def _run_query(domain, params):
-    params = params.copy()
-    page_size = _to_int(params.pop('limit', DEFAULT_PAGE_SIZE), 'limit')
+def _get_cursor_query(domain, params, last_date, last_id):
+    query = _get_query(domain, params)
+    return query.filter(
+        filters.OR(
+            filters.AND(
+                filters.term('@indexed_on', last_date),
+                filters.range_filter('_id', gt=last_id),
+            ),
+            case_search.indexed_on(gt=last_date),
+        )
+    )
+
+
+def _get_query(domain, params):
+    page_size = _to_int(params.get('limit', DEFAULT_PAGE_SIZE), 'limit')
     if page_size > MAX_PAGE_SIZE:
         raise UserError(f"You cannot request more than {MAX_PAGE_SIZE} cases per request.")
-
     query = (case_search.CaseSearchES()
              .domain(domain)
              .size(page_size)
-             .sort("@indexed_on"))
-
+             .sort("@indexed_on")
+             .sort("_id", reset_sort=False))
     for key, val in params.items():
-        if key == 'xpath':
-            query = query.filter(_get_xpath_filter(domain, val))
-        elif key in SIMPLE_FILTERS:
-            query = query.filter(SIMPLE_FILTERS[key](val))
-        elif '.' in key and key.split(".")[0] in COMPOUND_FILTERS:
-            prefix, qualifier = key.split(".", maxsplit=1)
-            query = query.filter(COMPOUND_FILTERS[prefix](qualifier, val))
-        else:
-            raise UserError(f"'{key}' is not a valid parameter.")
+        query = query.filter(_get_filter(domain, key, val))
+    return query
 
-    return query.run()
+
+def _get_filter(domain, key, val):
+    if key == 'limit':
+        pass
+    elif key == 'xpath':
+        return _get_xpath_filter(domain, val)
+    elif key in SIMPLE_FILTERS:
+        return SIMPLE_FILTERS[key](val)
+    elif '.' in key and key.split(".")[0] in COMPOUND_FILTERS:
+        prefix, qualifier = key.split(".", maxsplit=1)
+        return COMPOUND_FILTERS[prefix](qualifier, val)
+    else:
+        raise UserError(f"'{key}' is not a valid parameter.")
 
 
 def _get_xpath_filter(domain, xpath):

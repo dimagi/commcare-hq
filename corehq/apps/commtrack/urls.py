@@ -3,7 +3,6 @@ from django.conf.urls import url
 from corehq.apps.commtrack.views import (
     CommTrackSettingsView,
     DefaultConsumptionView,
-    RebuildStockStateView,
     SMSSettingsView,
     default,
 )
@@ -14,6 +13,4 @@ settings_urls = [
     url(r'^project_settings/$', CommTrackSettingsView.as_view(), name=CommTrackSettingsView.urlname),
     url(r'^default_consumption/$', DefaultConsumptionView.as_view(), name=DefaultConsumptionView.urlname),
     url(r'^sms/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
-    url(r'^rebuild_stock_state/$', RebuildStockStateView.as_view(),
-        name=RebuildStockStateView.urlname),
 ]

@@ -120,7 +120,7 @@ class CaseAccessorTestsSQL(TestCase):
         CaseAccessorSQL.save_case(case)
 
         indices = CaseAccessorSQL.get_indices(case.domain, case.case_id)
-        self.assertEqual(2, len(indices))
+        indices.sort(key=lambda x: x.identifier)  # "parent" comes before "task"
         self.assertEqual([index1, index2], indices)
 
     def test_get_reverse_indices(self):

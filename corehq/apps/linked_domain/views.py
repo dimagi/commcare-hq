@@ -25,6 +25,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.domain.dbaccessors import domain_exists
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_or_api_key,
@@ -101,7 +102,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, WebUser
 from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.timezones.utils import get_timezone_for_request
 
@@ -306,6 +307,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
             'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
+            'is_superuser': is_superuser,
             'view_data': {
                 'is_downstream_domain': bool(upstream_link),
                 'upstream_domains': upstream_domain_urls,
@@ -388,6 +390,21 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     @allow_remote_invocation
     def create_domain_link(self, in_data):
         domain_to_link = in_data['downstream_domain']
+        if not domain_exists(domain_to_link):
+            return {
+                'success': False,
+                'message': ugettext("The project space {} does not exist. Make sure the name is "
+                                    "correct and this domain hasn't been deleted.").format(domain_to_link)
+            }
+
+        if DomainLink.objects.filter(master_domain=self.domain, linked_domain=domain_to_link):
+            return {
+                'success': False,
+                'message': ugettext(
+                    "The project space {} is already linked to this project space."
+                ).format(domain_to_link)
+            }
+
         try:
             domain_link = DomainLink.link_domains(domain_to_link, self.domain)
         except DomainLinkError as e:
@@ -503,9 +520,17 @@ class DomainLinkHistoryReport(GenericTabularReport):
             '{} -> {}'.format(link.master_domain, link.linked_domain),
             server_to_user_time(record.date, self.timezone),
             self._make_model_cell(record),
-            pretty_doc_info(get_doc_info_by_id(self.domain, record.user_id))
+            self._make_user_cell(record)
         ]
         return row
+
+    def _make_user_cell(self, record):
+        doc_info = get_doc_info_by_id(self.domain, record.user_id)
+        user = WebUser.get_by_user_id(record.user_id)
+        if self.domain not in user.get_domains() and 'link' in doc_info:
+            doc_info['link'] = None
+
+        return pretty_doc_info(doc_info)
 
     @memoized
     def linked_app_names(self, domain):

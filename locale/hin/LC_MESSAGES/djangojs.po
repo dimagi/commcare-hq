@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-09-22 19:36+0000\n"
+"POT-Creation-Date: 2021-10-27 20:24+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -2635,7 +2635,15 @@ msgstr ""
 msgid "Evaluate XPath"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:270
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:69
+msgid "Expand Data Preview"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:70
+msgid "Collapse Data Preview"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:275
 msgid "Error evaluating expression."
 msgstr ""
 
@@ -2709,19 +2717,21 @@ msgid ""
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:333
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:344
 msgid "Submitting..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:335
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:346
 msgid "Submit"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:397
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:408
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js:511
 msgid "An answer is required"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:399
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:410
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js:513
 msgid "This answer is outside the allowed range."
 msgstr ""
 
@@ -2735,11 +2745,11 @@ msgstr ""
 msgid "You have been logged out because of inactivity."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js:319
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js:327
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js:477
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js:487
 msgid ""
 "We’re unable to submit this form right now due to high system usage. \n"
 "\n"
@@ -2747,7 +2757,7 @@ msgid ""
 "form in Incomplete Forms later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js:481
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js:491
 msgid "Form submission failed with error"
 msgstr ""
 
@@ -2755,26 +2765,26 @@ msgstr ""
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:343
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:345
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:352
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:354
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:501
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:503
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:529
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:531
 msgid "Please wait..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:681
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:683
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
@@ -2837,15 +2847,27 @@ msgstr "हॉ"
 msgid "No"
 msgstr "नहीं"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:55
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:25
+msgid "Working as <b><%- restoreAs %></b> in <b><%- domain %></b>."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:27
+msgid "Working as <b><%- restoreAs %></b>."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:29
+msgid "Use <%- username %>."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:68
 msgid "Log in as <%= username %>?"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:59
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:72
 msgid "Yes, log in as this user"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:137
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:150
 msgid "Page <%- num %>"
 msgstr ""
 
@@ -2904,11 +2926,11 @@ msgstr ""
 msgid "No Name"
 msgstr ""
 
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:97
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:98
 msgid "You have unsaved changes to your data dictionary."
 msgstr ""
 
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:179
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:181
 msgid ""
 "You have unsaved changes to this case type. Are you sure you would like to "
 "continue?"
@@ -3080,16 +3102,30 @@ msgstr ""
 msgid "There was an error downloading your export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:158
+#: corehq/apps/export/static/export/js/export_list.js:160
 msgid "Download Requested"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:450
-#: corehq/apps/export/static/export/js/export_list.js:457
+#: corehq/apps/export/static/export/js/export_list.js:447
+msgid "All of the selected feeds will be deleted."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/export_list.js:449
+msgid "All of the selected exports will be deleted."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/export_list.js:454
+msgid ""
+"All of the selected exports will be collected for download to a single Excel "
+"file, with each export as a separate sheet."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/export_list.js:521
+#: corehq/apps/export/static/export/js/export_list.js:528
 msgid "Invalid date format"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:599
+#: corehq/apps/export/static/export/js/export_list.js:670
 msgid "Problem saving dashboard feed filters"
 msgstr ""
 
@@ -3415,10 +3451,8 @@ msgstr ""
 msgid "Search project spaces"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:370
-msgid ""
-"Unable to link project spaces. <%- error %>\n"
-"You must remove the existing link before creating this new link."
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:369
+msgid "Unable to link project spaces. <%- error %>"
 msgstr ""
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:375
@@ -3466,7 +3500,7 @@ msgid "Please enter your name."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js:100
-#: corehq/apps/users/static/users/js/invite_web_user.js:22
+#: corehq/apps/users/static/users/js/invite_web_user.js:23
 msgid "Please specify an email."
 msgstr ""
 
@@ -3758,6 +3792,14 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js:183
 msgid "We were unsuccessful loading the report:"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js:120
+msgid "My Scheduled Reports"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js:126
+msgid "Other Scheduled Reports"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/single_form.js:64
@@ -4123,116 +4165,133 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:252
 msgid ""
+"<strong>Messaging</strong> &mdash; configure and send conditional alerts"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:257
+msgid "Access Messaging"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:268
+msgid ""
 "<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update "
 "data. Specific APIs may require additional permissions."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:257
+#: corehq/apps/users/static/users/js/roles.js:273
 msgid "Access APIs"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:268
+#: corehq/apps/users/static/users/js/roles.js:284
 msgid ""
 "<strong>Applications</strong> &mdash; modify or view the structure and "
 "configuration of all applications."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:273
+#: corehq/apps/users/static/users/js/roles.js:289
 msgid "Edit & View Apps"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:274
+#: corehq/apps/users/static/users/js/roles.js:290
 msgid "View-Only Applications"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:284
+#: corehq/apps/users/static/users/js/roles.js:300
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:290
+#: corehq/apps/users/static/users/js/roles.js:306
 msgid "View Roles and Permissions"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:300
+#: corehq/apps/users/static/users/js/roles.js:316
 msgid ""
 "<strong>Dropzone</strong> &mdash; Upload and download files from the file "
 "Dropzone"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:305
+#: corehq/apps/users/static/users/js/roles.js:321
 msgid "Edit & Download files from the Dropzone "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:306
+#: corehq/apps/users/static/users/js/roles.js:322
 msgid "View-Only Dropzone"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:316
+#: corehq/apps/users/static/users/js/roles.js:332
 msgid ""
 "<strong>Shared Exports</strong> &mdash; access and edit the content and "
 "structure of shared exports"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:332
+#: corehq/apps/users/static/users/js/roles.js:348
 msgid "Create and Edit Reports"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:335
+#: corehq/apps/users/static/users/js/roles.js:351
 msgid "Allow role to create and edit reports in report builder."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:339
+#: corehq/apps/users/static/users/js/roles.js:355
 msgid "Access All Reports"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:342
+#: corehq/apps/users/static/users/js/roles.js:358
 msgid "Allow role to access all reports."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:350
+#: corehq/apps/users/static/users/js/roles.js:362
+msgid "Create and Edit Configurable Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:365
+msgid "Allow role to create and edit configurable reports."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:373
 msgid "Manage Registries"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:351
+#: corehq/apps/users/static/users/js/roles.js:374
 msgid "Select which registries the role can manage:"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:358
+#: corehq/apps/users/static/users/js/roles.js:381
 msgid "View Registry Data"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:359
+#: corehq/apps/users/static/users/js/roles.js:382
 msgid "Select which registry data the role can view:"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:368
+#: corehq/apps/users/static/users/js/roles.js:391
 #, javascript-format
 msgid "Select at least one item from the list for \"%s\""
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:456
+#: corehq/apps/users/static/users/js/roles.js:479
 msgid "Edit Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:456
+#: corehq/apps/users/static/users/js/roles.js:479
 msgid "View Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:457
+#: corehq/apps/users/static/users/js/roles.js:480
 msgid "New Role"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:467
+#: corehq/apps/users/static/users/js/roles.js:490
 msgid "Delete Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:470
+#: corehq/apps/users/static/users/js/roles.js:493
 msgid "Are you sure you want to delete the role <%- role %>?"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:530
+#: corehq/apps/users/static/users/js/roles.js:553
 msgid "An error occurred, please try again."
 msgstr ""
 
