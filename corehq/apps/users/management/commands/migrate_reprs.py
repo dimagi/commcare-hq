@@ -30,11 +30,11 @@ def migrate(user_history):
 
     user_repr = cached_user_id_to_username(user_history.user_id)
 
-    if user_history.changed_by_repr != changed_by_repr or user_history.user_repr != user_repr:
-        was_change = True
-    if changed_by_repr:
+    if changed_by_repr and user_history.changed_by_repr != changed_by_repr:
         user_history.changed_by_repr = changed_by_repr
-    if user_repr:
+        was_change = True
+    if user_repr and user_history.user_repr != user_repr:
         user_history.user_repr = user_repr
+        was_change = True
     if was_change:
         user_history.save()
