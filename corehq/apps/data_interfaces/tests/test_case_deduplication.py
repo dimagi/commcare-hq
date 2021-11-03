@@ -464,6 +464,28 @@ class CaseDeduplicationActionTest(TestCase):
 
         self._assert_potential_duplicates(duplicates[0].case_id, duplicates)
 
+    @es_test
+    @patch("corehq.apps.data_interfaces.deduplication.DUPLICATE_LIMIT", 3)
+    def test_many_duplicates(self):
+        """Test what happens if there are over DUPLICATE_LIMIT matches
+        """
+        es = get_es_new()
+        with trap_extra_setup(ConnectionError):
+            initialize_index_and_mapping(es, CASE_SEARCH_INDEX_INFO)
+        self.addCleanup(ensure_index_deleted, CASE_SEARCH_INDEX_INFO.index)
+
+        num_duplicates = 6
+        duplicates, uniques = self._create_cases(num_duplicates)
+
+        for case in chain(duplicates, uniques):
+            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
+        es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+
+        self.rule.run_actions_when_case_matches(duplicates[0])
+        duplicate_case_ids = CaseDuplicate.objects.all().values_list("case_id", flat=True)
+
+        self.assertTrue(set(case.case_id for case in duplicates[0:3]) & set(duplicate_case_ids))
+
 
 @override_settings(RUN_UNKNOWN_USER_PILLOW=False)
 @override_settings(RUN_FORM_META_PILLOW=False)
