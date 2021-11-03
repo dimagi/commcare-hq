@@ -108,6 +108,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         with self.assertRaises(XFormException):
             self.form.render_xform()
 
+    @patch.object(Application, 'supports_data_registry', lambda: True)
     def test_instance_check(self):
         self.module.search_config = CaseSearch(
             properties=[
