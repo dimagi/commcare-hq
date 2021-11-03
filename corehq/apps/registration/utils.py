@@ -173,7 +173,7 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
                 for slug in APPCUES_APP_SLUGS
             ]
             callback = send_domain_registration_email.si(
-                request.user.email,
+                request.user.get_email(),
                 dom_req.domain,
                 dom_req.activation_guid,
                 request.user.get_full_name(),
@@ -181,7 +181,7 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
             )
             chord(header)(callback)
         else:
-            send_domain_registration_email(request.user.email,
+            send_domain_registration_email(request.user.get_email(),
                                            dom_req.domain,
                                            dom_req.activation_guid,
                                            request.user.get_full_name(),
