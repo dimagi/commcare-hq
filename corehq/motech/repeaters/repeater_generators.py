@@ -555,13 +555,13 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
 
     def _get_case(self, registry_helper, repeat_record, config, couch_user):
         try:
-            case = registry_helper.get_case(config.case_id, config.case_type, couch_user, repeat_record.repeater)
+            case = registry_helper.get_case(config.case_id, couch_user, repeat_record.repeater)
         except RegistryAccessException:
             raise DataRegistryCaseUpdateError("User does not have permission to access the registry")
         except CaseNotFound:
             raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
 
-        if case.domain != config.domain:
+        if case.domain != config.domain or case.type != config.case_type:
             raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
 
         return case

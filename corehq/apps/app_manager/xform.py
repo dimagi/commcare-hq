@@ -835,16 +835,6 @@ class XForm(WrappedNode):
         instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(
             app, [self.render().decode('utf-8')])
 
-        module = form.get_module()
-        if _module_loads_registry_case(module) and module.search_config.additional_registry_queries:
-            remote_instances = [
-                Instance(id=query.instance_name, src='jr://instance/remote')
-                for query in module.search_config.additional_registry_queries
-            ]
-            for instance in remote_instances:
-                instances.add(instance)
-                unknown_instance_ids.discard(instance.id)
-
         for instance_id in unknown_instance_ids:
             if instance_id not in instance_declarations:
                 missing_unknown_instances.add(instance_id)

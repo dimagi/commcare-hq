@@ -2136,12 +2136,6 @@ class CaseSearchAgainLabel(BaseCaseSearchLabel):
     label = DictProperty(default={'en': 'Search Again'})
 
 
-class AdditionalRegistryQuery(DocumentSchema):
-    instance_name = StringProperty()
-    case_type_xpath = StringProperty()
-    case_id_xpath = StringProperty()
-
-
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
@@ -2162,7 +2156,7 @@ class CaseSearch(DocumentSchema):
     additional_case_types = ListProperty(str)
     data_registry = StringProperty()
     data_registry_workflow = StringProperty()           # one of REGISTRY_WORKFLOW_*
-    additional_registry_queries = SchemaListProperty(AdditionalRegistryQuery)
+    additional_registry_cases = StringListProperty()  # list of xpath expressions
 
     @property
     def case_session_var(self):

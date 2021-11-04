@@ -267,34 +267,33 @@
           </div>
           <div class="form-group" data-bind="visible: dataRegistryWorkflow() == 'load_case'">
               <label for="data-registry" class="{% css_label_class %} control-label">
-                  {% trans "Additional Data Registry Queries" %}
+                  {% trans "Load Additional Data Registry Cases" %}
                   <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
-                        data-content="{% trans_html_attr "Load additional data into forms in this module by performing extra queries against the data registry." %}">
+                        data-content="{% blocktrans %}
+                        Load additional cases from the Data Registry into the 'registry' instance for forms in this module.
+                        The case type of the case must be configured in the registry and in the module via the module's
+                        case type or the module's 'Additional Case List and Case Search Types' configuration.
+                        {% endblocktrans %}">
+                  </span>
               </label>
               <div class="{% css_field_class %}">
                   <table class="table table-condensed">
-                    <thead data-bind="visible: additionalRegistryQueries().length > 0">
+                    <thead data-bind="visible: additionalRegistryCases().length > 0">
                     <tr>
-                      <th class="col-sm-1"></th>
-                      <th class="col-sm-4">{% trans "Instance Name" %}</th>
-                      <th class="col-sm-4">{% trans "Case Type" %}</th>
-                      <th class="col-sm-4">{% trans "Case ID" %}</th>
+                      <th class="col-sm-12">{% trans "Case ID XPath" %}</th>
                       <th class="col-sm-1"></th>
                     </tr>
                     </thead>
-                    <tbody data-bind="foreach: additionalRegistryQueries, sortableList: additionalRegistryQueries">
+                    <tbody data-bind="foreach: additionalRegistryCases, sortableList: additionalRegistryCases">
                       <tr>
-                        <td class="text-center">
-                          <i class="grip sortable-handle hq-icon-full fa fa-arrows-v"></i>
-                        </td>
                         <td>
-                          <input class="form-control" type="text" data-bind="value: instanceName"/>
-                        </td>
-                        <td>
-                          <input class="form-control" type="text" data-bind="value: caseTypeXpath"/>
-                        </td>
-                        <td>
-                          <input class="form-control" type="text" data-bind="value: caseIdXpath"/>
+                          <textarea data-bind="
+                              value: caseIdXpath,
+                              xpathValidator: {text: caseIdXpath, allowCaseHashtags: false, errorHtml: $('#searchFilterXpathErrorHtml').html()}
+                              "
+                                    class="form-control vertical-resize"
+                                    spellcheck="false"
+                          ></textarea>
                         </td>
                         <td>
                           <i style="cursor: pointer;" class="fa fa-remove"
@@ -304,7 +303,7 @@
                     </tbody>
                   </table>
                   <button type="button" class="btn btn-default" data-bind="click: addRegistryQuery">
-                    <i class="fa fa-plus"></i> {% trans "Add Data Registry Query" %}
+                    <i class="fa fa-plus"></i> {% trans "Add Case ID to Data Registry Query" %}
                   </button>
               </div>
           </div>

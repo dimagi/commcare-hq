@@ -1,3 +1,4 @@
+import itertools
 import os
 from datetime import datetime
 from distutils.version import LooseVersion
@@ -411,15 +412,15 @@ def recovery_measures(request, domain, build_id):
 @mobile_auth
 @require_GET
 def registry_case(request, domain, app_id):
-    case_id = request.GET.get("case_id")
-    case_type = request.GET.get("case_type")
+    case_ids = request.GET.getlist("case_id")
+    case_types = request.GET.getlist("case_type")
     registry = request.GET.get("commcare_registry")
 
     missing = [
         name
         for name, value in zip(
             ["case_id", "case_type", "commcare_registry"],
-            [case_id, case_type, registry]
+            [case_ids, case_types, registry]
         )
         if not value
     ]
@@ -434,13 +435,25 @@ def registry_case(request, domain, app_id):
 
     app = get_app_cached(domain, app_id)
     try:
-        case = helper.get_case(case_id, case_type, request.couch_user, app)
+        cases = [
+            helper.get_case(case_id, request.couch_user, app)
+            for case_id in case_ids
+        ]
     except RegistryNotFound:
         return HttpResponseNotFound(f"Registry '{registry}' not found")
-    except (CaseNotFound, RegistryAccessException):
-        return HttpResponseNotFound(f"Case '{case_id}' not found")
+    except CaseNotFound as e:
+        return HttpResponseNotFound(f"Case '{str(e)}' not found")
+    except RegistryAccessException as e:
+        return HttpResponseBadRequest(str(e))
 
-    cases = helper.get_case_hierarchy(request.couch_user, case)
     for case in cases:
+        if case.type not in case_types:
+            return HttpResponseNotFound(f"Case '{case.case_id}' not found")
+
+    all_cases = list(itertools.chain.from_iterable(
+        helper.get_case_hierarchy(request.couch_user, case)
+        for case in cases
+    ))
+    for case in all_cases:
         case.case_json[COMMCARE_PROJECT] = case.domain
-    return HttpResponse(CaseDBFixture(cases).fixture, content_type="text/xml; charset=utf-8")
+    return HttpResponse(CaseDBFixture(all_cases).fixture, content_type="text/xml; charset=utf-8")
