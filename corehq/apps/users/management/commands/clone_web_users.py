@@ -34,7 +34,7 @@ class Command(BaseCommand):
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
         for old_username, new_username in iterate_usernames_to_update(file):
             old_user, new_user = clone_user(old_username, new_username)
-            deactivate_user(old_user)
+            deactivate_django_user(old_user.get_django_user())
             send_deprecation_email(old_user, new_user)
 
 
@@ -79,10 +79,10 @@ def create_new_user_from_old_user(old_user, new_username):
     return WebUser.get_by_username(new_user.username, strict=True)
 
 
-def deactivate_user(user):
-    user.is_active = False
-    user.save()
-    logger.info(f'Deactivated user {user.username}.')
+def deactivate_django_user(django_user):
+    django_user.is_active = False
+    django_user.save()
+    logger.info(f'Deactivated user {django_user.username}.')
 
 
 def copy_domain_memberships(from_user, to_user):
