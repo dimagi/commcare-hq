@@ -12,7 +12,7 @@ from corehq.util.log import with_progress_bar
 class Command(BaseCommand):
     help = "Adds user_repr and changed_by_repr to UserHistory log if not already present"
 
-    def handle(self):
+    def handle(self, **options):
         records = UserHistory.objects.filter(Q(user_repr__isnull=True) | Q(changed_by_repr__isnull=True))
         for user_history in with_progress_bar(records.order_by('pk').iterator(), records.count()):
             try:
