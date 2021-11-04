@@ -120,7 +120,7 @@ class Requests(object):
         self._session = None
 
     def __enter__(self):
-        self._session = self.auth_manager.get_session()
+        self._session = self.auth_manager.get_session(self.domain_name)
         return self
 
     def __exit__(self, *args):
@@ -132,13 +132,12 @@ class Requests(object):
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
-        validate_user_input_url_for_repeaters(url, domain=self.domain_name, src='sent_attempt')
         if self._session:
             response = self._session.request(method, url, *args, **kwargs)
         else:
             # Mimics the behaviour of requests.api.request()
-            with self.auth_manager.get_session() as session:
-                response = session.request(method, url, *args, **kwargs)
+            with self:
+                response = self._session.request(method, url, *args, **kwargs)
         if raise_for_status:
             response.raise_for_status()
         return response

@@ -432,7 +432,7 @@ class EntriesHelper(object):
                 if module_offers_registry_search(module):
                     result.append(self.get_data_registry_search_datums(module))
                     result.append(datum)
-                    result.extend(self.get_data_registry_case_datums(datum, module))
+                    result.append(self.get_data_registry_case_datums(datum, module))
                 else:
                     result.append(datum)
             else:
@@ -537,7 +537,7 @@ class EntriesHelper(object):
         workflow and perform the search directly as part of the entry instead of via an action in the
         details screen. The case details is then populated with data from the results of the query.
         """
-        from corehq.apps.app_manager.suite_xml.sections.remote_requests import RemoteRequestFactory
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
         factory = RemoteRequestFactory(module, [])
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
@@ -547,39 +547,34 @@ class EntriesHelper(object):
         the user selected is in the user's casedb so we have to get the data directly from HQ before
         entering the form. This data is then available in the 'registry' instance (``instance('registry')``)
         """
-        from corehq.apps.app_manager.suite_xml.sections.remote_requests import REGISTRY_INSTANCE
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
 
-        def _registry_query(instance_name, case_type_xpath, case_id_xpath):
-            return FormDatumMeta(
-                datum=RemoteRequestQuery(
-                    url=absolute_reverse('registry_case', args=[self.app.domain, self.app.get_id]),
-                    storage_instance=instance_name,
-                    template='case',
-                    data=[
-                        QueryData(key='case_type', ref=case_type_xpath),
-                        QueryData(key='case_id', ref=case_id_xpath),
-                        QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
-                    ],
-                    default_search='true',
-                ),
-                case_type=None,
-                requires_selection=False,
-                action=None
-            )
+        case_types = set(module.search_config.additional_case_types) | {module.case_type}
+        case_ids_expressions = {session_var(datum.datum.id)} | set(module.search_config.additional_registry_cases)
+        data = [
+            QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
+        ]
+        data.extend([
+            QueryData(key='case_type', ref=f"'{case_type}'")
+            for case_type in sorted(case_types)
+        ])
+        data.extend([
+            QueryData(key='case_id', ref=case_id_xpath)
+            for case_id_xpath in sorted(case_ids_expressions)
+        ])
 
-        datums = [_registry_query(
-            instance_name=REGISTRY_INSTANCE,
-            case_type_xpath=f"'{datum.case_type}'",
-            case_id_xpath=session_var(datum.datum.id)
-        )]
-
-        for query in module.search_config.additional_registry_queries:
-            datums.append(_registry_query(
-                instance_name=query.instance_name,
-                case_type_xpath=query.case_type_xpath,
-                case_id_xpath=query.case_id_xpath
-            ))
-        return datums
+        return FormDatumMeta(
+            datum=RemoteRequestQuery(
+                url=absolute_reverse('registry_case', args=[self.app.domain, self.app.get_id]),
+                storage_instance=REGISTRY_INSTANCE,
+                template='case',
+                data=data,
+                default_search='true',
+            ),
+            case_type=None,
+            requires_selection=False,
+            action=None
+        )
 
     @staticmethod
     def get_auto_select_datums_and_assertions(action, auto_select, form):
