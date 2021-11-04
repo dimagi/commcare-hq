@@ -196,7 +196,7 @@ class TestStaleDataInESSQL(TestCase):
     def _stale_data_in_es(self, *args, **kwargs):
         f = StringIO()
         expect_exception = kwargs.pop('expect_exception', None)
-        with mock.patch('sys.stdout', f), mock.patch('sys.stderr', StringIO()):
+        with mock.patch('sys.stdout', f):
             if expect_exception:
                 with self.assertRaises(expect_exception):
                     call_command('stale_data_in_es', *args, stdout=f, **kwargs)
