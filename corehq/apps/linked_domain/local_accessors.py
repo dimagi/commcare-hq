@@ -11,7 +11,7 @@ from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
 from corehq.apps.reports.models import TableauServer, TableauVisualization
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 
 
 def get_tableau_server_and_visualizations(domain):
@@ -189,6 +189,11 @@ def get_auto_update_rules(domain):
                 } for case_rule_action in actions
             ]
         }
+
+        # Delete unnecessary data for running rules
+        del rule_data['rule']['last_run']
+        del rule_data['rule']['locked_for_editing']
+
         data.append(rule_data)
 
     return data

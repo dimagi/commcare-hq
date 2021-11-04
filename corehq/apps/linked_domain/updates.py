@@ -9,7 +9,7 @@ from toggle.shortcuts import set_toggle
 
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
-    CaseRuleSubmission, ClosedParentDefinition, CustomActionDefinition,
+    ClosedParentDefinition, CustomActionDefinition,
     CustomMatchDefinition, MatchPropertyDefinition, UpdateCaseDefinition
 )
 from corehq.apps.case_search.models import CaseSearchConfig
@@ -427,8 +427,16 @@ def update_auto_update_rules(domain_link):
 
     for upstream_rule_def in upstream_rules:
         # Grab local rule by upstream ID (preferred) or by name
-        downstream_rule = (downstream_rules.filter(upstream_id=upstream_rule_def['rule']['id']).first()
-            or downstream_rules.filter(name=upstream_rule_def['rule']['name']).first())
+        try:
+            downstream_rule = downstream_rules.get(upstream_id=upstream_rule_def['rule']['id'])
+        except AutomaticUpdateRule.DoesNotExist:
+            try:
+                downstream_rule = downstream_rules.get(name=upstream_rule_def['rule']['name'])
+            except AutomaticUpdateRule.MultipleObjectsReturned:
+                # If there are multiple rules with the same name, overwrite the first.
+                downstream_rule = downstream_rules.filter(name=upstream_rule_def['rule']['name']).first()
+            except AutomaticUpdateRule.DoesNotExist:
+                downstream_rule = None
 
         # If no corresponding local rule, make a new rule
         if not downstream_rule:
@@ -436,6 +444,7 @@ def update_auto_update_rules(domain_link):
                 domain=domain_link.linked_domain,
                 active=upstream_rule_def['rule']['active'],
                 workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                upstream_id=upstream_rule_def['rule']['id']
             )
 
         # Copy all the contents from old rule to new rule
@@ -447,11 +456,8 @@ def update_auto_update_rules(domain_link):
             downstream_rule.server_modified_boundary = upstream_rule_def['rule']['server_modified_boundary']
             downstream_rule.save()
 
-            # Delete criteria and actions if they exist
-            if CaseRuleCriteria.objects.filter(rule_id=downstream_rule.id).first():
-                downstream_rule.delete_criteria()
-            if CaseRuleAction.objects.filter(rule_id=downstream_rule.id).first():
-                downstream_rule.delete_actions()
+            downstream_rule.delete_criteria()
+            downstream_rule.delete_actions()
 
             # Largely from data_interfaces/forms.py - save_criteria()
             for criteria in upstream_rule_def['criteria']:
