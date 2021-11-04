@@ -275,7 +275,10 @@
                     <tbody data-bind="foreach: additionalRegistryCases, sortableList: additionalRegistryCases">
                       <tr>
                         <td>
-                          <textarea data-bind="value: caseIdXpath"
+                          <textarea data-bind="
+                              value: caseIdXpath,
+                              xpathValidator: {text: caseIdXpath, allowCaseHashtags: false, errorHtml: $('#searchFilterXpathErrorHtml').html()}
+                              "
                                     class="form-control vertical-resize"
                                     spellcheck="false"
                           ></textarea>
