@@ -181,8 +181,8 @@ def send_deprecation_email(old_user, new_user):
         'new_username': new_user.username,
     }
 
-    email_html = render_to_string('users/deprecated_user.html', context)
-    email_plaintext = render_to_string('users/deprecated_user.txt', context)
+    email_html = render_to_string('users/email/deprecated_user.html', context)
+    email_plaintext = render_to_string('users/email/deprecated_user.txt', context)
 
     send_html_email_async.delay(
         _("Deprecated User"),
