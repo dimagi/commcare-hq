@@ -1,3 +1,4 @@
+from datetime import datetime
 from itertools import chain
 
 from django.test import TestCase, override_settings
@@ -9,7 +10,7 @@ from casexml.apps.case.mock import CaseFactory
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.topics import get_multi_topic_offset
+from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.data_interfaces.deduplication import find_duplicate_case_ids
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
@@ -19,17 +20,14 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import (
-    flag_enabled,
-    trap_extra_setup,
-)
+from corehq.util.test_utils import flag_enabled, trap_extra_setup
 
 
 @es_test
@@ -46,7 +44,6 @@ class FindingDuplicatesTest(TestCase):
         self.factory = CaseFactory(self.domain)
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases()
         ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
         super().tearDown()
 
@@ -209,16 +206,6 @@ class CaseDeduplicationActionTest(TestCase):
         ])
         cls.action.save()
 
-    @classmethod
-    def tearDownClass(cls, *args, **kwargs):
-        cls.rule.hard_delete()
-        super().tearDownClass()
-
-    def tearDown(self):
-        CaseDuplicate.objects.all().delete()
-        FormProcessorTestUtils.delete_all_cases()
-        super().tearDown()
-
     def _create_cases(self, num_cases=5):
         faker = Faker()
         duplicate_name = "George Simon Esq."
@@ -380,6 +367,39 @@ class CaseDeduplicationActionTest(TestCase):
         self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), num_duplicates)
         self._assert_potential_duplicates(duplicates[1].case_id, duplicates)
 
+    @patch.object(CaseDeduplicationActionDefinition, '_update_cases')
+    @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
+    def test_cases_not_fetched_no_updates(self, find_duplicates_mock, update_cases_mock):
+        """Test that running a rule that has no updates doesn't fetch all the cases
+        """
+        duplicates, uniques = self._create_cases()
+        find_duplicates_mock.return_value = [duplicate.case_id for duplicate in duplicates]
+        update_cases_mock.return_value = 1
+
+        no_update_rule = AutomaticUpdateRule.objects.create(
+            domain=self.domain,
+            name='test',
+            case_type=self.case_type,
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )
+        _, self.action = self.rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=["name", "age"],
+        )
+
+        no_update_rule.run_actions_when_case_matches(duplicates[0])
+        update_cases_mock.assert_not_called()
+
+        self.rule.run_actions_when_case_matches(duplicates[0])
+        update_cases_mock.assert_called_with(
+            self.domain, self.rule, set(duplicate.case_id for duplicate in duplicates)
+        )
+
     def test_rule_activation(self):
         """Test that activating or deactivating a rule will trigger the right action
         """
@@ -407,6 +427,24 @@ class CaseDeduplicationActionTest(TestCase):
         self.rule.deleted = False
         self.rule.save()
 
+    @flag_enabled('CASE_DEDUPE')
+    def test_case_deletion(self):
+        """Test that deleting cases also deletes Duplicate Relationships
+        """
+        duplicates, uniques = self._create_cases()
+        duplicate_case_ids = [c.case_id for c in duplicates]
+        CaseDuplicate.bulk_create_duplicate_relationships(
+            self.action, duplicates[0], duplicate_case_ids
+        )
+
+        # Delete all cases except the last one, which is now no longer a duplicate.
+        tag_cases_as_deleted_and_remove_indices(
+            self.domain, duplicate_case_ids[0:-1], "deletion", datetime.utcnow()
+        )
+
+        # All CaseDuplicates should be deleted (including the last one)
+        self.assertFalse(CaseDuplicate.objects.filter(case_id__in=duplicate_case_ids).count())
+
     @es_test
     def test_integration_test(self):
         """Don't mock the find_duplicate_ids response to make sure it works
@@ -425,6 +463,27 @@ class CaseDeduplicationActionTest(TestCase):
         self.rule.run_actions_when_case_matches(duplicates[0])
 
         self._assert_potential_duplicates(duplicates[0].case_id, duplicates)
+
+    @es_test
+    @patch("corehq.apps.data_interfaces.deduplication.DUPLICATE_LIMIT", 3)
+    def test_many_duplicates(self):
+        """Test what happens if there are over DUPLICATE_LIMIT matches
+        """
+        es = get_es_new()
+        with trap_extra_setup(ConnectionError):
+            initialize_index_and_mapping(es, CASE_SEARCH_INDEX_INFO)
+        self.addCleanup(ensure_index_deleted, CASE_SEARCH_INDEX_INFO.index)
+
+        num_duplicates = 6
+        duplicates, uniques = self._create_cases(num_duplicates)
+
+        for case in chain(duplicates, uniques):
+            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
+        es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+
+        self.rule.run_actions_when_case_matches(duplicates[0])
+
+        self.assertEqual(CaseDuplicate.objects.all().count(), 3 + 1)  # DUPLICATE_LIMIT cases + original case
 
 
 @override_settings(RUN_UNKNOWN_USER_PILLOW=False)
@@ -473,7 +532,7 @@ class DeduplicationPillowTest(TestCase):
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
     def test_pillow_processes_changes(self, find_duplicate_cases_mock):
-        kafka_sec = get_multi_topic_offset([topics.FORM, topics.FORM_SQL])
+        kafka_sec = get_topic_offset(topics.FORM_SQL)
 
         case1 = self.factory.create_case(case_name="foo", case_type=self.case_type, update={"age": 2})
         case2 = self.factory.create_case(case_name="foo", case_type=self.case_type, update={"age": 2})
@@ -481,7 +540,7 @@ class DeduplicationPillowTest(TestCase):
 
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
 
-        new_kafka_sec = get_multi_topic_offset([topics.FORM, topics.FORM_SQL])
+        new_kafka_sec = get_topic_offset(topics.FORM_SQL)
         self.pillow.process_changes(since=kafka_sec, forever=False)
 
         self._assert_case_duplicate_pair(case1.case_id, [case2.case_id])

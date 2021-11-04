@@ -29,6 +29,7 @@ from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.data_interfaces.deduplication import (
     find_duplicate_case_ids,
+    get_dedupe_xmlns,
     reset_and_backfill_deduplicate_rule,
     reset_deduplicate_rule,
 )
@@ -70,7 +71,6 @@ from corehq.util.test_utils import unit_testing_only
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
-DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
 
 
 def _try_date_conversion(date_or_string):
@@ -807,7 +807,7 @@ class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
         result = []
         for p in properties:
             if not isinstance(p, self.PropertyDefinition):
-                raise ValueError("Expected {}.PropertyDefinition".format(self.__class__.__name__))
+                raise ValueError(f"Expected {self.__class__.__name__}.PropertyDefinition")
 
             result.append(p.to_json())
 
@@ -994,8 +994,10 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             if self._handle_existing_duplicates(case.case_id, new_duplicate_case_ids):
                 return CaseRuleActionResult(num_updates=0)
             CaseDuplicate.bulk_create_duplicate_relationships(self, case, new_duplicate_case_ids)
-
-        num_updates = self._update_cases(domain, rule, new_duplicate_case_ids)
+        if self.properties_to_update:
+            num_updates = self._update_cases(domain, rule, new_duplicate_case_ids)
+        else:
+            num_updates = 0
         return CaseRuleActionResult(num_updates=num_updates)
 
     def _handle_existing_duplicates(self, case_id, new_duplicate_case_ids):
@@ -1021,7 +1023,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             # This is no longer a duplicate, so check that there aren't any
             # other cases that are no longer duplicates
             CaseDuplicate.remove_unique_cases(action=self, case_id=case_id)
-            CaseDuplicate.objects.filter(action=self, case_id=case_id).delete()
+            CaseDuplicate.remove_duplicates_for_action(action=self, case_id=case_id)
             return True
 
         if new_duplicate_case_ids == existing_duplicate_case_ids:
@@ -1029,7 +1031,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             return True
 
         # Delete all CaseDuplicates with this case_id, we'll recreate them later
-        CaseDuplicate.objects.filter(action=self, case_id=case_id).delete()
+        CaseDuplicate.remove_duplicates_for_action(action=self, case_id=case_id)
         return False
 
     def _update_cases(self, domain, rule, duplicate_case_ids):
@@ -1042,7 +1044,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 domain,
                 case_update_batch,
                 device_id="CaseDeduplicationActionDefinition-update-cases",
-                xmlns=DEDUPE_XMLNS,
+                xmlns=get_dedupe_xmlns(rule),
             )
             rule.log_submission(result[0].form_id)
         return len(case_updates)
@@ -1085,6 +1087,20 @@ class CaseDuplicate(models.Model):
         return list(cls.objects.filter(action_id=action_id).values_list('case_id', flat=True))
 
     @classmethod
+    def bulk_remove_unique_cases(cls, case_ids):
+        """Given a list of case_ids that are deleted, make sure there are no
+        other CaseDuplicates pointing to them
+
+        """
+        return (
+            cls.objects
+            .filter(Q(potential_duplicates__case_id__in=case_ids))
+            .annotate(potential_duplicates_count=models.Count("potential_duplicates"))
+            .filter(potential_duplicates_count=1)
+            .delete()
+        )
+
+    @classmethod
     def remove_unique_cases(cls, action, case_id):
         # Given a case_id that is no longer a duplicate, ensure there are no
         # other CaseDuplicates that were only pointing to this case
@@ -1096,6 +1112,16 @@ class CaseDuplicate(models.Model):
             .filter(potential_duplicates_count=1)
             .delete()
         )
+
+    @classmethod
+    def remove_duplicates_for_action(cls, action, case_id):
+        return cls.objects.filter(action=action, case_id=case_id).delete()
+
+    @classmethod
+    def remove_duplicates_for_case_ids(cls, case_ids):
+        return cls.objects.filter(
+            case_id__in=case_ids
+        ).delete()
 
     @classmethod
     def bulk_create_duplicate_relationships(cls, action, initial_case, duplicate_case_ids):

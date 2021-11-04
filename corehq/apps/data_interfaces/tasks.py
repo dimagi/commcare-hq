@@ -30,6 +30,7 @@ from .interfaces import FormManagementMode
 from .models import (
     AUTO_UPDATE_XMLNS,
     AutomaticUpdateRule,
+    CaseDuplicate,
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
@@ -76,6 +77,12 @@ def reset_and_backfill_deduplicate_rule_task(domain, rule_id):
 
     reset_deduplicate_rule(rule)
     backfill_deduplicate_rule(domain, rule)
+
+
+@task(queue='background_queue')
+def delete_duplicates_for_cases(case_ids):
+    CaseDuplicate.bulk_remove_unique_cases(case_ids)
+    CaseDuplicate.remove_duplicates_for_case_ids(case_ids)
 
 
 @task(serializer='pickle', ignore_result=True)
