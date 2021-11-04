@@ -549,13 +549,19 @@ class EntriesHelper(object):
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
 
+        case_types = set(module.search_config.additional_case_types) | {module.case_type}
+        case_ids_expressions = {session_var(datum.datum.id)} | set(module.search_config.additional_registry_cases)
         data = [
-            QueryData(key='case_type', ref=f"'{datum.case_type}'"),
-            QueryData(key='case_id', ref=session_var(datum.datum.id)),
             QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
         ]
-        for case_id_xpath in module.search_config.additional_registry_cases:
-            data.append(QueryData(key='case_id', ref=case_id_xpath))
+        data.extend([
+            QueryData(key='case_type', ref=f"'{case_type}'")
+            for case_type in sorted(case_types)
+        ])
+        data.extend([
+            QueryData(key='case_id', ref=case_id_xpath)
+            for case_id_xpath in sorted(case_ids_expressions)
+        ])
 
         return FormDatumMeta(
             datum=RemoteRequestQuery(
