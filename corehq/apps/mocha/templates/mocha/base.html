@@ -63,5 +63,8 @@
         mocha.run();
       }
     </script>
+    {% if show_status_page == 'staging' %}
+      <script src="https://p3s9fvl6gvhr.statuspage.io/embed/script.js"></script>
+    {% endif %}
   </body>
 </html>
