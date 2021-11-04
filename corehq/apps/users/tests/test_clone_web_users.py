@@ -1,5 +1,10 @@
+from unittest import mock
+
 from django.contrib.auth.models import User
 from django.test import TestCase
+
+from toggle.models import Toggle
+from toggle.shortcuts import toggle_enabled
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.export.dbaccessors import _get_export_instance
@@ -8,11 +13,20 @@ from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.users.management.commands.clone_web_users import (
     copy_domain_memberships,
     transfer_exports,
+    transfer_feature_flags,
     transfer_saved_reports,
     transfer_scheduled_reports,
 )
 from corehq.apps.users.models import WebUser
 from corehq.const import USER_CHANGE_VIA_CLONE
+from corehq.toggles import NAMESPACE_USER, TAG_INTERNAL, StaticToggle
+
+TEST_TOGGLE = StaticToggle(
+    'TEST_TOGGLE',
+    'This is for tests',
+    TAG_INTERNAL,
+    [NAMESPACE_USER],
+)
 
 
 class TestCloneWebUsers(TestCase):
@@ -125,3 +139,17 @@ class TestCloneWebUsers(TestCase):
 
         actual_id = ReportConfig.by_domain_and_owner(self.domain, self.new_user._id, stale=False)[0]._id
         self.assertEqual(expected_id, actual_id)
+
+    @mock.patch('corehq.toggles.all_toggles_by_name', mock.Mock(return_value={'TEST_TOGGLE': TEST_TOGGLE}))
+    def test_transfer_feature_flags(self):
+        toggle = Toggle(slug='TEST_TOGGLE', enabled_users=[self.old_user.username])
+        toggle.save()
+        self.addCleanup(toggle.delete)
+
+        self.assertTrue(toggle_enabled('TEST_TOGGLE', self.old_user.username))
+        self.assertFalse(toggle_enabled('TEST_TOGGLE', self.new_user.username))
+
+        transfer_feature_flags(self.old_user, self.new_user)
+
+        self.assertFalse(toggle_enabled('TEST_TOGGLE', self.old_user.username))
+        self.assertTrue(toggle_enabled('TEST_TOGGLE', self.new_user.username))

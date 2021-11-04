@@ -6,6 +6,8 @@ from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
+from toggle.shortcuts import set_toggle
+
 import settings
 from corehq.apps.export.dbaccessors import _get_export_instance
 from corehq.apps.export.models import ExportInstance
@@ -13,6 +15,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.users.models import DomainMembership, WebUser
 from corehq.const import USER_CHANGE_VIA_CLONE
+from corehq.toggles import toggles_enabled_for_user
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +56,7 @@ def clone_user(old_username, new_username):
     transfer_exports(old_user, new_user)
     transfer_scheduled_reports(old_user, new_user.get_id)
     transfer_saved_reports(old_user, new_user)
+    transfer_feature_flags(old_user, new_user)
 
     logger.info(f'Created new user {new_user.username}.')
     return old_user, new_user
@@ -120,6 +124,17 @@ def transfer_saved_reports(from_user, to_user):
         for saved_report in ReportConfig.by_domain_and_owner(domain, from_user.get_id, stale=False):
             saved_report.owner_id = to_user.get_id
             saved_report.save()
+
+
+def transfer_feature_flags(from_user, to_user):
+    enabled_toggles = toggles_enabled_for_user(from_user.username)
+    for toggle in enabled_toggles:
+        logger.info(f'Updating toggle {toggle} from {from_user.username} to {to_user.username}')
+        set_toggle(toggle, from_user.username, False)
+        set_toggle(toggle, to_user.username, True)
+
+    toggles_enabled_for_user.clear(from_user.username)
+    toggles_enabled_for_user.clear(to_user.username)
 
 
 def copy_user_fields(from_user, to_user):
