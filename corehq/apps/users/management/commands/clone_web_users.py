@@ -157,7 +157,8 @@ def copy_user_fields(from_user, to_user):
     to_user.announcements_seen = from_user.announcements_seen
     to_user.user_data = from_user.user_data
     to_user.update_metadata(from_user.metadata)
-    to_user.set_location(from_user.location_id)
+    # I know it isn't recommended to set location_id directly, but this seems like a good exception
+    to_user.location_id = from_user.location_id
     to_user.assigned_location_ids = from_user.assigned_location_ids
     to_user.has_built_app = from_user.has_built_app
     to_user.analytics_enabled = from_user.analytics_enabled
