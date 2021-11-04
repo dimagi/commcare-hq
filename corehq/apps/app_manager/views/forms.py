@@ -547,6 +547,9 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
+    if not _is_valid_xform(xml):
+        return {'status': 'error'}
+
     xml = save_xform(app, form, xml.encode('utf-8'))
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
