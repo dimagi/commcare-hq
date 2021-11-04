@@ -2,7 +2,7 @@
 FormES
 --------
 """
-from corehq.pillows.mappings.const import NULL_VALUE
+from corehq.pillows.mappings import NULL_VALUE
 
 from . import filters
 from .es_query import HQESQuery

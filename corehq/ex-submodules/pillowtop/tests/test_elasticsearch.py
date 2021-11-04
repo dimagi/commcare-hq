@@ -25,14 +25,10 @@ from pillowtop.index_settings import disallowed_settings_by_es_version, INDEX_RE
 from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.processors.elastic import send_to_elasticsearch
-from .utils import (
-    TEST_INDEX_INFO,
-    get_doc_count,
-    get_index_mapping,
-)
+from .utils import get_doc_count, get_index_mapping, TEST_INDEX_INFO
 
 
-@es_test(index=TEST_INDEX_INFO)
+@es_test
 class ElasticPillowTest(SimpleTestCase):
 
     def setUp(self):
@@ -95,13 +91,9 @@ class ElasticPillowTest(SimpleTestCase):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        with mock.patch.object(ElasticsearchInterface, "_verify_is_alias", return_value=None):
-            ElasticsearchInterface(get_es_new()).index_doc(
-                self.index,
-                TEST_INDEX_INFO.type,
-                doc_id,
-                {'doc_type': 'CommCareCase', 'type': 'mother'},
-            )
+        ElasticsearchInterface(get_es_new()).index_doc(
+            self.index, TEST_INDEX_INFO.type, doc_id, {'doc_type': 'CommCareCase', 'type': 'mother'},
+            verify_alias=False)
         self.assertEqual(1, get_doc_count(self.es, self.index))
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
         es_doc = self.es_interface.get_doc(TEST_INDEX_INFO.alias, TEST_INDEX_INFO.type, doc_id)
@@ -168,7 +160,12 @@ class ElasticPillowTest(SimpleTestCase):
                 .format(disallowed_setting))
 
 
-@es_test(index=TEST_INDEX_INFO)
+TEST_ES_META = {
+    TEST_INDEX_INFO.index: TEST_INDEX_INFO
+}
+
+
+@es_test
 class TestSendToElasticsearch(SimpleTestCase):
 
     def setUp(self):
@@ -184,10 +181,13 @@ class TestSendToElasticsearch(SimpleTestCase):
     def tearDown(self):
         ensure_index_deleted(self.index)
 
+    @mock.patch('corehq.apps.hqadmin.views.data.ES_META', TEST_ES_META)
+    @mock.patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @mock.patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         self._send_to_es_and_check(doc)
-        res = lookup_doc_in_es(doc['_id'], self.es_alias)
+        res = lookup_doc_in_es(doc['_id'], self.index)
         self.assertEqual(res, doc)
 
     def _send_to_es_and_check(self, doc, update=False, es_merge_update=False,
