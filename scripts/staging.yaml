@@ -68,7 +68,6 @@ branches:
     - dmr/throttle-system-forms  # Danny Sept 24
     - smh/remove-extra-spinner-icons # Steph Oct 6
     - ml/remove-pickles-phonelog # Minha Oct 7
-    - dependabot/npm_and_yarn/moment-2.29.1+sk/app-workflow-visualization
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
@@ -76,12 +75,9 @@ branches:
     - fr/dedupe+ad/auto-update-rules-for-linked-spaces
     - fr/dedupe  # Farid Sept 17
     - ad/auto-update-rules-for-linked-spaces # Addison Oct 25
-    - dm/upgrade-gevent+sk/app-workflow-visualization
 #    - ml/remove-pickles-reports # Minha Oct 21
-    - sk/data-registry-form-linking+sk/app-workflow-visualization # Simon oct 30
     - sk/data-registry-form-linking+jls/smart-linking-in-web-apps-stack-jump
     - sk/data-registry-form-linking  # Simon Oct 22
-    - sk/app-workflow-visualization # Simon Oct 26
     - jls/enable-usercase-button # Jenny Oct 27
     - do/exclude-users-forward-forms # Dominic Oct 29
     - ap/resume-cancelled-batches # Amit Nov 1
