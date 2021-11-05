@@ -261,12 +261,12 @@ class TestNavigationEventsQueries(AuditcareTest):
                 session_key=uuid.uuid4().hex,
                 event_date=datetime.utcnow(),
             )
-            for domain, minutes in [(None, -1),
-                                    (domain, 0),
-                                    (domain, 1)]:
+            for event_domain, minutes in [(None, -1),
+                                          (domain, 0),
+                                          (domain, 1)]:
                 fields = login_event.copy()
                 # save one event with domain/date changed by loop params:
-                fields["domain"] = domain
+                fields["domain"] = event_domain
                 fields['event_date'] += timedelta(minutes=minutes)
                 NavigationEventAudit(**fields).save()
                 # update the fields and save another:
