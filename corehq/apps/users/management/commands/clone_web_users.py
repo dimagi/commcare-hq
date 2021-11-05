@@ -13,7 +13,7 @@ from corehq.apps.export.dbaccessors import _get_export_instance
 from corehq.apps.export.models import ExportInstance
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
-from corehq.apps.users.models import DomainMembership, WebUser
+from corehq.apps.users.models import CouchUser, DomainMembership, WebUser
 from corehq.const import USER_CHANGE_VIA_CLONE
 from corehq.toggles import toggles_enabled_for_user
 
@@ -34,7 +34,12 @@ class Command(BaseCommand):
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
         for old_username, new_username in iterate_usernames_to_update(file):
             logger.info(f'Cloning old user {old_username} to new user {new_username}')
-            old_user, new_user = clone_user(old_username, new_username)
+            try:
+                old_user, new_user = clone_user(old_username, new_username)
+            except CouchUser.Inconsistent as e:
+                logger.error(f'{e}\nSkipping the pair ({old_username}, {new_username})')
+                continue
+
             deactivate_django_user(old_user.get_django_user())
             send_deprecation_email(old_user, new_user)
 
