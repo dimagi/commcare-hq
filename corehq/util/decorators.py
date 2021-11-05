@@ -56,7 +56,8 @@ def run_only_when(condition):
     def outer(fn):
         @wraps(fn)
         def inner(*args, **kwargs):
-            if condition:
+            condition_ = condition() if callable(condition) else condition
+            if condition_:
                 return fn(*args, **kwargs)
         return inner
     return outer

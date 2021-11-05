@@ -11,9 +11,9 @@ from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdErro
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from casexml.apps.phone.tests.test_sync_mode import DeprecatedBaseSyncTest
 from corehq.form_processor.tests.utils import sharded
-from six.moves import range
 
 
+@sharded
 @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)
 class OwnerCleanlinessTest(DeprecatedBaseSyncTest):
 
@@ -523,10 +523,6 @@ class OwnerCleanlinessTest(DeprecatedBaseSyncTest):
 
 
 @sharded
-class OwnerCleanlinessTestSQL(OwnerCleanlinessTest):
-    pass
-
-
 class SetCleanlinessFlagsTest(TestCase):
 
     def test_set_bad_domains(self):
@@ -540,11 +536,6 @@ class SetCleanlinessFlagsTest(TestCase):
         for invalid_owner in test_cases:
             with self.assertRaises(InvalidOwnerIdError):
                 set_cleanliness_flags('whatever', invalid_owner)
-
-
-@sharded
-class SetCleanlinessFlagsTestSQL(SetCleanlinessFlagsTest):
-    pass
 
 
 class CleanlinessUtilitiesTest(SimpleTestCase):
@@ -564,6 +555,7 @@ class CleanlinessUtilitiesTest(SimpleTestCase):
         self.assertEqual(set(back), set(range(5)))
 
 
+@sharded
 class GetCaseFootprintInfoTest(TestCase):
 
     @classmethod
@@ -581,8 +573,15 @@ class GetCaseFootprintInfoTest(TestCase):
     def test_simple_footprint(self):
         """ should only return open cases from user """
         case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.owner_id, 'create': True})
-        closed_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.owner_id, 'close': True, 'create': True})
-        other_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.other_owner_id, 'create': True})
+        closed_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={
+            'owner_id': self.owner_id,
+            'close': True,
+            'create': True,
+        })
+        other_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={
+            'owner_id': self.other_owner_id,
+            'create': True,
+        })
         self.factory.create_or_update_cases([case, other_case, closed_case])
 
         footprint_info = get_case_footprint_info(self.domain, self.owner_id)
@@ -709,10 +708,6 @@ class GetCaseFootprintInfoTest(TestCase):
 
 
 @sharded
-class GetCaseFootprintInfoTestSQL(GetCaseFootprintInfoTest):
-    pass
-
-
 class GetDependentCasesTest(TestCase):
 
     @classmethod
@@ -796,8 +791,3 @@ class GetDependentCasesTest(TestCase):
                          get_dependent_case_info(self.domain, [child.case_id]).extension_ids)
         self.assertEqual(set([]),
                          get_dependent_case_info(self.domain, [parent.case_id]).extension_ids)
-
-
-@sharded
-class GetDependentCasesTestSQL(GetDependentCasesTest):
-    pass

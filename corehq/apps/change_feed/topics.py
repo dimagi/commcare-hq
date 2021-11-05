@@ -1,13 +1,10 @@
 from kafka.common import OffsetRequestPayload
 
-from couchforms.models import all_known_formlike_doc_types
-
 from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.change_feed.connection import get_simple_kafka_client
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
+from corehq.form_processor.models import XFormInstanceSQL
 
-CASE = 'case'
-FORM = 'form'
 DOMAIN = 'domain'
 META = 'meta'
 APP = 'app'
@@ -22,15 +19,13 @@ LOCATION = 'location'
 SYNCLOG_SQL = 'synclog-sql'
 
 
-CASE_TOPICS = (CASE, CASE_SQL)
-FORM_TOPICS = (FORM, FORM_SQL)
+CASE_TOPICS = (CASE_SQL, )
+FORM_TOPICS = (FORM_SQL, )
 USER_TOPICS = (COMMCARE_USER, WEB_USER)
 ALL = (
-    CASE,
     CASE_SQL,
     COMMCARE_USER,
     DOMAIN,
-    FORM,
     FORM_SQL,
     GROUP,
     LEDGER,
@@ -48,15 +43,9 @@ def get_topic_for_doc_type(doc_type, data_source_type=None, default_topic=None):
     from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 
     if doc_type in document_types.CASE_DOC_TYPES:
-        return {
-            'sql': CASE_SQL,
-            'couch': CASE
-        }.get(data_source_type, CASE)
-    elif doc_type in all_known_formlike_doc_types():
-        return {
-            'sql': FORM_SQL,
-            'couch': FORM
-        }.get(data_source_type, FORM)
+        return CASE_SQL
+    elif doc_type in XFormInstanceSQL.ALL_DOC_TYPES:
+        return FORM_SQL
     elif doc_type in document_types.DOMAIN_DOC_TYPES:
         return DOMAIN
     elif doc_type in document_types.MOBILE_USER_DOC_TYPES:

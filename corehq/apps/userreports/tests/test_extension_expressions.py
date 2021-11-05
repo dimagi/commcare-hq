@@ -7,10 +7,8 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 
-@run_with_sql_backend
 class IndexedCaseExpressionTest(TestCase):
     def setUp(self):
         super(IndexedCaseExpressionTest, self).setUp()

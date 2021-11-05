@@ -343,6 +343,7 @@ class ReadableFormdataTest(SimpleTestCase):
         self._test_corpus('top_level_refless_group')
 
 
+@sharded
 class ReadableFormTest(TestCase):
 
     def setUp(self):
@@ -454,8 +455,3 @@ class ReadableFormTest(TestCase):
             '/data/cups_of_tea[3]/details_of_cup/secret': 'mg',
         }
         self.assertDictEqual({k: v['value'] for k, v in question_response_map.items()}, expected_response_map)
-
-
-@sharded
-class ReadableFormSQLTest(ReadableFormTest):
-    pass

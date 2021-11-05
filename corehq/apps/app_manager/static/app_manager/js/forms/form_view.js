@@ -93,7 +93,7 @@ hqDefine("app_manager/js/forms/form_view", function () {
         };
 
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('FORM_LINK_WORKFLOW') || initialPageData('uses_form_workflow')) {
-            labels[FormWorkflow.Values.FORM] = gettext("Link to other form");
+            labels[FormWorkflow.Values.FORM] = gettext("Link to other form or menu");
             options.forms = initialPageData('linkable_forms');
             options.formLinks = initialPageData('form_links');
             options.formDatumsUrl = hqImport('hqwebapp/js/initial_page_data').reverse('get_form_datums');

@@ -1,6 +1,7 @@
 import json
 from collections import defaultdict
 from datetime import datetime
+from django.conf import settings
 
 import langcodes
 import six.moves.urllib.error
@@ -9,6 +10,7 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
+from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from django.contrib import messages
@@ -27,6 +29,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ngettext, ugettext_lazy, ugettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
+from dimagi.utils.couch import CriticalSection
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
@@ -295,12 +298,15 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     def backup_token(self):
         if Domain.get_by_name(self.request.domain).two_factor_auth:
-            device = self.editable_user.get_django_user().staticdevice_set.get_or_create(name='backup')[0]
-            token = device.token_set.first()
-            if token:
-                return device.token_set.first().token
-            else:
-                return device.token_set.create(token=StaticToken.random_token()).token
+            with CriticalSection([f"backup-token-{self.editable_user._id}"]):
+                device = (self.editable_user.get_django_user()
+                          .staticdevice_set
+                          .get_or_create(name='backup')[0])
+                token = device.token_set.first()
+                if token:
+                    return device.token_set.first().token
+                else:
+                    return device.token_set.create(token=StaticToken.random_token()).token
         return None
 
     @property
@@ -539,6 +545,7 @@ class ListWebUsersView(BaseRoleAccessView):
     page_title = ugettext_lazy("Web Users")
     urlname = 'web_users'
 
+
     @property
     @memoized
     def role_labels(self):
@@ -575,6 +582,7 @@ class ListWebUsersView(BaseRoleAccessView):
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'bulk_download_url': bulk_download_url,
+            'from_address': settings.DEFAULT_FROM_EMAIL
         }
 
 
@@ -670,7 +678,8 @@ class ListRolesView(BaseRoleAccessView):
             'web_apps_privilege': self.web_apps_privilege,
             'has_report_builder_access': has_report_builder_access(self.request),
             'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
-            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain)
+            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
+            'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
 
 
@@ -685,7 +694,7 @@ def paginate_enterprise_users(request, domain):
     # Get linked mobile users
     web_user_usernames = [u.username for u in web_users]
     mobile_result = (
-        UserES().domains(domains).mobile_users().sort('username.exact')
+        UserES().show_inactive().domains(domains).mobile_users().sort('username.exact')
         .filter(
             queries.nested(
                 'user_data_es',
@@ -698,15 +707,16 @@ def paginate_enterprise_users(request, domain):
     for hit in mobile_result.hits:
         login_as_user = {data['key']: data['value'] for data in hit['user_data_es']}.get('login_as_user')
         mobile_users[login_as_user].append(CommCareUser.wrap(hit))
-
     users = []
     allowed_domains = set(domains) - {domain}
     for web_user in web_users:
+        loginAsUserCount = len(list(filter(lambda m: m['is_active'], mobile_users[web_user.username])))
         other_domains = [m.domain for m in web_user.domain_memberships if m.domain in allowed_domains]
         users.append({
             **_format_enterprise_user(domain, web_user),
             'otherDomains': other_domains,
-            'loginAsUserCount': len(mobile_users[web_user.username]),
+            'loginAsUserCount': loginAsUserCount,
+            'inactiveMobileCount': len(mobile_users[web_user.username]) - loginAsUserCount,
         })
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
             profile = mobile_user.get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
@@ -715,6 +725,7 @@ def paginate_enterprise_users(request, domain):
                 'profile': profile.name if profile else None,
                 'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
                 'loginAsUser': web_user.username,
+                'is_active': mobile_user.is_active,
             })
 
     return JsonResponse({
@@ -795,9 +806,10 @@ def remove_web_user(request, domain, couch_user_id):
     if user:
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
-        log_user_change(request.domain, couch_user=user,
+        # web user's membership is bound to the domain, so log as a change for that domain
+        log_user_change(by_domain=request.domain, for_domain=domain, couch_user=user,
                         changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                        message=UserChangeMessage.domain_removal(domain))
+                        change_messages=UserChangeMessage.domain_removal(domain))
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -873,8 +885,13 @@ def _update_role_from_view(domain, role_data):
     else:
         role = UserRole()
 
+    name = role_data["name"]
+    if not role.id:
+        if name.lower() == 'admin' or UserRole.objects.filter(domain=domain, name__iexact=name).exists():
+            raise ValueError(_("A role with the same name already exists"))
+
     role.domain = domain
-    role.name = role_data["name"]
+    role.name = name
     role.default_landing_page = landing_page
     role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
@@ -1229,6 +1246,14 @@ def delete_phone_number(request, domain, couch_user_id):
         raise Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
+    log_user_change(
+        by_domain=request.domain,
+        for_domain=user.domain,
+        couch_user=user,
+        changed_by_user=request.couch_user,
+        changed_via=USER_CHANGE_VIA_WEB,
+        change_messages=UserChangeMessage.phone_numbers_removed([phone_number])
+    )
     from corehq.apps.users.views.mobile import EditCommCareUserView
     redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
@@ -1308,11 +1333,12 @@ def change_password(request, domain, login_id):
         if form.is_valid():
             form.save()
             log_user_change(
-                domain=domain,
+                by_domain=domain,
+                for_domain=commcare_user.domain,
                 couch_user=commcare_user,
                 changed_by_user=request.couch_user,
                 changed_via=USER_CHANGE_VIA_WEB,
-                message=UserChangeMessage.password_reset()
+                change_messages=UserChangeMessage.password_reset()
             )
             json_dump['status'] = 'OK'
             form = SetUserPasswordForm(request.project, login_id, user='')

@@ -7,7 +7,6 @@ from django.urls import reverse
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.api.resources import v0_5
@@ -18,6 +17,7 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import WebUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from .utils import APIResourceTest
 
@@ -191,7 +191,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
                 update={cls.field_name: val},
             ).as_xml()
             post_case_blocks([case_block], {'domain': cls.domain.name})
-            cls.cases.append(CommCareCase.get(id))
+            cls.cases.append(CaseAccessors(cls.domain.name).get_case(id))
 
         cls.report_columns = [
             {

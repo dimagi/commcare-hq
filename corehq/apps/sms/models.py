@@ -181,6 +181,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
     ERROR_TRIAL_SMS_EXCEEDED = 'TRIAL_SMS_EXCEEDED'
     ERROR_MESSAGE_FORMAT_INVALID = 'MESSAGE_FORMAT_INVALID'
+    ERROR_FAULTY_GATEWAY_CONFIGURATION = 'FAULTY_GATEWAY_CONFIGURATION'
     STATUS_PENDING = 'STATUS_PENDING'  # special value for pending status
 
     STATUS_SENT = "sent"
@@ -188,10 +189,12 @@ class SMSBase(UUIDGeneratorMixin, Log):
     STATUS_QUEUED = "queued"
     STATUS_RECEIVED = "received"
     STATUS_FORWARDED = "forwarded"
+    STATUS_DELIVERED = "delivered"  # the specific gateway need to tell us this
     STATUS_UNKNOWN = "unknown"
 
     STATUS_DISPLAY = {
         STATUS_SENT: _('Sent'),
+        STATUS_DELIVERED: _('Delivered'),
         STATUS_ERROR: _('Error'),
         STATUS_QUEUED: _('Queued'),
         STATUS_RECEIVED: _('Received'),
@@ -315,7 +318,7 @@ class SMS(SMSBase):
         try:
             publish_sms_saved(self)
         except Exception:
-            publish_sms_change.delay(self)
+            publish_sms_change.delay(self.id)
 
     def requeue(self):
         if self.processed or self.direction != OUTGOING:

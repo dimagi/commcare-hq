@@ -198,10 +198,10 @@
     {% if is_linked_app %}
       <div class="tab-pane" id="linked-app">
         <div class="panel panel-appmanager panel-appmanager-form">
-          <form action="{% url "pull_master_app" domain app.id %}" method="POST">
+          <form action="{% url "pull_upstream_app" domain app.id %}" method="POST">
             {% csrf_token %}
             <legend>
-              {% trans "Update from master application" %}
+              {% trans "Update from upstream application" %}
             </legend>
             <div class="panel-body">
               <p>
@@ -218,21 +218,21 @@
                 {% endif %}
               </p>
               <div class="form-horizontal">
-                {% if multiple_masters %}
+                {% if multiple_upstreams %}
                   <div class="form-group">
                     <div class="{% css_field_class %}">
-                      <select name="master_app_id" class="form-control hqwebapp-select2"
-                              data-placeholder="{% trans_html_attr "Select a master app to pull" %}">
-                        <option value="">{% trans "Select a master app to pull" %}</option>
-                        {% for brief in master_briefs %}
+                      <select name="upstream_app_id" class="form-control hqwebapp-select2"
+                              data-placeholder="{% trans_html_attr "Select an upstream app to pull" %}">
+                        <option value="">{% trans "Select an upstream app to pull" %}</option>
+                        {% for brief in upstream_briefs %}
                           {# Poor readability because any whitespace within the option will also appear in the title attribute and therefore on hover #}
-                          <option value="{{ brief.id }}">{{ brief.name }}{% for id, version in master_versions_by_id.items %}{% if id == brief.id %} ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %}){% endif %}{% endfor %}</option>
+                          <option value="{{ brief.id }}">{{ brief.name }}{% for id, version in upstream_versions_by_id.items %}{% if id == brief.id %} ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %}){% endif %}{% endfor %}</option>
                         {% endfor %}
                       </select>
                     </div>
                   </div>
                 {% else %}
-                  <input name="master_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
+                  <input name="upstream_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
                 {% endif %}
                 <div class="form-group">
                   <div class="{% css_field_class %}">

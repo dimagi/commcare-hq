@@ -6,14 +6,12 @@ from uuid import uuid4
 
 from django.test import TestCase
 
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
-
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_TEXT,
@@ -64,8 +62,8 @@ class TestGetInfoResourcesListOneCase(TestCase, DomainSubscriptionMixin):
     def setUp(self):
         now = datetime.utcnow()
         self.case_id = str(uuid4())
-        self.case = CommCareCase(
-            _id=self.case_id,
+        self.case = CommCareCaseSQL(
+            case_id=self.case_id,
             domain=DOMAIN,
             type='person',
             name='Ted',
@@ -148,8 +146,8 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
     def setUp(self):
         now = datetime.utcnow()
         self.parent_case_id = str(uuid4())
-        self.parent_case = CommCareCase(
-            _id=self.parent_case_id,
+        self.parent_case = CommCareCaseSQL(
+            case_id=self.parent_case_id,
             domain=DOMAIN,
             type='person',
             name='Ted',
@@ -159,39 +157,43 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
         )
         self.parent_case.save()
 
-        self.child_case_1 = CommCareCase(
+        self.child_case_1 = CommCareCaseSQL(
             case_id='111111111',
             domain=DOMAIN,
             type='person_name',
             name='Theodore',
-            given_names='Theodore John',
-            family_name='Kaczynski',
-            indices=[CommCareCaseIndex(
-                identifier='parent',
-                referenced_type='person',
-                referenced_id=self.parent_case_id,
-            )],
+            case_json={
+                'given_names': 'Theodore John',
+                'family_name': 'Kaczynski',
+            },
             owner_id=str(uuid4()),
             modified_on=now,
             server_modified_on=now,
         )
         self.child_case_1.save()
-        self.child_case_2 = CommCareCase(
+        add_case_index(
+            self.child_case_1,
+            identifier='parent',
+            referenced_type='person',
+            referenced_id=self.parent_case_id,
+        )
+        self.child_case_2 = CommCareCaseSQL(
             case_id='222222222',
             domain=DOMAIN,
             type='person_name',
             name='Unabomber',
-            given_names='Unabomber',
-            indices=[CommCareCaseIndex(
-                identifier='parent',
-                referenced_type='person',
-                referenced_id=self.parent_case_id,
-            )],
+            case_json={'given_names': 'Unabomber'},
             owner_id=str(uuid4()),
             modified_on=now,
             server_modified_on=now,
         )
         self.child_case_2.save()
+        add_case_index(
+            self.child_case_2,
+            identifier='parent',
+            referenced_type='person',
+            referenced_id=self.parent_case_id,
+        )
 
     def tearDown(self):
         self.child_case_1.delete()
@@ -206,15 +208,12 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
             case_trigger_infos,
             resource_types_by_case_type,
         )
-        self.assertEqual(resource, {
-            'id': self.parent_case_id,
-            'name': [
-                {'text': 'Ted'},
-                {'given': ['Theodore', 'John'], 'family': 'Kaczynski'},
-                {'given': ['Unabomber']},
-            ],
-            'resourceType': 'Patient',
-        })
+        self.assertIn({'text': 'Ted'}, resource['name'])
+        self.assertIn(
+            {'given': ['Theodore', 'John'], 'family': 'Kaczynski'},
+            resource['name'],
+        )
+        self.assertIn({'given': ['Unabomber']}, resource['name'])
 
 
 class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
@@ -327,8 +326,8 @@ class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
         now = datetime.utcnow()
         owner_id = str(uuid4())
         self.parent_case_id = str(uuid4())
-        self.parent_case = CommCareCase(
-            _id=self.parent_case_id,
+        self.parent_case = CommCareCaseSQL(
+            case_id=self.parent_case_id,
             domain=DOMAIN,
             type='person',
             name='Beth',
@@ -339,21 +338,22 @@ class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
         self.parent_case.save()
 
         self.child_case_id = str(uuid4())
-        self.child_case = CommCareCase(
-            _id=self.child_case_id,
+        self.child_case = CommCareCaseSQL(
+            case_id=self.child_case_id,
             domain=DOMAIN,
             type='vitals',
-            temperature=36.1,
-            indices=[CommCareCaseIndex(
-                identifier='parent',
-                referenced_type='person',
-                referenced_id=self.parent_case_id,
-            )],
+            case_json={'temperature': 36.1},
             owner_id=owner_id,
             modified_on=now,
             server_modified_on=now,
         )
         self.child_case.save()
+        add_case_index(
+            self.child_case,
+            identifier='parent',
+            referenced_type='person',
+            referenced_id=self.parent_case_id,
+        )
 
     def tearDown(self):
         self.child_case.delete()
@@ -474,3 +474,12 @@ class TestWhenToBundle(TestCase):
 
         # Bundles are POSTed to API root
         self.assertEqual(response, "POSTed to endpoint '/'")
+
+
+def add_case_index(child_case, **props):
+    child_case.index_set.add(CommCareCaseIndexSQL(
+        case=child_case,
+        domain=DOMAIN,
+        relationship_id=CommCareCaseIndexSQL.CHILD,
+        **props
+    ), bulk=False)

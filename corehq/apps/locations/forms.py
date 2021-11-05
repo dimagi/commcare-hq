@@ -515,7 +515,7 @@ class UsersAtLocationForm(forms.Form):
             updated_user = CommCareUser.wrap_correctly(updated_user_doc)
             user_old_locations = targeted_users_old_locations[updated_user.get_id]
             log_commcare_user_locations_changes(
-                self.domain_object.name, self.request, updated_user,
+                self.request, updated_user,
                 old_location_id=user_old_locations['location_id'],
                 old_assigned_location_ids=user_old_locations['assigned_location_ids'])
 

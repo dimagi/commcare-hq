@@ -39,7 +39,7 @@ from dimagi.utils.web import json_request
 
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.reports.daterange import (
     get_all_daterange_slugs,
     get_daterange_start_end_dates,
@@ -62,6 +62,10 @@ from corehq.apps.users.models import CouchUser
 from corehq.elastic import ESError
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
+
+from smtplib import SMTPSenderRefused
+
+from .logging import ScheduledReportLogger
 
 ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
 DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
@@ -526,6 +530,8 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     uuid = StringProperty()
     start_date = DateProperty(default=None)
 
+    addedToBulk = BooleanProperty(default=False)
+
     @property
     def is_editable(self):
         try:
@@ -661,7 +667,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
         recipients = defaultdict(list)
         for email in self.all_recipient_emails:
-            language = user_languages.get(email, fallback_language)
+            language = user_languages.get(email, fallback_language) or fallback_language
             recipients[language].append(email)
         return immutabledict(recipients)
 
@@ -691,84 +697,139 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         return self.uuid
 
     def _get_and_send_report(self, language, emails):
-        from corehq.apps.reports.views import get_scheduled_report_response, render_full_report_notification
-        from corehq.apps.reports.standard.deployments import ApplicationStatusReport
         with localize(language):
-            title = (
-                _(DEFAULT_REPORT_NOTIF_SUBJECT)
-                if self.email_subject == DEFAULT_REPORT_NOTIF_SUBJECT
-                else self.email_subject
-            )
+            title = self._get_title(self.email_subject)
 
             attach_excel = getattr(self, 'attach_excel', False)
-            excel_files = None
+            report_text, excel_files = self._generate_report(attach_excel, title, emails)
+
+            # Both are empty if ALL the ReportConfigs in the ReportNotification
+            # have a start_date in the future (or an exception occurred)
+            if not report_text and not excel_files:
+                return
+
+            self._send_emails(title, report_text, emails, excel_files)
+
+    @staticmethod
+    def _get_title(subject):
+        # only translate the default subject
+        return (
+            _(DEFAULT_REPORT_NOTIF_SUBJECT)
+            if subject == DEFAULT_REPORT_NOTIF_SUBJECT
+            else subject
+        )
+
+    def _generate_report(self, attach_excel, title, emails):
+        from corehq.apps.reports.views import get_scheduled_report_response
+        report_text = None
+        excel_files = None
+
+        try:
+            report_text, excel_files = get_scheduled_report_response(
+                self.owner, self.domain, self._id, attach_excel=attach_excel,
+                send_only_active=True
+            )
+        # TODO: Be more specific with our error-handling. If building the report could fail,
+        # we should have a reasonable idea of why
+        except Exception as er:
+            notify_exception(
+                None,
+                message="Encountered error while generating report",
+                details={
+                    'subject': title,
+                    'recipients': str(emails),
+                    'error': er,
+                }
+            )
+            if isinstance(er, ESError):
+                # An ElasticSearch error could indicate that the report itself is too large.
+                # Try exporting the report instead, as that builds the report in chunks,
+                # rather than all at once.
+                # TODO: narrow down this handling so that we don't try this if ElasticSearch is simply down,
+                # for example
+                self._export_report(emails, title)
+        return report_text, excel_files
+
+    def _send_emails(self, title, report_text, emails, excel_files):
+        from corehq.apps.reports.views import render_full_report_notification
+
+        email_is_too_large = False
+
+        for email in emails:
+            body = render_full_report_notification(None, report_text, email, self).content
             try:
-                report_text, excel_files = get_scheduled_report_response(
-                    self.owner, self.domain, self._id, attach_excel=attach_excel,
-                    send_only_active=True
-                )
-
-                # Both are empty if ALL the ReportConfigs in the ReportNotification
-                # have a start_date in the future.
-                if not report_text and not excel_files:
-                    return
-
-                for email in emails:
-                    body = render_full_report_notification(None, report_text, email, self).content
-                    send_html_email_async(
-                        title, email, body,
-                        email_from=settings.DEFAULT_FROM_EMAIL,
-                        file_attachments=excel_files,
-                        smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
+                self._send_email(title, email, body, excel_files)
             except Exception as er:
-                notify_exception(
-                    None,
-                    message="Encountered error while generating report or sending email",
-                    details={
-                        'subject': title,
-                        'recipients': str(emails),
-                        'error': er,
-                    }
-                )
-                if excel_files:
-                    message = _("Unable to generate email report. Excel files are attached.")
-                    send_html_email_async(title, email, message,
-                                          email_from=settings.DEFAULT_FROM_EMAIL,
-                                          file_attachments=excel_files,
-                                          smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
+                if isinstance(er, SMTPSenderRefused) and (er.smtp_code in LARGE_FILE_SIZE_ERROR_CODES):
+                    email_is_too_large = True
+                    break
+                else:
+                    ScheduledReportLogger.log_email_failure(self, email, body, er)
+            else:
+                ScheduledReportLogger.log_email_success(self, email, body)
 
-                elif getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
-                    # If the email doesn't work because it is too large to fit in the HTML body,
-                    # send it as an excel attachment, by creating a mock request with the right data.
+        if email_is_too_large:
+            # TODO: Because different domains may have different size thresholds,
+            # one of the middle addresses could have triggered this, causing us to send
+            # both the original email and the retried email to some users.
+            # This is likely best handled by treating each address separately.
+            ScheduledReportLogger.log_email_size_failure(self, email, emails, body)
+            # The body is too large -- attempt to resend the report as attachments.
+            if excel_files:
+                # If the attachments already exist, just send them
+                self._send_only_attachments(title, emails, excel_files)
+            else:
+                # Otherwise we're forced to trigger a process to create them
+                self._export_report(emails, title)
 
-                    for report_config in self.configs:
-                        mock_request = HttpRequest()
-                        mock_request.couch_user = self.owner
-                        mock_request.user = self.owner.get_django_user()
-                        mock_request.domain = self.domain
-                        mock_request.couch_user.current_domain = self.domain
-                        mock_request.couch_user.language = self.language
-                        mock_request.method = 'GET'
-                        mock_request.bypass_two_factor = True
+    def _send_email(self, title, email, body, excel_files):
+        send_HTML_email(
+            title, email, body,
+            email_from=settings.DEFAULT_FROM_EMAIL,
+            file_attachments=excel_files,
+            smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
 
-                        mock_query_string_parts = [report_config.query_string, 'filterSet=true']
-                        mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
-                        request_data = vars(mock_request)
-                        request_data['couch_user'] = mock_request.couch_user.userID
-                        if report_config.report_slug != ApplicationStatusReport.slug:
-                            # ApplicationStatusReport doesn't have date filter
-                            date_range = report_config.get_date_range()
-                            start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
-                            end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
-                            datespan = DateSpan(start_date, end_date)
-                            request_data['datespan'] = datespan
+    def _send_only_attachments(self, title, emails, excel_files):
+        message = _("Unable to generate email report. Excel files are attached.")
+        send_HTML_email(
+            title,
+            emails,
+            message,
+            email_from=settings.DEFAULT_FROM_EMAIL,
+            file_attachments=excel_files
+        )
 
-                        full_request = {'request': request_data,
-                                        'domain': request_data['domain'],
-                                        'context': {},
-                                        'request_params': json_request(request_data['GET'])}
+    def _export_report(self, emails, title):
+        from corehq.apps.reports.standard.deployments import ApplicationStatusReport
 
-                        export_all_rows_task(report_config.report, full_request, emails, title)
+        for report_config in self.configs:
+            mock_request = HttpRequest()
+            mock_request.couch_user = self.owner
+            mock_request.user = self.owner.get_django_user()
+            mock_request.domain = self.domain
+            mock_request.couch_user.current_domain = self.domain
+            mock_request.couch_user.language = self.language
+            mock_request.method = 'GET'
+            mock_request.bypass_two_factor = True
+
+            mock_query_string_parts = [report_config.query_string, 'filterSet=true']
+            mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
+            request_data = vars(mock_request)
+            request_data['couch_user'] = mock_request.couch_user.userID
+            if report_config.report_slug != ApplicationStatusReport.slug:
+                # ApplicationStatusReport doesn't have date filter
+                date_range = report_config.get_date_range()
+                start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
+                end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
+                datespan = DateSpan(start_date, end_date)
+                request_data['datespan'] = datespan
+
+            full_request = {'request': request_data,
+                            'domain': request_data['domain'],
+                            'context': {},
+                            'request_params': json_request(request_data['GET'])}
+
+            export_all_rows_task(report_config.report, full_request, emails, title)
 
     def remove_recipient(self, email):
         try:
@@ -811,3 +872,20 @@ class ScheduledReportsCheckpoint(models.Model):
             return cls.objects.order_by('-end_datetime')[0]
         except IndexError:
             return None
+
+
+class ScheduledReportLog(models.Model):
+    LOG_STATE_SUCCESS = 'success'
+    LOG_STATE_ERROR = 'error'
+    LOG_STATE_RETRY = 'retry'
+
+    sent_to = models.EmailField(db_index=True)
+    domain = models.CharField(max_length=255, db_index=True)
+    report_id = models.UUIDField(db_index=True)
+    state = models.CharField(max_length=10)
+    size = models.PositiveIntegerField()
+    timestamp = models.DateTimeField(default=datetime.utcnow, db_index=True)
+    error = models.TextField(null=True)
+
+    def __repr__(self):
+        return f'{self.report_id} sent to {self.sent_to}: {self.state}'

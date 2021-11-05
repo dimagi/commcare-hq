@@ -3,13 +3,11 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.messaging.templating import MessagingTemplateRenderer, CaseMessagingTemplateParam
 from corehq.util.test_utils import create_test_case, set_parent_case
 from django.test import TestCase
 
 
-@run_with_sql_backend
 class TemplatingTestCase(TestCase):
 
     @classmethod

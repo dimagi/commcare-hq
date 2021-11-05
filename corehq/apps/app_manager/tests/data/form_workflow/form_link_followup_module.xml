@@ -1,0 +1,18 @@
+<partial>
+    <entry>
+        <command id="m0-f0">
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </command>
+        <instance id="casedb" src="jr://instance/casedb"/>
+        <session>
+          <datum detail-confirm="m0_case_long" detail-select="m0_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='frog'][@status='open']" value="./@case_id"/>
+        </session>
+        <stack>
+          <create if="(today() - dob) &lt; 7">
+            <command value="'m0'"/>
+          </create>
+        </stack>
+    </entry>
+</partial>

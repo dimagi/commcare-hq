@@ -115,7 +115,11 @@
           </p>
 
           {% trans "Registration: This form opens a new case" as registers_case %}
-          {% trans "Followup: This form loads a case and may then update or close it" as updates_case %}
+          {% if module_offers_registry_search %}
+            {% trans "Followup: This form loads a case from a data registry" as updates_case %}
+          {% else %}
+            {% trans "Followup: This form loads a case and may then update or close it" as updates_case %}
+          {% endif %}
           <select class="form-control"
                   id="case-action-select"
                   data-bind="optstr: [
@@ -140,10 +144,21 @@
 
     {% if form.source %}
       <!--ko if: actionType() === 'update' -->
+      {% if module_offers_registry_search %}
+      <div class="panel panel-appmanager">
+        <div class="panel-body">
+          <p>{% blocktrans trimmed %}Updating cases directly is not supported when using data registry search. Refer
+            to the <a href="https://confluence.dimagi.com/display/USH/Data+Registry#DataRegistry-Updatingcases" target="_blank">documentation</a>
+            for information on how to update cases from a data registry.
+          {% endblocktrans %}</p>
+        </div>
+      </div>
+      {% else %}
       <div data-bind="template: {
                         name: 'case-config:case-transaction',
                         data: case_transaction
                       }"></div>
+      {% endif %}
       <!--/ko-->
       <!--ko if: actionType() === 'open' -->
       <div data-bind="template: {
@@ -152,7 +167,12 @@
                       }"></div>
       <!--/ko-->
       {% if add_ons.subcases %}
+        {% if module_offers_registry_search %}
+        {# only allow subcases when also opening a case since we can't attach subcases to a case in another domain #}
+        <!--ko if: actionType() === 'open'-->
+        {% else %}
         <!--ko if: actionType() !== 'none'-->
+        {% endif %}
         <hr />
         <p class="lead">
           {% blocktrans %}

@@ -3,7 +3,6 @@
 pip>=10.0.0
 
 flower==0.9.2
-tornado<5.0
 setproctitle==1.2.2
 uWSGI==2.0.19.1
 ipython==7.16.1

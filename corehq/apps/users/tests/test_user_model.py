@@ -12,10 +12,7 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, DeviceAppMeta, WebUser
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    run_with_sql_backend,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import (
     TestFormMetadata,
     get_simple_wrapped_form,
@@ -25,7 +22,6 @@ from corehq.util.test_utils import softer_assert
 from corehq.apps.users.models import MAX_LOGIN_ATTEMPTS
 
 
-@run_with_sql_backend
 class UserModelTest(TestCase):
 
     def setUp(self):

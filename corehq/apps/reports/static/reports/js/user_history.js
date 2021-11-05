@@ -4,7 +4,7 @@ hqDefine("reports/js/user_history", [
     $
 ) {
     $(function () {
-        if (document.location.href.match(/reports\/user_history/)) {
+        if (document.location.href.match(/reports\/user_management\/user_history/)) {
             $(document).on('click', '.see-all-link', function () {
                 var $container = $(this).closest(".see-all");
                 $container.children(".see-all-primary, .see-all-link").addClass("hide");

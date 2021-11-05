@@ -113,11 +113,7 @@ class AllCommCareUsersTest(TestCase):
         super(AllCommCareUsersTest, cls).tearDownClass()
 
     def test_get_users_by_filters(self):
-        populate_user_index([
-            self.ccuser_1.to_json(),
-            self.ccuser_2.to_json(),
-            self.web_user.to_json(),
-        ])
+        populate_user_index([self.ccuser_1, self.ccuser_2, self.web_user])
 
         def usernames(users):
             return [u.username for u in users]

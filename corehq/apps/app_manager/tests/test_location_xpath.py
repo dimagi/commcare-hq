@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.exceptions import LocationXpathValidationError
+from corehq.apps.app_manager.exceptions import LocationXPathValidationError
 from corehq.apps.app_manager.xpath import LocationXpath
 
 
@@ -35,12 +35,12 @@ class LocationXpathTest(SimpleTestCase):
         ]
         for input in test_cases:
             self.assertRaises(
-                LocationXpathValidationError,
+                LocationXPathValidationError,
                 LocationXpath('commtrack:locations').validate,
                 input, self.hierarchy,
             )
             self.assertRaises(
-                LocationXpathValidationError,
+                LocationXPathValidationError,
                 LocationXpath('commtrack:locations').location,
                 input, self.hierarchy,
             )
@@ -53,12 +53,12 @@ class LocationXpathTest(SimpleTestCase):
         ]
         for input in test_cases:
             self.assertRaises(
-                LocationXpathValidationError,
+                LocationXPathValidationError,
                 LocationXpath('commtrack:locations').validate,
                 input, self.hierarchy,
             )
             self.assertRaises(
-                LocationXpathValidationError,
+                LocationXPathValidationError,
                 LocationXpath('commtrack:locations').location,
                 input, self.hierarchy,
             )

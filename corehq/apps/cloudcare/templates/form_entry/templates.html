@@ -2,7 +2,8 @@
 {% load hq_shared_tags %}
 
 <script type="text/html" id="sub-group-fullform-ko-template">
-  <div class="gr" data-bind="
+  <div tabindex="-1" class ="gr" data-bind="
+        class: isRepetition ? 'repetition' : '',
         css: {
           'gr-no-children': $data.children().length === 0,
           'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'question' }),
@@ -55,7 +56,8 @@
       <div data-bind="if: showChildren()">
         <fieldset>
         <legend aria-hidden="true" class="sr-only">{% trans "Question Group" %}</legend>
-          <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children }, css: {'panel-body': collapsible}"/>
+          <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children,
+            afterRender: focusNewRepeat }, css: {'panel-body': collapsible}"/>
         </fieldset>
       </div>
   </div>
@@ -128,7 +130,7 @@
               {% endblocktrans %}
               <ul data-bind="foreach: erroredQuestions">
                   <li>
-                      <a href="#" data-bind="click: navigateTo, html: caption_markdown() || caption() || gettext('Unknown Question')"></a>
+                      <a href="#" data-bind="click: navigateTo, html: caption_markdown() || caption() || question_id() || gettext('Unknown Question')"></a>
                       <span data-bind="visible: serverError, text: serverError"></span>
                       <span data-bind="if: error">
                         <!-- ko text: error --><!-- /ko -->
@@ -257,11 +259,18 @@
   <div class="info panel panel-default">
     <div class="panel-body">
       <span class="ix" data-bind="text: ixInfo($data)">></span>
-      <span class="caption webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+      <span class="caption webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption(), attr: {'for': entry.entryId}"></span>
       <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
       >
       </div>
+      <div class="widget-container controls" data-bind="css: controlWidth">
+      <!-- labels only deal with server errors, since there's no data type validation for the browser to do-->
+      <div class="text-danger error-message" data-bind="
+                visible: serverError,
+                text: serverError
+      "></div>
+    </div>
     </div>
   </div>
   <!-- /ko -->
@@ -284,7 +293,6 @@
               data-bind="click: newRepeat, text: getTranslation('repeat.dialog.add.new', '{% trans_html_attr 'Add new repeat' %}')"
               id="repeat-add-new" />
     </div>
-
   </div>
 </script>
 

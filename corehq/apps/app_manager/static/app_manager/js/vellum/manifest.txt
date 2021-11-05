@@ -974,7 +974,7 @@
 ├─ pascalcase@0.1.1
 ├─ path-exists@3.0.0
 ├─ path-is-absolute@1.0.1
-├─ path-parse@1.0.6
+├─ path-parse@1.0.7
 ├─ path-root-regex@0.1.2
 ├─ path-root@0.1.1
 │  └─ path-root-regex@^0.1.0
@@ -1348,7 +1348,7 @@
 ├─ ws@5.2.3
 │  └─ async-limiter@~1.0.0
 ├─ XMLWriter@1.1.0
-├─ xpath@0.0.4
+├─ xpath@0.0.6
 │  └─ biginteger@^1.0.3
 ├─ xrayquire@0.1.1
 ├─ xtend@4.0.2

@@ -36,12 +36,12 @@ from corehq.apps.linked_domain.view_helpers import (
     build_report_view_model,
     build_superuser_view_models,
     build_view_models_from_data_models,
-    get_apps,
-    get_fixtures,
-    get_keywords,
-    get_reports,
+    get_upstream_and_downstream_apps,
+    get_upstream_and_downstream_fixtures,
+    get_upstream_and_downstream_keywords,
+    get_upstream_and_downstream_reports,
 )
-from corehq.apps.sms.models import Keyword
+from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
@@ -71,7 +71,7 @@ def _create_report(domain, title="report", upstream_id=None, should_save=True, a
     return report
 
 
-def _create_keyword(domain, name="ping", upstream_id=None, should_save=True):
+def _create_keyword(domain, name="ping", upstream_id=None, should_save=True, is_grouped=False):
     keyword = Keyword(
         domain=domain,
         keyword=name,
@@ -79,8 +79,17 @@ def _create_keyword(domain, name="ping", upstream_id=None, should_save=True):
         override_open_sessions=True,
         upstream_id=upstream_id
     )
+
     if should_save:
         keyword.save()
+
+    if is_grouped:
+        keyword.keywordaction_set.create(
+            recipient=KeywordAction.RECIPIENT_USER_GROUP,
+            recipient_id='abc123',
+            action=KeywordAction.ACTION_SMS,
+            message_content='Test',
+        )
 
     return keyword
 
@@ -153,7 +162,7 @@ class TestGetDataModels(BaseLinkedDomainTest):
         expected_upstream_app_names = [self.original_app._id]
         expected_downstream_app_names = []
 
-        upstream_apps, downstream_apps = get_apps(self.upstream_domain)
+        upstream_apps, downstream_apps = get_upstream_and_downstream_apps(self.upstream_domain)
         actual_upstream_app_names = [app._id for app in upstream_apps.values()]
         actual_downstream_app_names = [app._id for app in downstream_apps.values()]
 
@@ -161,81 +170,83 @@ class TestGetDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_downstream_app_names, actual_downstream_app_names)
 
     def test_get_apps_for_downstream_domain(self):
-        expected_original_app_names = []
-        expected_linked_app_names = [self.linked_app._id]
+        expected_upstream_app_names = []
+        expected_downstream_app_names = [self.linked_app._id]
 
-        original_apps, linked_apps = get_apps(self.downstream_domain)
-        actual_original_app_names = [app._id for app in original_apps.values()]
-        actual_linked_app_names = [app._id for app in linked_apps.values()]
+        upstream_apps, downstream_apps = get_upstream_and_downstream_apps(self.downstream_domain)
+        actual_upstream_app_names = [app._id for app in upstream_apps.values()]
+        actual_downstream_app_names = [app._id for app in downstream_apps.values()]
 
-        self.assertEqual(expected_original_app_names, actual_original_app_names)
-        self.assertEqual(expected_linked_app_names, actual_linked_app_names)
+        self.assertEqual(expected_upstream_app_names, actual_upstream_app_names)
+        self.assertEqual(expected_downstream_app_names, actual_downstream_app_names)
 
     def test_get_reports_for_upstream_domain(self):
-        expected_original_reports = [self.original_report._id]
-        expected_linked_reports = []
+        expected_upstream_reports = [self.original_report._id]
+        expected_downstream_reports = []
 
-        original_reports, linked_reports = get_reports(self.upstream_domain)
-        actual_original_reports = [report._id for report in original_reports.values()]
-        actual_linked_reports = [report._id for report in linked_reports.values()]
+        upstream_reports, downstream_reports = get_upstream_and_downstream_reports(self.upstream_domain)
+        actual_upstream_reports = [report._id for report in upstream_reports.values()]
+        actual_downstream_reports = [report._id for report in downstream_reports.values()]
 
-        self.assertEqual(expected_original_reports, actual_original_reports)
-        self.assertEqual(expected_linked_reports, actual_linked_reports)
+        self.assertEqual(expected_upstream_reports, actual_upstream_reports)
+        self.assertEqual(expected_downstream_reports, actual_downstream_reports)
 
     def test_get_reports_for_downstream_domain(self):
-        expected_original_reports = []
-        expected_linked_reports = [self.linked_report._id]
+        expected_upstream_reports = []
+        expected_downstream_reports = [self.linked_report._id]
 
-        original_reports, linked_reports = get_reports(self.downstream_domain)
-        actual_original_reports = [report._id for report in original_reports.values()]
-        actual_linked_reports = [report._id for report in linked_reports.values()]
+        upstream_reports, downstream_reports = get_upstream_and_downstream_reports(self.downstream_domain)
+        actual_upstream_reports = [report._id for report in upstream_reports.values()]
+        actual_downstream_reports = [report._id for report in downstream_reports.values()]
 
-        self.assertEqual(expected_original_reports, actual_original_reports)
-        self.assertEqual(expected_linked_reports, actual_linked_reports)
+        self.assertEqual(expected_upstream_reports, actual_upstream_reports)
+        self.assertEqual(expected_downstream_reports, actual_downstream_reports)
 
     def test_get_keywords_for_upstream_domain(self):
-        expected_original_keywords = [str(self.original_keyword.id)]
-        expected_linked_keywords = []
+        expected_upstream_keywords = [str(self.original_keyword.id)]
+        expected_downstream_keywords = []
 
-        original_keywords, linked_keywords = get_keywords(self.upstream_domain)
-        actual_original_keywords = [str(keyword.id) for keyword in original_keywords.values()]
-        actual_linked_keywords = [str(keyword.id) for keyword in linked_keywords.values()]
+        upstream_keywords, downstream_keywords = get_upstream_and_downstream_keywords(self.upstream_domain)
+        actual_upstream_keywords = [str(keyword.id) for keyword in upstream_keywords.values()]
+        actual_downstream_keywords = [str(keyword.id) for keyword in downstream_keywords.values()]
 
-        self.assertEqual(expected_original_keywords, actual_original_keywords)
-        self.assertEqual(expected_linked_keywords, actual_linked_keywords)
+        self.assertEqual(expected_upstream_keywords, actual_upstream_keywords)
+        self.assertEqual(expected_downstream_keywords, actual_downstream_keywords)
 
     def test_get_keywords_for_downstream_domain(self):
-        expected_original_keywords = []
-        expected_linked_keywords = [str(self.linked_keyword.id)]
+        expected_upstream_keywords = []
+        expected_downstream_keywords = [str(self.linked_keyword.id)]
 
-        original_keywords, linked_keywords = get_keywords(self.downstream_domain)
-        actual_original_keywords = [str(keyword.id) for keyword in original_keywords.values()]
-        actual_linked_keywords = [str(keyword.id) for keyword in linked_keywords.values()]
+        upstream_keywords, downstream_keywords = get_upstream_and_downstream_keywords(self.downstream_domain)
+        actual_upstream_keywords = [str(keyword.id) for keyword in upstream_keywords.values()]
+        actual_downstream_keywords = [str(keyword.id) for keyword in downstream_keywords.values()]
 
-        self.assertEqual(expected_original_keywords, actual_original_keywords)
-        self.assertEqual(expected_linked_keywords, actual_linked_keywords)
+        self.assertEqual(expected_upstream_keywords, actual_upstream_keywords)
+        self.assertEqual(expected_downstream_keywords, actual_downstream_keywords)
 
     def test_get_fixtures_for_upstream_domain(self):
-        expected_original_fixtures = [self.original_fixture._id]
-        expected_linked_fixtures = []
+        expected_upstream_fixtures = [self.original_fixture._id]
+        expected_downstream_fixtures = []
 
-        original_fixtures, linked_fixtures = get_fixtures(self.upstream_domain, None)
-        actual_original_fixtures = [fixture._id for fixture in original_fixtures.values()]
-        actual_linked_fixtures = [fixture._id for fixture in linked_fixtures.values()]
+        upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.upstream_domain, None)
+        actual_upstream_fixtures = [fixture._id for fixture in upstream_fixtures.values()]
+        actual_downstream_fixtures = [fixture._id for fixture in downstream_fixtures.values()]
 
-        self.assertEqual(expected_original_fixtures, actual_original_fixtures)
-        self.assertEqual(expected_linked_fixtures, actual_linked_fixtures)
+        self.assertEqual(expected_upstream_fixtures, actual_upstream_fixtures)
+        self.assertEqual(expected_downstream_fixtures, actual_downstream_fixtures)
 
     def test_get_fixtures_for_downstream_domain(self):
-        expected_original_fixtures = []
-        expected_linked_fixtures = [self.original_fixture._id]
+        expected_upstream_fixtures = []
+        expected_downstream_fixtures = [self.original_fixture._id]
 
-        original_fixtures, linked_fixtures = get_fixtures(self.downstream_domain, self.domain_link)
-        actual_original_fixtures = [fixture._id for fixture in original_fixtures.values()]
-        actual_linked_fixtures = [fixture._id for fixture in linked_fixtures.values()]
+        upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(
+            self.downstream_domain, self.domain_link
+        )
+        actual_upstream_fixtures = [fixture._id for fixture in upstream_fixtures.values()]
+        actual_downstream_fixtures = [fixture._id for fixture in downstream_fixtures.values()]
 
-        self.assertEqual(expected_original_fixtures, actual_original_fixtures)
-        self.assertEqual(expected_linked_fixtures, actual_linked_fixtures)
+        self.assertEqual(expected_upstream_fixtures, actual_upstream_fixtures)
+        self.assertEqual(expected_downstream_fixtures, actual_downstream_fixtures)
 
 
 class TestBuildIndividualViewModels(TestCase):
@@ -260,37 +271,22 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Application (Test Application)',
             'detail': {'app_id': 'abc123'},
             'last_update': None,
-            'can_update': True
+            'can_update': True,
+            'is_linkable': True,
         }
 
         actual_view_model = build_app_view_model(app)
         self.assertEqual(expected_view_model, actual_view_model)
 
-    def test_build_app_view_model_with_none_returns_unknown(self):
+    def test_build_app_view_model_with_none_returns_none(self):
         app = None
-        expected_view_model = {
-            'type': 'app',
-            'name': 'Application (Unknown App)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False
-        }
-
         actual_view_model = build_app_view_model(app)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
-    def test_build_app_view_model_with_empty_dict_returns_unknown(self):
+    def test_build_app_view_model_with_empty_dict_returns_none(self):
         app = {}
-        expected_view_model = {
-            'type': 'app',
-            'name': 'Application (Unknown App)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False
-        }
-
         actual_view_model = build_app_view_model(app)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
     def test_build_fixture_view_model_returns_match(self):
         fixture = _create_fixture(self.domain, tag="test-table", should_save=False)
@@ -299,37 +295,21 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Lookup Table (test-table)',
             'detail': {'tag': 'test-table'},
             'last_update': None,
-            'can_update': True
+            'can_update': True,
+            'is_linkable': True,
         }
-
         actual_view_model = build_fixture_view_model(fixture)
         self.assertEqual(expected_view_model, actual_view_model)
 
-    def test_build_fixture_view_model_with_none_returns_unknown(self):
+    def test_build_fixture_view_model_with_none_returns_none(self):
         fixture = None
-        expected_view_model = {
-            'type': 'fixture',
-            'name': 'Lookup Table (Unknown Table)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False
-        }
-
         actual_view_model = build_fixture_view_model(fixture)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
     def test_build_fixture_view_model_with_empty_returns_none(self):
         fixture = {}
-        expected_view_model = {
-            'type': 'fixture',
-            'name': 'Lookup Table (Unknown Table)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False
-        }
-
         actual_view_model = build_fixture_view_model(fixture)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
     def test_build_report_view_model(self):
         report = _create_report(self.domain, title='report-test', should_save=False)
@@ -339,37 +319,22 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Report (report-test)',
             'detail': {'report_id': 'abc123'},
             'last_update': None,
-            'can_update': True
+            'can_update': True,
+            'is_linkable': True,
         }
 
         actual_view_model = build_report_view_model(report)
         self.assertEqual(expected_view_model, actual_view_model)
 
-    def test_build_report_view_model_with_none_returns_unknown(self):
+    def test_build_report_view_model_with_none_returns_none(self):
         report = None
-        expected_view_model = {
-            'type': 'report',
-            'name': 'Report (Unknown Report)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False
-        }
-
         actual_view_model = build_report_view_model(report)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
-    def test_build_report_view_model_with_empty_returns_unknown(self):
+    def test_build_report_view_model_with_empty_returns_none(self):
         report = {}
-        expected_view_model = {
-            'type': 'report',
-            'name': 'Report (Unknown Report)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False
-        }
-
         actual_view_model = build_report_view_model(report)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
     def test_build_keyword_view_model_returns_match(self):
         keyword = _create_keyword(self.domain, name='keyword-test', should_save=False)
@@ -380,33 +345,32 @@ class TestBuildIndividualViewModels(TestCase):
             'name': 'Keyword (keyword-test)',
             'detail': {'keyword_id': '100'},
             'last_update': None,
-            'can_update': True
+            'can_update': True,
+            'is_linkable': True,
         }
 
         actual_view_model = build_keyword_view_model(keyword)
         self.assertEqual(expected_view_model, actual_view_model)
 
-    def test_build_keyword_view_model_with_none_returns_unknown(self):
+    def test_build_keyword_view_model_with_none_returns_none(self):
         keyword = None
-        expected_view_model = {
-            'type': 'keyword',
-            'name': 'Keyword (Deleted Keyword)',
-            'detail': None,
-            'last_update': None,
-            'can_update': False
-        }
-
         actual_view_model = build_keyword_view_model(keyword)
-        self.assertEqual(expected_view_model, actual_view_model)
+        self.assertIsNone(actual_view_model)
 
-    def test_build_keyword_view_model_with_empty_returns_unknown(self):
+    def test_build_keyword_view_model_with_empty_returns_none(self):
         keyword = {}
+        actual_view_model = build_keyword_view_model(keyword)
+        self.assertIsNone(actual_view_model)
+
+    def test_build_keyword_view_model_with_grouped_returns_unlinkable(self):
+        keyword = _create_keyword(self.domain, name='keyword-test', is_grouped=True)
         expected_view_model = {
             'type': 'keyword',
-            'name': 'Keyword (Deleted Keyword)',
-            'detail': None,
+            'name': 'Keyword (keyword-test)',
+            'detail': {'keyword_id': f'{keyword.id}'},
             'last_update': None,
-            'can_update': False
+            'can_update': True,
+            'is_linkable': False,
         }
 
         actual_view_model = build_keyword_view_model(keyword)
@@ -441,7 +405,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'Case Search Settings',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -456,7 +421,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'Data Dictionary',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -471,7 +437,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'Dialer Settings',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -486,7 +453,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'OTP Pass-through Settings',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -501,7 +469,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'Signed Callout',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -516,7 +485,8 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'Custom Product Data Fields',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
@@ -531,12 +501,14 @@ class TestBuildFeatureFlagViewModels(TestCase):
                 'name': 'Tableau Server and Visualizations',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             }
         ]
         view_models = build_feature_flag_view_models(self.domain)
 
         self.assertEqual(expected_view_models, view_models)
+
 
 class TestBuildDomainLevelViewModels(SimpleTestCase):
 
@@ -547,28 +519,32 @@ class TestBuildDomainLevelViewModels(SimpleTestCase):
                 'name': 'Custom User Data Fields',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             },
             {
                 'type': 'custom_location_data',
                 'name': 'Custom Location Data Fields',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             },
             {
                 'type': 'roles',
                 'name': 'User Roles',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             },
             {
                 'type': 'previews',
                 'name': 'Feature Previews',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             },
         ]
 
@@ -593,7 +569,8 @@ class TestBuildSuperuserViewModels(SimpleTestCase):
                 'name': 'Feature Flags',
                 'detail': None,
                 'last_update': 'Never',
-                'can_update': True
+                'can_update': True,
+                'is_linkable': True,
             },
         ]
 
@@ -674,26 +651,26 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_length, len(view_models))
 
     def test_app_view_models_are_built(self):
-        _, linked_apps = get_apps(self.downstream_domain)
-        view_models = build_view_models_from_data_models(self.downstream_domain, linked_apps, {}, {}, {})
+        _, downstream_apps = get_upstream_and_downstream_apps(self.downstream_domain)
+        view_models = build_view_models_from_data_models(self.downstream_domain, downstream_apps, {}, {}, {})
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_fixture_view_models_are_built(self):
-        _, linked_fixtures = get_fixtures(self.downstream_domain, self.domain_link)
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, linked_fixtures, {}, {})
+        _, downstream_fixtures = get_upstream_and_downstream_fixtures(self.downstream_domain, self.domain_link)
+        view_models = build_view_models_from_data_models(self.downstream_domain, {}, downstream_fixtures, {}, {})
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_report_view_models_are_built(self):
-        _, linked_reports = get_reports(self.downstream_domain)
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, linked_reports, {})
+        _, downstream_reports = get_upstream_and_downstream_reports(self.downstream_domain)
+        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, downstream_reports, {})
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_keyword_view_models_are_built(self):
-        _, linked_keywords = get_keywords(self.downstream_domain)
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, linked_keywords)
+        _, downstream_keywords = get_upstream_and_downstream_keywords(self.downstream_domain)
+        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, downstream_keywords)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
@@ -724,75 +701,75 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
     def test_already_synced_app_view_models_are_built(self):
         self._create_sync_event(MODEL_APP, AppLinkDetail(app_id=self.linked_app._id).to_json())
 
-        _, linked_apps = get_apps(self.downstream_domain)
+        _, downstream_apps = get_upstream_and_downstream_apps(self.downstream_domain)
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link,
-                                                                  linked_apps, {}, {}, {}, pytz.UTC)
+                                                                  downstream_apps, {}, {}, {}, pytz.UTC)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_linked_apps_are_popped(self):
         self._create_sync_event(MODEL_APP, AppLinkDetail(app_id=self.linked_app._id).to_json())
 
-        _, linked_apps = get_apps(self.downstream_domain)
-        self.assertTrue(1, len(linked_apps))
-        build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, linked_apps, {}, {},
-                                                    {}, pytz.UTC)
-        self.assertEqual(0, len(linked_apps))
+        _, downstream_apps = get_upstream_and_downstream_apps(self.downstream_domain)
+        self.assertTrue(1, len(downstream_apps))
+        build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, downstream_apps, {},
+                                                    {}, {}, pytz.UTC)
+        self.assertEqual(0, len(downstream_apps))
 
     def test_already_synced_fixture_view_models_are_built(self):
         self._create_sync_event(MODEL_FIXTURE, FixtureLinkDetail(tag=self.original_fixture.tag).to_json())
 
-        _, linked_fixtures = get_fixtures(self.downstream_domain, self.domain_link)
+        _, downstream_fixtures = get_upstream_and_downstream_fixtures(self.downstream_domain, self.domain_link)
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {},
-                                                                  linked_fixtures, {}, {}, pytz.UTC)
+                                                                  downstream_fixtures, {}, {}, pytz.UTC)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_linked_fixtures_are_popped(self):
         self._create_sync_event(MODEL_FIXTURE, FixtureLinkDetail(tag=self.original_fixture.tag).to_json())
 
-        _, linked_fixtures = get_fixtures(self.downstream_domain, self.domain_link)
-        self.assertTrue(1, len(linked_fixtures))
-        build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, linked_fixtures,
-                                                    {}, {}, pytz.UTC)
-        self.assertEqual(0, len(linked_fixtures))
+        _, downstream_fixtures = get_upstream_and_downstream_fixtures(self.downstream_domain, self.domain_link)
+        self.assertTrue(1, len(downstream_fixtures))
+        build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {},
+                                                    downstream_fixtures, {}, {}, pytz.UTC)
+        self.assertEqual(0, len(downstream_fixtures))
 
     def test_already_synced_report_view_models_are_built(self):
         self._create_sync_event(MODEL_REPORT, ReportLinkDetail(report_id=self.linked_report.get_id).to_json())
 
-        _, linked_reports = get_reports(self.downstream_domain)
+        _, downstream_reports = get_upstream_and_downstream_reports(self.downstream_domain)
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {},
-                                                                  linked_reports, {}, pytz.UTC)
+                                                                  downstream_reports, {}, pytz.UTC)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_linked_reports_are_popped(self):
         self._create_sync_event(MODEL_REPORT, ReportLinkDetail(report_id=self.linked_report.get_id).to_json())
 
-        _, linked_reports = get_reports(self.downstream_domain)
-        self.assertTrue(1, len(linked_reports))
+        _, downstream_reports = get_upstream_and_downstream_reports(self.downstream_domain)
+        self.assertTrue(1, len(downstream_reports))
         build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {},
-                                                    linked_reports, {}, pytz.UTC)
-        self.assertEqual(0, len(linked_reports))
+                                                    downstream_reports, {}, pytz.UTC)
+        self.assertEqual(0, len(downstream_reports))
 
     def test_already_synced_keyword_view_models_are_built(self):
         self._create_sync_event(MODEL_KEYWORD, KeywordLinkDetail(keyword_id=str(self.linked_keyword.id)).to_json())
 
-        _, linked_keywords = get_keywords(self.downstream_domain)
-        self.assertTrue(1, len(linked_keywords))
+        _, downstream_keywords = get_upstream_and_downstream_keywords(self.downstream_domain)
+        self.assertTrue(1, len(downstream_keywords))
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {},
-                                                                  {}, linked_keywords, pytz.UTC)
+                                                                  {}, downstream_keywords, pytz.UTC)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_linked_keywords_are_popped(self):
         self._create_sync_event(MODEL_KEYWORD, KeywordLinkDetail(keyword_id=str(self.linked_keyword.id)).to_json())
 
-        _, linked_keywords = get_keywords(self.downstream_domain)
-        self.assertTrue(1, len(linked_keywords))
+        _, downstream_keywords = get_upstream_and_downstream_keywords(self.downstream_domain)
+        self.assertTrue(1, len(downstream_keywords))
         build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {}, {},
-                                                    linked_keywords, pytz.UTC)
-        self.assertEqual(0, len(linked_keywords))
+                                                    downstream_keywords, pytz.UTC)
+        self.assertEqual(0, len(downstream_keywords))
 
     def _create_sync_event(self, model_type, model_detail=None):
         sync_event = DomainLinkHistory(

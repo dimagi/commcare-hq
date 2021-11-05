@@ -3,15 +3,14 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 
-from fakecouch import FakeCouchDb
-from mock import MagicMock
+from mock import MagicMock, patch
 from simpleeval import InvalidExpression
+from testil import Config
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
 from corehq.apps.groups.models import Group
@@ -25,8 +24,8 @@ from corehq.apps.userreports.expressions.specs import (
 )
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.util.test_utils import (
     create_and_save_a_case,
     create_and_save_a_form,
@@ -775,9 +774,7 @@ class RelatedDocExpressionTest(SimpleTestCase):
 
     def setUp(self):
         # we have to set the fake database before any other calls
-        self.orig_db = CommCareCase.get_db()
-        self.database = FakeCouchDb()
-        CommCareCase.set_db(self.database)
+        self.patch_cases_database()
         self.spec = {
             "type": "related_doc",
             "related_doc_type": "CommCareCase",
@@ -812,8 +809,16 @@ class RelatedDocExpressionTest(SimpleTestCase):
             }
         })
 
-    def tearDown(self):
-        CommCareCase.set_db(self.orig_db)
+    def patch_cases_database(self):
+        def get_case(self_, case_id):
+            doc = self.database.get(case_id)
+            if doc is None:
+                raise CaseNotFound
+            return Config(to_json=lambda: doc)
+        get_case_patch = patch.object(CaseAccessors, "get_case", get_case)
+        get_case_patch.start()
+        self.addCleanup(get_case_patch.stop)
+        self.database = {}
 
     def test_simple_lookup(self):
         related_id = 'related-id'
@@ -825,7 +830,7 @@ class RelatedDocExpressionTest(SimpleTestCase):
             'domain': 'test-domain',
             'related_property': 'foo'
         }
-        self.database.mock_docs = {
+        self.database = {
             'my-id': my_doc,
             related_id: related_doc
         }
@@ -845,7 +850,7 @@ class RelatedDocExpressionTest(SimpleTestCase):
             'domain': 'wrong-domain',
             'related_property': 'foo'
         }
-        self.database.mock_docs = {
+        self.database = {
             'my-id': my_doc,
             related_id: related_doc
         }
@@ -867,7 +872,7 @@ class RelatedDocExpressionTest(SimpleTestCase):
             'domain': 'test-domain',
             'related_property': 'bar',
         }
-        self.database.mock_docs = {
+        self.database = {
             'my-id': my_doc,
             related_id: related_doc,
             related_id_2: related_doc_2
@@ -890,7 +895,7 @@ class RelatedDocExpressionTest(SimpleTestCase):
             'domain': 'wrong-domain',
             'related_property': 'bar',
         }
-        self.database.mock_docs = {
+        self.database = {
             'my-id': my_doc,
             related_id: related_doc,
             related_id_2: related_doc_2
@@ -922,11 +927,10 @@ class RelatedDocExpressionTest(SimpleTestCase):
         self.assertEqual('foo', self.expression(my_doc, context))
 
         my_doc = self.database.get('my-id')
-        self.database.mock_docs.clear()
+        self.database.clear()
         self.assertEqual('foo', self.expression(my_doc, context))
 
 
-@run_with_sql_backend
 class RelatedDocExpressionDbTest(TestCase):
     domain = 'related-doc-db-test-domain'
 
@@ -1120,7 +1124,6 @@ class TestEvaluatorTypes(SimpleTestCase):
         self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), int)
 
 
-@run_with_sql_backend
 class TestFormsExpressionSpec(TestCase):
 
     @classmethod
@@ -1179,7 +1182,6 @@ class TestFormsExpressionSpec(TestCase):
         self.assertEqual(forms, [])
 
 
-@run_with_sql_backend
 class TestGetSubcasesExpression(TestCase):
 
     def setUp(self):
@@ -1237,7 +1239,6 @@ class TestGetSubcasesExpression(TestCase):
         self.assertEqual(extension.case_id, subcases[0]['_id'])
 
 
-@run_with_sql_backend
 class TestGetCaseSharingGroupsExpression(TestCase):
 
     def setUp(self):
@@ -1299,7 +1300,6 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         self.assertEqual(len(case_sharing_groups), 0)
 
 
-@run_with_sql_backend
 class TestGetReportingGroupsExpression(TestCase):
 
     def setUp(self):

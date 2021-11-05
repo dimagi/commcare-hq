@@ -3,7 +3,6 @@ import uuid
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
-from django.test.utils import override_settings
 from fakecouch import FakeCouchDb
 
 from casexml.apps.case.mock import CaseFactory
@@ -167,15 +166,13 @@ class BaseResumableSqlModelIteratorTest(object):
     @classmethod
     def base_setUpClass(cls):
         cls.domain = uuid.uuid4().hex
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
-            FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-            cls.all_doc_ids = cls.create_docs(cls.domain, 9)
-            cls.first_doc_id = cls.all_doc_ids[0]
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        cls.all_doc_ids = cls.create_docs(cls.domain, 9)
+        cls.first_doc_id = cls.all_doc_ids[0]
 
     @classmethod
     def base_tearDownClass(cls):
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
-            FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
 
     def base_setUp(self):
         self.iteration_key = uuid.uuid4().hex
@@ -230,7 +227,6 @@ class BaseResumableSqlModelIteratorTest(object):
         self.assertEqual(chunks, [3, 2, 0])  # max chunk: 3
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class XFormResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, TestCase):
     @property
     def reindex_accessor(self):
@@ -264,7 +260,6 @@ class XFormResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, Test
         super(XFormResumableSqlModelIteratorTest, self).tearDown()
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class CaseResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, TestCase):
     @property
     def reindex_accessor(self):
@@ -294,7 +289,6 @@ class CaseResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, TestC
         super(CaseResumableSqlModelIteratorTest, self).tearDown()
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class LedgerResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, TestCase):
     @property
     def reindex_accessor(self):

@@ -2,7 +2,6 @@ from django.test import TestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
 from corehq.util.test_utils import create_test_case
 
@@ -53,7 +52,6 @@ class CustomRecipientTest(TestCase):
         self.parent_location_type.delete()
         self.domain_obj.delete()
 
-    @run_with_all_backends
     def test_recipient_mobile_worker_case_owner_location_parent(self):
         with create_test_case(self.domain, 'test-case', 'test-name', owner_id=self.user.get_id) as case:
             self.assertEqual(case.owner_id, self.user.get_id)
@@ -82,9 +80,13 @@ class CustomRecipientTest(TestCase):
             # Remove case
             self.assertIsNone(instance(case_id='does-not-exist').recipient)
 
-    @run_with_all_backends
     def test_recipient_location_case_owner_parent_location(self):
-        with create_test_case(self.domain, 'test-case', 'test-name', owner_id=self.child_location.location_id) as case:
+        with create_test_case(
+            self.domain,
+            'test-case',
+            'test-name',
+            owner_id=self.child_location.location_id
+        ) as case:
             self.assertEqual(case.owner_id, self.child_location.location_id)
 
             def instance(case_id=''):

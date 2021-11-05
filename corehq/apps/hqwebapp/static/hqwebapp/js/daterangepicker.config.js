@@ -67,7 +67,7 @@ hqDefine("hqwebapp/js/daterangepicker.config", [
 
             // Add clearing functionality
             $el.on('cancel.daterangepicker', function () {
-                $el.val(gettext("Show All Dates"));
+                $el.val(gettext("Show All Dates")).change();
 
                 // Clear startdate and enddate filters
                 var filter_id = $(this)[0].getAttribute("name");

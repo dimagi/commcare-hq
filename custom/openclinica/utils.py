@@ -7,7 +7,7 @@ import bz2
 from time import strptime
 from lxml import etree
 from corehq.util.quickcache import quickcache
-from couchforms.models import XFormDeprecated
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 
 class OpenClinicaIntegrationError(Exception):
@@ -300,7 +300,7 @@ def originals_first(forms):
     Return original (deprecated) forms before edited versions
     """
     def get_previous_versions(form_id):
-        form_ = XFormDeprecated.get(form_id)
+        form_ = FormAccessors.get_form(form_id)
         if getattr(form_, 'deprecated_form_id', None):
             return get_previous_versions(form_.deprecated_form_id) + [form_]
         else:

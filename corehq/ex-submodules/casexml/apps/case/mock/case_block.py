@@ -164,10 +164,12 @@ class CaseBlock(object):
             else:
                 # can this be a hierarchical structure? if yes, how to decode?
                 updates[tag] = node.text
+
+        if case.get("date_modified"):
+            fields['date_modified'] = string_to_datetime(case.get("date_modified")).replace(tzinfo=None)
+
         return cls(
             case_id=case.get("case_id"),
-            date_modified=string_to_datetime(
-                case.get("date_modified")).replace(tzinfo=None),
             user_id=case.get("user_id"),
             index=dict(index_tuple(x) for x in case.find(NS + "index") or []),
             **fields
