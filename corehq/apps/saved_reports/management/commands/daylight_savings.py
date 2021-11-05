@@ -4,18 +4,21 @@ from django.core.management import BaseCommand
 from corehq.apps.saved_reports.models import ReportNotification
 
 
-def get_domains(path):
-    with open(path, 'r') as f:
-        domains = f.readlines()
+class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument('domains', nargs='+')
+        parser.add_argument('-F', '--forward', action='store_true')
 
-    return [domain.strip() for domain in domains]
+    def handle(self, domains, forward=False, *args, **kwargs):
+        for domain in domains:
+            print(f'processing domain: {domain}')
+            reports = get_reports_by_domain(domain)
 
-
-def get_reports_by_domain(domain):
-    key = [domain]
-    reports = ReportNotification.view('reportconfig/user_notifications',
-        reduce=False, include_docs=True, startkey=key, endkey=key + [{}])
-    return reports
+            for report in reports:
+                previous_hour = report.hour
+                report = adjust_report(report, forward)
+                report.save()
+                print(f'Updated hour on report {report._id} from {previous_hour} to {report.hour}')
 
 
 DAYS_IN_WEEK = 7
@@ -39,18 +42,8 @@ def adjust_report(report, forward=False):
     return report
 
 
-class Command(BaseCommand):
-    def add_arguments(self, parser):
-        parser.add_argument('domains', nargs='+')
-        parser.add_argument('-F', '--forward', action='store_true')
-
-    def handle(self, domains, forward=False, *args, **kwargs):
-        for domain in domains:
-            print(f'processing domain: {domain}')
-            reports = get_reports_by_domain(domain)
-
-            for report in reports:
-                previous_hour = report.hour
-                report = adjust_report(report, forward)
-                report.save()
-                print(f'Updated hour on report {report._id} from {previous_hour} to {report.hour}')
+def get_reports_by_domain(domain):
+    key = [domain]
+    reports = ReportNotification.view('reportconfig/user_notifications',
+        reduce=False, include_docs=True, startkey=key, endkey=key + [{}])
+    return reports
