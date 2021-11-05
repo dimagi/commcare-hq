@@ -31,15 +31,7 @@ class SendRequestTests(SimpleTestCase):
 
     def setUp(self):
         self.request_patcher = patch.object(requests.Session, 'request')
-        self.request_mock = self.request_patcher.start()
-
-        self.auth_patcher = patch.object(BasicAuthManager, 'get_auth')
-        get_auth_mock = self.auth_patcher.start()
-        get_auth_mock.return_value = '<HTTPBasicAuthDummy>'
-
-    def tearDown(self):
-        self.auth_patcher.stop()
-        self.request_patcher.stop()
+        self.auth_patcher = patch.object(BasicAuthManager, 'get_auth', return_value='<HTTPBasicAuthDummy>')
 
     def test_send_payload(self):
         payload = {'ham': ['spam', 'spam', 'spam']}
@@ -47,30 +39,32 @@ class SendRequestTests(SimpleTestCase):
             DOMAIN, BASE_URL, USERNAME, PASSWORD,
             logger=noop_logger
         )
-        req.post('/api/dataValueSets', json=payload)
-        self.request_mock.assert_called_with(
-            'POST',
-            'http://www.example.com/2.3.4/api/dataValueSets',
-            data=None,
-            json=payload,
-            headers={'Content-type': 'application/json', 'Accept': 'application/json'},
-            timeout=REQUEST_TIMEOUT,
-        )
+        with self.auth_patcher, self.request_patcher as request_mock:
+            req.post('/api/dataValueSets', json=payload)
+            request_mock.assert_called_with(
+                'POST',
+                'http://www.example.com/2.3.4/api/dataValueSets',
+                data=None,
+                json=payload,
+                headers={'Content-type': 'application/json', 'Accept': 'application/json'},
+                timeout=REQUEST_TIMEOUT,
+            )
 
     def test_verify_ssl(self):
         req = get_basic_requests(
             DOMAIN, BASE_URL, USERNAME, PASSWORD,
             verify=False, logger=noop_logger,
         )
-        req.get('/api/me')
-        self.request_mock.assert_called_with(
-            'GET',
-            'http://www.example.com/2.3.4/api/me',
-            allow_redirects=True,
-            headers={'Accept': 'application/json'},
-            timeout=REQUEST_TIMEOUT,
-            verify=False
-        )
+        with self.auth_patcher, self.request_patcher as request_mock:
+            req.get('/api/me')
+            request_mock.assert_called_with(
+                'GET',
+                'http://www.example.com/2.3.4/api/me',
+                allow_redirects=True,
+                headers={'Accept': 'application/json'},
+                timeout=REQUEST_TIMEOUT,
+                verify=False
+            )
 
     def test_bad_url(self):
         payload = {'ham': ['spam', 'spam', 'spam']}

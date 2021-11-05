@@ -862,9 +862,9 @@ class MultipleSelectionForm(forms.Form):
                 var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
                 multiselect_utils.createFullMultiselectWidget(
                     'id_of_multiselect_field',
-                    django.gettext("Available Things"),
-                    django.gettext("Things Selected"),
-                    django.gettext("Search Things...")
+                    gettext("Available Things"),
+                    gettext("Things Selected"),
+                    gettext("Search Things...")
                 );
             });
         });

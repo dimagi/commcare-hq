@@ -241,9 +241,8 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
     if ((webuser and not hubspot_enabled_for_user(webuser))
             or (not webuser and not hubspot_enabled_for_email(email))):
         # This user has analytics disabled
-        metrics_gauge(
+        metrics_counter(
             'commcare.hubspot_data.rejected.send_form_to_hubspot',
-            1,
             tags={
                 'username': webuser.username if webuser else email,
             }

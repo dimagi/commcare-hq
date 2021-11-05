@@ -112,7 +112,7 @@ class DebugMetrics:
     def __getattr__(self, item):
         if item in ('counter', 'gauge', 'histogram'):
             def _check(name, value, *args, **kwargs):
-                tags = kwargs.get('tags', {})
+                tags = kwargs.get('tags') or {}
                 _enforce_prefix(name, 'commcare')
                 _validate_tag_names(tags)
                 metrics_logger.debug("[%s] %s %s %s", item, name, tags, value)

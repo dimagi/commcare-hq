@@ -761,7 +761,7 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         return toggles.DATA_REGISTRY_CASE_UPDATE_REPEATER.enabled(domain)
 
     def get_url(self, repeat_record):
-        new_domain = self.payload_doc(repeat_record).get_case_property('target_case_domain')
+        new_domain = self.payload_doc(repeat_record).get_case_property('target_domain')
         return self.connection_settings.url.format(domain=new_domain)
 
     def send_request(self, repeat_record, payload):
@@ -1434,8 +1434,3 @@ def domain_can_forward(domain):
         domain_has_privilege(domain, ZAPIER_INTEGRATION)
         or domain_has_privilege(domain, DATA_FORWARDING)
     )
-
-
-# import signals
-# Do not remove this import, its required for the signals code to run even though not explicitly used in this file
-from corehq.motech.repeaters import signals  # noqa: disable=unused-import,F401

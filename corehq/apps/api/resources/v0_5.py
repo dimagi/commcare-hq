@@ -337,16 +337,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
 class WebUserResource(v0_1.WebUserResource):
 
-    class Meta(v0_1.WebUserResource.Meta):
-        detail_allowed_methods = ['get', 'put', 'delete']
-        list_allowed_methods = ['get', 'post']
-        always_return_data = True
-
-    def serialize(self, request, data, format, options=None):
-        if not isinstance(data, dict) and request.method == 'POST':
-            data = {'id': data.obj._id}
-        return self._meta.serializer.serialize(data, format, options)
-
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if isinstance(bundle_or_obj, Bundle):
             domain = bundle_or_obj.request.domain
@@ -358,106 +348,6 @@ class WebUserResource(v0_1.WebUserResource):
                                                           domain=domain,
                                                           api_name=self._meta.api_name,
                                                           pk=obj._id))
-
-    def _validate(self, bundle):
-        if bundle.data.get('is_admin', False):
-            # default value Admin since that will be assigned later anyway since is_admin is True
-            if bundle.data.get('role', 'Admin') != 'Admin':
-                raise BadRequest("An admin can have only one role : Admin")
-        else:
-            if not bundle.data.get('role', None):
-                raise BadRequest("Please assign role for non admin user")
-
-    def _update(self, bundle, user_change_logger=None):
-        should_save = False
-        for key, value in bundle.data.items():
-            if key == "role":
-                # role handled in _set_role_for_bundle
-                continue
-            if getattr(bundle.obj, key, None) != value:
-                if key == 'phone_numbers':
-                    old_phone_numbers = set(bundle.obj.phone_numbers)
-                    new_phone_numbers = set()
-                    bundle.obj.phone_numbers = []
-                    for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
-                        formatted_phone_number = strip_plus(phone_number)
-                        new_phone_numbers.add(formatted_phone_number)
-                        bundle.obj.add_phone_number(formatted_phone_number)
-                        if idx == 0:
-                            bundle.obj.set_default_phone_number(formatted_phone_number)
-                        should_save = True
-
-                    if user_change_logger:
-                        (numbers_added, numbers_removed) = find_differences_in_list(
-                            target=list(new_phone_numbers),
-                            source=list(old_phone_numbers)
-                        )
-
-                        if numbers_added or numbers_removed:
-                            user_change_logger.add_change_message(
-                                UserChangeMessage.phone_numbers_updated(added=list(numbers_added),
-                                                                        removed=list(numbers_removed))
-                            )
-                elif key in ['email', 'username']:
-                    lowercase_value = value.lower()
-                    if user_change_logger and getattr(bundle.obj, key) != lowercase_value:
-                        user_change_logger.add_changes({key: lowercase_value})
-                    setattr(bundle.obj, key, lowercase_value)
-                    should_save = True
-                else:
-                    if user_change_logger:
-                        # we do call setattr for keys that are not really attributes i.e is_admin & permissions
-                        # track only once that are attributes
-                        if hasattr(bundle.obj, key) and getattr(bundle.obj, key) != value:
-                            # first_name, last_name
-                            user_change_logger.add_changes({key: value})
-                    setattr(bundle.obj, key, value)
-                    should_save = True
-        return should_save
-
-    def obj_create(self, bundle, **kwargs):
-        self._validate(bundle)
-        try:
-            self._meta.domain = kwargs['domain']
-            bundle.obj = WebUser.create(
-                domain=kwargs['domain'],
-                username=bundle.data['username'].lower(),
-                password=bundle.data['password'],
-                created_by=bundle.request.couch_user,
-                created_via=USER_CHANGE_VIA_API,
-                email=bundle.data.get('email', '').lower(),
-                is_admin=bundle.data.get('is_admin', False)
-            )
-            del bundle.data['password']
-            self._update(bundle)
-            # is_admin takes priority over role
-            if not bundle.obj.is_admin and bundle.data.get('role'):
-                _set_role_for_bundle(kwargs, bundle)
-            bundle.obj.save()
-        except Exception:
-            if bundle.obj._id:
-                bundle.obj.delete(bundle.request.domain, deleted_by=bundle.request.couch_user,
-                                  deleted_via=USER_CHANGE_VIA_API)
-            else:
-                try:
-                    django_user = bundle.obj.get_django_user()
-                except User.DoesNotExist:
-                    pass
-                else:
-                    django_user.delete()
-            raise
-        return bundle
-
-    def obj_update(self, bundle, **kwargs):
-        self._validate(bundle)
-        bundle.obj = WebUser.get(kwargs['pk'])
-        assert kwargs['domain'] in bundle.obj.domains
-        user_change_logger = self._get_user_change_logger(bundle)
-        if self._update(bundle, user_change_logger):
-            assert kwargs['domain'] in bundle.obj.domains
-            bundle.obj.save()
-            user_change_logger.save()
-        return bundle
 
 
 class AdminWebUserResource(v0_1.UserResource):
@@ -705,7 +595,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         else:
             return ""
 
-    def _get_report_data(self, report_config, domain, start, limit, get_params):
+    def _get_report_data(self, report_config, domain, start, limit, get_params, couch_user):
         report = ConfigurableReportDataSource.from_spec(report_config, include_prefilters=True)
 
         string_type_params = [
@@ -715,7 +605,8 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         ]
         filter_values = get_filter_values(
             report_config.ui_filters,
-            query_dict_to_dict(get_params, domain, string_type_params)
+            query_dict_to_dict(get_params, domain, string_type_params),
+            couch_user,
         )
         report.set_filter_values(filter_values)
 
@@ -742,7 +633,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
 
         report_config = self._get_report_configuration(pk, domain)
         page, columns, total_records = self._get_report_data(
-            report_config, domain, start, limit, bundle.request.GET)
+            report_config, domain, start, limit, bundle.request.GET, bundle.request.couch_user)
 
         return ConfigurableReportData(
             data=page,
