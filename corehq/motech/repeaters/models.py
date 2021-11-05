@@ -298,7 +298,7 @@ class SQLRepeater(models.Model):
             self.save()
 
 
-class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater, RepeaterSuperProxy):
+class SQLCaseRepeater(RepeaterSuperProxy, SyncSQLToCouchMixin, SQLRepeater):
     """
     Record that cases should be repeated to a new url
 
@@ -370,6 +370,7 @@ class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater, RepeaterSuperProxy):
             "format",
             "white_listed_case_types",
             "black_listed_users",
+            "repeater_type",
         ]
 
     @classmethod
@@ -826,6 +827,10 @@ class CaseRepeater(SyncCouchToSQLMixin, Repeater):
         })
         return headers
 
+    def save(self, *args, **kwargs):
+        self.repeater_type = self.__class__.__name__
+        return super().save(*args, **kwargs)
+
     @classmethod
     def _migration_get_fields(cls):
         return [
@@ -836,6 +841,7 @@ class CaseRepeater(SyncCouchToSQLMixin, Repeater):
             "format",
             "white_listed_case_types",
             "black_listed_users",
+            "repeater_type",
         ]
 
     @classmethod
