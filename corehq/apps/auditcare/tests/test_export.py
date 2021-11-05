@@ -282,9 +282,11 @@ class TestNavigationEventsQueries(AuditcareTest):
         login_events = []
         for x in range(2):
             login_event = create_session_events(domain)
-            # rename `access_time` to `event_date`
+            # rename `event_date` to `access_time` (name of aggregation field)
             login_event["access_time"] = login_event.pop("event_date")
             login_events.append(login_event)
+            # remove the session key (not returned by the query)
+            del login_event["session_key"]
         self.assertEqual(list(get_domain_first_access_times([domain])), login_events)
 
 

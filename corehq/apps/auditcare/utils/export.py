@@ -81,10 +81,9 @@ def get_domain_first_access_times(domains, start_date=None, end_date=None):
 
     ```sql
     SELECT
-        MIN(event_date) AS access_time,
         "user",
         domain,
-        session_key
+        MIN(event_date) AS access_time
     FROM auditcare_navigationeventaudit
     WHERE (
         domain IN ( {domains} )
@@ -103,8 +102,9 @@ def get_domain_first_access_times(domains, start_date=None, end_date=None):
     where["user__isnull"] = False
     where["session_key__isnull"] = False
     return (NavigationEventAudit.objects
-            .values("user", "domain", "session_key")
+            .values("user", "domain", "session_key")  # GROUP BY fields
             .annotate(access_time=Min("event_date"))
+            .values("user", "domain", "access_time")  # SELECT fields
             .filter(**where)
             .order_by("access_time")
             .iterator())
