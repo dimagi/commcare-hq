@@ -295,9 +295,9 @@ class MySavedReportsView(BaseProjectReportSectionView):
         all_scheduled_reports = ReportNotification.view('reportconfig/user_notifications', reduce=False,
                                                         include_docs=True, startkey=key, endkey=key + [{}])
         user = self.request.couch_user
-        user_email = user.get_email()
+        owner_id = user.username if user.is_web_user() else user.get_email()
         for scheduled_report in all_scheduled_reports:
-            if not _is_valid(scheduled_report) or user_email == scheduled_report.owner_email:
+            if not _is_valid(scheduled_report) or owner_id == scheduled_report.owner_email:
                 continue
             self._adjust_report_day_and_time(scheduled_report)
             if scheduled_report.can_be_viewed_by(user):
