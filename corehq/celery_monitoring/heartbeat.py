@@ -4,6 +4,7 @@ from celery.task import periodic_task
 from django.conf import settings
 from django.core.cache import cache
 
+from corehq.celery_monitoring.signals import get_task_time_to_start
 from corehq.util.metrics import metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
 
@@ -32,10 +33,16 @@ class HeartbeatCache(object):
         cache.delete(self._cache_key())
 
 
+class HeartbeatTimeToStartCache(HeartbeatCache):
+    def _cache_key(self):
+        return f'heartbeat:time_to_start:{self.queue}'
+
+
 class Heartbeat(object):
     def __init__(self, queue):
         self.queue = queue
         self._heartbeat_cache = HeartbeatCache(queue)
+        self._time_to_start_chace = HeartbeatTimeToStartCache(queue)
         self.threshold = settings.CELERY_HEARTBEAT_THRESHOLDS[self.queue]
 
     def get_last_seen(self):
@@ -80,6 +87,21 @@ class Heartbeat(object):
             )
         return blockage_duration
 
+    def set_time_to_start(self, task_id):
+        time_to_start = get_task_time_to_start(task_id)
+        self._time_to_start_cache.set(time_to_start)
+
+    def get_and_report_time_to_start(self):
+        time_to_start = self._time_to_start_cache.get()
+        if self.threshold:
+            metrics_gauge(
+                'commcare.celery.heartbeat.time_to_start_ok',
+                1 if time_to_start.total_seconds() <= self.threshold else 0,
+                tags={'celery_queue': self.queue},
+                multiprocess_mode=MPM_MAX
+            )
+        return time_to_start
+
     @property
     def periodic_task_name(self):
         return 'heartbeat__{}'.format(self.queue)
@@ -94,6 +116,7 @@ class Heartbeat(object):
         def heartbeat():
             try:
                 self.get_and_report_blockage_duration()
+                self.set_time_to_start(heartbeat.request.id)
             except HeartbeatNeverRecorded:
                 pass
             self.mark_seen()

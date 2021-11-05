@@ -158,12 +158,15 @@ def check_blobdb():
 
 def check_celery():
     blocked_queues = []
+    slow_queues = []
 
     for queue, threshold in settings.CELERY_HEARTBEAT_THRESHOLDS.items():
         if threshold:
             threshold = datetime.timedelta(seconds=threshold)
+            heartbeat = Heartbeat(queue)
             try:
-                blockage_duration = Heartbeat(queue).get_and_report_blockage_duration()
+                blockage_duration = heartbeat.get_and_report_blockage_duration()
+                heartbeat_time_to_start = heartbeat.get_and_report_time_to_start()
             except HeartbeatNeverRecorded:
                 blocked_queues.append((queue, 'as long as we can see', threshold))
             else:
@@ -172,12 +175,20 @@ def check_celery():
                 # It is still counted as out of SLA for the celery uptime metric in datadog
                 if blockage_duration > max(threshold, datetime.timedelta(minutes=5)):
                     blocked_queues.append((queue, blockage_duration, threshold))
+                elif (heartbeat_time_to_start is not None and
+                      heartbeat_time_to_start > max(threshold, datetime.timedelta(minutes=5)):
+                    slow_queues.append(queue, heartbeat_time_to_start, threshold)
 
     if blocked_queues:
         return ServiceStatus(False, '\n'.join(
             "{} has been blocked for {} (max allowed is {})".format(
                 queue, blockage_duration, threshold
             ) for queue, blockage_duration, threshold in blocked_queues))
+    elif slow_queues:
+        return ServiceStatus(False, '\n'.join(
+            "{} is delayed for {} (max allowed is {})".format(
+                queue, blockage_duration, threshold
+            ) for queue, blockage_duration, threshold in slow_queues))
     else:
         return ServiceStatus(True, "OK")
 
