@@ -1,13 +1,13 @@
 from django.db import migrations
 
 from corehq.apps.users.models import CouchUser
-from corehq.toggles import USER_CONFIGURABLE_REPORTS, Toggle
+from corehq.toggles import USER_CONFIGURABLE_REPORTS
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
 @skip_on_fresh_install
 def add_ucr_permissions(apps, schema_editor):
-    usernames = _get_usernames_for_toggle(USER_CONFIGURABLE_REPORTS)
+    usernames = USER_CONFIGURABLE_REPORTS.get_enabled_users()
     all_user_roles = []
     user_objs = [CouchUser.get_by_username(username) for username in usernames]
 
@@ -24,12 +24,6 @@ def add_ucr_permissions(apps, schema_editor):
         if not permissions.edit_ucrs:
             permissions.edit_ucrs = True
             role.set_permissions(permissions.to_list())
-
-
-def _get_usernames_for_toggle(toggle):
-    toggle_obj = Toggle.get(toggle.slug)
-    return [user for user in toggle_obj.enabled_users
-            if not user.startswith("domain:")]
 
 
 class Migration(migrations.Migration):

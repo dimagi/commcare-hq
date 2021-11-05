@@ -21,7 +21,7 @@ Postgres and Couch data.
   - Create a pg dump.  You'll need to verify the host IP address:
 
     ```sh
-    pg_dump -h 0.0.0.0 -U commcarehq commcarehq > /path/to/backup_hq_db.sql
+    pg_dump -h localhost -U commcarehq commcarehq > /path/to/backup_hq_db.sql
     ```
 
 - CouchDB
@@ -65,7 +65,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
         ibrew install python@3.8
         ```
         
-        Then make sure you are using this version of python when setting up your python environment.
+        Then make sure you are using this version of python for your python virtual environment. Otherwise you will likely into problems installing python modules.
 
 - [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
@@ -442,7 +442,7 @@ that to the new install.
   - Restore the backup:
 
     ```sh
-    psql -U commcarehq -h 0.0.0.0 commcarehq < /path/to/backup_hq_db.sql
+    psql -U commcarehq -h localhost commcarehq < /path/to/backup_hq_db.sql
     ```
 
 - CouchDB
@@ -459,7 +459,7 @@ that to the new install.
     ./scripts/docker start couch
     ```
 
-  - Fire up Fauxton to check that the dbs are there: http://0.0.0.0:5984/_utils/
+  - Fire up Fauxton to check that the dbs are there: http://localhost:5984/_utils/
 
 - Shared Directory
   - If you are following the default instructions, move/merge the `sharedfiles`
@@ -473,18 +473,17 @@ Devs using computers with the ARM64 architecture (often Apple computers with the
 - Postgres
 
     In your hq-compose.yml, try updating the following:
-        ```sh
+        ```
         image: dimagi/docker-postgresql
         ```
         to
-        ```sh
+        ```
         image: arm64v8/postgres
         ```
-        So that you are using a Postgres image built for ARM64 archtecture. Now your Docker service may run properly.
-        
+        So that you are using a Postgres image built for ARM64 archtecture. Now your Docker service should run properly. Note that you may run into errors while testing because of this different image--see details on a fix in the testing section farther down.
 - Elasticsearch
     
-    Download the TAR for ES 2.4.2 from [here](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-2![image](https://user-images.githubusercontent.com/6729291/134395887-66c3a63a-0d6c-41fd-afc0-527993810126.png). Open it, and move it somewhere you can reliably remember, maybe your root directory. In a new tab/window:
+    Download the TAR for ES 2.4.2 from [here](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-2). Open it, and move it somewhere you can reliably remember, maybe your root directory. In a new tab/window:
     ```sh
     cd ~/Downloads
     mv elasticsearch-2.4.2 ~/
@@ -498,6 +497,7 @@ Devs using computers with the ARM64 architecture (often Apple computers with the
     ./bin/elasticsearch
     ```
 - Formplayer
+
     If you are having trouble with Formplayer, try starting it outside of Docker (instructions for this farther down).
 
 ### Initial Database Population
@@ -677,7 +677,7 @@ LOCAL_APPS += ('django_extensions',)
 When running HQ, be sure to use `runserver_plus`:
 
 ```sh
-./manage.py runserver_plus 0.0.0.0:8000
+./manage.py runserver_plus localhost:8000
 ```
 
 Then you need to have Formplayer running.
@@ -741,7 +741,7 @@ it can give you a good idea of what's broken.
 Then run the django server with the following command:
 
 ```sh
-./manage.py runserver 0.0.0.0:8000
+./manage.py runserver localhost:8000
 ```
 
 You should now be able to load CommCare HQ in a browser at [http://localhost:8000](http://localhost:8000).
@@ -844,15 +844,6 @@ files from Vellum directly, do the following.
     ```
 
 
-## Airflow
-
-It is usually not required to have a local airflow environment running.
-
-However, if you do need to get setup on Airflow (which is used to back some
-reporting infrastructure) you can follow the instructions in the
-[pipes repository](https://github.com/dimagi/pipes/).
-
-
 ## Running Tests
 
 To run the standard tests for CommCare HQ, run
@@ -894,6 +885,15 @@ In the Postgres shell, run the following as a superuser:
 ALTER USER commcarehq CREATEDB;
 ```
 
+If you are on arm64 architecture using a non-Dimagi Docker Postgres image:
+
+- If you run into a missing "hashlib.control" or "plproxy.control" file while trying to run tests, it is because you are not using the Dimagi Postgres Docker image that includes the pghashlib and plproxy extensions. You will need to change the USE_PARTITIONED_DATABASE variable in your localsettings.py to False so that you won't shard your test database and need the extensions
+
+```
+USE_PARTITIONED_DATABASE = False
+```
+
+        
 
 ### REUSE DB
 

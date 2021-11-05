@@ -150,7 +150,7 @@ domain_settings = [
     url(r'^subscription/pro_bono/$', ProBonoView.as_view(), name=ProBonoView.urlname),
     url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
         name=CreditsStripePaymentView.urlname),
-    url(r'^subscription/credis/make_wire_payment/$', CreditsWireInvoiceView.as_view(),
+    url(r'^subscription/credits/make_wire_payment/$', CreditsWireInvoiceView.as_view(),
         name=CreditsWireInvoiceView.urlname),
     url(r'^billing/statements/download/(?P<statement_id>[\w-]+).pdf$',
         BillingStatementPdfView.as_view(),

@@ -25,7 +25,9 @@ from corehq.apps.domain.models import Domain
 )
 def send_datasets_for_all_domains():
     for domain in find_domains_with_toggle_enabled(toggles.DHIS2_INTEGRATION):
-        send_datasets.delay(domain) if _data_forwarding_privilege(domain) else None
+        domain_obj = Domain.get_by_name(domain)
+        if domain_obj and domain_obj.has_privilege(DATA_FORWARDING):
+            send_datasets.delay(domain)
 
 
 @task(serializer='pickle', queue='background_queue')
@@ -35,10 +37,6 @@ def send_datasets(domain_name, send_now=False, send_date=None):
     for dataset_map in SQLDataSetMap.objects.filter(domain=domain_name).all():
         if send_now or should_send_on_date(dataset_map, send_date):
             send_dataset(dataset_map, send_date)
-
-
-def _data_forwarding_privilege(domain_name):
-    return Domain.get_by_name(domain_name).has_privilege(DATA_FORWARDING)
 
 
 def send_dataset(
@@ -83,7 +81,10 @@ def send_dataset(
     .. _DHIS2 API docs: https://docs.dhis2.org/master/en/developer/html/webapi_data_values.html
 
     """
-    payload_id = dataset_map.ucr_id  # Allows us to filter Remote API Logs
+    # payload_id lets us filter API logs, and uniquely identifies the
+    # dataset map, to help AEs and administrators link an API log back
+    # to a dataset map.
+    payload_id = f'dhis2/map/{dataset_map.pk}/'
     response_log_url = reverse(
         'motech_log_list_view',
         args=[dataset_map.domain],

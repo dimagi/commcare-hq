@@ -710,23 +710,14 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
                          'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails]))
             return json_response({'error': {'message': message}})
         amount = Decimal(request.POST.get('amount', 0))
+        general_credit = Decimal(request.POST.get('general_credit', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
-            wire_invoice_factory.create_wire_credits_invoice(self._get_items(request), amount)
+            wire_invoice_factory.create_wire_credits_invoice(amount, general_credit)
         except Exception as e:
             return json_response({'error': {'message': str(e)}})
 
         return json_response({'success': True})
-
-    @staticmethod
-    def _get_items(request):
-        if Decimal(request.POST.get('general_credit', 0)) > 0:
-            return [{
-                'type': 'General Credits',
-                'amount': Decimal(request.POST.get('general_credit', 0))
-            }]
-
-        return []
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):

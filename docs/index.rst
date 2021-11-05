@@ -86,6 +86,14 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     value_source
 
 .. toctree::
+    :caption: Single Sign On (SSO)
+    :maxdepth: 1
+
+    sso/overview
+    sso/architecture
+    sso/local_setup
+
+.. toctree::
     :caption: UI and Front End
     :maxdepth: 1
 

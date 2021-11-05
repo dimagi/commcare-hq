@@ -22,7 +22,6 @@ from casexml.apps.case import const
 from memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from couchforms.models import XFormInstance
 from corehq.form_processor.exceptions import CaseNotFound
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
 from dimagi.utils.couch import (
@@ -79,13 +78,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
     @property
     def xform(self):
-        try:
-            return XFormInstance.get(self.xform_id) if self.xform_id else None
-        except ResourceNotFound:
-            logging.exception("couldn't access form {form} inside of a referenced case.".format(
-                form=self.xform_id,
-            ))
-            return None
+        raise NotImplementedError
 
     @property
     def form(self):
@@ -371,8 +364,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         Gets the form docs associated with a case. If it can't find a form
         it won't be included.
         """
-        from couchforms.dbaccessors import get_forms_by_id
-        return get_forms_by_id(self.xform_ids)
+        raise NotImplementedError
 
     def get_attachment(self, attachment_name):
         return self.fetch_attachment(attachment_name)
