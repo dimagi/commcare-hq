@@ -291,7 +291,6 @@ class CustomDataModelMixin(object):
                 }
             )
             if not created and obj.has_users_assigned:
-                print("HFUIEDPHDUSIAHNBDUSKALNHDJSKAL")
                 refresh_es_for_profile_users.delay(self.domain, obj.id)
                 user_ids_to_sync = obj.user_ids_assigned()
                 from corehq.apps.users.models import CommCareUser
