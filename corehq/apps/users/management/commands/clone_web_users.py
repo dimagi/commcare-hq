@@ -93,7 +93,8 @@ def copy_domain_memberships(from_user, to_user):
             role_id=domain_membership.role_id,
             location_id=domain_membership.location_id,
             assigned_location_ids=domain_membership.assigned_location_ids,
-            program_id=domain_membership.program_id
+            program_id=domain_membership.program_id,
+            is_admin=domain_membership.is_admin,
         )
         to_user.domain_memberships.append(copied_membership)
         to_user.domains.append(copied_membership.domain)
