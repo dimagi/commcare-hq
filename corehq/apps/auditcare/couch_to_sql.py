@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import re
 
@@ -133,7 +134,9 @@ def get_events_from_couch(start_key, end_key, batch_size, start_doc_id=None):
         navigation_objects,
         access_objects,
         nav_couch_ids,
-        access_couch_ids
+        access_couch_ids,
+        start_key,
+        end_key
     )
 
     res_obj.update({
@@ -175,11 +178,15 @@ def _get_couch_docs(start_key, end_key, batch_size, start_doc_id=None):
     return list(result)
 
 
-def get_unsaved_events(nav_objs, access_objs, nav_couch_ids, access_couch_ids):
+def get_unsaved_events(nav_objs, access_objs, nav_couch_ids, access_couch_ids, start_key, end_key):
     existing_access_events = set(AccessAudit.objects.filter(
+        event_date__lte=_get_datetime_from_key(start_key),
+        event_date__gte=_get_datetime_from_key(end_key),
         couch_id__in=access_couch_ids
     ).values_list('couch_id', flat=True))
     existing_nav_events = set(NavigationEventAudit.objects.filter(
+        event_date__lte=_get_datetime_from_key(start_key),
+        event_date__gte=_get_datetime_from_key(end_key),
         couch_id__in=nav_couch_ids
     ).values_list('couch_id', flat=True))
 
@@ -201,3 +208,7 @@ def get_unsaved_events(nav_objs, access_objs, nav_couch_ids, access_couch_ids):
 
 def _pick(doc, keys):
     return {key: doc.get(key) for key in keys if doc.get(key)}
+
+
+def _get_datetime_from_key(key):
+    return datetime(*key[:6])

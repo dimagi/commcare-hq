@@ -85,7 +85,7 @@ An alternative approach to passing server data to partials is to encode is as `d
 
 ## I18n
 Just like Django lets you use `ugettext('...')` in python
-and `{% trans '...' %}`, you can also use `django.gettext('...')`
+and `{% trans '...' %}`, you can also use `gettext('...')`
 in any JavaScript.
 
 For any page extending our main template, there's nothing further

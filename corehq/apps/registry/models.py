@@ -222,20 +222,6 @@ class RegistryGrant(models.Model):
                 f"from_domain='{self.from_domain}', to_domains='{self.to_domains}')")
 
 
-class RegistryPermission(models.Model):
-    """This model controls which users in a domain can access the data registry."""
-    registry = models.ForeignKey("DataRegistry", related_name="permissions", on_delete=models.CASCADE)
-    domain = models.CharField(max_length=255)
-    read_only_group_id = models.CharField(max_length=255, null=True)
-
-    class Meta:
-        unique_together = ('registry', 'domain')
-
-    def __repr__(self):
-        return (f"RegistryPermission(registry_id='{self.registry_id}', "
-                f"domain='{self.domain}', read_only_group_id='{self.read_only_group_id}')")
-
-
 class RegistryAuditLog(models.Model):
     """Audit log model used to store logs of user level interactions
     (not system level).
@@ -257,12 +243,12 @@ class RegistryAuditLog(models.Model):
         (ACTION_GRANT_ADDED, _("Grant created")),
         (ACTION_GRANT_REMOVED, _("Grant removed")),
         (ACTION_DATA_ACCESSED, _("Data Accessed")),
+        (ACTION_INVITATION_ADDED, _("Invitation Added")),
     )
 
     ACTION_CHOICES = (
         (ACTION_ACTIVATED, _("Registry Activated")),
         (ACTION_DEACTIVATED, _("Registry De-activated")),
-        (ACTION_INVITATION_ADDED, _("Invitation Added")),
         (ACTION_INVITATION_REMOVED, _("Invitation Revoked")),
         (ACTION_SCHEMA_CHANGED, _("Schema Changed")),
     ) + NON_OWNER_ACTION_CHOICES

@@ -676,9 +676,6 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
         }, self.get_factory_context()))
         return default_indicators
 
-    def get_report_count(self):
-        raise NotImplementedError("TODO")
-
     @classmethod
     def by_domain(cls, domain):
         return get_registry_data_sources_by_domain(domain)

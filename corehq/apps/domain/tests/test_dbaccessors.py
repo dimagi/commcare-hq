@@ -6,7 +6,6 @@ from django.test import TestCase
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 
 from corehq.apps.domain.dbaccessors import (
@@ -14,7 +13,6 @@ from corehq.apps.domain.dbaccessors import (
     domain_exists,
     domain_or_deleted_domain_exists,
     get_doc_count_in_domain_by_class,
-    get_doc_ids_in_domain_by_class,
     get_doc_ids_in_domain_by_type,
     get_docs_in_domain_by_class,
     get_domain_ids_by_names,
