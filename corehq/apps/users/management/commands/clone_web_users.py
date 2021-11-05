@@ -136,7 +136,7 @@ def transfer_feature_flags(from_user, to_user):
         logger.info(f'Updating toggle {toggle} from {from_user.username} to {to_user.username}')
         set_toggle(toggle, from_user.username, False)
         set_toggle(toggle, to_user.username, True)
-        logger.info(f'Transferred access to {toggle.slug}.')
+        logger.info(f'Transferred access to {toggle}.')
 
     toggles_enabled_for_user.clear(from_user.username)
     toggles_enabled_for_user.clear(to_user.username)
