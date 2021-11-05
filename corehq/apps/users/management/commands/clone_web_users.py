@@ -49,6 +49,7 @@ def clone_user(old_username, new_username):
     new_username = new_username.lower()
     old_user = WebUser.get_by_username(old_username)
     new_user = create_new_user_from_old_user(old_user, new_username)
+    new_user.save()
 
     # Copy methods do not impact the existing user
     copy_domain_memberships(old_user, new_user)
@@ -73,10 +74,7 @@ def create_new_user_from_old_user(old_user, new_username):
         by_domain_required_for_log=False,
     )
 
-    new_user = copy_user_fields(old_user, new_user)
-    new_user.save()
-
-    return WebUser.get_by_username(new_user.username, strict=True)
+    return copy_user_fields(old_user, new_user)
 
 
 def deactivate_django_user(django_user):
