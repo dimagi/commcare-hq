@@ -377,6 +377,23 @@ class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater, RepeaterSuperProxy):
         return CaseRepeater
 
 
+class SQLCreateCaseRepeater(SQLCaseRepeater):
+    class Meta:
+        proxy = True
+
+    _repeater_type = 'CreateCaseRepeater'
+
+    objects = RepeaterProxyManager()
+
+    def allowed_to_forward(self, payload):
+        # assume if there's exactly 1 xform_id that modified the case it's being created
+        return super().allowed_to_forward(payload) and len(payload.xform_ids) == 1
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return CreateCaseRepeater
+
+
 class Repeater(QuickCachedDocumentMixin, Document):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and
