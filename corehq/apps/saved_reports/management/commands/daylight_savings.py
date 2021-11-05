@@ -41,12 +41,10 @@ def adjust_report(report, forward=False):
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument('path')
+        parser.add_argument('domains', nargs='+')
         parser.add_argument('-F', '--forward', action='store_true')
 
-    def handle(self, path, forward=False, *args, **kwargs):
-        domains = get_domains(path)
-
+    def handle(self, domains, forward=False, *args, **kwargs):
         for domain in domains:
             print(f'processing domain: {domain}')
             reports = get_reports_by_domain(domain)
