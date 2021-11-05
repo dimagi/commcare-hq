@@ -11,6 +11,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 
 from memoized import memoized
+from corehq.apps.callcenter.tasks import sync_usercases_if_applicable
 
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
@@ -290,7 +291,13 @@ class CustomDataModelMixin(object):
                 }
             )
             if not created and obj.has_users_assigned:
+                print("HFUIEDPHDUSIAHNBDUSKALNHDJSKAL")
                 refresh_es_for_profile_users.delay(self.domain, obj.id)
+                user_ids_to_sync = obj.user_ids_assigned()
+                from corehq.apps.users.models import CommCareUser
+                for user_id in user_ids_to_sync:
+                    user = CommCareUser.get_by_user_id(user_id)
+                    sync_usercases_if_applicable(user, spawn_task=False)
             seen.add(obj.id)
 
         errors = []
