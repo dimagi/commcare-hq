@@ -193,7 +193,7 @@ class RepeaterSuperProxy(models.Model):
     # See https://stackoverflow.com/questions/241250/single-table-inheritance-in-django/60894618#60894618
     PROXY_FIELD_NAME = "repeater_type"
 
-    repeater_type = models.CharField(max_length=64)
+    repeater_type = models.CharField(max_length=64, db_index=True)
 
     class Meta:
         abstract = True
