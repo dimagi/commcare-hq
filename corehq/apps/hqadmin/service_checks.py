@@ -176,7 +176,7 @@ def check_celery():
                 if blockage_duration > max(threshold, datetime.timedelta(minutes=5)):
                     blocked_queues.append((queue, blockage_duration, threshold))
                 elif (heartbeat_time_to_start is not None and
-                      heartbeat_time_to_start > max(threshold, datetime.timedelta(minutes=5)):
+                      heartbeat_time_to_start > max(threshold, datetime.timedelta(minutes=5))):
                     slow_queues.append(queue, heartbeat_time_to_start, threshold)
 
     if blocked_queues:
