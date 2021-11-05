@@ -21,6 +21,13 @@ class Command(BaseCommand):
                 print(f'Updated hour on report {report._id} from {previous_hour} to {report.hour}')
 
 
+def get_reports_by_domain(domain):
+    key = [domain]
+    reports = ReportNotification.view('reportconfig/user_notifications',
+        reduce=False, include_docs=True, startkey=key, endkey=key + [{}])
+    return reports
+
+
 DAYS_IN_WEEK = 7
 
 
@@ -40,10 +47,3 @@ def adjust_report(report, forward=False):
         report.day = trigger_time.day
 
     return report
-
-
-def get_reports_by_domain(domain):
-    key = [domain]
-    reports = ReportNotification.view('reportconfig/user_notifications',
-        reduce=False, include_docs=True, startkey=key, endkey=key + [{}])
-    return reports
