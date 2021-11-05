@@ -33,6 +33,7 @@ class Command(BaseCommand):
     def handle(self, file, **options):
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
         for old_username, new_username in iterate_usernames_to_update(file):
+            logger.info(f'Cloning old user {old_username} to new user {new_username}')
             old_user, new_user = clone_user(old_username, new_username)
             deactivate_django_user(old_user.get_django_user())
             send_deprecation_email(old_user, new_user)
@@ -59,7 +60,6 @@ def clone_user(old_username, new_username):
     transfer_saved_reports(old_user, new_user)
     transfer_feature_flags(old_user, new_user)
 
-    logger.info(f'Created new user {new_user.username}.')
     return old_user, new_user
 
 
@@ -73,8 +73,9 @@ def create_new_user_from_old_user(old_user, new_username):
         email=new_username,
         by_domain_required_for_log=False,
     )
-
-    return copy_user_fields(old_user, new_user)
+    new_user = copy_user_fields(old_user, new_user)
+    logger.info(f'Created new user {new_user.username}.')
+    return new_user
 
 
 def deactivate_django_user(django_user):
@@ -98,6 +99,7 @@ def copy_domain_memberships(from_user, to_user):
         )
         to_user.domain_memberships.append(copied_membership)
         to_user.domains.append(copied_membership.domain)
+        logger.info(f'Copied {domain_membership.domain} domain membership.')
 
     to_user.save()
 
@@ -109,6 +111,7 @@ def transfer_exports(from_user, to_user):
             if export.owner_id == from_user.get_id:
                 export.owner_id = to_user.get_id
                 export.save()
+                logger.info(f'Transferred ownership of export {export._id}.')
 
 
 def transfer_scheduled_reports(from_user, to_user_id):
@@ -116,6 +119,7 @@ def transfer_scheduled_reports(from_user, to_user_id):
         for scheduled_report in ReportNotification.by_domain_and_owner(domain, from_user._id, stale=False):
             scheduled_report.owner_id = to_user_id
             scheduled_report.save()
+            logger.info(f'Transferred ownership of scheduled report {scheduled_report._id}.')
 
 
 def transfer_saved_reports(from_user, to_user):
@@ -123,6 +127,7 @@ def transfer_saved_reports(from_user, to_user):
         for saved_report in ReportConfig.by_domain_and_owner(domain, from_user.get_id, stale=False):
             saved_report.owner_id = to_user.get_id
             saved_report.save()
+            logger.info(f'Transferred ownership of saved report {saved_report._id}.')
 
 
 def transfer_feature_flags(from_user, to_user):
@@ -131,6 +136,7 @@ def transfer_feature_flags(from_user, to_user):
         logger.info(f'Updating toggle {toggle} from {from_user.username} to {to_user.username}')
         set_toggle(toggle, from_user.username, False)
         set_toggle(toggle, to_user.username, True)
+        logger.info(f'Transferred access to {toggle.slug}.')
 
     toggles_enabled_for_user.clear(from_user.username)
     toggles_enabled_for_user.clear(to_user.username)
@@ -183,6 +189,9 @@ def send_deprecation_email(old_user, new_user):
     email_html = render_to_string('users/email/deprecated_user.html', context)
     email_plaintext = render_to_string('users/email/deprecated_user.txt', context)
 
+    logger.info(
+        f'Sending email with deprecated notice to old email {old_user.email} and new email {new_user.email}.'
+    )
     send_html_email_async.delay(
         _("Deprecated User"),
         old_user.email,
