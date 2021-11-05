@@ -75,7 +75,7 @@ def get_domain_first_access_times(domains, start_date=None, end_date=None):
     NOTE: This function does _not_ query couch.
 
     NOTE: This function may return multiple "access events" from the same
-          session (if multiple of `domains` were accessed in the same session).
+          session (if multiple `domains` were accessed in the same session).
 
     Resulting SQL query:
 
@@ -89,7 +89,7 @@ def get_domain_first_access_times(domains, start_date=None, end_date=None):
     WHERE (
         domain IN ( {domains} )
         AND event_date > {start_date}
-        AND event_date < {end_date}
+        AND event_date <= {end_date}
         AND "user" IS NOT NULL
         AND session_key IS NOT NULL
     )

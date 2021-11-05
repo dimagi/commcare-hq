@@ -23,7 +23,7 @@ class Command(BaseCommand):
             - Specifying the --domain option excludes all non-domain navigation events
               (admin activities, account/profile management, etc).
             - Specifying the --domain option without the --user option will result in a
-              report limited to "users associated with that domain" and superusers.
+              report limited to "users associated with that domain" (not including enterprise users) and superusers.
     """)
 
     def create_parser(self, prog_name, subcommand, **kwargs):
