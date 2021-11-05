@@ -298,7 +298,7 @@ class SQLRepeater(models.Model):
             self.save()
 
 
-class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater):
+class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater, RepeaterSuperProxy):
     """
     Record that cases should be repeated to a new url
 
@@ -328,6 +328,7 @@ class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater):
     payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
 
     _migration_couch_id_name = 'repeater_id'
+    _repeater_type = 'CaseRepeater'
 
     def allowed_to_forward(self, payload):
         return self._allowed_case_type(payload) and self._allowed_user(payload)
