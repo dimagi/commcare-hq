@@ -87,4 +87,5 @@ branches:
     - sk/additional-registry-cases  # Simon Nov 4
     - rc/store-usernames-in-log # Robert Nov 4
     - do/user-profiles-not-updating # Dominic Nov 4
+    - sk/additional-registry-cases # Simon/Jenny Nov 6
 submodules: { }
