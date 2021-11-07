@@ -1,6 +1,7 @@
 import csv
 import itertools
 import os
+import urllib.parse
 import uuid
 from collections import Counter
 from datetime import datetime, timedelta
@@ -365,7 +366,8 @@ class DisableUserView(FormView):
 
     @property
     def redirect_url(self):
-        return '{}?q={}'.format(reverse('web_user_lookup'), self.username)
+        encoded_username = urllib.parse.quote(self.username)
+        return '{}?q={}'.format(reverse('web_user_lookup'), encoded_username)
 
     def get(self, request, *args, **kwargs):
         if not self.user:
@@ -436,7 +438,7 @@ class DisableUserView(FormView):
         )
 
         messages.success(self.request, _('Account successfully %(verb)s.' % {'verb': verb}))
-        return redirect('{}?q={}'.format(reverse('web_user_lookup'), self.username))
+        return redirect(self.redirect_url)
 
 
 @method_decorator(require_superuser, name='dispatch')
