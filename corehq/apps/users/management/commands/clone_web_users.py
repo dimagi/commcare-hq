@@ -24,7 +24,15 @@ NEW_USERNAME = 'new_username'
 
 
 class Command(BaseCommand):
-    help = "Create a new web user with the same data as the old user"
+    help = """
+    Creates new web users with the same data as existing web users
+    - Input is a CSV file with old_username and new_username columns
+    - The new user is created, data is copied/transferred over, and the old user is deactivated which will log
+    users out on their next request
+    - Sends an email to the new user's preferred email and old user's preferred email informing them of the change
+    If a user wants to reactivate their old account, they can request this via support who has the ability to make
+    this change in hq admin  under User Administration -> Lookup user by email -> Disable/Enable User Account
+    """
 
     def add_arguments(self, parser):
         parser.add_argument('file', help='')
