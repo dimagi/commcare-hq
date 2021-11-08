@@ -3,14 +3,15 @@
 {{ greeting }}
 
 {% blocktrans %}
-As your organization has already communicated to you, your current CommCare user {{ old_username }} is being
-migrated over to a new user {{ new_username }}. You can now log in with the new user using SSO.
+As your organization has already communicated to you, your current CommCare user: {{ old_username }} is being
+migrated over to a new user: {{ new_username }}. You can now log in with the new user using SSO.
 
 This new user will have access to the same project spaces as the deprecated user, and saved exports, saved reports,
 and scheduled reports created by your deprecated user have been transferred to the new user.
 
 The deprecated user is no longer active. If for any reason you need to gain access to the old account, please
-contact support.
+contact support informing them your account associated with {{ old_username }} has been deactivated as a result of
+the MSI user migration.
 
 Thanks,
 CommCareHQ
