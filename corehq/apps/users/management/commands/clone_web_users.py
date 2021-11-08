@@ -194,15 +194,14 @@ def send_deprecation_email(old_user, new_user):
     email_html = render_to_string('users/email/deprecated_user.html', context)
     email_plaintext = render_to_string('users/email/deprecated_user.txt', context)
 
-    logger.info(
-        f'Sending email with deprecated notice to old email {old_user.email} and new email {new_user.email}.'
-    )
+    logger.info(f'Sending email with deprecated notice to old email {old_user.get_email()} and '
+                f'new email {new_user.get_email()}.')
     send_html_email_async.delay(
         _("Deprecated User"),
-        old_user.email,
+        old_user.get_email(),
         email_html,
         text_content=email_plaintext,
         email_from=settings.DEFAULT_FROM_EMAIL,
         file_attachments=[],
-        cc=[new_user.email]
+        cc=[new_user.get_email()]
     )
