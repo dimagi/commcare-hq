@@ -199,9 +199,7 @@ class RepeaterSuperProxy(models.Model):
         abstract = True
 
     def save(self, *args, **kwargs):
-        # _repeater_type should be replaces when SQL is removed from model name
-        # After that self.model.__name__ would work fine
-        self.repeater_type = self._repeater_type
+        self.repeater_type = self.get_repeater_type()
         return super().save(*args, **kwargs)
 
     def __new__(cls, *args, **kwargs):
@@ -224,7 +222,7 @@ class RepeaterSuperProxy(models.Model):
 
 class RepeaterProxyManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(repeater_type=self.model._repeater_type)
+        return super().get_queryset().filter(repeater_type=self.model.get_repeater_type(self.model))
 
 
 class RepeaterManager(models.Manager):
@@ -297,6 +295,10 @@ class SQLRepeater(models.Model):
             self.next_attempt_at = None
             self.save()
 
+    def get_repeater_type(self):
+        name = self.__class__.__name__
+        return name[3:] if name.startswith('SQL') else name
+
 
 class SQLCaseRepeater(RepeaterSuperProxy, SyncSQLToCouchMixin, SQLRepeater):
     """
@@ -328,7 +330,6 @@ class SQLCaseRepeater(RepeaterSuperProxy, SyncSQLToCouchMixin, SQLRepeater):
     payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
 
     _migration_couch_id_name = 'repeater_id'
-    _repeater_type = 'CaseRepeater'
 
     def allowed_to_forward(self, payload):
         return self._allowed_case_type(payload) and self._allowed_user(payload)
@@ -381,8 +382,6 @@ class SQLCaseRepeater(RepeaterSuperProxy, SyncSQLToCouchMixin, SQLRepeater):
 class SQLCreateCaseRepeater(SQLCaseRepeater):
     class Meta:
         proxy = True
-
-    _repeater_type = 'CreateCaseRepeater'
 
     objects = RepeaterProxyManager()
 
