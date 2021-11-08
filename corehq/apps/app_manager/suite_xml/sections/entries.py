@@ -549,7 +549,7 @@ class EntriesHelper(object):
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
 
-        case_types = set(module.search_config.additional_case_types) | {module.case_type}
+        case_types = set(module.search_config.additional_case_types) | {datum.case_type}
         case_ids_expressions = {session_var(datum.datum.id)} | set(module.search_config.additional_registry_cases)
         data = [
             QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
