@@ -50,20 +50,26 @@ def test_generator_exclude_list():
         }})
 
 
-def test_generator_dont_override_existing():
-    builder = (
-        IntentCaseBuilder(override_properties=False)
-        .case_properties(new_prop="new_prop_val", existing_prop="try override", existing_blank_prop="not blank")
-        .exclude_props([])
+def test_generator_create_case():
+    builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").create_case("123")
+    _test_payload_generator(
+        intent_case=builder.get_case(), target_case_exists=False,
+        expected_updates={"1": {"new_prop": "new_prop_val"}},
+        expected_creates={"1": {"case_type": "patient", "owner_id": "123"}},
     )
-    _test_payload_generator(intent_case=builder.get_case(), expected_updates={
-        "1": {
-            "new_prop": "new_prop_val",
-        }})
+
+
+def test_generator_create_close():
+    builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").close_case()
+    _test_payload_generator(
+        intent_case=builder.get_case(),
+        expected_updates={"1": {"new_prop": "new_prop_val"}},
+        expected_close=["1"],
+    )
 
 
 def test_generator_update_create_index_to_parent():
-    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
     def _get_case(case_id):
         assert case_id == "case2"
@@ -75,7 +81,7 @@ def test_generator_update_create_index_to_parent():
 
 
 def test_generator_update_create_index_to_host():
-    builder = IntentCaseBuilder().create_index("case2", "parent_type", "extension").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "extension")
 
     def _get_case(case_id):
         assert case_id == "case2"
@@ -87,7 +93,7 @@ def test_generator_update_create_index_to_host():
 
 
 def test_generator_update_create_index_not_found():
-    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
     with assert_raises(DataRegistryCaseUpdateError, msg="Index case not found: case2"):
         with patch.object(CaseAccessorSQL, 'get_case', side_effect=CaseNotFound):
@@ -95,7 +101,7 @@ def test_generator_update_create_index_not_found():
 
 
 def test_generator_update_create_index_domain_mismatch():
-    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
     def _get_case(case_id):
         assert case_id == "case2"
@@ -107,7 +113,7 @@ def test_generator_update_create_index_domain_mismatch():
 
 
 def test_generator_update_create_index_case_type_mismatch():
-    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child").exclude_props([])
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
     def _get_case(case_id):
         assert case_id == "case2"
@@ -118,20 +124,72 @@ def test_generator_update_create_index_case_type_mismatch():
             _test_payload_generator(intent_case=builder.get_case())
 
 
+def test_generator_update_create_index_bad_relationship():
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "cousin")
+    msg = "Index relationships must be either 'child' or 'extension'"
+    with assert_raises(DataRegistryCaseUpdateError, msg=msg):
+        _test_payload_generator(intent_case=builder.get_case())
+
+
+def test_generator_update_remove_index_bad_relationship():
+    builder = IntentCaseBuilder().remove_index("case2", "cousin")
+    msg = "Index relationships must be either 'child' or 'extension'"
+    with assert_raises(DataRegistryCaseUpdateError, msg=msg):
+        _test_payload_generator(intent_case=builder.get_case())
+
+
+def test_generator_update_remove_index():
+    builder = IntentCaseBuilder().remove_index("parent_case_id", "child")
+
+    _test_payload_generator(intent_case=builder.get_case(), expected_indices={
+        "1": {"parent": IndexAttrs("parent_type", None, "child")}})
+
+
+def test_generator_update_create_and_remove_index():
+    builder = IntentCaseBuilder() \
+        .create_index("case2", "host_type", "extension") \
+        .remove_index("parent_case_id", "child")
+
+    def _get_case(case_id):
+        assert case_id == "case2"
+        return Mock(domain=TARGET_DOMAIN, case_type="host_type")
+
+    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+        _test_payload_generator(intent_case=builder.get_case(), expected_indices={
+            "1": {
+                "host": IndexAttrs("host_type", "case2", "extension"),
+                "parent": IndexAttrs("parent_type", None, "child")
+            }})
+
+
+def test_generator_update_create_and_remove_same_index():
+    builder = IntentCaseBuilder() \
+        .create_index("case2", "new_parent_type", "child") \
+        .remove_index("parent_case_id", "child")
+
+    def _get_case(case_id):
+        assert case_id == "case2"
+        return Mock(domain=TARGET_DOMAIN, case_type="new_parent_type")
+
+    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+        _test_payload_generator(intent_case=builder.get_case(), expected_indices={
+            "1": {
+                "parent": IndexAttrs("new_parent_type", "case2", "child")
+            }})
+
+
 def test_generator_update_multiple_cases():
-    main_case_builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").exclude_props([])
+    main_case_builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val")
     subcase1 = (
         IntentCaseBuilder()
         .target_case(case_id="sub1")
         .case_properties(sub1_prop="sub1_val")
-        .exclude_props([])
         .get_case()
     )
     subcase2 = (
         IntentCaseBuilder()
         .target_case(case_id="sub2")
         .case_properties(sub2_prop="sub2_val")
-        .exclude_props([])
         .get_case()
     )
     main_case_builder.set_subcases([subcase1, subcase2])
@@ -161,7 +219,9 @@ def test_generator_required_fields():
         _test_payload_generator(intent_case=intent_case)
 
 
-def _test_payload_generator(intent_case, expected_updates=None, expected_indices=None):
+def _test_payload_generator(intent_case, target_case_exists=True,
+                            expected_updates=None, expected_indices=None,
+                            expected_creates=None, expected_close=None):
     # intent case is the case created in the source domain which is used to trigger the repeater
     # and which contains the config for updating the case in the target domain
 
@@ -172,10 +232,18 @@ def _test_payload_generator(intent_case, expected_updates=None, expected_indices
 
     # target_case is the case in the target domain which is being updated
     def _get_case(self, case_id, case_type, *args, **kwargs):
+        if not target_case_exists:
+            raise CaseNotFound
+
         return Mock(domain=TARGET_DOMAIN, case_type=case_type, case_id=case_id, case_json={
             "existing_prop": uuid.uuid4().hex,
             "existing_blank_prop": ""
-        })
+        }, live_indices=[
+            Mock(
+                identifier="parent", referenced_type="parent_type",
+                referenced_id="parent_case_id", relationship_id="child"
+            )
+        ])
 
     with patch.object(DataRegistryHelper, "get_case", new=_get_case), \
          patch.object(CouchUser, "get_by_user_id", return_value=Mock(username="local_user")):
@@ -189,6 +257,10 @@ def _test_payload_generator(intent_case, expected_updates=None, expected_indices
         form.assert_case_updates(expected_updates or {})
         if expected_indices:
             form.assert_case_index(expected_indices)
+        if expected_creates:
+            form.assert_case_create(expected_creates)
+        if expected_close:
+            form.assert_case_close(expected_close)
 
 
 class DataRegistryUpdateForm:
@@ -225,14 +297,23 @@ class DataRegistryUpdateForm:
         }
         eq(actual, expected)
 
+    def assert_case_create(self, expected_creates):
+        for case_id, create in expected_creates.items():
+            eq(self.cases[case_id].create, True)
+            for key, val in create.items():
+                eq(getattr(self.cases[case_id], key), val)
+
+    def assert_case_close(self, case_ids):
+        for case_id in case_ids:
+            eq(self.cases[case_id].close, True)
+
 
 class IntentCaseBuilder:
     CASE_TYPE = "registry_case_update"
 
-    def __init__(self, registry="registry1", override_properties=True):
+    def __init__(self, registry="registry1"):
         self.props: dict = {
             "target_data_registry": registry,
-            "target_property_override": str(int(override_properties)),
         }
         self.target_case()
         self.subcases = []
@@ -245,11 +326,31 @@ class IntentCaseBuilder:
         })
         return self
 
+    def create_case(self, owner_id):
+        self.props.update({
+            "target_case_create": "1",
+            "target_case_owner_id": owner_id
+        })
+        return self
+
+    def close_case(self):
+        self.props.update({
+            "target_case_close": "1",
+        })
+        return self
+
     def create_index(self, case_id, case_type, relationship="child"):
         self.props.update({
-            "target_index_case_id": case_id,
-            "target_index_case_type": case_type,
-            "target_index_relationship": relationship,
+            "target_index_create_case_id": case_id,
+            "target_index_create_case_type": case_type,
+            "target_index_create_relationship": relationship,
+        })
+        return self
+
+    def remove_index(self, case_id, relationship):
+        self.props.update({
+            "target_index_remove_case_id": case_id,
+            "target_index_remove_relationship": relationship,
         })
         return self
 
