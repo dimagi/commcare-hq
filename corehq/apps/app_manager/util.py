@@ -21,6 +21,8 @@ from dimagi.utils.couch import CriticalSection
 from corehq import toggles
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_USERCASE,
+    REGISTRY_WORKFLOW_LOAD_CASE,
+    REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_ID,
     USERCASE_PREFIX,
     USERCASE_TYPE,
@@ -381,6 +383,20 @@ def module_offers_registry_search(module):
         module_offers_search(module)
         and module.get_app().supports_data_registry
         and module.search_config.data_registry
+    )
+
+
+def module_loads_registry_case(module):
+    return (
+        module_offers_registry_search(module)
+        and module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_LOAD_CASE
+    )
+
+
+def module_uses_smart_links(module):
+    return (
+        module_offers_registry_search(module)
+        and module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_SMART_LINK
     )
 
 
