@@ -18,7 +18,7 @@ from corehq.apps.registry.exceptions import RegistryAccessException
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser
 from corehq.const import OPENROSA_VERSION_3
-from corehq.form_processor.exceptions import CaseNotFound, CaseTypeMismatch
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.motech.repeaters.exceptions import ReferralError, DataRegistryCaseUpdateError
@@ -616,17 +616,15 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
 
     def _get_case(self, registry_helper, repeat_record, config, couch_user):
         try:
-            case = registry_helper.get_case(config.case_id, config.case_type, couch_user, repeat_record.repeater)
+            case = registry_helper.get_case(config.case_id, couch_user, repeat_record.repeater)
         except RegistryAccessException:
             raise DataRegistryCaseUpdateError("User does not have permission to access the registry")
-        except CaseTypeMismatch:
-            raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
         except CaseNotFound:
             if config.create_case:
                 return
             raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
 
-        if case.domain != config.domain:
+        if case.domain != config.domain or case.type != config.case_type:
             raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
 
         return case
