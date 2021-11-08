@@ -135,7 +135,7 @@ When this flag is on, different builds of the same downstream app may have diffe
 
 ## Removing a link
 
-Use the `unlink_apps` management command to convert a linked application to a regular application. 
+Use the `unlink_apps` management command to convert a linked application to a regular application.
 
 ```
 $ ./manage.py unlink_apps {downstream_app_id} {downstream_domain_name} {upstream_domain_name}
