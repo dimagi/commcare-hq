@@ -835,16 +835,6 @@ class XForm(WrappedNode):
         instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(
             app, [self.render().decode('utf-8')])
 
-        module = form.get_module()
-        if _module_offers_registry_search(module) and module.search_config.additional_registry_queries:
-            remote_instances = [
-                Instance(id=query.instance_name, src='jr://instance/remote')
-                for query in module.search_config.additional_registry_queries
-            ]
-            for instance in remote_instances:
-                instances.add(instance)
-                unknown_instance_ids.discard(instance.id)
-
         for instance_id in unknown_instance_ids:
             if instance_id not in instance_declarations:
                 missing_unknown_instances.add(instance_id)
@@ -1591,7 +1581,7 @@ class XForm(WrappedNode):
             raise CaseError("To update a case you must either open a case or require a case to begin with")
 
         module = form.get_module()
-        is_registry_case = _module_offers_registry_search(module) and not form_opens_case
+        is_registry_case = _module_loads_registry_case(module) and not form_opens_case
         delegation_case_block = None
         if not actions or (form.requires == 'none' and not form_opens_case):
             case_block = None
@@ -2258,7 +2248,7 @@ def _infer_vellum_type(control, bind):
     return result['name']
 
 
-def _module_offers_registry_search(module):
+def _module_loads_registry_case(module):
     """Local function to allow mocking in tests"""
-    from .util import module_offers_registry_search
-    return module_offers_registry_search(module)
+    from .util import module_loads_registry_case
+    return module_loads_registry_case(module)
