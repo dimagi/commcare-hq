@@ -84,7 +84,6 @@ branches:
     - ap/resume-cancelled-batches # Amit Nov 1
     - bmb/upgrade-babel-2.9.1  # Biyeun Nov 1 (touches 2FA, phone number validation, going into QA)
     - bmb/update-datatables-dt  # Biyeun Nov 2
-    - sk/additional-registry-cases  # Simon Nov 4
-#    - rc/store-usernames-in-log # Robert Nov 4
+    - rc/store-usernames-in-log # Robert Nov 4
     - do/user-profiles-not-updating # Dominic Nov 4
 submodules: { }

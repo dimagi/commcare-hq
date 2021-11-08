@@ -94,13 +94,11 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
             IntentCaseBuilder(self.registry_slug)
             .target_case(self.target_domain, self.target_case_id_1)
             .case_properties(new_prop="new_val_case1")
-            .exclude_props([])
         )
         builder2 = (
             IntentCaseBuilder(self.registry_slug)
             .target_case(self.target_domain, self.target_case_id_2)
             .case_properties(new_prop="new_val_case2")
-            .exclude_props([])
         )
         factory = CaseFactory(self.domain)
         host = CaseStructure(

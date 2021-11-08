@@ -9,7 +9,9 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     Itemset,
     Module,
-    AdditionalRegistryQuery, DetailColumn, FormLink, DetailTab,
+    DetailColumn,
+    FormLink,
+    DetailTab,
 )
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -97,9 +99,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/"
                 storage-instance="registry" template="case" default_search="true">
+              <data key="commcare_registry" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
-              <data key="commcare_registry" ref="'myregistry'"/>
             </query>
           </session>
         </partial>"""
@@ -123,25 +125,24 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_search_data_registry_additional_registry_query(self, *args):
         base_xpath = "instance('registry')/results/case[@case_id=instance('commcaresession')/session/data/case_id]"
-        self.module.search_config.additional_registry_queries = [
-            AdditionalRegistryQuery(
-                instance_name="duplicate",
-                case_type_xpath=f"{base_xpath}/potential_duplicate_case_type",
-                case_id_xpath=f"{base_xpath}/potential_duplicate_case_id"
-            )
+        self.module.search_config.additional_case_types = ["other_case"]
+        self.module.search_config.additional_registry_cases = [
+            f"{base_xpath}/potential_duplicate_case_id"
         ]
         suite = self.app.create_suite()
 
         expected_entry_query = f"""
         <partial>
-          <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/" storage-instance="duplicate"
+          <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/" storage-instance="registry"
                 template="case" default_search="true">
-            <data key="case_type" ref="{base_xpath}/potential_duplicate_case_type"/>
-            <data key="case_id" ref="{base_xpath}/potential_duplicate_case_id"/>
             <data key="commcare_registry" ref="'myregistry'"/>
+            <data key="case_type" ref="'case'"/>
+            <data key="case_type" ref="'other_case'"/>
+            <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+            <data key="case_id" ref="{base_xpath}/potential_duplicate_case_id"/>
           </query>
         </partial>"""
-        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[3]")
+        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[2]")
 
         self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
         self.assertXmlDoesNotHaveXpath(suite, "./entry[1]/instance[@id='registry']")
