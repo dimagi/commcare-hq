@@ -425,7 +425,7 @@ class DisableUserView(FormView):
         )
         send_HTML_email(
             "%sYour account has been %s" % (settings.EMAIL_SUBJECT_PREFIX, verb),
-            self.username,
+            self.user.get_email() if self.user else self.username,
             render_to_string('hqadmin/email/account_disabled_email.html', context={
                 'support_email': settings.SUPPORT_EMAIL,
                 'password_reset': reset_password,
@@ -512,7 +512,7 @@ class DisableTwoFactorView(FormView):
             "Two-Factor auth was reset. Details: \n"
             "    Account reset: {username}\n"
             "    Reset by: {reset_by}\n"
-            "    Request Verificatoin Mode: {verification}\n"
+            "    Request Verification Mode: {verification}\n"
             "    Verified by: {verified_by}\n"
             "    Two-Factor disabled for {days} days.".format(
                 username=username,
@@ -524,7 +524,7 @@ class DisableTwoFactorView(FormView):
         )
         send_HTML_email(
             "%sTwo-Factor authentication reset" % settings.EMAIL_SUBJECT_PREFIX,
-            username,
+            couch_user.get_email(),
             render_to_string('hqadmin/email/two_factor_reset_email.html', context={
                 'until': disable_until.strftime('%Y-%m-%d %H:%M:%S UTC') if disable_for_days else None,
                 'support_email': settings.SUPPORT_EMAIL,
