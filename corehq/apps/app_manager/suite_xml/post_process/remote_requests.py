@@ -266,20 +266,13 @@ class RemoteRequestFactory(object):
     def build_stack(self):
         stack = Stack()
         if module_uses_smart_links(self.module):
-            case_id_xpath = CaseIDXPath(session_var(self.case_session_var))
-            case_domain_xpath = case_id_xpath.case(instance_name=RESULTS_INSTANCE).slash(COMMCARE_PROJECT)
             user_domain_xpath = session_var(COMMCARE_PROJECT, path="user/data")
-            frame = PushFrame(if_clause=case_domain_xpath.neq(user_domain_xpath))
+            frame = PushFrame(if_clause=self._get_case_domain_xpath().neq(user_domain_xpath))
             frame.add_datum(StackJump(
                 url=Text(
                     xpath=TextXPath(
                         function=self.get_smart_link_function(),
-                        variables=[
-                            XPathVariable(
-                                name="domain",
-                                xpath=CalculatedPropertyXPath(function=case_domain_xpath),
-                            ),
-                        ],
+                        variables=self.get_smart_link_variables(),
                     ),
                 ),
             ))
@@ -293,7 +286,44 @@ class RemoteRequestFactory(object):
         app_id = self.app.upstream_app_id if is_linked_app(self.app) else self.app.origin_id
         url = absolute_reverse("session_endpoint", args=["---", app_id, self.module.session_endpoint_id])
         prefix, suffix = url.split("---")
-        return f"concat('{prefix}', $domain, '{suffix}')"
+        params = ""
+        argument_ids = self.endpoint_argument_ids
+        if argument_ids:
+            params = f", '?{argument_ids[-1]}=', ${argument_ids[-1]}"
+            for argument_id in argument_ids[:-1]:
+                params = f", '&{argument_id}=', ${argument_id}"
+        return f"concat('{prefix}', $domain, '{suffix}'{params})"
+
+    def get_smart_link_variables(self):
+        variables = [
+            XPathVariable(
+                name="domain",
+                xpath=CalculatedPropertyXPath(function=self._get_case_domain_xpath()),
+            ),
+        ]
+        argument_ids = self.endpoint_argument_ids
+        if argument_ids:
+            for argument_id in argument_ids[:-1]:
+                variables.append(XPathVariable(
+                    name=argument_id,
+                    xpath=CalculatedPropertyXPath(function=QuerySessionXPath(argument_id).instance()),
+                ))
+            # Last argument was the one selected in case search
+            variables.append(XPathVariable(
+                name=argument_ids[-1],
+                xpath=CalculatedPropertyXPath(function=QuerySessionXPath(self.case_session_var).instance()),
+            ))
+        return variables
+
+    @cached_property
+    def endpoint_argument_ids(self):
+        helper = EndpointsHelper(self.suite, self.app, [self.module])
+        children = helper.get_frame_children(self.module, None)
+        return helper.get_argument_ids(children)
+
+    def _get_case_domain_xpath(self):
+        case_id_xpath = CaseIDXPath(session_var(self.case_session_var))
+        return case_id_xpath.case(instance_name=RESULTS_INSTANCE).slash(COMMCARE_PROJECT)
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
