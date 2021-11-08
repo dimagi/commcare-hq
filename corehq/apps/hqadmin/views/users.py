@@ -366,6 +366,8 @@ class DisableUserView(FormView):
 
     @property
     def redirect_url(self):
+        if not self.username:
+            return None
         encoded_username = urllib.parse.quote(self.username)
         return '{}?q={}'.format(reverse('web_user_lookup'), encoded_username)
 

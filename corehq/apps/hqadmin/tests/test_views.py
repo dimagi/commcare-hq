@@ -7,7 +7,7 @@ from lxml import etree
 from mock import Mock, patch
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.hqadmin.views.users import AdminRestoreView
+from corehq.apps.hqadmin.views.users import AdminRestoreView, DisableUserView
 
 
 class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
@@ -65,3 +65,30 @@ class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
             },
             'num_ledger_entries': 0,
         })
+
+
+class DisableUserViewTests(SimpleTestCase):
+
+    def test_redirect_url_username_is_encoded(self):
+        user = Mock()
+        request = Mock()
+        request.GET = {
+            'username': 'test+example@dimagi.com'
+        }
+        view = DisableUserView(user=user, request=request)
+        with patch('corehq.apps.hqadmin.views.users.reverse') as mock_reverse:
+            mock_reverse.return_value = 'dummy_url/'
+            redirect_url = view.redirect_url
+
+        self.assertEqual(redirect_url, 'dummy_url/?q=test%2Bexample%40dimagi.com')
+
+    def test_redirect_url_returns_none_if_no_username(self):
+        user = Mock()
+        request = Mock()
+        request.GET = {}
+        view = DisableUserView(user=user, request=request)
+        with patch('corehq.apps.hqadmin.views.users.reverse') as mock_reverse:
+            mock_reverse.return_value = 'dummy_url/'
+            redirect_url = view.redirect_url
+
+        self.assertIsNone(redirect_url)
