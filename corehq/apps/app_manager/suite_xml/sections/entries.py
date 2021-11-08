@@ -541,7 +541,7 @@ class EntriesHelper(object):
         details screen. The case details is then populated with data from the results of the query.
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
-        factory = RemoteRequestFactory(module, [])
+        factory = RemoteRequestFactory(None, module, [])
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
 

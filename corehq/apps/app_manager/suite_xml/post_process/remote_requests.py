@@ -71,7 +71,8 @@ class QuerySessionXPath(InstanceXpath):
 
 
 class RemoteRequestFactory(object):
-    def __init__(self, module, detail_section_elements):
+    def __init__(self, suite, module, detail_section_elements):
+        self.suite = suite
         self.app = module.get_app()
         self.domain = self.app.domain
         self.module = module
@@ -296,8 +297,8 @@ class RemoteRequestFactory(object):
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
-    def __init__(self, module, detail_section_elements, endpoint_id, case_session_var):
-        super().__init__(module, detail_section_elements)
+    def __init__(self, suite, module, detail_section_elements, endpoint_id, case_session_var):
+        super().__init__(suite, module, detail_section_elements)
         self.endpoint_id = endpoint_id
         self.case_session_var = case_session_var
 
@@ -351,7 +352,7 @@ class RemoteRequestsHelper(PostProcessor):
         for module in self.modules:
             if module_offers_search(module) or module_uses_smart_links(module):
                 self.suite.remote_requests.append(RemoteRequestFactory(
-                    module, detail_section_elements).build_remote_request()
+                    self.suite, module, detail_section_elements).build_remote_request()
                 )
             if module.session_endpoint_id:
                 self.suite.remote_requests.extend(
@@ -370,6 +371,6 @@ class RemoteRequestsHelper(PostProcessor):
         for child in children:
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
                 elements.append(SessionEndpointRemoteRequestFactory(
-                    module, detail_section_elements, endpoint_id, child.id).build_remote_request(),
+                    self.suite, module, detail_section_elements, endpoint_id, child.id).build_remote_request(),
                 )
         return elements
