@@ -390,6 +390,20 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.isMulti = true;
         self.hideLabel = ko.observable(options.hideLabel);
 
+        // A custom binding to add a column layout class only if hideLabel = true
+        ko.bindingHandlers.addColStyle = {
+            update: function(element, valueAccessor) {
+                var value = valueAccessor();
+                var shouldAddColStyle = ko.unwrap(value);
+
+                if (shouldAddColStyle) {
+                    // Account for number of choices plus column for clear button
+                    var colWidth = parseInt(12 / (self.choices().length + 1)) || 1;
+                    $(element).addClass('col-xs-' + colWidth)
+                }
+            }
+        }
+
         self.onClear = function () {
             self.rawAnswer([]);
         };
