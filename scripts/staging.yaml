@@ -74,7 +74,6 @@ branches:
     - ml/remove-pickles-user-importer # Minha Oct 13
     - rp/insert-status-embed # Rynhard Oct 15
     - fr/dedupe+ad/auto-update-rules-for-linked-spaces
-    - fr/dedupe  # Farid Sept 17
     - ad/auto-update-rules-for-linked-spaces # Addison Oct 25
 #    - ml/remove-pickles-reports # Minha Oct 21
     - sk/data-registry-form-linking+sk/additional-registry-cases
@@ -86,4 +85,5 @@ branches:
     - bmb/update-datatables-dt  # Biyeun Nov 2
     - rc/store-usernames-in-log # Robert Nov 4
     - do/user-profiles-not-updating # Dominic Nov 4
+    - fr/inactive-duplicates        # Farid Nov 8
 submodules: { }
