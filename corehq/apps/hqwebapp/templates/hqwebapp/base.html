@@ -425,6 +425,8 @@
     {% block js %}{% endblock js %}
 
     {% block js-inline %}{% endblock js-inline %}
-
+    {% if show_status_page == 'staging' %}
+      <script src="https://p3s9fvl6gvhr.statuspage.io/embed/script.js"></script>
+    {% endif %}
   </body>
 </html>
