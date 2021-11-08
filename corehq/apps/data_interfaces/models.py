@@ -112,6 +112,7 @@ class AutomaticUpdateRule(models.Model):
     # that this rule belongs to.
     workflow = models.CharField(max_length=126)
 
+    upstream_id = models.CharField(max_length=32, null=True)
     locked_for_editing = models.BooleanField(default=False)
 
     class Meta(object):
@@ -440,6 +441,25 @@ class AutomaticUpdateRule(models.Model):
     def get_schedule(self):
         return self.get_action_definition().schedule
 
+    def to_json(self):
+        simple_fields = [
+            "domain",
+            "name",
+            "case_type",
+            "active",
+            "deleted",
+            "last_run",
+            "filter_on_server_modified",
+            "server_modified_boundary",
+            "workflow",
+            "locked_for_editing",
+            "upstream_id"
+        ]
+        data = {}
+        for field in simple_fields:
+            data[field] = getattr(self, field)
+        data['id'] = self.id
+        return data
 
 class CaseRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
