@@ -80,8 +80,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             DataTablesColumn(_("Modified by User")),
             DataTablesColumn(_("Action")),
             DataTablesColumn(_("Via")),
-            DataTablesColumn(_("Change Message")),
             DataTablesColumn(_("Changes")),
+            DataTablesColumn(_("Change Message")),
             DataTablesColumn(_("Timestamp")),
         ]
 
@@ -173,8 +173,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             cached_user_id_to_username(record.changed_by),
             _get_action_display(record.action),
             record.changed_via,
-            list(get_messages(record.change_messages)),
             self._user_history_details_cell(record.changes, domain),
+            list(get_messages(record.change_messages)),
             ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
         ]
 
