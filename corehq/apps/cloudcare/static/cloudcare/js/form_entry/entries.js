@@ -388,6 +388,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.templateType = 'select';
         self.choices = question.choices;
         self.isMulti = true;
+        self.hideLabel = ko.observable(options.hideLabel);
 
         self.onClear = function () {
             self.rawAnswer([]);
@@ -1059,8 +1060,23 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 break;
             case Const.MULTI_SELECT:
                 isMinimal = style === Const.MINIMAL;
+                if (style) {
+                    isLabel = style === Const.LABEL;
+                    hideLabel = style === Const.LIST_NOLABEL;
+                }
+
                 if (isMinimal) {
                     entry = new MultiDropdownEntry(question, {});
+                } else if (isLabel) {
+                    // ChoiceLabelEntry is usually only for radio-type inputs, but utilizing here because
+                    //  it will just be label text.
+                    entry = new ChoiceLabelEntry(question, {
+                        hideLabel: false,
+                    });
+                } else if (hideLabel) {
+                    entry = new MultiSelectEntry(question, {
+                        hideLabel: true,
+                    });
                 } else {
                     entry = new MultiSelectEntry(question, {});
                 }
