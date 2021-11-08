@@ -35,7 +35,7 @@ def explode_cases(domain, user_id, factor, task=None):
 
     couch_user = CommCareUser.get_by_user_id(user_id, domain)
     restore_user = get_restore_user(domain, couch_user, None)
-    device = MockDevice(restore_user.project, restore_user, {"overwrite_cache": True, "case_sync": LIVEQUERY})
+    device = MockDevice(restore_user.project, restore_user, {"overwrite_cache": True})
     sync_result = device.restore()
 
     cases = {}

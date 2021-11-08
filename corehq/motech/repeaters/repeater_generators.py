@@ -401,12 +401,16 @@ class CaseUpdateConfig:
         "domain": "target_domain",
         "case_type": "target_case_type",
         "case_id": "target_case_id",
+        "owner_id": "target_case_owner_id",
+        "create_case": "target_case_create",
+        "close_case": "target_case_close",
         "includes": "target_property_includelist",
         "excludes": "target_property_excludelist",
-        "override_props": "target_property_override",
-        "index_case_id": "target_index_case_id",
-        "index_case_type": "target_index_case_type",
-        "index_relationship": "target_index_relationship",
+        "index_create_case_id": "target_index_create_case_id",
+        "index_create_case_type": "target_index_create_case_type",
+        "index_create_relationship": "target_index_create_relationship",
+        "index_remove_case_id": "target_index_remove_case_id",
+        "index_remove_relationship": "target_index_remove_relationship",
     }
     REQUIRED_FIELDS = [
         "registry_slug",
@@ -420,12 +424,16 @@ class CaseUpdateConfig:
     domain = attr.ib()
     case_type = attr.ib()
     case_id = attr.ib()
+    owner_id = attr.ib()
+    create_case = attr.ib()
+    close_case = attr.ib()
     includes = attr.ib()
     excludes = attr.ib()
-    override_props = attr.ib()
-    index_case_id = attr.ib()
-    index_case_type = attr.ib()
-    index_relationship = attr.ib()
+    index_create_case_id = attr.ib()
+    index_create_case_type = attr.ib()
+    index_create_relationship = attr.ib()
+    index_remove_case_id = attr.ib()
+    index_remove_relationship = attr.ib()
 
     @classmethod
     def from_payload(cls, payload_doc):
@@ -434,9 +442,21 @@ class CaseUpdateConfig:
             for attr, prop_name in cls.PROPS.items()
         }
         kwargs["intent_case"] = payload_doc
+        if "index_create_relationship" not in kwargs:
+            kwargs["index_create_relationship"] = "child"
+        if "index_remove_relationship" not in kwargs:
+            kwargs["index_remove_relationship"] = "child"
         config = CaseUpdateConfig(**kwargs)
         config.validate()
         return config
+
+    @property
+    def index_remove_identifier(self):
+        return "parent" if self.index_remove_relationship == "child" else "host"
+
+    @property
+    def index_create_identifier(self):
+        return "parent" if self.index_create_relationship == "child" else "host"
 
     def validate(self):
         missing = [
@@ -448,55 +468,96 @@ class CaseUpdateConfig:
 
         if self.includes is not None and self.excludes is not None:
             raise DataRegistryCaseUpdateError("Both exclude and include lists specified. Only one is allowed.")
-        if self.includes is None and self.excludes is None:
-            raise DataRegistryCaseUpdateError("Neither exclude and include lists specified. One is required.")
+
+    @index_create_relationship.validator
+    @index_remove_relationship.validator
+    def _check_index_relationship(self, attribute, value):
+        if value and value not in ("child", "extension"):
+            raise DataRegistryCaseUpdateError("Index relationships must be either 'child' or 'extension'")
 
     def get_case_block(self, target_case):
+        kwargs = {}
+        if target_case is None:
+            if not self.create_case:
+                # should never get here but added as a precaution
+                raise DataRegistryCaseUpdateError("Target case not found")
+            if not self.owner_id:
+                raise DataRegistryCaseUpdateError("'owner_id' required when creating cases")
+
+            kwargs = {
+                "case_type": self.case_type,
+            }
         return CaseBlock(
-            create=False,
-            case_id=target_case.case_id,
-            update=self.get_case_updates(target_case),
-            index=self.get_case_index(target_case)
+            create=target_case is None,
+            case_id=self.case_id,
+            owner_id=self.owner_id,
+            update=self.get_case_updates(),
+            index=self.get_case_indices(target_case),
+            close=bool(self.close_case),
+            **kwargs
         ).as_text()
 
-    def get_case_updates(self, target_case):
+    def get_case_updates(self):
         case_json = self.intent_case.case_json
-        update_props = []
+        if self.intent_case.name:
+            case_json["case_name"] = self.intent_case.name
+        if self.intent_case.external_id:
+            case_json["external_id"] = self.intent_case.external_id
         if self.excludes is not None:
             update_props = set(case_json) - set(self.excludes.split())
-        if self.includes is not None:
+        elif self.includes is not None:
             update_props = set(case_json) & set(self.includes.split())
+        else:
+            update_props = set(case_json)
 
         update_props.difference_update(set(self.PROPS.values()))
-        override = self.override_props is None or self.override_props.lower() in ("1", "true")
-        if not override:
-            target_props = set(target_case.case_json)
-            update_props.difference_update(target_props)
-
         return {
             prop: case_json[prop]
             for prop in update_props
         }
 
-    def get_case_index(self, target_case):
-        if not (self.index_case_id and self.index_case_type):
-            return
+    def get_case_indices(self, target_case):
+        indices = self.get_create_case_index(target_case)
+        if not self.index_remove_case_id:
+            return indices
+
+        if self.index_remove_identifier not in indices:
+            indices.update(self.get_remove_case_index(target_case))
+
+        return indices
+
+    def get_create_case_index(self, target_case):
+        if not (self.index_create_case_id and self.index_create_case_type):
+            return {}
 
         try:
-            index_case = CaseAccessors(self.domain).get_case(self.index_case_id)
+            index_case = CaseAccessors(self.domain).get_case(self.index_create_case_id)
         except CaseNotFound:
-            raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_case_id}")
+            raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
         if index_case.domain != target_case.domain:
-            raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_case_id}")
+            raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
-        if index_case.case_type != self.index_case_type:
+        if index_case.type != self.index_create_case_type:
             raise DataRegistryCaseUpdateError("Index case type does not match")
 
-        relationship = self.index_relationship or "child"
-        key = "parent" if relationship == "child" else "host"
         return {
-            key: (self.index_case_type, self.index_case_id, relationship)
+            self.index_create_identifier: (
+                self.index_create_case_type, self.index_create_case_id, self.index_create_relationship
+            )
+        }
+
+    def get_remove_case_index(self, target_case):
+        identifier = "parent" if self.index_remove_relationship == "child" else "host"
+        indices = [index for index in target_case.live_indices if index.identifier == identifier]
+        if not indices:
+            return {}
+        assert len(indices) == 1
+        index = indices[0]
+        if index.referenced_id != self.index_remove_case_id:
+            raise DataRegistryCaseUpdateError("Index case ID does not match for index to remove")
+        return {
+            identifier: (index.referenced_type, "", self.index_remove_relationship)
         }
 
 
@@ -548,20 +609,22 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         main_config = configs[0]
         registry_slug = main_config.registry_slug
         helper = DataRegistryHelper(main_config.intent_case.domain, registry_slug=registry_slug)
-        return [
+        return list(filter(None, [
             self._get_case(helper, repeat_record, config, couch_user)
             for config in configs
-        ]
+        ]))
 
     def _get_case(self, registry_helper, repeat_record, config, couch_user):
         try:
-            case = registry_helper.get_case(config.case_id, config.case_type, couch_user, repeat_record.repeater)
+            case = registry_helper.get_case(config.case_id, couch_user, repeat_record.repeater)
         except RegistryAccessException:
             raise DataRegistryCaseUpdateError("User does not have permission to access the registry")
         except CaseNotFound:
+            if config.create_case:
+                return
             raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
 
-        if case.domain != config.domain:
+        if case.domain != config.domain or case.type != config.case_type:
             raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
 
         return case
@@ -571,7 +634,7 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
             case.case_id: case for case in target_cases
         }
         return [
-            config.get_case_block(targets_by_id[config.case_id])
+            config.get_case_block(targets_by_id.get(config.case_id, None))
             for config in configs
         ]
 

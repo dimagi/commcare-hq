@@ -49,7 +49,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
                     dataRegistry: options.data_registry,
                     dataRegistryWorkflow: options.data_registry_workflow,
-                    additionalRegistryQueries: options.additional_registry_queries,
+                    additionalRegistryCases: options.additional_registry_cases,
                 });
 
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");

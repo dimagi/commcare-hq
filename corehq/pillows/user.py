@@ -8,7 +8,7 @@ from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvi
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
 from corehq.elastic import (
     doc_exists_in_es,
-    send_to_elasticsearch, get_es_new,
+    send_to_elasticsearch, get_es_new, ES_META
 )
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.util.es.interface import ElasticsearchInterface
@@ -45,7 +45,7 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
         }
         if domain:
             doc["domain_membership"] = {"domain": domain}
-        ElasticsearchInterface(es).index_doc(USER_INDEX_INFO.alias, USER_INDEX_INFO.type, doc=doc, doc_id=user_id)
+        ElasticsearchInterface(es).index_doc(USER_INDEX_INFO.alias, ES_META['users'].type, doc=doc, doc_id=user_id)
 
 
 def transform_user_for_elasticsearch(doc_dict):

@@ -124,7 +124,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "cases_per_page": casesPerPage,
                     "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                     "isPersistent": params.isPersistent,
-                    "useLiveQuery": user.useLiveQuery,
                     "sortIndex": params.sortIndex,
                     "preview": params.preview,
                     "geo_location": lastRecordedLocation,
