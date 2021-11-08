@@ -1,9 +1,11 @@
 hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
     'jquery',
     'hqwebapp/js/main',
+    'DOMPurify/dist/purify.min'
 ], function (
     $,
-    hqMain
+    hqMain,
+    DOMPurify
 ) {
     'use strict';
     var module = {};
@@ -81,8 +83,14 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
                     });
 
                 }
-                if (map_key && !map_key.trim()) map_key = `"<span style="white-space: pre;">${map_key}</span>"`;
-                if (map_val && !map_val.trim()) map_val = `"<span style="white-space: pre;">${map_val}</span>"`;
+                map_key = DOMPurify.sanitize(map_key);
+                map_val = DOMPurify.sanitize(map_val);
+                if (map_key && !map_key.trim()) {
+                    map_key = `"<span style="white-space: pre;">${map_key}</span>"`;
+                }
+                if (map_val && !map_val.trim()) {
+                    map_val = `"<span style="white-space: pre;">${map_val}</span>"`;
+                }
                 let left_side = map_key ? `<strong>${map_key}</strong>` : `<i>${django.gettext('blank')}</i>`;
                 let right_side = map_val ? map_val : `<i>${django.gettext('blank')}</i>`;
                 this.$noedit_view.html(`${left_side} &rarr; ${right_side}`);
