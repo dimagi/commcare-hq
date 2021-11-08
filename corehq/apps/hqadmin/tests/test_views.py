@@ -82,13 +82,13 @@ class DisableUserViewTests(SimpleTestCase):
 
         self.assertEqual(redirect_url, 'dummy_url/?q=test%2Bexample%40dimagi.com')
 
-    def test_redirect_url_returns_none_if_no_username(self):
+    def test_redirect_url_returns_no_params_if_no_username(self):
         user = Mock()
         request = Mock()
         request.GET = {}
         view = DisableUserView(user=user, request=request)
         with patch('corehq.apps.hqadmin.views.users.reverse') as mock_reverse:
-            mock_reverse.return_value = 'dummy_url/'
+            mock_reverse.return_value = 'dummy_url'
             redirect_url = view.redirect_url
 
-        self.assertIsNone(redirect_url)
+        self.assertEqual(redirect_url, 'dummy_url')
