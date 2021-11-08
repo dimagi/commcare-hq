@@ -538,7 +538,7 @@ class CaseUpdateConfig:
         if index_case.domain != target_case.domain:
             raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
-        if index_case.case_type != self.index_create_case_type:
+        if index_case.type != self.index_create_case_type:
             raise DataRegistryCaseUpdateError("Index case type does not match")
 
         return {
