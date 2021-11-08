@@ -1058,7 +1058,6 @@ class CaseDuplicate(models.Model):
             rule = AutomaticUpdateRule.objects.get(
                 id=rule_id,
                 workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
-                active=True,
                 deleted=False
             )
         except AutomaticUpdateRule.DoesNotExist:
