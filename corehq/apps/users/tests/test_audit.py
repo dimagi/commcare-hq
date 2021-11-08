@@ -17,7 +17,10 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
                               expected_formatted_message):
         if not isinstance(expected_formatted_message, list):
             expected_formatted_message = [expected_formatted_message]
-        change_messages = change_message_method(*args)
+        if isinstance(args, dict):
+            change_messages = change_message_method(**args)
+        else:
+            change_messages = change_message_method(*args)
         self.assertEqual(
             change_messages,
             expected_change_messages
@@ -210,8 +213,8 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             "1111111111"
         ]
         self._test_change_messages(
-            UserChangeMessage.phone_numbers_added,
-            [phone_numbers],
+            UserChangeMessage.phone_numbers_updated,
+            {'added': phone_numbers},
             {
                 "phone_numbers": {
                     "add_phone_numbers": {
@@ -228,8 +231,8 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             "1111111111"
         ]
         self._test_change_messages(
-            UserChangeMessage.phone_numbers_removed,
-            [phone_numbers],
+            UserChangeMessage.phone_numbers_updated,
+            {'removed': phone_numbers},
             {
                 "phone_numbers": {
                     "remove_phone_numbers": {

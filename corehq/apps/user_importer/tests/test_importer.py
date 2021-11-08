@@ -740,7 +740,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
         change_messages = {}
         change_messages.update(UserChangeMessage.password_reset())
-        change_messages.update(UserChangeMessage.phone_numbers_added(['23424123']))
+        change_messages.update(UserChangeMessage.phone_numbers_updated(added=['23424123']))
         change_messages.update(UserChangeMessage.role_change(self.role))
         self.assertDictEqual(user_history.change_messages, change_messages)
 
@@ -1189,7 +1189,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
         change_messages = {}
-        change_messages.update(UserChangeMessage.phone_numbers_removed(['12345678912']))
+        change_messages.update(UserChangeMessage.phone_numbers_updated(removed=['12345678912']))
         change_messages.update(UserChangeMessage.password_reset())
         self.assertDictEqual(user_history.change_messages, change_messages)
 

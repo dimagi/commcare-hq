@@ -109,26 +109,6 @@ class UserChangeMessage(object):
         return {}
 
     @staticmethod
-    def phone_numbers_added(phone_numbers):
-        return {
-            PHONE_NUMBERS_FIELD: {
-                ADD_PHONE_NUMBERS: {
-                    "phone_numbers": phone_numbers
-                }
-            }
-        }
-
-    @staticmethod
-    def phone_numbers_removed(phone_numbers):
-        return {
-            PHONE_NUMBERS_FIELD: {
-                REMOVE_PHONE_NUMBERS: {
-                    "phone_numbers": phone_numbers
-                }
-            }
-        }
-
-    @staticmethod
     def profile_info(profile_id, profile_name=None):
         if profile_id:
             change_message = {
