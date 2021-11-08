@@ -20,7 +20,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Sort,
     Template,
     Text,
-    XPath,
+    TextXPath,
     XPathVariable,
 )
 from corehq.apps.reports_core.filters import (
@@ -261,7 +261,7 @@ def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
             last_sync_string = "format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
 
         return Text(
-            xpath=XPath(
+            xpath=TextXPath(
                 function=last_sync_string
             )
         )
@@ -269,7 +269,7 @@ def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
     def _get_description_text(report_config):
         if report_config.use_xpath_description:
             return Text(
-                xpath=XPath(function=config.xpath_description)
+                xpath=TextXPath(function=config.xpath_description)
             )
         else:
             return Text(
@@ -340,11 +340,11 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
     """
     def get_xpath(column_id):
         if new_mobile_ucr_restore:
-            return XPath(
+            return TextXPath(
                 function="{}".format(column_id),
             )
         else:
-            return XPath(
+            return TextXPath(
                 function="column[@id='{}']".format(column_id),
             )
     def _column_to_field(column):
@@ -395,7 +395,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                         word_eval,
                         xpath_function
                     )
-                return XPath(
+                return TextXPath(
                     function=xpath_function.format(
                         column_id=col.column_id
                     ),
