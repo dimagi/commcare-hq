@@ -86,4 +86,5 @@ branches:
     - do/user-profiles-not-updating # Dominic Nov 4
     - fr/inactive-duplicates        # Farid Nov 8
     - gh/use-email-for-all-comms # Graham Nov 8 (check back on Dec 6)
+    - dm/py36-pickle5 # Daniel Nov 8
 submodules: { }
