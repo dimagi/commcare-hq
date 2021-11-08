@@ -13,12 +13,23 @@ class TestXFormValidation(SimpleTestCase):
         '''.strip()
         self.assertTrue(_is_valid_xform(form))
 
-    def test_form_with_entity_is_invalid(self):
+    def test_form_with_entity_only_in_dtd_is_valid(self):
         form = '''
         <!DOCTYPE foo [<!ENTITY example SYSTEM 'file://etc/hosts'>]>
         <html>
             <head>
                 <title>Survery</title>
+            </head>
+        </html>
+        '''.strip()
+        self.assertTrue(_is_valid_xform(form))
+
+    def test_form_referencing_entity_is_invalid(self):
+        form = '''
+        <!DOCTYPE foo [<!ENTITY example SYSTEM 'file://etc/hosts'>]>
+        <html>
+            <head>
+                <title>Survery: &example;</title>
             </head>
         </html>
         '''.strip()

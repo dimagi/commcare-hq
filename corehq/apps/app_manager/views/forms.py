@@ -1,5 +1,4 @@
 import hashlib
-import itertools
 import json
 import logging
 import re
@@ -22,8 +21,6 @@ from django.views.decorators.http import require_GET
 
 from diff_match_patch import diff_match_patch
 from lxml import etree
-from defusedxml import ElementTree
-from defusedxml.common import DefusedXmlException
 from text_unidecode import unidecode
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
@@ -255,14 +252,13 @@ def edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
 
 def _is_valid_xform(raw_form_str):
-    try:
-        ElementTree.fromstring(raw_form_str)
-    except ElementTree.ParseError:
-        return False
-    except DefusedXmlException:
-        return False
-
-    return True
+    # NOTE raw_form_str should be in bytes, as parsing on a string fails
+    # if the XML specifies an encoding
+    parser = etree.XMLParser(resolve_entities=False)
+    tree = etree.fromstring(raw_form_str, parser=parser).getroottree()
+    entities = tree.iter(etree.Entity)
+    hasEntities = any(True for entity in entities)  # for some reason, lxml entities can evaluate to False
+    return not hasEntities
 
 
 @no_conflict_require_POST
