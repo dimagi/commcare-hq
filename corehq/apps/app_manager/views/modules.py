@@ -37,6 +37,8 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.const import (
     MOBILE_UCR_VERSION_1,
+    REGISTRY_WORKFLOW_LOAD_CASE,
+    REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_TYPE,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -205,6 +207,10 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
         'data_registry_enabled': app.supports_data_registry,
         'data_registries': get_data_registry_dropdown_options(app.domain, required_case_types=case_types),
+        'data_registry_workflow_choices': (
+            (REGISTRY_WORKFLOW_LOAD_CASE, _("Load external case into form")),
+            (REGISTRY_WORKFLOW_SMART_LINK, _("Smart link to external domain")),
+        ),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
@@ -236,6 +242,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_again_label':
                 module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
             'data_registry': module.search_config.data_registry,
+            'data_registry_workflow': module.search_config.data_registry_workflow,
             'additional_registry_cases': module.search_config.additional_registry_cases,
         },
     }
@@ -1244,6 +1251,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                     for p in search_properties.get('default_properties')
                 ],
                 data_registry=search_properties.get('data_registry', ""),
+                data_registry_workflow=search_properties.get('data_registry_workflow', ""),
                 additional_registry_cases=additional_registry_cases,
             )
 
