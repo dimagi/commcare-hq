@@ -1,6 +1,8 @@
 from django.test import SimpleTestCase
 from mock import patch
+from uuid import uuid4
 
+from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
@@ -14,10 +16,15 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.suite_xml.sections.details import (
     AUTO_LAUNCH_EXPRESSION,
+    DetailContributor
 )
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesContributor
+from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
     RESULTS_INSTANCE,
+    RemoteRequestFactory,
 )
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
@@ -29,6 +36,50 @@ from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'test_domain'
+
+
+@patch.object(Application, 'supports_data_registry', lambda: True)
+class RemoteRequestSmartLinkURLTest(SimpleTestCase):
+    def setUp(self):
+        self.factory = AppFactory(domain=DOMAIN)
+        self.app_id = uuid4().hex
+        self.factory.app._id = self.app_id
+        module, form = self.factory.new_basic_module('basic', 'tree')
+        self.factory.form_requires_case(form, 'tree')
+        child_module, child_form = self.factory.new_basic_module('child', 'leaf', parent_module=module)
+        self.factory.form_requires_case(child_form, 'leaf')
+
+        child_module.search_config = CaseSearch(
+            search_label=CaseSearchLabel(label={'en': 'Search'}),
+            properties=[CaseSearchProperty(name=field) for field in ['name', 'shape']],
+            data_registry="a_registry",
+            data_registry_workflow=REGISTRY_WORKFLOW_SMART_LINK,
+        )
+        child_module.assign_references()
+
+        child_module.session_endpoint_id = "child_endpoint"
+        child_module.parent_select.active = True
+        child_module.parent_select.module_id = module.unique_id
+
+        generator = SuiteGenerator(self.factory.app)
+        detail_section_elements = generator.add_section(DetailContributor)
+        entries = EntriesContributor(generator.suite, self.factory.app, self.factory.app.modules)
+        generator.suite.entries.extend(entries.get_module_contributions(child_module))
+        self.request_factory = RemoteRequestFactory(generator.suite, child_module, detail_section_elements)
+
+    def testSmartLinkFunction(self):
+        self.assertEqual(self.request_factory.get_smart_link_function(), f'''
+            concat('http://localhost:8000/a/', $domain, '/app/v1/{self.app_id}/child_endpoint/', '?case_id_leaf=', $case_id_leaf, '&case_id=', $case_id)
+        '''.strip())
+
+    def testSmartLinkVariables(self):
+        vars = self.request_factory.get_smart_link_variables()
+        self.assertEqual([v.name for v in vars], ['domain', 'case_id', 'case_id_leaf'])
+        self.assertEqual([v.xpath.function for v in vars], [
+            "instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project",
+            "instance('commcaresession')/session/data/case_id",
+            "instance('commcaresession')/session/data/search_case_id",
+        ])
 
 
 @patch_get_xform_resource_overrides()
