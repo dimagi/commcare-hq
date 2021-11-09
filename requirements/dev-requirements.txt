@@ -352,6 +352,8 @@ pexpect==4.8.0
     # via ipython
 phonenumberslite==8.12.10
     # via -r base-requirements.in
+pickle5==0.0.11
+    # via -r base-requirements.in
 pickleshare==0.7.5
     # via ipython
 pillow==8.3.2
