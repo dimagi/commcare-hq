@@ -1235,8 +1235,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 additional_registry_cases.append(case_id_xpath)
 
             data_registry_slug = search_properties.get('data_registry', "")
-            # force auto launch when data registry selected
-            force_auto_launch = data_registry_slug
+            data_registry_workflow = search_properties.get('data_registry_workflow', "")
+            # force auto launch when data registry load case workflow selected
+            force_auto_launch = data_registry_slug and data_registry_workflow == REGISTRY_WORKFLOW_LOAD_CASE
 
             module.search_config = CaseSearch(
                 search_label=search_label,
@@ -1255,7 +1256,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                     for p in search_properties.get('default_properties')
                 ],
                 data_registry=data_registry_slug,
-                data_registry_workflow=search_properties.get('data_registry_workflow', ""),
+                data_registry_workflow=data_registry_workflow,
                 additional_registry_cases=additional_registry_cases,
             )
 
