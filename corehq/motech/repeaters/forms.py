@@ -102,11 +102,11 @@ class FormRepeaterForm(GenericRepeaterForm):
         label="Include 'app_id' URL query parameter.",
         initial=True
     )
-    black_listed_users = forms.MultipleChoiceField(
+    user_blocklist = forms.MultipleChoiceField(
         required=False,
         label=_('Users to exclude'),
         widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
-        help_text=_('Case creations and updates submitted by these users will not be forwarded')
+        help_text=_('Forms submitted by these users will not be forwarded')
     )
 
     @property
@@ -117,12 +117,12 @@ class FormRepeaterForm(GenericRepeaterForm):
 
     def set_extra_django_form_fields(self):
         super(FormRepeaterForm, self).set_extra_django_form_fields()
-        self.fields['black_listed_users'].choices = self.user_choices
+        self.fields['user_blocklist'].choices = self.user_choices
 
     def get_ordered_crispy_form_fields(self):
         fields = super(FormRepeaterForm, self).get_ordered_crispy_form_fields()
         fields.append(twbscrispy.PrependedText('include_app_id_param', ''))
-        return fields + ['black_listed_users']
+        return fields + ['user_blocklist']
 
 
 class CaseRepeaterForm(GenericRepeaterForm):
