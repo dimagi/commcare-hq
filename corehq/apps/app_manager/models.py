@@ -138,7 +138,7 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     save_xform,
     update_form_unique_ids,
-    update_report_module_ids,
+    update_report_module_ids, module_loads_registry_case,
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
@@ -2011,6 +2011,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     print_template = DictProperty()
 
+    def get_instance_name(self, module):
+        value_is_the_default = self.instance_name == 'casedb'
+        if value_is_the_default and module_loads_registry_case(module):
+            return RESULTS_INSTANCE
+        return self.instance_name
+
     def get_tab_spans(self):
         '''
         Return the starting and ending indices into self.columns deliminating
@@ -2149,6 +2155,7 @@ class CaseSearch(DocumentSchema):
     blacklisted_owner_ids_expression = StringProperty()
     additional_case_types = ListProperty(str)
     data_registry = StringProperty()
+    data_registry_workflow = StringProperty()           # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()  # list of xpath expressions
 
     @property
