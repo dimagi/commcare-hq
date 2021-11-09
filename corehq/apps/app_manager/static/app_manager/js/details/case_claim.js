@@ -198,7 +198,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.restrictWorkflowForDataRegistry = ko.pureComputed(() => {
             return self.dataRegistry() && self.dataRegistryWorkflow() === 'load_case';
-        })
+        });
 
         self.workflow = ko.computed({
             read: function () {
