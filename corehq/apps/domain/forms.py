@@ -1241,11 +1241,8 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
             if not couch_user:
                 continue
 
-            if couch_user.is_web_user():
-                user_email = user.username
-            elif user.email:
-                user_email = user.email
-            else:
+            user_email = couch_user.get_email()
+            if not user_email:
                 continue
 
             c = {
