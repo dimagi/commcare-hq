@@ -57,7 +57,6 @@ branches:
     - sr/es-alias # Sravan Nov 18
     - sr/cs-multiselect  # Sravan May 31
     - ce/bulk-case-search # Cal July 6
-    - rp/enterprize-sms-report # Rynhard July 12
     #- sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
     - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
@@ -71,7 +70,6 @@ branches:
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
-    - rp/insert-status-embed # Rynhard Oct 15
     - fr/dedupe+ad/auto-update-rules-for-linked-spaces
     - ad/auto-update-rules-for-linked-spaces # Addison Oct 25
 #    - ml/remove-pickles-reports # Minha Oct 21
@@ -87,4 +85,5 @@ branches:
     - fr/inactive-duplicates        # Farid Nov 8
     - gh/use-email-for-all-comms # Graham Nov 8 (check back on Dec 6)
     - dm/py36-pickle5 # Daniel Nov 8
+    - rp/status-embed # Rynhard Nov 9
 submodules: { }
