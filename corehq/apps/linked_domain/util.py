@@ -96,6 +96,7 @@ def _get_missing_multimedia(app, old_multimedia_ids=None):
             continue
         try:
             local_media = CommCareMultimedia.get(media_info['multimedia_id'])
+            local_media.get_display_file()
         except ResourceNotFound:
             filename = path.split('/')[-1]
             missing.append((filename, media_info))

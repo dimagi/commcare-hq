@@ -11,7 +11,6 @@ from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.utils import get_restore_config, MockDevice
-from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.groups.models import Group
@@ -33,8 +32,6 @@ from casexml.apps.phone.models import (
 )
 from casexml.apps.phone.restore import (
     CachedResponse,
-    CLEAN_OWNERS,
-    LIVEQUERY,
     RestoreConfig,
     RestoreParams,
     RestoreCacheSettings,
@@ -52,7 +49,6 @@ class BaseSyncTest(TestCase):
     """
     Shared functionality among tests
     """
-    restore_options = {'case_sync': CLEAN_OWNERS}
 
     @classmethod
     def setUpClass(cls):
@@ -80,7 +76,6 @@ class BaseSyncTest(TestCase):
         restore_config = RestoreConfig(
             project=self.project,
             restore_user=self.user,
-            **self.restore_options
         )
         restore_config.restore_payload_path_cache.invalidate()
         super(BaseSyncTest, self).tearDown()
@@ -94,7 +89,6 @@ class BaseSyncTest(TestCase):
     def get_device(self, **kw):
         kw.setdefault("project", self.project)
         kw.setdefault("user", self.user)
-        kw.setdefault("restore_options", self.restore_options)
         kw.setdefault("default_case_type", PARENT_TYPE)
         return MockDevice(**kw)
 
@@ -112,21 +106,7 @@ class BaseSyncTest(TestCase):
         all_ids.update(case_id_map)
         all_ids.update(dependent_case_id_map)
         self.assertEqual(set(all_ids), sync_log.case_ids_on_phone)
-        # livequery sync does not use or populate sync_log.index_tree
-        if self.restore_options['case_sync'] == LIVEQUERY:
-            self.assertEqual(sync_log.log_format, LOG_FORMAT_LIVEQUERY)
-        else:
-            self.assertEqual(sync_log.log_format, LOG_FORMAT_SIMPLIFIED)
-            self.assertEqual(set(dependent_case_id_map.keys()), sync_log.dependent_case_ids_on_phone)
-            for case_id, indices in case_id_map.items():
-                if indices:
-                    index_ids = [i.referenced_id for i in case_id_map[case_id]]
-                    self._checkLists(index_ids, list(sync_log.index_tree.indices[case_id].values()),
-                                     'case {} has unexpected indices'.format(case_id))
-            for case_id, indices in dependent_case_id_map.items():
-                if indices:
-                    index_ids = [i.referenced_id for i in case_id_map[case_id]]
-                    self._checkLists(index_ids, list(sync_log.index_tree.indices[case_id].values()))
+        self.assertEqual(sync_log.log_format, LOG_FORMAT_LIVEQUERY)
 
 
 class DeprecatedBaseSyncTest(BaseSyncTest):
@@ -768,11 +748,6 @@ class SyncTokenUpdateTest(BaseSyncTest):
 
 
 @sharded
-class LiveQuerySyncTokenUpdateTest(SyncTokenUpdateTest):
-    restore_options = {'case_sync': LIVEQUERY}
-
-
-@sharded
 class SyncDeletedCasesTest(BaseSyncTest):
 
     def test_deleted_case_doesnt_sync(self):
@@ -799,11 +774,6 @@ class SyncDeletedCasesTest(BaseSyncTest):
         CaseAccessors(self.project.name).soft_delete_cases([parent_id])
         self.assertEqual(set(self.device.sync().cases), {child_id})
         # todo: in the future we may also want to purge the child
-
-
-@sharded
-class LiveQuerySyncDeletedCasesTest(SyncDeletedCasesTest):
-    restore_options = {'case_sync': LIVEQUERY}
 
 
 @sharded
@@ -1035,11 +1005,6 @@ class ExtensionCasesSyncTokenUpdates(BaseSyncTest):
 
 
 @sharded
-class LiveQueryExtensionCasesSyncTokenUpdates(ExtensionCasesSyncTokenUpdates):
-    restore_options = {'case_sync': LIVEQUERY}
-
-
-@sharded
 class ExtensionCasesFirstSync(BaseSyncTest):
 
     def setUp(self):
@@ -1059,19 +1024,14 @@ class ExtensionCasesFirstSync(BaseSyncTest):
         sync0 = self.device.last_sync
         with flag_enabled('EXTENSION_CASES_SYNC_ENABLED'):
             config = get_restore_config(self.project, self.user,
-                restore_id=sync0.log._id, **self.restore_options)
+                restore_id=sync0.log._id)
             self.assertTrue(sync0.get_log().extensions_checked)
             self.assertFalse(config.restore_state.is_first_extension_sync)
 
         config = get_restore_config(self.project, self.user,
-            restore_id=sync0.log._id, **self.restore_options)
+            restore_id=sync0.log._id)
         self.assertTrue(sync0.get_log().extensions_checked)
         self.assertFalse(config.restore_state.is_first_extension_sync)
-
-
-@sharded
-class LiveQueryExtensionCasesFirstSync(ExtensionCasesFirstSync):
-    restore_options = {'case_sync': LIVEQUERY}
 
 
 @sharded
@@ -1133,11 +1093,6 @@ class ChangingOwnershipTest(BaseSyncTest):
 
 
 @sharded
-class LiveQueryChangingOwnershipTest(ChangingOwnershipTest):
-    restore_options = {'case_sync': LIVEQUERY}
-
-
-@sharded
 @patch('casexml.apps.phone.restore.INITIAL_SYNC_CACHE_THRESHOLD', 0)
 class SyncTokenCachingTest(BaseSyncTest):
 
@@ -1157,13 +1112,12 @@ class SyncTokenCachingTest(BaseSyncTest):
             project=self.project,
             restore_user=self.user,
             cache_settings=RestoreCacheSettings(force_cache=True),
-            **self.restore_options
         )
         original_payload = restore_config.get_payload()
         self.assertNotIsInstance(original_payload, CachedResponse)
 
         restore_config = RestoreConfig(
-            project=self.project, restore_user=self.user, **self.restore_options)
+            project=self.project, restore_user=self.user)
         cached_payload = restore_config.get_payload()
         self.assertIsInstance(cached_payload, CachedResponse)
 
@@ -1214,7 +1168,6 @@ class SyncTokenCachingTest(BaseSyncTest):
             project=self.project,
             restore_user=self.user,
             cache_settings=RestoreCacheSettings(force_cache=True),
-            **self.restore_options
         )
         original_payload = config.get_payload()
         self.assertNotIsInstance(original_payload, CachedResponse)
@@ -1228,18 +1181,12 @@ class SyncTokenCachingTest(BaseSyncTest):
             project=self.project,
             restore_user=self.user,
             cache_settings=RestoreCacheSettings(force_cache=True),
-            **self.restore_options
         )
         next_file = next_config.get_payload()
         next_name = next_config.restore_payload_path_cache.get_value()
         self.assertNotIsInstance(next_file, CachedResponse)
         self.assertTrue(next_name)
         self.assertNotEqual(original_name, next_name)
-
-
-@sharded
-class LiveQuerySyncTokenCachingTest(SyncTokenCachingTest):
-    restore_options = {'case_sync': LIVEQUERY}
 
 
 @sharded
@@ -1785,11 +1732,6 @@ class MultiUserSyncTest(BaseSyncTest):
 
 
 @sharded
-class LiveQueryMultiUserSyncTest(MultiUserSyncTest):
-    restore_options = {'case_sync': LIVEQUERY}
-
-
-@sharded
 class SteadyStateExtensionSyncTest(BaseSyncTest):
     """
     Test that doing multiple clean syncs with extensions does what we think it will
@@ -1801,16 +1743,6 @@ class SteadyStateExtensionSyncTest(BaseSyncTest):
         cls.other_user = create_restore_user(
             cls.project.name,
             username=OTHER_USERNAME,
-        )
-        cls._create_ownership_cleanliness(cls.user_id)
-        cls._create_ownership_cleanliness(cls.other_user.user_id)
-
-    @classmethod
-    def _create_ownership_cleanliness(cls, user_id):
-        OwnershipCleanlinessFlag.objects.get_or_create(
-            owner_id=user_id,
-            domain=cls.project.name,
-            defaults={'is_clean': True}
         )
 
     def _create_extension(self):
@@ -1875,17 +1807,6 @@ class SteadyStateExtensionSyncTest(BaseSyncTest):
         host, extension = self._create_extension()
         both_ids = {host.case_id, extension.case_id}
 
-        # NOTE for clean_owners sync it is important that this is the
-        # first sync for this device. In other words, the restore state
-        # must not have a last sync log. This is possibly due to a bug
-        # in the clean_owners sync implementation, which omits extension
-        # cases that have been created since the last sync because they
-        # are not in last_sync_log.extension_index_tree. See
-        # _get_case_ids_for_owners_with_extensions after the comment "we
-        # also need to fetch unowned extension cases that have been
-        # modified". This comment can be removed when
-        # test_two_device_extension_sync_bug is no longer skipped for
-        # clean_owners.
         sync0 = guy.sync()
         self.assertEqual(sync0.log.case_ids_on_phone, both_ids)
         self.assertEqual(set(sync0.cases), both_ids)
@@ -1904,9 +1825,6 @@ class SteadyStateExtensionSyncTest(BaseSyncTest):
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
     def test_two_device_extension_sync_bug(self):
-        if self.restore_options["case_sync"] == CLEAN_OWNERS:
-            self.skipTest("a bug in clean_owners causes this to fail")
-            # not going after this now since livequery passes
         deviceA = self.get_device(user=self.other_user, sync=True)
         deviceB = self.get_device(user=self.other_user, sync=True)
         self.assertFalse(deviceA.last_sync.cases)
@@ -1939,11 +1857,6 @@ class SteadyStateExtensionSyncTest(BaseSyncTest):
 
 
 @sharded
-class LiveQuerySteadyStateExtensionSyncTest(SteadyStateExtensionSyncTest):
-    restore_options = {'case_sync': LIVEQUERY}
-
-
-@sharded
 class SyncTokenReprocessingTest(BaseSyncTest):
     """
     Tests sync token logic for fixing itself when it gets into a bad state.
@@ -1973,11 +1886,6 @@ class SyncTokenReprocessingTest(BaseSyncTest):
 
 
 @sharded
-class LiveQuerySyncTokenReprocessingTest(SyncTokenReprocessingTest):
-    restore_options = {'case_sync': LIVEQUERY}
-
-
-@sharded
 class LooseSyncTokenValidationTest(BaseSyncTest):
 
     def test_submission_with_bad_log_toggle_enabled(self):
@@ -1997,13 +1905,7 @@ class LooseSyncTokenValidationTest(BaseSyncTest):
                     version=V2,
                     sync_log_id='not-a-valid-synclog-id',
                 ),
-                **self.restore_options
             ).get_payload()
-
-
-@sharded
-class LiveQueryLooseSyncTokenValidationTest(LooseSyncTokenValidationTest):
-    restore_options = {'case_sync': LIVEQUERY}
 
 
 @sharded
@@ -2037,8 +1939,3 @@ class IndexSyncTest(BaseSyncTest):
         self.assertEqual(set(sync.cases), {child_id, parent_id, other_parent_id})
         self.assertIn(branch_index, sync.cases[child_id].index)
         self.assertIn(wave_index, sync.cases[child_id].index)
-
-
-@sharded
-class LiveQueryIndexSyncTest(IndexSyncTest):
-    restore_options = {'case_sync': LIVEQUERY}
