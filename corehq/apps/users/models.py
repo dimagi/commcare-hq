@@ -3064,7 +3064,9 @@ class UserHistory(models.Model):
     by_domain = models.CharField(max_length=255, null=True)
     for_domain = models.CharField(max_length=255, null=True)
     user_type = models.CharField(max_length=255)  # CommCareUser / WebUser
+    user_repr = models.CharField(max_length=255, null=True)
     user_id = models.CharField(max_length=128)
+    changed_by_repr = models.CharField(max_length=255, null=True)
     changed_by = models.CharField(max_length=128)
     # ToDo: remove post migration/reset of existing records
     message = models.TextField(blank=True, null=True)
