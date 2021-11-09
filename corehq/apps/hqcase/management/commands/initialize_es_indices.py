@@ -1,7 +1,7 @@
 from django.core.management import BaseCommand
 
-
-from corehq.elastic import ES_META, get_es_new
+from corehq.apps.es.registry import get_registry, registry_entry
+from corehq.elastic import get_es_new
 from pillowtop.reindexer.reindexer import (
     prepare_index_for_reindex,
     prepare_index_for_usage,
@@ -50,9 +50,9 @@ class Command(BaseCommand):
                 return
 
         if index:
-            indices = [ES_META[index]]
+            indices = [registry_entry(index)]
         else:
-            indices = ES_META.values()
+            indices = get_registry().values()
         for index in indices:
             if set_for_usage:
                 prepare_index_for_usage(es, index)
