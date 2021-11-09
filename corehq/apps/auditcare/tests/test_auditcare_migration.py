@@ -165,7 +165,7 @@ class TestManagementCommand(TestCase):
     def test_copy_failed_events(self):
         AuditcareMigrationMeta(key=self.errored_keys[0], state=AuditcareMigrationMeta.ERRORED).save()
         AuditcareMigrationMeta(key=self.errored_keys[1], state=AuditcareMigrationMeta.ERRORED).save()
-        call_command("copy_events_to_sql", "--only_errored=True")
+        call_command("copy_events_to_sql", "--only_errored")
 
         count_access_objects = AccessAudit.objects.filter(event_date__lte=datetime(2021, 5, 30)).count()
         count_navigation_objects = NavigationEventAudit.objects.filter(
