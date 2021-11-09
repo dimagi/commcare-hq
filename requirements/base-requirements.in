@@ -74,6 +74,7 @@ lxml~=4.6.3
 mock==2.0.0
 openpyxl~=3.0
 phonenumberslite~=8.12
+pickle5  # For Pythons pre 3.8.3. Can be removed when no environment will ever revert to < 3.8
 Pillow>=8.3.2
 polib==1.1.0
 prometheus-client==0.7.1
