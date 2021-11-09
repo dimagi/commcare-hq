@@ -53,7 +53,7 @@ class Command(BaseCommand):
 
 
 def iterate_usernames_to_update(file):
-    with open(file, newline='') as csvfile:
+    with open(file) as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             yield row[OLD_USERNAME], row[NEW_USERNAME]
