@@ -32,7 +32,7 @@ def mass_email(request):
             html = form.cleaned_data['email_body_html']
             text = form.cleaned_data['email_body_text']
             real_email = form.cleaned_data['real_email']
-            send_mass_emails.delay(request.couch_user.username, real_email, subject, html, text)
+            send_mass_emails.delay(request.couch_user.get_email(), real_email, subject, html, text)
             messages.success(request, 'Task started. You will receive an email summarizing the results.')
         else:
             messages.error(request, 'Something went wrong, see below.')
