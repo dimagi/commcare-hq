@@ -196,9 +196,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
         var self = ko.mapping.fromJS(options, mapping);
 
+        self.restrictWorkflowForDataRegistry = ko.pureComputed(() => {
+            return self.dataRegistry() && self.dataRegistryWorkflow() === 'load_case';
+        });
+
         self.workflow = ko.computed({
             read: function () {
-                if (self.dataRegistry()) {
+                if (self.restrictWorkflowForDataRegistry()) {
                     if (self.autoLaunch()) {
                         if (self.defaultSearch()) {
                             return "es_only";
