@@ -11,6 +11,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 
 from memoized import memoized
+from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
@@ -291,6 +292,7 @@ class CustomDataModelMixin(object):
             )
             if not created and obj.has_users_assigned:
                 refresh_es_for_profile_users.delay(self.domain, obj.id)
+                bulk_sync_usercases_if_applicable(obj.definition.domain, obj.user_ids_assigned())
             seen.add(obj.id)
 
         errors = []
