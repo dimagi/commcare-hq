@@ -119,7 +119,13 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
           `_doc`.
         - Scroll request results reflect the state of the index at the time the
           initial `search` is requested. Changes to the index after that time
-          will not be reflected for the duration of the scroll "search context".
+          will not be reflected for the duration of the search context.
+        - Open scroll search contexts can keep old index segments alive longer,
+          which may require more disk space and file descriptor limits.
+        - An Elasticsearch cluster has a limited number of allowed concurrent
+          search contexts. Versions 2.4 and 5.6 do not specify what the default
+          maximum limit is, or how to configure it. Version 7.14 specifies the
+          default is 500 concurrent search contexts.
         - See: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-scroll.html
         """
         body = body.copy() if body else {}
@@ -132,10 +138,15 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         try:
             yield results
             while True:
-                results = self.scroll(scroll_id)
+                # Failure to add the `scroll` parameter here will cause the
+                # scroll context to terminate immediately after this request,
+                # resulting in this method fetching a maximum `size * 2`
+                # documents.
+                # see: https://stackoverflow.com/a/63911571
+                results = self.scroll(scroll_id, params={"scroll": scroll})
                 scroll_id = results.get('_scroll_id')
                 yield results
-                if scroll_id is None or not results['hits']['total']:
+                if scroll_id is None or not results['hits']['hits']:
                     break
         finally:
             if scroll_id:
