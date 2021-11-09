@@ -291,7 +291,7 @@ class RemoteRequestFactory(object):
         if argument_ids:
             params = f", '?{argument_ids[-1]}=', ${argument_ids[-1]}"
             for argument_id in argument_ids[:-1]:
-                params = f", '&{argument_id}=', ${argument_id}"
+                params += f", '&{argument_id}=', ${argument_id}"
         return f"concat('{prefix}', $domain, '{suffix}'{params})"
 
     def get_smart_link_variables(self):
