@@ -454,6 +454,7 @@ def update_auto_update_rules(domain_link):
             downstream_rule.case_type = upstream_rule_def['rule']['case_type']
             downstream_rule.filter_on_server_modified = upstream_rule_def['rule']['filter_on_server_modified']
             downstream_rule.server_modified_boundary = upstream_rule_def['rule']['server_modified_boundary']
+            downstream_rule.active = upstream_rule_def['rule']['active']
             downstream_rule.save()
 
             downstream_rule.delete_criteria()
