@@ -485,15 +485,17 @@ class CaseUpdateConfig:
                 raise DataRegistryCaseUpdateError("'owner_id' required when creating cases")
 
             kwargs = {
+                "create": True,
                 "case_type": self.case_type,
+                "date_opened": self.intent_case.opened_on
             }
         return CaseBlock(
-            create=target_case is None,
             case_id=self.case_id,
             owner_id=self.owner_id,
             update=self.get_case_updates(),
             index=self.get_case_indices(target_case),
             close=bool(self.close_case),
+            date_modified=self.intent_case.modified_on,
             **kwargs
         ).as_text()
 
