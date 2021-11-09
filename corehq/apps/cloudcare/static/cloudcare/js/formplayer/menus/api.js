@@ -65,7 +65,12 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                     FormplayerFrontend.trigger('navigateHome');
                                     return;
                                 }
-                                // TODO: this is really slow
+
+                                // Drop last selection to avoid redirect loop if user presses back in the future
+                                var urlObject = Util.currentUrlToObject();
+                                urlObject.setSelections(_.initial(urlObject.selections || []));
+                                Util.setUrlToObject(urlObject, true);
+
                                 console.log("Redirecting to " + response.smartLinkRedirect);
                                 document.location = response.smartLinkRedirect;
                                 return;
