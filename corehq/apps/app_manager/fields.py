@@ -106,8 +106,9 @@ class ApplicationDataSourceUIHelper(object):
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
-        self.application_field.choices = sort_tuple_field_choices_by_name(
-            [(app_id, source['name']) for app_id, source in self.all_sources.items()]
+        self.application_field.choices = sorted(
+            [(app_id, source['name']) for app_id, source in self.all_sources.items()],
+            key=lambda id_name_tuple: (id_name_tuple[1] or '').lower()
         )
         if self.enable_registry:
             self.application_field.choices += [('', '--------')]
@@ -182,7 +183,7 @@ class ApplicationDataSourceUIHelper(object):
             self.source_field.widget.attrs = {'data-bind': '''
                 optionsText: function(item){return item.text},
                 optionsValue: function(item){return item.value},
-                value: sourceId
+                value: sourceId,
                 options: sourcesMap[application()][sourceType()]
             '''}
 
