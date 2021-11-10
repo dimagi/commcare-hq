@@ -82,7 +82,7 @@ Try accessing ``http://localhost/a/domain`` and see if it works. nginx should
 
 proxy all requests to localhost to your django server. You should also be able
 
-to access ``http://your_ip_address/a/domain`` from a phone or other device on the
+to access ``http://your_ip_address:8000/a/domain`` from a phone or other device on the
 
 same network.
 
