@@ -40,16 +40,19 @@ class Command(BaseCommand):
 
     def handle(self, file, **options):
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
+        already_existing_users = []
         for old_username, new_username in iterate_usernames_to_update(file):
             logger.info(f'Cloning old user {old_username} to new user {new_username}')
             try:
                 old_user, new_user = clone_user(old_username, new_username)
-            except CouchUser.Inconsistent as e:
-                logger.error(f'{e}\nSkipping the pair ({old_username}, {new_username})')
+            except CouchUser.Inconsistent:
+                already_existing_users.append((old_username, new_username))
                 continue
 
             deactivate_django_user(old_user.get_django_user())
             send_deprecation_email(old_user, new_user)
+            if already_existing_users:
+                logger.warning(f'Users already exist (old_username, new_username):\n {already_existing_users}')
 
 
 def iterate_usernames_to_update(file):
