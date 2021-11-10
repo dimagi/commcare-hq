@@ -2,7 +2,6 @@ import uuid
 
 from contextlib import contextmanager
 from django.test import SimpleTestCase
-from mock import patch
 
 from corehq.apps.es.tests.utils import (
     TEST_ES_INFO,
