@@ -1,3 +1,4 @@
+import itertools
 import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -14,6 +15,7 @@ from botocore.vendored.requests.packages.urllib3.exceptions import (
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from couchdbkit import ResourceConflict, ResourceNotFound
+
 from corehq.util.es.elasticsearch import ConnectionTimeout
 from corehq.util.metrics import metrics_counter, metrics_gauge, metrics_histogram_timer
 from corehq.util.metrics.const import MPM_MAX, MPM_MIN, MPM_LIVESUM
@@ -46,7 +48,6 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.userreports.models import (
     AsyncIndicator,
-    DataSourceConfiguration,
     get_report_config,
     id_is_static, )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
@@ -154,15 +155,14 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
     case_type_or_xmlns_list = config.get_case_type_or_xmlns_filter()
-    completed_ct_xmlns = resume_helper.get_completed_case_type_or_xmlns()
-    if completed_ct_xmlns:
-        case_type_or_xmlns_list = [
-            case_type_or_xmlns
-            for case_type_or_xmlns in case_type_or_xmlns_list
-            if case_type_or_xmlns not in completed_ct_xmlns
-        ]
+    domains = config.data_domains
 
-    for case_type_or_xmlns in case_type_or_xmlns_list:
+    loop_iterations = list(itertools.product(domains, case_type_or_xmlns_list))
+    completed_iterations = resume_helper.get_completed_iterations()
+    if completed_iterations:
+        loop_iterations = list(set(loop_iterations) - set(completed_iterations))
+
+    for domain, case_type_or_xmlns in loop_iterations:
         relevant_ids = []
         document_store = get_document_store_for_doc_type(
             config.domain, config.referenced_doc_type,
@@ -181,7 +181,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
         if relevant_ids:
             _build_indicators(config, document_store, relevant_ids)
 
-        resume_helper.add_completed_case_type_or_xmlns(case_type_or_xmlns)
+        resume_helper.add_completed_iteration(domain, case_type_or_xmlns)
 
     resume_helper.clear_resume_info()
     if not id_is_static(indicator_config_id):

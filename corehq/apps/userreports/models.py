@@ -516,6 +516,10 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if not connection_manager.resolves_to_unique_dbs(mirrored_engine_ids + [self.engine_id]):
             raise BadSpecError("No two engine_ids should point to the same database")
 
+    @property
+    def data_domains(self):
+        return [self.domain]
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
