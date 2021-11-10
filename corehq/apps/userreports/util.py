@@ -10,6 +10,12 @@ from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, TEMP_REPORT_PREFIX
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.models import (
+    id_is_static,
+    StaticDataSourceConfiguration,
+    DataSourceConfiguration,
+    RegistryDataSourceConfiguration,
+)
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
@@ -276,3 +282,18 @@ def get_static_report_mapping(from_domain, to_domain):
 
 def add_tabbed_text(text):
     return '\t' + '\n\t'.join(text.splitlines(False))
+
+
+def get_ucr_datasource_config_by_id(indicator_config_id):
+    if id_is_static(indicator_config_id):
+        return StaticDataSourceConfiguration.by_id(indicator_config_id)
+    else:
+        doc = DataSourceConfiguration.get_db().get(indicator_config_id)
+        return _correctly_wrap_data_source(doc)
+
+
+def _correctly_wrap_data_source(doc):
+    return {
+        "DataSourceConfiguration": DataSourceConfiguration,
+        "RegistryDataSourceConfiguration": RegistryDataSourceConfiguration,
+    }[doc["doc_type"]].wrap(doc)

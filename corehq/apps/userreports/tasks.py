@@ -47,10 +47,8 @@ from corehq.apps.userreports.exceptions import (
 from corehq.apps.userreports.models import (
     AsyncIndicator,
     DataSourceConfiguration,
-    StaticDataSourceConfiguration,
     get_report_config,
-    id_is_static, RegistryDataSourceConfiguration,
-)
+    id_is_static, )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
@@ -58,7 +56,7 @@ from corehq.apps.userreports.reports.data_source import (
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
-    get_indicator_adapter,
+    get_indicator_adapter, get_ucr_datasource_config_by_id,
 )
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
@@ -67,21 +65,6 @@ from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
 
 celery_task_logger = logging.getLogger('celery.task')
-
-
-def _get_config_by_id(indicator_config_id):
-    if id_is_static(indicator_config_id):
-        return StaticDataSourceConfiguration.by_id(indicator_config_id)
-    else:
-        doc = DataSourceConfiguration.get_db().get(indicator_config_id)
-        return _correctly_wrap_data_source(doc)
-
-
-def _correctly_wrap_data_source(doc):
-    return {
-        "DataSourceConfiguration": DataSourceConfiguration,
-        "RegistryDataSourceConfiguration": RegistryDataSourceConfiguration,
-    }[doc["doc_type"]].wrap(doc)
 
 
 def _build_indicators(config, document_store, relevant_ids):
@@ -99,7 +82,7 @@ def _build_indicators(config, document_store, relevant_ids):
 
 @serial_task('{indicator_config_id}', default_retry_delay=60 * 10, timeout=3 * 60 * 60, max_retries=20, queue=UCR_CELERY_QUEUE, ignore_result=True)
 def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None, diffs=None, trigger_time=None):
-    config = _get_config_by_id(indicator_config_id)
+    config = get_ucr_datasource_config_by_id(indicator_config_id)
     if trigger_time is not None and trigger_time < config.last_modified:
         return
 
@@ -135,7 +118,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
 def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=None):
-    config = _get_config_by_id(indicator_config_id)
+    config = get_ucr_datasource_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
@@ -153,7 +136,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def resume_building_indicators(indicator_config_id, initiated_by=None):
-    config = _get_config_by_id(indicator_config_id)
+    config = get_ucr_datasource_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
@@ -417,7 +400,7 @@ def build_async_indicators(indicator_doc_ids):
         if config_id in config_by_id:
             return config_by_id[config_id]
         else:
-            config = _get_config_by_id(config_id)
+            config = get_ucr_datasource_config_by_id(config_id)
             config_by_id[config_id] = config
             return config
 
