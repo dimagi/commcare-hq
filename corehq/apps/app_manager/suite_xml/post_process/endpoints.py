@@ -41,7 +41,7 @@ class EndpointsHelper(PostProcessor):
 
         stack = Stack()
         children = self.get_frame_children(module, form)
-        argument_ids = self._get_argument_ids(children)
+        argument_ids = self.get_argument_ids(children)
 
         # Add a claim request for each endpoint argument.
         # This assumes that all arguments are case ids.
@@ -64,7 +64,7 @@ class EndpointsHelper(PostProcessor):
         }
         return SessionEndpoint(**kwargs)
 
-    def _get_argument_ids(self, frame_children):
+    def get_argument_ids(self, frame_children):
         return [
             child.id for child in frame_children
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection
