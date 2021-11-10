@@ -22,7 +22,6 @@ from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.registry.models import DataRegistry
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager.data_source_meta import (
     APP_DATA_SOURCE_TYPE_VALUES,
@@ -84,7 +83,7 @@ from corehq.apps.userreports.reports.builder.sources import (
 )
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
-from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.userreports.util import has_report_builder_access, get_ucr_datasource_config_by_id
 from corehq.toggles import (
     SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER,
     SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
@@ -1143,10 +1142,7 @@ class ConfigureNewReportBase(forms.Form):
 
     def _update_data_source_if_necessary(self):
         if self.ds_builder.uses_managed_data_source:
-            if self.ds_builder.uses_registry_data_source:
-                data_source = RegistryDataSourceConfiguration.get(self.existing_report.config_id)
-            else:
-                data_source = DataSourceConfiguration.get(self.existing_report.config_id)
+            data_source = get_ucr_datasource_config_by_id(self.existing_report.config_id)
             if data_source.get_report_count() > 1:
                 # If another report is pointing at this data source, create a new
                 # data source for this report so that we can change the indicators
@@ -1274,7 +1270,7 @@ class ConfigureNewReportBase(forms.Form):
         Add filter to data source to prevent it from being updated by DB changes
         """
         # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
-        data_source_config = DataSourceConfiguration.get(data_source_config_id)
+        data_source_config = get_ucr_datasource_config_by_id(data_source_config_id)
         data_source_config.configured_filter = {
             # An expression that is always false:
             "type": "boolean_expression",
@@ -1288,10 +1284,8 @@ class ConfigureNewReportBase(forms.Form):
     def _update_temp_datasource(self, data_source_config_id, username):
         if not self.ds_builder.uses_managed_data_source:
             return
-        if self.ds_builder.uses_registry_data_source:
-            data_source_config = RegistryDataSourceConfiguration.get(data_source_config_id)
-        else:
-            data_source_config = DataSourceConfiguration.get(data_source_config_id)
+
+        data_source_config = get_ucr_datasource_config_by_id(data_source_config_id)
 
         filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
         # The data source needs indicators for all possible calculations, not just the ones currently in use

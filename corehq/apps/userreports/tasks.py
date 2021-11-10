@@ -192,7 +192,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
         try:
             config.save()
         except ResourceConflict:
-            current_config = DataSourceConfiguration.get(config._id)
+            current_config = get_ucr_datasource_config_by_id(config._id)
             # check that a new build has not yet started
             if in_place:
                 if config.meta.build.initiated_in_place == current_config.meta.build.initiated_in_place:
