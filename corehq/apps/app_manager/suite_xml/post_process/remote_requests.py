@@ -265,8 +265,12 @@ class RemoteRequestFactory(object):
 
     def build_stack(self):
         stack = Stack()
+        rewind_if = None
         if module_uses_smart_links(self.module):
             user_domain_xpath = session_var(COMMCARE_PROJECT, path="user/data")
+            # For case in same domain, do a regular case claim rewind
+            rewind_if = self._get_case_domain_xpath().eq(user_domain_xpath)
+            # For case in another domain, jump to that other domain
             frame = PushFrame(if_clause=self._get_case_domain_xpath().neq(user_domain_xpath))
             frame.add_datum(StackJump(
                 url=Text(
@@ -277,7 +281,7 @@ class RemoteRequestFactory(object):
                 ),
             ))
             stack.add_frame(frame)
-        frame = PushFrame()
+        frame = PushFrame(if_clause=rewind_if)
         frame.add_rewind(QuerySessionXPath(self.case_session_var).instance())
         stack.add_frame(frame)
         return stack
