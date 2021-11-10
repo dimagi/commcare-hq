@@ -42,7 +42,7 @@ from corehq.apps.userreports.models import (
     ReportMeta,
     get_datasource_config_infer_type,
     guess_data_source_type,
-    RegistryDataSourceConfiguration,
+    RegistryDataSourceConfiguration, RegistryReportConfiguration,
 )
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
@@ -295,6 +295,12 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
     """
     @property
     @abstractmethod
+    def report_config_class(self):
+        """Return the report class type"""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
     def uses_managed_data_source(self):
         """
         Whether this interface uses a managed data source.
@@ -373,6 +379,10 @@ class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
     @property
     def uses_managed_data_source(self):
         return True
+
+    @property
+    def report_config_class(self):
+        return RegistryReportConfiguration if self.uses_registry_data_source else ReportConfiguration
 
     @property
     def uses_registry_data_source(self):
@@ -548,6 +558,13 @@ class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
     @property
     def uses_managed_data_source(self):
         return False
+
+    @property
+    def report_config_class(self):
+        return {
+            "DataSourceConfiguration": ReportConfiguration,
+            "RegistryDataSourceConfiguration": RegistryReportConfiguration,
+        }[self.data_source.doc_type]
 
     @property
     @memoized
@@ -1213,7 +1230,7 @@ class ConfigureNewReportBase(forms.Form):
             data_source_config_id = self._build_data_source()
         else:
             data_source_config_id = self.ds_builder.data_source_id
-        report = ReportConfiguration(
+        report = self.ds_builder.report_config_class(
             domain=self.domain,
             config_id=data_source_config_id,
             title=self.cleaned_data['report_title'] or self.report_name,
@@ -1244,7 +1261,7 @@ class ConfigureNewReportBase(forms.Form):
         """
 
         self._update_temp_datasource(data_source_id, username)
-        report = ReportConfiguration(
+        report = self.ds_builder.report_config_class(
             domain=self.domain,
             config_id=data_source_id,
             title=self.report_name,
