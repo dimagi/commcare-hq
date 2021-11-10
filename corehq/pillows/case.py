@@ -8,7 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
+from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.messaging.pillow import CaseMessagingSyncProcessor
@@ -101,7 +101,8 @@ def get_case_pillow(
         topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num,
         dedicated_migration_process=dedicated_migration_process
     )
-    table_manager = ConfigurableReportTableManager(
+    run_migrations = (process_num == 0)  # only first process runs migrations
+    ucr_processor = get_ucr_processor(
         data_source_providers=[
             DynamicDataSourceProvider('CommCareCase'),
             StaticDataSourceProvider('CommCareCase')
@@ -109,11 +110,9 @@ def get_case_pillow(
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
-        run_migrations=(process_num == 0),  # only first process runs migrations
+        run_migrations=run_migrations,
+        ucr_configs=ucr_configs
     )
-    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
-    if ucr_configs:
-        table_manager.bootstrap(ucr_configs)
     case_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
@@ -145,7 +144,7 @@ def get_case_pillow(
         processor=processors,
         processor_chunk_size=processor_chunk_size,
         process_num=process_num,
-        is_dedicated_migration_process=dedicated_migration_process and (process_num == 0)
+        is_dedicated_migration_process=dedicated_migration_process and run_migrations
     )
 
 
