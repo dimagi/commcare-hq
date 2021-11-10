@@ -251,6 +251,8 @@ class DataSourceProperty(object):
             filter.update({"choice_provider": {"type": "location", "include_descendants": True}})
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "location", "include_descendants": True, "show_all_locations": True}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMMCARE_PROJECT:
+            filter.update({"choice_provider": {"type": COMMCARE_PROJECT}})
         if configuration.get('pre_value') or configuration.get('pre_operator'):
             filter.update({
                 'type': 'pre',  # type could have been "date"
