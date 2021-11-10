@@ -419,7 +419,7 @@
   <legend aria-hidden="true" class="sr-only">{% trans "Answer Choices" %}</legend>
     <div class="sel clear">
       <div data-bind="foreach: choices, as: 'choice'">
-        <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }, addColStyle: $parent.hideLabel">
+        <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }, class: $parent.colStyleIfHideLabel">
           <label>
               <input data-bind="
                           checked: $parent.rawAnswer,
