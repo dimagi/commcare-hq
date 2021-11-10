@@ -140,8 +140,13 @@ def _delete_hubspot_contact(vid, retry_num=0):
             if retry_num <= MAX_API_RETRIES:
                 return _delete_hubspot_contact(vid, retry_num + 1)
             else:
-                logger.error(f"Failed to delete Hubspot contact {vid} due to "
-                             f"{str(e)}.")
+                metrics_counter(
+                    'commcare.hubspot_data.error.delete_hubspot_contact',
+                    tags={
+                        'vid': vid,
+                        'error': str(e),
+                    }
+                )
         else:
             return True
     return False
@@ -184,8 +189,13 @@ def _get_contact_ids_to_delete(list_of_emails, retry_num=0):
             if retry_num <= MAX_API_RETRIES:
                 return _get_contact_ids_to_delete(list_of_emails, retry_num + 1)
             else:
-                logger.error(f"Failed to get Hubspot contact ids for emails "
-                             f"{list_of_emails.join(', ')} due to {str(e)}.")
+                metrics_counter(
+                    'commcare.hubspot_data.error.get_contact_ids_for_emails',
+                    tags={
+                        'emails': list_of_emails.join(', '),
+                        'error': str(e),
+                    }
+                )
         else:
             ids_to_delete = []
             for contact_id, data in req.json().items():
