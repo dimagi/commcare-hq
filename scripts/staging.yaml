@@ -63,7 +63,6 @@ branches:
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
-    - jls/smart-linking-in-web-apps # Jenny Sept 22
     - dmr/throttle-system-forms  # Danny Sept 24
     - smh/remove-extra-spinner-icons # Steph Oct 6
     - ml/remove-pickles-phonelog # Minha Oct 7
@@ -85,5 +84,7 @@ branches:
     - gh/use-email-for-all-comms # Graham Nov 8 (check back on Dec 6)
     - dm/py36-pickle5 # Daniel Nov 8
     - rp/status-embed # Rynhard Nov 9
+    - sr/session-endpoints+jls/smart-linking-in-web-apps # Sravan Nov 10
+    - jls/smart-linking-in-web-apps # Jenny Sept 22
     - sr/session-endpoints  # Sravan Nov 9
 submodules: { }
