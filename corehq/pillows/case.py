@@ -8,7 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import get_ucr_processor
+from corehq.apps.userreports.pillow import get_ucr_processor, get_data_registry_ucr_processor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.messaging.pillow import CaseMessagingSyncProcessor
@@ -113,6 +113,10 @@ def get_case_pillow(
         run_migrations=run_migrations,
         ucr_configs=ucr_configs
     )
+    ucr_dr_processor = get_data_registry_ucr_processor(
+        run_migrations=run_migrations,
+        ucr_configs=ucr_configs
+    )
     case_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
@@ -135,7 +139,7 @@ def get_case_pillow(
         processors.append(get_case_to_report_es_processor())
     if not skip_ucr:
         # this option is useful in tests to avoid extra UCR setup where unneccessary
-        processors = [ucr_processor] + processors
+        processors = [ucr_processor, ucr_dr_processor] + processors
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,
