@@ -2,6 +2,7 @@ import uuid
 
 from contextlib import contextmanager
 from django.test import SimpleTestCase
+from mock import patch
 
 from corehq.apps.es.tests.utils import (
     TEST_ES_INFO,
@@ -28,6 +29,29 @@ class TestElastic(SimpleTestCase):
         super().tearDown()
         self.es.indices.delete(self.index)
 
+    def test_scroll_query_accept_size_and_scroll_kw(self):
+        list(scroll_query(self.index, {}, size=1, scroll="1m"))
+
+    def test_scroll_query_invalid_kw(self):
+        with self.assertRaises(ValueError):
+            list(scroll_query(self.index, {}, doc_type=self.doc_type))
+
+    def test_scroll_query_scroll_size(self):
+        total_docs = 3
+        docs = [{"number": n} for n in range(total_docs)]
+        with self._index_test_docs(self.index, self.doc_type, docs):
+            with patch("corehq.elastic.ElasticsearchInterface.scroll",
+                       side_effect=self.es.scroll) as scroll:
+                list(scroll_query(self.index, {}, size=1))
+                # NOTE: call_count == total_docs because the final call returns
+                # empty, resulting in StopIteration.
+                # Call sequence (for 3 total docs with size=1):
+                # - len(iface.search(...)["hits"]["hits"]) == 1
+                # - len(iface.scroll(...)["hits"]["hits"]) == 1
+                # - len(iface.scroll(...)["hits"]["hits"]) == 1
+                # - len(iface.scroll(...)["hits"]["hits"]) == 0
+                self.assertEqual(scroll.call_count, total_docs)
+
     def test_scroll_query(self):
         docs = [
             {"prop": "port", "color": "red"},
@@ -42,38 +66,16 @@ class TestElastic(SimpleTestCase):
             self.assertEqual(len(results), len(indexed))
 
     def test_scroll_query_returns_over_2x_size_docs(self):
-        """Test that all results are returned in very large scroll queries.
-
-        NOTE: this test is slow (~7sec on an i7-10610U)
-
-        Due to the slowness, this test indexes docs discretely rather than
-        using the `_index_test_docs()` helper in order to be more performant.
-
-        The combination of the following optimizations:
-
-        - Convert test setup/teardown to functions instead of classmethods
-          to allow this test to not clean up after itself (tearDown deletes
-          the entire index).
-        - Discrete document indexing in this method rather than using a
-          contextmanager that deletes the docs after the test completes.
-        - Calling `indices.refresh(...)` once after all docs are indexed rather
-          than specifying a refresh after each doc is indexed.
-
-        reduced the runtime of this test from ~25sec to ~7sec.
-        """
-        docs = []
-        interface = ElasticsearchInterface(self.es)
-        for integer in range((interface.SCROLL_SIZE * 2) + 1):
-            doc_id = uuid.uuid4().hex
-            doc = {"_id": doc_id, "number": integer}
-            interface.index_doc(self.index, self.doc_type, doc_id, doc)
-            docs.append(doc)
-        self.es.indices.refresh(self.index)
-        results = []
-        for result in scroll_query(self.index, {}):
-            results.append(result["_source"])
-        results.sort(key=lambda d: d["number"])
-        self.assertEqual(results, docs)
+        """Test that all results are returned for scroll queries."""
+        scroll_size = 3  # fetch N docs per "scroll"
+        total_docs = (scroll_size * 2) + 1
+        docs = [{"number": n} for n in range(total_docs)]
+        with self._index_test_docs(self.index, self.doc_type, docs) as indexed:
+            self.assertEqual(len(indexed), total_docs)
+            results = {}
+            for result in scroll_query(self.index, {}, size=scroll_size):
+                results[result["_id"]] = result["_source"]
+        self.assertEqual(results, indexed)
 
     @contextmanager
     def _index_test_docs(self, index, doc_type, docs):

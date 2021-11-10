@@ -205,11 +205,26 @@ def iter_es_docs_from_query(query):
     return ScanResult(query.count(), iter_export_docs())
 
 
-def scroll_query(index_cname, q, es_instance_alias=ES_DEFAULT_INSTANCE):
+def scroll_query(index_cname, query, es_instance_alias=ES_DEFAULT_INSTANCE, **kw):
+    """Perfrom a scrolling search, yielding each doc until the entire context
+    is exhausted.
+
+    :param index_cname: Canonical (registered) name of index to search.
+    :param query: Dict, raw search query.
+    :param es_instance_alias: Name of Elastic instance (for interface instantiation).
+    :param **kw: Additional scroll keyword arguments. Valid options:
+                 `size`: Integer, scroll size (number of documents per "scroll")
+                 `scroll`: String, time value specifying how long the Elastic
+                           cluster should keep the search context alive.
+    """
+    valid_kw = {"size", "scroll"}
+    if not set(kw).issubset(valid_kw):
+        raise ValueError(f"invalid keyword args: {set(kw) - valid_kw}")
     index_info = registry_entry(index_cname)
     es_interface = ElasticsearchInterface(get_es_instance(es_instance_alias))
     try:
-        for results in es_interface.iter_scroll(index_info.alias, index_info.type, body=q):
+        for results in es_interface.iter_scroll(index_info.alias, index_info.type,
+                                                body=query, **kw):
             report_and_fail_on_shard_failures(results)
             for hit in results["hits"]["hits"]:
                 yield hit
