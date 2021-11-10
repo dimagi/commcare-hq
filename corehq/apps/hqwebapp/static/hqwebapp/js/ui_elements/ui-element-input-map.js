@@ -1,16 +1,23 @@
 hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
     'jquery',
     'hqwebapp/js/main',
+    'DOMPurify/dist/purify.min'
 ], function (
     $,
-    hqMain
+    hqMain,
+    DOMPurify
 ) {
     'use strict';
     var module = {};
 
-    var InputMap = function (show_del_button) {
+    var InputMap = function (show_del_button, placeholders) {
         var that = this;
         hqMain.eventize(this);
+        if (!placeholders) {
+            placeholders = {};
+            placeholders.key = gettext('key');
+            placeholders.value = gettext('value');
+        }
         this.ui = $('<div class="form-group hq-input-map" />');
         this.value = {
             key: "",
@@ -26,8 +33,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
         });
 
         this.$edit_view = $('<div class="form-inline" style="margin-left:5px;" />');
-        var key_input = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + gettext('key') + '" />'),
-            val_input = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="' + gettext('value') + '" />');
+        var key_input = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + placeholders.key + '" />'),
+            val_input = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="' + placeholders.value  + '" />');
         key_input.change(function () {
             that.fire('change');
         });
@@ -76,13 +83,17 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
                     });
 
                 }
-                if (map_key) {
-                    this.$noedit_view.html('<strong>' + $('<div>').text(map_key).html() + '</strong> &rarr; ' + (
-                        map_val ? $('<div>').text(map_val).html() : '<i class="fa fa-remove"></i>'
-                    ));
-                } else {
-                    this.$noedit_view.text("");
+                map_key = DOMPurify.sanitize(map_key);
+                map_val = DOMPurify.sanitize(map_val);
+                if (map_key && !map_key.trim()) {
+                    map_key = `"<span style="white-space: pre;">${map_key}</span>"`;
                 }
+                if (map_val && !map_val.trim()) {
+                    map_val = `"<span style="white-space: pre;">${map_val}</span>"`;
+                }
+                let left_side = map_key ? `<strong>${map_key}</strong>` : `<i>${django.gettext('blank')}</i>`;
+                let right_side = map_val ? map_val : `<i>${django.gettext('blank')}</i>`;
+                this.$noedit_view.html(`${left_side} &rarr; ${right_side}`);
                 return this;
             }
         },
@@ -99,8 +110,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
         },
     };
 
-    module.new = function (show_del_button) {
-        return new InputMap(show_del_button);
+    module.new = function (show_del_button, placeholders) {
+        return new InputMap(show_del_button, placeholders);
     };
 
     return module;
