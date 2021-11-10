@@ -61,7 +61,8 @@ from corehq.apps.userreports.dbaccessors import (
     get_number_of_report_configs_by_data_source,
     get_report_configs_for_domain,
     get_all_registry_data_source_ids,
-    get_registry_data_sources_by_domain,
+    get_registry_data_sources_by_domain, get_registry_report_configs_for_domain,
+    get_number_of_registry_report_configs_by_data_source,
 )
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -875,6 +876,17 @@ CUSTOM_REPORT_PREFIX = 'custom-'
 
 
 class RegistryReportConfiguration(ReportConfiguration):
+
+    @classmethod
+    @quickcache(['cls.__name__', 'domain'])
+    def by_domain(cls, domain):
+        return get_registry_report_configs_for_domain(domain)
+
+    @classmethod
+    @quickcache(['cls.__name__', 'domain', 'data_source_id'])
+    def count_by_data_source(cls, domain, data_source_id):
+        return get_number_of_registry_report_configs_by_data_source(domain, data_source_id)
+
     @property
     def registry_slug(self):
         return self.config.registry_slug

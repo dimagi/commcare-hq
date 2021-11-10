@@ -61,7 +61,7 @@ from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
     ReportConfiguration,
-    StaticReportConfiguration,
+    StaticReportConfiguration, RegistryReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
@@ -204,25 +204,34 @@ def _make_dynamic_report(report_config, keyprefix):
 
 
 def _safely_get_report_configs(project_name):
+    return (
+        _safely_get_report_configs_generic(project_name, ReportConfiguration) +  # noqa: W504
+        _safely_get_report_configs_generic(project_name, RegistryReportConfiguration) +  # noqa: W504
+        _safely_get_static_report_configs(project_name)
+    )
+
+
+def _safely_get_report_configs_generic(project_name, report_class):
     try:
-        configs = ReportConfiguration.by_domain(project_name)
+        configs = report_class.by_domain(project_name)
     except (BadSpecError, BadValueError) as e:
         logging.exception(e)
 
         # Pick out the UCRs that don't have spec errors
         configs = []
-        for config_id in get_doc_ids_in_domain_by_class(project_name, ReportConfiguration):
+        for config_id in get_doc_ids_in_domain_by_class(project_name, report_class):
             try:
-                configs.append(ReportConfiguration.get(config_id))
+                configs.append(report_class.get(config_id))
             except (BadSpecError, BadValueError) as e:
                 logging.error("%s with report config %s" % (str(e), config_id))
+    return configs
 
+
+def _safely_get_static_report_configs(project_name):
     try:
-        configs.extend(StaticReportConfiguration.by_domain(project_name))
+        return StaticReportConfiguration.by_domain(project_name)
     except (BadSpecError, BadValueError) as e:
         logging.exception(e)
-
-    return configs
 
 
 def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
