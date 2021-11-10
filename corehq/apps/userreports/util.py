@@ -10,12 +10,6 @@ from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, TEMP_REPORT_PREFIX
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import (
-    id_is_static,
-    StaticDataSourceConfiguration,
-    DataSourceConfiguration,
-    RegistryDataSourceConfiguration,
-)
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
@@ -285,6 +279,11 @@ def add_tabbed_text(text):
 
 
 def get_ucr_datasource_config_by_id(indicator_config_id):
+    from corehq.apps.userreports.models import (
+        id_is_static,
+        StaticDataSourceConfiguration,
+        DataSourceConfiguration,
+    )
     if id_is_static(indicator_config_id):
         return StaticDataSourceConfiguration.by_id(indicator_config_id)
     else:
@@ -293,6 +292,10 @@ def get_ucr_datasource_config_by_id(indicator_config_id):
 
 
 def _correctly_wrap_data_source(doc):
+    from corehq.apps.userreports.models import (
+        DataSourceConfiguration,
+        RegistryDataSourceConfiguration,
+    )
     return {
         "DataSourceConfiguration": DataSourceConfiguration,
         "RegistryDataSourceConfiguration": RegistryDataSourceConfiguration,
