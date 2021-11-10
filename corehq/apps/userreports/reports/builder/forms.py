@@ -483,6 +483,9 @@ class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
     def data_source_name(self):
         raise NotImplementedError
 
+    def construct_data_source(self, table_id, **kwargs):
+        return DataSourceConfiguration(domain=self.domain, table_id=table_id, **kwargs)
+
     def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
         if is_multiselect_chart_report:
             base_item_expression = self.base_item_expression(True, multiselect_field)
@@ -918,6 +921,14 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
         )
         return properties
 
+    def construct_data_source(self, table_id, **kwargs):
+        return RegistryDataSourceConfiguration(
+            domain=self.domain,
+            table_id=table_id,
+            registry_slug=self.registry_slug,
+            **kwargs
+        )
+
     def _get_datasource_default_columns(self):
         return {
             column.id
@@ -1145,21 +1156,12 @@ class ConfigureNewReportBase(forms.Form):
                                                                  self._is_multiselect_chart_report,
                                                                  ms_field)
 
-    def _build_data_source(self, is_registry=False):
-        if is_registry:
-            data_source_config = RegistryDataSourceConfiguration(
-                domain=self.domain,
-                table_id=clean_table_name(self.domain, str(uuid.uuid4().hex)),
-                registry_slug=self.registry_slug,
-                **self._get_data_source_configuration_kwargs()
-            )
-        else:
-            data_source_config = DataSourceConfiguration(
-                domain=self.domain,
-                # The uuid gets truncated, so it's not really universally unique.
-                table_id=clean_table_name(self.domain, str(uuid.uuid4().hex)),
-                **self._get_data_source_configuration_kwargs()
-            )
+    def _build_data_source(self):
+        data_source_config = self.ds_builder.construct_data_source(
+            # The uuid gets truncated, so it's not really universally unique.
+            table_id=clean_table_name(self.domain, str(uuid.uuid4().hex)),
+            **self._get_data_source_configuration_kwargs()
+        )
         data_source_config.validate()
         data_source_config.save()
         tasks.rebuild_indicators.delay(data_source_config._id, source="report_builder")
@@ -1187,7 +1189,7 @@ class ConfigureNewReportBase(forms.Form):
                 # If another report is pointing at this data source, create a new
                 # data source for this report so that we can change the indicators
                 # without worrying about breaking another report.
-                data_source_config_id = self._build_data_source(is_registry=self.ds_builder.uses_registry_data_source)
+                data_source_config_id = self._build_data_source()
                 self.existing_report.config_id = data_source_config_id
             else:
                 indicators = self.ds_builder.indicators(
@@ -1208,7 +1210,7 @@ class ConfigureNewReportBase(forms.Form):
         :raises BadSpecError if validation fails when building data source, or report is invalid
         """
         if self.ds_builder.uses_managed_data_source:
-            data_source_config_id = self._build_data_source(is_registry=self.ds_builder.uses_registry_data_source)
+            data_source_config_id = self._build_data_source()
         else:
             data_source_config_id = self.ds_builder.data_source_id
         report = ReportConfiguration(
@@ -1272,19 +1274,10 @@ class ConfigureNewReportBase(forms.Form):
         filters = [f._asdict() for f in self.initial_user_filters + self.initial_default_filters]
         columns = [c._asdict() for c in self.initial_columns]
 
-        if self.ds_builder.uses_registry_data_source:
-            data_source_config = RegistryDataSourceConfiguration(
-                domain=self.domain,
-                table_id=clean_table_name(self.domain, uuid.uuid4().hex),
-                registry_slug=self.registry_slug,
-                **self.ds_builder.get_temp_datasource_constructor_kwargs(columns, filters)
-            )
-        else:
-            data_source_config = DataSourceConfiguration(
-                domain=self.domain,
-                table_id=clean_table_name(self.domain, uuid.uuid4().hex),
-                **self.ds_builder.get_temp_datasource_constructor_kwargs(columns, filters)
-            )
+        data_source_config = self.ds_builder.construct_data_source(
+            table_id=clean_table_name(self.domain, uuid.uuid4().hex),
+            **self.ds_builder.get_temp_datasource_constructor_kwargs(columns, filters)
+        )
         data_source_config.validate()
         data_source_config.save()
 
