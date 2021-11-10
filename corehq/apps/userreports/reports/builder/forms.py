@@ -502,13 +502,31 @@ class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
         raise NotImplementedError
 
     def get_temp_datasource_constructor_kwargs(self, required_columns, required_filters):
-        indicators = self.all_possible_indicators(required_columns, required_filters)
+        indicators = self._remove_defaults_from_indicators(
+            self.all_possible_indicators(required_columns, required_filters)
+        )
         return self._ds_config_kwargs(indicators)
 
     def get_datasource_constructor_kwargs(self, columns, filters,
                                           is_multiselect_chart_report=False, multiselect_field=None):
-        indicators = self.indicators(columns, filters)
+        indicators = self._remove_defaults_from_indicators(
+            self.indicators(columns, filters)
+        )
         return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
+
+    def _remove_defaults_from_indicators(self, indicators):
+        defaults = self._get_datasource_default_columns()
+        return [
+            indicator for indicator in indicators
+            if indicator['column_id'] not in defaults
+        ]
+
+    def _get_datasource_default_columns(self):
+        return {
+            column.id
+            for indicator in DataSourceConfiguration().default_indicators
+            for column in indicator.get_columns()
+        }
 
 
 class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
@@ -900,29 +918,12 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
         )
         return properties
 
-    def get_temp_datasource_constructor_kwargs(self, required_columns, required_filters):
-        indicators = self.all_possible_indicators(required_columns, required_filters)
-        return self._ds_config_kwargs(self._remove_defaults_from_indicators(indicators))
-
-    def get_datasource_constructor_kwargs(self, columns, filters,
-                                          is_multiselect_chart_report=False, multiselect_field=None):
-        indicators = self.indicators(columns, filters)
-        return self._ds_config_kwargs(
-            self._remove_defaults_from_indicators(indicators),
-            is_multiselect_chart_report,
-            multiselect_field
-        )
-
-    def _remove_defaults_from_indicators(self, indicators):
-        defaults = {
+    def _get_datasource_default_columns(self):
+        return {
             column.id
             for indicator in RegistryDataSourceConfiguration().default_indicators
             for column in indicator.get_columns()
         }
-        return [
-            indicator for indicator in indicators
-            if indicator['column_id'] not in defaults
-        ]
 
 
 def get_data_source_interface(domain, app, source_type, source_id, registry_slug):
