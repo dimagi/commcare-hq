@@ -300,3 +300,14 @@ def _correctly_wrap_data_source(doc):
         "DataSourceConfiguration": DataSourceConfiguration,
         "RegistryDataSourceConfiguration": RegistryDataSourceConfiguration,
     }[doc["doc_type"]].wrap(doc)
+
+
+def correctly_wrap_report_config(config):
+    from corehq.apps.userreports.models import (
+        ReportConfiguration,
+        RegistryReportConfiguration,
+    )
+    return {
+        "ReportConfiguration": ReportConfiguration,
+        "RegistryReportConfiguration": RegistryReportConfiguration,
+    }[config["doc_type"]].wrap(config)
