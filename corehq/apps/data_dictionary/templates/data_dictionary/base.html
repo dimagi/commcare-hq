@@ -6,11 +6,92 @@
 
 {% block page_navigation %}
   <h2 class="text-hq-nav-header">{% trans "Data Dictionary" %}</h2>
-  <ul class="nav nav-hq-sidebar" data-bind="foreach: caseTypes">
+  <ul class="nav nav-hq-sidebar">
+    <!-- ko foreach: caseTypes -->
     <li data-bind="css: { active: $data.name == $root.activeCaseType() }">
-      <a href="#" data-bind="text: $data.name, click: $root.goToCaseType"></a>
+      {# navigation handle by URL hash #}
+      <a data-bind="text: $data.name, attr: {href: $data.url}"></a>
+    </li>
+    <!-- /ko -->
+    <li>
+      <a href="#" data-bind="openModal: 'create-case-type'">
+        <i class="fa fa-plus"></i>
+        {% trans "Add Case Type" %}
+      </a>
     </li>
   </ul>
+
+  <script type="text/html" id="create-case-type">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">{% trans "Create a new Case Type" %}</h4>
+        </div>
+        <form class="form-horizontal" id="create-case-type-form"
+                style="margin: 0; padding: 0"
+                action="{% url "create_case_type" domain %}"
+                method="post"
+                data-bind="submit: submitCreate"
+        >
+            {% csrf_token %}
+            <div class="modal-body">
+              <fieldset>
+                <div class="form-group" data-bind="css: {'has-error': nameChecked() && !nameValid()}">
+                  <label for="name" class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
+                    {% trans "Name" %}
+                  </label>
+                  <i class="fa" data-bind="
+                     visible: nameChecked(),
+                     css: {
+                         'fa-check': nameValid(),
+                         'text-success': nameValid(),
+                         'fa-remove': !nameValid(),
+                         'text-danger': !nameValid(),
+                     }
+                  "></i>
+                  <div class="col-xs-12 col-sm-6 col-md-6 col-lg-8 controls">
+                    <input type="text" name="name" class="form-control" required data-bind="textInput: name"/>
+                    <span class='help-block' data-bind="visible: nameChecked() && !nameValid()">
+                      {% trans "A case type with this name already exists." %}
+                    </span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="description" class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
+                      {% trans "Description" %}
+                  </label>
+                  <div class="col-xs-12 col-sm-6 col-md-6 col-lg-8 controls">
+                    <textarea name="description" class="form-control"></textarea>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+            <div class="modal-footer">
+              <a href="#" data-dismiss="modal" class="btn btn-default" data-bind="
+                css: {disabled: formCreateCaseTypeSent()},
+                attr: {disabled: formCreateCaseTypeSent()}
+              ">{% trans 'Cancel' %}</a>
+              <button type="submit" class="btn btn-primary" data-bind="
+                css: {disabled: formCreateCaseTypeSent() || !nameValid()},
+                attr: {disabled: formCreateCaseTypeSent() || !nameValid()}
+              ">
+                <i class="fa fa-plus" data-bind="
+                   css: {
+                       'fa-plus': !formCreateCaseTypeSent(),
+                       'fa-refresh': formCreateCaseTypeSent,
+                       'fa-spin': formCreateCaseTypeSent
+                   }
+                "></i>
+                {% trans "Create Case Type" %}
+              </button>
+            </div>
+          </form>
+      </div>
+    </div>
+</script>
 {% endblock %}
 
 {% block page_content %}
@@ -18,7 +99,7 @@
   {% registerurl 'update_case_property' domain %}
   {% initial_page_data 'typeChoices' question_types %}
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
-  <div data-bind="saveButton: saveButton"></div>
+  <div data-bind="saveButton: saveButton, visible: $root.activeCaseType()"></div>
   <div class="row">
     <div class="col-md-10">
       <h3 data-bind="text: $root.activeCaseType()"></h3>
@@ -51,6 +132,7 @@
         <i class="fa fa-cloud-upload"></i>
         {% trans "Import from Excel" %}
       </a>
+      <div  data-bind="visible: $root.activeCaseType()">
       <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated Properties" %}</button>
       <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default pull-right">{% trans "Hide Deprecated Properties" %}</button>
       <table id="data-dictionary-table" class="table">
@@ -84,7 +166,7 @@
           </td>
           <td data-bind="text: name"></td>
           <td>
-            <select class ="form-control"
+            <select class="form-control"
                     data-bind="
                                 options: $root.availableDataTypes,
                                 optionsCaption: 'Select a data type',
@@ -92,6 +174,11 @@
                                 optionsValue: 'value',
                                 value: dataType,
                             "></select>
+            {% if request|toggle_enabled:'CASE_IMPORT_DATA_DICTIONARY_VALIDATION' %}
+              <p class="help-block" data-bind="visible: dataType() === 'date'">
+                {% trans "YYYY-MM-DD" %}
+              </p>
+            {% endif %}
           </td>
           <td>
                             <textarea class="form-control vertical-resize" data-bind="
@@ -140,6 +227,7 @@
           {% trans "Add Case Property Group" %}
         </button>
       </form>
+      </div>
       <p class="help-block">
         {% url 'generate_data_dictionary' domain as refresh_url %}
         {% blocktrans %}
@@ -147,6 +235,12 @@
         (opens in a new tab, may be slow...)
         {% endblocktrans %}
       </p>
+      <div data-bind="hidden: $root.caseTypes().length > 0">
+        <button class="btn btn-primary" data-bind="openModal: 'create-case-type'">
+          <i class="fa fa-plus"></i>
+          {% trans "Add a new Case Type" %}
+        </button>
+      </div>
     </div>
   </div>
 {% endblock %}

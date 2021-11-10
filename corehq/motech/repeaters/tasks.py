@@ -32,7 +32,7 @@ from .dbaccessors import (
     iterate_repeat_records,
 )
 from .models import (
-    RepeaterStub,
+    SQLRepeater,
     domain_can_forward,
     get_payload,
     send_request,
@@ -173,25 +173,25 @@ repeaters_overdue = metrics_gauge_task(
 
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeater_stub(repeater_stub: RepeaterStub):
+def process_repeater(repeater: SQLRepeater):
     """
     Worker task to send SQLRepeatRecords in chronological order.
 
-    This function assumes that ``repeater_stub`` checks have already
+    This function assumes that ``repeater`` checks have already
     been performed. Call via ``models.attempt_forward_now()``.
     """
     with CriticalSection(
-        [f'process-repeater-{repeater_stub.repeater_id}'],
+        [f'process-repeater-{repeater.repeater_id}'],
         fail_hard=False, block=False, timeout=5 * 60 * 60,
     ):
-        for repeat_record in repeater_stub.repeat_records_ready[:RECORDS_AT_A_TIME]:
+        for repeat_record in repeater.repeat_records_ready[:RECORDS_AT_A_TIME]:
             try:
-                payload = get_payload(repeater_stub.repeater, repeat_record)
+                payload = get_payload(repeater.repeater, repeat_record)
             except Exception:
                 # The repeat record is cancelled if there is an error
                 # getting the payload. We can safely move to the next one.
                 continue
-            should_retry = not send_request(repeater_stub.repeater,
+            should_retry = not send_request(repeater.repeater,
                                             repeat_record, payload)
             if should_retry:
                 break

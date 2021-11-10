@@ -24,6 +24,7 @@ from django_prbac.utils import has_privilege
 
 from lxml import etree
 
+from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
 
@@ -194,6 +195,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     Get context items that are used by both basic and advanced modules.
     '''
     item_lists = item_lists_by_app(app) if app.enable_search_prompt_appearance else []
+    case_types = set(module.search_config.additional_case_types) | {module.case_type}
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
@@ -201,6 +203,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'shadow_parent': _get_shadow_parent(app, module),
         'case_types': {m.case_type for m in app.modules if m.case_type},
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
+        'data_registry_enabled': app.supports_data_registry,
+        'data_registries': get_data_registry_dropdown_options(app.domain, required_case_types=case_types),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
@@ -231,6 +235,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 module.search_config.search_label.label if hasattr(module, 'search_config') else "",
             'search_again_label':
                 module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
+            'data_registry': module.search_config.data_registry,
+            'additional_registry_cases': module.search_config.additional_registry_cases,
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -995,6 +1001,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['hint'] = hint
         if prop['hidden']:
             ret['hidden'] = prop['hidden']
+        if prop['allow_blank_value']:
+            ret['allow_blank_value'] = prop['allow_blank_value']
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'
@@ -1190,15 +1198,35 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 "search_filter", "blacklisted_owner_ids_expression",
                 "search_button_display_condition", "search_additional_relevant"
             ]
+
+            def _check_xpath(xpath, location):
+                is_valid, message = validate_xpath(xpath)
+                if not is_valid:
+                    raise ValueError(
+                        f"Please fix the errors in xpath expression '{xpath}' "
+                        f"in {location}. The error is {message}"
+                    )
+
             for prop in xpath_props:
                 xpath = search_properties.get(prop, "")
                 if xpath:
-                    is_valid, message = validate_xpath(xpath)
-                    if not is_valid:
-                        return HttpResponseBadRequest(
-                            "Please fix the errors in xpath expression {xpath} in Search and Claim Options. "
-                            "The error is {err}".format(xpath=xpath, err=message)
-                        )
+                    try:
+                        _check_xpath(xpath, "Search and Claim Options")
+                    except ValueError as e:
+                        return HttpResponseBadRequest(str(e))
+
+            additional_registry_cases = []
+            for case_id_xpath in search_properties.get('additional_registry_cases', []):
+                if not case_id_xpath:
+                    continue
+
+                try:
+                    _check_xpath(case_id_xpath, "the Case ID of Additional Data Registry Query")
+                except ValueError as e:
+                    return HttpResponseBadRequest(str(e))
+
+                additional_registry_cases.append(case_id_xpath)
+
             module.search_config = CaseSearch(
                 search_label=search_label,
                 search_again_label=search_again_label,
@@ -1214,7 +1242,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 default_properties=[
                     DefaultCaseSearchProperty.wrap(p)
                     for p in search_properties.get('default_properties')
-                ]
+                ],
+                data_registry=search_properties.get('data_registry', ""),
+                additional_registry_cases=additional_registry_cases,
             )
 
     resp = {}

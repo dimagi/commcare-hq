@@ -4,7 +4,6 @@ from corehq.apps.es import CaseES
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.form_processor.utils import should_use_sql_backend
 from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.util import MessagingRuleProgressHelper
@@ -72,7 +71,7 @@ def update_messaging_for_case(domain, case_id, case):
     if case is None or case.is_deleted:
         clear_messaging_for_case(domain, case_id)
     elif settings.USE_PHONE_ENTRIES:
-        sms_tasks._sync_case_phone_number(case)
+        sms_tasks.sync_case_phone_number(case)
 
 
 def clear_messaging_for_case(domain, case_id):
@@ -90,7 +89,8 @@ def run_auto_update_rules_for_case(case):
 def _get_cached_rule(domain, rule_id):
     rules = AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
     rules = [rule for rule in rules if rule.pk == rule_id]
-    return rules[0] if len(rules) == 1 else None
+    if len(rules) == 1:
+        return rules[0]
 
 
 def _sync_case_for_messaging_rule(domain, case_id, rule_id):
@@ -129,10 +129,7 @@ def paginated_case_ids(domain, case_type, db_alias=None):
 
 
 def get_case_ids_for_messaging_rule(domain, case_type):
-    if not should_use_sql_backend(domain):
-        return CaseAccessors(domain).get_case_ids_in_domain(case_type)
-    else:
-        return paginated_case_ids(domain, case_type)
+    return paginated_case_ids(domain, case_type)
 
 
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE)
@@ -151,34 +148,10 @@ def run_messaging_rule(domain, rule_id):
     total_cases_count = CaseES().domain(domain).case_type(rule.case_type).count()
     progress_helper.set_total_cases_to_be_processed(total_cases_count)
 
-    def _run_rule_sequentially():
-        incr = 0
-        progress_helper.set_initial_progress()
-        for case_id in get_case_ids_for_messaging_rule(domain, rule.case_type):
-            sync_case_for_messaging_rule.delay(domain, case_id, rule_id)
-            incr += 1
-            if incr >= 1000:
-                incr = 0
-                progress_helper.update_total_key_expiry()
-                if progress_helper.is_canceled():
-                    break
-
-        # By putting this task last in the queue, the rule should be marked
-        # complete at about the time that the last tasks are finishing up.
-        # This beats saving the task results in the database and using a
-        # celery chord which would be more taxing on system resources.
-        set_rule_complete.delay(rule_id)
-
-    def _run_rule_on_multiple_shards():
-        db_aliases = get_db_aliases_for_partitioned_query()
-        progress_helper.set_initial_progress(shard_count=len(db_aliases))
-        for db_alias in db_aliases:
-            run_messaging_rule_for_shard.delay(domain, rule_id, db_alias)
-
-    if should_use_sql_backend(domain):
-        _run_rule_on_multiple_shards()
-    else:
-        _run_rule_sequentially()
+    db_aliases = get_db_aliases_for_partitioned_query()
+    progress_helper.set_initial_progress(shard_count=len(db_aliases))
+    for db_alias in db_aliases:
+        run_messaging_rule_for_shard.delay(domain, rule_id, db_alias)
 
 
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE, acks_late=True,

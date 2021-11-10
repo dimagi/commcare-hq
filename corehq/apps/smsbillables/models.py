@@ -5,7 +5,7 @@ from django.db import models
 
 from corehq import toggles
 from corehq.apps.accounting import models as accounting
-from corehq.apps.accounting.models import Currency
+from corehq.apps.accounting.models import BillingAccount, Currency, Subscription
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.sms.models import (
     DIRECTION_CHOICES,
@@ -426,6 +426,41 @@ class SmsBillable(models.Model):
                 % (direction, domain)
             )
         return usage_fee
+
+    @classmethod
+    def get_billables_sent_between(cls, datespan):
+        return cls.objects.filter(
+            date_sent__gte=datespan.startdate,
+            date_sent__lt=datespan.enddate_adjusted,
+        )
+
+    @classmethod
+    def filter_selected_billables_by_date(cls, selected_billables, date_span):
+        return selected_billables.filter(
+            date_created__gte=date_span.startdate,
+            date_created__lt=date_span.enddate_adjusted,
+        )
+
+    @classmethod
+    def filter_selected_billables_show_billables(cls, selected_billables, show_billables):
+        from corehq.apps.smsbillables.filters import ShowBillablesFilter
+        return selected_billables.filter(
+            is_valid=(show_billables == ShowBillablesFilter.VALID),
+        )
+
+    @classmethod
+    def filter_selected_billables_by_account(cls, selected_billables, account_name):
+        try:
+            account = BillingAccount.objects.get(name=account_name)
+        except BillingAccount.DoesNotExist:
+            return selected_billables.none()
+        domains = Subscription.visible_objects.filter(
+            account=account
+        ).values_list('subscriber__domain', flat=True).distinct()
+        domains = set(domains).union([account.created_by_domain])
+        return selected_billables.filter(
+            domain__in=domains
+        )
 
 
 _ProviderChargeInfo = namedtuple('_ProviderCharges', [

@@ -11,7 +11,6 @@ from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -89,7 +88,6 @@ class TestAPISerialization(TestCase):
         ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
         super().tearDownClass()
 
-    @run_with_all_backends
     def test_serialization(self):
         self.assertEqual(
             serialize_case(self.case),
@@ -119,7 +117,6 @@ class TestAPISerialization(TestCase):
             }
         )
 
-    @run_with_all_backends
     def test_es_serialization(self):
         es_case = CaseSearchES().doc_id(self.case.case_id).run().hits[0]
         self.assertEqual(serialize_case(self.case), serialize_es_case(es_case))

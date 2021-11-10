@@ -43,7 +43,7 @@
         </prompt>
       </query>
       <datum id="search_case_id"
-             nodeset="instance('results')/results/case[@case_type='case'][name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name]"
+             nodeset="instance('results')/results/case[@case_type='case'][name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name][not(commcare_is_related_case=true())]"
              value="./@case_id"
              detail-confirm="{module_id}_search_long"
              detail-select="{module_id}_search_short"/>

@@ -23,8 +23,7 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         cls.forwarding_url = 'http://not-a-real-url-at-all'
 
         cls.domain = 'bedazzled'
-        cls.domain_obj = Domain(name=cls.domain)
-        cls.domain_obj.save()
+        cls.domain_obj = Domain.get_or_create_with_name(cls.domain)
 
         # DATA_FORWARDING is on PRO and above
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)

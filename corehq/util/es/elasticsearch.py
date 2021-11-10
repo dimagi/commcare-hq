@@ -24,8 +24,27 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 2:
         SnapshotClient,
     )
     from elasticsearch2.helpers import bulk, scan
+elif settings.ELASTICSEARCH_MAJOR_VERSION == 5:
+    import elasticsearch5 as elasticsearch
+    from elasticsearch5.exceptions import AuthorizationException
+    from elasticsearch5 import (
+        ConnectionError,
+        ConflictError,
+        ConnectionTimeout,
+        Elasticsearch,
+        ElasticsearchException,
+        NotFoundError,
+        SerializationError,
+        TransportError,
+        RequestError,
+    )
+    from elasticsearch5.client import (
+        IndicesClient,
+        SnapshotClient,
+    )
+    from elasticsearch5.helpers import bulk, scan
 else:
-    raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 2, given {}".format(
+    raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 2 or 5, given {}".format(
         settings.ELASTICSEARCH_MAJOR_VERSION))
 
 

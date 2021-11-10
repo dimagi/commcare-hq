@@ -1,5 +1,5 @@
+from casexml.apps.case.tests.util import create_case
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.data_interfaces.tests.util import create_case
 
 
 def create_usercase(user):

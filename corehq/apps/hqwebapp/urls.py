@@ -3,6 +3,7 @@ from django.conf.urls import include, url
 from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 from two_factor.urls import urlpatterns as tf_urls
 
+from corehq.apps.cloudcare.views import session_endpoint
 from corehq.apps.domain.views.sms import PublicSMSRatesView
 from corehq.apps.hqwebapp.session_details_endpoint.views import (
     SessionDetailsView,
@@ -110,6 +111,7 @@ domain_specific = [
     url(r'^retreive_download/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         retrieve_download, {'template': 'hqwebapp/includes/file_download.html'},
         name='hq_soil_download'),
+    url(r'^app/v1/(?P<app_id>[\w-]+)/(?P<endpoint_id>[\w_-]+)/$', session_endpoint, name='session_endpoint'),
 ]
 
 prelogin_root = [

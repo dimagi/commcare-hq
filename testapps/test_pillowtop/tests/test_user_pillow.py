@@ -1,10 +1,8 @@
-from django.conf import settings
-
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.change_feed.topics import get_topic_offset, get_multi_topic_offset
+from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES
 from corehq.apps.es.tests.utils import es_test
@@ -13,13 +11,12 @@ from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_publishers import change_meta_from_sql_form
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.user import get_user_pillow_old
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
-from couchforms.models import XFormInstance
 from corehq.util.test_utils import get_form_ready_to_save
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -94,7 +91,6 @@ class UserPillowTest(UserPillowTestBase):
 
 class UnknownUserPillowTest(UserPillowTestBase):
 
-    @run_with_all_backends
     def test_unknown_user_pillow(self):
         FormProcessorTestUtils.delete_all_xforms()
         user_id = 'test-unknown-user'
@@ -103,9 +99,9 @@ class UnknownUserPillowTest(UserPillowTestBase):
         FormProcessorInterface(domain=TEST_DOMAIN).save_processed_models([form])
 
         # send to kafka
-        topic = topics.FORM_SQL if settings.TESTS_SHOULD_USE_SQL_BACKEND else topics.FORM
+        topic = topics.FORM_SQL
         since = self._get_kafka_seq()
-        producer.send_change(topic, _form_to_change_meta(form))
+        producer.send_change(topic, change_meta_from_sql_form(form))
 
         # send to elasticsearch
         pillow = get_xform_pillow()
@@ -124,18 +120,7 @@ class UnknownUserPillowTest(UserPillowTestBase):
         self.assertEqual('UnknownUser', user_doc['doc_type'])
 
     def _get_kafka_seq(self):
-        return get_multi_topic_offset([topics.FORM_SQL, topics.FORM])
-
-
-def _form_to_change_meta(form):
-    if settings.TESTS_SHOULD_USE_SQL_BACKEND:
-        return change_meta_from_sql_form(form)
-    else:
-        return change_meta_from_doc(
-            document=form.to_json(),
-            data_source_type=data_sources.SOURCE_COUCH,
-            data_source_name=XFormInstance.get_db().dbname,
-        )
+        return get_topic_offset(topics.FORM_SQL)
 
 
 def _user_to_change_meta(user):

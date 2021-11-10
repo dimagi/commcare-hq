@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timedelta
 
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 
 import mock
 
@@ -52,7 +52,6 @@ TEST_DOMAIN = 'cc-util-test'
 CASE_TYPE = 'cc-flw'
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
 class CallCenterUtilsTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -222,12 +221,6 @@ class CallCenterUtilsTests(TestCase):
         return CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(user_id or self.user._id, CASE_TYPE)
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class CallCenterUtilsTestsSQL(CallCenterUtilsTests):
-    pass
-
-
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
 class CallCenterUtilsUsercaseTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -382,7 +375,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
             'name': 'James McNulty',
             'language': None,
             'is_active': 'True',
-            'phone-number': self.user.phone_number,
+            'phone-number': [self.user.phone_number],
             'password': 123,
             'email': None
         }, {
@@ -391,7 +384,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
             'name': 'William Moreland',
             'language': None,
             'is_active': 'True',
-            'phone-number': '23424123',
+            'phone-number': ['23424123'],
             'password': 123,
             'email': None
         }]
@@ -413,11 +406,6 @@ class CallCenterUtilsUsercaseTests(TestCase):
         new_user_case = accessor.get_case_by_domain_hq_user_id(new_user._id, USERCASE_TYPE)
         self.assertEqual(new_user_case.owner_id, new_user.get_id)
         self.assertEqual(1, len(new_user_case.xform_ids))
-
-
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class CallCenterUtilsUsercaseTestsSQL(CallCenterUtilsUsercaseTests):
-    pass
 
 
 class DomainTimezoneTests(SimpleTestCase):

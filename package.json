@@ -27,7 +27,7 @@
         "css-grid-polyfill-binaries": "FremyCompany/css-grid-polyfill-binaries#1.1.1",
         "d3": "3.5.17",
         "datamaps": "0.5.9",
-        "datatables.net": "1.10.23",
+        "datatables.net": "1.11.3",
         "datatables.net-dt": "1.10.23",
         "datatables-bootstrap3": "Jowin/Datatables-Bootstrap3",
         "datatables-buttons": "DataTables/Buttons#^1.5.6",
@@ -74,11 +74,11 @@
         "requirejs": "2.3.6",
         "select2": "4.1.0-rc.0",
         "topojson": "3.0.2",
-        "uglify-js": "2.8.29",
+        "uglify-js": "3",
         "ui-select": "npm:ui-select#0.13.2",
         "underscore": "1.13.1",
         "url-polyfill": "1.1.10",
-        "xpath": "dimagi/js-xpath#v0.0.4",
+        "xpath": "dimagi/js-xpath#v0.0.6",
         "zxcvbn": "4.4.2"
     },
     "devDependencies": {
@@ -105,10 +105,14 @@
         "js-yaml": "^3.13.1",
         "lodash": "^4.17.19",
         "mem": "^4.0.0",
+        "minimist": "^0.2.1",
         "minimatch": "^3.0.2",
+        "normalize-url": "^4.5.1",
+        "set-value": "^4.0.1",
         "ssri": "^8.0.1",
         "yargs-parser": "^18.1.3",
-        "underscore.string": "^3.3.5"
+        "underscore.string": "^3.3.5",
+        "ansi-regex": "^5.0.1"
     },
     "scripts": {
         "postinstall": "yarn run -s build:modernizr",

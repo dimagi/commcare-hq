@@ -265,8 +265,6 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'toggles': self._get_toggles(),
-            'use_livequery': self.domain_object.use_livequery,
-            'use_sql_backend': self.domain_object.use_sql_backend,
             'privileges': self._get_privileges(),
         }
 

@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 from django_digest.models import PartialDigest, UserNonce
 
-from .models import DomainPermissionsMirror, HQApiKey, UserHistory
+from .models import HQApiKey, UserHistory
 
 
 class DDUserNonceAdmin(admin.ModelAdmin):
@@ -22,8 +22,12 @@ admin.site.register(PartialDigest, DDPartialDigestAdmin)
 
 class ApiKeyInline(admin.TabularInline):
     model = HQApiKey
-    readonly_fields = ['key', 'created']
-    extra = 1
+    readonly_fields = ('created',)
+    exclude = ('key',)
+    extra = 0
+
+    def has_add_permission(self, request, obj):
+        return False
 
 
 class CustomUserAdmin(UserAdmin):
@@ -43,13 +47,17 @@ class HQApiKeyAdmin(admin.ModelAdmin):
     list_display = ['user', 'name', 'created', 'domain']
     list_filter = ['created', 'domain']
 
+    readonly_fields = ('created',)
+    exclude = ('key',)
+
 
 admin.site.register(HQApiKey, HQApiKeyAdmin)
 
 
 class UserHistoryAdmin(admin.ModelAdmin):
-    list_display = ['changed_at', 'domain', 'user_id', 'changed_by', 'action', 'message']
-    list_filter = ['domain', 'action']
+    list_display = ['changed_at', 'by_domain', 'for_domain', 'user_type', 'user_id', 'changed_by', 'action',
+                    'changes', 'change_messages', 'changed_via', 'user_upload_record_id']
+    list_filter = ['by_domain', 'for_domain']
     sortable_by = []
 
     def has_add_permission(self, request):

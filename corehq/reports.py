@@ -48,13 +48,18 @@ from corehq.apps.reports.standard import deployments, inspect, monitoring, sms, 
 from corehq.apps.reports.standard.cases.case_list_explorer import (
     CaseListExplorer,
 )
+from corehq.apps.reports.standard.cases.duplicate_cases import (
+    DuplicateCasesExplorer,
+)
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
+from corehq.apps.reports.standard.web_user_activity import WebUserActivityReport
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
 )
+from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
 from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
@@ -65,8 +70,7 @@ from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
 )
-from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
-from corehq.form_processor.utils import should_use_sql_backend
+from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
 from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,
@@ -87,6 +91,7 @@ def REPORTS(project):
     reports.extend(_get_configurable_reports(project))
 
     monitoring_reports = (
+        WebUserActivityReport,
         monitoring.WorkerActivityReport,
         monitoring.DailyFormStatsReport,
         monitoring.SubmissionsByFormReport,
@@ -101,6 +106,10 @@ def REPORTS(project):
     ]
     if toggles.CASE_LIST_EXPLORER.enabled(project.name):
         inspect_reports.append(CaseListExplorer)
+
+    if toggles.CASE_DEDUPE.enabled(project.name):
+        inspect_reports.append(DuplicateCasesExplorer)
+
     deployments_reports = (
         deployments.ApplicationStatusReport,
         deployments.AggregateUserStatusReport,
@@ -119,10 +128,6 @@ def REPORTS(project):
         (ugettext_lazy("Manage Deployments"), deployments_reports),
     ])
 
-    if toggles.EMBEDDED_TABLEAU.enabled(project.name):
-        tableau_reports = tableau.get_reports(project.name)
-        reports.extend([(ugettext_lazy("Tableau Views"), tableau_reports)])
-
     if project.commtrack_enabled:
         supply_reports = (
             commtrack.SimplifiedInventoryReport,
@@ -130,11 +135,6 @@ def REPORTS(project):
             commtrack.CurrentStockStatusReport,
             commtrack.StockStatusMapReport,
         )
-        if not should_use_sql_backend(project):
-            supply_reports = supply_reports + (
-                commtrack.ReportingRatesReport,
-                commtrack.ReportingStatusMapReport,
-            )
         supply_reports = _filter_reports(report_set, supply_reports)
         reports.insert(0, (ugettext_lazy("CommCare Supply"), supply_reports))
 
@@ -349,6 +349,12 @@ SMS_ADMIN_INTERFACES = (
     (_("SMS Billing Administration"), (
         SMSBillablesInterface,
         SMSGatewayFeeCriteriaInterface,
+    )),
+)
+
+ENTERPRISE_INTERFACES = (
+    (_("Manage Billing Details"), (
+        EnterpriseSMSBillablesReport,
     )),
 )
 

@@ -2,7 +2,6 @@ import re
 import uuid
 from xml.etree import cElementTree as ElementTree
 import datetime
-from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock, CaseBlockError, IndexAttrs, ChildIndexAttrs
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
@@ -12,7 +11,7 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 
 
 class IndexSimpleTest(SimpleTestCase):
@@ -55,6 +54,7 @@ class IndexSimpleTest(SimpleTestCase):
         self.assertRaises(ValueError, self.case.remove_index_by_ref_id, 'i2')
 
 
+@sharded
 class IndexTest(TestCase):
     CASE_ID = 'test-index-case'
     MOTHER_CASE_ID = 'text-index-mother-case'
@@ -85,7 +85,6 @@ class IndexTest(TestCase):
                 [CaseBlock.deprecated_init(create=True, case_id=prereq, user_id=self.user.user_id).as_xml()],
                 domain=self.project.name
             )
-
 
         # Step 1. Create a case with index <mom>
         create_index = CaseBlock.deprecated_init(
@@ -185,11 +184,6 @@ class IndexTest(TestCase):
         self.assertEqual(cases[0].indices[0].relationship, 'child')
 
 
-@use_sql_backend
-class IndexTestSQL(IndexTest):
-    pass
-
-
 class CaseBlockIndexRelationshipTests(SimpleTestCase):
 
     def test_case_block_index_supports_relationship(self):
@@ -284,7 +278,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         CaseBlock index relationship should only allow valid values
         """
         with self.assertRaisesRegex(CaseBlockError,
-                                     'Valid values for an index relationship are "child" and "extension"'):
+                                    'Valid values for an index relationship are "child" and "extension"'):
             CaseBlock.deprecated_init(
                 case_id='abcdef',
                 case_type='at_risk',

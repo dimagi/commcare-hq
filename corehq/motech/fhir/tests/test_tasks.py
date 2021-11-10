@@ -7,10 +7,9 @@ from django.test import SimpleTestCase, TestCase
 from requests import HTTPError
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
-from casexml.apps.case.tests.util import delete_all_cases
+from casexml.apps.case.tests.util import create_case, delete_all_cases
 
 from corehq.apps.data_dictionary.models import CaseType
-from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.motech.const import COMMCARE_DATA_TYPE_TEXT
 from corehq.motech.exceptions import ConfigurationError, RemoteAPIError

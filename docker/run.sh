@@ -21,6 +21,7 @@ VALID_TEST_SUITES=(
     python
     python-sharded
     python-sharded-and-javascript
+    python-elasticsearch-v5
 )
 
 
@@ -104,6 +105,10 @@ function run_tests {
             for dirpath in $(find /mnt -mindepth 1 -maxdepth 1 -type d -not -name 'commcare-hq*'); do
                 logdo ls -la "$dirpath"
             done
+            logdo python -m site
+            logdo pip freeze
+            logdo npm config list
+            logdo yarn --version
             logdo cat -n ../run_tests
         }
         echo -e "$(func_text overlay_debug)\\noverlay_debug" | su cchq -c "/bin/bash -" || true
@@ -151,16 +156,34 @@ function _run_tests {
     shift
     py_test_args=("$@")
     js_test_args=("$@")
-    if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
-        export USE_PARTITIONED_DATABASE=yes
-        # TODO make it possible to run a subset of python-sharded tests
-        py_test_args+=("--attr=sql_backend")
-    fi
+    case "$TEST" in
+        python-sharded*)
+            export USE_PARTITIONED_DATABASE=yes
+            # TODO make it possible to run a subset of python-sharded tests
+            py_test_args+=("--attr=sharded")
+            ;;
+        python-elasticsearch-v5)
+            export ELASTICSEARCH_HOST='elasticsearch5'
+            export ELASTICSEARCH_PORT=9205
+            export ELASTICSEARCH_MAJOR_VERSION=5
+            py_test_args+=("--attr=es_test")
+            ;;
+    esac
 
     function _test_python {
         ./manage.py create_kafka_topics
-        logmsg INFO "./manage.py test ${py_test_args[*]}"
-        ./manage.py test "${py_test_args[@]}"
+        if [ -n "$CI" ]; then
+            logmsg INFO "coverage run manage.py test ${py_test_args[*]}"
+            # `coverage` generates a file that's then sent to codecov
+            coverage run manage.py test "${py_test_args[@]}"
+            coverage xml
+            if [ -n "$TRAVIS" ]; then
+                bash <(curl -s https://codecov.io/bash)
+            fi
+        else
+            logmsg INFO "./manage.py test ${py_test_args[*]}"
+            ./manage.py test "${py_test_args[@]}"
+        fi
     }
 
     function _test_javascript {
@@ -175,13 +198,9 @@ function _run_tests {
         python-sharded-and-javascript)
             _test_python
             _test_javascript
-            if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
-                echo "----------> Begin Static Analysis <----------"
-                COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis --datadog
-                echo "----------> End Static Analysis <----------"
-            fi
+            ./manage.py static_analysis
             ;;
-        python|python-sharded)
+        python|python-sharded|python-elasticsearch-v5)
             _test_python
             ;;
         javascript)

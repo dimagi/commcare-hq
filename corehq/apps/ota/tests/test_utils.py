@@ -263,6 +263,8 @@ class GetRestoreUserTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_users()
+        cls.project.delete()
+        cls.other_project.delete()
         super(GetRestoreUserTest, cls).tearDownClass()
 
     def test_get_restore_user_web_user(self):

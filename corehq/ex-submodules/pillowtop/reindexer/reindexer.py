@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 
-from elasticsearch.helpers import BulkIndexError as ESBulkIndexError
 from elasticsearch2.helpers import BulkIndexError as ES2BulkIndexError
 
 from corehq.util.es.elasticsearch import TransportError

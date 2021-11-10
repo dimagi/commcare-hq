@@ -95,17 +95,23 @@
           <div class="form-group">
             {% if show_search_workflow %}
               <div class="form-group">
-                <label class="control-label {% css_label_class %}" for="search-workflow">
+                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="hidden: dataRegistry">
                   {% trans "Web Apps Search Workflow" %}
                   <span class="hq-help-template" data-title="{% trans "Web Apps Search Workflow" %}"
                         data-content="{% trans_html_attr "<strong>Normal Case List</strong> is the &quot;classic&quot; case search workflow.  <br><br><strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is typically used for a &quot;Search Cases&quot; module.  <br><br><strong>See More</strong> is the same functionality as Normal Case List, except clicking the search button runs the default searches and returns the results. The user doesn't get to change the search criteria. This enables a workflow where the user sees what's in the local casedb then clicks &quot;See More&quot; to view all cases that fit the criteria.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search. The user never sees the results of the casedb." %}">
                   </span>
                 </label>
+                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="visible: dataRegistry">
+                  {% trans "Web Apps Search Workflow" %}
+                  <span class="hq-help-template" data-title="{% trans "Web Apps Search Workflow (Data Registry)" %}"
+                        data-content="{% trans_html_attr "<strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is the default for Data Registry search.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search." %}">
+                  </span>
+                </label>
                 <div class="{% css_field_class %}">
                   <select class="form-control" data-bind="value: workflow" id="search-workflow">
-                    <option value="classic">{% trans "Normal Case List" %}</option>
+                    <option value="classic" data-bind="hidden: dataRegistry">{% trans "Normal Case List" %}</option>
                     <option value="auto_launch">{% trans "Search First" %}</option>
-                    <option value="see_more">{% trans "See More" %}</option>
+                    <option value="see_more" data-bind="hidden: dataRegistry">{% trans "See More" %}</option>
                     <option value="es_only">{% trans "Skip to Default Case Search Results" %}</option>
                   </select>
                 </div>
@@ -231,6 +237,65 @@
               </p>
             </div>
           </div>
+          {% if data_registry_enabled %}
+          <div class="form-group">
+              <label for="data-registry" class="{% css_label_class %} control-label">
+                  {% trans "Data Registry" %}
+                  <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
+                        data-content="{% trans_html_attr "Select a Data Registry to use for searching.  Users with access will see results from the registry when performing this search." %}">
+              </label>
+              <div class="{% css_field_class %}">
+                  <select class="form-control" id="data-registry" data-bind="value: dataRegistry">
+                      <option value/>
+                      {% for registry in data_registries %}
+                          <option value="{{ registry.slug }}">{{ registry.name }}</option>
+                      {% endfor %}
+                  </select>
+              </div>
+          </div>
+          <div class="form-group">
+              <label for="data-registry" class="{% css_label_class %} control-label">
+                  {% trans "Load Additional Data Registry Cases" %}
+                  <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
+                        data-content="{% blocktrans %}
+                        Load additional cases from the Data Registry into the 'registry' instance for forms in this module.
+                        The case type of the case must be configured in the registry and in the module via the module's
+                        case type or the module's 'Additional Case List and Case Search Types' configuration.
+                        {% endblocktrans %}">
+                  </span>
+              </label>
+              <div class="{% css_field_class %}">
+                  <table class="table table-condensed">
+                    <thead data-bind="visible: additionalRegistryCases().length > 0">
+                    <tr>
+                      <th class="col-sm-12">{% trans "Case ID XPath" %}</th>
+                      <th class="col-sm-1"></th>
+                    </tr>
+                    </thead>
+                    <tbody data-bind="foreach: additionalRegistryCases, sortableList: additionalRegistryCases">
+                      <tr>
+                        <td>
+                          <textarea data-bind="
+                              value: caseIdXpath,
+                              xpathValidator: {text: caseIdXpath, allowCaseHashtags: false, errorHtml: $('#searchFilterXpathErrorHtml').html()}
+                              "
+                                    class="form-control vertical-resize"
+                                    spellcheck="false"
+                          ></textarea>
+                        </td>
+                        <td>
+                          <i style="cursor: pointer;" class="fa fa-remove"
+                             data-bind="click: $parent.removeRegistryQuery"></i>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <button type="button" class="btn btn-default" data-bind="click: addRegistryQuery">
+                    <i class="fa fa-plus"></i> {% trans "Add Case ID to Data Registry Query" %}
+                  </button>
+              </div>
+          </div>
+          {% endif %}
           <span class="hide" id="searchFilterXpathErrorHtml">
             {% blocktrans %}
               This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.

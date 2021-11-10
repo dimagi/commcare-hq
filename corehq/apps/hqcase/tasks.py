@@ -16,14 +16,13 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.exceptions import NotAllowed
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
 
 
-@task(serializer='pickle')
+@task
 def explode_case_task(domain, user_id, factor):
     return explode_cases(domain, user_id, factor, explode_case_task)
 
@@ -36,7 +35,7 @@ def explode_cases(domain, user_id, factor, task=None):
 
     couch_user = CommCareUser.get_by_user_id(user_id, domain)
     restore_user = get_restore_user(domain, couch_user, None)
-    device = MockDevice(restore_user.project, restore_user, {"overwrite_cache": True, "case_sync": LIVEQUERY})
+    device = MockDevice(restore_user.project, restore_user, {"overwrite_cache": True})
     sync_result = device.restore()
 
     cases = {}
@@ -138,7 +137,7 @@ def topological_sort_cases(cases):
     return sorted_ids
 
 
-@task(serializer='pickle')
+@task
 def delete_exploded_case_task(domain, explosion_id):
     return delete_exploded_cases(domain, explosion_id, delete_exploded_case_task)
 
@@ -146,7 +145,6 @@ def delete_exploded_case_task(domain, explosion_id):
 def delete_exploded_cases(domain, explosion_id, task=None):
     if not explosion_id:
         raise Exception("explosion_id is falsy, aborting rather than deleting all cases")
-    NotAllowed.check(domain)
     if task:
         DownloadBase.set_progress(delete_exploded_case_task, 0, 0)
     query = (CaseSearchES()

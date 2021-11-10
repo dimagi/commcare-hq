@@ -6,7 +6,7 @@ from django.test import TestCase
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import XFormInstanceSQL
 
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import save_alert_schedule_instance
 from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
 from corehq.messaging.scheduling.scheduling_partitioned.tests.test_dbaccessors_partitioned import \
@@ -17,7 +17,7 @@ from corehq.sql_db.shard_data_management import get_count_of_unmatched_models_by
 from corehq.sql_db.tests.utils import DefaultShardingTestConfigMixIn
 
 
-@use_sql_backend
+@sharded
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
     domain = 'shard-management-test'

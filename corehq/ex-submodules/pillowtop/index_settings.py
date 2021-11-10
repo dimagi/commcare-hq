@@ -3,8 +3,12 @@ from django.conf import settings
 from corehq.elastic import SIZE_LIMIT
 
 disallowed_settings_by_es_version = {
-    1: ['max_result_window'],
     2: [
+        'merge.policy.merge_factor',
+        'store.throttle.max_bytes_per_sec',
+        'store.throttle.type'
+    ],
+    5: [
         'merge.policy.merge_factor',
         'store.throttle.max_bytes_per_sec',
         'store.throttle.type'

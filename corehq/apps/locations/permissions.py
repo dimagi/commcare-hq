@@ -208,6 +208,12 @@ def location_safe(view):
     return view
 
 
+# Use this decorator for views that need to be marked location safe but do not actually
+# apply location restrictions to the data they return e.g. case search. This is generally only applicable to endpoints
+# whose client is expected to be the application engine (mobile / web apps).
+location_safe_bypass = location_safe
+
+
 def conditionally_location_safe(conditional_function):
     """Decorator to apply to a view function that verifies if something is location
     safe based on the arguments or kwarguments. That function should return

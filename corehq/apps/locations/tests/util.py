@@ -2,11 +2,8 @@ from collections import namedtuple
 
 from django.test import TestCase
 
-from dimagi.utils.couch.database import iter_bulk_delete
-
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
-from corehq.apps.users.models import Permissions, SQLUserRole
+from corehq.apps.users.models import Permissions, UserRole
 from corehq.util.test_utils import unit_testing_only
 
 from ..models import LocationType, SQLLocation, make_location
@@ -28,11 +25,6 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE,
 
 @unit_testing_only
 def delete_all_locations():
-    ids = [
-        doc['id'] for doc in
-        SupplyPointCase.get_db().view('supply_point_by_loc/view', reduce=False).all()
-    ]
-    iter_bulk_delete(SupplyPointCase.get_db(), ids)
     SQLLocation.objects.all().delete()
     LocationType.objects.all().delete()
 
@@ -133,7 +125,7 @@ def setup_locations_and_types(domain, location_types, stock_tracking_types, loca
 
 
 def restrict_user_by_location(domain, user):
-    role = SQLUserRole.create(
+    role = UserRole.create(
         domain=domain,
         name='Regional Supervisor',
         permissions=Permissions(edit_commcare_users=True,

@@ -25,7 +25,7 @@ app_urls = [
         name=FormplayerPreviewSingleApp.urlname,
     ),
     url(r'^preview_app/(?P<app_id>[\w-]+)/$', PreviewAppView.as_view(), name=PreviewAppView.urlname),
-    url(r'^report_formplayer_error', report_formplayer_error, name='report_formplayer_error')
+    url(r'^report_formplayer_error', report_formplayer_error, name='report_formplayer_error'),
 ]
 
 api_urls = [

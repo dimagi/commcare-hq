@@ -152,6 +152,7 @@ class CaseBlock(object):
         fields = {"update": updates}
         for node in case.find(NS + "create") or []:
             tag = tag_of(node)
+            fields["create"] = True
             if tag in cls._built_ins:
                 fields[tag] = node.text
             # can create node have date_opened child node?
@@ -164,10 +165,15 @@ class CaseBlock(object):
             else:
                 # can this be a hierarchical structure? if yes, how to decode?
                 updates[tag] = node.text
+
+        if case.find(NS + "close") is not None:
+            fields["close"] = True
+
+        if case.get("date_modified"):
+            fields['date_modified'] = string_to_datetime(case.get("date_modified")).replace(tzinfo=None)
+
         return cls(
             case_id=case.get("case_id"),
-            date_modified=string_to_datetime(
-                case.get("date_modified")).replace(tzinfo=None),
             user_id=case.get("user_id"),
             index=dict(index_tuple(x) for x in case.find(NS + "index") or []),
             **fields

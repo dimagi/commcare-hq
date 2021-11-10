@@ -3,6 +3,7 @@ import datetime
 from collections import defaultdict
 from decimal import Decimal
 
+import simplejson
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Max, Min, Q, Sum
@@ -49,6 +50,7 @@ from corehq.apps.accounting.utils import (
     months_from_date,
 )
 from corehq.apps.domain.dbaccessors import domain_exists, deleted_domain_exists
+from corehq.apps.domain.utils import get_serializable_wire_invoice_general_credit
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.dates import (
     get_first_last_days,
@@ -101,7 +103,9 @@ class DomainInvoiceFactory(object):
                 & Q(date_end__gt=F('date_start'))
             ),
             subscriber=self.subscriber,
-            date_start__lte=self.date_end
+            date_start__lte=self.date_end,
+        ).exclude(
+            plan_version__plan__edition=SoftwarePlanEdition.PAUSED,
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 
@@ -333,12 +337,16 @@ class DomainWireInvoiceFactory(object):
 
         return wire_invoice
 
-    def create_wire_credits_invoice(self, items, amount):
+    def create_wire_credits_invoice(self, amount, general_credit):
+
+        serializable_amount = simplejson.dumps(amount, use_decimal=True)
+        serializable_items = get_serializable_wire_invoice_general_credit(general_credit)
+
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
         create_wire_credits_invoice.delay(
             domain_name=self.domain.name,
-            amount=amount,
-            invoice_items=items,
+            amount=serializable_amount,
+            invoice_items=serializable_items,
             contact_emails=self.contact_emails
         )
 
@@ -363,8 +371,8 @@ class CustomerAccountInvoiceFactory(object):
 
     def create_invoice(self):
         for sub in self.account.subscription_set.filter(do_not_invoice=False):
-            if not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY \
-                    and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end):
+            if (not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+                    and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end)):
                 self.subscriptions[sub.plan_version].append(sub)
         if not self.subscriptions:
             return
@@ -428,6 +436,8 @@ class CustomerAccountInvoiceFactory(object):
 
 
 def should_create_invoice(subscription, domain, invoice_start, invoice_end):
+    if subscription.plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
+        return False
     if not domain_exists(domain) and deleted_domain_exists(domain):
         # domain has been deleted, ignore
         return False

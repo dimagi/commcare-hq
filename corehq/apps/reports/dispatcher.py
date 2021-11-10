@@ -49,6 +49,7 @@ class ReportDispatcher(View):
 
         It's also intended that you make the appropriate permissions checks in the permissions_check method
         and decorate the dispatch method with the appropriate permissions decorators.
+        You may also override GenericReportView.allow_access in individual report classes
 
         ReportDispatcher expects to serve a report that is a subclass of GenericReportView.
     """
@@ -137,16 +138,17 @@ class ReportDispatcher(View):
         report_kwargs = kwargs.copy()
 
         class_name = self.get_report_class_name(domain, report_slug)
-        cls = to_function(class_name) if class_name else None
+        report_class = to_function(class_name) if class_name else None
 
         permissions_check = permissions_check or self.permissions_check
         if (
-            cls
+            report_class
             and permissions_check(class_name, request, domain=domain)
-            and self.toggles_enabled(cls, request)
+            and self.toggles_enabled(report_class, request)
+            and report_class.allow_access(request)
         ):
             try:
-                report = cls(request, domain=domain, **report_kwargs)
+                report = report_class(request, domain=domain, **report_kwargs)
                 report.rendered_as = render_as
                 report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
@@ -206,6 +208,7 @@ class ReportDispatcher(View):
                 if (
                     dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True)
                     and cls.toggles_enabled(report, request)
+                    and report.allow_access(request)
                     and (show_in_navigation or show_in_dropdown)
                 ):
                     report_contexts.append({
@@ -297,6 +300,7 @@ class DomainReportDispatcher(ReportDispatcher):
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
         from corehq.apps.export.views.incremental import IncrementalExportLogView
+
         from corehq.toggles import INCREMENTAL_EXPORTS
 
         if (report.endswith(DomainForwardingRepeatRecords.__name__)
@@ -339,3 +343,14 @@ class UserManagementReportDispatcher(ReportDispatcher):
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         from corehq.toggles import USER_HISTORY_REPORT
         return USER_HISTORY_REPORT.enabled_for_request(request)
+
+
+class ReleaseManagementReportDispatcher(ReportDispatcher):
+    prefix = 'release_management_report'
+    map_name = 'RELEASE_MANAGEMENT_REPORTS'
+
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
+        from corehq.apps.linked_domain.util import can_access_linked_domains
+        # will eventually only be accessible via the release_management privilege, but shared with linked domains
+        # feature flag for now
+        return can_access_linked_domains(request.couch_user, domain)

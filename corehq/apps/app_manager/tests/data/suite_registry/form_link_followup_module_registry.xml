@@ -1,0 +1,48 @@
+<partial>
+    <entry>
+        <form>xmlns1.0</form>
+        <command id="m0-f0">
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </command>
+        <session>
+          <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results" template="case" default_search="false">
+            <data key="case_type" ref="'case'"/>
+            <data key="commcare_registry" ref="'myregistry'"/>
+            <prompt key="name">
+              <display>
+                <text>
+                  <locale id="search_property.m0.name"/>
+                </text>
+              </display>
+            </prompt>
+            <prompt key="favorite_color">
+              <display>
+                <text>
+                  <locale id="search_property.m0.favorite_color"/>
+                </text>
+              </display>
+              <itemset nodeset="instance('colors')/colors_list/colors">
+                <label ref="name"/>
+                <value ref="value"/>
+                <sort ref="name"/>
+              </itemset>
+            </prompt>
+          </query>
+          <datum detail-confirm="m0_case_long" detail-select="m0_case_short" id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open']" value="./@case_id"/>
+          <query default_search="true" storage-instance="registry" template="case" url="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+            <data key="commcare_registry" ref="'myregistry'"/>
+            <data key="case_type" ref="'case'"/>
+            <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+          </query>
+        </session>
+        <instance id="colors" src="jr://fixture/item-list:colors"/>
+        <instance id="commcaresession" src="jr://instance/session"/>
+        <stack>
+          <create if="(today() - dob) &lt; 7">
+            <command value="'m0'"/>
+          </create>
+        </stack>
+    </entry>
+</partial>

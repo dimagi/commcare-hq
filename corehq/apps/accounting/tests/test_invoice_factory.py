@@ -125,6 +125,21 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
         self.assertEqual(community_ranges, [(self.invoice_start, self.invoice_end + datetime.timedelta(days=1))])
 
+    def test_paused_plan_generates_no_invoice(self):
+        """
+        Ensure that paused plans do not generate invoices.
+        """
+        paused_plan = generator.subscribable_plan_version(
+            edition=SoftwarePlanEdition.PAUSED
+        )
+        Subscription.new_domain_subscription(
+            self.account, self.domain.name, paused_plan,
+            date_start=self.invoice_start,
+            date_end=self.invoice_end + datetime.timedelta(days=1),
+
+        )
+        self.assertListEqual(self.invoice_factory._get_subscriptions(), [])
+
 
 class TestInvoicingMethods(BaseAccountingTest):
 
@@ -169,6 +184,28 @@ class TestInvoicingMethods(BaseAccountingTest):
             invoice_end=self.invoice_end
         ))
         trial_domain.delete()
+
+    def test_should_not_invoice_paused_plan(self):
+        """
+        Ensure that paused plans do not generate a CustomerInvoice
+        """
+        paused_domain = generator.arbitrary_domain()
+        self.addCleanup(paused_domain.delete)
+        paused_plan = generator.subscribable_plan_version(
+            edition=SoftwarePlanEdition.PAUSED
+        )
+        paused_plan.plan.is_customer_software_plan = True
+        subscription = Subscription.new_domain_subscription(
+            self.account, paused_domain.name, paused_plan,
+            date_start=self.invoice_start,
+
+        )
+        self.assertFalse(should_create_invoice(
+            subscription=subscription,
+            domain=subscription.subscriber.domain,
+            invoice_start=self.invoice_start,
+            invoice_end=self.invoice_end
+        ))
 
     def test_should_not_invoice_without_subscription_charges(self):
         feature_charge_domain = generator.arbitrary_domain()

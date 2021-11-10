@@ -1,8 +1,10 @@
-{% extends 'users/base_template.html' %}
+{% extends 'hqwebapp/base_section.html' %}
 
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
+
+{% requirejs_main "locations/js/widgets" %}
 
 {% block page_content %}
   {% if has_untrusted_identity_provider %}
@@ -72,24 +74,6 @@
         <div class="form-actions">
           <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
             <button type="submit" class="btn btn-primary">{% trans 'Update Role' %}</button>
-          </div>
-        </div>
-      </fieldset>
-    </form>
-  {% endif %}
-  {% if update_permissions and not request.is_view_only %}
-    <hr />
-    <form class="form form-horizontal" name="user_permissions" method="post">
-      {% csrf_token %}
-      <input type="hidden" name="form_type" value="update-user-permissions" />
-      <fieldset>
-
-        <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Staff Permissions{% endblocktrans %}</legend>
-        {% crispy form_user_update_permissions %}
-
-        <div class="form-actions">
-          <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-            <button type="submit" class="btn btn-primary">{% trans 'Update Permissions' %}</button>
           </div>
         </div>
       </fieldset>

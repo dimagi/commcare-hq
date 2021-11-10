@@ -1102,11 +1102,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         app = Application.new_app('domain', "Untitled Application")
 
-        report_module = app.add_module(ReportModule.new_module('Reports', None))
-        report_module.unique_id = 'report_module'
         report = get_sample_report_config()
         report._id = 'd3ff18cd83adf4550b35db8d391f6008'
-
         report_app_config = ReportAppConfig(
             report_id=report._id,
             header={'en': 'CommBugz'},
@@ -1122,6 +1119,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             },
         )
         report_app_config._report = report
+        report_module = app.add_module(ReportModule.new_module('Reports', None))
+        report_module.unique_id = 'report_module'
         report_module.report_configs = [report_app_config]
         report_module._loaded = True
         self.assertXmlPartialEqual(
@@ -1140,36 +1139,40 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         report_module.media_image = {
             'en': 'jr://file/commcare/image/module0_en.png',
         }
+        report_module.get_details.reset_cache(report_module)
+        actual_suite = app.create_suite()
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_menu_multimedia'),
-            app.create_suite(),
+            actual_suite,
             "./menu",
         )
 
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_select_detail'),
-            app.create_suite(),
+            actual_suite,
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.select']",
         )
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_summary_detail_use_xpath_description'),
-            app.create_suite(),
+            actual_suite,
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_detail'),
-            app.create_suite(),
+            actual_suite,
             "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
         )
 
         report_app_config.show_data_table = False
+        report_module.get_details.reset_cache(report_module)
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_summary_detail_hide_data_table'),
             app.create_suite(),
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )
-        report_app_config.show_data_table = True
 
+        report_app_config.show_data_table = True
+        report_module.get_details.reset_cache(report_module)
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_entry'),
             app.create_suite(),
@@ -1181,6 +1184,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
         report_app_config.use_xpath_description = False
+        report_module.get_details.reset_cache(report_module)
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_summary_detail_use_localized_description'),
             app.create_suite(),
@@ -1218,6 +1222,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 'translations': translation_format,
             }
             report_app_config._report = ReportConfiguration.wrap(report_app_config._report._doc)
+            report_module.get_details.reset_cache(report_module)
             self.assertXmlPartialEqual(
                 self.get_xml(expected_output),
                 app.create_suite(),

@@ -16,9 +16,6 @@ from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.features.scheduler import (
     schedule_detail_variables,
 )
-from corehq.apps.app_manager.suite_xml.post_process.instances import (
-    get_all_instances_referenced_in_xpaths,
-)
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Action,
@@ -39,8 +36,8 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Style,
     Template,
     Text,
-    Xpath,
-    XpathVariable,
+    TextXPath,
+    XPathVariable,
 )
 from corehq.apps.app_manager.util import (
     create_temp_sort_column,
@@ -201,7 +198,8 @@ class DetailContributor(SectionContributor):
                         d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module):
-                    d.actions.append(self._get_case_search_action(module, in_search="search" in id))
+                    in_search = module.search_config.data_registry or "search" in id
+                    d.actions.append(self._get_case_search_action(module, in_search=in_search))
 
             try:
                 if not self.app.enable_multi_sort:
@@ -448,9 +446,9 @@ class DetailContributor(SectionContributor):
                     grid_y=0,
                 ),
                 header=Header(text=Text()),
-                template=Template(text=Text(xpath=Xpath(
+                template=Template(text=Text(xpath=TextXPath(
                     function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",
-                    variables=[XpathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
+                    variables=[XPathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
                 ))),
             )]
         )
@@ -461,7 +459,7 @@ class DetailContributor(SectionContributor):
             id=id_strings.fixture_detail(module),
             title=Text(),
         )
-        xpath = Xpath(function=module.fixture_select.display_column)
+        xpath = TextXPath(function=module.fixture_select.display_column)
         if module.fixture_select.localize:
             template_text = Text(locale=Locale(child_id=Id(xpath=xpath)))
         else:
@@ -610,28 +608,6 @@ def get_detail_column_infos_for_tabs_with_sorting(detail):
     return columns
 
 
-def get_instances_for_module(app, module, detail_section_elements):
-    """
-    This method is used by CloudCare when filtering cases.
-    """
-    modules = list(app.get_modules())
-    helper = DetailsHelper(app, modules)
-    details = detail_section_elements
-    detail_mapping = {detail.id: detail for detail in details}
-    details_by_id = detail_mapping
-    detail_ids = [helper.get_detail_id_safe(module, detail_type)
-                  for detail_type, detail, enabled in module.get_details()
-                  if enabled]
-    detail_ids = [_f for _f in detail_ids if _f]
-    xpaths = set()
-
-    for detail_id in detail_ids:
-        xpaths.update(details_by_id[detail_id].get_all_xpaths())
-
-    instances, _ = get_all_instances_referenced_in_xpaths(app, xpaths)
-    return instances
-
-
 class CaseTileHelper(object):
     tile_fields = ["header", "top_left", "sex", "bottom_left", "date"]
 
@@ -722,7 +698,7 @@ class CaseTileHelper(object):
         variables = []
         for i, mapping in enumerate(column.enum):
             variables.append(
-                XpathVariable(
+                XPathVariable(
                     name=mapping.key_as_variable,
                     locale_id=id_strings.detail_column_enum_variable(
                         self.module, self.detail_type, column, mapping.key_as_variable

@@ -7,11 +7,11 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from memoized import memoized
 
-from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.reports.extension_points import customize_user_query
 from corehq.apps.user_importer.models import UserUploadRecord
@@ -348,7 +348,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
-        q = user_es.UserES().domain(domain, allow_mirroring=True)
+        q = user_es.UserES().domain(domain, allow_enterprise=True)
         q = customize_user_query(request_user, domain, q)
         if (
             ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs)
@@ -461,12 +461,29 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         }
 
 
+class AffectedUserFilter(ExpandedMobileWorkerFilter):
+    label = _("Affected User(s)")
+
+
 class ChangedByUserFilter(ExpandedMobileWorkerFilter):
     slug = "changed_by_user"
-    label = ugettext_lazy("Changed By User(s)")
+    label = ugettext_lazy("Modified by User(s)")
 
     def get_default_selections(self):
         return [('t__6', _("[Web Users]"))]
+
+
+class UserPropertyFilter(BaseSingleOptionFilter):
+    label = ugettext_noop('Modified Property')
+    default_text = ugettext_noop('Select Property')
+    slug = 'user_property'
+
+    @property
+    def options(self):
+        from corehq.apps.reports.standard.users.reports import UserHistoryReport
+        properties = UserHistoryReport.get_primary_properties(self.domain)
+        properties.pop("username", None)
+        return list(properties.items())
 
 
 class ChangeActionFilter(BaseMultipleOptionFilter):

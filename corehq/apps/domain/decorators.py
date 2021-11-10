@@ -104,7 +104,7 @@ def login_and_domain_required(view_func):
                 raise Http404()
             return call_view()
 
-        if couch_user.is_member_of(domain_obj, allow_mirroring=True):
+        if couch_user.is_member_of(domain_obj, allow_enterprise=True):
             if _is_missing_two_factor(view_func, req):
                 return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
             elif not _can_access_project_page(req):
@@ -263,7 +263,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False,
                         if (
                             couch_user
                             and (allow_cc_users or couch_user.is_web_user())
-                            and couch_user.is_member_of(domain, allow_mirroring=True)
+                            and couch_user.is_member_of(domain, allow_enterprise=True)
                         ):
                             clear_login_attempts(couch_user)
                             return fn(request, domain, *args, **kwargs)

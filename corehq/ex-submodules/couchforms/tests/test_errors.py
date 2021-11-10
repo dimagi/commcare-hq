@@ -1,10 +1,11 @@
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import softer_assert
 
 
+@sharded
 class CaseProcessingErrorsTest(TestCase):
 
     def test_no_case_id(self):
@@ -66,8 +67,3 @@ class CaseProcessingErrorsTest(TestCase):
         )
         self.assertTrue(result.xform.is_error)
         self.assertEqual(result.xform.problem, 'UsesReferrals: Sorry, referrals are no longer supported!')
-
-
-@use_sql_backend
-class CaseProcessingErrorsTestSQL(CaseProcessingErrorsTest):
-    pass

@@ -9,7 +9,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             moduleType = moduleBrief.module_type,
             options = initial_page_data('js_options') || {};
 
-        hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
+        hqImport('app_manager/js/app_manager').setAppendedPageTitle(gettext("Menu Settings"));
         // Set up details
         if (moduleBrief.case_type) {
             var details = initial_page_data('details');
@@ -47,6 +47,8 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     searchAgainLabel: options.search_again_label,
                     searchFilter: options.search_filter,
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
+                    dataRegistry: options.data_registry,
+                    additionalRegistryCases: options.additional_registry_cases,
                 });
 
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");

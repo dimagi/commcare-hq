@@ -2,7 +2,6 @@ import doctest
 import json
 
 from django.test.testcases import TestCase
-
 from fakecouch import FakeCouchDb
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -13,6 +12,7 @@ from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig
 from corehq.motech.dhis2.events_helpers import get_event
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
+from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 
 DOMAIN = "dhis2-test"
 
@@ -32,6 +32,8 @@ class TestDhis2EventsHelpers(TestCase):
             name='test location',
             location_id='test_location',
             location_type=location_type,
+            latitude='-33.8655',
+            longitude='18.6941',
             metadata={LOCATION_DHIS_ID: "dhis2_location_id"},
         )
         cls.user = WebUser.create(DOMAIN, 'test', 'passwordtest', None, None)
@@ -47,21 +49,17 @@ class TestDhis2EventsHelpers(TestCase):
     def setUp(self):
         self.db = Dhis2Repeater.get_db()
         self.fakedb = FakeCouchDb()
-        Dhis2Repeater.set_db(self.fakedb)
 
-    def tearDown(self):
-        Dhis2Repeater.set_db(self.db)
-
-    def test_form_processing(self):
-        form = {
+        self.form = {
             "domain": DOMAIN,
             "form": {
                 "@xmlns": "test_xmlns",
                 "event_date": "2017-05-25T21:06:27.012000",
                 "completed_date": "2017-05-25T21:06:27.012000",
+                "event_location": "-33.6543213 19.12344312 abcdefg",
                 "name": "test event",
                 "meta": {
-                    "location": self.location.location_id,
+                    "location": '',
                     "timeEnd": "2017-05-25T21:06:27.012000",
                     "timeStart": "2017-05-25T21:06:17.739000",
                     "userID": self.user.user_id,
@@ -70,7 +68,7 @@ class TestDhis2EventsHelpers(TestCase):
             },
             "received_on": "2017-05-26T09:17:23.692083Z",
         }
-        config = {
+        self.config = {
             'form_configs': json.dumps([{
                 'xmlns': 'test_xmlns',
                 'program_id': 'test program',
@@ -84,6 +82,9 @@ class TestDhis2EventsHelpers(TestCase):
                     'doc_type': 'FormUserAncestorLocationField',
                     'form_user_ancestor_location_field': LOCATION_DHIS_ID
                 },
+                'event_location': {
+                    'form_question': '/data/event_location'
+                },
                 'datavalue_maps': [
                     {
                         'data_element_id': 'dhis2_element_id',
@@ -95,13 +96,27 @@ class TestDhis2EventsHelpers(TestCase):
                 ]
             }])
         }
-        config_form = Dhis2ConfigForm(data=config)
+        config_form = Dhis2ConfigForm(data=self.config)
         self.assertTrue(config_form.is_valid())
         data = config_form.cleaned_data
-        repeater = Dhis2Repeater()
-        repeater.dhis2_config.form_configs = [Dhis2FormConfig.wrap(fc) for fc in data['form_configs']]
-        repeater.save()
-        event = get_event(DOMAIN, repeater.dhis2_config.form_configs[0], form)
+        self.repeater = Dhis2Repeater()
+        self.repeater.dhis2_config.form_configs = [Dhis2FormConfig.wrap(fc) for fc in data['form_configs']]
+        self.repeater.save()
+
+        Dhis2Repeater.set_db(self.fakedb)
+
+    def tearDown(self):
+        Dhis2Repeater.set_db(self.db)
+
+    def test_form_processing_with_owner(self):
+        info = CaseTriggerInfo(
+            domain=DOMAIN,
+            case_id=None,
+            owner_id='test_location',
+            form_question_values=get_form_question_values(self.form),
+        )
+        event = get_event(DOMAIN, self.repeater.dhis2_config.form_configs[0], form_json=self.form, info=info)
+
         self.assertDictEqual(
             {
                 'dataValues': [
@@ -114,7 +129,11 @@ class TestDhis2EventsHelpers(TestCase):
                 'completedDate': '2017-05-25',
                 'program': 'test program',
                 'eventDate': '2017-05-26',
-                'orgUnit': 'dhis2_location_id'
+                'orgUnit': 'dhis2_location_id',
+                'coordinate': {
+                    'latitude': -33.6543,
+                    'longitude': 19.1234
+                }
             },
             event
         )

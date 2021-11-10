@@ -43,7 +43,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     apps/settings
     apps/advanced_app_features
     apps/builds
-    cloudcare
+    web_apps
     formplayer
 
 .. toctree::
@@ -84,6 +84,14 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     fhir/index
     openmrs
     value_source
+
+.. toctree::
+    :caption: Single Sign On (SSO)
+    :maxdepth: 1
+
+    sso/overview
+    sso/architecture
+    sso/local_setup
 
 .. toctree::
     :caption: UI and Front End

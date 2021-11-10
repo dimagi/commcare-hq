@@ -5,38 +5,45 @@ services:
       context: .
       dockerfile: "${DOCKERFILE}"
     environment:
+      CI: "${CI}"
+      CODECOV_TOKEN: "${CODECOV_TOKEN}"
+      DATADOG_API_KEY: "${DATADOG_API_KEY}"
+      DATADOG_APP_KEY: "${DATADOG_APP_KEY}"
       DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch2:9200 minio:9980 kafka:9092"
       DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
       DOCKER_HQ_OVERLAYFS_CHMOD: "${DOCKER_HQ_OVERLAYFS_CHMOD}"
       DOCKER_HQ_OVERLAYFS_METACOPY: "${DOCKER_HQ_OVERLAYFS_METACOPY}"
+      GITHUB_ACTIONS: "${GITHUB_ACTIONS}"
+      GITHUB_EVENT_NAME: "${GITHUB_EVENT_NAME}"
       JS_SETUP: "${JS_SETUP}"
+      JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
       NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
       REUSE_DB: "${REUSE_DB}"
-      TRAVIS_HQ_USERNAME: "${TRAVIS_HQ_USERNAME}"
-      TRAVIS_HQ_PASSWORD: "${TRAVIS_HQ_PASSWORD}"
-      DATADOG_API_KEY: "${DATADOG_API_KEY}"
-      DATADOG_APP_KEY: "${DATADOG_APP_KEY}"
+      TRAVIS: "${TRAVIS}"
+      TRAVIS_BRANCH: "${TRAVIS_BRANCH}"
       TRAVIS_BUILD_ID: "${TRAVIS_BUILD_ID}"
       TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
+      TRAVIS_COMMIT: "${TRAVIS_COMMIT}"
       TRAVIS_EVENT_TYPE: "${TRAVIS_EVENT_TYPE}"
+      TRAVIS_JOB_ID: "${TRAVIS_JOB_ID}"
       TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
-      JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
-      UCR_CITUS_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
+      TRAVIS_PULL_REQUEST: "${TRAVIS_PULL_REQUEST}"
+      TRAVIS_PULL_REQUEST_BRANCH: "${TRAVIS_PULL_REQUEST_BRANCH}"
+      TRAVIS_PULL_REQUEST_SHA: "${TRAVIS_PULL_REQUEST_SHA}"
+      TRAVIS_REPO_SLUG: "${TRAVIS_REPO_SLUG}"
     privileged: true  # allows mount inside container
     links:
       - postgres
       - couch
       - redis
       - elasticsearch2
+      - elasticsearch5
       - kafka
       - zookeeper
       - minio
     volumes:
       - ..:/mnt/commcare-hq-ro${RO}
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-lib:}/mnt/lib
-    depends_on:
-      citus_worker1: { condition: service_healthy }
-      citus_worker2: { condition: service_healthy }
 
   formplayer:
     image: dimagi/formplayer
@@ -85,10 +92,20 @@ services:
     environment:
       ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     expose:
-      - "9200"  # is used in python-elasticsearch-v7 build matrix
+      - "9200"
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch2:}/usr/share/elasticsearch/data
       - ./files/elasticsearch_2.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
+
+  elasticsearch5:
+    image: elasticsearch:5.6.16
+    environment:
+      ES_JAVA_OPTS: "-Xms750m -Xmx750m -Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
+    expose:
+      - "9200"
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch5:}/usr/share/elasticsearch/data
+      - ./files/elasticsearch_5.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   zookeeper:
     image: wurstmeister/zookeeper
@@ -105,7 +122,14 @@ services:
           KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
           KAFKA_BROKER_ID: 1
           KAFKA_ADVERTISED_PORT: 9092
-          CUSTOM_INIT_SCRIPT: "curl https://raw.githubusercontent.com/vishnubob/wait-for-it/c096cface5fbd9f2d6b037391dfecae6fde1362e/wait-for-it.sh > wait.sh && chmod +x ./wait.sh && ./wait.sh zookeeper:2181 || exit 1"
+          CUSTOM_INIT_SCRIPT: |
+            URL="https://raw.githubusercontent.com/vishnubob/wait-for-it/c096cface5fbd9f2d6b037391dfecae6fde1362e/wait-for-it.sh"
+            if curl --max-time 10 $URL > wait.sh ; then
+              chmod +x ./wait.sh
+              ./wait.sh -t 30 zookeeper:2181 || exit 1
+            else
+              echo "Wait script download failed"
+            fi
           KAFKA_ADVERTISED_HOST_NAME: "kafka"
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
@@ -122,41 +146,3 @@ services:
     environment:
       MINIO_ACCESS_KEY: admin-key
       MINIO_SECRET_KEY: admin-secret
-
-  citus_master:
-    image: 'citusdata/citus:8.1.1'
-    ports: ["${CITUS_MASTER_EXTERNAL_PORT:-5600}:5432"]
-    labels: ['com.citusdata.role=Master']
-    volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_master:}/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
-      POSTGRES_USER: commcarehq
-      POSTGRES_PASSWORD: commcarehq
-  citus_manager:
-    image: 'citusdata/membership-manager:0.2.0'
-    volumes: ["${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock"]
-    depends_on: { citus_master: { condition: service_healthy } }
-    environment:
-      CITUS_HOST: citus_master
-      POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
-      POSTGRES_USER: commcarehq
-      POSTGRES_PASSWORD: commcarehq
-  citus_worker1:
-    image: 'citusdata/citus:8.1.1'
-    labels: ['com.citusdata.role=Worker']
-    depends_on: { citus_manager: { condition: service_healthy } }
-    volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker1:}/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
-      POSTGRES_USER: commcarehq
-  citus_worker2:
-    image: 'citusdata/citus:8.1.1'
-    labels: ['com.citusdata.role=Worker']
-    depends_on: { citus_manager: { condition: service_healthy } }
-    volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker2:}/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
-      POSTGRES_USER: commcarehq

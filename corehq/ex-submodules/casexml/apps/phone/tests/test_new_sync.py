@@ -6,7 +6,6 @@ from jsonobject import JsonObject
 from six.moves import range
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from casexml.apps.phone.const import CLEAN_OWNERS, LIVEQUERY
 from casexml.apps.phone.exceptions import RestoreException
 from casexml.apps.phone.models import SimplifiedSyncLog
 from casexml.apps.phone.restore import RestoreConfig
@@ -17,7 +16,7 @@ from casexml.apps.phone.tests.utils import (
 from casexml.apps.phone.utils import MockDevice
 
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request.api import set_request
 
@@ -40,13 +39,8 @@ class TestLiveQuery(TestCase):
         cls.project.delete()
         super(TestLiveQuery, cls).tearDownClass()
 
-    def test_clean_owners_after_livequery(self):
-        device = MockDevice(self.project, self.user, {"case_sync": LIVEQUERY})
-        device.sync()
-        with self.assertRaises(RestoreException):
-            device.sync(case_sync=CLEAN_OWNERS)
 
-
+@sharded
 class TestNewSyncSpecifics(TestCase):
 
     @classmethod
@@ -110,8 +104,3 @@ class TestNewSyncSpecifics(TestCase):
             CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
             CaseStructure(case_id=parent_id, attrs={'owner_id': 'different'}),
         ], form_extras={'last_sync_token': sync_log._id})
-
-
-@use_sql_backend
-class TestNewSyncSpecificsSQL(TestNewSyncSpecifics):
-    pass

@@ -1,4 +1,3 @@
-import re
 from collections import defaultdict
 from datetime import date, datetime
 
@@ -8,8 +7,6 @@ from django.db.models import Count, F, Func
 from django.db.models.aggregates import Avg, StdDev
 
 from dateutil.relativedelta import relativedelta
-
-from casexml.apps.stock.models import StockTransaction
 
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.es import CaseES, FormES, UserES
@@ -34,7 +31,6 @@ from corehq.form_processor.models import (
     LedgerTransaction,
     LedgerValue,
 )
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.connections import connection_manager
 from corehq.sql_db.util import (
@@ -216,15 +212,12 @@ class Command(BaseCommand):
         self._print_table(['Month', 'Cases updated per user'], final_stats)
 
     def _ledgers_per_case(self):
-        if should_use_sql_backend(self.domain):
-            db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
-            results = (
-                LedgerValue.objects.using(db_name).filter(domain=self.domain)
-                .values('case_id')
-                .annotate(ledger_count=Count('pk'))
-            )[:100]
-        else:
-            raise NotImplementedError
+        db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
+        results = (
+            LedgerValue.objects.using(db_name).filter(domain=self.domain)
+            .values('case_id')
+            .annotate(ledger_count=Count('pk'))
+        )[:100]
 
         case_ids = set()
         ledger_count = 0
@@ -247,39 +240,26 @@ class Command(BaseCommand):
         self.stdout.write('\nCase Types with Ledgers')
         for type_ in case_types:
             self._print_value('case_type', type_, CaseES().domain(self.domain).case_type(type_).count())
-            if should_use_sql_backend(self.domain):
-                db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
-                results = (
-                    CommCareCaseSQL.objects.using(db_name).filter(domain=self.domain, closed=True, type=type_)
-                    .annotate(lifespan=F('closed_on') - F('opened_on'))
-                    .annotate(avg_lifespan=Avg('lifespan'))
-                    .values('avg_lifespan', flat=True)
-                )
-                self._print_value('Average lifespan for "%s" cases' % type_, results[0]['avg_lifespan'])
+            db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
+            results = (
+                CommCareCaseSQL.objects.using(db_name).filter(domain=self.domain, closed=True, type=type_)
+                .annotate(lifespan=F('closed_on') - F('opened_on'))
+                .annotate(avg_lifespan=Avg('lifespan'))
+                .values('avg_lifespan', flat=True)
+            )
+            self._print_value('Average lifespan for "%s" cases' % type_, results[0]['avg_lifespan'])
 
             self._cases_created_per_user_per_month(type_)
 
         self._print_value('Average ledgers per case', avg_ledgers_per_case)
 
-        if should_use_sql_backend(self.domain):
-            stats = defaultdict(list)
-            for db_name, case_ids_p in split_list_by_db_partition(case_ids):
-                transactions_per_case_per_month = (
-                    LedgerTransaction.objects.using(db_name).filter(case_id__in=case_ids)
-                    .annotate(m=Month('server_date'), y=Year('server_date')).values('case_id', 'y', 'm')
-                    .annotate(count=Count('id'))
-                )
-                for row in transactions_per_case_per_month:
-                    month = date(row['y'], row['m'], 1)
-                    stats[month].append(row['count'])
-        else:
+        stats = defaultdict(list)
+        for db_name, case_ids_p in split_list_by_db_partition(case_ids):
             transactions_per_case_per_month = (
-                StockTransaction.objects.filter(case_id__in=case_ids)
-                .annotate(m=Month('report__date'), y=Year('report__date')).values('case_id', 'y', 'm')
+                LedgerTransaction.objects.using(db_name).filter(case_id__in=case_ids)
+                .annotate(m=Month('server_date'), y=Year('server_date')).values('case_id', 'y', 'm')
                 .annotate(count=Count('id'))
             )
-
-            stats = defaultdict(list)
             for row in transactions_per_case_per_month:
                 month = date(row['y'], row['m'], 1)
                 stats[month].append(row['count'])
@@ -292,10 +272,6 @@ class Command(BaseCommand):
         self._print_table(['Month', 'Ledgers updated per case'], final_stats)
 
     def _case_to_case_index_ratio(self):
-        if not should_use_sql_backend(self.domain):
-            self.stdout.write('\nUnable to get case to index ratio of Couch domain\n')
-            return
-
         db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
         case_query = CommCareCaseSQL.objects.using(db_name).filter(domain=self.domain)
         index_query = CommCareCaseIndexSQL.objects.using(db_name).filter(domain=self.domain)
@@ -304,10 +280,6 @@ class Command(BaseCommand):
         self._print_value('Ratio of cases to case indices: 1 : ', case_index_count / case_count)
 
     def _attachment_sizes(self):
-        if not should_use_sql_backend(self.domain):
-            self.stdout.write('\nAttachment stats only available for SQL domains\n')
-            return
-
         db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
         with BlobMeta.get_cursor_for_partition_db(db_name, readonly=True) as cursor:
             cursor.execute("""
@@ -365,7 +337,7 @@ class Command(BaseCommand):
                 datasource.referenced_doc_type, _get_table_size(datasource)
             )
             for datasource in static_datasources + dynamic_datasources
-        ], key=lambda r: r[-1])
+        ], key=lambda r: r[-1] if r[-1] != 'Table not found' else 0)
 
         self.stdout.write('UCR datasource sizes')
         self._print_table(

@@ -11,7 +11,7 @@ from corehq.apps.saved_reports.scheduled import (
     get_scheduled_report_ids,
     guess_reporting_minute,
 )
-from corehq.apps.users.models import Permissions, SQLUserRole, WebUser
+from corehq.apps.users.models import Permissions, UserRole, WebUser
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import ensure_active_es, ensure_index_deleted
 
@@ -184,7 +184,7 @@ class ScheduledReportSendingTest(TestCase):
         super(ScheduledReportSendingTest, cls).setUpClass()
 
         cls.domain_obj = create_domain(cls.domain)
-        cls.reports_role = SQLUserRole.create(cls.domain, 'Test Role', permissions=Permissions(
+        cls.reports_role = UserRole.create(cls.domain, 'Test Role', permissions=Permissions(
             view_report_list=[cls.REPORT_NAME_LOOKUP['worker_activity']]
         ))
         cls.user = WebUser.create(

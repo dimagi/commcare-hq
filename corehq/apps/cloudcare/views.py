@@ -4,6 +4,7 @@ import string
 
 import sentry_sdk
 from django.conf import settings
+from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
@@ -20,9 +21,7 @@ from django.views.generic import View
 from django.views.generic.base import TemplateView
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
+import urllib.parse
 from text_unidecode import unidecode
 
 from corehq.apps.formplayer_api.utils import get_formplayer_url
@@ -45,6 +44,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_current_app_doc,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    wrap_app,
 )
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -71,7 +71,9 @@ from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
-    waf_allow)
+    waf_allow,
+)
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
@@ -107,12 +109,7 @@ class FormplayerMain(View):
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
     def fetch_app(self, domain, app_id):
-        username = self.request.couch_user.username
-        if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
-                toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
-            return get_latest_build_doc(domain, app_id)
-        else:
-            return get_latest_released_app_doc(domain, app_id)
+        return _fetch_build(domain, self.request.couch_user.username, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
         app_access = get_application_access_for_domain(domain)
@@ -142,7 +139,7 @@ class FormplayerMain(View):
         def set_cookie(response):  # set_coookie is a noop by default
             return response
 
-        cookie_name = six.moves.urllib.parse.quote(
+        cookie_name = urllib.parse.quote(
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
         username = request.COOKIES.get(cookie_name)
         if username:
@@ -218,6 +215,13 @@ class FormplayerMain(View):
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
         )
+
+
+def _fetch_build(domain, username, app_id):
+    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+        return get_latest_build_doc(domain, app_id)
+    else:
+        return get_latest_released_app_doc(domain, app_id)
 
 
 class FormplayerMainPreview(FormplayerMain):
@@ -569,3 +573,52 @@ def _message_to_sentry_thread_topic(message):
     'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCareHQ.'
     """
     return re.sub(r'[a-f0-9-]{7,}', '[...]', message)
+
+
+@login_and_domain_required
+@require_cloudcare_access
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
+@location_safe
+def session_endpoint(request, domain, app_id, endpoint_id):
+    def _fail(error):
+        messages.error(request, error)
+        return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]))
+
+    if not toggles.SESSION_ENDPOINTS.enabled_for_request(request):
+        return _fail(_("Linking directly into Web Apps has been disabled."))
+
+    build = _fetch_build(domain, request.couch_user.username, app_id)
+    if not build:
+        # These links can be used for cross-domain web apps workflows, where a link jumps to the
+        # same screen but in another domain's corresponding app. This works if both the source and
+        # target apps are downstream apps that share an upstream app - the link references the upstream app.
+        from corehq.apps.linked_domain.applications import get_downstream_app_id_map
+        id_map = get_downstream_app_id_map(domain)
+        if app_id in id_map:
+            if len(id_map[app_id]) == 1:
+                build = _fetch_build(domain, request.couch_user.username, id_map[app_id][0])
+        if not build:
+            return _fail(_("Could not find application."))
+    build = wrap_app(build)
+
+    valid_endpoint_ids = {m.session_endpoint_id for m in build.get_modules() if m.session_endpoint_id}
+    valid_endpoint_ids |= {f.session_endpoint_id for f in build.get_forms() if f.session_endpoint_id}
+    if endpoint_id not in valid_endpoint_ids:
+        return _fail(_("This link does not exist. "
+                       "Your app may have changed so that the given link is no longer valid."))
+
+    restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
+    force_login_as = not restore_as_user.is_commcare_user()
+    if force_login_as and not can_use_restore_as(request):
+        return _fail(_("This user cannot access this link."))
+
+    cloudcare_state = json.dumps({
+        "appId": build._id,
+        "endpointId": endpoint_id,
+        "endpointArgs": {
+            urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)
+            for key, value in request.GET.items()
+        },
+        "forceLoginAs": force_login_as,
+    })
+    return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)

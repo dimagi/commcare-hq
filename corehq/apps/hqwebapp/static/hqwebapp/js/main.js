@@ -215,7 +215,22 @@ hqDefine('hqwebapp/js/main', [
                         options.error = function (data) {
                             that.nextState = null;
                             that.setState('retry');
-                            var customError = ((data.responseJSON && data.responseJSON.message) ? data.responseJSON.message : data.responseText);
+                            var customError = data.responseText;
+                            if (data.responseJSON) {
+                                if (data.responseJSON.message) {
+                                    customError = data.responseJSON.message;
+                                } else if (data.responseJSON.messages && data.responseJSON.messages.length) {
+                                    if (data.responseJSON.messages.length === 1) {
+                                        customError = _.template("<%- m %>")({m: data.responseJSON.messages[0]});
+                                    } else {
+                                        customError = _.template("<ul><%= errors %></ul>")({
+                                            errors: data.responseJSON.messages.map(function (m) {
+                                                return _.template("<li><%- m %></li>")({m: m});
+                                            }).join(""),
+                                        });
+                                    }
+                                }
+                            }
                             if (customError.indexOf('<head>') > -1) {
                                 // this is sending back a full html page, likely login, so no error message.
                                 customError = null;
@@ -280,19 +295,19 @@ hqDefine('hqwebapp/js/main', [
     };
 
     var SaveButton = makeSaveButton({
-        SAVE: django.gettext("Save"),
-        SAVING: django.gettext("Saving..."),
-        SAVED: django.gettext("Saved"),
-        RETRY: django.gettext("Try Again"),
-        ERROR_SAVING: django.gettext("There was an error saving"),
+        SAVE: gettext("Save"),
+        SAVING: gettext("Saving..."),
+        SAVED: gettext("Saved"),
+        RETRY: gettext("Try Again"),
+        ERROR_SAVING: gettext("There was an error saving"),
     }, 'btn btn-primary');
 
     var DeleteButton = makeSaveButton({
-        SAVE: django.gettext("Delete"),
-        SAVING: django.gettext("Deleting..."),
-        SAVED: django.gettext("Deleted"),
-        RETRY: django.gettext("Try Again"),
-        ERROR_SAVING: django.gettext("There was an error deleting"),
+        SAVE: gettext("Delete"),
+        SAVING: gettext("Deleting..."),
+        SAVED: gettext("Deleted"),
+        RETRY: gettext("Try Again"),
+        ERROR_SAVING: gettext("There was an error deleting"),
     }, 'btn btn-danger', 'savebtn-bar-danger');
 
     ko.bindingHandlers.saveButton = {

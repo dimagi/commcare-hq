@@ -20,6 +20,11 @@ class XPathField(StringField):
     pass
 
 
+class BooleanField(SimpleBooleanField):
+    def __init__(self, xpath, *args, **kwargs):
+        return super().__init__(xpath, 'true', 'false', *args, **kwargs)
+
+
 class OrderedXmlObject(XmlObject):
     ORDER = ()
 
@@ -38,34 +43,34 @@ class IdNode(XmlObject):
     id = StringField('@id')
 
 
-class CalculatedPropertyXpathVariable(XmlObject):
+class CalculatedPropertyXPathVariable(XmlObject):
     ROOT_NAME = 'variable'
     name = StringField('@name')
     locale_id = StringField('locale/@id')
 
 
-class CalculatedPropertyXpath(XmlObject):
+class CalculatedPropertyXPath(XmlObject):
     ROOT_NAME = 'xpath'
     function = XPathField('@function')
-    variables = NodeListField('variable', CalculatedPropertyXpathVariable)
+    variables = NodeListField('variable', CalculatedPropertyXPathVariable)
 
 
-class XpathVariable(XmlObject):
+class XPathVariable(XmlObject):
     ROOT_NAME = 'variable'
     name = StringField('@name')
 
     locale_id = StringField('locale/@id')
-    xpath = NodeField('xpath', CalculatedPropertyXpath)
+    xpath = NodeField('xpath', CalculatedPropertyXPath)
 
     @property
     def value(self):
         return self.locale_id or self.xpath
 
 
-class Xpath(XmlObject):
+class TextXPath(XmlObject):
     ROOT_NAME = 'xpath'
     function = XPathField('@function')
-    variables = NodeListField('variable', XpathVariable)
+    variables = NodeListField('variable', XPathVariable)
 
 
 class LocaleArgument(XmlObject):
@@ -76,17 +81,17 @@ class LocaleArgument(XmlObject):
 
 class Id(XmlObject):
     ROOT_NAME = 'id'
-    xpath = NodeField('xpath', Xpath)
+    xpath = NodeField('xpath', TextXPath)
 
 
-class XpathEnum(Xpath):
+class XPathEnum(TextXPath):
     @classmethod
     def build(cls, enum, template, get_template_context, get_value):
         variables = []
         for item in enum:
             v_key = item.key_as_variable
             v_val = get_value(v_key)
-            variables.append(XpathVariable(name=v_key, locale_id=v_val))
+            variables.append(XPathVariable(name=v_key, locale_id=v_val))
 
         parts = []
         for i, item in enumerate(enum):
@@ -124,7 +129,7 @@ class Text(XmlObject):
 
     ROOT_NAME = 'text'
 
-    xpath = NodeField('xpath', Xpath)
+    xpath = NodeField('xpath', TextXPath)
     xpath_function = XPathField('xpath/@function')
 
     locale = NodeField('locale', Locale)
@@ -204,7 +209,7 @@ class LocaleResource(AbstractResource):
 class MediaResource(AbstractResource):
     ROOT_NAME = 'media'
     path = StringField('@path')
-    lazy = SimpleBooleanField('resource/@lazy', true="true", false="false")
+    lazy = BooleanField('resource/@lazy')
 
 
 class PracticeUserRestoreResource(AbstractResource):
@@ -274,7 +279,7 @@ class MediaText(XmlObject):
     ROOT_NAME = 'text'
     form_name = StringField('@form', choices=['image', 'audio'])  # Nothing XForm-y about this 'form'
     locale = NodeField('locale', LocaleId)
-    xpath = NodeField('xpath', Xpath)
+    xpath = NodeField('xpath', TextXPath)
     xpath_function = XPathField('xpath/@function')
 
 
@@ -373,7 +378,7 @@ class SessionDatum(IdNode, OrderedXmlObject):
     detail_confirm = StringField('@detail-confirm')
     detail_persistent = StringField('@detail-persistent')
     detail_inline = StringField('@detail-inline')
-    autoselect = SimpleBooleanField('@autoselect', true="true", false="false")
+    autoselect = BooleanField('@autoselect')
 
 
 class StackDatum(IdNode):
@@ -463,6 +468,39 @@ class Assertion(XmlObject):
     text = NodeListField('text', Text)
 
 
+class QueryData(XmlObject):
+    ROOT_NAME = 'data'
+
+    key = StringField('@key')
+    ref = XPathField('@ref')
+
+
+class QueryPrompt(DisplayNode):
+    ROOT_NAME = 'prompt'
+
+    key = StringField('@key')
+    appearance = StringField('@appearance', required=False)
+    receive = StringField('@receive', required=False)
+    hidden = BooleanField('@hidden', required=False)
+    input_ = StringField('@input', required=False)
+    default_value = StringField('@default', required=False)
+    allow_blank_value = BooleanField('@allow_blank_value', required=False)
+
+    itemset = NodeField('itemset', Itemset)
+
+
+class RemoteRequestQuery(OrderedXmlObject, XmlObject):
+    ROOT_NAME = 'query'
+    ORDER = ('data', 'prompts')
+
+    url = StringField('@url')
+    storage_instance = StringField('@storage-instance')
+    template = StringField('@template')
+    data = NodeListField('data', QueryData)
+    prompts = NodeListField('prompt', QueryPrompt)
+    default_search = BooleanField("@default_search")
+
+
 class Entry(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'entry'
     ORDER = ('form', 'command', 'instance', 'datums')
@@ -472,6 +510,7 @@ class Entry(OrderedXmlObject, XmlObject):
     instances = NodeListField('instance', Instance)
 
     datums = NodeListField('session/datum', SessionDatum)
+    queries = NodeListField('session/query', RemoteRequestQuery)
 
     stack = NodeField('stack', Stack)
 
@@ -480,6 +519,8 @@ class Entry(OrderedXmlObject, XmlObject):
     def require_instances(self, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in self.instances}
         for instance in instances:
+            if 'remote' in instance.src:
+                continue
             if (instance.id, instance.src) not in used:
                 self.instances.append(
                     # it's important to make a copy,
@@ -500,35 +541,15 @@ class Entry(OrderedXmlObject, XmlObject):
         for instance_id in instance_ids:
             if instance_id not in covered_ids:
                 raise UnknownInstanceError(
-                    "Instance reference not recognized: {} in xpath \"{}\""
+                    "Instance reference not recognized: {} in XPath \"{}\""
                     # to get xpath context to show in this error message
                     # make instance_id a unicode subclass with an xpath property
-                    .format(instance_id, getattr(instance_id, 'xpath', "(Xpath Unknown)")))
+                    .format(instance_id, getattr(instance_id, 'xpath', "(XPath Unknown)")))
 
         sorted_instances = sorted(self.instances,
                                   key=lambda instance: instance.id)
         if sorted_instances != self.instances:
             self.instances = sorted_instances
-
-
-class QueryData(XmlObject):
-    ROOT_NAME = 'data'
-
-    key = StringField('@key')
-    ref = XPathField('@ref')
-
-
-class QueryPrompt(DisplayNode):
-    ROOT_NAME = 'prompt'
-
-    key = StringField('@key')
-    appearance = StringField('@appearance', required=False)
-    receive = StringField('@receive', required=False)
-    hidden = SimpleBooleanField('@hidden', 'true', 'false', required=False)
-    input_ = StringField('@input', required=False)
-    default_value = StringField('@default', required=False)
-
-    itemset = NodeField('itemset', Itemset)
 
 
 class RemoteRequestPost(XmlObject):
@@ -537,18 +558,6 @@ class RemoteRequestPost(XmlObject):
     url = StringField('@url')
     relevant = StringField('@relevant')
     data = NodeListField('data', QueryData)
-
-
-class RemoteRequestQuery(OrderedXmlObject, XmlObject):
-    ROOT_NAME = 'query'
-    ORDER = ('data', 'prompts')
-
-    url = StringField('@url')
-    storage_instance = StringField('@storage-instance')
-    template = StringField('@template')
-    data = NodeListField('data', QueryData)
-    prompts = NodeListField('prompt', QueryPrompt)
-    default_search = SimpleBooleanField("@default_search", "true", "false")
 
 
 class RemoteRequestSession(OrderedXmlObject, XmlObject):
@@ -730,7 +739,7 @@ class Lookup(OrderedXmlObject):
     ORDER = ('auto_launch', 'extras', 'responses', 'field')
 
     name = StringField("@name")
-    auto_launch = SimpleBooleanField("@auto_launch", "true", "false")
+    auto_launch = BooleanField("@auto_launch")
     action = StringField("@action", required=True)
     image = StringField("@image")
     extras = NodeListField('extra', Extra)
@@ -745,7 +754,7 @@ class ActionMixin(OrderedXmlObject):
     stack = NodeField('stack', Stack)
     relevant = XPathField('@relevant')
     auto_launch = StringField("@auto_launch")
-    redo_last = SimpleBooleanField("@redo_last", "true", "false")
+    redo_last = BooleanField("@redo_last")
 
 
 class Action(ActionMixin):
@@ -828,13 +837,13 @@ class Detail(OrderedXmlObject, IdNode):
         # can't check len(self.variables) directly since NodeList uses an
         # xpath to find its children which doesn't work here since
         # each node has a custom name
-        return self._variables is not None and len(self.variables.node.getchildren()) > 0
+        return self._variables is not None and len(self.variables.node) > 0
 
     def get_variables(self):
         """
         :returns: List of DetailVariable objects
         """
-        return [self.variables.mapper.to_python(node) for node in self.variables.node.getchildren()]
+        return [self.variables.mapper.to_python(node) for node in self.variables.node]
 
     def get_all_xpaths(self):
         result = set()

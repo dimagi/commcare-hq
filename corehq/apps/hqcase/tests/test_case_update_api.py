@@ -3,25 +3,28 @@ import uuid
 from django.test import TestCase
 from django.urls import reverse
 
+from mock import patch
+
 from casexml.apps.case.mock import CaseBlock
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import Permissions, SQLUserRole, WebUser
+from corehq.apps.users.models import Permissions, UserRole, WebUser
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    sharded,
 )
-from corehq.util.test_utils import flag_enabled, privilege_enabled
+from corehq.util.test_utils import disable_quickcache, flag_enabled, privilege_enabled
 
 from ..utils import submit_case_blocks
 
 
-@use_sql_backend
+@sharded
+@disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
 @flag_enabled('CASE_API_V0_6')
 class TestCaseAPI(TestCase):
@@ -32,7 +35,7 @@ class TestCaseAPI(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
-        role = SQLUserRole.create(
+        role = UserRole.create(
             cls.domain, 'edit-data', permissions=Permissions(edit_data=True)
         )
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
@@ -93,6 +96,12 @@ class TestCaseAPI(TestCase):
         res = self.client.get(reverse('case_api', args=(self.domain, case_id)))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()['case_id'], case_id)
+
+    def test_basic_get_list(self):
+        with patch('corehq.apps.hqcase.views.get_list', lambda *args: {'example': 'result'}):
+            res = self.client.get(reverse('case_api', args=(self.domain,)))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json(), {'example': 'result'})
 
     def test_case_not_found(self):
         res = self.client.get(reverse('case_api', args=(self.domain, 'fake_id')))

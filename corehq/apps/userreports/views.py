@@ -41,6 +41,7 @@ from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq import toggles
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_SAVED_UCR_FORM_ID,
     send_hubspot_form,
@@ -84,6 +85,7 @@ from corehq.apps.userreports.const import (
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
     REPORT_BUILDER_EVENTS_KEY,
+    TEMP_REPORT_PREFIX,
 )
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -101,7 +103,6 @@ from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
-    StaticDataSourceConfiguration,
     StaticReportConfiguration,
     get_datasource_config,
     get_report_config,
@@ -123,7 +124,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.util import report_has_location_filter
-from corehq.apps.userreports.reports.view import ConfigurableReportView
+from corehq.apps.userreports.reports.view import ConfigurableReportView, delete_report_config
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
@@ -144,15 +145,14 @@ from corehq.apps.userreports.util import (
     has_report_builder_add_on_privilege,
     number_of_report_builder_reports,
 )
-from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.decorators import get_permission_name, require_permission
 from corehq.apps.users.models import Permissions
+from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
-
-TEMP_REPORT_PREFIX = '__tmp'
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -213,6 +213,17 @@ class BaseUserConfigReportsView(BaseDomainView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain,))
 
+    def dispatch(self, *args, **kwargs):
+        allow_access_to_ucrs = (
+            self.request.couch_user.has_permission(
+                self.domain,
+                get_permission_name(Permissions.edit_ucrs)
+            )
+        )
+        if allow_access_to_ucrs:
+            return super().dispatch(*args, **kwargs)
+        raise Http404()
+
 
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
     urlname = 'configurable_reports_home'
@@ -246,6 +257,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.report_id
             ),
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
         }
 
     @property
@@ -611,7 +623,8 @@ class ConfigureReport(ReportBuilderView):
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.existing_report.get_id
-            ) if self.existing_report else {}
+            ) if self.existing_report else {},
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
         }
 
     def _get_bound_form(self, report_data):
@@ -697,7 +710,7 @@ def _get_form_type(report_type):
     if report_type == "list" or report_type is None:
         return ConfigureListReportForm
     if report_type == "table":
-            return ConfigureTableReportForm
+        return ConfigureTableReportForm
     if report_type == "map":
         return ConfigureMapReportForm
 
@@ -736,7 +749,8 @@ class ReportPreview(BaseDomainView):
         if bound_form.is_valid():
             try:
                 temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
-                response_data = ConfigurableReportView.report_preview_data(self.domain, temp_report)
+                with delete_report_config(temp_report) as report_config:
+                    response_data = ConfigurableReportView.report_preview_data(self.domain, report_config)
                 if response_data:
                     return json_response(response_data)
             except BadBuilderConfigError as e:
@@ -1034,11 +1048,24 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
     @property
     def page_context(self):
+        is_rebuilding = (
+            self.config.meta.build.initiated
+            and (
+                not self.config.meta.build.finished
+                and not self.config.meta.build.rebuilt_asynchronously
+            )
+        )
+        is_rebuilding_inplace = (
+            self.config.meta.build.initiated_in_place
+            and not self.config.meta.build.finished_in_place
+        )
         return {
             'form': self.edit_form,
             'data_source': self.config,
             'read_only': self.read_only,
             'used_by_reports': self.get_reports(),
+            'is_rebuilding': is_rebuilding,
+            'is_rebuilding_inplace': is_rebuilding_inplace,
         }
 
     @property
@@ -1240,7 +1267,6 @@ def build_data_source_in_place(request, domain, config_id):
             config.display_name
         )
     )
-
     rebuild_indicators_in_place.delay(config_id, request.user.username, source='edit_data_source_build_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]

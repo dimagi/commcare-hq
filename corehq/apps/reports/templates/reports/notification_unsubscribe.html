@@ -4,7 +4,9 @@
 {% block content %}
   <div style="margin-left: 20px">
     {% if error or success %}
-      <a href="{% url 'homepage' %}" class="btn btn-default">{% trans 'Return to homepage' %}</a>
+      <a href="{% url 'reports_home' domain=report.domain %}"
+         onclick="location.href=this.href+'#scheduled-reports';return false;"
+         class="btn btn-default">{% trans 'Return to Scheduled Reports' %}</a>
     {% else %}
       <form method="POST">
         {% csrf_token %}
@@ -22,7 +24,9 @@
           {% endblocktrans %}
         </h3>
         <input type="submit" value="{% trans 'Confirm' %}" class="btn btn-primary" />
-        <a href="{% url 'homepage' %}" class="btn btn-default">{% trans 'Cancel' %}</a>
+        <a href="{% url 'reports_home' domain=report.domain %}"
+           onclick="location.href=this.href+'#scheduled-reports';return false;"
+           class="btn btn-default">{% trans 'Cancel' %}</a>
       </form>
     {% endif %}
   </div>

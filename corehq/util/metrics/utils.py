@@ -64,9 +64,3 @@ def bucket_value(value, buckets, unit=''):
         if value < bucket:
             return lt_template.format(bucket, unit)
     return over_template.format(buckets[-1], unit)
-
-
-def maybe_add_domain_tag(domain_name, tags):
-    """Conditionally add a domain tag to the given list of tags"""
-    if (settings.SERVER_ENVIRONMENT, domain_name) in settings.METRICS_TAGGED_DOMAINS:
-        tags['domain'] = domain_name

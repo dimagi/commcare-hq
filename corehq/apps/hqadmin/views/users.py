@@ -1,5 +1,7 @@
 import csv
 import itertools
+import os
+import urllib.parse
 import uuid
 from collections import Counter
 from datetime import datetime, timedelta
@@ -51,8 +53,9 @@ from corehq.apps.hqadmin.forms import (
     SuperuserManagementForm,
 )
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
-from corehq.apps.hqmedia.tasks import build_application_zip
+from corehq.apps.hqmedia.tasks import create_files_for_ccz
 from corehq.apps.ota.views import get_restore_params, get_restore_response
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username, log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
@@ -62,6 +65,7 @@ from corehq.util.timer import TimingContext
 
 class UserAdministration(BaseAdminSectionView):
     section_name = ugettext_lazy("User Administration")
+
 
 class SuperuserManagement(UserAdministration):
     urlname = 'superuser_management'
@@ -104,9 +108,11 @@ class SuperuserManagement(UserAdministration):
                 if fields_changed:
                     user.save()
                     couch_user = CouchUser.from_django_user(user)
-                    log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
+                    log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
+                                    changed_by_user=self.request.couch_user,
                                     changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
-                                    domain_required_for_log=False)
+                                    by_domain_required_for_log=False,
+                                    for_domain_required_for_log=False)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
@@ -360,7 +366,12 @@ class DisableUserView(FormView):
 
     @property
     def redirect_url(self):
-        return '{}?q={}'.format(reverse('web_user_lookup'), self.username)
+        base_url = reverse('web_user_lookup')
+        if self.username:
+            encoded_username = urllib.parse.quote(self.username) if self.username else None
+            return '{}?q={}'.format(base_url, encoded_username)
+
+        return base_url
 
     def get(self, request, *args, **kwargs):
         if not self.user:
@@ -381,14 +392,14 @@ class DisableUserView(FormView):
         return redirect(self.redirect_url)
 
     def form_valid(self, form):
-        log_messages = []
+        change_messages = {}
         if not self.user:
             return self.redirect_response(self.request)
 
         reset_password = form.cleaned_data['reset_password']
         if reset_password:
             self.user.set_password(uuid.uuid4().hex)
-            log_messages.append("Password reset")
+            change_messages.update(UserChangeMessage.password_reset())
 
         # toggle active state
         self.user.is_active = not self.user.is_active
@@ -396,12 +407,14 @@ class DisableUserView(FormView):
 
         verb = 're-enabled' if self.user.is_active else 'disabled'
         reason = form.cleaned_data['reason']
-        log_messages.append(f'User {verb}. Reason: "{reason}"')
+        change_messages.update(UserChangeMessage.status_update(self.user.is_active, reason))
         couch_user = CouchUser.from_django_user(self.user)
-        log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
-                        changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
+        log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
+                        changed_by_user=self.request.couch_user,
+                        changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,
                         fields_changed={'is_active': self.user.is_active},
-                        domain_required_for_log=False)
+                        by_domain_required_for_log=False,
+                        for_domain_required_for_log=False)
         mail_admins(
             "User account {}".format(verb),
             "The following user account has been {verb}: \n"
@@ -429,7 +442,7 @@ class DisableUserView(FormView):
         )
 
         messages.success(self.request, _('Account successfully %(verb)s.' % {'verb': verb}))
-        return redirect('{}?q={}'.format(reverse('web_user_lookup'), self.username))
+        return redirect(self.redirect_url)
 
 
 @method_decorator(require_superuser, name='dispatch')
@@ -478,13 +491,11 @@ class DisableTwoFactorView(FormView):
 
     def form_valid(self, form):
         from django_otp import devices_for_user
-        log_messages = []
 
         username = form.cleaned_data['username']
         user = User.objects.get(username__iexact=username)
         for device in devices_for_user(user):
             device.delete()
-        log_messages.append("Registered devices reset")
 
         couch_user = CouchUser.from_django_user(user)
         disable_for_days = form.cleaned_data['disable_for_days']
@@ -492,15 +503,16 @@ class DisableTwoFactorView(FormView):
             disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
             couch_user.two_factor_auth_disabled_until = disable_until
             couch_user.save()
-            log_messages.append(f"Disabled for {disable_for_days} days")
 
         verification = form.cleaned_data['verification_mode']
         verified_by = form.cleaned_data['via_who'] or self.request.user.username
-        log_messages.append(
-            f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification}"')
-        log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
-                        changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
-                        domain_required_for_log=False)
+        change_messages = UserChangeMessage.two_factor_disabled_with_verification(
+            verified_by, verification, disable_for_days)
+        log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
+                        changed_by_user=self.request.couch_user,
+                        changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,
+                        by_domain_required_for_log=False,
+                        for_domain_required_for_log=False)
         mail_admins(
             "Two-Factor account reset",
             "Two-Factor auth was reset. Details: \n"
@@ -567,19 +579,28 @@ class AppBuildTimingsView(TemplateView):
 
     @staticmethod
     def get_timing_context(app):
+        # Intended to reproduce a live-preview app build
+        # Contents should mirror the work done in the direct_ccz view
         with app.timing_context:
             errors = app.validate_app()
             assert not errors, errors
 
+            app.set_media_versions()
+
             with app.timing_context("build_zip"):
-                build_application_zip(
+                # mirroring the content of build_application_zip
+                # but with the same `app` instance to preserve timing data
+                fpath = create_files_for_ccz(
+                    build=app,
+                    build_profile_id=None,
                     include_multimedia_files=True,
                     include_index_files=True,
-                    domain=app.domain,
-                    app_id=app.id,
                     download_id=None,
                     compress_zip=True,
                     filename='app-profile-test.ccz',
+                    download_targeted_version=False,
+                    task=None,
                 )
 
+        os.remove(fpath)
         return app.timing_context

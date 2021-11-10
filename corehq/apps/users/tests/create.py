@@ -4,7 +4,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, CouchUser, WebUser, UserRolePresets, SQLUserRole
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser, UserRolePresets, UserRole
 from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 
 
@@ -88,7 +88,7 @@ class TestDomainMemberships(TestCase):
         cls.ccuser = CommCareUser.create(cls.domain, cc_username, password, None, None)
 
         initialize_domain_with_default_roles(cls.domain)
-        role = SQLUserRole.objects.get(domain=cls.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
+        role = UserRole.objects.get(domain=cls.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
         cls.field_implementer_role_id = role.get_qualified_id()
 
     def setUp(self):

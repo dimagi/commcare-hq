@@ -8,7 +8,7 @@ from corehq.apps.es import CaseES
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.elastic import get_es_new
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.elasticsearch import ConnectionError
@@ -39,7 +39,6 @@ class ReportCasePillowTest(BasePillowTestCase):
         FormProcessorTestUtils.delete_all_cases()
         super(ReportCasePillowTest, self).tearDown()
 
-    @run_with_all_backends
     def test_report_case_pillow(self):
         case_id, case_name = self._create_case_and_sync_to_es(DOMAIN)
 
@@ -51,7 +50,6 @@ class ReportCasePillowTest(BasePillowTestCase):
         self.assertEqual(case_id, case_doc['_id'])
         self.assertEqual(case_name, case_doc['name'])
 
-    @run_with_all_backends
     def test_unsupported_domain(self):
         self._create_case_and_sync_to_es('unsupported-domain')
 
@@ -85,7 +83,6 @@ class ReportCaseReindexerTest(TestCase):
         ensure_index_deleted(REPORT_CASE_INDEX_INFO.index)
         super(ReportCaseReindexerTest, self).tearDown()
 
-    @run_with_all_backends
     def test_report_case_reindexer(self):
         cases_included = set()
         for i in range(3):

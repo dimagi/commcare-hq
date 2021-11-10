@@ -8,9 +8,10 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 
 
+@sharded
 class StockStatusDataSourceTests(TestCase):
 
     @classmethod
@@ -99,8 +100,3 @@ class StockStatusDataSourceTests(TestCase):
                 'product_name': self.product.name,
                 'resupply_quantity_needed': None}]
         )
-
-
-@use_sql_backend
-class StockStatusDataSourceSQLTests(StockStatusDataSourceTests):
-    pass

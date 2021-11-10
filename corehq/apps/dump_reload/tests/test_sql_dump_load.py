@@ -7,10 +7,8 @@ from io import StringIO
 
 import mock
 from django.contrib.admin.utils import NestedObjects
-from django.core import serializers
 from django.db import transaction, IntegrityError
 from django.db.models.signals import post_delete, post_save
-from django.db.transaction import TransactionManagementError
 from django.test import SimpleTestCase, TestCase
 from nose.tools import nottest
 
@@ -19,7 +17,6 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.dump_reload.sql import SqlDataDumper, SqlDataLoader
 from corehq.apps.dump_reload.sql.dump import (
     get_model_iterator_builders_to_dump,
@@ -53,7 +50,7 @@ from corehq.form_processor.models import (
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
-    use_sql_backend,
+    sharded,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
@@ -69,9 +66,7 @@ class BaseDumpLoadTest(TestCase):
         cls.domain = Domain(name=cls.domain_name)
         cls.domain.save()
 
-        cls.default_objects_counts = Counter({
-            DomainMigrationProgress: 1
-        })
+        cls.default_objects_counts = Counter({})
 
     @classmethod
     def tearDownClass(cls):
@@ -160,7 +155,7 @@ def delete_domain_sql_data_for_dump_load_test(domain_name):
     assert [] == list(get_objects_to_dump(domain_name, [], [])), "Not all SQL objects deleted"
 
 
-@use_sql_backend
+@sharded
 class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     maxDiff = None
 
@@ -332,16 +327,16 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self._dump_and_load(expected_object_counts)
 
     def test_dump_roles(self):
-        from corehq.apps.users.models import SQLUserRole, Permissions, RoleAssignableBy, RolePermission
+        from corehq.apps.users.models import UserRole, Permissions, RoleAssignableBy, RolePermission
 
         expected_object_counts = Counter({
-            SQLUserRole: 2,
-            RolePermission: 9,
+            UserRole: 2,
+            RolePermission: 11,
             RoleAssignableBy: 1
         })
 
-        role1 = SQLUserRole.create(self.domain_name, 'role1')
-        role2 = SQLUserRole.create(
+        role1 = UserRole.create(self.domain_name, 'role1')
+        role2 = UserRole.create(
             self.domain_name, 'role1',
             permissions=Permissions(edit_web_users=True),
             assignable_by=[role1.id]
@@ -351,8 +346,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         self._dump_and_load(expected_object_counts)
 
-        role1_loaded = SQLUserRole.objects.get(id=role1.id)
-        role2_loaded = SQLUserRole.objects.get(id=role2.id)
+        role1_loaded = UserRole.objects.get(id=role1.id)
+        role2_loaded = UserRole.objects.get(id=role2.id)
 
         self.assertEqual(role1_loaded.permissions.to_list(), Permissions().to_list())
         self.assertEqual(role1_loaded.assignable_by, [])

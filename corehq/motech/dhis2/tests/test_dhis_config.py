@@ -5,7 +5,7 @@ from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
 from jsonobject.base_properties import BadValueError
 
-from corehq.motech.dhis2.dhis2_config import Dhis2Config
+from corehq.motech.dhis2.dhis2_config import Dhis2CaseConfig, Dhis2Config
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
 
@@ -177,3 +177,58 @@ class TestDhisConfigValidation(SimpleTestCase):
         repeater.save()
         org_unit_value_source = dict(repeater.dhis2_config.form_configs[0].org_unit_id)
         self.assertDictEqual(org_unit_value_source, {'value': 'dhis2_location_id'})
+
+
+class TestDhis2CaseConfig(SimpleTestCase):
+
+    def test_default(self):
+        conf = Dhis2CaseConfig.wrap({
+            'case_type': 'foo',
+            'te_type_id': 'abc12345678',
+            'tei_id': {'case_property': 'external_id'},
+            'org_unit_id': {'case_property': 'dhis2_org_unit_id'},
+            'attributes': {},
+            'form_configs': [],
+            'finder_config': {},
+            # relationships_to_export not specified
+        })
+        self.assertEqual(conf.relationships_to_export, [])
+
+    def test_one_relationship_given(self):
+        Dhis2CaseConfig.wrap({
+            'case_type': 'foo',
+            'te_type_id': 'abc12345678',
+            'tei_id': {'case_property': 'external_id'},
+            'org_unit_id': {'case_property': 'dhis2_org_unit_id'},
+            'attributes': {},
+            'form_configs': [],
+            'finder_config': {},
+            'relationships_to_export': [{
+                'identifier': 'parent',
+                'referenced_type': 'bar',
+                'subcase_to_supercase_dhis2_id': 'abc12345678',
+            }]
+        })
+
+    def test_index_given_twice(self):
+        Dhis2CaseConfig.wrap({
+            'case_type': 'foo',
+            'te_type_id': 'abc12345678',
+            'tei_id': {'case_property': 'external_id'},
+            'org_unit_id': {'case_property': 'dhis2_org_unit_id'},
+            'attributes': {},
+            'form_configs': [],
+            'finder_config': {},
+            'relationships_to_export': [
+                {
+                    'identifier': 'parent',
+                    'referenced_type': 'bar',
+                    'subcase_to_supercase_dhis2_id': 'abc12345678',
+                },
+                {
+                    'identifier': 'parent',
+                    'referenced_type': 'bar',
+                    'supercase_to_subcase_dhis2_id': 'def90123456',
+                },
+            ]
+        })
