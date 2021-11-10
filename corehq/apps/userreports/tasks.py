@@ -49,7 +49,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     StaticDataSourceConfiguration,
     get_report_config,
-    id_is_static,
+    id_is_static, RegistryDataSourceConfiguration,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.data_source import (
@@ -73,7 +73,15 @@ def _get_config_by_id(indicator_config_id):
     if id_is_static(indicator_config_id):
         return StaticDataSourceConfiguration.by_id(indicator_config_id)
     else:
-        return DataSourceConfiguration.get(indicator_config_id)
+        doc = DataSourceConfiguration.get_db().get(indicator_config_id)
+        return _correctly_wrap_data_source(doc)
+
+
+def _correctly_wrap_data_source(doc):
+    return {
+        "DataSourceConfiguration": DataSourceConfiguration,
+        "RegistryDataSourceConfiguration": RegistryDataSourceConfiguration,
+    }[doc["doc_type"]].wrap(doc)
 
 
 def _build_indicators(config, document_store, relevant_ids):
