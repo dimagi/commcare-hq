@@ -91,9 +91,15 @@ Make Commcare use your local IP address
 
 Set the ``BASE_ADDRESS`` setting in ``localsettings.py`` to your IP address (e.g.
 
-``192.168.0.10``), without a port. You'll have to update this if you ever change
+``192.168.0.10``), without a port.
 
-networks or get a new IP address.
+Additionally, modify ``deployment/nginx/cchq_local_nginx.conf`` to replace localhost with
+your IP address as ``server_name`` and also in ``proxy_pass``.
+For example, set server_name as ``192.168.0.10`` and
+``proxy_pass`` as ``http://192.168.0.10:8000``.
+Then run ``sudo nginx -s reload`` to update configration changes.
+
+Note: You'll have to update these if you ever change networks or get a new IP address.
 
 Rebuild and redeploy your application
 #####################################
