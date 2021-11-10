@@ -868,7 +868,9 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
         registry_helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
         owning_domain = registry_helper.registry.domain
         prop_map = get_data_dict_props_by_case_type(owning_domain)
-        self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
+        self.case_properties = sorted(
+            set(prop_map[self.source_id]) | {'closed', 'closed_on'} - {COMMCARE_PROJECT}
+        )
 
     def _get_data_source_build_information(self):
         return DataSourceBuildInformation(
