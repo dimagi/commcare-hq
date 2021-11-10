@@ -69,7 +69,7 @@ branches:
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
-    - fr/dedupe+ad/auto-update-rules-for-linked-spaces
+#    - fr/dedupe+ad/auto-update-rules-for-linked-spaces
     - ad/auto-update-rules-for-linked-spaces # Addison Oct 25
 #    - ml/remove-pickles-reports # Minha Oct 21
     - sk/data-registry-form-linking+sk/additional-registry-cases
