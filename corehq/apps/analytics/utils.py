@@ -5,7 +5,7 @@ import logging
 
 from django.conf import settings
 
-from corehq.util.metrics import metrics_gauge, metrics_counter
+from corehq.util.metrics import metrics_counter
 from corehq.apps.accounting.models import Subscription, BillingAccount
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -131,9 +131,11 @@ def _delete_hubspot_contact(vid, retry_num=0):
                 return False
             req.raise_for_status()
         except (ConnectionError, requests.exceptions.HTTPError) as e:
-            metrics_gauge(
+            metrics_counter(
                 'commcare.hubspot_data.retry.delete_hubspot_contact',
-                1
+                tags={
+                    'vid': vid,
+                }
             )
             if retry_num <= MAX_API_RETRIES:
                 return _delete_hubspot_contact(vid, retry_num + 1)
@@ -174,7 +176,10 @@ def _get_contact_ids_to_delete(list_of_emails, retry_num=0):
             req.raise_for_status()
         except (ConnectionError, requests.exceptions.HTTPError) as e:
             metrics_counter(
-                'commcare.hubspot_data.retry.get_contact_ids_for_emails'
+                'commcare.hubspot_data.retry.get_contact_ids_for_emails',
+                tags={
+                    'emails': list_of_emails.join(', '),
+                }
             )
             if retry_num <= MAX_API_RETRIES:
                 return _get_contact_ids_to_delete(list_of_emails, retry_num + 1)
@@ -231,7 +236,7 @@ def remove_blocked_domain_contacts_from_hubspot(stdout=None):
             if stdout:
                 stdout.write(f"Found {len(ids_to_delete)} id(s) to delete.")
             num_deleted = sum(_delete_hubspot_contact(vid) for vid in ids_to_delete)
-            metrics_gauge(
+            metrics_counter(
                 'commcare.hubspot_data.deleted_user.blocked_domain',
                 num_deleted,
                 tags={
