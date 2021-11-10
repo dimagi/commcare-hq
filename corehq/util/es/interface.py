@@ -141,7 +141,7 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         size_qy = body.get("size")
         size_kw = kwargs.get("size")
         if size_kw is None and size_qy is None:
-            # Set a large scroll size if one is not already is configured.
+            # Set a large scroll size if one is not already configured.
             # Observations on Elastic v2.4 show default (when not specified)
             # scroll size of 10.
             kwargs["size"] = self.SCROLL_SIZE
