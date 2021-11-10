@@ -57,11 +57,12 @@ class EndpointsHelper(PostProcessor):
             elif child.id in argument_ids:
                 self._add_datum_for_arg(frame, child.id)
 
-        return SessionEndpoint(
-            id=endpoint_id,
-            arguments=[Argument(id=i) for i in argument_ids],
-            stack=stack,
-        )
+        kwargs = {
+            "id": endpoint_id,
+            "arguments": [Argument(id=i) for i in argument_ids],
+            "stack": stack,
+        }
+        return SessionEndpoint(**kwargs)
 
     def _get_argument_ids(self, frame_children, form):
 

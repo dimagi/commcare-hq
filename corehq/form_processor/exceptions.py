@@ -10,10 +10,6 @@ class CaseNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass
 
 
-class CaseTypeMismatch(CaseNotFound):
-    pass
-
-
 class XFormNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass
 

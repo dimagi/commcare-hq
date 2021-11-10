@@ -40,6 +40,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.util import (
     app_callout_templates,
     module_case_hierarchy_has_circular_reference,
+    module_uses_smart_links,
     split_path,
     xpath_references_case,
     xpath_references_usercase,
@@ -371,6 +372,12 @@ class ModuleBaseValidator(object):
         if self.module.put_in_root and self.module.session_endpoint_id:
             errors.append({
                 'type': 'endpoint to display only forms',
+                'module': self.get_module_info(),
+            })
+
+        if module_uses_smart_links(self.module) and not self.module.session_endpoint_id:
+            errors.append({
+                'type': 'smart links missing endpoint',
                 'module': self.get_module_info(),
             })
 

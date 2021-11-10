@@ -73,7 +73,7 @@ def test_generator_update_create_index_to_parent():
 
     def _get_case(case_id):
         assert case_id == "case2"
-        return Mock(domain=TARGET_DOMAIN, case_type="parent_type")
+        return Mock(domain=TARGET_DOMAIN, type="parent_type")
 
     with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
         _test_payload_generator(intent_case=builder.get_case(), expected_indices={
@@ -85,7 +85,7 @@ def test_generator_update_create_index_to_host():
 
     def _get_case(case_id):
         assert case_id == "case2"
-        return Mock(domain=TARGET_DOMAIN, case_type="parent_type")
+        return Mock(domain=TARGET_DOMAIN, type="parent_type")
 
     with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
         _test_payload_generator(intent_case=builder.get_case(), expected_indices={
@@ -105,7 +105,7 @@ def test_generator_update_create_index_domain_mismatch():
 
     def _get_case(case_id):
         assert case_id == "case2"
-        return Mock(domain="not target", case_type="parent_type")
+        return Mock(domain="not target", type="parent_type")
 
     with assert_raises(DataRegistryCaseUpdateError, msg="Index case not found: case2"):
         with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
@@ -117,7 +117,7 @@ def test_generator_update_create_index_case_type_mismatch():
 
     def _get_case(case_id):
         assert case_id == "case2"
-        return Mock(domain=TARGET_DOMAIN, case_type="not parent")
+        return Mock(domain=TARGET_DOMAIN, type="not parent")
 
     with assert_raises(DataRegistryCaseUpdateError, msg="Index case type does not match"):
         with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
@@ -152,7 +152,7 @@ def test_generator_update_create_and_remove_index():
 
     def _get_case(case_id):
         assert case_id == "case2"
-        return Mock(domain=TARGET_DOMAIN, case_type="host_type")
+        return Mock(domain=TARGET_DOMAIN, type="host_type")
 
     with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
         _test_payload_generator(intent_case=builder.get_case(), expected_indices={
@@ -169,7 +169,7 @@ def test_generator_update_create_and_remove_same_index():
 
     def _get_case(case_id):
         assert case_id == "case2"
-        return Mock(domain=TARGET_DOMAIN, case_type="new_parent_type")
+        return Mock(domain=TARGET_DOMAIN, type="new_parent_type")
 
     with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
         _test_payload_generator(intent_case=builder.get_case(), expected_indices={
@@ -195,7 +195,7 @@ def test_generator_update_multiple_cases():
     main_case_builder.set_subcases([subcase1, subcase2])
 
     def _get_case(case_id):
-        return Mock(domain=TARGET_DOMAIN, case_type="parent", case_id=case_id)
+        return Mock(domain=TARGET_DOMAIN, type="parent", case_id=case_id)
 
     with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
         _test_payload_generator(intent_case=main_case_builder.get_case(), expected_updates={
@@ -231,11 +231,11 @@ def _test_payload_generator(intent_case, target_case_exists=True,
     generator.submission_username = Mock(return_value='user1')
 
     # target_case is the case in the target domain which is being updated
-    def _get_case(self, case_id, case_type, *args, **kwargs):
+    def _get_case(self, case_id, *args, **kwargs):
         if not target_case_exists:
             raise CaseNotFound
 
-        return Mock(domain=TARGET_DOMAIN, case_type=case_type, case_id=case_id, case_json={
+        return Mock(domain=TARGET_DOMAIN, type="patient", case_id=case_id, case_json={
             "existing_prop": uuid.uuid4().hex,
             "existing_blank_prop": ""
         }, live_indices=[
