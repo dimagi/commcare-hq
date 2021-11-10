@@ -1,5 +1,4 @@
 import hashlib
-import itertools
 import json
 import logging
 import re
@@ -81,7 +80,8 @@ from corehq.apps.app_manager.util import (
     advanced_actions_use_usercase,
     enable_usercase,
     is_usercase_in_use,
-    save_xform, module_offers_registry_search,
+    save_xform,
+    module_loads_registry_case,
 )
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
@@ -449,6 +449,12 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         except InvalidSessionEndpoint as e:
             return json_response({'message': str(e)}, status_code=400)
 
+    if should_edit('function_datum_endpoints'):
+        if request.POST['function_datum_endpoints']:
+            form.function_datum_endpoints = request.POST['function_datum_endpoints'].replace(" ", "").split(",")
+        else:
+            form.function_datum_endpoints = []
+
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
@@ -778,7 +784,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         ],
         'form_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
-        'module_offers_registry_search': module_offers_registry_search(module),
+        'module_loads_registry_case': module_loads_registry_case(module),
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):

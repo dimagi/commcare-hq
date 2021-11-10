@@ -59,6 +59,23 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             defer.reject();
 
                         } else {
+                            if (response.smartLinkRedirect) {
+                                if (user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
+                                    FormplayerFrontend.trigger('showSuccess', gettext("You have selected a case in a different domain. App Preview does not support this feature.", 5000));
+                                    FormplayerFrontend.trigger('navigateHome');
+                                    return;
+                                }
+
+                                // Drop last selection to avoid redirect loop if user presses back in the future
+                                var urlObject = Util.currentUrlToObject();
+                                urlObject.setSelections(_.initial(urlObject.selections || []));
+                                Util.setUrlToObject(urlObject, true);
+
+                                console.log("Redirecting to " + response.smartLinkRedirect);
+                                document.location = response.smartLinkRedirect;
+                                return;
+                            }
+
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
