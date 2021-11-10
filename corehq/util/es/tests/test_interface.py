@@ -94,6 +94,45 @@ class TestESInterface(SimpleTestCase):
                     for attr in doc:
                         self.assertEqual(doc[attr], results[doc_id]["_source"][attr])
 
+    def test_scroll_ambiguous_size_raises(self):
+        interface = ElasticsearchInterface(self.es)
+        query = {"size": 1}
+        with self.assertRaises(ValueError):
+            list(interface.iter_scroll(self.index, self.doc_type, query, size=1))
+
+    def test_scroll_query_size_as_keyword(self):
+        docs = [{"number": n} for n in range(3)]
+        with self._index_test_docs(self.index, self.doc_type, docs):
+            self._test_scroll_backend_calls({}, len(docs), size=1)
+
+    def test_scroll_query_size_in_query(self):
+        docs = [{"number": n} for n in range(3)]
+        with self._index_test_docs(self.index, self.doc_type, docs):
+            self._test_scroll_backend_calls({"size": 1}, len(docs))
+
+    def test_scroll_size_default(self):
+        docs = [{"number": n} for n in range(3)]
+        interface = ElasticsearchInterface(self.es)
+        interface.SCROLL_SIZE = 1
+        with self._index_test_docs(self.index, self.doc_type, docs):
+            self._test_scroll_backend_calls({}, len(docs), interface)
+
+    def _test_scroll_backend_calls(self, query, call_count, interface=None, **iter_scroll_kw):
+        if interface is None:
+            interface = ElasticsearchInterface(self.es)
+        with patch.object(interface, "search", side_effect=self.es.search) as search, \
+             patch.object(interface, "scroll", side_effect=self.es.scroll) as scroll:
+            list(interface.iter_scroll(self.index, self.doc_type, query, **iter_scroll_kw))
+            # NOTE: scroll.call_count == call_count because the final scroll
+            # call returns zero hits (thus ending the generator).
+            # Call sequence (for 3 matched docs with size=1):
+            # - len(interface.search(...)["hits"]["hits"]) == 1
+            # - len(interface.scroll(...)["hits"]["hits"]) == 1
+            # - len(interface.scroll(...)["hits"]["hits"]) == 1
+            # - len(interface.scroll(...)["hits"]["hits"]) == 0
+            search.assert_called_once()
+            self.assertEqual(scroll.call_count, call_count)
+
     @contextmanager
     def _index_test_docs(self, index, doc_type, docs):
         interface = ElasticsearchInterface(self.es)
@@ -104,10 +143,11 @@ class TestESInterface(SimpleTestCase):
                 doc = dict(doc)  # make a copy
                 doc_id = doc["_id"] = uuid.uuid4().hex
             indexed[doc_id] = doc
-            interface.index_doc(index, doc_type, doc_id, doc,
-                                params={"refresh": True})
+            interface.index_doc(index, doc_type, doc_id, doc)
+        self.es.indices.refresh(index)
         try:
             yield indexed
         finally:
             for doc_id in indexed:
                 self.es.delete(index, doc_type, doc_id)
+            self.es.indices.refresh(index)

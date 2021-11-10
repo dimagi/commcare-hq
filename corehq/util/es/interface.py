@@ -107,9 +107,16 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return results
 
     def iter_scroll(self, index_alias=None, doc_type=None, body=None,
-                    scroll=SCROLL_KEEPALIVE, size=SCROLL_SIZE, **kwargs):
+                    scroll=SCROLL_KEEPALIVE, **kwargs):
         """Perform one or more scroll requests to completely exhaust a scrolling
         search context.
+
+        Providing a query with `size` specified as well as the `size` keyword
+        argument is ambiguous, and Elastic docs do not say what happens when
+        `size` is provided both as a GET parameter _as well as_ part of the
+        query body. Real-world observations show that the GET parameter wins,
+        but to avoid ambiguity, specifying both in this function will raise a
+        ValueError.
 
         Read before using:
         - Scroll queries are not designed for real-time user requests.
@@ -130,8 +137,18 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         """
         body = body.copy() if body else {}
         body.setdefault("sort", "_doc")  # configure for efficiency if able
-        results = self.search(index_alias, doc_type, body, scroll=scroll,
-                              size=size, **kwargs)
+        # validate size
+        size_qy = body.get("size")
+        size_kw = kwargs.get("size")
+        if size_kw is None and size_qy is None:
+            # Set a large scroll size if one is not already is configured.
+            # Observations on Elastic v2.4 show default (when not specified)
+            # scroll size of 10.
+            kwargs["size"] = self.SCROLL_SIZE
+        elif not (size_kw is None or size_qy is None):
+            raise ValueError(f"size cannot be specified in both query and keyword "
+                             f"arguments (query: {size_qy}, kw: {size_kw})")
+        results = self.search(index_alias, doc_type, body, scroll=scroll, **kwargs)
         scroll_id = results.get('_scroll_id')
         if scroll_id is None:
             return

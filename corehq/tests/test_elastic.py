@@ -36,22 +36,6 @@ class TestElastic(SimpleTestCase):
         with self.assertRaises(ValueError):
             list(scroll_query(self.index, {}, doc_type=self.doc_type))
 
-    def test_scroll_query_scroll_size(self):
-        total_docs = 3
-        docs = [{"number": n} for n in range(total_docs)]
-        with self._index_test_docs(self.index, self.doc_type, docs):
-            with patch("corehq.elastic.ElasticsearchInterface.scroll",
-                       side_effect=self.es.scroll) as scroll:
-                list(scroll_query(self.index, {}, size=1))
-                # NOTE: call_count == total_docs because the final call returns
-                # empty, resulting in StopIteration.
-                # Call sequence (for 3 total docs with size=1):
-                # - len(iface.search(...)["hits"]["hits"]) == 1
-                # - len(iface.scroll(...)["hits"]["hits"]) == 1
-                # - len(iface.scroll(...)["hits"]["hits"]) == 1
-                # - len(iface.scroll(...)["hits"]["hits"]) == 0
-                self.assertEqual(scroll.call_count, total_docs)
-
     def test_scroll_query(self):
         docs = [
             {"prop": "port", "color": "red"},
