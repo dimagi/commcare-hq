@@ -58,6 +58,27 @@ class SchemaTest(SimpleTestCase):
             'related': None,
         })
 
+    def test_get_casedb_schema_with_advanced_form(self):
+        module_id = len(self.factory.app.modules)
+        module, form = self.factory.new_advanced_module(module_id, "village")
+        self.factory.form_opens_case(form, "village")
+        self.factory.form_requires_case(
+            form,
+            case_type=self.factory.app.get_module(0).case_type,
+            update={'foo': '/data/question1'}
+        )
+        schema = get_casedb_schema(form)
+        self.assertEqual(len(schema["subsets"]), 1, schema["subsets"])
+        self.assert_has_kv_pairs(schema["subsets"][0], {
+            'id': 'case',
+            'name': 'village',
+            'structure': {
+                'case_name': {"description": ""},
+                'foo': {"description": ""},
+            },
+            'related': None,
+        })
+
     def test_get_casedb_schema_with_related_case_types(self):
         family = self.add_form("family")
         village = self.add_form("village")
