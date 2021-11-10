@@ -249,7 +249,7 @@ class AddFormRepeaterView(AddRepeaterView):
         repeater = super().set_repeater_attr(repeater, cleaned_data)
         repeater.include_app_id_param = (
             self.add_repeater_form.cleaned_data['include_app_id_param'])
-        repeater.black_listed_users = (
+        repeater.user_blocklist = (
             self.add_repeater_form.cleaned_data['user_blocklist'])
         return repeater
 
