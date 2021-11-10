@@ -18,6 +18,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.xform import XForm
+from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -192,7 +193,7 @@ class DataSourceProperty(object):
                 return CasePropertyColumnOption(self._id, self._data_types, self._text)
         else:
             assert self._type == PROPERTY_TYPE_RAW
-            return RawPropertyColumnOption(self._id, self._data_types, self._text)
+            return RawPropertyColumnOption(self._id, self._data_types, self._text, self._source)
 
     def _get_filter_format(self, filter_configuration):
         """
@@ -541,7 +542,7 @@ class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
                 type=PROPERTY_TYPE_RAW,
                 id=column.id,
                 text=column.id,
-                source=(column.id, column.datatype),
+                source=column.id,
                 data_types=[column.datatype],
             )
 
@@ -884,6 +885,18 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
     def data_source_name(self):
         today = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         return "{} {} {}".format(self.source_id, self.registry_slug, today)
+
+    @property
+    def data_source_properties(self):
+        properties = super().data_source_properties
+        properties[COMMCARE_PROJECT] = DataSourceProperty(
+            type=PROPERTY_TYPE_RAW,
+            id=COMMCARE_PROJECT,
+            text=_('CommCare Project'),
+            source='domain',
+            data_types=["string"],
+        )
+        return properties
 
 
 def get_data_source_interface(domain, app, source_type, source_id, registry_slug):
