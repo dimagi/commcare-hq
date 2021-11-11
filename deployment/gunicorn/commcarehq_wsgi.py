@@ -1,3 +1,4 @@
+# flake8: noqa: E402
 import os
 from manage import _set_source_root_parent, _set_source_root
 
@@ -10,7 +11,9 @@ _set_source_root(os.path.join('custom', '_legacy'))
 # patch gevent
 from gevent.monkey import patch_all
 from psycogreen.gevent import patch_psycopg
+from manage import patch_pickle
 
+patch_pickle()  # should happen before gevent patch, which imports pickle
 patch_all(subprocess=True)
 patch_psycopg()
 
