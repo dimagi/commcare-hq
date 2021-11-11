@@ -239,14 +239,15 @@ def hmac_callout_settings(request, domain):
 @require_can_edit_apps
 def pull_missing_multimedia(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
+    force = request.POST.get('force') == 'on'
     if async_update:
-        pull_missing_multimedia_for_app_and_notify_task.delay(domain, app_id, request.user.email)
+        pull_missing_multimedia_for_app_and_notify_task.delay(domain, app_id, request.user.email, force)
         messages.success(request,
                          ugettext('Your request has been submitted. '
                                   'We will notify you via email once completed.'))
     else:
         app = get_app(domain, app_id)
-        pull_missing_multimedia_for_app(app)
+        pull_missing_multimedia_for_app(app, force=force)
     return HttpResponseRedirect(reverse('app_settings', args=[domain, app_id]))
 
 
