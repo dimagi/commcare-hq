@@ -64,7 +64,7 @@ class EndpointsHelper(PostProcessor):
         }
         return SessionEndpoint(**kwargs)
 
-    def get_argument_ids(self, frame_children, form):
+    def get_argument_ids(self, frame_children, form=None):
 
         def should_include(child):
             if not isinstance(child, WorkflowDatumMeta):
