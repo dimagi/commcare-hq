@@ -1,5 +1,4 @@
-from unittest.mock import MagicMock
-from datetime import date, datetime
+from datetime import datetime
 from casexml.apps.case.xml.generator import date_to_xml_string
 
 DUMMY_ID = "foo"
