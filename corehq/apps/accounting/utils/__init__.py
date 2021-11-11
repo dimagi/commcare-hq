@@ -331,7 +331,7 @@ def revoke_grants(privs_to_revoke, dry_run=False, verbose=False, roles_by_slug=N
 
             if priv_slug not in granted[grantee_slug]:
                 if verbose or dry_run:
-                    logger.info(f'{dry_run_tag}Privilege already revoked: {grantee_slug} => f{priv_slug}')
+                    logger.info(f'{dry_run_tag}Privilege already revoked: {grantee_slug} => {priv_slug}')
             else:
                 granted[grantee_slug].discard(priv_slug)
                 if verbose or dry_run:
