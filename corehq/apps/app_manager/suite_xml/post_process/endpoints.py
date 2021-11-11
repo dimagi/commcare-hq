@@ -71,7 +71,7 @@ class EndpointsHelper(PostProcessor):
             if child.requires_selection:
                 return True
             if form:
-                return child.id in form.function_datum_endpoints or []
+                return child.id in (form.function_datum_endpoints or [])
             return False
 
         return [
