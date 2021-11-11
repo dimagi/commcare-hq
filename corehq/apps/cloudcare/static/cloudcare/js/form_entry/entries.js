@@ -397,7 +397,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.isMulti = true;
         self.hideLabel = options.hideLabel;
 
-        self.colStyleIfHideLabel = self.hideLabel ? self.getColStyle(self.choices().length) : null;
+        self.colStyleIfHideLabel = ko.computed(function () {
+            return self.hideLabel ? self.getColStyle(self.choices().length) : null;
+        });
 
         self.onClear = function () {
             self.rawAnswer([]);
@@ -497,7 +499,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         self.hideLabel = options.hideLabel;
 
-        self.colStyle = self.getColStyle(self.choices().length);
+        self.colStyle = ko.computed(function () {
+            return self.getColStyle(self.choices().length);
+        });
 
         self.onClear = function () {
             self.rawAnswer(Const.NO_ANSWER);
