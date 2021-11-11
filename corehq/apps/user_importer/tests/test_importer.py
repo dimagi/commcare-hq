@@ -3,7 +3,7 @@ from copy import deepcopy
 from django.contrib.admin.models import LogEntry
 from django.test import SimpleTestCase, TestCase
 
-from unittest.mock import mock, patch
+from unittest.mock import patch
 
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
@@ -802,7 +802,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(False, user.is_active)
         self.assertEqual(False, user.is_account_confirmed)
 
-    @mock.patch('corehq.apps.user_importer.importer.send_account_confirmation_if_necessary')
+    @patch('corehq.apps.user_importer.importer.send_account_confirmation_if_necessary')
     def test_upload_with_unconfirmed_account_send_email(self, mock_account_confirm_email):
         import_users_and_groups(
             self.domain.name,
@@ -833,7 +833,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(mock_account_confirm_email.call_count, 1)
         self.assertEqual('with_email', mock_account_confirm_email.call_args[0][0].raw_username)
 
-    @mock.patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
+    @patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
     def test_upload_invite_web_user(self, mock_send_activation_email):
         import_users_and_groups(
             self.domain.name,
@@ -857,7 +857,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.user_id, self.user.get_id)
         self.assertEqual(user_history.action, UserModelAction.CREATE.value)
 
-    @mock.patch('corehq.apps.user_importer.importer.Invitation')
+    @patch('corehq.apps.user_importer.importer.Invitation')
     def test_upload_add_web_user(self, mock_invitation_class):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
 
@@ -952,7 +952,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.user_id, commcare_user.get_id)
         self.assertEqual(user_history.action, UserModelAction.CREATE.value)
 
-    @mock.patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
+    @patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
     def test_update_pending_user_role(self, mock_send_activation_email):
         import_users_and_groups(
             self.domain.name,
@@ -1630,7 +1630,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         web_user = WebUser.get_by_username(self.uploading_user.username)
         self.assertTrue(web_user.is_member_of(self.domain.name))
 
-    @mock.patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
+    @patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
     def test_upload_invite(self, mock_send_activation_email):
         self.setup_users()
         import_users_and_groups(
