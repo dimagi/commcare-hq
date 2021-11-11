@@ -909,7 +909,7 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
         owning_domain = registry_helper.registry.domain
         prop_map = get_data_dict_props_by_case_type(owning_domain)
         self.case_properties = sorted(
-            set(prop_map[self.source_id]) | {'closed', 'closed_on'} - {COMMCARE_PROJECT}
+            set(prop_map[self.source_id]) | {'closed', 'closed_on'}
         )
 
     def _get_data_source_build_information(self):
