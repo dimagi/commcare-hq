@@ -88,4 +88,5 @@ branches:
     - jls/smart-linking-in-web-apps # Jenny Sept 22
     - jls/smart-linking-in-web-apps-disallow-spf # Jenny Nov 11
     - sr/session-endpoints  # Sravan Nov 9
+    - ad/tab-structure-for-check-boxes # Addison Nov 11
 submodules: { }
