@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.domain.models import Domain
 from corehq.util.argparse_types import date_type
 
-from ...utils.export import get_users_to_for_domain, write_log_events
+from ...utils.export import get_users_for_domain, write_log_events
 
 
 class Command(BaseCommand):
@@ -81,7 +81,7 @@ class Command(BaseCommand):
         if username:
             users = [username]
         else:
-            users, removed_users, super_users = get_users_to_for_domain(domain)
+            users, removed_users, super_users = get_users_for_domain(domain)
 
         if options["gzip"]:
             opener = gzip.open

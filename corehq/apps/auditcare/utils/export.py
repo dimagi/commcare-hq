@@ -45,7 +45,7 @@ def write_log_event(writer, event, override_user=None):
     writer.writerow([event.event_date, event.user, event.domain, event.ip_address, event.request_path])
 
 
-def get_users_to_for_domain(domain):
+def get_users_for_domain(domain):
     users = {u.username for u in WebUser.by_domain(domain)}
     super_users = {u['username'] for u in User.objects.filter(is_superuser=True).values('username')}
     users_who_accepted_invitations = set(Invitation.objects.filter(
