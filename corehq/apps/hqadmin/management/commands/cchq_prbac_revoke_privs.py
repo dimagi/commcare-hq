@@ -1,10 +1,11 @@
+import logging
+
 from django.core.management.base import BaseCommand
 from django_prbac.models import Role
 
 from corehq.apps.accounting.models import SoftwarePlanVersion
 from corehq.apps.accounting.utils import revoke_grants
 from corehq.apps.hqadmin.management.commands.cchq_prbac_grandfather_privs import _confirm, _get_role_edition
-from corehq.apps.hqmedia.tasks import logging
 from corehq.privileges import MAX_PRIVILEGES
 
 logger = logging.getLogger(__name__)
