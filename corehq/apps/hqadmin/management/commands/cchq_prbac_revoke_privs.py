@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django_prbac.models import Role
 
 from corehq.apps.accounting.models import SoftwarePlanVersion
 from corehq.apps.accounting.utils import revoke_grants
@@ -17,6 +18,8 @@ class Command(BaseCommand):
         verbose = kwargs.get('verbose')
         noinput = kwargs.get('noinput')
         skip_edition = kwargs.get('skip_edition')
+        delete_revoked_privs = kwargs.get('delete_privs')
+
         logger.setLevel(logging.INFO if verbose else logging.WARNING)
         query = SoftwarePlanVersion.objects
 
@@ -55,6 +58,22 @@ class Command(BaseCommand):
 
         privs_to_revoke = ((role_slug, privs) for role_slug in all_plan_slugs)
         revoke_grants(privs_to_revoke, dry_run=dry_run, verbose=verbose)
+        if delete_revoked_privs:
+            if skipped_editions:
+                logger.error(
+                    "Cannot safely delete revoked privileges until ensuring they have been revoked for all "
+                    "editions. If you are sure you want to delete the privilege, run again without specifying any "
+                    "skipped editions."
+                )
+                return
+            for priv in privs:
+                if not dry_run:
+                    role_to_delete = Role.objects.get(slug=priv)
+                    role_to_delete.delete()
+                logger.info(
+                    f"{dry_run}Deleted {priv} from database. To ensure the privilege is not recreated, remove "
+                    f"remaining references to this privilege in the codebase."
+                )
 
     def add_arguments(self, parser):
         parser.add_argument(
