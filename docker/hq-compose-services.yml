@@ -3,7 +3,7 @@ version: '2.3'
 services:
   formplayer:
     extends:
-      file: hq-compose.yml
+      file: "${COMPOSE_BASE}"
       service: formplayer
     links:
       - postgres
@@ -16,14 +16,14 @@ services:
 
   postgres:
     extends:
-      file: hq-compose.yml
+      file: "${COMPOSE_BASE}"
       service: postgres
     ports:
       - "5432:5432"
 
   couch:
     extends:
-      file: hq-compose.yml
+      file: "${COMPOSE_BASE}"
       service: couch
     command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
     ports:
@@ -31,14 +31,14 @@ services:
 
   redis:
     extends:
-      file: hq-compose.yml
+      file: "${COMPOSE_BASE}"
       service: redis
     ports:
       - "6379:6379"
 
   elasticsearch2:
     extends:
-      file: hq-compose.yml
+      file: "${COMPOSE_BASE}"
       service: elasticsearch2
     command: elasticsearch --cluster.name=${ES_CLUSTER_NAME}
     environment:
@@ -49,7 +49,7 @@ services:
 
   elasticsearch5:
     extends:
-      file: hq-compose.yml
+      file: "${COMPOSE_BASE}"
       service: elasticsearch5
     command: elasticsearch
     environment:
@@ -60,7 +60,7 @@ services:
 
   kafka:
     extends:
-      file: hq-compose.yml
+      file: "${COMPOSE_BASE}"
       service: kafka
     environment:
       KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_ADVERTISED_HOST_NAME}
@@ -69,14 +69,14 @@ services:
 
   zookeeper:
     extends:
-      file: hq-compose.yml
+      file: "${COMPOSE_BASE}"
       service: zookeeper
     ports:
       - "2181:2181"
 
   minio:
     extends:
-      file: hq-compose.yml
+      file: "${COMPOSE_BASE}"
       service: minio
     ports:
       - "9980:9980"

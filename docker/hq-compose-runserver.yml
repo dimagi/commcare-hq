@@ -32,7 +32,7 @@ services:
 
   formplayer:
     extends:
-      file: hq-compose.yml
+      file: "${COMPOSE_BASE}"
       service: formplayer
     environment:
         COMMCARE_HOST: "http://web:8000"
