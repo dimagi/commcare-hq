@@ -111,4 +111,10 @@ class Command(BaseCommand):
             dest="verbose",
             help="Verbose logging",
             default=True,
+        ),
+        parser.add_argument(
+            '--delete-privs',
+            action='store_true',
+            default=False,
+            help='If privilege has been revoked for all plans, delete the Role object associated with it'
         )
