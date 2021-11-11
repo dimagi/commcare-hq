@@ -3,7 +3,10 @@ from django.core.management.base import BaseCommand
 from corehq.apps.accounting.models import SoftwarePlanVersion
 from corehq.apps.accounting.utils import revoke_grants
 from corehq.apps.hqadmin.management.commands.cchq_prbac_grandfather_privs import _confirm, _get_role_edition
+from corehq.apps.hqmedia.tasks import logging
 from corehq.privileges import MAX_PRIVILEGES
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -14,7 +17,7 @@ class Command(BaseCommand):
         verbose = kwargs.get('verbose')
         noinput = kwargs.get('noinput')
         skip_edition = kwargs.get('skip_edition')
-
+        logger.setLevel(logging.INFO if verbose else logging.WARNING)
         query = SoftwarePlanVersion.objects
 
         skipped_editions = []
@@ -43,11 +46,11 @@ class Command(BaseCommand):
             ', '.join(privs),
             ', '.join(all_plan_slugs),
         )):
-            print('Aborting')
+            logger.error('Aborting')
             return
 
         if not all(priv in MAX_PRIVILEGES for priv in privs):
-            print('Not all specified privileges are valid: {}'.format(', '.join(privs)))
+            logger.error('Not all specified privileges are valid: {}'.format(', '.join(privs)))
             return
 
         privs_to_revoke = ((role_slug, privs) for role_slug in all_plan_slugs)
