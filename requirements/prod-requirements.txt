@@ -269,8 +269,6 @@ markupsafe==1.1.1
     # via
     #   jinja2
     #   mako
-mock==2.0.0
-    # via -r base-requirements.in
 ndg-httpsclient==0.5.1
     # via -r prod-requirements.in
 oauthlib==3.1.0
@@ -283,8 +281,6 @@ openpyxl==3.0.6
     #   commcaretranslationchecker
 parso==0.7.1
     # via jedi
-pbr==5.5.0
-    # via mock
 pexpect==4.8.0
     # via ipython
 phonenumberslite==8.12.10
@@ -449,7 +445,6 @@ six==1.15.0
     #   jsonobject-couchdbkit
     #   jsonpath-ng
     #   jsonschema
-    #   mock
     #   protobuf
     #   pyopenssl
     #   python-dateutil

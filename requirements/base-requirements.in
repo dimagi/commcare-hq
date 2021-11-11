@@ -71,7 +71,6 @@ kombu==4.2.2.post1
 billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
 laboratory==0.2.0
 lxml~=4.6.3
-mock==2.0.0
 openpyxl~=3.0
 phonenumberslite~=8.12
 pickle5  # For Pythons pre 3.8.3. Can be removed when no environment will ever revert to < 3.8
