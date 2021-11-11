@@ -321,23 +321,21 @@ def revoke_grants(privs_to_revoke, dry_run=False, verbose=False, roles_by_slug=N
     grants_to_revoke = []
     for grantee_slug, priv_slugs in privs_to_revoke:
         if grantee_slug not in roles_by_slug:
-            logger.info('grantee %s does not exist.', grantee_slug)
+            logger.info(f'grantee {grantee_slug} does not exist.')
             continue
 
         for priv_slug in priv_slugs:
             if priv_slug not in roles_by_slug:
-                logger.info('privilege %s does not exist.', priv_slug)
+                logger.info(f'privilege {priv_slug} does not exist.')
                 continue
 
             if priv_slug not in granted[grantee_slug]:
                 if verbose or dry_run:
-                    logger.info('%sPrivilege already revoked: %s => %s',
-                        dry_run_tag, grantee_slug, priv_slug)
+                    logger.info(f'{dry_run_tag}Privilege already revoked: {grantee_slug} => f{priv_slug}')
             else:
                 granted[grantee_slug].discard(priv_slug)
                 if verbose or dry_run:
-                    logger.info('%Revoking privilege: %s => %s',
-                        dry_run_tag, grantee_slug, priv_slug)
+                    logger.info(f'{dry_run_tag}Revoking privilege: {grantee_slug} => {priv_slug}')
                 if not dry_run:
                     grants_to_revoke = Grant.objects.filter(
                         from_role=roles_by_slug[grantee_slug],
