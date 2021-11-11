@@ -133,12 +133,6 @@ def patch_pickle():
         import pickle5
         sys.modules["pickle"] = pickle5
 
-        # HACK set HIGHEST_PROTOCOL to one understood by Python 3.6.
-        # Celery uses HIGHEST_PROTOCOL to make pickles and Kombu, a
-        # dependency of Celery, uses the built-in pickle module
-        # (imported before we have a chance to patch it).
-        pickle5.HIGHEST_PROTOCOL = pickle5.DEFAULT_PROTOCOL
-
 
 def patch_jsonfield():
     """Patch the ``to_python`` method of JSONField
