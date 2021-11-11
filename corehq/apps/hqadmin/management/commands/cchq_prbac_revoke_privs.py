@@ -22,6 +22,8 @@ class Command(BaseCommand):
         delete_revoked_privs = kwargs.get('delete_privs')
 
         logger.setLevel(logging.INFO if verbose else logging.WARNING)
+        dry_run_tag = "[DRY RUN] " if dry_run else ""
+
         query = SoftwarePlanVersion.objects
 
         skipped_editions = []
@@ -72,8 +74,8 @@ class Command(BaseCommand):
                     role_to_delete = Role.objects.get(slug=priv)
                     role_to_delete.delete()
                 logger.info(
-                    f"{dry_run}Deleted {priv} from database. To ensure the privilege is not recreated, remove "
-                    f"remaining references to this privilege in the codebase."
+                    f"{dry_run_tag}Deleted role for privilege {priv} from database. To ensure the role is not "
+                    f"recreated, remove remaining references in the codebase."
                 )
 
     def add_arguments(self, parser):
