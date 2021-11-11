@@ -8,6 +8,8 @@ from psycogreen.gevent import patch_psycopg
 
 
 def main():
+    patch_pickle()  # should happen before gevent patch, which imports pickle
+
     # important to apply gevent monkey patches before running any other code
     # applying this later can lead to inconsistencies and threading issues
     # but compressor doesn't like it
@@ -130,6 +132,12 @@ def patch_pickle():
     if pickle.HIGHEST_PROTOCOL < 5:
         import pickle5
         sys.modules["pickle"] = pickle5
+
+        # HACK set HIGHEST_PROTOCOL to one understood by Python 3.6.
+        # Celery uses HIGHEST_PROTOCOL to make pickles and Kombu, a
+        # dependency of Celery, uses the built-in pickle module
+        # (imported before we have a chance to patch it).
+        pickle5.HIGHEST_PROTOCOL = pickle5.DEFAULT_PROTOCOL
 
 
 def patch_jsonfield():
