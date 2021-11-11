@@ -5,7 +5,7 @@ boto3~=1.17
 # celery 4.1.1 forked to work around https://github.com/celery/celery/issues/4737	celery==4.4.7
 # upgrade when https://github.com/celery/celery/issues/4980 is fixed
 # originally changes were made on nickpell/celery, but this was moved to dimagi/celery
-celery @ https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl
+celery @ https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
 CommcareTranslationChecker==0.9.7
 concurrent-log-handler==0.9.12
 csiphash==0.0.5
