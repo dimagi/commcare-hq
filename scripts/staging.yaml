@@ -86,5 +86,6 @@ branches:
     - rp/status-embed # Rynhard Nov 9
     - sr/session-endpoints+jls/smart-linking-in-web-apps # Sravan Nov 10
     - jls/smart-linking-in-web-apps # Jenny Sept 22
+    - jls/smart-linking-in-web-apps-disallow-spf # Jenny Nov 11
     - sr/session-endpoints  # Sravan Nov 9
 submodules: { }
