@@ -283,7 +283,7 @@ def get_report_config_or_not_found(domain, config_id):
     from corehq.apps.userreports.models import ReportConfiguration
     try:
         doc = ReportConfiguration.get_db().get(config_id)
-        config = correctly_wrap_report_config(doc)
+        config = wrap_report_config_by_type(doc)
     except (ResourceNotFound, KeyError):
         raise DocumentNotFound()
 
@@ -303,10 +303,10 @@ def get_ucr_datasource_config_by_id(indicator_config_id):
         return StaticDataSourceConfiguration.by_id(indicator_config_id)
     else:
         doc = DataSourceConfiguration.get_db().get(indicator_config_id)
-        return _correctly_wrap_data_source(doc)
+        return _wrap_data_source_by_doc_type(doc)
 
 
-def _correctly_wrap_data_source(doc):
+def _wrap_data_source_by_doc_type(doc):
     from corehq.apps.userreports.models import (
         DataSourceConfiguration,
         RegistryDataSourceConfiguration,
@@ -317,7 +317,7 @@ def _correctly_wrap_data_source(doc):
     }[doc["doc_type"]].wrap(doc)
 
 
-def correctly_wrap_report_config(config):
+def wrap_report_config_by_type(config):
     from corehq.apps.userreports.models import (
         ReportConfiguration,
         RegistryReportConfiguration,
