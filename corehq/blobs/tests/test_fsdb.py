@@ -7,7 +7,7 @@ from shutil import rmtree
 from tempfile import mkdtemp
 
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 import corehq.blobs.fsdb as mod
 from corehq.blobs import CODES

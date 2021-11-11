@@ -5,7 +5,7 @@ import time
 
 from django.core.management.base import BaseCommand
 
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain

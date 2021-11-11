@@ -3,7 +3,7 @@ from functools import wraps
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponseForbidden, HttpResponse
 from django.test import SimpleTestCase, TestCase, RequestFactory
-from mock import mock
+from unittest.mock import mock
 
 from corehq.apps.api.cors import ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW, ACCESS_CONTROL_ALLOW_HEADERS
 from corehq.apps.api.decorators import allow_cors

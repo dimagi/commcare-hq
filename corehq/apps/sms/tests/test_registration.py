@@ -4,7 +4,7 @@ import json
 from django.test import Client, TestCase
 
 from django_prbac.models import Role
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from corehq.apps.accounting.models import (
     BillingAccount,

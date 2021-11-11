@@ -1,4 +1,4 @@
-from mock import mock, Mock
+from unittest.mock import mock, Mock
 
 from testil import eq
 

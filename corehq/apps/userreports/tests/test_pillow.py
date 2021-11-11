@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase
 
 from unittest import mock
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.signals import case_post_save

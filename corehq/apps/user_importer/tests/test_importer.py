@@ -3,7 +3,7 @@ from copy import deepcopy
 from django.contrib.admin.models import LogEntry
 from django.test import SimpleTestCase, TestCase
 
-from mock import mock, patch
+from unittest.mock import mock, patch
 
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc

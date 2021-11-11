@@ -1,5 +1,5 @@
 from unittest import mock
-from mock.mock import MagicMock
+from unittest.mock.mock import MagicMock
 
 from corehq.util.test_utils import softer_assert
 from custom.up_nrhm.reports.asha_facilitators_report import (

@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from corehq.apps.app_manager.views.notifications import notify_event
 

@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 import pytz
 from django.test import SimpleTestCase, override_settings
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.hqwebapp.doc_info import DocInfo
 from corehq.apps.hqwebapp.templatetags.proptable_tags import DisplayConfig

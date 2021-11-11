@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 import attr
-from mock import ANY, call, patch
+from unittest.mock import ANY, call, patch
 
 from corehq.util.metrics.tests.utils import capture_metrics
 from ..lockmeter import MeteredLock

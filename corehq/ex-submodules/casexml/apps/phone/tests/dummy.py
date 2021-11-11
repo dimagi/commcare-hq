@@ -1,4 +1,4 @@
-from mock import MagicMock
+from unittest.mock import MagicMock
 from datetime import date, datetime
 from casexml.apps.case.xml.generator import date_to_xml_string
 

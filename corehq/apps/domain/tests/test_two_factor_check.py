@@ -2,7 +2,7 @@ import json
 
 from django.test import RequestFactory, TestCase
 
-from mock import Mock, mock
+from unittest.mock import Mock, mock
 
 from corehq.apps.domain.decorators import (
     OTP_AUTH_FAIL_RESPONSE,
