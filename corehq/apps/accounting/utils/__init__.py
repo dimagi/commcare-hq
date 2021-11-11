@@ -339,13 +339,14 @@ def revoke_grants(privs_to_revoke, dry_run=False, verbose=False, roles_by_slug=N
                     logger.info('%Revoking privilege: %s => %s',
                         dry_run_tag, grantee_slug, priv_slug)
                 if not dry_run:
-                    grants_to_revoke.append(Grant(
+                    grants_to_revoke = Grant.objects.filter(
                         from_role=roles_by_slug[grantee_slug],
                         to_role=roles_by_slug[priv_slug]
-                    ))
+                    )
     if grants_to_revoke:
         Role.get_cache().clear()
-        Grant.objects.bulk_delete(grants_to_revoke)
+        for grant in grants_to_revoke:
+            grant.delete()
 
 
 def log_removed_grants(priv_slugs, dry_run=False):
