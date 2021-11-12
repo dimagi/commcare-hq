@@ -2,7 +2,7 @@ import json
 
 from django.test import RequestFactory, TestCase
 
-from unittest.mock import Mock, mock
+from unittest.mock import Mock, patch
 
 from corehq.apps.domain.decorators import (
     OTP_AUTH_FAIL_RESPONSE,
@@ -75,7 +75,7 @@ class TestTwoFactorCheck(TestCase):
         view_func = 'dummy_view_func'
         two_factor_check_fn = two_factor_check(view_func, api_key)
         function_getting_checked_with_auth = two_factor_check_fn(mock_fn_to_call)
-        with mock.patch('corehq.apps.domain.decorators._ensure_request_couch_user',
+        with patch('corehq.apps.domain.decorators._ensure_request_couch_user',
                         return_value=request.couch_user):
             response = function_getting_checked_with_auth(request, self.domain.name)
             self.assertEqual(response.status_code, 401)
@@ -92,7 +92,7 @@ class TestTwoFactorCheck(TestCase):
         view_func = 'dummy_view_func'
         two_factor_check_fn = two_factor_check(view_func, api_key)
         function_getting_checked_with_auth = two_factor_check_fn(mock_fn_to_call)
-        with mock.patch('corehq.apps.domain.decorators._ensure_request_couch_user',
+        with patch('corehq.apps.domain.decorators._ensure_request_couch_user',
                         return_value=request.couch_user):
             response = function_getting_checked_with_auth(request, self.domain.name)
             self.assertEqual(response, 'Function was called!')
