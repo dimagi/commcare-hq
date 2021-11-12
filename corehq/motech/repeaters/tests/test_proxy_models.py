@@ -65,11 +65,11 @@ class TestSQLCreateCaseRepeater(TestCase):
     def test_repeaters_are_synced_to_couch(self):
         repeaters = get_all_repeater_docs()
         self.assertEqual(len(repeaters), 2)
-        self.assertListEqual(
-            sorted([r['_id'] for r in repeaters]),
-            sorted([self.createcase_repeater_obj.repeater_id, self.case_repeater_obj.repeater_id])
+        self.assertEqual(
+            {r['_id'] for r in repeaters]},
+            {self.createcase_repeater_obj.repeater_id, self.case_repeater_obj.repeater_id}
         )
-        self.assertListEqual(
-            sorted([r['repeater_type'] for r in repeaters]),
-            sorted([self.createcase_repeater_obj.repeater_type, self.case_repeater_obj.repeater_type])
+        self.assertEqual(
+            {r['repeater_type'] for r in repeaters]},
+            {self.createcase_repeater_obj.repeater_type, self.case_repeater_obj.repeater_type}
         )
