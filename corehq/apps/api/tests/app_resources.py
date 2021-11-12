@@ -1,6 +1,6 @@
 import json
 
-from unittest.mock.mock import patch
+from unittest.mock import patch
 from testil import Regex
 
 from corehq.apps.api.resources import v0_4
