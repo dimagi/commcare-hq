@@ -66,10 +66,10 @@ class TestSQLCreateCaseRepeater(TestCase):
         repeaters = get_all_repeater_docs()
         self.assertEqual(len(repeaters), 2)
         self.assertEqual(
-            {r['_id'] for r in repeaters]},
+            {r['_id'] for r in repeaters},
             {self.createcase_repeater_obj.repeater_id, self.case_repeater_obj.repeater_id}
         )
         self.assertEqual(
-            {r['repeater_type'] for r in repeaters]},
+            {r['repeater_type'] for r in repeaters},
             {self.createcase_repeater_obj.repeater_type, self.case_repeater_obj.repeater_type}
         )
