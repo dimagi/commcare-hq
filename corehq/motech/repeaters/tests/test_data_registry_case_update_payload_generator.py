@@ -206,6 +206,20 @@ def test_generator_update_multiple_cases():
         })
 
 
+def test_generator_update_multiple_cases_multiple_domains():
+    main_case_builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val")
+    subcase = (
+        IntentCaseBuilder()
+        .target_case(domain="other_domain", case_id="sub1")
+        .case_properties(sub1_prop="sub1_val")
+        .get_case()
+    )
+    main_case_builder.set_subcases([subcase])
+
+    with assert_raises(DataRegistryCaseUpdateError, msg="Multiple updates must all be in the same domain"):
+        _test_payload_generator(intent_case=main_case_builder.get_case())
+
+
 def test_generator_required_fields():
     intent_case = CommCareCaseSQL(
         domain=SOURCE_DOMAIN,

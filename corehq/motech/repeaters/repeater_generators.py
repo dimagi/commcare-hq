@@ -605,6 +605,10 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
                 CaseUpdateConfig.from_payload(extension_case)
                 for extension_case in extensions
             ])
+
+        domains = {config.domain for config in configs}
+        if len(domains) > 1:
+            raise DataRegistryCaseUpdateError("Multiple updates must all be in the same domain")
         return configs
 
     def _get_target_cases(self, repeat_record, configs, couch_user):
