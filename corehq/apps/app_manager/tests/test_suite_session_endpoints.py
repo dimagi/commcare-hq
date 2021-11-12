@@ -422,10 +422,6 @@ class SessionEndpointTestsAdvanced(SimpleTestCase, TestXmlMixin):
                           <command value="'claim_command.my_form.case_id_load_mother_0'"/>
                         </push>
                         <push>
-                          <datum id="extra_id" value="$extra_id"/>
-                          <command value="'claim_command.my_form.extra_id'"/>
-                        </push>
-                        <push>
                           <datum id="selected_date" value="$selected_date"/>
                           <command value="'claim_command.my_form.selected_date'"/>
                         </push>

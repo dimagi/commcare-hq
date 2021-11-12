@@ -45,7 +45,11 @@ class EndpointsHelper(PostProcessor):
 
         # Add a claim request for each endpoint argument.
         # This assumes that all arguments are case ids.
-        for arg_id in argument_ids:
+        non_computed_argument_ids = [
+            child.id for child in children
+            if isinstance(child, WorkflowDatumMeta) and child.requires_selection
+        ]
+        for arg_id in non_computed_argument_ids:
             self._add_claim_frame(stack, arg_id, endpoint_id)
 
         # Add a frame to navigate to the endpoint
