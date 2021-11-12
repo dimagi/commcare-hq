@@ -208,7 +208,7 @@ def _get_domain_info(domain):
 def _get_user_info(username):
     user = CouchUser.get_by_username(username)
     if not user:
-        return {}
+        return {"error": "User not found"}
 
     return {
         "user_is_dimagi": "@dimagi.com" in username,
