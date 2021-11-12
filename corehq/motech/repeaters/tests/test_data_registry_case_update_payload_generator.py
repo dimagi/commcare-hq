@@ -60,6 +60,13 @@ def test_generator_create_case():
     )
 
 
+def test_generator_create_case_target_exists():
+    builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").create_case("123")
+
+    with assert_raises(DataRegistryCaseUpdateError, msg="Unable to create target case as it already exists"):
+        _test_payload_generator(intent_case=builder.get_case(), target_case_exists=True)
+
+
 def test_generator_create_close():
     builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").close_case()
     _test_payload_generator(
