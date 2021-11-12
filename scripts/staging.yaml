@@ -85,4 +85,5 @@ branches:
     - jls/smart-linking-in-web-apps # Jenny Sept 22
     - sr/session-endpoints  # Sravan Nov 9
     - ad/tab-structure-for-check-boxes # Addison Nov 11
+    - revert-30687-revert-30182-jm/remove-es-scan  # Joel Nov 12
 submodules: { }
