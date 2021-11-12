@@ -310,8 +310,6 @@ class RegistryDataSourceTableManager(UcrTableManager):
 
     def _do_bootstrap(self, configs=None):
         configs = self.get_filtered_configs(configs)
-        if not configs:
-            return
 
         for config in configs:
             self._add_adapter_for_data_source(config)
