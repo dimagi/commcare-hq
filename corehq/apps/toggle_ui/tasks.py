@@ -155,8 +155,11 @@ def _get_toggle_rows(toggle):
     items_by_ns[NAMESPACE_DOMAIN].update(toggle.always_enabled)
     items_by_ns[NAMESPACE_DOMAIN].difference_update(toggle.always_disabled)
 
+    # map 'None' to the user namespace
+    namespaces = [NAMESPACE_USER if ns is None else ns for ns in toggle.namespaces]
+
     def _ns_count(ns):
-        return len(items_by_ns[ns]) if ns in toggle.namespaces else 0
+        return len(items_by_ns[ns]) if ns in namespaces else 0
 
     toggle_data.update({
         "user_count": _ns_count(NAMESPACE_USER),
