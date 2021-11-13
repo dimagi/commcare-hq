@@ -457,6 +457,7 @@ def iframe_domain_login(req, domain):
         'restrict_domain_creation': True,
         'is_session_expiration': True,
         'ANALYTICS_IDS': {},
+        'domain': domain,
     })
 
 
