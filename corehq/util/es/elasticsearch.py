@@ -23,7 +23,7 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 2:
         IndicesClient,
         SnapshotClient,
     )
-    from elasticsearch2.helpers import BulkIndexError, bulk, scan
+    from elasticsearch2.helpers import BulkIndexError, bulk
 elif settings.ELASTICSEARCH_MAJOR_VERSION == 5:
     import elasticsearch5 as elasticsearch
     from elasticsearch5.exceptions import AuthorizationException
@@ -42,7 +42,7 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 5:
         IndicesClient,
         SnapshotClient,
     )
-    from elasticsearch5.helpers import BulkIndexError, bulk, scan
+    from elasticsearch5.helpers import BulkIndexError, bulk
 else:
     raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 2 or 5, given {}".format(
         settings.ELASTICSEARCH_MAJOR_VERSION))
@@ -63,6 +63,5 @@ __all__ = [
     'SnapshotClient',
     'TransportError',
     'bulk',
-    'scan',
     'elasticsearch',
 ]
