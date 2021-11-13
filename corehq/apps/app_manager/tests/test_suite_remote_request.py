@@ -76,7 +76,8 @@ class RemoteRequestSmartLinkURLTest(SimpleTestCase):
         vars = self.request_factory.get_smart_link_variables()
         self.assertEqual([v.name for v in vars], ['domain', 'case_id', 'case_id_leaf'])
         self.assertEqual([v.xpath.function for v in vars], [
-            "instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project",
+            "instance('results')/results/case[@case_id=instance('commcaresession')"
+            "/session/data/search_case_id]/commcare_project",
             "instance('commcaresession')/session/data/case_id",
             "instance('commcaresession')/session/data/search_case_id",
         ])
