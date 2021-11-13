@@ -41,7 +41,7 @@ class EndpointsHelper(PostProcessor):
 
         stack = Stack()
         children = self.get_frame_children(module, form)
-        argument_ids = self._get_argument_ids(children)
+        argument_ids = self.get_argument_ids(children, form)
 
         # Add a claim request for each endpoint argument.
         # This assumes that all arguments are case ids.
@@ -57,16 +57,27 @@ class EndpointsHelper(PostProcessor):
             elif child.id in argument_ids:
                 self._add_datum_for_arg(frame, child.id)
 
-        return SessionEndpoint(
-            id=endpoint_id,
-            arguments=[Argument(id=i) for i in argument_ids],
-            stack=stack,
-        )
+        kwargs = {
+            "id": endpoint_id,
+            "arguments": [Argument(id=i) for i in argument_ids],
+            "stack": stack,
+        }
+        return SessionEndpoint(**kwargs)
 
-    def _get_argument_ids(self, frame_children):
+    def get_argument_ids(self, frame_children, form=None):
+
+        def should_include(child):
+            if not isinstance(child, WorkflowDatumMeta):
+                return False
+            if child.requires_selection:
+                return True
+            if form:
+                return child.id in form.function_datum_endpoints or []
+            return False
+
         return [
             child.id for child in frame_children
-            if isinstance(child, WorkflowDatumMeta) and child.requires_selection
+            if should_include(child)
         ]
 
     def _add_claim_frame(self, stack, arg_id, endpoint_id):

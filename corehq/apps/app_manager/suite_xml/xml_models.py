@@ -463,6 +463,12 @@ class Stack(XmlObject):
         self.node.append(frame.node)
 
 
+class StackJump(XmlObject):
+    ROOT_NAME = 'jump'
+
+    url = NodeField('url/text', Text)
+
+
 class Argument(IdNode):
     ROOT_NAME = 'argument'
 
@@ -470,6 +476,7 @@ class Argument(IdNode):
 class SessionEndpoint(IdNode):
     ROOT_NAME = 'endpoint'
 
+    command_id = StringField('@command_id')
     arguments = NodeListField('argument', Argument)
     stack = NodeField('stack', Stack)
 
