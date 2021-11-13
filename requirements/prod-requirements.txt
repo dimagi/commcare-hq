@@ -19,21 +19,19 @@ babel==2.9.1
 backcall==0.2.0
     # via ipython
 billiard==3.5.0.4
-    # via
-    #   -r base-requirements.in
-    #   celery
+    # via -r base-requirements.in
 boto3==1.17.85
     # via -r base-requirements.in
 botocore==1.20.85
     # via
     #   boto3
     #   s3transfer
-https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
+celery @ https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
     # via
     #   -r base-requirements.in
     #   django-celery-results
     #   flower
-certifi==2020.6.20
+certifi==2021.10.8
     # via
     #   -r prod-requirements.in
     #   requests
@@ -243,7 +241,7 @@ jsonobject==0.9.10
     #   jsonobject-couchdbkit
 jsonobject-couchdbkit==1.0.1
     # via -r base-requirements.in
-https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
+jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
 jsonschema==3.2.0
     # via -r base-requirements.in
@@ -252,9 +250,7 @@ jwcrypto==0.8
 kafka-python==1.4.7
     # via -r base-requirements.in
 kombu==4.2.2.post1
-    # via
-    #   -r base-requirements.in
-    #   celery
+    # via -r base-requirements.in
 laboratory==0.2.0
     # via -r base-requirements.in
 lxml==4.6.3
@@ -370,7 +366,6 @@ pytz==2020.1
     # via
     #   -r base-requirements.in
     #   babel
-    #   celery
     #   django
     #   flower
     #   twilio
@@ -423,7 +418,7 @@ setproctitle==1.2.2
     # via -r prod-requirements.in
 sh==1.14.2
     # via -r base-requirements.in
-git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
 simplejson==3.17.2
     # via
