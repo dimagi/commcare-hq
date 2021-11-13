@@ -56,6 +56,7 @@ from corehq.apps.linked_domain.exceptions import (
     UnsupportedActionError,
 )
 from corehq.apps.linked_domain.local_accessors import (
+    get_auto_update_rules,
     get_custom_data_models,
     get_data_dictionary,
     get_dialer_settings,
@@ -117,6 +118,12 @@ def tableau_server_and_visualizations(request, domain):
 @require_linked_domain
 def toggles_and_previews(request, domain):
     return JsonResponse(get_enabled_toggles_and_previews(domain))
+
+
+@login_or_api_key
+@require_linked_domain
+def auto_update_rules(request, domain):
+    return JsonResponse(get_auto_update_rules(domain))
 
 
 @login_or_api_key
