@@ -421,6 +421,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
             "domain": self.domain,
             'report': {"title": _("Create New Report")},
             'form': self.form,
+            "dropdown_map": self.form.dropdown_map,
         }
         return context
 
@@ -454,6 +455,8 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'source_type': app_source.source_type,
                 'source': app_source.source,
             }
+            if app_source.registry_slug != '':
+                get_params['registry_slug'] = app_source.registry_slug
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
             )

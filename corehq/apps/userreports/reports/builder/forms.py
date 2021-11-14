@@ -89,7 +89,9 @@ from corehq.toggles import (
     SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER,
     SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
     OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER,
-    SHOW_IDS_IN_REPORT_BUILDER)
+    SHOW_IDS_IN_REPORT_BUILDER,
+    DATA_REGISTRY
+)
 
 
 STATIC_CASE_PROPS = [
@@ -908,8 +910,8 @@ class DataSourceForm(forms.Form):
 
         # TODO: Map reports.
         self.app_source_helper = ApplicationDataSourceUIHelper(
-            enable_raw=SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER.enabled(self.domain)
-
+            enable_raw=SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER.enabled(self.domain),
+            enable_registry=DATA_REGISTRY.enabled(self.domain)
         )
         self.app_source_helper.bootstrap(self.domain)
         self.fields.update(self.app_source_helper.get_fields())
@@ -931,9 +933,7 @@ class DataSourceForm(forms.Form):
                     )
                 )
             ),
-            crispy.Fieldset(
-                _('Data'), *self.app_source_helper.get_crispy_fields()
-            ),
+            self.get_data_layout(),
             hqcrispy.FormActions(
                 StrictButton(
                     _('Next'),
@@ -944,9 +944,46 @@ class DataSourceForm(forms.Form):
             ),
         )
 
+    def get_data_layout(self):
+        if not DATA_REGISTRY.enabled(self.domain):
+            return crispy.Fieldset(
+                _('Data'), *self.app_source_helper.get_crispy_fields(),
+            )
+        else:
+            help_texts = self.app_source_helper.get_crispy_filed_help_texts()
+            return crispy.Fieldset(
+                _('Data'),
+                hqcrispy.FieldWithHelpBubble('source_type', help_bubble_text=help_texts['source_type']),
+                crispy.Div(
+                    crispy.HTML('<input type="radio" name="project_data" id="one_project" '
+                                'value="isDataFromOneProject" data-bind="checked: isDataFromOneProject,'
+                                ' checkedValue: \'true\'" class="project_data-option"/>'
+                                '<label for="one_project" class="project_data-label">%s</label>'
+                                % _("Data From My Project Space")),
+                    crispy.Div(
+                        hqcrispy.FieldWithHelpBubble('application', help_bubble_text=help_texts['application']),
+                        style="padding-left: 50px;"
+                    ),
+                    crispy.HTML('<input type="radio" name="project_data" id="many_projects" '
+                                'value="isDataFromOneProject" data-bind="checked: isDataFromOneProject, '
+                                'checkedValue: \'false\'" class="project_data-option"/><label '
+                                'for="many_projects" class="project_data-label">%s</label>'
+                                % _("Data From My Project Space And Others")),
+                    crispy.Div(
+                        hqcrispy.FieldWithHelpBubble('registry_slug', help_bubble_text=help_texts['registry_slug']),
+                        style="padding-left: 50px;"
+                    ),
+                ),
+                hqcrispy.FieldWithHelpBubble('source', help_bubble_text=help_texts['source']),
+            )
+
     @property
     def sources_map(self):
         return self.app_source_helper.all_sources
+
+    @property
+    def dropdown_map(self):
+        return self.app_source_helper.app_and_registry_sources
 
     def get_selected_source(self):
         return self.app_source_helper.get_app_source(self.cleaned_data)
