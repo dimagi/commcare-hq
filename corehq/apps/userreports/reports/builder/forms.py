@@ -18,11 +18,11 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.xform import XForm
+from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.registry.models import DataRegistry
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager.data_source_meta import (
     APP_DATA_SOURCE_TYPE_VALUES,
@@ -42,7 +42,7 @@ from corehq.apps.userreports.models import (
     ReportMeta,
     get_datasource_config_infer_type,
     guess_data_source_type,
-    RegistryDataSourceConfiguration,
+    RegistryDataSourceConfiguration, RegistryReportConfiguration,
 )
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
@@ -84,7 +84,7 @@ from corehq.apps.userreports.reports.builder.sources import (
 )
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
-from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.userreports.util import has_report_builder_access, get_ucr_datasource_config_by_id
 from corehq.toggles import (
     SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER,
     SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
@@ -193,7 +193,7 @@ class DataSourceProperty(object):
                 return CasePropertyColumnOption(self._id, self._data_types, self._text)
         else:
             assert self._type == PROPERTY_TYPE_RAW
-            return RawPropertyColumnOption(self._id, self._data_types, self._text)
+            return RawPropertyColumnOption(self._id, self._data_types, self._text, self._source)
 
     def _get_filter_format(self, filter_configuration):
         """
@@ -251,6 +251,8 @@ class DataSourceProperty(object):
             filter.update({"choice_provider": {"type": "location", "include_descendants": True}})
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "location", "include_descendants": True, "show_all_locations": True}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMMCARE_PROJECT:
+            filter.update({"choice_provider": {"type": COMMCARE_PROJECT}})
         if configuration.get('pre_value') or configuration.get('pre_operator'):
             filter.update({
                 'type': 'pre',  # type could have been "date"
@@ -293,6 +295,12 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
     A data source could be an (app, form), (app, case_type), or (registry, case_type) pair (see
     ManagedReportBuilderDataSourceHelper), or it can be a real UCR data source (see UnmanagedDataSourceHelper)
     """
+    @property
+    @abstractmethod
+    def report_config_class(self):
+        """Return the report class type"""
+        raise NotImplementedError
+
     @property
     @abstractmethod
     def uses_managed_data_source(self):
@@ -373,6 +381,10 @@ class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
     @property
     def uses_managed_data_source(self):
         return True
+
+    @property
+    def report_config_class(self):
+        return RegistryReportConfiguration if self.uses_registry_data_source else ReportConfiguration
 
     @property
     def uses_registry_data_source(self):
@@ -483,6 +495,9 @@ class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
     def data_source_name(self):
         raise NotImplementedError
 
+    def construct_data_source(self, table_id, **kwargs):
+        return DataSourceConfiguration(domain=self.domain, table_id=table_id, **kwargs)
+
     def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
         if is_multiselect_chart_report:
             base_item_expression = self.base_item_expression(True, multiselect_field)
@@ -502,13 +517,31 @@ class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
         raise NotImplementedError
 
     def get_temp_datasource_constructor_kwargs(self, required_columns, required_filters):
-        indicators = self.all_possible_indicators(required_columns, required_filters)
+        indicators = self._remove_defaults_from_indicators(
+            self.all_possible_indicators(required_columns, required_filters)
+        )
         return self._ds_config_kwargs(indicators)
 
     def get_datasource_constructor_kwargs(self, columns, filters,
                                           is_multiselect_chart_report=False, multiselect_field=None):
-        indicators = self.indicators(columns, filters)
+        indicators = self._remove_defaults_from_indicators(
+            self.indicators(columns, filters)
+        )
         return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
+
+    def _remove_defaults_from_indicators(self, indicators):
+        defaults = self._get_datasource_default_columns()
+        return [
+            indicator for indicator in indicators
+            if indicator['column_id'] not in defaults
+        ]
+
+    def _get_datasource_default_columns(self):
+        return {
+            column.id
+            for indicator in DataSourceConfiguration().default_indicators
+            for column in indicator.get_columns()
+        }
 
 
 class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
@@ -529,6 +562,13 @@ class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
         return False
 
     @property
+    def report_config_class(self):
+        return {
+            "DataSourceConfiguration": ReportConfiguration,
+            "RegistryDataSourceConfiguration": RegistryReportConfiguration,
+        }[self.data_source.doc_type]
+
+    @property
     @memoized
     def data_source(self):
         return get_datasource_config_infer_type(self.data_source_id, self.domain)[0]
@@ -542,7 +582,7 @@ class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
                 type=PROPERTY_TYPE_RAW,
                 id=column.id,
                 text=column.id,
-                source=(column.id, column.datatype),
+                source=column.id,
                 data_types=[column.datatype],
             )
 
@@ -868,7 +908,9 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
         registry_helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
         owning_domain = registry_helper.registry.domain
         prop_map = get_data_dict_props_by_case_type(owning_domain)
-        self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
+        self.case_properties = sorted(
+            set(prop_map[self.source_id]) | {'closed', 'closed_on'}
+        )
 
     def _get_data_source_build_information(self):
         return DataSourceBuildInformation(
@@ -885,6 +927,33 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
     def data_source_name(self):
         today = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         return "{} {} {}".format(self.source_id, self.registry_slug, today)
+
+    @property
+    def data_source_properties(self):
+        properties = super().data_source_properties
+        properties[COMMCARE_PROJECT] = DataSourceProperty(
+            type=PROPERTY_TYPE_RAW,
+            id=COMMCARE_PROJECT,
+            text=_('CommCare Project'),
+            source='domain',
+            data_types=["string"],
+        )
+        return properties
+
+    def construct_data_source(self, table_id, **kwargs):
+        return RegistryDataSourceConfiguration(
+            domain=self.domain,
+            table_id=table_id,
+            registry_slug=self.registry_slug,
+            **kwargs
+        )
+
+    def _get_datasource_default_columns(self):
+        return {
+            column.id
+            for indicator in RegistryDataSourceConfiguration().default_indicators
+            for column in indicator.get_columns()
+        }
 
 
 def get_data_source_interface(domain, app, source_type, source_id, registry_slug):
@@ -1106,21 +1175,12 @@ class ConfigureNewReportBase(forms.Form):
                                                                  self._is_multiselect_chart_report,
                                                                  ms_field)
 
-    def _build_data_source(self, is_registry=False):
-        if is_registry:
-            data_source_config = RegistryDataSourceConfiguration(
-                domain=self.domain,
-                table_id=clean_table_name(self.domain, str(uuid.uuid4().hex)),
-                registry_slug=self.registry_slug,
-                **self._get_data_source_configuration_kwargs()
-            )
-        else:
-            data_source_config = DataSourceConfiguration(
-                domain=self.domain,
-                # The uuid gets truncated, so it's not really universally unique.
-                table_id=clean_table_name(self.domain, str(uuid.uuid4().hex)),
-                **self._get_data_source_configuration_kwargs()
-            )
+    def _build_data_source(self):
+        data_source_config = self.ds_builder.construct_data_source(
+            # The uuid gets truncated, so it's not really universally unique.
+            table_id=clean_table_name(self.domain, str(uuid.uuid4().hex)),
+            **self._get_data_source_configuration_kwargs()
+        )
         data_source_config.validate()
         data_source_config.save()
         tasks.rebuild_indicators.delay(data_source_config._id, source="report_builder")
@@ -1143,15 +1203,12 @@ class ConfigureNewReportBase(forms.Form):
 
     def _update_data_source_if_necessary(self):
         if self.ds_builder.uses_managed_data_source:
-            if self.ds_builder.uses_registry_data_source:
-                data_source = RegistryDataSourceConfiguration.get(self.existing_report.config_id)
-            else:
-                data_source = DataSourceConfiguration.get(self.existing_report.config_id)
+            data_source = get_ucr_datasource_config_by_id(self.existing_report.config_id)
             if data_source.get_report_count() > 1:
                 # If another report is pointing at this data source, create a new
                 # data source for this report so that we can change the indicators
                 # without worrying about breaking another report.
-                data_source_config_id = self._build_data_source(is_registry=self.ds_builder.uses_registry_data_source)
+                data_source_config_id = self._build_data_source()
                 self.existing_report.config_id = data_source_config_id
             else:
                 indicators = self.ds_builder.indicators(
@@ -1172,10 +1229,10 @@ class ConfigureNewReportBase(forms.Form):
         :raises BadSpecError if validation fails when building data source, or report is invalid
         """
         if self.ds_builder.uses_managed_data_source:
-            data_source_config_id = self._build_data_source(is_registry=self.ds_builder.uses_registry_data_source)
+            data_source_config_id = self._build_data_source()
         else:
             data_source_config_id = self.ds_builder.data_source_id
-        report = ReportConfiguration(
+        report = self.ds_builder.report_config_class(
             domain=self.domain,
             config_id=data_source_config_id,
             title=self.cleaned_data['report_title'] or self.report_name,
@@ -1206,7 +1263,7 @@ class ConfigureNewReportBase(forms.Form):
         """
 
         self._update_temp_datasource(data_source_id, username)
-        report = ReportConfiguration(
+        report = self.ds_builder.report_config_class(
             domain=self.domain,
             config_id=data_source_id,
             title=self.report_name,
@@ -1236,19 +1293,10 @@ class ConfigureNewReportBase(forms.Form):
         filters = [f._asdict() for f in self.initial_user_filters + self.initial_default_filters]
         columns = [c._asdict() for c in self.initial_columns]
 
-        if self.ds_builder.uses_registry_data_source:
-            data_source_config = RegistryDataSourceConfiguration(
-                domain=self.domain,
-                table_id=clean_table_name(self.domain, uuid.uuid4().hex),
-                registry_slug=self.registry_slug,
-                **self.ds_builder.get_temp_datasource_constructor_kwargs(columns, filters)
-            )
-        else:
-            data_source_config = DataSourceConfiguration(
-                domain=self.domain,
-                table_id=clean_table_name(self.domain, uuid.uuid4().hex),
-                **self.ds_builder.get_temp_datasource_constructor_kwargs(columns, filters)
-            )
+        data_source_config = self.ds_builder.construct_data_source(
+            table_id=clean_table_name(self.domain, uuid.uuid4().hex),
+            **self.ds_builder.get_temp_datasource_constructor_kwargs(columns, filters)
+        )
         data_source_config.validate()
         data_source_config.save()
 
@@ -1274,7 +1322,7 @@ class ConfigureNewReportBase(forms.Form):
         Add filter to data source to prevent it from being updated by DB changes
         """
         # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
-        data_source_config = DataSourceConfiguration.get(data_source_config_id)
+        data_source_config = get_ucr_datasource_config_by_id(data_source_config_id)
         data_source_config.configured_filter = {
             # An expression that is always false:
             "type": "boolean_expression",
@@ -1288,10 +1336,8 @@ class ConfigureNewReportBase(forms.Form):
     def _update_temp_datasource(self, data_source_config_id, username):
         if not self.ds_builder.uses_managed_data_source:
             return
-        if self.ds_builder.uses_registry_data_source:
-            data_source_config = RegistryDataSourceConfiguration.get(data_source_config_id)
-        else:
-            data_source_config = DataSourceConfiguration.get(data_source_config_id)
+
+        data_source_config = get_ucr_datasource_config_by_id(data_source_config_id)
 
         filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
         # The data source needs indicators for all possible calculations, not just the ones currently in use

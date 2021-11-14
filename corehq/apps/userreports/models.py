@@ -61,7 +61,8 @@ from corehq.apps.userreports.dbaccessors import (
     get_number_of_report_configs_by_data_source,
     get_report_configs_for_domain,
     get_all_registry_data_source_ids,
-    get_registry_data_sources_by_domain,
+    get_registry_data_sources_by_domain, get_registry_report_configs_for_domain,
+    get_number_of_registry_report_configs_by_data_source,
 )
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -87,7 +88,7 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
-    get_indicator_adapter,
+    get_indicator_adapter, wrap_report_config_by_type,
 )
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
@@ -516,6 +517,10 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if not connection_manager.resolves_to_unique_dbs(mirrored_engine_ids + [self.engine_id]):
             raise BadSpecError("No two engine_ids should point to the same database")
 
+    @property
+    def data_domains(self):
+        return [self.domain]
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -871,6 +876,17 @@ CUSTOM_REPORT_PREFIX = 'custom-'
 
 
 class RegistryReportConfiguration(ReportConfiguration):
+
+    @classmethod
+    @quickcache(['cls.__name__', 'domain'])
+    def by_domain(cls, domain):
+        return get_registry_report_configs_for_domain(domain)
+
+    @classmethod
+    @quickcache(['cls.__name__', 'domain', 'data_source_id'])
+    def count_by_data_source(cls, domain, data_source_id):
+        return get_number_of_registry_report_configs_by_data_source(domain, data_source_id)
+
     @property
     def registry_slug(self):
         return self.config.registry_slug
@@ -1349,7 +1365,7 @@ def get_report_configs(config_ids, domain):
     dynamic_report_configs = []
     if dynamic_report_config_ids:
         dynamic_report_configs = [
-            ReportConfiguration.wrap(doc) for doc in
+            wrap_report_config_by_type(doc) for doc in
             get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
         ]
 

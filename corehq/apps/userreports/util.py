@@ -1,6 +1,7 @@
 import collections
 import hashlib
 
+from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
@@ -276,3 +277,52 @@ def get_static_report_mapping(from_domain, to_domain):
 
 def add_tabbed_text(text):
     return '\t' + '\n\t'.join(text.splitlines(False))
+
+
+def get_report_config_or_not_found(domain, config_id):
+    from corehq.apps.userreports.models import ReportConfiguration
+    try:
+        doc = ReportConfiguration.get_db().get(config_id)
+        config = wrap_report_config_by_type(doc)
+    except (ResourceNotFound, KeyError):
+        raise DocumentNotFound()
+
+    if config.domain != domain:
+        raise DocumentNotFound()
+
+    return config
+
+
+def get_ucr_datasource_config_by_id(indicator_config_id):
+    from corehq.apps.userreports.models import (
+        id_is_static,
+        StaticDataSourceConfiguration,
+        DataSourceConfiguration,
+    )
+    if id_is_static(indicator_config_id):
+        return StaticDataSourceConfiguration.by_id(indicator_config_id)
+    else:
+        doc = DataSourceConfiguration.get_db().get(indicator_config_id)
+        return _wrap_data_source_by_doc_type(doc)
+
+
+def _wrap_data_source_by_doc_type(doc):
+    from corehq.apps.userreports.models import (
+        DataSourceConfiguration,
+        RegistryDataSourceConfiguration,
+    )
+    return {
+        "DataSourceConfiguration": DataSourceConfiguration,
+        "RegistryDataSourceConfiguration": RegistryDataSourceConfiguration,
+    }[doc["doc_type"]].wrap(doc)
+
+
+def wrap_report_config_by_type(config):
+    from corehq.apps.userreports.models import (
+        ReportConfiguration,
+        RegistryReportConfiguration,
+    )
+    return {
+        "ReportConfiguration": ReportConfiguration,
+        "RegistryReportConfiguration": RegistryReportConfiguration,
+    }[config["doc_type"]].wrap(config)
