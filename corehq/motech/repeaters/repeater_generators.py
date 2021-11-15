@@ -488,12 +488,13 @@ class CaseUpdateConfig:
         if value and value not in ("child", "extension"):
             raise DataRegistryCaseUpdateError("Index relationships must be either 'child' or 'extension'")
 
-    def get_case_block(self, target_case):
+    def get_case_block(self, registry_helper, repeat_record, couch_user):
+        target_case = self._get_registry_case(
+            self.domain, self.case_id, self.case_type, self.create_case,
+            registry_helper=registry_helper, repeat_record=repeat_record, couch_user=couch_user
+        )
         kwargs = {}
-        if target_case is None:
-            if not self.create_case:
-                # should never get here but added as a precaution
-                raise DataRegistryCaseUpdateError("Target case not found")
+        if self.create_case:
             if not self.owner_id:
                 raise DataRegistryCaseUpdateError("'owner_id' required when creating cases")
             kwargs = {
@@ -501,9 +502,6 @@ class CaseUpdateConfig:
                 "case_type": self.case_type,
                 "date_opened": self.intent_case.opened_on
             }
-        elif self.create_case:
-            # should never get here but added as a precaution
-            raise DataRegistryCaseUpdateError("Unable to create target case as it already exists")
 
         return CaseBlock(
             case_id=self.case_id,
@@ -578,6 +576,25 @@ class CaseUpdateConfig:
             identifier: (index.referenced_type, "", self.index_remove_relationship)
         }
 
+    @staticmethod
+    def _get_registry_case(domain, case_id, case_type, for_create, registry_helper, repeat_record, couch_user):
+        try:
+            case = registry_helper.get_case(case_id, couch_user, repeat_record.repeater)
+        except RegistryAccessException:
+            raise DataRegistryCaseUpdateError("User does not have permission to access the registry")
+        except CaseNotFound:
+            if for_create:
+                return
+            raise DataRegistryCaseUpdateError(f"Target case not found: {case_id}")
+
+        if for_create:
+            raise DataRegistryCaseUpdateError("Unable to create target case as it already exists")
+
+        if case.domain != domain or case.type != case_type:
+            raise DataRegistryCaseUpdateError(f"Target case not found: {case_id}")
+
+        return case
+
 
 class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
 
@@ -589,9 +606,7 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         configs = self._get_configs(payload_doc)
         submitting_user = CouchUser.get_by_user_id(payload_doc.user_id)
-        cases = self._get_target_cases(repeat_record, configs, submitting_user)
-
-        case_blocks = self._get_case_blocks(cases, configs)
+        case_blocks = self._get_case_blocks(repeat_record, configs, submitting_user)
         return render_to_string('hqcase/xml/case_block.xml', {
             'xmlns': SYSTEM_FORM_XMLNS,
             'case_block': " ".join(case_blocks),
@@ -627,43 +642,12 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
             raise DataRegistryCaseUpdateError("Multiple updates must all be in the same domain")
         return configs
 
-    def _get_target_cases(self, repeat_record, configs, couch_user):
+    def _get_case_blocks(self, repeat_record, configs, couch_user):
         main_config = configs[0]
         registry_slug = main_config.registry_slug
         helper = DataRegistryHelper(main_config.intent_case.domain, registry_slug=registry_slug)
-        return list(filter(None, [
-            self._get_case(
-                config.domain, config.case_id, config.case_type, not config.create_case,
-                helper, repeat_record, couch_user
-            )
-            for config in configs
-        ]))
-
-    def _get_case(self, domain, case_id, case_type, is_required, registry_helper, repeat_record, couch_user):
-        try:
-            case = registry_helper.get_case(case_id, couch_user, repeat_record.repeater)
-        except RegistryAccessException:
-            raise DataRegistryCaseUpdateError("User does not have permission to access the registry")
-        except CaseNotFound:
-            if not is_required:
-                return
-            raise DataRegistryCaseUpdateError(f"Target case not found: {case_id}")
-
-
-if config.create_case:
-            raise DataRegistryCaseUpdateError("Unable to create target case as it already exists")
-
-        if case.domain != domain or case.type != case_type:
-            raise DataRegistryCaseUpdateError(f"Target case not found: {case_id}")
-
-        return case
-
-    def _get_case_blocks(self, target_cases, configs):
-        targets_by_id = {
-            case.case_id: case for case in target_cases
-        }
         return [
-            config.get_case_block(targets_by_id.get(config.case_id, None))
+            config.get_case_block(helper, repeat_record, couch_user)
             for config in configs
         ]
 
