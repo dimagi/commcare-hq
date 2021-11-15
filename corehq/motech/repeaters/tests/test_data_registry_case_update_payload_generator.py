@@ -241,6 +241,23 @@ def test_generator_required_fields():
         _test_payload_generator(intent_case=intent_case)
 
 
+def test_generator_copy_from_other_case():
+    builder = IntentCaseBuilder() \
+        .case_properties(intent_prop="intent_prop_val")\
+        .copy_props_from("other_domain", "other_case_id", "other_case_type")
+
+    def _get_case(case_id):
+        assert case_id == "other_case_id"
+        return Mock(domain="other_domain", type="other_case_type", case_json={"other_prop": "other_val"})
+
+    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+        _test_payload_generator(intent_case=builder.get_case(), expected_updates={
+            "1": {
+                "intent_prop": "intent_prop_val",
+                "other_prop": "other_val",
+            }})
+
+
 def _test_payload_generator(intent_case, target_case_exists=True,
                             expected_updates=None, expected_indices=None,
                             expected_creates=None, expected_close=None):
@@ -391,6 +408,16 @@ class IntentCaseBuilder:
 
     def case_properties(self, **kwargs):
         self.props.update(kwargs)
+        return self
+
+    def copy_props_from(self, domain, case_id, case_type, includes=None, excludes=None):
+        self.props["target_copy_properties_from_case_domain"] = domain
+        self.props["target_copy_properties_from_case_id"] = case_id
+        self.props["target_copy_properties_from_case_type"] = case_type
+        if includes is not None:
+            self.props["target_copy_properties_includelist"] = includes
+        if excludes is not None:
+            self.props["target_copy_properties_excludelist"] = excludes
         return self
 
     def set_subcases(self, subcases):
