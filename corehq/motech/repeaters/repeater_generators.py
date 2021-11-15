@@ -491,7 +491,7 @@ class CaseUpdateConfig:
     def get_case_block(self, registry_helper, repeat_record, couch_user):
         target_case = self._get_registry_case(
             self.domain, self.case_id, self.case_type, self.create_case,
-            registry_helper=registry_helper, repeat_record=repeat_record, couch_user=couch_user
+            registry_helper, repeat_record, couch_user
         )
         kwargs = {}
         if self.create_case:
@@ -503,26 +503,33 @@ class CaseUpdateConfig:
                 "date_opened": self.intent_case.opened_on
             }
 
+        updates = self.get_case_updates(self.intent_case, self.includes, self.excludes)
+        if self.copy_case_id:
+            copy_from = self._get_registry_case(
+                self.copy_domain, self.copy_case_id, self.copy_case_type, False,
+                registry_helper, repeat_record, couch_user
+            )
+            updates.update(self.get_case_updates(copy_from, self.copy_includelist, self.copy_excludelist))
         return CaseBlock(
             case_id=self.case_id,
             owner_id=self.owner_id,
-            update=self.get_case_updates(),
+            update=updates,
             index=self.get_case_indices(target_case),
             close=bool(self.close_case),
             date_modified=self.intent_case.modified_on,
             **kwargs
         ).as_text()
 
-    def get_case_updates(self):
-        case_json = self.intent_case.case_json
-        if self.intent_case.name:
-            case_json["case_name"] = self.intent_case.name
-        if self.intent_case.external_id:
-            case_json["external_id"] = self.intent_case.external_id
-        if self.excludes is not None:
-            update_props = set(case_json) - set(self.excludes.split())
-        elif self.includes is not None:
-            update_props = set(case_json) & set(self.includes.split())
+    def get_case_updates(self, from_case, includes, excludes):
+        case_json = from_case.case_json
+        if from_case.name:
+            case_json["case_name"] = from_case.name
+        if from_case.external_id:
+            case_json["external_id"] = from_case.external_id
+        if excludes is not None:
+            update_props = set(case_json) - set(excludes.split())
+        elif includes is not None:
+            update_props = set(case_json) & set(includes.split())
         else:
             update_props = set(case_json)
 
