@@ -592,13 +592,13 @@ class CaseUpdateConfig:
         except CaseNotFound:
             if for_create:
                 return
-            raise DataRegistryCaseUpdateError(f"Target case not found: {case_id}")
+            raise DataRegistryCaseUpdateError(f"Case not found: {case_id}")
 
         if for_create:
-            raise DataRegistryCaseUpdateError("Unable to create target case as it already exists")
+            raise DataRegistryCaseUpdateError(f"Unable to create case as it already exists: {case_id}")
 
         if case.domain != domain or case.type != case_type:
-            raise DataRegistryCaseUpdateError(f"Target case not found: {case_id}")
+            raise DataRegistryCaseUpdateError(f"Case not found: {case_id}")
 
         return case
 

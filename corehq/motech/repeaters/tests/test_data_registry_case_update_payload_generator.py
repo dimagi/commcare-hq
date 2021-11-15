@@ -28,7 +28,7 @@ def test_generator_empty_update():
 def test_generator_fail_if_case_domain_mismatch():
     builder = IntentCaseBuilder().include_props([]).target_case(domain="other")
 
-    with assert_raises(DataRegistryCaseUpdateError, msg="Target case not found: 1"):
+    with assert_raises(DataRegistryCaseUpdateError, msg="Case not found: 1"):
         _test_payload_generator(intent_case=builder.get_case())
 
 
@@ -63,7 +63,7 @@ def test_generator_create_case():
 def test_generator_create_case_target_exists():
     builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").create_case("123")
 
-    with assert_raises(DataRegistryCaseUpdateError, msg="Unable to create target case as it already exists"):
+    with assert_raises(DataRegistryCaseUpdateError, msg="Unable to create case as it already exists: 1"):
         _test_payload_generator(intent_case=builder.get_case())
 
 
