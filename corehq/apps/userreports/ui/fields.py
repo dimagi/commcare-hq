@@ -47,6 +47,9 @@ class JsonField(forms.CharField):
             return value
 
     def to_python(self, value):
+        if isinstance(value, self.expected_type):
+            return json.loads(json.dumps(value))
+
         val = super(JsonField, self).to_python(value)
         try:
             return json.loads(val)
@@ -57,4 +60,6 @@ class JsonField(forms.CharField):
         if value in self.null_values and self.required:
             raise forms.ValidationError(self.error_messages['required'])
         if self.expected_type and not isinstance(value, self.expected_type):
-            raise forms.ValidationError(_('Expected {} but was {}'.format(self.expected_type, type(value))))
+            raise forms.ValidationError(
+                _('Expected {} but was {}'.format(self.expected_type.__name__, type(value).__name__))
+            )
