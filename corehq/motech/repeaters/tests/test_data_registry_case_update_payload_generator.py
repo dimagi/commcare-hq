@@ -254,11 +254,9 @@ def test_generator_copy_from_other_case():
         .copy_props_from("other_domain", "other_case_id", "other_case_type")
 
     registry_cases = _mock_registry()
-    registry_cases["other_case_id"] = Mock(
-        domain="other_domain", case_id="other_case_id", type="other_case_type",
-        case_json={"other_prop": "other_val"}
+    registry_cases["other_case_id"] = _mock_case(
+        "other_case_id", domain="other_domain", case_type="other_case_type", props={"other_prop": "other_val"}
     )
-
     _test_payload_generator(
         intent_case=builder.get_case(),
         registry_mock_cases=registry_cases,
@@ -454,13 +452,20 @@ def _mock_registry():
     }
 
 
-def _mock_case(case_id):
-    return Mock(domain=TARGET_DOMAIN, type="patient", case_id=case_id, case_json={
+def _mock_case(case_id, props=None, domain=TARGET_DOMAIN, case_type="patient"):
+    props = props if props is not None else {
         "existing_prop": uuid.uuid4().hex,
         "existing_blank_prop": ""
-    }, live_indices=[
-        Mock(
-            identifier="parent", referenced_type="parent_type",
-            referenced_id="parent_case_id", relationship_id="child"
-        )
-    ])
+    }
+    mock_case = Mock(
+        domain=domain, type=case_type, case_id=case_id,
+        external_id=None,
+        case_json=props,
+        live_indices=[
+            Mock(
+                identifier="parent", referenced_type="parent_type",
+                referenced_id="parent_case_id", relationship_id="child"
+            )
+        ])
+    mock_case.name = None
+    return mock_case
