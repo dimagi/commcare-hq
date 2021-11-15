@@ -406,11 +406,19 @@ class CaseUpdateConfig:
         "close_case": "target_case_close",
         "includes": "target_property_includelist",
         "excludes": "target_property_excludelist",
+        # index create
         "index_create_case_id": "target_index_create_case_id",
         "index_create_case_type": "target_index_create_case_type",
         "index_create_relationship": "target_index_create_relationship",
+        # index remove
         "index_remove_case_id": "target_index_remove_case_id",
         "index_remove_relationship": "target_index_remove_relationship",
+        # copy from other case
+        "copy_domain": "target_copy_properties_from_case_domain",
+        "copy_case_id": "target_copy_properties_from_case_id",
+        "copy_case_type": "target_copy_properties_from_case_type",
+        "copy_includelist": "target_copy_properties_includelist",
+        "copy_excludelist": "target_copy_properties_excludelist"
     }
     REQUIRED_FIELDS = [
         "registry_slug",
@@ -434,6 +442,11 @@ class CaseUpdateConfig:
     index_create_relationship = attr.ib()
     index_remove_case_id = attr.ib()
     index_remove_relationship = attr.ib()
+    copy_domain = attr.ib()
+    copy_case_id = attr.ib()
+    copy_case_type = attr.ib()
+    copy_includelist = attr.ib()
+    copy_excludelist = attr.ib()
 
     @classmethod
     def from_payload(cls, payload_doc):
