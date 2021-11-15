@@ -85,6 +85,7 @@ from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
     pull_missing_multimedia_for_app,
     server_to_user_time,
+    user_has_admin_access_in_all_domains,
 )
 from corehq.apps.linked_domain.view_helpers import (
     build_domain_link_view_model,
@@ -401,7 +402,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     def create_domain_link(self, in_data):
         domain_to_link = in_data['downstream_domain']
 
-        error = handle_create_domain_link_request(self.domain, domain_to_link)
+        error = handle_create_domain_link_request(self.request.couch_user, self.domain, domain_to_link)
         if error:
             return {
                 'success': False,
@@ -439,7 +440,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
             return {'success': False}
 
 
-def handle_create_domain_link_request(upstream_domain, downstream_domain):
+def handle_create_domain_link_request(couch_user, upstream_domain, downstream_domain):
     if not domain_exists(downstream_domain):
         return ugettext("The project space {} does not exist. Make sure the name is correct and that "
                         "this domain hasn't been deleted.").format(downstream_domain)
@@ -448,6 +449,9 @@ def handle_create_domain_link_request(upstream_domain, downstream_domain):
         return ugettext(
             "The project space {} is already a downstream project space of {}."
         ).format(downstream_domain, upstream_domain)
+
+    if not user_has_admin_access_in_all_domains(couch_user, [upstream_domain, downstream_domain]):
+        return ugettext("The user must be an admin is both project spaces to successfully create a link.")
 
     try:
         DomainLink.link_domains(downstream_domain, upstream_domain)
