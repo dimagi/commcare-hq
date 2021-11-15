@@ -1,6 +1,6 @@
 from django.test.testcases import SimpleTestCase, TestCase
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.app_manager.app_schemas.form_metadata import (
     ADDED,

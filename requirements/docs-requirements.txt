@@ -270,8 +270,6 @@ markupsafe==1.1.1
     #   mako
 mdit-py-plugins==0.2.8
     # via myst-parser
-mock==2.0.0
-    # via -r base-requirements.in
 myst-parser==0.15.2
     # via -r docs-requirements.in
 oauthlib==3.1.0
@@ -284,8 +282,6 @@ openpyxl==3.0.6
     #   commcaretranslationchecker
 packaging==20.9
     # via sphinx
-pbr==5.5.0
-    # via mock
 phonenumberslite==8.12.10
     # via -r base-requirements.in
 pickle5==0.0.11
@@ -432,7 +428,6 @@ six==1.15.0
     #   jsonobject-couchdbkit
     #   jsonpath-ng
     #   jsonschema
-    #   mock
     #   protobuf
     #   python-dateutil
     #   pyzxcvbn

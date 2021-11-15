@@ -6,7 +6,7 @@ from django.test import SimpleTestCase
 
 from corehq.util.es.elasticsearch import ConnectionError
 from corehq.apps.es.tests.utils import es_test
-from mock import patch
+from unittest.mock import patch
 from openpyxl import load_workbook
 
 from couchexport.export import get_writer

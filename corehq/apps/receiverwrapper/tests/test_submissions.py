@@ -7,7 +7,7 @@ from django.test.client import Client
 from django.test.utils import override_settings
 from django.urls import reverse
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally

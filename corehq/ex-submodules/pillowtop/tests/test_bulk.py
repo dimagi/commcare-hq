@@ -1,7 +1,7 @@
 import uuid
 
 from django.test import SimpleTestCase, TestCase
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH

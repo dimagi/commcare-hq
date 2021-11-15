@@ -322,8 +322,6 @@ markupsafe==1.1.1
     #   mako
 mccabe==0.6.1
     # via flake8
-mock==2.0.0
-    # via -r base-requirements.in
 nose==1.3.7
     # via
     #   -r test-requirements.in
@@ -344,8 +342,6 @@ packaging==20.4
     # via sphinx
 parso==0.7.1
     # via jedi
-pbr==5.5.0
-    # via mock
 pep517==0.10.0
     # via pip-tools
 pexpect==4.8.0
@@ -533,7 +529,6 @@ six==1.15.0
     #   jsonpath-ng
     #   jsonschema
     #   mando
-    #   mock
     #   packaging
     #   protobuf
     #   pyopenssl

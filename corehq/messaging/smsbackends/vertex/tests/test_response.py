@@ -1,5 +1,5 @@
 from django.test import TestCase
-import mock
+from unittest import mock
 
 from corehq.apps.sms.models import QueuedSMS
 from corehq.messaging.smsbackends.vertex.exceptions import VertexBackendException

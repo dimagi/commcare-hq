@@ -6,7 +6,7 @@ from xml.etree import cElementTree as ElementTree
 
 from django.test import TestCase
 
-import mock
+from unittest import mock
 
 from casexml.apps.phone.models import SimplifiedSyncLog
 from casexml.apps.phone.restore import RestoreParams

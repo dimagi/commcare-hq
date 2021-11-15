@@ -1,7 +1,7 @@
 import os
 import uuid
 
-import mock
+from unittest import mock
 from lxml import etree
 from nose.tools import nottest
 

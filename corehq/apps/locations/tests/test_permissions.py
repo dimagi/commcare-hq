@@ -7,7 +7,7 @@ from io import BytesIO
 from django.http import HttpResponse
 from django.urls import reverse
 
-import mock
+from unittest import mock
 
 from casexml.apps.case.tests.util import delete_all_xforms
 

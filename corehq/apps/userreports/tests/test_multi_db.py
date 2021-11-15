@@ -4,7 +4,7 @@ from contextlib import ExitStack
 from django.db import DEFAULT_DB_ALIAS
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,

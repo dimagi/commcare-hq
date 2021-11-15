@@ -5,7 +5,7 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 
 from memoized import memoized
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_build_ids
 from corehq.apps.app_manager.models import (
