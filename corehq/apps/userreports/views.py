@@ -468,7 +468,8 @@ class EditReportInBuilder(View):
 
     def dispatch(self, request, *args, **kwargs):
         report_id = kwargs['report_id']
-        report = get_document_or_404(ReportConfiguration, request.domain, report_id)
+        report = get_document_or_404(ReportConfiguration, request.domain, report_id,
+                                     additional_doc_types=["RegistryReportConfiguration"])
         if report.report_meta.created_by_builder:
             try:
                 return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
