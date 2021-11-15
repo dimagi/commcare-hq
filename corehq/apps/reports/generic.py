@@ -354,6 +354,15 @@ class GenericReportView(object):
         ]
 
     @property
+    def export_table_parts(self):
+        """
+            Intention: Override
+            Returns the JSON compatible parts needed to create export_table in export_all_rows_task
+        """
+
+        return []
+
+    @property
     def filter_set(self):
         """
         Whether a report has any filters set. Based on whether or not there
@@ -626,7 +635,7 @@ class GenericReportView(object):
                 self.slug,
                 self.name,
                 self.export_format,
-                self.export_table
+                self.export_table_parts
             )
             return HttpResponse()
         else:
@@ -940,24 +949,43 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
-        def _unformat_row(row):
-            def _unformat_val(val):
-                if isinstance(val, dict):
-                    return val.get('raw', val.get('sort_key', val))
-                return self._strip_tags(val)
-
-            return [_unformat_val(val) for val in row]
-
         table = headers.as_export_table
         self.exporting_as_excel = True
-        rows = (_unformat_row(row) for row in self.export_rows)
+        rows = (self._unformat_row(self, row) for row in self.export_rows)
         table = chain(table, rows)
         if self.total_row:
-            table = chain(table, [_unformat_row(self.total_row)])
+            table = chain(table, [self._unformat_row(self, self.total_row)])
         if self.statistics_rows:
-            table = chain(table, [_unformat_row(row) for row in self.statistics_rows])
+            table = chain(table, [self._unformat_row(self, row) for row in self.statistics_rows])
 
         return [[self.export_sheet_name, table]]
+
+    @property
+    def export_table_parts(self):
+        """
+        JSON compatible version of export_table only used for export_all_rows_task calls.
+        export_table will be established in the task with the parts returned from this method.
+        """
+        headers = self.headers
+        self.exporting_as_excel = True
+        rows = (self._unformat_row(self, row) for row in self.export_rows)
+        total_row, statistics_rows = [], []
+        if self.total_row:
+            total_row = [self._unformat_row(self, self.total_row)]
+        elif self.statistics_rows:
+            statistics_rows = [self._unformat_row(self, row) for row in self.statistics_rows]
+
+        return [str(self.export_sheet_name), headers.as_export_table, list(rows),
+                list(total_row), list(statistics_rows)]
+
+    @staticmethod
+    def _unformat_row(self, row):
+        def _unformat_val(val):
+            if isinstance(val, dict):
+                return val.get('raw', val.get('sort_key', val))
+            return self._strip_tags(val)
+
+        return [_unformat_val(val) for val in row]
 
     @property
     def export_rows(self):

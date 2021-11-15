@@ -807,7 +807,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 report.slug,
                 report.name,
                 report.export_format,
-                report.export_table,
+                report.export_table_parts,
                 emails,
                 title
             )

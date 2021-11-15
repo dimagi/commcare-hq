@@ -187,7 +187,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                 report.slug,
                 report.name,
                 report.export_format,
-                report.export_table,
+                report.export_table_parts,
                 recipient_list=recipient_emails
             )
         else:

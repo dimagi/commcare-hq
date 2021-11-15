@@ -3,6 +3,7 @@ import os
 import uuid
 import zipfile
 from datetime import datetime, timedelta
+from itertools import chain
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -168,8 +169,14 @@ def apps_update_calculated_properties():
 
 @task(ignore_result=True)
 def export_all_rows_task(user_id, report_class, domain, slug, name,
-                         export_format, export_table, recipient_list=None, subject=None):
+                         export_format, export_table_parts, recipient_list=None, subject=None):
     file = io.BytesIO()
+    table = chain(export_table_parts[1], export_table_parts[2])
+    if export_table_parts[3]:
+        table = chain(table, export_table_parts[3])
+    if export_table_parts[4]:
+        table = chain(table, export_table_parts[4])
+    export_table = [[export_table_parts[0], table]]
     export_from_tables(export_table, file, export_format)
     couch_user = CouchUser.get_by_user_id(user_id)
 
@@ -215,14 +222,14 @@ def _store_excel_in_blobdb(report_class, file, domain, report_slug):
 def build_form_multimedia_zipfile(
         domain,
         export_id,
-        filters,
+        es_filters,
         download_id,
         owner_id,
 ):
     from corehq.apps.export.models import FormExportInstance
     from corehq.apps.export.export import get_export_query
     export = FormExportInstance.get(export_id)
-    es_query = get_export_query(export, filters, are_filters_es_formatted=True)
+    es_query = get_export_query(export, es_filters, are_filters_es_formatted=True)
     form_ids = get_form_ids_with_multimedia(es_query)
     _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id,
                                       build_form_multimedia_zipfile)

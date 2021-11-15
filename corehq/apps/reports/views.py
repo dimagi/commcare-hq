@@ -495,7 +495,7 @@ def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDis
     del request_data['datespan']
 
     report_type = dispatcher_class.prefix
-    send_email_report.delay(recipient_emails, domain, report_slug, report_type,
+    send_email_report.delay(list(recipient_emails), domain, report_slug, report_type,
                             request_data, once, form.cleaned_data)
     return HttpResponse()
 
