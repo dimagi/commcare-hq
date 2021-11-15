@@ -1,7 +1,7 @@
 from django.apps import apps
 from django.conf import settings
 from django.core import checks
-from django.db import DEFAULT_DB_ALIAS
+from django.db import connections, DEFAULT_DB_ALIAS
 
 from corehq.sql_db.exceptions import PartitionValidationError
 
