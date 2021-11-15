@@ -195,7 +195,7 @@ def _get_domain_info(domain):
     service_type, plan = get_subscription_info(domain)
     return {
         "domain_is_active": domain_obj.is_active,
-        "domain_is_test": {"true": "true", "false": "false", "none": "unknown"}[domain_obj.is_test],
+        "domain_is_test": {"true": "True", "false": "False", "none": "unknown"}[domain_obj.is_test],
         "domain_is_snapshot": domain_obj.is_snapshot,
         "domain_has_dimagi_user": has_dimagi_user(domain),
         "domain_last_form_submission": last_form_submission(domain),
