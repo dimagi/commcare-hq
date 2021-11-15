@@ -1,5 +1,6 @@
 import csv
 import logging
+import re
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
@@ -16,6 +17,7 @@ from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.users.models import CouchUser, DomainMembership, WebUser
 from corehq.const import USER_CHANGE_VIA_CLONE
 from corehq.toggles import toggles_enabled_for_user
+from corehq.util.bounced_email_manager import EMAIL_REGEX_VALIDATION
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +44,11 @@ class Command(BaseCommand):
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
         already_existing_users = []
         for old_username, new_username in iterate_usernames_to_update(file):
+            if not re.search(EMAIL_REGEX_VALIDATION, new_username):
+                logger.error(
+                    f"New username {new_username} must be a valid email. Skipping cloning {old_username}."
+                )
+                continue
             logger.info(f'Cloning old user {old_username} to new user {new_username}')
             try:
                 old_user, new_user = clone_user(old_username, new_username)
