@@ -33,11 +33,14 @@ def is_active_downstream_domain(domain):
 
 
 def is_active_link(upstream_domain, downstream_domain):
-    return get_active_domain_link(upstream_domain, downstream_domain).exists()
+    return bool(get_active_domain_link(upstream_domain, downstream_domain))
 
 
 def get_active_domain_link(upstream_domain, downstream_domain):
-    return DomainLink.objects.filter(master_domain=upstream_domain, linked_domain=downstream_domain)
+    try:
+        return DomainLink.objects.get(master_domain=upstream_domain, linked_domain=downstream_domain)
+    except DomainLink.DoesNotExist:
+        return None
 
 
 @quickcache(['domain'], timeout=60 * 60)
