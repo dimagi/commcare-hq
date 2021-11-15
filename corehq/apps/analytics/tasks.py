@@ -41,6 +41,7 @@ from corehq.apps.analytics.utils import (
     remove_blocked_domain_contacts_from_hubspot,
     MAX_API_RETRIES,
     emails_that_accepted_invitations_to_blocked_hubspot_domains,
+    remove_blocked_domain_invited_users_from_hubspot,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
@@ -855,3 +856,4 @@ def cleanup_blocked_hubspot_contacts():
         return
 
     remove_blocked_domain_contacts_from_hubspot()
+    remove_blocked_domain_invited_users_from_hubspot()

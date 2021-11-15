@@ -263,6 +263,34 @@ def remove_blocked_domain_contacts_from_hubspot(stdout=None):
             )
 
 
+def remove_blocked_domain_invited_users_from_hubspot(stdout=None):
+    """
+    Removes contacts from Hubspot who have ever accepted an invitation on HQ
+    from a domain that is blocking Hubspot data.
+    :param stdout: the stdout of a management command (if applicable)
+    """
+    blocked_user_emails = emails_that_accepted_invitations_to_blocked_hubspot_domains()
+    total_users = blocked_user_emails.count()
+    chunk_size = 30  # Hubspot recommends fewer than 100 emails per request
+    num_chunks = int(math.ceil(float(total_users) / float(chunk_size)))
+
+    if stdout:
+        stdout.write(f"\n\nChecking Invited Users...")
+
+    for chunk in range(num_chunks):
+        start = chunk * chunk_size
+        end = (chunk + 1) * chunk_size
+        emails_to_check = blocked_user_emails[start:end]
+        ids_to_delete = _get_contact_ids_to_delete(set(emails_to_check))
+        if stdout:
+            stdout.write(f"Found {len(ids_to_delete)} id(s) to delete.")
+        num_deleted = sum(_delete_hubspot_contact(vid) for vid in ids_to_delete)
+        metrics_counter(
+            'commcare.hubspot_data.deleted_user.blocked_domain_invitation',
+            num_deleted
+        )
+
+
 def is_hubspot_js_allowed_for_request(request):
     """
     This determines whether a particular request is allowed to load any
