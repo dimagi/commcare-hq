@@ -16,6 +16,7 @@ from corehq.apps.analytics.utils import (
     is_domain_blocked_from_hubspot,
     hubspot_enabled_for_user,
     hubspot_enabled_for_email,
+    emails_that_accepted_invitations_to_blocked_hubspot_domains,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import (
@@ -178,6 +179,12 @@ class TestBlockedHubspotData(TestCase):
         self.blocked_invitation_user.delete_domain_membership(self.blocked_domain.name)
         self.blocked_invitation_user.save()
         self.assertFalse(hubspot_enabled_for_email(self.blocked_invitation_user.username))
+
+    def test_emails_that_accepted_invitations_to_blocked_hubspot_domains(self):
+        self.assertListEqual(
+            [self.blocked_invitation_user.username],
+            list(emails_that_accepted_invitations_to_blocked_hubspot_domains())
+        )
 
     def test_couch_user_is_blocked(self):
         """
