@@ -120,8 +120,10 @@ def check_db_tables(app_configs, **kwargs):
     ]
 
     def _check_model(model_class, using=None):
+        db = using or DEFAULT_DB_ALIAS
         try:
-            model_class._default_manager.using(using).all().exists()
+            with connections[db].cursor() as cursor:
+                cursor.execute("SELECT %s::regclass", [model_class._meta.db_table])
         except Exception as e:
             return checks.Error('checks.Error querying model on database "{}": "{}.{}": {}.{}({})'.format(
                 using or DEFAULT_DB_ALIAS,
