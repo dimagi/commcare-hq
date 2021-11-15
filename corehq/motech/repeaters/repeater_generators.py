@@ -489,10 +489,6 @@ class CaseUpdateConfig:
             raise DataRegistryCaseUpdateError("Index relationships must be either 'child' or 'extension'")
 
     def get_case_block(self, registry_helper, repeat_record, couch_user):
-        target_case = self._get_registry_case(
-            self.domain, self.case_id, self.case_type, self.create_case,
-            registry_helper, repeat_record, couch_user
-        )
         kwargs = {}
         if self.create_case:
             if not self.owner_id:
@@ -503,24 +499,37 @@ class CaseUpdateConfig:
                 "date_opened": self.intent_case.opened_on
             }
 
-        updates = self.get_case_updates(self.intent_case, self.includes, self.excludes)
-        if self.copy_case_id:
-            copy_from = self._get_registry_case(
-                self.copy_domain, self.copy_case_id, self.copy_case_type, False,
-                registry_helper, repeat_record, couch_user
-            )
-            updates.update(self.get_case_updates(copy_from, self.copy_includelist, self.copy_excludelist))
+        target_case = self._get_target_case(couch_user, registry_helper, repeat_record)
+        updates = self.get_case_updates(couch_user, registry_helper, repeat_record)
+        indices = self.get_case_indices(target_case)
         return CaseBlock(
             case_id=self.case_id,
             owner_id=self.owner_id,
             update=updates,
-            index=self.get_case_indices(target_case),
+            index=indices,
             close=bool(self.close_case),
             date_modified=self.intent_case.modified_on,
             **kwargs
         ).as_text()
 
-    def get_case_updates(self, from_case, includes, excludes):
+    def _get_target_case(self, couch_user, registry_helper, repeat_record):
+        return self._get_registry_case(
+            self.domain, self.case_id, self.case_type, self.create_case,
+            registry_helper, repeat_record, couch_user
+        )
+
+    def get_case_updates(self, couch_user, registry_helper, repeat_record):
+        updates = self._get_case_updates_from_source(self.intent_case, self.includes, self.excludes)
+        if self.copy_case_id:
+            copy_from = self._get_registry_case(
+                self.copy_domain, self.copy_case_id, self.copy_case_type, False,
+                registry_helper, repeat_record, couch_user
+            )
+            updates.update(self._get_case_updates_from_source(
+                copy_from, self.copy_includelist, self.copy_excludelist))
+        return updates
+
+    def _get_case_updates_from_source(self, from_case, includes, excludes):
         case_json = from_case.case_json
         if from_case.name:
             case_json["case_name"] = from_case.name
