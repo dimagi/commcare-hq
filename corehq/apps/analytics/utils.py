@@ -259,11 +259,7 @@ def remove_blocked_domain_contacts_from_hubspot(stdout=None):
             num_deleted = sum(_delete_hubspot_contact(vid) for vid in ids_to_delete)
             metrics_counter(
                 'commcare.hubspot_data.deleted_user.blocked_domain',
-                num_deleted,
-                tags={
-                    'domain': domain,
-                    'ids_deleted': ids_to_delete,
-                }
+                num_deleted
             )
 
 
