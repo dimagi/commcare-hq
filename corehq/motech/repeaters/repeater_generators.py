@@ -619,25 +619,29 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         registry_slug = main_config.registry_slug
         helper = DataRegistryHelper(main_config.intent_case.domain, registry_slug=registry_slug)
         return list(filter(None, [
-            self._get_case(helper, repeat_record, config, couch_user)
+            self._get_case(
+                config.domain, config.case_id, config.case_type, not config.create_case,
+                helper, repeat_record, couch_user
+            )
             for config in configs
         ]))
 
-    def _get_case(self, registry_helper, repeat_record, config, couch_user):
+    def _get_case(self, domain, case_id, case_type, is_required, registry_helper, repeat_record, couch_user):
         try:
-            case = registry_helper.get_case(config.case_id, couch_user, repeat_record.repeater)
+            case = registry_helper.get_case(case_id, couch_user, repeat_record.repeater)
         except RegistryAccessException:
             raise DataRegistryCaseUpdateError("User does not have permission to access the registry")
         except CaseNotFound:
-            if config.create_case:
+            if not is_required:
                 return
-            raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
+            raise DataRegistryCaseUpdateError(f"Target case not found: {case_id}")
 
-        if config.create_case:
+
+if config.create_case:
             raise DataRegistryCaseUpdateError("Unable to create target case as it already exists")
 
-        if case.domain != config.domain or case.type != config.case_type:
-            raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
+        if case.domain != domain or case.type != case_type:
+            raise DataRegistryCaseUpdateError(f"Target case not found: {case_id}")
 
         return case
 
