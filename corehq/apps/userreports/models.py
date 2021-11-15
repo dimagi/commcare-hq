@@ -88,7 +88,7 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
-    get_indicator_adapter, correctly_wrap_report_config,
+    get_indicator_adapter, wrap_report_config_by_type,
 )
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
@@ -1365,7 +1365,7 @@ def get_report_configs(config_ids, domain):
     dynamic_report_configs = []
     if dynamic_report_config_ids:
         dynamic_report_configs = [
-            correctly_wrap_report_config(doc) for doc in
+            wrap_report_config_by_type(doc) for doc in
             get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
         ]
 

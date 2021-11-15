@@ -76,7 +76,7 @@ from corehq.apps.userreports.util import (
     get_referring_apps,
     get_ucr_class_name,
     has_report_builder_access,
-    has_report_builder_trial, correctly_wrap_report_config, get_report_config_or_not_found,
+    has_report_builder_trial, wrap_report_config_by_type, get_report_config_or_not_found,
 )
 from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
 from corehq.util.couch import (
