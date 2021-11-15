@@ -8,7 +8,7 @@ from django.conf import settings
 from corehq.util.metrics import metrics_counter
 from corehq.apps.accounting.models import Subscription, BillingAccount
 from corehq.apps.es.users import UserES
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import WebUser, CommCareUser, Invitation
 
 logger = logging.getLogger('analytics')
 
@@ -66,11 +66,22 @@ def hubspot_enabled_for_user(user):
         for domain in web_user.get_domains():
             if is_domain_blocked_from_hubspot(domain):
                 return False
+        if has_user_accepted_invitation_to_blocked_hubspot_domain(web_user):
+            return False
     else:
         commcare_user = CommCareUser.get_by_username(user.username)
         if is_domain_blocked_from_hubspot(commcare_user.domain):
             return False
     return user.analytics_enabled
+
+
+def has_user_accepted_invitation_to_blocked_hubspot_domain(web_user):
+    blocked_domains = get_blocked_hubspot_domains()
+    return Invitation.objects.filter(
+        domain__in=blocked_domains,
+        is_accepted=True,
+        email=web_user.username
+    ).exists()
 
 
 def hubspot_enabled_for_email(email_address):
