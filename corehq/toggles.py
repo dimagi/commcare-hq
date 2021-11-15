@@ -2127,6 +2127,12 @@ COWIN_INTEGRATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+EXPRESSION_REPEATER = StaticToggle(
+    'expression_repeater',
+    'Integrate with generic APIs using UCR expressions',
+    TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+)
 
 TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
