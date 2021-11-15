@@ -84,6 +84,14 @@ def has_user_accepted_invitation_to_blocked_hubspot_domain(web_user):
     ).exists()
 
 
+def emails_that_accepted_invitations_to_blocked_hubspot_domains():
+    blocked_domains = get_blocked_hubspot_domains()
+    return Invitation.objects.filter(
+        domain__in=blocked_domains,
+        is_accepted=True,
+    ).values_list('email', flat=True)
+
+
 def hubspot_enabled_for_email(email_address):
     from corehq.apps.users.models import CouchUser
     user = CouchUser.get_by_username(email_address)

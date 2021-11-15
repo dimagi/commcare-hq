@@ -40,6 +40,7 @@ from corehq.apps.analytics.utils import (
     hubspot_enabled_for_email,
     remove_blocked_domain_contacts_from_hubspot,
     MAX_API_RETRIES,
+    emails_that_accepted_invitations_to_blocked_hubspot_domains,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
@@ -502,6 +503,7 @@ def track_periodic_data():
     hubspot_number_of_users_blocked = 0
 
     blocked_domains = get_blocked_hubspot_domains()
+    blocked_users = emails_that_accepted_invitations_to_blocked_hubspot_domains()
 
     for chunk in range(num_chunks):
         users_to_domains = (user_query
@@ -538,6 +540,14 @@ def track_periodic_data():
         for user in users_to_domains:
             email = user.get('email') or user.get('username')
             if not _email_is_valid(email):
+                continue
+
+            if (user.get('email') in blocked_users
+                    or user.get('username') in blocked_users):
+                # User had accepted an invitation to a project space whose
+                # Billing Account has blocked HubSpot analytics, so we
+                # should not send any data about them going forward
+                hubspot_number_of_users_blocked += 1
                 continue
 
             date_created = user.get('date_joined')
