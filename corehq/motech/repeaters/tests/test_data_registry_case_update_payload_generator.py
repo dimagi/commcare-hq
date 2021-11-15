@@ -54,7 +54,7 @@ def test_generator_exclude_list():
 def test_generator_create_case():
     builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").create_case("123")
     _test_payload_generator(
-        intent_case=builder.get_case(), target_case_exists=False,
+        intent_case=builder.get_case(), registry_mock_cases={},
         expected_updates={"1": {"new_prop": "new_prop_val"}},
         expected_creates={"1": {"case_type": "patient", "owner_id": "123"}},
     )
@@ -64,7 +64,7 @@ def test_generator_create_case_target_exists():
     builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").create_case("123")
 
     with assert_raises(DataRegistryCaseUpdateError, msg="Unable to create target case as it already exists"):
-        _test_payload_generator(intent_case=builder.get_case(), target_case_exists=True)
+        _test_payload_generator(intent_case=builder.get_case())
 
 
 def test_generator_create_close():
@@ -205,12 +205,19 @@ def test_generator_update_multiple_cases():
     def _get_case(case_id):
         return Mock(domain=TARGET_DOMAIN, type="parent", case_id=case_id)
 
+    registry_cases = _mock_registry()
+    registry_cases["sub1"] = _mock_case("sub1")
+    registry_cases["sub2"] = _mock_case("sub2")
+
     with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
-        _test_payload_generator(intent_case=main_case_builder.get_case(), expected_updates={
-            "1": {"new_prop": "new_prop_val"},
-            "sub1": {"sub1_prop": "sub1_val"},
-            "sub2": {"sub2_prop": "sub2_val"},
-        })
+        _test_payload_generator(
+            intent_case=main_case_builder.get_case(),
+            registry_mock_cases=registry_cases,
+            expected_updates={
+                "1": {"new_prop": "new_prop_val"},
+                "sub1": {"sub1_prop": "sub1_val"},
+                "sub2": {"sub2_prop": "sub2_val"},
+            })
 
 
 def test_generator_update_multiple_cases_multiple_domains():
@@ -246,23 +253,29 @@ def test_generator_copy_from_other_case():
         .case_properties(intent_prop="intent_prop_val")\
         .copy_props_from("other_domain", "other_case_id", "other_case_type")
 
-    def _get_case(case_id):
-        assert case_id == "other_case_id"
-        return Mock(domain="other_domain", type="other_case_type", case_json={"other_prop": "other_val"})
+    registry_cases = _mock_registry()
+    registry_cases["other_case_id"] = Mock(
+        domain="other_domain", case_id="other_case_id", type="other_case_type",
+        case_json={"other_prop": "other_val"}
+    )
 
-    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
-        _test_payload_generator(intent_case=builder.get_case(), expected_updates={
+    _test_payload_generator(
+        intent_case=builder.get_case(),
+        registry_mock_cases=registry_cases,
+        expected_updates={
             "1": {
                 "intent_prop": "intent_prop_val",
                 "other_prop": "other_val",
             }})
 
 
-def _test_payload_generator(intent_case, target_case_exists=True,
+def _test_payload_generator(intent_case, registry_mock_cases=None,
                             expected_updates=None, expected_indices=None,
                             expected_creates=None, expected_close=None):
     # intent case is the case created in the source domain which is used to trigger the repeater
     # and which contains the config for updating the case in the target domain
+
+    registry_mock_cases = _mock_registry() if registry_mock_cases is None else registry_mock_cases
 
     repeater = DataRegistryCaseUpdateRepeater(domain=SOURCE_DOMAIN)
     generator = DataRegistryCaseUpdatePayloadGenerator(repeater)
@@ -271,18 +284,10 @@ def _test_payload_generator(intent_case, target_case_exists=True,
 
     # target_case is the case in the target domain which is being updated
     def _get_case(self, case_id, *args, **kwargs):
-        if not target_case_exists:
+        try:
+            return registry_mock_cases[case_id]
+        except KeyError:
             raise CaseNotFound
-
-        return Mock(domain=TARGET_DOMAIN, type="patient", case_id=case_id, case_json={
-            "existing_prop": uuid.uuid4().hex,
-            "existing_blank_prop": ""
-        }, live_indices=[
-            Mock(
-                identifier="parent", referenced_type="parent_type",
-                referenced_id="parent_case_id", relationship_id="child"
-            )
-        ])
 
     with patch.object(DataRegistryHelper, "get_case", new=_get_case), \
          patch.object(CouchUser, "get_by_user_id", return_value=Mock(username="local_user")):
@@ -441,3 +446,21 @@ class IntentCaseBuilder:
 
         intent_case.get_subcases = _mock_subcases
         return intent_case
+
+
+def _mock_registry():
+    return {
+        "1": _mock_case("1")
+    }
+
+
+def _mock_case(case_id):
+    return Mock(domain=TARGET_DOMAIN, type="patient", case_id=case_id, case_json={
+        "existing_prop": uuid.uuid4().hex,
+        "existing_blank_prop": ""
+    }, live_indices=[
+        Mock(
+            identifier="parent", referenced_type="parent_type",
+            referenced_id="parent_case_id", relationship_id="child"
+        )
+    ])
