@@ -25,6 +25,10 @@ OLD_USERNAME = 'old_username'
 NEW_USERNAME = 'new_username'
 
 
+class OldUserNotFound(Exception):
+    pass
+
+
 class Command(BaseCommand):
     help = """
     Creates new web users with the same data as existing web users
@@ -43,23 +47,27 @@ class Command(BaseCommand):
     def handle(self, file, **options):
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
         already_existing_users = []
+        non_existent_old_users = []
+        invalid_emails = []
         for old_username, new_username in iterate_usernames_to_update(file):
             if not re.search(EMAIL_REGEX_VALIDATION, new_username):
-                logger.error(
-                    f"New username {new_username} must be a valid email. Skipping cloning {old_username}."
-                )
+                invalid_emails.append((old_username, new_username))
                 continue
-            logger.info(f'Cloning old user {old_username} to new user {new_username}')
+
             try:
                 old_user, new_user = clone_user(old_username, new_username)
+            except OldUserNotFound:
+                non_existent_old_users.append((old_username, new_username))
+                continue
             except CouchUser.Inconsistent:
                 already_existing_users.append((old_username, new_username))
                 continue
 
+            logger.info(f'Successfully cloned old user {old_username} to new user {new_username}')
             deactivate_django_user(old_user.get_django_user())
             send_deprecation_email(old_user, new_user)
-            if already_existing_users:
-                logger.warning(f'Users already exist (old_username, new_username):\n {already_existing_users}')
+
+        log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails)
 
 
 def iterate_usernames_to_update(file):
@@ -72,6 +80,8 @@ def iterate_usernames_to_update(file):
 def clone_user(old_username, new_username):
     new_username = new_username.lower()
     old_user = WebUser.get_by_username(old_username)
+    if not old_user:
+        raise OldUserNotFound
     new_user = create_new_user_from_old_user(old_user, new_username)
     new_user.save()
 
@@ -223,3 +233,15 @@ def send_deprecation_email(old_user, new_user):
         file_attachments=[],
         cc=[new_user.get_email()]
     )
+
+
+def log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails):
+    if already_existing_users:
+        pairs = "\n".join([str(pair) for pair in already_existing_users])
+        logger.warning(f'SKIPPED: New username already exists\n {pairs}')
+    if non_existent_old_users:
+        pairs = "\n".join([str(pair) for pair in non_existent_old_users])
+        logger.warning(f'SKIPPED: Old user not found\n {pairs}')
+    if invalid_emails:
+        pairs = "\n".join([str(pair) for pair in invalid_emails])
+        logger.warning(f'SKIPPED: New username is not a valid email\n {pairs}')
