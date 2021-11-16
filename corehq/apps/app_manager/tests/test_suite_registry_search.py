@@ -188,15 +188,15 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
           <create>
             <command value="'m0'"/>
             <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
-              <data key="case_type" ref="'case'"/>
               <data key="commcare_registry" ref="'myregistry'"/>
+              <data key="case_type" ref="'case'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_new_case_0"/>
             </query>
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_case_0"/>
             <query id="registry" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+              <data key="commcare_registry" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_new_case_0"/>
-              <data key="commcare_registry" ref="'myregistry'"/>
             </query>
             <command value="'m0-f0'"/>
           </create>
@@ -248,15 +248,15 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, Su
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
             <command value="'m1'"/>
             <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
-              <data key="case_type" ref="'case'"/>
               <data key="commcare_registry" ref="'myregistry'"/>
+              <data key="case_type" ref="'case'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
             </query>
             <datum id="case_id_case" value="instance('commcaresession')/session/data/case_id_case"/>
             <query id="registry" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+              <data key="commcare_registry" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
-              <data key="commcare_registry" ref="'myregistry'"/>
             </query>
             <command value="'m1-f1'"/>
           </create>
