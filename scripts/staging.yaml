@@ -70,8 +70,6 @@ branches:
     - ml/remove-pickles-user-importer # Minha Oct 13
 #    - fr/dedupe+ad/auto-update-rules-for-linked-spaces
 #    - ml/remove-pickles-reports # Minha Oct 21
-    - sk/data-registry-form-linking+sk/additional-registry-cases
-    - sk/data-registry-form-linking  # Simon Oct 22
     - jls/enable-usercase-button # Jenny Oct 27
     - bmb/update-datatables-dt  # Biyeun Nov 2
     - rc/store-usernames-in-log # Robert Nov 4
