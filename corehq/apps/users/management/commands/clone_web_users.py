@@ -79,6 +79,7 @@ def iterate_usernames_to_update(file):
 
 def clone_user(old_username, new_username):
     new_username = new_username.lower()
+    old_username = old_username.lower()
     old_user = WebUser.get_by_username(old_username)
     if not old_user:
         raise OldUserNotFound
