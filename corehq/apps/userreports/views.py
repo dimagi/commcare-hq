@@ -1175,7 +1175,7 @@ def delete_data_source(request, domain, config_id):
 
 def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id,
-                                 additional_doc_types=["RegistryReportConfiguration"])
+                                 additional_doc_types=["RegistryDataSourceConfiguration"])
     adapter = get_indicator_adapter(config)
     username = request.user.username if request else None
     skip = not request  # skip logging when we remove temporary tables
