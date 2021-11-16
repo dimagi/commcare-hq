@@ -70,7 +70,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
     get_all_mobile_filter_configs,
-    get_auto_filter_configurations, AdditionalRegistryQuery,
+    get_auto_filter_configurations,
 )
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
@@ -203,6 +203,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'shadow_parent': _get_shadow_parent(app, module),
         'case_types': {m.case_type for m in app.modules if m.case_type},
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
+        'data_registry_enabled': app.supports_data_registry,
         'data_registries': get_data_registry_dropdown_options(app.domain, required_case_types=case_types),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
@@ -235,7 +236,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_again_label':
                 module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
             'data_registry': module.search_config.data_registry,
-            'additional_registry_queries': module.search_config.additional_registry_queries,
+            'additional_registry_cases': module.search_config.additional_registry_cases,
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -1214,18 +1215,17 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                     except ValueError as e:
                         return HttpResponseBadRequest(str(e))
 
-            additional_registry_queries = []
-            for query in search_properties.get('additional_registry_queries', []):
-                if not all(list(query.values())):
-                    return HttpResponseBadRequest("All fields for Additional Data Registry Queries are required")
+            additional_registry_cases = []
+            for case_id_xpath in search_properties.get('additional_registry_cases', []):
+                if not case_id_xpath:
+                    continue
 
                 try:
-                    _check_xpath(query["case_type_xpath"], "the Case Type of Additional Data Registry Query")
-                    _check_xpath(query["case_id_xpath"], "the Case ID of Additional Data Registry Query")
+                    _check_xpath(case_id_xpath, "the Case ID of Additional Data Registry Query")
                 except ValueError as e:
                     return HttpResponseBadRequest(str(e))
 
-                additional_registry_queries.append(AdditionalRegistryQuery.wrap(query))
+                additional_registry_cases.append(case_id_xpath)
 
             module.search_config = CaseSearch(
                 search_label=search_label,
@@ -1244,7 +1244,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                     for p in search_properties.get('default_properties')
                 ],
                 data_registry=search_properties.get('data_registry', ""),
-                additional_registry_queries=additional_registry_queries,
+                additional_registry_cases=additional_registry_cases,
             )
 
     resp = {}

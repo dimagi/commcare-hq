@@ -7,7 +7,7 @@ from django.conf import settings
 from django.test import SimpleTestCase
 
 import pytz
-from mock import patch
+from unittest.mock import patch
 from nose.tools import assert_raises_regexp
 from requests.exceptions import ConnectTimeout, ReadTimeout
 

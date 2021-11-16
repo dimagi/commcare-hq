@@ -1,7 +1,7 @@
 from collections import defaultdict
 from contextlib import contextmanager
 
-import mock
+from unittest import mock
 
 from corehq.util.metrics import DebugMetrics, DelegatedMetrics
 

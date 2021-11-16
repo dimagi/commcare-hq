@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import bootstrap_location_types

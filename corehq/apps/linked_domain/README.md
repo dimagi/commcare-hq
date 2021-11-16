@@ -73,7 +73,9 @@ Project data like forms and cases would not be shared.
 Run the `add_downstream_domain` management command:
 
 ```
-$ ./manage.py add_downstream_domain --downstream_url {https://url.of.linked.hq/a/linked_domain_name/} --upstream_domain {upstream_domain_name}
+$ ./manage.py add_downstream_domain \
+    --downstream_url {https://url.of.linked.hq/a/linked_domain_name/} \
+    --upstream_domain {upstream_domain_name}
 ```
 
 This gets used as a permissions check during remote requests to ensure
@@ -83,8 +85,14 @@ that the remote domain is allowed to sync from this domain.
 
 Run the `link_to_upstream_domain` management command.
 ```
-$ ./manage.py link_to_upstream_domain --url_base {base_url_for_upstream_domain} --upstream_domain {upstream_domain_name} --username {username} --api_key {user_api_key} --downstream_domain {downstream_domain_name}
+$ ./manage.py link_to_upstream_domain \
+    --url_base {upstream base_url, eg: https://www.commcarehq.org} \
+    --upstream_domain {upstream_domain_name} \
+    --username {username} \
+    --api_key {user_api_key} \
+    --downstream_domain {downstream_domain_name}
 ```
+
 The specified username and API key are needed to authenticate requests to the upstream environment.
 ### Pulling Changes From the Upstream Domain
 
@@ -97,8 +105,15 @@ in the context of remote links.
 
 If you don't already have an upstream application you would like to link, create an app in the upstream domain. Then create an app in the downstream domain to serve as a placeholder. These app ids can then be used when running the `link_app_to_remote` management command:
 ```
-$ ./manage.py link_app_to_remote --master_id {upstream_app_id} --linked_id {downstream_app_id} --url_base {base url} --domain {upstream_domain_name} --username {username} --api_key {api_key}
+$ ./manage.py link_app_to_remote \
+    --linked_id {downstream_app_id} \
+    --master_id {upstream_app_id} \
+    --url_base {upstream base_url, eg: https://www.commcarehq.org} \
+    --domain {upstream_domain_name} \
+    --username {username} \
+    --api_key {api_key}
 ```
+
 # Linked Applications
 
 Linked applications predate linked domains. Now that linked domains exist, when you link an app, the linked domain record is automatically created. A downstream app is tied to an upstream app via the `upstream_app_id` and `upstream_version` attributes.
@@ -135,7 +150,7 @@ When this flag is on, different builds of the same downstream app may have diffe
 
 ## Removing a link
 
-Use the `unlink_apps` management command to convert a linked application to a regular application. 
+Use the `unlink_apps` management command to convert a linked application to a regular application.
 
 ```
 $ ./manage.py unlink_apps {downstream_app_id} {downstream_domain_name} {upstream_domain_name}

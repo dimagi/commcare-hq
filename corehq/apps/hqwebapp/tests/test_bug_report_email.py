@@ -1,6 +1,6 @@
 import textwrap
 
-import mock
+from unittest import mock
 from django.test import SimpleTestCase
 
 from corehq.apps.domain.models import Domain

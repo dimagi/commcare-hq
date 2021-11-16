@@ -3,7 +3,7 @@ from datetime import datetime
 
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex

@@ -48,7 +48,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     searchFilter: options.search_filter,
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
                     dataRegistry: options.data_registry,
-                    additionalRegistryQueries: options.additional_registry_queries,
+                    additionalRegistryCases: options.additional_registry_cases,
                 });
 
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");

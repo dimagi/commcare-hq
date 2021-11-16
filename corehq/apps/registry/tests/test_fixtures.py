@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 from django.test import SimpleTestCase, TestCase
 
 from casexml.apps.phone.tests.utils import call_fixture_generator, create_restore_user
-from corehq.apps.app_manager.models import CaseSearchProperty
+from corehq.apps.app_manager.models import Application, CaseSearchProperty
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
@@ -69,6 +69,7 @@ class RegistryFixtureProviderTests(TestCase, TestXmlMixin):
 
     @flag_enabled("DATA_REGISTRY")
     @patch("corehq.apps.registry.fixtures._get_permission_checker")
+    @patch.object(Application, 'supports_data_registry', lambda: True)
     def test_fixture_provider_no_permission(self, _get_permission_checker):
         _get_permission_checker().can_view_registry_data.return_value = False
         fixtures = call_fixture_generator(
@@ -83,6 +84,7 @@ class RegistryFixtureProviderTests(TestCase, TestXmlMixin):
 
     @flag_enabled("DATA_REGISTRY")
     @patch("corehq.apps.registry.fixtures._get_permission_checker")
+    @patch.object(Application, 'supports_data_registry', lambda: True)
     def test_fixture_provider(self, _get_permission_checker):
         _get_permission_checker().can_view_registry_data.return_value = True
         list_fixture, domains_fixture = call_fixture_generator(

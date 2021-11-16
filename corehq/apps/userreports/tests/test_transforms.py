@@ -2,7 +2,7 @@ from datetime import date, datetime, timedelta
 
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.transforms.factory import TransformFactory
