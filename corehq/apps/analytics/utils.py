@@ -278,7 +278,7 @@ def remove_blocked_domain_invited_users_from_hubspot(stdout=None):
     num_chunks = int(math.ceil(float(total_users) / float(chunk_size)))
 
     if stdout:
-        stdout.write(f"\n\nChecking Invited Users...")
+        stdout.write("\n\nChecking Invited Users...")
 
     for chunk in range(num_chunks):
         start = chunk * chunk_size
