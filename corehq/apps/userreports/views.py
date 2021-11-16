@@ -717,7 +717,8 @@ class ConfigureReport(ReportBuilderView):
 
 def update_report_description(request, domain, report_id):
     new_description = request.POST['value']
-    report = get_document_or_404(ReportConfiguration, domain, report_id)
+    report = get_document_or_404(ReportConfiguration, domain, report_id,
+                                 additional_doc_types=["RegistryReportConfiguration"])
     report.description = new_description
     report.save()
     return json_response({})
@@ -795,7 +796,8 @@ def _assert_report_delete_privileges(request):
 @require_permission(Permissions.edit_reports)
 def delete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
-    config = get_document_or_404(ReportConfiguration, domain, report_id)
+    config = get_document_or_404(ReportConfiguration, domain, report_id,
+                                 additional_doc_types=["RegistryReportConfiguration"])
 
     # Delete the data source too if it's not being used by any other reports.
     try:
@@ -1172,7 +1174,8 @@ def delete_data_source(request, domain, config_id):
 
 
 def delete_data_source_shared(domain, config_id, request=None):
-    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    config = get_document_or_404(DataSourceConfiguration, domain, config_id,
+                                 additional_doc_types=["RegistryReportConfiguration"])
     adapter = get_indicator_adapter(config)
     username = request.user.username if request else None
     skip = not request  # skip logging when we remove temporary tables

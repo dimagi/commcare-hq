@@ -691,6 +691,12 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
     def all_ids(cls):
         return get_all_registry_data_source_ids()
 
+    def get_report_count(self):
+        """
+        Return the number of ReportConfigurations that reference this data source.
+        """
+        return RegistryReportConfiguration.count_by_data_source(self.domain, self._id)
+
 
 class ReportMeta(DocumentSchema):
     # `True` if this report was initially constructed by the report builder.
