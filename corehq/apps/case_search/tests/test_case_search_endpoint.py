@@ -2,7 +2,7 @@ import uuid
 
 from django.test import TestCase
 
-import mock
+from unittest import mock
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 

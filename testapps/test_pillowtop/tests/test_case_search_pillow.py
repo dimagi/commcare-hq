@@ -1,7 +1,7 @@
 import uuid
 
 from django.test import TestCase
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException

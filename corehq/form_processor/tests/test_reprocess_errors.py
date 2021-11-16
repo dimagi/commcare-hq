@@ -3,7 +3,7 @@ import uuid
 
 from django.db.utils import IntegrityError, InternalError
 from django.test import TestCase, TransactionTestCase
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.signals import case_post_save

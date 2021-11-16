@@ -8,6 +8,8 @@ from psycogreen.gevent import patch_psycopg
 
 
 def main():
+    patch_pickle()  # should happen before gevent patch, which imports pickle
+
     # important to apply gevent monkey patches before running any other code
     # applying this later can lead to inconsistencies and threading issues
     # but compressor doesn't like it

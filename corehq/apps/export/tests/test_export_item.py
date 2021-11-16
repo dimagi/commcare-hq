@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from django.test import SimpleTestCase
 
-import mock
+from unittest import mock
 
 from corehq.apps.export.models import (
     ExportColumn,

@@ -3,7 +3,7 @@ from datetime import date, time
 
 from django.test import SimpleTestCase, TransactionTestCase
 
-from mock import Mock, call, patch
+from unittest.mock import Mock, call, patch
 
 from corehq.apps.accounting.exceptions import SubscriptionAdjustmentError
 from corehq.apps.accounting.models import (

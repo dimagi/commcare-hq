@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
 from corehq.apps.domain.models import Domain

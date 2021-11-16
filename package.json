@@ -100,6 +100,7 @@
     "resolutions": {
         "debug": "^2.6.9",
         "dot-prop": "^5.1.1",
+        "getobject": "^1.0.0",
         "growl": "^1.10.0",
         "grunt": "^1.2.0",
         "js-yaml": "^3.13.1",

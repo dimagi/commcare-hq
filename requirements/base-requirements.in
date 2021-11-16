@@ -5,7 +5,7 @@ boto3~=1.17
 # celery 4.1.1 forked to work around https://github.com/celery/celery/issues/4737	celery==4.4.7
 # upgrade when https://github.com/celery/celery/issues/4980 is fixed
 # originally changes were made on nickpell/celery, but this was moved to dimagi/celery
-celery @ https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl
+celery @ https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
 CommcareTranslationChecker==0.9.7
 concurrent-log-handler==0.9.12
 csiphash==0.0.5
@@ -29,7 +29,7 @@ django-logentry-admin==1.0.6
 django-oauth-toolkit==1.5.0
 django-otp~=0.9.3
 django-partial-index~=0.6.0
-django-phonenumber-field==2.3.1  # remove after upgrade >=3.0.1 is deemed safe
+django-phonenumber-field==5.2.0
 django-prbac>=0.0.8
 django-redis-sessions==0.6.1
 django-redis==4.12.1
@@ -37,7 +37,7 @@ django-simple-captcha==0.5.13
 django-statici18n==1.9.0
 django-tastypie==0.14.3
 django-transfer==0.4
-django-two-factor-auth~=1.12
+django-two-factor-auth~=1.13
 django-user-agents==0.4.0
 django-websocket-redis==0.6.0
 django~=2.2.21
@@ -71,7 +71,6 @@ kombu==4.2.2.post1
 billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
 laboratory==0.2.0
 lxml~=4.6.3
-mock==2.0.0
 openpyxl~=3.0
 phonenumberslite~=8.12
 pickle5  # For Pythons pre 3.8.3. Can be removed when no environment will ever revert to < 3.8

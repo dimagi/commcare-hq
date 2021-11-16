@@ -3,7 +3,7 @@ import uuid
 from django.test import SimpleTestCase
 
 from kafka.future import Future
-from mock import Mock
+from unittest.mock import Mock
 from nose.tools import assert_equal, assert_true
 
 from pillowtop.feed.interface import ChangeMeta
