@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.exceptions import (
     XFormException,
@@ -20,9 +20,6 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
     PreloadAction,
     UpdateCaseAction,
-    CaseSearch,
-    CaseSearchProperty,
-    AdditionalRegistryQuery,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import XForm
@@ -107,23 +104,6 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         self.app.langs = ['fra']  # lang that's not in the form
         with self.assertRaises(XFormException):
             self.form.render_xform()
-
-    def test_instance_check(self):
-        self.module.search_config = CaseSearch(
-            properties=[
-                CaseSearchProperty(name='name', label={'en': 'Name'}),
-            ],
-            data_registry="myregistry",
-            additional_registry_queries=[
-                AdditionalRegistryQuery(
-                    instance_name="other_case", case_type_xpath="'patient'", case_id_xpath="'123'"
-                )
-            ]
-        )
-        xml = self.get_xml('open_case')
-        form = XForm(xml)
-        form.add_missing_instances(self.form, self.app)
-        self.assertEqual(set(form._get_instance_ids()), {"commcaresession", "other_case"})
 
     def test_add_remote_instances(self):
         xml = self.get_xml('missing_instances')

@@ -14,6 +14,7 @@ from corehq.apps.callcenter.utils import (
     is_midnight_for_domain,
 )
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.domain.models import Domain
 
 logger = get_task_logger(__name__)
 
@@ -43,6 +44,13 @@ def calculate_indicators():
             override_cache=True
         )
         indicator_set.get_data()
+
+
+def bulk_sync_usercases_if_applicable(domain, user_ids):
+    domain_obj = Domain.get_by_name(domain)
+    if domain_obj.call_center_config.enabled or domain_obj.usercase_enabled:
+        for user_id in user_ids:
+            sync_usercases_task.delay(user_id)
 
 
 def sync_usercases_if_applicable(user, spawn_task):

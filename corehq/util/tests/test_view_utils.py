@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from mock import patch
+from unittest.mock import patch
 from corehq.util.view_utils import json_error
 
 

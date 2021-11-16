@@ -40,8 +40,8 @@ def notify_someone(email, success_message, error_message='Sorry, your HQ task fa
 @contextmanager
 def catch_signal(signal):
     """Catch django signal and return the mocked call."""
-    import mock
-    handler = mock.Mock()
+    from unittest.mock import Mock
+    handler = Mock()
     signal.connect(handler)
     yield handler
     signal.disconnect(handler)

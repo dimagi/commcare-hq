@@ -214,9 +214,8 @@ def _get_user_hubspot_id(web_user, retry_num=0):
         else:
             return req.json().get("vid", None)
     elif api_key:
-        metrics_gauge(
+        metrics_counter(
             'commcare.hubspot_data.rejected.get_user_hubspot_id',
-            1,
             tags={
                 'username': web_user.username,
             }

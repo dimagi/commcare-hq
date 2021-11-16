@@ -4,7 +4,7 @@ from functools import partial
 from django.test import SimpleTestCase, TestCase
 from django.utils.translation import ugettext
 
-import mock
+from unittest import mock
 
 from pillowtop.es_utils import initialize_index_and_mapping
 

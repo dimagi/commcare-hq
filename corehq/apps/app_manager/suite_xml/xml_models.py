@@ -67,7 +67,7 @@ class XPathVariable(XmlObject):
         return self.locale_id or self.xpath
 
 
-class XPath(XmlObject):
+class TextXPath(XmlObject):
     ROOT_NAME = 'xpath'
     function = XPathField('@function')
     variables = NodeListField('variable', XPathVariable)
@@ -81,10 +81,10 @@ class LocaleArgument(XmlObject):
 
 class Id(XmlObject):
     ROOT_NAME = 'id'
-    xpath = NodeField('xpath', XPath)
+    xpath = NodeField('xpath', TextXPath)
 
 
-class XPathEnum(XPath):
+class XPathEnum(TextXPath):
     @classmethod
     def build(cls, enum, template, get_template_context, get_value):
         variables = []
@@ -129,7 +129,7 @@ class Text(XmlObject):
 
     ROOT_NAME = 'text'
 
-    xpath = NodeField('xpath', XPath)
+    xpath = NodeField('xpath', TextXPath)
     xpath_function = XPathField('xpath/@function')
 
     locale = NodeField('locale', Locale)
@@ -279,7 +279,7 @@ class MediaText(XmlObject):
     ROOT_NAME = 'text'
     form_name = StringField('@form', choices=['image', 'audio'])  # Nothing XForm-y about this 'form'
     locale = NodeField('locale', LocaleId)
-    xpath = NodeField('xpath', XPath)
+    xpath = NodeField('xpath', TextXPath)
     xpath_function = XPathField('xpath/@function')
 
 
@@ -387,6 +387,19 @@ class StackDatum(IdNode):
     value = XPathField('@value')
 
 
+class QueryData(XmlObject):
+    ROOT_NAME = 'data'
+
+    key = StringField('@key')
+    ref = XPathField('@ref')
+
+
+class StackQuery(StackDatum):
+    ROOT_NAME = 'query'
+
+    data = NodeListField('data', QueryData)
+
+
 class StackCommand(XmlObject):
     ROOT_NAME = 'command'
 
@@ -468,13 +481,6 @@ class Assertion(XmlObject):
     text = NodeListField('text', Text)
 
 
-class QueryData(XmlObject):
-    ROOT_NAME = 'data'
-
-    key = StringField('@key')
-    ref = XPathField('@ref')
-
-
 class QueryPrompt(DisplayNode):
     ROOT_NAME = 'prompt'
 
@@ -500,6 +506,17 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     prompts = NodeListField('prompt', QueryPrompt)
     default_search = BooleanField("@default_search")
 
+    @property
+    def id(self):
+        return self.storage_instance
+
+
+def _wrap_session_datums(datum):
+    return {
+        'datum': SessionDatum,
+        'query': RemoteRequestQuery
+    }[datum.tag](datum)
+
 
 class Entry(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'entry'
@@ -511,10 +528,12 @@ class Entry(OrderedXmlObject, XmlObject):
 
     datums = NodeListField('session/datum', SessionDatum)
     queries = NodeListField('session/query', RemoteRequestQuery)
+    session_children = NodeListField('session/*', _wrap_session_datums)
 
     stack = NodeField('stack', Stack)
 
     assertions = NodeListField('assertions/assert', Assertion)
+
 
     def require_instances(self, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in self.instances}

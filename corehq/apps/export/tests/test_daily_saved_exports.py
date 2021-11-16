@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.export.tasks import saved_exports

@@ -8,7 +8,7 @@ from decimal import Decimal
 import six
 import sqlalchemy
 from django.db import DEFAULT_DB_ALIAS
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime

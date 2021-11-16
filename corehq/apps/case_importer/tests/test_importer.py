@@ -6,7 +6,7 @@ from django.utils.dateparse import parse_datetime
 
 from celery import states
 from celery.exceptions import Ignore
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
