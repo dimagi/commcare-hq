@@ -215,6 +215,32 @@ class SQLRepeater(models.Model):
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
+    repeater_type = models.CharField(max_length=64, db_index=True)
+
+    # attributes used in CaseRepeaters and it's subclasses
+    version = models.CharField(
+        max_length=10,
+        choices=list(zip(LEGAL_VERSIONS, LEGAL_VERSIONS)),
+        default=V2,
+    )
+    white_listed_case_types = ArrayField(
+        models.CharField(max_length=255, default=list)
+    )
+    black_listed_users = ArrayField(
+        models.CharField(max_length=255, default=list)
+    )
+
+    #attributes used in FormRepeaters and it's subclases
+    include_app_id_param = models.BooleanField(default=True)
+    white_listed_case_types = ArrayField(
+        models.CharField(max_length=255, default=list)
+    )
+
+    # attributes used in FormRepeaters and CaseRepeaters
+    format = models.CharField(
+        max_length=16,
+        choices=REPEATER_FORMAT_OPTIONS,
+    )
 
     objects = RepeaterManager()
 
@@ -230,6 +256,11 @@ class SQLRepeater(models.Model):
     @memoized
     def repeater(self):
         return Repeater.get(self.repeater_id)
+
+    @property
+    def _repeater_type(self):
+        name = type(self).__name__
+        return name[3:] if name.startswith('SQL') else name
 
     @property
     def repeat_records_ready(self):
