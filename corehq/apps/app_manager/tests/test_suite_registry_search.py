@@ -229,7 +229,8 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, Su
 
         m1.search_config = CaseSearch(
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
-            data_registry="myregistry"
+            data_registry="myregistry",
+            data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE,
         )
 
         # link from f1 to f2 (both in the child module)
