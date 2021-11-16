@@ -2,7 +2,6 @@ from django.forms import ValidationError
 
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.expressions.specs import DictExpressionSpec
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.userreports.ui import help_text
@@ -20,11 +19,9 @@ class CaseExpressionRepeaterForm(GenericRepeaterForm):
 
     def clean_configured_expression(self):
         try:
-            parsed_expression = ExpressionFactory.from_spec(
+            ExpressionFactory.from_spec(
                 self.cleaned_data['configured_expression'], FactoryContext.empty()
             )
-            if not isinstance(parsed_expression, DictExpressionSpec):
-                raise ValidationError("The configured expression must be a dict expression")
         except BadSpecError as e:
             raise ValidationError(e)
 
