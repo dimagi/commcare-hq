@@ -29,7 +29,7 @@ class CreateDomainLinkRequestTests(SimpleTestCase):
         user = Mock()
 
         with patch('corehq.apps.linked_domain.views.domain_exists', return_value=True),\
-             patch('corehq.apps.linked_domain.views.is_active_link', return_value=True):
+             patch('corehq.apps.linked_domain.views.get_active_domain_link', return_value=Mock()):
             error = handle_create_domain_link_request(user, upstream_domain, downstream_domain)
 
         self.assertEqual(error, f"The project space {downstream_domain} is already a downstream "
@@ -44,7 +44,7 @@ class CreateDomainLinkRequestTests(SimpleTestCase):
             raise DomainLinkError
 
         with patch('corehq.apps.linked_domain.views.domain_exists', return_value=True),\
-             patch('corehq.apps.linked_domain.views.is_active_link', return_value=False),\
+             patch('corehq.apps.linked_domain.views.get_active_domain_link', return_value=None),\
              patch('corehq.apps.linked_domain.views.DomainLink.link_domains') as mock_linkdomains:
             mock_linkdomains.side_effect = mock_handler
             error = handle_create_domain_link_request(user, upstream_domain, downstream_domain)
@@ -58,7 +58,7 @@ class CreateDomainLinkRequestTests(SimpleTestCase):
         user = Mock()
 
         with patch('corehq.apps.linked_domain.views.domain_exists', return_value=True),\
-             patch('corehq.apps.linked_domain.views.is_active_link', return_value=False),\
+             patch('corehq.apps.linked_domain.views.get_active_domain_link', return_value=None),\
              patch('corehq.apps.linked_domain.views.user_has_admin_access_in_all_domains', return_value=False):
             error = handle_create_domain_link_request(user, upstream_domain, downstream_domain)
 
@@ -70,7 +70,7 @@ class CreateDomainLinkRequestTests(SimpleTestCase):
         user = Mock()
 
         with patch('corehq.apps.linked_domain.views.domain_exists', return_value=True),\
-             patch('corehq.apps.linked_domain.views.is_active_link', return_value=False),\
+             patch('corehq.apps.linked_domain.views.get_active_domain_link', return_value=None),\
              patch('corehq.apps.linked_domain.views.DomainLink.link_domains', return_value=True),\
              patch('corehq.apps.linked_domain.views.user_has_admin_access_in_all_domains', return_value=True):
             error = handle_create_domain_link_request(user, upstream_domain, downstream_domain)
