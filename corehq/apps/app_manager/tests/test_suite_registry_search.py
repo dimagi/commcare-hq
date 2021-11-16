@@ -35,7 +35,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def setUp(self):
         self.app = Application.new_app(DOMAIN, "Untitled Application")
         self.app._id = '123'
-        self.app.build_spec = BuildSpec(version='2.35.0', build_number=1)
+        self.app.build_spec = BuildSpec(version='2.53.0', build_number=1)
         self.module = self.app.add_module(Module.new_module("Followup", None))
         self.form = self.app.new_form(0, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
         self.form.requires = 'case'
@@ -209,11 +209,12 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
 
 @patch_get_xform_resource_overrides()
+@flag_enabled('DATA_REGISTRY')
 class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite_registry')
 
     def setUp(self):
-        factory = AppFactory(DOMAIN, "App with DR and child modules", build_version='2.35.0')
+        factory = AppFactory(DOMAIN, "App with DR and child modules", build_version='2.53.0')
         m0, f0 = factory.new_basic_module("case list", "case")
         factory.form_requires_case(f0)
 
