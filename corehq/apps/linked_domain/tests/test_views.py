@@ -1,9 +1,13 @@
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase
 
 from corehq.apps.domain.exceptions import DomainDoesNotExist
-from corehq.apps.linked_domain.exceptions import DomainLinkError, DomainLinkAlreadyExists, DomainLinkNotAllowed
+from corehq.apps.linked_domain.exceptions import (
+    DomainLinkAlreadyExists,
+    DomainLinkError,
+    DomainLinkNotAllowed,
+)
 from corehq.apps.linked_domain.views import link_domains
 
 

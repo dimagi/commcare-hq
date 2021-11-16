@@ -52,10 +52,15 @@ from corehq.apps.linked_domain.dbaccessors import (
     get_linked_domains,
     get_upstream_domain_link,
 )
-from corehq.apps.linked_domain.decorators import require_linked_domain, require_access_to_linked_domains
+from corehq.apps.linked_domain.decorators import (
+    require_access_to_linked_domains,
+    require_linked_domain,
+)
 from corehq.apps.linked_domain.exceptions import (
+    DomainLinkAlreadyExists,
     DomainLinkError,
-    UnsupportedActionError, DomainLinkAlreadyExists, DomainLinkNotAllowed,
+    DomainLinkNotAllowed,
+    UnsupportedActionError,
 )
 from corehq.apps.linked_domain.local_accessors import (
     get_auto_update_rules,
@@ -66,8 +71,8 @@ from corehq.apps.linked_domain.local_accessors import (
     get_fixture,
     get_hmac_callout_settings,
     get_otp_settings,
-    get_user_roles,
     get_tableau_server_and_visualizations,
+    get_user_roles,
 )
 from corehq.apps.linked_domain.models import (
     DomainLink,
