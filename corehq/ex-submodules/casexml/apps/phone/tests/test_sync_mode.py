@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException

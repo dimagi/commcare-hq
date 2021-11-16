@@ -9,7 +9,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from dateutil.relativedelta import relativedelta
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.models import SyncLogSQL

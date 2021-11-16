@@ -2,7 +2,7 @@ import uuid
 
 from django.test import TestCase
 from corehq.util.es.elasticsearch import ConnectionError
-import mock
+from unittest import mock
 
 from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.case_search.models import CaseSearchConfig

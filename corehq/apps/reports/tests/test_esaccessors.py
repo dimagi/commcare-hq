@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 
 import pytz
 from corehq.util.es.elasticsearch import ConnectionError
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain

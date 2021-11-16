@@ -1,5 +1,5 @@
 from io import BytesIO
-from mock import patch
+from unittest.mock import patch
 from datetime import datetime, timedelta
 from django.test import TestCase
 

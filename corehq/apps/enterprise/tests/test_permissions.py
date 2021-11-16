@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 
 from django.test.testcases import TestCase
 from django.urls import reverse

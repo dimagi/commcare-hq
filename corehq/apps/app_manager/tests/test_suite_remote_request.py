@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from mock import patch
+from unittest.mock import patch
 from uuid import uuid4
 
 from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK

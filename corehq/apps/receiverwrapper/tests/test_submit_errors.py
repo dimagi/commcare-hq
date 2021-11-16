@@ -9,7 +9,7 @@ from django.test.client import Client
 from django.urls import reverse
 
 from botocore.exceptions import ConnectionClosedError
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.exceptions import IllegalCaseId
 from couchforms.models import UnfinishedSubmissionStub
