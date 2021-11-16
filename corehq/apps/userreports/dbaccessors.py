@@ -46,7 +46,8 @@ def get_registry_report_configs_for_domain(domain):
 
 
 def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=False, include_aggregate=False):
-    from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
+    from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration, \
+        RegistryDataSourceConfiguration
     key = [domain]
     if referenced_doc_type:
         key.append(referenced_doc_type)
@@ -59,6 +60,9 @@ def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=
             include_docs=True
         ),
         key=lambda config: config.display_name or '')
+    datasources.extend(sorted(
+        RegistryDataSourceConfiguration.by_domain(domain), key=lambda config: config.display_name or '')
+    )
 
     if include_static:
         static_ds = StaticDataSourceConfiguration.by_domain(domain)

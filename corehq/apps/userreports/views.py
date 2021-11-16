@@ -111,7 +111,7 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
     id_is_static,
-    report_config_id_is_static,
+    report_config_id_is_static, RegistryReportConfiguration,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
@@ -201,7 +201,7 @@ class BaseUserConfigReportsView(BaseDomainView):
         static_reports = list(StaticReportConfiguration.by_domain(self.domain))
         context = super(BaseUserConfigReportsView, self).main_context
         context.update({
-            'reports': ReportConfiguration.by_domain(self.domain) + static_reports,
+            'reports': ReportConfiguration.by_domain(self.domain) + RegistryReportConfiguration.by_domain(self.domain) + static_reports,
             'data_sources': get_datasources_for_domain(self.domain, include_static=True)
         })
         if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
