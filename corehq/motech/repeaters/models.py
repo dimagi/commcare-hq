@@ -199,8 +199,6 @@ class RepeaterSuperProxy(models.Model):
         abstract = True
 
     def save(self, *args, **kwargs):
-        # _repeater_type should be replaces when SQL is removed from model name
-        # After that self.model.__name__ would work fine
         self.repeater_type = self._repeater_type
         return super().save(*args, **kwargs)
 
