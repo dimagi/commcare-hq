@@ -866,6 +866,10 @@ class CreateCaseRepeater(CaseRepeater):
         # assume if there's exactly 1 xform_id that modified the case it's being created
         return super(CreateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) == 1
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLCreateCaseRepeater
+
 
 class UpdateCaseRepeater(CaseRepeater):
     """
