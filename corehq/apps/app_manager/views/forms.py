@@ -251,16 +251,6 @@ def edit_form_attr(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
-def _is_valid_xform(raw_form_str):
-    # NOTE raw_form_str should be in bytes, as parsing on a string fails
-    # if the XML specifies an encoding
-    parser = etree.XMLParser(resolve_entities=False)
-    tree = etree.fromstring(raw_form_str, parser=parser).getroottree()
-    entities = tree.iter(etree.Entity)
-    hasEntities = any(True for entity in entities)  # for some reason, lxml entities can evaluate to False
-    return not hasEntities
-
-
 @no_conflict_require_POST
 @require_permission(Permissions.edit_apps, login_decorator=None)
 def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
@@ -329,8 +319,6 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     pass
             if xform:
                 if isinstance(xform, str):
-                    if not _is_valid_xform(xform):
-                        raise Exception("Invalid Xform specified")
                     xform = xform.encode('utf-8')
                 save_xform(app, form, xform)
             else:
@@ -543,10 +531,12 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
-    if not _is_valid_xform(xml):
-        return {'status': 'error'}
 
-    xml = save_xform(app, form, xml.encode('utf-8'))
+    try:
+        xml = save_xform(app, form, xml.encode('utf-8'))
+    except XFormException:
+        return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
+
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
 
@@ -556,7 +546,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
-    return json_response(response_json)
+    return JsonResponse(response_json)
 
 
 def apply_patch(patch, text):

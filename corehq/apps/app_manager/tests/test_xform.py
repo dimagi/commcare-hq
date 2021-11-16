@@ -1,31 +1,33 @@
 from django.test import SimpleTestCase
-from ...views.forms import _is_valid_xform
+
+from ..xform import parse_xml
+from ..exceptions import XFormException
 
 
-class TestXFormValidation(SimpleTestCase):
-    def test_normal_form_is_valid(self):
-        form = '''
+class ParseXMLTests(SimpleTestCase):
+    def test_parses_normal_xml(self):
+        xml = '''
         <html>
             <head>
                 <title>Survery</title>
             </head>
         </html>
         '''.strip()
-        self.assertTrue(_is_valid_xform(form))
+        parse_xml(xml)
 
-    def test_form_with_entity_only_in_dtd_is_valid(self):
-        form = '''
+    def test_parses_entity_only_in_dtd(self):
+        xml = '''
         <!DOCTYPE foo [<!ENTITY example SYSTEM 'file://etc/hosts'>]>
         <html>
             <head>
-                <title>Survery</title>
+                <title>Survery: example</title>
             </head>
         </html>
         '''.strip()
-        self.assertTrue(_is_valid_xform(form))
+        parse_xml(xml)
 
-    def test_form_referencing_entity_is_invalid(self):
-        form = '''
+    def test_throws_exception_with_entity_reference(self):
+        xml = '''
         <!DOCTYPE foo [<!ENTITY example SYSTEM 'file://etc/hosts'>]>
         <html>
             <head>
@@ -33,4 +35,6 @@ class TestXFormValidation(SimpleTestCase):
             </head>
         </html>
         '''.strip()
-        self.assertFalse(_is_valid_xform(form))
+
+        with self.assertRaises(XFormException):
+            parse_xml(xml)
