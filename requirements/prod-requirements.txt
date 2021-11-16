@@ -14,10 +14,8 @@ attrs==18.2.0
     # via
     #   -r base-requirements.in
     #   jsonschema
-babel==2.8.0
-    # via
-    #   django-phonenumber-field
-    #   flower
+babel==2.9.1
+    # via flower
 backcall==0.2.0
     # via ipython
 billiard==3.5.0.4
@@ -30,7 +28,7 @@ botocore==1.20.85
     # via
     #   boto3
     #   s3transfer
-https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl
+https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
     # via
     #   -r base-requirements.in
     #   django-celery-results
@@ -139,7 +137,7 @@ django-otp==0.9.4
     #   django-two-factor-auth
 django-partial-index==0.6.0
     # via -r base-requirements.in
-django-phonenumber-field==2.3.1
+django-phonenumber-field==5.2.0
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -159,7 +157,7 @@ django-tastypie==0.14.3
     # via -r base-requirements.in
 django-transfer==0.4
     # via -r base-requirements.in
-django-two-factor-auth==1.12.1
+django-two-factor-auth==1.13.1
     # via -r base-requirements.in
 django-user-agents==0.4.0
     # via -r base-requirements.in
@@ -271,8 +269,6 @@ markupsafe==1.1.1
     # via
     #   jinja2
     #   mako
-mock==2.0.0
-    # via -r base-requirements.in
 ndg-httpsclient==0.5.1
     # via -r prod-requirements.in
 oauthlib==3.1.0
@@ -285,11 +281,11 @@ openpyxl==3.0.6
     #   commcaretranslationchecker
 parso==0.7.1
     # via jedi
-pbr==5.5.0
-    # via mock
 pexpect==4.8.0
     # via ipython
 phonenumberslite==8.12.10
+    # via -r base-requirements.in
+pickle5==0.0.11
     # via -r base-requirements.in
 pickleshare==0.7.5
     # via ipython
@@ -449,7 +445,6 @@ six==1.15.0
     #   jsonobject-couchdbkit
     #   jsonpath-ng
     #   jsonschema
-    #   mock
     #   protobuf
     #   pyopenssl
     #   python-dateutil

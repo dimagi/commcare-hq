@@ -926,13 +926,6 @@ CASE_API_V0_6 = StaticToggle(
     save_fn=_enable_search_index,
 )
 
-LIVEQUERY_SYNC = DynamicallyPredictablyRandomToggle(
-    'livequery_sync',
-    'Enable livequery sync algorithm',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
     'hipaa_compliance_checkbox',
     'Show HIPAA compliance checkbox',
@@ -1222,13 +1215,6 @@ NON_PARENT_MENU_SELECTION = StaticToggle(
     help_link="https://confluence.dimagi.com/display/USH/Selecting+any+case+in+%27select+parent+first%27+workflow"
 )
 
-FORMPLAYER_USE_LIVEQUERY = StaticToggle(
-    'formplayer_use_livequery',
-    'Use LiveQuery on Web Apps',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-)
-
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'ICDS: Allow a configurable case list that is filtered based on a fixture type and '
@@ -1264,6 +1250,13 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
     TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
+CASE_DEDUPE = StaticToggle(
+    'case_dedupe',
+    'Case deduplication feature',
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
 )
 

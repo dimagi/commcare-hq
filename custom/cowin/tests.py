@@ -5,7 +5,7 @@ import uuid
 from django.test import SimpleTestCase
 
 import requests
-from mock import PropertyMock, patch
+from unittest.mock import PropertyMock, patch
 
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.models import ConnectionSettings

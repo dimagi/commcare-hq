@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-03 15:11+0000\n"
+"POT-Creation-Date: 2021-11-10 20:28+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -2768,26 +2768,26 @@ msgstr ""
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:345
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:344
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:354
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:353
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:503
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:501
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:531
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:529
 msgid "Please wait..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:683
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:681
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
@@ -2801,11 +2801,11 @@ msgstr ""
 msgid "Completed: "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:30
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:29
 msgid "Show Full Menu"
 msgstr "Mostrar Menu Completo"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:37
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:36
 msgid "Hide Full Menu"
 msgstr ""
 
@@ -2937,6 +2937,22 @@ msgstr ""
 msgid ""
 "You have unsaved changes to this case type. Are you sure you would like to "
 "continue?"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js:26
+msgid "OR"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js:28
+msgid "AND"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js:33
+msgid "True when ANY of the case properties match"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js:35
+msgid "True when ALL of the case properties match"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:168

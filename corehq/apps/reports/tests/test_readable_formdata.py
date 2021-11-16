@@ -7,7 +7,7 @@ from django.test import SimpleTestCase
 from django.test.testcases import TestCase
 
 import yaml
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     FormQuestionResponse,

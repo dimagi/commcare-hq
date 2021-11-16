@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from mock import call, patch
+from unittest.mock import call, patch
 
 from corehq.apps.case_search.models import (
     disable_case_search,

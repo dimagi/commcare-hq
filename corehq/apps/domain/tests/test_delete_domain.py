@@ -9,10 +9,10 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from dateutil.relativedelta import relativedelta
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
-from casexml.apps.phone.models import OwnershipCleanlinessFlag, SyncLogSQL
+from casexml.apps.phone.models import SyncLogSQL
 from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.apps.accounting.models import (
@@ -701,13 +701,11 @@ class TestDeleteDomain(TestCase):
 
     def _assert_phone_counts(self, domain_name, count):
         self._assert_queryset_count([
-            OwnershipCleanlinessFlag.objects.filter(domain=domain_name),
             SyncLogSQL.objects.filter(domain=domain_name)
         ], count)
 
     def test_phone_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            OwnershipCleanlinessFlag.objects.create(domain=domain_name)
             SyncLogSQL.objects.create(
                 domain=domain_name,
                 doc={},

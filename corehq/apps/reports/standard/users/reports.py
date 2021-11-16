@@ -1,10 +1,10 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
-from django.core.exceptions import ObjectDoesNotExist
 
 from memoized import memoized
 
@@ -21,7 +21,16 @@ from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin, PaginatedReportMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
-from corehq.apps.users.audit.change_messages import get_messages
+from corehq.apps.users.audit.change_messages import (
+    ASSIGNED_LOCATIONS_FIELD,
+    CHANGE_MESSAGES_FIELDS,
+    DOMAIN_FIELD,
+    LOCATION_FIELD,
+    PHONE_NUMBERS_FIELD,
+    ROLE_FIELD,
+    TWO_FACTOR_FIELD,
+    get_messages,
+)
 from corehq.apps.users.models import UserHistory
 from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
@@ -61,15 +70,16 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             user_data_label = _("user data")
         return {
             "username": _("username"),
-            "role_id": _("role"),
+            ROLE_FIELD: _("role"),
             "email": _("email"),
-            "domain": _("project"),
+            DOMAIN_FIELD: _("project"),
             "is_active": _("is active"),
             "language": _("language"),
-            "phone_numbers": _("phone numbers"),
-            "location_id": _("location"),
+            PHONE_NUMBERS_FIELD: _("phone numbers"),
+            LOCATION_FIELD: _("primary location"),
             "user_data": user_data_label,
-            "two_factor_auth_disabled_until": _("two factor authentication disabled"),
+            TWO_FACTOR_FIELD: _("two factor authentication disabled"),
+            ASSIGNED_LOCATIONS_FIELD: _("assigned locations"),
         }
 
     @property
@@ -131,7 +141,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             filters = filters & Q(changed_by__in=changed_by_user_ids)
 
         if user_property:
-            filters = filters & Q(**{"changes__has_key": user_property})
+            filters = filters & self._get_property_filters(user_property)
 
         if actions and ChangeActionFilter.ALL not in actions:
             filters = filters & Q(action__in=actions)
@@ -146,6 +156,18 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     def _for_domains(self):
         return BillingAccount.get_account_by_domain(self.domain).get_domains()
+
+    @staticmethod
+    def _get_property_filters(user_property):
+        if user_property in CHANGE_MESSAGES_FIELDS:
+            query_filters = Q(change_messages__has_key=user_property)
+            # to include CommCareUser creation from UI where a location can be assigned as a part of user creation
+            # which is tracked only under "changes" and not "change messages"
+            if user_property == LOCATION_FIELD:
+                query_filters = query_filters | Q(changes__has_key='location_id')
+        else:
+            query_filters = Q(changes__has_key=user_property)
+        return query_filters
 
     @property
     def rows(self):
@@ -178,47 +200,48 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             _get_action_display(record.action),
             record.changed_via,
             self._user_history_details_cell(record.changes, domain),
-            list(get_messages(record.change_messages)),
+            self._html_list(list(get_messages(record.change_messages))),
             ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
         ]
 
-    def _user_history_details_cell(self, changes, domain):
-        def _html_list(changes=None, unstyled=True):
-            items = []
-            if changes is None:
-                return None
+    def _html_list(self, changes):
+        items = []
+        if isinstance(changes, dict):
             for key, value in changes.items():
                 if isinstance(value, dict):
-                    value = _html_list(value, unstyled=unstyled)
+                    value = self._html_list(value)
                 elif isinstance(value, list):
                     value = format_html(", ".join(value))
                 else:
                     value = format_html(str(value))
                 items.append("<li>{}: {}</li>".format(key, value))
+        elif isinstance(changes, list):
+            items = ["<li>{}</li>".format(format_html(change)) for change in changes]
+        return mark_safe(f"<ul class='list-unstyled'>{''.join(items)}</ul>")
 
-            class_attr = "class='list-unstyled'" if unstyled else ""
-            return mark_safe(f"<ul {class_attr}>{''.join(items)}</ul>")
-
+    def _user_history_details_cell(self, changes, domain):
         properties = UserHistoryReport.get_primary_properties(domain)
         properties.pop("user_data", None)
         primary_changes = {}
         all_changes = {}
 
         for key, value in changes.items():
-            if key in properties:
-                if key == 'location_id':
-                    value = self._get_location_name(value)
+            if key == 'location_id':
+                value = self._get_location_name(value)
+                primary_changes[properties[LOCATION_FIELD]] = value
+                all_changes[properties[LOCATION_FIELD]] = value
+            elif key == 'user_data':
+                for user_data_key, user_data_value in changes['user_data'].items():
+                    all_changes[f"user data: {user_data_key}"] = user_data_value
+            elif key in properties:
                 primary_changes[properties[key]] = value
                 all_changes[properties[key]] = value
-            if key == 'user_data':
-                for key, value in changes['user_data'].items():
-                    all_changes[f"user data: {key}"] = value
         more_count = len(all_changes) - len(primary_changes)
         return render_to_string("reports/standard/partials/user_history_changes.html", {
-            "primary_changes": _html_list(primary_changes),
-            "all_changes": _html_list(all_changes),
+            "primary_changes": self._html_list(primary_changes),
+            "all_changes": self._html_list(all_changes),
             "more_count": more_count,
-    })
+        })
 
 
 def _get_action_display(logged_action):

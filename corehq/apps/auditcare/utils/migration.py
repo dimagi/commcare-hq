@@ -65,6 +65,13 @@ class AuditCareMigrationUtil():
 
         return [get_datetimes_from_key(key) for key in errored_keys]
 
+    def get_cancelled_keys(self, limit=5):
+        cancelled_keys = (AuditcareMigrationMeta.objects
+            .filter(state=AuditcareMigrationMeta.STARTED, finished_at__isnull=True)
+            .values_list('key', flat=True)[:limit]
+        )
+        return [get_datetimes_from_key(key) for key in cancelled_keys]
+
     def log_batch_start(self, key):
         if AuditcareMigrationMeta.objects.filter(key=key):
             return

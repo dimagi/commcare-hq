@@ -3,7 +3,7 @@ import uuid
 from django.http import HttpRequest
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.signals import case_post_save

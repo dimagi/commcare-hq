@@ -1,6 +1,6 @@
 from django.test.testcases import SimpleTestCase, TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.models import (
     Application,

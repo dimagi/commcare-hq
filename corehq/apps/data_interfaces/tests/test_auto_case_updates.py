@@ -3,7 +3,7 @@ from datetime import datetime
 
 from django.test import TestCase, override_settings
 
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.signals import case_post_save

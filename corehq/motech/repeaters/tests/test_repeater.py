@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase
 
 import attr
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory

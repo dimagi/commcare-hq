@@ -3,9 +3,15 @@ from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
 
 from django.utils.translation import ugettext as _
+from django.db import transaction
 
 from toggle.shortcuts import set_toggle
 
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
+    ClosedParentDefinition, CustomActionDefinition,
+    CustomMatchDefinition, MatchPropertyDefinition, UpdateCaseDefinition
+)
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
@@ -29,6 +35,7 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.const import (
+    MODEL_AUTO_UPDATE_RULES,
     MODEL_CASE_SEARCH,
     MODEL_FIXTURE,
     MODEL_FLAGS,
@@ -66,6 +73,8 @@ from corehq.apps.linked_domain.local_accessors import \
     get_otp_settings as local_get_otp_settings
 from corehq.apps.linked_domain.local_accessors import \
     get_hmac_callout_settings as local_get_hmac_callout_settings
+from corehq.apps.linked_domain.local_accessors import \
+    get_auto_update_rules as local_get_auto_update_rules
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
@@ -86,6 +95,8 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_otp_settings as remote_get_otp_settings
 from corehq.apps.linked_domain.remote_accessors import \
     get_hmac_callout_settings as remote_get_hmac_callout_settings
+from corehq.apps.linked_domain.remote_accessors import \
+    get_auto_update_rules as remote_get_auto_update_rules
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.keywords import update_keyword
 from corehq.apps.locations.views import LocationFieldsView
@@ -102,6 +113,7 @@ from corehq.toggles import NAMESPACE_DOMAIN
 
 def update_model_type(domain_link, model_type, model_detail=None):
     update_fn = {
+        MODEL_AUTO_UPDATE_RULES: update_auto_update_rules,
         MODEL_FIXTURE: update_fixture,
         MODEL_FLAGS: update_toggles,
         MODEL_PREVIEWS: update_previews,
@@ -399,6 +411,101 @@ def update_hmac_callout_settings(domain_link):
     model.api_key = master_results['api_key']
     model.api_secret = master_results['api_secret']
     model.save()
+
+
+def update_auto_update_rules(domain_link):
+    if domain_link.is_remote:
+        upstream_rules = remote_get_auto_update_rules(domain_link)
+    else:
+        upstream_rules = local_get_auto_update_rules(domain_link.master_domain)
+
+    downstream_rules = AutomaticUpdateRule.by_domain(
+        domain_link.linked_domain,
+        AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+        active_only=False
+    )
+
+    for upstream_rule_def in upstream_rules:
+        # Grab local rule by upstream ID (preferred) or by name
+        try:
+            downstream_rule = downstream_rules.get(upstream_id=upstream_rule_def['rule']['id'])
+        except AutomaticUpdateRule.DoesNotExist:
+            try:
+                downstream_rule = downstream_rules.get(name=upstream_rule_def['rule']['name'])
+            except AutomaticUpdateRule.MultipleObjectsReturned:
+                # If there are multiple rules with the same name, overwrite the first.
+                downstream_rule = downstream_rules.filter(name=upstream_rule_def['rule']['name']).first()
+            except AutomaticUpdateRule.DoesNotExist:
+                downstream_rule = None
+
+        # If no corresponding local rule, make a new rule
+        if not downstream_rule:
+            downstream_rule = AutomaticUpdateRule(
+                domain=domain_link.linked_domain,
+                active=upstream_rule_def['rule']['active'],
+                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                upstream_id=upstream_rule_def['rule']['id']
+            )
+
+        # Copy all the contents from old rule to new rule
+        with transaction.atomic():
+
+            downstream_rule.name = upstream_rule_def['rule']['name']
+            downstream_rule.case_type = upstream_rule_def['rule']['case_type']
+            downstream_rule.filter_on_server_modified = upstream_rule_def['rule']['filter_on_server_modified']
+            downstream_rule.server_modified_boundary = upstream_rule_def['rule']['server_modified_boundary']
+            downstream_rule.active = upstream_rule_def['rule']['active']
+            downstream_rule.save()
+
+            downstream_rule.delete_criteria()
+            downstream_rule.delete_actions()
+
+            # Largely from data_interfaces/forms.py - save_criteria()
+            for criteria in upstream_rule_def['criteria']:
+                definition = None
+
+                if criteria['match_property_definition']:
+                    definition = MatchPropertyDefinition.objects.create(
+                        property_name=criteria['match_property_definition']['property_name'],
+                        property_value=criteria['match_property_definition']['property_value'],
+                        match_type=criteria['match_property_definition']['match_type'],
+                    )
+                elif criteria['custom_match_definition']:
+                    definition = CustomMatchDefinition.objects.create(
+                        name=criteria['custom_match_definition']['name'],
+                    )
+                elif criteria['closed_parent_definition']:
+                    definition = ClosedParentDefinition.objects.create()
+
+                new_criteria = CaseRuleCriteria(rule=downstream_rule)
+                new_criteria.definition = definition
+                new_criteria.save()
+
+            # Largely from data_interfacees/forms.py - save_actions()
+            for action in upstream_rule_def['actions']:
+                definition = None
+
+                if action['update_case_definition']:
+                    definition = UpdateCaseDefinition(close_case=action['update_case_definition']['close_case'])
+                    properties = []
+                    for propertyItem in action['update_case_definition']['properties_to_update']:
+                        properties.append(
+                            UpdateCaseDefinition.PropertyDefinition(
+                                name=propertyItem['name'],
+                                value_type=propertyItem['value_type'],
+                                value=propertyItem['value'],
+                            )
+                        )
+                    definition.set_properties_to_update(properties)
+                    definition.save()
+                elif action['custom_action_definition']:
+                    definition = CustomActionDefinition.objects.create(
+                        name=action['custom_action_definition']['name'],
+                    )
+
+                action = CaseRuleAction(rule=downstream_rule)
+                action.definition = definition
+                action.save()
 
 
 def _convert_reports_permissions(domain_link, master_results):
