@@ -1,5 +1,5 @@
 import functools
-import mock
+from unittest import mock
 import uuid
 
 

@@ -4,7 +4,7 @@ from datetime import time
 
 from django.test import TestCase, override_settings
 
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.tests.util import create_case
 from corehq.apps.casegroups.models import CommCareCaseGroup

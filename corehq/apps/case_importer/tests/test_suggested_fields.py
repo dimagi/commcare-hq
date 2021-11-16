@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-import mock
+from unittest import mock
 
 from corehq.apps.case_importer.suggested_fields import (
     FieldSpec,
