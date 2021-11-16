@@ -248,13 +248,12 @@ class RepeaterManager(models.Manager):
                 .filter(repeat_records_ready_to_send))
 
 
-class SQLRepeater(models.Model):
+class SQLRepeater(RepeaterSuperProxy):
     domain = models.CharField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
-    repeater_type = models.CharField(max_length=64, db_index=True)
 
     # attributes used in CaseRepeaters and it's subclasses
     version = models.CharField(
