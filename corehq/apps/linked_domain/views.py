@@ -30,6 +30,7 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_or_api_key,
 )
+from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
 from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag
@@ -54,7 +55,7 @@ from corehq.apps.linked_domain.dbaccessors import (
 from corehq.apps.linked_domain.decorators import require_linked_domain, require_access_to_linked_domains
 from corehq.apps.linked_domain.exceptions import (
     DomainLinkError,
-    UnsupportedActionError,
+    UnsupportedActionError, DomainLinkAlreadyExists, DomainLinkNotAllowed,
 )
 from corehq.apps.linked_domain.local_accessors import (
     get_auto_update_rules,
@@ -400,27 +401,15 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     @allow_remote_invocation
     def create_domain_link(self, in_data):
         domain_to_link = in_data['downstream_domain']
-
-        error = handle_create_domain_link_request(self.request.couch_user, self.domain, domain_to_link)
-        if error:
-            return {
-                'success': False,
-                'message': error
-            }
-
-        domain_link = get_active_domain_link(self.domain, domain_to_link)
-        if not domain_link:
-            return {
-                'success': False,
-                'message': ugettext("Failed to successfully save domain link.")
-            }
+        try:
+            domain_link = link_domains(self.request.couch_user, self.domain, domain_to_link)
+        except (DomainDoesNotExist, DomainLinkAlreadyExists, DomainLinkNotAllowed, DomainLinkError) as e:
+            return {'success': False, 'message': str(e)}
 
         track_workflow(self.request.couch_user.username, "Linked domain: domain link created")
-        timezone = get_timezone_for_request()
-        return {
-            'success': True,
-            'domain_link': build_domain_link_view_model(domain_link, timezone)
-        }
+
+        domain_link_view_model = build_domain_link_view_model(domain_link, get_timezone_for_request())
+        return {'success': True, 'domain_link': domain_link_view_model}
 
     @allow_remote_invocation
     def create_remote_report_link(self, in_data):
@@ -439,25 +428,23 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
             return {'success': False}
 
 
-def handle_create_domain_link_request(couch_user, upstream_domain, downstream_domain):
+def link_domains(couch_user, upstream_domain, downstream_domain):
     if not domain_exists(downstream_domain):
-        return ugettext("The project space {} does not exist. Make sure the name is correct and that "
-                        "this domain hasn't been deleted.").format(downstream_domain)
+        error = ugettext("The project space {} does not exist. Verify that the name is correct, and that the "
+                         "domain has not been deleted.").format(downstream_domain)
+        raise DomainDoesNotExist(error)
 
     if get_active_domain_link(upstream_domain, downstream_domain):
-        return ugettext(
+        error = ugettext(
             "The project space {} is already a downstream project space of {}."
         ).format(downstream_domain, upstream_domain)
+        raise DomainLinkAlreadyExists(error)
 
     if not user_has_admin_access_in_all_domains(couch_user, [upstream_domain, downstream_domain]):
-        return ugettext("The user must be an admin is both project spaces to successfully create a link.")
+        error = ugettext("You must be an admin in both project spaces to create a link.")
+        raise DomainLinkNotAllowed(error)
 
-    try:
-        DomainLink.link_domains(downstream_domain, upstream_domain)
-    except DomainLinkError:
-        return ugettext(
-            "An error was encountered while attempting to link {} to {}."
-        ).format(downstream_domain, upstream_domain)
+    return DomainLink.link_domains(downstream_domain, upstream_domain)
 
 
 class DomainLinkHistoryReport(GenericTabularReport):

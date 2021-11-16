@@ -2,77 +2,57 @@ from unittest.mock import patch, Mock
 
 from django.test import SimpleTestCase
 
-from corehq.apps.linked_domain.exceptions import DomainLinkError
-from corehq.apps.linked_domain.views import handle_create_domain_link_request
+from corehq.apps.domain.exceptions import DomainDoesNotExist
+from corehq.apps.linked_domain.exceptions import DomainLinkError, DomainLinkAlreadyExists, DomainLinkNotAllowed
+from corehq.apps.linked_domain.views import link_domains
 
 
-class CreateDomainLinkRequestTests(SimpleTestCase):
+class LinkDomainsTests(SimpleTestCase):
 
-    def test_fails_if_domain_does_not_exist(self):
-        upstream_domain = 'upstream'
-        downstream_domain = 'downstream'
-        user = Mock()
+    @classmethod
+    def setUpClass(cls):
+        super(LinkDomainsTests, cls).setUpClass()
+        cls.upstream_domain = 'upstream'
+        cls.downstream_domain = 'downstream'
 
+    def test_exception_raised_if_domain_does_not_exist(self):
         def mock_handler(domain):
-            return domain != downstream_domain
+            return domain != self.downstream_domain
 
-        with patch('corehq.apps.linked_domain.views.domain_exists') as mock_domainexists:
+        with patch('corehq.apps.linked_domain.views.domain_exists') as mock_domainexists,\
+             self.assertRaises(DomainDoesNotExist):
             mock_domainexists.side_effect = mock_handler
-            error = handle_create_domain_link_request(user, upstream_domain, downstream_domain)
+            link_domains(Mock(), self.upstream_domain, self.downstream_domain)
 
-        self.assertEqual(error, f"The project space {downstream_domain} does not exist. Make sure "
-                                f"the name is correct and that this domain hasn't been deleted.")
-
-    def test_fails_if_domain_link_already_exists(self):
-        upstream_domain = 'upstream'
-        downstream_domain = 'downstream'
-        user = Mock()
-
+    def test_exception_raised_if_domain_link_already_exists(self):
         with patch('corehq.apps.linked_domain.views.domain_exists', return_value=True),\
-             patch('corehq.apps.linked_domain.views.get_active_domain_link', return_value=Mock()):
-            error = handle_create_domain_link_request(user, upstream_domain, downstream_domain)
+             patch('corehq.apps.linked_domain.views.get_active_domain_link', return_value=Mock()),\
+             self.assertRaises(DomainLinkAlreadyExists):
+            link_domains(Mock(), self.upstream_domain, self.downstream_domain)
 
-        self.assertEqual(error, f"The project space {downstream_domain} is already a downstream "
-                                f"project space of {upstream_domain}.")
-
-    def test_fails_if_domain_link_error_raised(self):
-        upstream_domain = 'upstream'
-        downstream_domain = 'downstream'
-        user = Mock()
-
+    def test_exception_raised_if_domain_link_error_raised(self):
         def mock_handler(downstream, upstream):
             raise DomainLinkError
 
         with patch('corehq.apps.linked_domain.views.domain_exists', return_value=True),\
              patch('corehq.apps.linked_domain.views.get_active_domain_link', return_value=None),\
-             patch('corehq.apps.linked_domain.views.DomainLink.link_domains') as mock_linkdomains:
+             patch('corehq.apps.linked_domain.views.DomainLink.link_domains') as mock_linkdomains,\
+             self.assertRaises(DomainLinkError):
             mock_linkdomains.side_effect = mock_handler
-            error = handle_create_domain_link_request(user, upstream_domain, downstream_domain)
+            link_domains(Mock(), self.upstream_domain, self.downstream_domain)
 
-        self.assertEqual(error, f"An error was encountered while attempting to link {downstream_domain} to "
-                                f"{upstream_domain}.")
-
-    def test_fails_if_user_is_not_admin_in_both_domains(self):
-        upstream_domain = 'upstream'
-        downstream_domain = 'downstream'
-        user = Mock()
-
+    def test_exception_raised_if_user_is_not_admin_in_both_domains(self):
         with patch('corehq.apps.linked_domain.views.domain_exists', return_value=True),\
              patch('corehq.apps.linked_domain.views.get_active_domain_link', return_value=None),\
-             patch('corehq.apps.linked_domain.views.user_has_admin_access_in_all_domains', return_value=False):
-            error = handle_create_domain_link_request(user, upstream_domain, downstream_domain)
-
-        self.assertEqual(error, "The user must be an admin is both project spaces to successfully create a link.")
+             patch('corehq.apps.linked_domain.views.user_has_admin_access_in_all_domains', return_value=False),\
+             self.assertRaises(DomainLinkNotAllowed):
+            link_domains(Mock(), self.upstream_domain, self.downstream_domain)
 
     def test_successful(self):
-        upstream_domain = 'upstream'
-        downstream_domain = 'downstream'
-        user = Mock()
-
         with patch('corehq.apps.linked_domain.views.domain_exists', return_value=True),\
              patch('corehq.apps.linked_domain.views.get_active_domain_link', return_value=None),\
              patch('corehq.apps.linked_domain.views.DomainLink.link_domains', return_value=True),\
              patch('corehq.apps.linked_domain.views.user_has_admin_access_in_all_domains', return_value=True):
-            error = handle_create_domain_link_request(user, upstream_domain, downstream_domain)
+            domain_link = link_domains(Mock(), self.upstream_domain, self.downstream_domain)
 
-        self.assertIsNone(error)
+        self.assertIsNotNone(domain_link)
