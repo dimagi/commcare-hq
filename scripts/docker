@@ -112,12 +112,19 @@ function usage() {
     exit
 }
 
-if [ "$(uname -m)" == "arm64" ]; then
-    arch_suffix='-arm64'
-else
-    arch_suffix=''
-fi
-export COMPOSE_BASE="hq-compose${arch_suffix}.yml"
+case "$(uname -m)" in
+    x86_64)
+        arch_suffix='x86'
+        ;;
+    arm64)
+        arch_suffix='arm64'
+        ;;
+    *)
+        arch_suffix='x86'
+        echo "WARNING: unrecognized system architecture ($(uname -m)), falling back to ${arch_suffix}" >&2
+        ;;
+esac
+export COMPOSE_ARCH="hq-compose-arch-${arch_suffix}.yml"
 
 CMD="$1"
 shift
@@ -129,7 +136,7 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
             CMD=help
         fi
     fi
-    export COMPOSE_FILE="docker/${COMPOSE_BASE}"
+    export COMPOSE_FILE="docker/hq-compose.yml"
     export COMPOSE_PROJECT_NAME=hqtest
     if [ -n "$TRAVIS_BUILD_DIR" ]; then
         export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
