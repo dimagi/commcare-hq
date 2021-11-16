@@ -2130,7 +2130,7 @@ COWIN_INTEGRATION = StaticToggle(
 EXPRESSION_REPEATER = StaticToggle(
     'expression_repeater',
     'Integrate with generic APIs using UCR expressions',
-    TAG_SOLUTIONS_OPEN,
+    TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
