@@ -40,6 +40,8 @@ def associated_usercase_closed(case, now):
 
 def get_usercase_from_checkin(checkin_case):
     username = checkin_case.get_case_property("username")
+    if not username:
+        return None
     query = (
         CaseSearchES()
         .domain(checkin_case.domain)
