@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from django.test import SimpleTestCase, TestCase
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 from simpleeval import InvalidExpression
 from testil import Config
 

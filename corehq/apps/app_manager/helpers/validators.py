@@ -375,11 +375,17 @@ class ModuleBaseValidator(object):
                 'module': self.get_module_info(),
             })
 
-        if module_uses_smart_links(self.module) and not self.module.session_endpoint_id:
-            errors.append({
-                'type': 'smart links missing endpoint',
-                'module': self.get_module_info(),
-            })
+        if module_uses_smart_links(self.module):
+            if not self.module.session_endpoint_id:
+                errors.append({
+                    'type': 'smart links missing endpoint',
+                    'module': self.get_module_info(),
+                })
+            if self.module.parent_select.active:
+                errors.append({
+                    'type': 'smart links select parent first',
+                    'module': self.get_module_info(),
+                })
 
         return errors
 

@@ -4,7 +4,7 @@ from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from mock import patch
+from unittest.mock import patch
 from nose.tools import assert_equal, assert_false, assert_true
 
 from corehq.sql_db.config import PlProxyConfig, _get_standby_plproxy_config

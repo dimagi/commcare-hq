@@ -483,17 +483,22 @@ class CaseUpdateConfig:
                 raise DataRegistryCaseUpdateError("Target case not found")
             if not self.owner_id:
                 raise DataRegistryCaseUpdateError("'owner_id' required when creating cases")
-
             kwargs = {
+                "create": True,
                 "case_type": self.case_type,
+                "date_opened": self.intent_case.opened_on
             }
+        elif self.create_case:
+            # should never get here but added as a precaution
+            raise DataRegistryCaseUpdateError("Unable to create target case as it already exists")
+
         return CaseBlock(
-            create=target_case is None,
             case_id=self.case_id,
             owner_id=self.owner_id,
             update=self.get_case_updates(),
             index=self.get_case_indices(target_case),
             close=bool(self.close_case),
+            date_modified=self.intent_case.modified_on,
             **kwargs
         ).as_text()
 
@@ -603,6 +608,10 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
                 CaseUpdateConfig.from_payload(extension_case)
                 for extension_case in extensions
             ])
+
+        domains = {config.domain for config in configs}
+        if len(domains) > 1:
+            raise DataRegistryCaseUpdateError("Multiple updates must all be in the same domain")
         return configs
 
     def _get_target_cases(self, repeat_record, configs, couch_user):
@@ -623,6 +632,9 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
             if config.create_case:
                 return
             raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
+
+        if config.create_case:
+            raise DataRegistryCaseUpdateError("Unable to create target case as it already exists")
 
         if case.domain != config.domain or case.type != config.case_type:
             raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")

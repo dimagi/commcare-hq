@@ -5,7 +5,7 @@ from django.test.client import Client
 from django.urls import reverse
 
 from bs4 import BeautifulSoup
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin

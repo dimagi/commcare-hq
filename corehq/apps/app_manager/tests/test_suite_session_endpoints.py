@@ -1,4 +1,4 @@
-from mock import patch
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
@@ -227,13 +227,13 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
     def test_registry_workflows(self):
         self.module.session_endpoint_id = 'my_case_list'
 
-        with patch("corehq.apps.app_manager.suite_xml.sections.endpoints.module_offers_search") as mock:
+        with patch("corehq.apps.app_manager.util.module_offers_search") as mock:
             mock.return_value = True
             self.module.search_config.data_registry_workflow = REGISTRY_WORKFLOW_SMART_LINK
             self.assertXmlPartialEqual(
                 """
                 <partial>
-                    <endpoint id="my_case_list" command_id="m0">
+                    <endpoint id="my_case_list">
                         <stack>
                             <push>
                                 <command value="'m0'"/>

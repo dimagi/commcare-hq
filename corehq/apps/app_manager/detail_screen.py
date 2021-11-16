@@ -592,7 +592,7 @@ class PropertyXpathGenerator(BaseXpathGenerator):
 
         if indexes and indexes[0] == 'user':
             case = CaseXPath(UsercaseXPath().case())
-        else:
+        elif indexes:
             instance_name = self.detail.get_instance_name(self.module)
             for index in indexes:
                 case = case.index_id(index).case(instance_name=instance_name)

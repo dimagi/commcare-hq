@@ -1,4 +1,4 @@
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.models import Application, LinkedApplication
 from corehq.apps.app_manager.tests.util import patch_validate_xform

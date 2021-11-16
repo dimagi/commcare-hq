@@ -111,11 +111,11 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
                 relationship=CASE_INDEX_EXTENSION,
             )]
         )
-        factory.create_or_update_case(extension, user_id=self.mobile_user.get_id)
+        cases = factory.create_or_update_case(extension, user_id=self.mobile_user.get_id)
         repeat_records = self.repeat_records(self.domain).all()
         self.assertEqual(len(repeat_records), 1)
         payload = repeat_records[0].get_payload()
-        form = DataRegistryUpdateForm(payload)
+        form = DataRegistryUpdateForm(payload, cases[0])
         form.assert_case_updates({
             self.target_case_id_1: {"new_prop": "new_val_case1"},
             self.target_case_id_2: {"new_prop": "new_val_case2"}

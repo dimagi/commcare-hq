@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from unittest.mock import patch, Mock
 from xml.etree import cElementTree as ElementTree
 
@@ -57,6 +58,13 @@ def test_generator_create_case():
         expected_updates={"1": {"new_prop": "new_prop_val"}},
         expected_creates={"1": {"case_type": "patient", "owner_id": "123"}},
     )
+
+
+def test_generator_create_case_target_exists():
+    builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").create_case("123")
+
+    with assert_raises(DataRegistryCaseUpdateError, msg="Unable to create target case as it already exists"):
+        _test_payload_generator(intent_case=builder.get_case(), target_case_exists=True)
 
 
 def test_generator_create_close():
@@ -205,6 +213,20 @@ def test_generator_update_multiple_cases():
         })
 
 
+def test_generator_update_multiple_cases_multiple_domains():
+    main_case_builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val")
+    subcase = (
+        IntentCaseBuilder()
+        .target_case(domain="other_domain", case_id="sub1")
+        .case_properties(sub1_prop="sub1_val")
+        .get_case()
+    )
+    main_case_builder.set_subcases([subcase])
+
+    with assert_raises(DataRegistryCaseUpdateError, msg="Multiple updates must all be in the same domain"):
+        _test_payload_generator(intent_case=main_case_builder.get_case())
+
+
 def test_generator_required_fields():
     intent_case = CommCareCaseSQL(
         domain=SOURCE_DOMAIN,
@@ -248,7 +270,7 @@ def _test_payload_generator(intent_case, target_case_exists=True,
     with patch.object(DataRegistryHelper, "get_case", new=_get_case), \
          patch.object(CouchUser, "get_by_user_id", return_value=Mock(username="local_user")):
         repeat_record = Mock(repeater=Repeater())
-        form = DataRegistryUpdateForm(generator.get_payload(repeat_record, intent_case))
+        form = DataRegistryUpdateForm(generator.get_payload(repeat_record, intent_case), intent_case)
         form.assert_form_props({
             "source_domain": SOURCE_DOMAIN,
             "source_form_id": "form123",
@@ -264,7 +286,8 @@ def _test_payload_generator(intent_case, target_case_exists=True,
 
 
 class DataRegistryUpdateForm:
-    def __init__(self, form):
+    def __init__(self, form, intent_case):
+        self.intent_case = intent_case
         self.formxml = ElementTree.fromstring(form)
         self.cases = {
             case.get('case_id'): CaseBlock.from_xml(case)
@@ -279,7 +302,9 @@ class DataRegistryUpdateForm:
         :param expected_updates: Dict[case_id, Dict]
         """
         for case_id, updates in expected_updates.items():
-            eq(self.cases[case_id].update, updates)
+            case = self.cases[case_id]
+            case.date_modified = self.intent_case.modified_on
+            eq(case.update, updates)
 
     def assert_case_index(self, expected_indices):
         """
@@ -299,9 +324,11 @@ class DataRegistryUpdateForm:
 
     def assert_case_create(self, expected_creates):
         for case_id, create in expected_creates.items():
-            eq(self.cases[case_id].create, True)
+            case = self.cases[case_id]
+            eq(case.create, True)
+            eq(case.date_opened, self.intent_case.opened_on)
             for key, val in create.items():
-                eq(getattr(self.cases[case_id], key), val)
+                eq(getattr(case, key), val)
 
     def assert_case_close(self, case_ids):
         for case_id in case_ids:
@@ -370,12 +397,15 @@ class IntentCaseBuilder:
         self.subcases = subcases
 
     def get_case(self):
+        utcnow = datetime.utcnow()
         intent_case = CommCareCaseSQL(
             domain=SOURCE_DOMAIN,
             type=self.CASE_TYPE,
             case_json=self.props,
             case_id=uuid.uuid4().hex,
-            user_id="local_user1"
+            user_id="local_user1",
+            opened_on=utcnow,
+            modified_on=utcnow,
         )
         intent_case.track_create(CaseTransaction(form_id="form123", type=CaseTransaction.TYPE_FORM))
 

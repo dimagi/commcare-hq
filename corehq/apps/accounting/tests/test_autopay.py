@@ -1,6 +1,6 @@
 from django.core import mail
 
-import mock
+from unittest import mock
 from django_prbac.models import Role
 from stripe import Charge
 from stripe.stripe_object import StripeObject

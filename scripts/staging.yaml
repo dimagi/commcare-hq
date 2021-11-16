@@ -57,33 +57,30 @@ branches:
     - sr/es-alias # Sravan Nov 18
     - sr/cs-multiselect  # Sravan May 31
     - ce/bulk-case-search # Cal July 6
-    - rp/enterprize-sms-report # Rynhard July 12
     #- sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
     - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
-    - jls/smart-linking-in-web-apps+sk/additional-registry-cases
-    - jls/smart-linking-in-web-apps # Jenny Sept 22
     - dmr/throttle-system-forms  # Danny Sept 24
     - smh/remove-extra-spinner-icons # Steph Oct 6
     - ml/remove-pickles-phonelog # Minha Oct 7
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
-    - rp/insert-status-embed # Rynhard Oct 15
-    - fr/dedupe+ad/auto-update-rules-for-linked-spaces
-    - ad/auto-update-rules-for-linked-spaces # Addison Oct 25
+#    - fr/dedupe+ad/auto-update-rules-for-linked-spaces
 #    - ml/remove-pickles-reports # Minha Oct 21
     - sk/data-registry-form-linking+sk/additional-registry-cases
     - sk/data-registry-form-linking  # Simon Oct 22
     - jls/enable-usercase-button # Jenny Oct 27
-    - do/exclude-users-forward-forms # Dominic Oct 29
-    - ap/resume-cancelled-batches # Amit Nov 1
-    - bmb/upgrade-babel-2.9.1  # Biyeun Nov 1 (touches 2FA, phone number validation, going into QA)
     - bmb/update-datatables-dt  # Biyeun Nov 2
     - rc/store-usernames-in-log # Robert Nov 4
-    - do/user-profiles-not-updating # Dominic Nov 4
-    - fr/inactive-duplicates        # Farid Nov 8
+    - gh/use-email-for-all-comms # Graham Nov 8 (passive QA testing: check back on Dec 6)
+    - rp/status-embed # Rynhard Nov 9
+    - sr/session-endpoints+jls/smart-linking-in-web-apps # Sravan Nov 10
+    - jls/smart-linking-in-web-apps # Jenny Sept 22
+    - sr/session-endpoints  # Sravan Nov 9
+    - ad/tab-structure-for-check-boxes # Addison Nov 11
+    - revert-30687-revert-30182-jm/remove-es-scan  # Joel Nov 12
+    - gh/mrm/only-admins-can-link # Graham Nov 16
 submodules: { }

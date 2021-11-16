@@ -1,18 +1,5 @@
 import base64
-import json
 
-from django.test import Client, TestCase
-
-from django_prbac.models import Role
-from mock import Mock, patch
-
-from corehq.apps.accounting.models import (
-    BillingAccount,
-    DefaultProductPlan,
-    SoftwarePlanEdition,
-    Subscription,
-    SubscriptionAdjustment,
-)
 from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import incoming
