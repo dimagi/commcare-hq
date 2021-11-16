@@ -3,7 +3,7 @@ import uuid
 from django.test import SimpleTestCase
 
 from kafka.future import Future
-from mock import Mock
+from unittest.mock import Mock
 from nose.tools import assert_equal, assert_true
 
 from pillowtop.feed.interface import ChangeMeta
@@ -41,7 +41,7 @@ class TestKafkaAuditLogging(SimpleTestCase):
 
         with capture_log_output(KAFKA_AUDIT_LOGGER) as logs:
             with self.assertRaises(Exception):
-                kafka_producer.send_change(topics.CASE, meta)
+                kafka_producer.send_change(topics.CASE_SQL, meta)
 
         self._check_logs(logs, meta.document_id, [CHANGE_PRE_SEND, CHANGE_ERROR])
 
@@ -55,7 +55,7 @@ class TestKafkaAuditLogging(SimpleTestCase):
         )
 
         with capture_log_output(KAFKA_AUDIT_LOGGER) as logs:
-            kafka_producer.send_change(topics.CASE, meta)
+            kafka_producer.send_change(topics.CASE_SQL, meta)
             future.failure(Exception())
 
         self._check_logs(logs, meta.document_id, [CHANGE_PRE_SEND, CHANGE_ERROR])
@@ -65,7 +65,7 @@ class TestKafkaAuditLogging(SimpleTestCase):
         with capture_log_output(KAFKA_AUDIT_LOGGER) as logs:
             meta = ChangeMeta(document_id=uuid.uuid4().hex, data_source_type='dummy-type',
                               data_source_name='dummy-name')
-            kafka_producer.send_change(topics.CASE, meta)
+            kafka_producer.send_change(topics.CASE_SQL, meta)
             if not auto_flush:
                 kafka_producer.flush()
         self._check_logs(logs, meta.document_id, [CHANGE_PRE_SEND, CHANGE_SENT])

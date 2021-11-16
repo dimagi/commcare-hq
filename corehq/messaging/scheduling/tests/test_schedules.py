@@ -32,7 +32,7 @@ from corehq.messaging.scheduling.tasks import (
 )
 from datetime import datetime, date, time
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 
 class BaseScheduleTest(TestCase):

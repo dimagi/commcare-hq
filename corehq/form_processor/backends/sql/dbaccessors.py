@@ -772,7 +772,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         try:
             return CommCareCaseSQL.objects.partitioned_get(case_id)
         except CommCareCaseSQL.DoesNotExist:
-            raise CaseNotFound
+            raise CaseNotFound(case_id)
 
     @staticmethod
     def get_cases(case_ids, ordered=False, prefetched_indices=None):

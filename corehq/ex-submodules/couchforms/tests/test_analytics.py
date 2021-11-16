@@ -2,7 +2,7 @@ import datetime
 import uuid
 
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 from requests import ConnectionError
 
 from couchforms.analytics import (

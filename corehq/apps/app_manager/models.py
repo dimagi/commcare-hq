@@ -121,7 +121,7 @@ from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
 )
-from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
@@ -2130,12 +2130,6 @@ class CaseSearchAgainLabel(BaseCaseSearchLabel):
     label = DictProperty(default={'en': 'Search Again'})
 
 
-class AdditionalRegistryQuery(DocumentSchema):
-    instance_name = StringProperty()
-    case_type_xpath = StringProperty()
-    case_id_xpath = StringProperty()
-
-
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
@@ -2155,7 +2149,7 @@ class CaseSearch(DocumentSchema):
     blacklisted_owner_ids_expression = StringProperty()
     additional_case_types = ListProperty(str)
     data_registry = StringProperty()
-    additional_registry_queries = SchemaListProperty(AdditionalRegistryQuery)
+    additional_registry_cases = StringListProperty()  # list of xpath expressions
 
     @property
     def case_session_var(self):
@@ -5082,9 +5076,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     @memoized
     def enable_update_prompts(self):
         return (
-            # custom for ICDS until ICDS users are > 2.38
-            (self.supports_update_prompts or toggles.ICDS.enabled(self.domain)) and
-            toggles.PHONE_HEARTBEAT.enabled(self.domain)
+            self.supports_update_prompts and toggles.PHONE_HEARTBEAT.enabled(self.domain)
         )
 
     @memoized

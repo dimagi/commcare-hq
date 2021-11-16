@@ -1,3 +1,10 @@
+"""DO NOT ADD NEW THINGS TO THIS MODULE
+
+New test utilities should be added to a module in the
+`corehq.tests.util` package. Things in this module may be moved there as
+it makes sense to do so. See the docstring on that package for important
+guidelines.
+"""
 import functools
 import json
 import logging
@@ -19,7 +26,7 @@ from django.db.backends import utils
 from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 
-import mock
+from unittest import mock
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator

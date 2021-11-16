@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# flake8: noqa: F405
 
 import inspect
 from collections import defaultdict
@@ -795,6 +796,7 @@ LOCAL_PILLOWTOPS = {}
 RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
+RUN_DEDUPLICATION_PILLOW = True
 
 # Set to True to remove the `actions` and `xform_id` fields from the
 # ES Case index. These fields contribute high load to the shard
@@ -2022,6 +2024,15 @@ if 'locmem' not in CACHES:
     CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
+
+# Make django_redis use pickle.DEFAULT_PROTOCOL by default.
+# Remove after upgrading django_redis to a version that does that.
+# See also corehq.tests.test_pickle.test_django_redis_protocol
+from pickle import DEFAULT_PROTOCOL as _protocol
+for _value in CACHES.values():
+    if _value.get("BACKEND", "").startswith("django_redis"):
+        _value.setdefault("OPTIONS", {}).setdefault("PICKLE_VERSION", _protocol)
+del _value, _protocol
 
 
 REST_FRAMEWORK = {

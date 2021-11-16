@@ -3,7 +3,7 @@ from xml.etree import cElementTree as ElementTree
 
 from django.test import TestCase, override_settings
 
-import mock
+from unittest import mock
 
 from casexml.apps.case.mock import (
     CaseBlock,

@@ -53,35 +53,34 @@ branches:
     # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-    #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
     - sr/cs-multiselect  # Sravan May 31
-    - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - ce/bulk-case-search # Cal July 6
-    - rp/enterprize-sms-report # Rynhard July 12
     #- sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
-    - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
     - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
-    - fr/dedupe  # Farid Sept 17
-    - fr/dedupe-report  # Farid October 14
-    - jm/remove-es-scan  # Joel Sep 17 [QA]
-    - jls/smart-linking-in-web-apps # Jenny Sept 22
-    - jls/smart-linking-in-web-apps-continue-fixes # Jenny Oct 15
     - dmr/throttle-system-forms  # Danny Sept 24
-    - gh/erm/link-reports-and-keywords-on-push-take2 # Graham Sept 28
-    - dependabot/npm_and_yarn/datatables.net-1.11.3 # Amit Oct 6
     - smh/remove-extra-spinner-icons # Steph Oct 6
-    - ap/ucr-rebuild-btn # Amit Oct 7
     - ml/remove-pickles-phonelog # Minha Oct 7
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
-    - ml/make-mobile-privileges-unreachable # Minha Oct 12
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
-    - rp/insert-status-embed # Rynhard Oct 15
-    - gh/remove-pickles/messaging # Grahan Oct 15
+#    - fr/dedupe+ad/auto-update-rules-for-linked-spaces
+    - ad/auto-update-rules-for-linked-spaces # Addison Oct 25
+#    - ml/remove-pickles-reports # Minha Oct 21
+    - sk/data-registry-form-linking+sk/additional-registry-cases
+    - sk/data-registry-form-linking  # Simon Oct 22
+    - jls/enable-usercase-button # Jenny Oct 27
+    - bmb/update-datatables-dt  # Biyeun Nov 2
+    - rc/store-usernames-in-log # Robert Nov 4
+    - gh/use-email-for-all-comms # Graham Nov 8 (passive QA testing: check back on Dec 6)
+    - rp/status-embed # Rynhard Nov 9
+    - sr/session-endpoints+jls/smart-linking-in-web-apps # Sravan Nov 10
+    - jls/smart-linking-in-web-apps # Jenny Sept 22
+    - sr/session-endpoints  # Sravan Nov 9
+    - ad/tab-structure-for-check-boxes # Addison Nov 11
+    - revert-30687-revert-30182-jm/remove-es-scan  # Joel Nov 12
 submodules: { }

@@ -586,6 +586,7 @@ class FormRepeater(Repeater):
 
     include_app_id_param = BooleanProperty(default=True)
     white_listed_form_xmlns = StringListProperty(default=[])  # empty value means all form xmlns are accepted
+    user_blocklist = StringListProperty(default=[])
     friendly_name = _("Forward Forms")
 
     @memoized
@@ -602,7 +603,8 @@ class FormRepeater(Repeater):
     def allowed_to_forward(self, payload):
         return (
             payload.xmlns != DEVICE_LOG_XMLNS and
-            (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns)
+            (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns
+            and payload.user_id not in self.user_blocklist)
         )
 
     def get_url(self, repeat_record):

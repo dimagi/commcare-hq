@@ -25,13 +25,12 @@ class RegistryCaseDetailsTests(TestCase):
         cls.domain_object = create_domain(cls.domain)
         cls.user = CommCareUser.create(cls.domain, "user", "123", None, None)
         cls.registry = create_registry_for_test(cls.user.get_django_user(), cls.domain)
-        cls.registry.schema = [{"case_type": "parent"}]
+        cls.registry.schema = [{"case_type": "parent"}, {"case_type": "other"}]
         cls.registry.save()
 
         cls.grand_parent_case_id = 'mona'
         cls.parent_case_id = 'homer'
         cls.child_case_id = 'bart'
-        cls.extension_case_id = 'beer'
         grand_parent_case = CaseStructure(
             case_id=cls.grand_parent_case_id,
             attrs={'create': True, 'case_type': 'grandparent'},
@@ -57,6 +56,12 @@ class RegistryCaseDetailsTests(TestCase):
         )
 
         cls.cases = CaseFactory(cls.domain).create_or_update_cases([child_case])
+        cls.other_case = CaseFactory(cls.domain).create_or_update_case(
+            CaseStructure(
+                case_id='unrelated_case',
+                attrs={'create': True, 'case_type': 'other'},
+            )
+        )
 
         cls.app = AppFactory(cls.domain).app
         cls.app.save()
@@ -94,6 +99,16 @@ class RegistryCaseDetailsTests(TestCase):
             related_object_type=RegistryAuditLog.RELATED_OBJECT_APPLICATION,
             related_object_id=self.app.get_id
         ).count())
+
+    def test_get_case_details_multiple_case_ids(self):
+        response_content = self._make_request({
+            "commcare_registry": self.registry.slug,
+            "case_id": [self.parent_case_id, "unrelated_case"],
+            "case_type": ["parent", "other"],
+        }, 200)
+        actual_cases = self._get_cases_in_response(response_content)
+        expected_cases = {"unrelated_case": self.other_case, **{case.case_id: case for case in self.cases}}
+        self.assertEqual(set(actual_cases), set(expected_cases))
 
     def test_get_case_details_missing_case(self):
         self._make_request({

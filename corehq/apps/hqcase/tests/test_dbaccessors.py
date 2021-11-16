@@ -2,7 +2,7 @@ import uuid
 
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from pillowtop.es_utils import initialize_index_and_mapping
 

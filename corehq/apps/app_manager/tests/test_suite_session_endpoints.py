@@ -1,4 +1,4 @@
-from mock import patch
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
@@ -267,6 +267,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
 
         self.factory.app.rearrange_modules(self.shadow_module.id, 0)
 
+        suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -285,8 +286,32 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                 </endpoint>
             </partial>
             """,
-            self.factory.app.create_suite(),
+            suite,
             "./endpoint",
+        )
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <remote-request>
+                    <post relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0" url="http://localhost:8000/a/test-domain/phone/claim-case/">
+                        <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+                    </post>
+                    <command id="claim_command.my_shadow.case_id">
+                        <display>
+                            <text/>
+                        </display>
+                    </command>
+                    <instance id="casedb" src="jr://instance/casedb"/>
+                    <instance id="commcaresession" src="jr://instance/session"/>
+                    <session>
+                        <datum function="instance('commcaresession')/session/data/case_id" id="case_id"/>
+                    </session>
+                    <stack/>
+                </remote-request>
+            </partial>
+            """,
+            suite,
+            "./remote-request"
         )
 
         del self.factory.app.modules[0]

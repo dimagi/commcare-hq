@@ -1,6 +1,6 @@
 from django.test import RequestFactory, TestCase, override_settings
 
-import mock
+from unittest import mock
 
 from corehq.apps.accounting.models import (
     DefaultProductPlan,

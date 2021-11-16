@@ -156,7 +156,7 @@ def update_case(domain, case_id, case_properties=None, close=False,
     )
 
 
-def bulk_update_cases(domain, case_changes, device_id):
+def bulk_update_cases(domain, case_changes, device_id, xmlns=None):
     """
     Updates or closes a list of cases (or both) by submitting a form.
     domain - the cases' domain
@@ -171,7 +171,7 @@ def bulk_update_cases(domain, case_changes, device_id):
     for case_id, case_properties, close in case_changes:
         case_block = _get_update_or_close_case_block(case_id, case_properties, close)
         case_blocks.append(case_block.as_text())
-    return submit_case_blocks(case_blocks, domain, device_id=device_id)
+    return submit_case_blocks(case_blocks, domain, device_id=device_id, xmlns=xmlns)
 
 
 def resave_case(domain, case, send_post_save_signal=True):
