@@ -69,7 +69,6 @@ branches:
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
 #    - fr/dedupe+ad/auto-update-rules-for-linked-spaces
-    - ad/auto-update-rules-for-linked-spaces # Addison Oct 25
 #    - ml/remove-pickles-reports # Minha Oct 21
     - sk/data-registry-form-linking+sk/additional-registry-cases
     - sk/data-registry-form-linking  # Simon Oct 22
