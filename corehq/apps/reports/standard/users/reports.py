@@ -87,8 +87,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         h = [
             DataTablesColumn(_("Affected User"), sortable=False),
             DataTablesColumn(_("Modified by User"), sortable=False),
-            DataTablesColumn(_("Action"), sortable=False),
-            DataTablesColumn(_("Via"), sortable=False),
+            DataTablesColumn(_("Action"), prop_name='action'),
+            DataTablesColumn(_("Via"), prop_name='changed_via'),
             DataTablesColumn(_("Changes"), sortable=False),
             DataTablesColumn(_("Change Message"), sortable=False),
             DataTablesColumn(_("Timestamp"), prop_name='changed_at'),
