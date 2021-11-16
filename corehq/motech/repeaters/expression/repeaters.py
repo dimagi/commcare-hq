@@ -4,7 +4,9 @@ from memoized import memoized
 
 from dimagi.ext.couchdbkit import DictProperty
 
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.specs import FactoryContext
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.expression.repeater_generators import (
     ExpressionPayloadGenerator,
@@ -23,19 +25,29 @@ class BaseExpressionRepeater(Repeater):
     configured_expression = DictProperty()
     payload_generator_classes = (ExpressionPayloadGenerator,)
 
+    @property
+    @memoized
+    def parsed_filter(self):
+        return FilterFactory.from_spec(self.configured_filter)
+
+    @property
+    @memoized
+    def parsed_expression(self):
+        return ExpressionFactory.from_spec(self.configured_expression, FactoryContext.empty())
+
     @classmethod
     def available_for_domain(cls, domain):
         return EXPRESSION_REPEATER.enabled(domain)
 
     def allowed_to_forward(self, payload):
-        return FilterFactory.from_spec(self.configured_filter)(payload.to_json())
+        return self.parsed_filter(payload.to_json())
 
     @memoized
     def get_payload(self, repeat_record):
         return self.generator.get_payload(
             repeat_record,
             self.payload_doc(repeat_record),
-            self.configured_expression
+            self.parsed_expression,
         )
 
 
