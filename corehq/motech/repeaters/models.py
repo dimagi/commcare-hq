@@ -331,31 +331,21 @@ class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater):
     Record that cases should be repeated to a new url
 
     """
-    version = models.CharField(
-        max_length=10,
-        choices=list(zip(LEGAL_VERSIONS, LEGAL_VERSIONS)),
-        default=V2,
-    )
-    white_listed_case_types = ArrayField(
-        models.CharField(max_length=255, default=list)
-    )
-    # users who caseblock submissions should be ignored
-    black_listed_users = ArrayField(
-        models.CharField(max_length=255, default=list)
-    )
-    format = models.CharField(
-        max_length=16,
-        choices=REPEATER_FORMAT_OPTIONS,
-    )
-
     class Meta:
-        db_table = 'repeaters_caserepeater'
+        proxy = True
 
     friendly_name = _("Forward Cases")
 
     payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
 
     _migration_couch_id_name = 'repeater_id'
+
+    @property
+    def form_class_name(self):
+        """
+        CaseRepeater and most of its subclasses use the same form for editing
+        """
+        return 'CaseRepeater'
 
     def allowed_to_forward(self, payload):
         return self._allowed_case_type(payload) and self._allowed_user(payload)
@@ -373,13 +363,6 @@ class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater):
     @memoized
     def payload_doc(self, repeat_record):
         return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
-
-    @property
-    def form_class_name(self):
-        """
-        CaseRepeater and most of its subclasses use the same form for editing
-        """
-        return 'CaseRepeater'
 
     def _migration_sync_to_couch(self, couch_object):
         for field_name in self._migration_get_fields():
