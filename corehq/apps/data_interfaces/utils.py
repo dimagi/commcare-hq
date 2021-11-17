@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound
 
-from dimagi.utils.logging import notify_error
+from dimagi.utils.logging import notify_error, notify_exception
 from soil import DownloadBase
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -276,9 +276,17 @@ def run_rules_for_case(case, rules, now):
             ):
                 case = CaseAccessors(case.domain).get_case(case.case_id)
 
-        last_result = rule.run_rule(case, now)
-        aggregated_result.add_result(last_result)
-        if last_result.num_closes > 0:
-            break
+        try:
+            last_result = rule.run_rule(case, now)
+        except Exception:
+            notify_exception(None, "Error applying case update rule", {
+                'domain': case.domain,
+                'rule_pk': rule.pk,
+                'case_id': case.case_id,
+            })
+        else:
+            aggregated_result.add_result(last_result)
+            if last_result.num_closes > 0:
+                break
 
     return aggregated_result

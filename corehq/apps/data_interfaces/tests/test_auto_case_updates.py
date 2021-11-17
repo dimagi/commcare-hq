@@ -1056,6 +1056,28 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
                 self.assertRuleRunCount(3)
                 self.assertLastRuleRun(1)
 
+    def test_single_failure_is_isolated(self):
+
+        def fail_on_person2(case, now):
+            if case.type == 'person2':
+                raise AssertionError()
+            return CaseRuleActionResult(num_updates=1)
+
+        _create_empty_rule(self.domain)
+        with _with_case(self.domain, 'person1', datetime.utcnow()) as case1, \
+                _with_case(self.domain, 'person2', datetime.utcnow()) as case2, \
+                _with_case(self.domain, 'person3', datetime.utcnow()) as case3, \
+                patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.iter_cases') as iter_cases_patch, \
+                patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.run_rule') as run_rule:
+            iter_cases_patch.return_value = [case1, case2, case3]
+            run_rule.side_effect = fail_on_person2
+
+            self.assertRuleRunCount(0)
+            run_case_update_rules_for_domain(self.domain)
+            self.assertRuleRunCount(1)
+            # Three cases were checked, one failed hard, two were updated
+            self.assertLastRuleRun(cases_checked=3, num_updates=2)
+
 
 class TestParentCaseReferences(BaseCaseRuleTest):
 
