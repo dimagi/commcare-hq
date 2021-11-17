@@ -1,4 +1,4 @@
-from unittest import mock
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -22,7 +22,7 @@ from corehq.const import USER_CHANGE_VIA_CLONE
 from corehq.toggles import NAMESPACE_USER, TAG_INTERNAL, StaticToggle
 
 TEST_TOGGLE = StaticToggle(
-    'TEST_TOGGLE',
+    'test_toggle',
     'This is for tests',
     TAG_INTERNAL,
     [NAMESPACE_USER],
@@ -140,16 +140,19 @@ class TestCloneWebUsers(TestCase):
         actual_id = ReportConfig.by_domain_and_owner(self.domain, self.new_user._id, stale=False)[0]._id
         self.assertEqual(expected_id, actual_id)
 
-    @mock.patch('corehq.toggles.all_toggles_by_name', mock.Mock(return_value={'TEST_TOGGLE': TEST_TOGGLE}))
     def test_transfer_feature_flags(self):
-        toggle = Toggle(slug='TEST_TOGGLE', enabled_users=[self.old_user.username])
+        toggle = Toggle(slug='test_toggle', enabled_users=[self.old_user.username])
         toggle.save()
         self.addCleanup(toggle.delete)
 
-        self.assertTrue(toggle_enabled('TEST_TOGGLE', self.old_user.username))
-        self.assertFalse(toggle_enabled('TEST_TOGGLE', self.new_user.username))
+        self.assertTrue(toggle_enabled('test_toggle', self.old_user.username))
+        self.assertFalse(toggle_enabled('test_toggle', self.new_user.username))
 
-        transfer_feature_flags(self.old_user, self.new_user)
+        mock_togglesbyname = {'TEST_TOGGLE': TEST_TOGGLE}
+        with patch('corehq.toggles.all_toggles_by_name', return_value=mock_togglesbyname),\
+             patch('corehq.apps.users.management.commands.clone_web_users.all_toggles_by_name',
+                   return_value=mock_togglesbyname):
+            transfer_feature_flags(self.old_user, self.new_user)
 
-        self.assertFalse(toggle_enabled('TEST_TOGGLE', self.old_user.username))
-        self.assertTrue(toggle_enabled('TEST_TOGGLE', self.new_user.username))
+        self.assertFalse(toggle_enabled('test_toggle', self.old_user.username))
+        self.assertTrue(toggle_enabled('test_toggle', self.new_user.username))

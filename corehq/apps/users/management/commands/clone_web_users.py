@@ -16,7 +16,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.users.models import CouchUser, DomainMembership, WebUser
 from corehq.const import USER_CHANGE_VIA_CLONE
-from corehq.toggles import toggles_enabled_for_user
+from corehq.toggles import all_toggles_by_name, toggles_enabled_for_user
 from corehq.util.bounced_email_manager import EMAIL_REGEX_VALIDATION
 
 logger = logging.getLogger(__name__)
@@ -165,11 +165,13 @@ def transfer_saved_reports(from_user, to_user):
 
 def transfer_feature_flags(from_user, to_user):
     enabled_toggles = toggles_enabled_for_user(from_user.username)
-    for toggle in enabled_toggles:
-        logger.info(f'Updating toggle {toggle} from {from_user.username} to {to_user.username}')
-        set_toggle(toggle, from_user.username, False)
-        set_toggle(toggle, to_user.username, True)
-        logger.info(f'Transferred access to {toggle}.')
+    by_name = all_toggles_by_name()
+    for toggle_name in enabled_toggles:
+        logger.info(f'Updating toggle name {toggle_name} from {from_user.username} to {to_user.username}')
+        toggle_slug = by_name[toggle_name].slug
+        set_toggle(toggle_slug, from_user.username, False)
+        set_toggle(toggle_slug, to_user.username, True)
+        logger.info(f'Transferred access to toggle slug {toggle_slug}.')
 
     toggles_enabled_for_user.clear(from_user.username)
     toggles_enabled_for_user.clear(to_user.username)
