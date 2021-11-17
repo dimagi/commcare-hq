@@ -37,6 +37,7 @@ from .exceptions import (
     XFormException,
     XFormValidationError,
     XFormValidationFailed,
+    DangerousXmlException,
 )
 from .suite_xml.xml_models import Instance
 from .xpath import CaseIDXPath, QualifiedScheduleFormXPath, session_var
@@ -57,7 +58,7 @@ def parse_xml(string):
         raise XFormException(_("Error parsing XML: {}").format(e))
 
     if _contains_entities(parsed):
-        raise XFormException(_("Error parsing XML: Entities are not allowed"))
+        raise DangerousXmlException(_("Error parsing XML: Entities are not allowed"))
 
     return parsed
 
