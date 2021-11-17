@@ -68,7 +68,7 @@ branches:
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
-#    - ml/remove-pickles-reports # Minha Oct 21
+    - ml/remove-pickles-reports # Minha Oct 21
     - jls/enable-usercase-button # Jenny Oct 27
     - bmb/update-datatables-dt  # Biyeun Nov 2
     - rc/store-usernames-in-log # Robert Nov 4
