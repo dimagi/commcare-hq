@@ -47,8 +47,8 @@ class JsonField(forms.CharField):
             return value
 
     def to_python(self, value):
-        if isinstance(value, self.expected_type):
-            return json.loads(json.dumps(value))
+        if value and isinstance(value, dict):
+            return value
 
         val = super(JsonField, self).to_python(value)
         try:
