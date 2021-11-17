@@ -325,7 +325,6 @@ def revoke_privs_for_grantees(privs_for_grantees, dry_run=False, verbose=False):
     """
     dry_run_tag = "[DRY RUN] " if dry_run else ""
     roles_by_slug = get_all_roles_by_slug()
-    granted_privs_for_grantee = get_granted_privs_for_grantee()
 
     grants_to_delete = []
     for grantee_slug, priv_slugs in privs_for_grantees:
@@ -338,20 +337,15 @@ def revoke_privs_for_grantees(privs_for_grantees, dry_run=False, verbose=False):
                 logger.info(f'privilege {priv_slug} does not exist.')
                 continue
 
-            if priv_slug not in granted_privs_for_grantee[grantee_slug]:
-                if verbose or dry_run:
-                    logger.info(f'{dry_run_tag}Privilege already revoked: {grantee_slug} => {priv_slug}')
-            else:
-                granted_privs_for_grantee[grantee_slug].discard(priv_slug)
+            existing_grants = get_grants(roles_by_slug[grantee_slug], roles_by_slug[priv_slug])
+            if existing_grants:
                 if verbose or dry_run:
                     logger.info(f'{dry_run_tag}Revoking privilege: {grantee_slug} => {priv_slug}')
                 if not dry_run:
-                    grants_to_delete.append(
-                        get_grants(
-                            roles_by_slug[grantee_slug],
-                            roles_by_slug[priv_slug]
-                        )
-                    )
+                    grants_to_delete.extend(existing_grants)
+            else:
+                if verbose or dry_run:
+                    logger.info(f'{dry_run_tag}Privilege already revoked: {grantee_slug} => {priv_slug}')
 
     if grants_to_delete:
         delete_grants(grants_to_delete)
