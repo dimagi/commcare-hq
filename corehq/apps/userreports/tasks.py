@@ -165,7 +165,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
     for domain, case_type_or_xmlns in loop_iterations:
         relevant_ids = []
         document_store = get_document_store_for_doc_type(
-            config.domain, config.referenced_doc_type,
+            domain, config.referenced_doc_type,
             case_type_or_xmlns=case_type_or_xmlns,
             load_source="build_indicators",
         )
