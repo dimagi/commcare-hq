@@ -1,7 +1,7 @@
 from django.apps import apps
 from django.conf import settings
 from django.core import checks
-from django.db import connections, DEFAULT_DB_ALIAS
+from django.db import connections, DEFAULT_DB_ALIAS, router
 
 from corehq.sql_db.exceptions import PartitionValidationError
 
@@ -120,7 +120,7 @@ def check_db_tables(app_configs, **kwargs):
     ]
 
     def _check_model(model_class, using=None):
-        db = using or DEFAULT_DB_ALIAS
+        db = using or router.db_for_read(model_class)
         try:
             with connections[db].cursor() as cursor:
                 cursor.execute("SELECT %s::regclass", [model_class._meta.db_table])
