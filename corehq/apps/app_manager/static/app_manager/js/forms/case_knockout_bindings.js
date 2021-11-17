@@ -15,6 +15,7 @@
                     + " (" + utils._truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
         },
         _getLabel: function (question, MAXLEN) {
+            question.label = question.label.replace('<', '&lt;').replace('>', '&gt;');
             return utils._truncateLabel((question.repeat ? '- ' : '')
                     + question.label, question.tag === 'hidden' ? ' (Hidden)' : '', MAXLEN);
         },
