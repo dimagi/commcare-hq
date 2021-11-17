@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.exceptions import (
     XFormException,
@@ -105,10 +105,10 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         with self.assertRaises(XFormException):
             self.form.render_xform()
 
-    def test_instance_check(self):
+    def test_add_remote_instances(self):
         xml = self.get_xml('missing_instances')
         with self.assertRaises(XFormValidationError) as cm:
-            XForm(xml).add_missing_instances(self.app)
+            XForm(xml).add_missing_instances(self.form, self.app)
         exception_message = str(cm.exception)
         self.assertIn('casebd', exception_message)
         self.assertIn('custom2', exception_message)

@@ -5,7 +5,7 @@ import logging
 
 from django.conf import settings
 
-from corehq.util.metrics import metrics_gauge, metrics_counter
+from corehq.util.metrics import metrics_counter
 from corehq.apps.accounting.models import Subscription, BillingAccount
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -13,6 +13,20 @@ from corehq.apps.users.models import WebUser, CommCareUser
 logger = logging.getLogger('analytics')
 
 MAX_API_RETRIES = 5
+
+ALLOWED_CONVERSIONS = [
+    'Blog',
+    'Case study/ Ev. Base',
+    'Contact us',
+    'Event',
+    'Live Chat',
+    'Newletter',
+    'Newsletter',
+    'Offer',
+    'Outbound',
+    'Paid Ads',
+    'Video',
+]
 
 
 def get_meta(request):
@@ -117,24 +131,30 @@ def _delete_hubspot_contact(vid, retry_num=0):
                 return False
             req.raise_for_status()
         except (ConnectionError, requests.exceptions.HTTPError) as e:
-            metrics_gauge(
-                'commcare.hubspot_data.retry.delete_hubspot_contact',
-                1
+            metrics_counter(
+                'commcare.hubspot_data.retry.delete_hubspot_contact'
             )
             if retry_num <= MAX_API_RETRIES:
                 return _delete_hubspot_contact(vid, retry_num + 1)
             else:
-                logger.error(f"Failed to delete Hubspot contact {vid} due to "
-                             f"{str(e)}.")
+                metrics_counter(
+                    'commcare.hubspot_data.error.delete_hubspot_contact',
+                    tags={
+                        'error': str(e),
+                    }
+                )
         else:
             return True
     return False
 
 
-def _get_contact_ids_for_emails(list_of_emails, retry_num=0):
+def _get_contact_ids_to_delete(list_of_emails, retry_num=0):
     """
     Gets a list of Contact IDs on Hubspot from a list of emails.
     If an email in the list doesn't exist on Hubspot, it's simply ignored.
+    We also check the list returned from HubSpot to ensure that users
+    who engaged with HubSpot under an allowed first conversion action are
+    not removed from HubSpot.
     :param list_of_emails:
     :param retry_num: the number of the current retry attempt
     :return: list of contact ids
@@ -160,12 +180,29 @@ def _get_contact_ids_for_emails(list_of_emails, retry_num=0):
                 'commcare.hubspot_data.retry.get_contact_ids_for_emails'
             )
             if retry_num <= MAX_API_RETRIES:
-                return _get_contact_ids_for_emails(list_of_emails, retry_num + 1)
+                return _get_contact_ids_to_delete(list_of_emails, retry_num + 1)
             else:
-                logger.error(f"Failed to get Hubspot contact ids for emails "
-                             f"{list_of_emails.join(', ')} due to {str(e)}.")
+                metrics_counter(
+                    'commcare.hubspot_data.error.get_contact_ids_for_emails',
+                    tags={
+                        'error': str(e),
+                    }
+                )
         else:
-            return req.json().keys()
+            ids_to_delete = []
+            for contact_id, data in req.json().items():
+                first_conversion_status = data.get(
+                    'properties', {}
+                ).get('first_conversion_clustered_', {}).get('value')
+
+                # If a user's first conversion IS in the allowed list, it means
+                # they have directly interacted with us and we want to keep them
+                # in the email list. However, we will not send project data
+                # about them to HubSpot as they will still be blocked from
+                # updates in track_periodic_data.
+                if first_conversion_status not in ALLOWED_CONVERSIONS:
+                    ids_to_delete.append(contact_id)
+            return ids_to_delete
     return []
 
 
@@ -197,11 +234,11 @@ def remove_blocked_domain_contacts_from_hubspot(stdout=None):
                 blocked_emails.append(username)
                 if user_email and user_email != username:
                     blocked_emails.append(user_email)
-            ids_to_delete = _get_contact_ids_for_emails(set(blocked_emails))
+            ids_to_delete = _get_contact_ids_to_delete(set(blocked_emails))
             if stdout:
                 stdout.write(f"Found {len(ids_to_delete)} id(s) to delete.")
             num_deleted = sum(_delete_hubspot_contact(vid) for vid in ids_to_delete)
-            metrics_gauge(
+            metrics_counter(
                 'commcare.hubspot_data.deleted_user.blocked_domain',
                 num_deleted,
                 tags={

@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-06 19:18+0000\n"
+"POT-Creation-Date: 2021-11-10 20:28+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2021\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -146,17 +146,17 @@ msgstr ""
 msgid "See Past Versions"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:143
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:35
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
 msgid "Add"
 msgstr "Agregar"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:396
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:395
 msgid "Moved successfully."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:417
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:416
 msgid "You have unsaved changes"
 msgstr "Tiene cambios sin guardar"
 
@@ -2768,7 +2768,15 @@ msgstr "Formulario XML"
 msgid "Evaluate XPath"
 msgstr "Evaluar XPath"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:270
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:69
+msgid "Expand Data Preview"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:70
+msgid "Collapse Data Preview"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:275
 msgid "Error evaluating expression."
 msgstr "Error al evaluar la expresión."
 
@@ -2890,13 +2898,13 @@ msgstr ""
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:343
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:344
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:352
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:353
 msgid "You are are back online."
 msgstr ""
 
@@ -2925,11 +2933,11 @@ msgstr ""
 msgid "Completed: "
 msgstr "Completado:"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:30
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:29
 msgid "Show Full Menu"
 msgstr "Mostrar el Menú Completo"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:37
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:36
 msgid "Hide Full Menu"
 msgstr ""
 
@@ -2977,15 +2985,27 @@ msgstr "Sí"
 msgid "No"
 msgstr "No"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:55
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:25
+msgid "Working as <b><%- restoreAs %></b> in <b><%- domain %></b>."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:27
+msgid "Working as <b><%- restoreAs %></b>."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:29
+msgid "Use <%- username %>."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:68
 msgid "Log in as <%= username %>?"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:59
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:72
 msgid "Yes, log in as this user"
 msgstr "Sí, ingresar como este usuario"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:137
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:150
 msgid "Page <%- num %>"
 msgstr ""
 
@@ -3057,6 +3077,26 @@ msgid ""
 "You have unsaved changes to this case type. Are you sure you would like to "
 "continue?"
 msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js:26
+msgid "OR"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js:28
+msgid "AND"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js:33
+#, fuzzy
+#| msgid "True when ANY of the expressions are true."
+msgid "True when ANY of the case properties match"
+msgstr "Es verdadero cuando CUALQUIERA de las expresiones es verdadera"
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js:35
+#, fuzzy
+#| msgid "True when ALL of the expressions are true."
+msgid "True when ALL of the case properties match"
+msgstr "Es verdadero cuando TODAS las expresiones son verdaderas"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:168
 msgid "Case Reassignment (via HQ)"
@@ -3200,15 +3240,15 @@ msgstr ""
 msgid "There is an issue communicating with the server at this time."
 msgstr "Hay un problema de comunicación con el servidor en este momento."
 
-#: corehq/apps/export/static/export/js/download_data_files.js:26
+#: corehq/apps/export/static/export/js/download_data_files.js:25
 msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
 msgstr "Copiar a portapapeles: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
 
-#: corehq/apps/export/static/export/js/download_data_files.js:35
+#: corehq/apps/export/static/export/js/download_data_files.js:34
 msgid "Data file URL copied to clipboard."
 msgstr "El archivo de datos URL fue copiado al portapapeles."
 
-#: corehq/apps/export/static/export/js/download_data_files.js:61
+#: corehq/apps/export/static/export/js/download_data_files.js:60
 msgid "Data file deleted."
 msgstr "Archivo de datos borrado."
 
@@ -3945,6 +3985,14 @@ msgstr "Caducó el Portal. Por favor contacte al Soporte de CommCare HQ."
 msgid "We were unsuccessful loading the report:"
 msgstr "No pudimos cargar el reporte:"
 
+#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js:120
+msgid "My Scheduled Reports"
+msgstr "Mis Reportes Agendados"
+
+#: corehq/apps/reports/static/reports/js/scheduled_reports_list.js:126
+msgid "Other Scheduled Reports"
+msgstr ""
+
 #: corehq/apps/reports/static/reports/js/single_form.js:64
 msgid "Labels"
 msgstr "Etiquetas"
@@ -4092,15 +4140,15 @@ msgstr ""
 "El llenado automático no está disponible en Inglés (in). Por favor cambie su "
 "idioma usando el desplegable ubicado en la esquina superior izquierda."
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:376
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:391
-#: corehq/apps/userreports/static/userreports/js/report_config.js:305
-#: corehq/apps/userreports/static/userreports/js/report_config.js:333
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:375
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:390
+#: corehq/apps/userreports/static/userreports/js/report_config.js:304
+#: corehq/apps/userreports/static/userreports/js/report_config.js:332
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr "Elija la propiedad que quisiera agregar como filtro para este reporte."
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:377
-#: corehq/apps/userreports/static/userreports/js/report_config.js:306
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:376
+#: corehq/apps/userreports/static/userreports/js/report_config.js:305
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
@@ -4109,8 +4157,8 @@ msgstr ""
 "del nombre de la propiedad. Asígnele un nombre a su filtro que sea fácil de "
 "entender para sus usuarios. "
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:378
-#: corehq/apps/userreports/static/userreports/js/report_config.js:307
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:377
+#: corehq/apps/userreports/static/userreports/js/report_config.js:306
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
@@ -4120,8 +4168,8 @@ msgstr ""
 "Seleccione esto si la propiedad es una fecha.<br/><strong>Opción</strong>: "
 "Seleccione esto si la propiedad es un texto u opción múltiple."
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:392
-#: corehq/apps/userreports/static/userreports/js/report_config.js:334
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:391
+#: corehq/apps/userreports/static/userreports/js/report_config.js:333
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
@@ -4132,19 +4180,19 @@ msgstr ""
 "><strong>Valor</strong>: Seleccione esto para filtrar la propiedad por un "
 "único valor."
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:393
-#: corehq/apps/userreports/static/userreports/js/report_config.js:335
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:392
+#: corehq/apps/userreports/static/userreports/js/report_config.js:334
 msgid "What value or date range must the property be equal to?"
 msgstr "¿Qué valor o rango de fecha debe la propiedad igualar?"
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:404
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:403
 msgid ""
 "Column format selection will determine how each row's value is calculated."
 msgstr ""
 "La selección de formato de las columnas determinará cómo se calcularán los "
 "valores de cada fila."
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:433
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:432
 msgid "Please check above for any errors in your configuration."
 msgstr "Por favor verifique arriba si hay algún error en su configuración."
 

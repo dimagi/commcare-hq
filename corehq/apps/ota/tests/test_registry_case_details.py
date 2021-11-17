@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.registry.helper import DataRegistryHelper
@@ -24,13 +25,12 @@ class RegistryCaseDetailsTests(TestCase):
         cls.domain_object = create_domain(cls.domain)
         cls.user = CommCareUser.create(cls.domain, "user", "123", None, None)
         cls.registry = create_registry_for_test(cls.user.get_django_user(), cls.domain)
-        cls.registry.schema = [{"case_type": "parent"}]
+        cls.registry.schema = [{"case_type": "parent"}, {"case_type": "other"}]
         cls.registry.save()
 
         cls.grand_parent_case_id = 'mona'
         cls.parent_case_id = 'homer'
         cls.child_case_id = 'bart'
-        cls.extension_case_id = 'beer'
         grand_parent_case = CaseStructure(
             case_id=cls.grand_parent_case_id,
             attrs={'create': True, 'case_type': 'grandparent'},
@@ -56,6 +56,12 @@ class RegistryCaseDetailsTests(TestCase):
         )
 
         cls.cases = CaseFactory(cls.domain).create_or_update_cases([child_case])
+        cls.other_case = CaseFactory(cls.domain).create_or_update_case(
+            CaseStructure(
+                case_id='unrelated_case',
+                attrs={'create': True, 'case_type': 'other'},
+            )
+        )
 
         cls.app = AppFactory(cls.domain).app
         cls.app.save()
@@ -77,14 +83,32 @@ class RegistryCaseDetailsTests(TestCase):
         response_content = self._make_request({
             "commcare_registry": self.registry.slug, "case_id": self.parent_case_id, "case_type": "parent",
         }, 200)
-        case_ids = self._get_cases_in_response(response_content)
-        self.assertEqual(case_ids, {case.case_id for case in self.cases})
+        actual_cases = self._get_cases_in_response(response_content)
+        expected_cases = {case.case_id: case for case in self.cases}
+        self.assertEqual(set(actual_cases), set(expected_cases))
+
+        actual_domains = {
+            case.case_id: case.get_property(COMMCARE_PROJECT) for case in actual_cases.values()
+        }
+        expected_domains = {case.case_id: case.domain for case in self.cases}
+        self.assertEqual(actual_domains, expected_domains)
+
         self.assertEqual(1, RegistryAuditLog.objects.filter(
             registry=self.registry,
             action=RegistryAuditLog.ACTION_DATA_ACCESSED,
             related_object_type=RegistryAuditLog.RELATED_OBJECT_APPLICATION,
             related_object_id=self.app.get_id
         ).count())
+
+    def test_get_case_details_multiple_case_ids(self):
+        response_content = self._make_request({
+            "commcare_registry": self.registry.slug,
+            "case_id": [self.parent_case_id, "unrelated_case"],
+            "case_type": ["parent", "other"],
+        }, 200)
+        actual_cases = self._get_cases_in_response(response_content)
+        expected_cases = {"unrelated_case": self.other_case, **{case.case_id: case for case in self.cases}}
+        self.assertEqual(set(actual_cases), set(expected_cases))
 
     def test_get_case_details_missing_case(self):
         self._make_request({
@@ -105,7 +129,22 @@ class RegistryCaseDetailsTests(TestCase):
 
     def _get_cases_in_response(self, response_content):
         xml = ElementTree.fromstring(response_content)
-        return {node.get("case_id") for node in xml.findall("case")}
+        return {node.get('case_id'): _FixtureCase(node) for node in xml.findall("case")}
+
+
+class _FixtureCase:
+    """
+    Shim class for working with XML case blocks in a case DB fixture.
+    """
+    def __init__(self, xml_element):
+        self.xml_element = xml_element
+
+    @property
+    def case_id(self):
+        return self.xml_element.get('case_id')
+
+    def get_property(self, name):
+        return self.xml_element.findtext(name)
 
 
 @generate_cases([

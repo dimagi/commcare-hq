@@ -8,6 +8,8 @@ from psycogreen.gevent import patch_psycopg
 
 
 def main():
+    patch_pickle()  # should happen before gevent patch, which imports pickle
+
     # important to apply gevent monkey patches before running any other code
     # applying this later can lead to inconsistencies and threading issues
     # but compressor doesn't like it
@@ -113,11 +115,23 @@ def run_patches():
     import mimetypes
     mimetypes.init()
 
+    patch_pickle()
     patch_jsonfield()
 
     import django
     _setup_once.setup = django.setup
     django.setup = _setup_once
+
+
+def patch_pickle():
+    """Patch pickle to support protocol 5
+
+    Remove after upgrading to Python 3.8+
+    """
+    import pickle
+    if pickle.HIGHEST_PROTOCOL < 5:
+        import pickle5
+        sys.modules["pickle"] = pickle5
 
 
 def patch_jsonfield():

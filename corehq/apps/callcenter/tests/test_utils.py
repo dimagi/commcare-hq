@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
 
-import mock
+from unittest import mock
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases

@@ -5,7 +5,7 @@ from corehq.util.elastic import ensure_index_deleted
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names

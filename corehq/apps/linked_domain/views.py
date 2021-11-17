@@ -56,6 +56,7 @@ from corehq.apps.linked_domain.exceptions import (
     UnsupportedActionError,
 )
 from corehq.apps.linked_domain.local_accessors import (
+    get_auto_update_rules,
     get_custom_data_models,
     get_data_dictionary,
     get_dialer_settings,
@@ -102,7 +103,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, WebUser
 from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.timezones.utils import get_timezone_for_request
 
@@ -117,6 +118,12 @@ def tableau_server_and_visualizations(request, domain):
 @require_linked_domain
 def toggles_and_previews(request, domain):
     return JsonResponse(get_enabled_toggles_and_previews(domain))
+
+
+@login_or_api_key
+@require_linked_domain
+def auto_update_rules(request, domain):
+    return JsonResponse(get_auto_update_rules(domain))
 
 
 @login_or_api_key
@@ -239,14 +246,15 @@ def hmac_callout_settings(request, domain):
 @require_can_edit_apps
 def pull_missing_multimedia(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
+    force = request.POST.get('force') == 'on'
     if async_update:
-        pull_missing_multimedia_for_app_and_notify_task.delay(domain, app_id, request.user.email)
+        pull_missing_multimedia_for_app_and_notify_task.delay(domain, app_id, request.user.email, force)
         messages.success(request,
                          ugettext('Your request has been submitted. '
                                   'We will notify you via email once completed.'))
     else:
         app = get_app(domain, app_id)
-        pull_missing_multimedia_for_app(app)
+        pull_missing_multimedia_for_app(app, force=force)
     return HttpResponseRedirect(reverse('app_settings', args=[domain, app_id]))
 
 
@@ -520,9 +528,17 @@ class DomainLinkHistoryReport(GenericTabularReport):
             '{} -> {}'.format(link.master_domain, link.linked_domain),
             server_to_user_time(record.date, self.timezone),
             self._make_model_cell(record),
-            pretty_doc_info(get_doc_info_by_id(self.domain, record.user_id))
+            self._make_user_cell(record)
         ]
         return row
+
+    def _make_user_cell(self, record):
+        doc_info = get_doc_info_by_id(self.domain, record.user_id)
+        user = WebUser.get_by_user_id(record.user_id)
+        if self.domain not in user.get_domains() and 'link' in doc_info:
+            doc_info['link'] = None
+
+        return pretty_doc_info(doc_info)
 
     @memoized
     def linked_app_names(self, domain):

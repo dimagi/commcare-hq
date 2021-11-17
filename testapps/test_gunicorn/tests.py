@@ -1,6 +1,6 @@
 import os
 
-import mock
+from unittest import mock
 from deployment.gunicorn.gunicorn_conf import _child_exit, _on_starting
 from testil import eq
 

@@ -586,6 +586,7 @@ class FormRepeater(Repeater):
 
     include_app_id_param = BooleanProperty(default=True)
     white_listed_form_xmlns = StringListProperty(default=[])  # empty value means all form xmlns are accepted
+    user_blocklist = StringListProperty(default=[])
     friendly_name = _("Forward Forms")
 
     @memoized
@@ -602,7 +603,8 @@ class FormRepeater(Repeater):
     def allowed_to_forward(self, payload):
         return (
             payload.xmlns != DEVICE_LOG_XMLNS and
-            (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns)
+            (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns
+            and payload.user_id not in self.user_blocklist)
         )
 
     def get_url(self, repeat_record):
@@ -761,7 +763,7 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         return toggles.DATA_REGISTRY_CASE_UPDATE_REPEATER.enabled(domain)
 
     def get_url(self, repeat_record):
-        new_domain = self.payload_doc(repeat_record).get_case_property('target_case_domain')
+        new_domain = self.payload_doc(repeat_record).get_case_property('target_domain')
         return self.connection_settings.url.format(domain=new_domain)
 
     def send_request(self, repeat_record, payload):
@@ -1434,8 +1436,3 @@ def domain_can_forward(domain):
         domain_has_privilege(domain, ZAPIER_INTEGRATION)
         or domain_has_privilege(domain, DATA_FORWARDING)
     )
-
-
-# import signals
-# Do not remove this import, its required for the signals code to run even though not explicitly used in this file
-from corehq.motech.repeaters import signals  # noqa: disable=unused-import,F401

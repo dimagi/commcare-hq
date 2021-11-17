@@ -77,20 +77,22 @@ hqDefine('app_manager/js/app_manager_utils', [
 
     var handleAjaxAppChange = function (callback) {
         $(document).ajaxComplete(function (e, xhr, options) {
-            var match = options.url.match(/\/apps\/(.*)/);
-            if (match) {
-                var suffix = match[1];  // first captured group
-                if (/^edit_form_attr/.test(suffix) ||
-                    /^edit_module_attr/.test(suffix) ||
-                    /^edit_module_detail_screens/.test(suffix) ||
-                    /^edit_app_attr/.test(suffix) ||
-                    /^edit_form_actions/.test(suffix) ||
-                    /^edit_commcare_settings/.test(suffix) ||
-                    /^rearrange/.test(suffix) ||
-                    /^patch_xform/.test(suffix)) {
-                    callback();
+            xhr.done(() => {
+                var match = options.url.match(/\/apps\/(.*)/);
+                if (match) {
+                    var suffix = match[1];  // first captured group
+                    if (/^edit_form_attr/.test(suffix) ||
+                        /^edit_module_attr/.test(suffix) ||
+                        /^edit_module_detail_screens/.test(suffix) ||
+                        /^edit_app_attr/.test(suffix) ||
+                        /^edit_form_actions/.test(suffix) ||
+                        /^edit_commcare_settings/.test(suffix) ||
+                        /^rearrange/.test(suffix) ||
+                        /^patch_xform/.test(suffix)) {
+                        callback();
+                    }
                 }
-            }
+            });
         });
     };
 

@@ -4,7 +4,7 @@ from io import BytesIO
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import deprecated_check_user_has_case

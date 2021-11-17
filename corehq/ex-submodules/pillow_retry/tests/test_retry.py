@@ -2,7 +2,7 @@ from django.conf import settings
 from django.test import TestCase
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message, KafkaChangeFeed
@@ -46,7 +46,7 @@ class CouchPillowRetryProcessingTest(TestCase, TestMixin):
         self._fake_couch = FakeCouchDb()
         self._fake_couch.dbname = 'test_commcarehq'
         self.consumer = KafkaConsumer(
-            topics.CASE,
+            topics.CASE_SQL,
             client_id='test-consumer',
             bootstrap_servers=settings.KAFKA_BROKERS,
             consumer_timeout_ms=100,
@@ -114,7 +114,7 @@ class KakfaPillowRetryProcessingTest(TestCase, TestMixin):
             name='test-kafka-case-feed',
             checkpoint=None,
             change_feed=KafkaChangeFeed(
-                topics=[topics.CASE, topics.CASE_SQL], client_id='test-kafka-case-feed'
+                topics=[topics.CASE_SQL], client_id='test-kafka-case-feed'
             ),
             processor=self.processor
         )

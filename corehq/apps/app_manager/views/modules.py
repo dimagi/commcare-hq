@@ -70,7 +70,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
     get_all_mobile_filter_configs,
-    get_auto_filter_configurations, AdditionalRegistryQuery,
+    get_auto_filter_configurations,
 )
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
@@ -203,6 +203,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'shadow_parent': _get_shadow_parent(app, module),
         'case_types': {m.case_type for m in app.modules if m.case_type},
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
+        'data_registry_enabled': app.supports_data_registry,
         'data_registries': get_data_registry_dropdown_options(app.domain, required_case_types=case_types),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
@@ -235,7 +236,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_again_label':
                 module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
             'data_registry': module.search_config.data_registry,
-            'additional_registry_queries': module.search_config.additional_registry_queries,
+            'additional_registry_cases': module.search_config.additional_registry_cases,
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -1197,19 +1198,35 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 "search_filter", "blacklisted_owner_ids_expression",
                 "search_button_display_condition", "search_additional_relevant"
             ]
+
+            def _check_xpath(xpath, location):
+                is_valid, message = validate_xpath(xpath)
+                if not is_valid:
+                    raise ValueError(
+                        f"Please fix the errors in xpath expression '{xpath}' "
+                        f"in {location}. The error is {message}"
+                    )
+
             for prop in xpath_props:
                 xpath = search_properties.get(prop, "")
                 if xpath:
-                    is_valid, message = validate_xpath(xpath)
-                    if not is_valid:
-                        return HttpResponseBadRequest(
-                            "Please fix the errors in xpath expression {xpath} in Search and Claim Options. "
-                            "The error is {err}".format(xpath=xpath, err=message)
-                        )
-            additional_registry_queries = [
-                AdditionalRegistryQuery.wrap(query)
-                for query in search_properties.get('additional_registry_queries', [])
-            ]
+                    try:
+                        _check_xpath(xpath, "Search and Claim Options")
+                    except ValueError as e:
+                        return HttpResponseBadRequest(str(e))
+
+            additional_registry_cases = []
+            for case_id_xpath in search_properties.get('additional_registry_cases', []):
+                if not case_id_xpath:
+                    continue
+
+                try:
+                    _check_xpath(case_id_xpath, "the Case ID of Additional Data Registry Query")
+                except ValueError as e:
+                    return HttpResponseBadRequest(str(e))
+
+                additional_registry_cases.append(case_id_xpath)
+
             module.search_config = CaseSearch(
                 search_label=search_label,
                 search_again_label=search_again_label,
@@ -1227,7 +1244,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                     for p in search_properties.get('default_properties')
                 ],
                 data_registry=search_properties.get('data_registry', ""),
-                additional_registry_queries=additional_registry_queries,
+                additional_registry_cases=additional_registry_cases,
             )
 
     resp = {}

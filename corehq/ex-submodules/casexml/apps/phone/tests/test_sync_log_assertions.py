@@ -2,14 +2,13 @@ import uuid
 
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.const import CASE_ACTION_UPDATE
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.phone.models import CaseState, IndexTree, SimplifiedSyncLog
-from couchforms.models import XFormInstance
 
-from corehq.form_processor.tests.utils import sharded
+from corehq.form_processor.tests.utils import create_form_for_test, sharded
 
 
 @sharded
@@ -25,7 +24,7 @@ class SyncLogAssertionTest(TestCase):
             user_id="someuser"
         )
         xform_id = uuid.uuid4().hex
-        xform = XFormInstance(_id=xform_id)
+        xform = create_form_for_test("domain", form_id=xform_id, save=False)
         form_actions = [CommCareCaseAction(action_type=CASE_ACTION_UPDATE,)]
         with patch.object(CommCareCase, 'get_actions_for_form', return_value=form_actions):
             parent_case = CommCareCase(_id='hodor')
@@ -47,7 +46,7 @@ class SyncLogAssertionTest(TestCase):
 
         dependent_case_state = CaseState(case_id="d1", indices=[])
         xform_id = uuid.uuid4().hex
-        xform = XFormInstance(_id=xform_id)
+        xform = create_form_for_test("domain", form_id=xform_id, save=False)
         form_actions = [CommCareCaseAction(
             action_type=CASE_ACTION_UPDATE,
             updated_known_properties={'owner_id': 'user2'},

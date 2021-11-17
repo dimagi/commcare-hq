@@ -27,7 +27,7 @@
         "css-grid-polyfill-binaries": "FremyCompany/css-grid-polyfill-binaries#1.1.1",
         "d3": "3.5.17",
         "datamaps": "0.5.9",
-        "datatables.net": "1.10.23",
+        "datatables.net": "1.11.3",
         "datatables.net-dt": "1.10.23",
         "datatables-bootstrap3": "Jowin/Datatables-Bootstrap3",
         "datatables-buttons": "DataTables/Buttons#^1.5.6",
@@ -100,6 +100,7 @@
     "resolutions": {
         "debug": "^2.6.9",
         "dot-prop": "^5.1.1",
+        "getobject": "^1.0.0",
         "growl": "^1.10.0",
         "grunt": "^1.2.0",
         "js-yaml": "^3.13.1",
@@ -108,9 +109,11 @@
         "minimist": "^0.2.1",
         "minimatch": "^3.0.2",
         "normalize-url": "^4.5.1",
+        "set-value": "^4.0.1",
         "ssri": "^8.0.1",
         "yargs-parser": "^18.1.3",
-        "underscore.string": "^3.3.5"
+        "underscore.string": "^3.3.5",
+        "ansi-regex": "^5.0.1"
     },
     "scripts": {
         "postinstall": "yarn run -s build:modernizr",
