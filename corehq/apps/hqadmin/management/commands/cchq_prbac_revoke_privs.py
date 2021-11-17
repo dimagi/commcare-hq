@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from django_prbac.models import Role
 
 from corehq.apps.accounting.models import SoftwarePlanVersion
-from corehq.apps.accounting.utils import revoke_grants
+from corehq.apps.accounting.utils import revoke_privs_for_grantees
 from corehq.apps.hqadmin.management.commands.cchq_prbac_grandfather_privs import _confirm, _get_role_edition
 from corehq.privileges import MAX_PRIVILEGES
 
@@ -60,7 +60,7 @@ class Command(BaseCommand):
             return
 
         privs_to_revoke = ((role_slug, privs) for role_slug in all_plan_slugs)
-        revoke_grants(privs_to_revoke, dry_run=dry_run, verbose=verbose)
+        revoke_privs_for_grantees(privs_to_revoke, dry_run=dry_run, verbose=verbose)
         if delete_revoked_privs:
             if skipped_editions:
                 logger.error(
