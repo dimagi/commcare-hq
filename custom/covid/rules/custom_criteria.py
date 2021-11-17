@@ -11,35 +11,23 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 
 def associated_usercase_closed(case, now):
     """
-    Only cases that match all of the following criteria pass the filter:
-
-    - the case is open
-    - the case is an associated checkin case of a mobile worker
-    - the corresponding user case is closed
-
+    Is this an open checkin case where the associated usercase has been closed?
     """
-    if case.closed:
-        return False
-
-    if case.type != "checkin":
+    if case.closed or case.type != "checkin":
         return False
 
     usercase = get_usercase_from_checkin(case)
-
-    if usercase is None:
-        return False
-
-    if case.domain != usercase.domain:
-        return False
-
-    if usercase.closed:
-        return True
-
-    return False
+    return (
+        usercase is not None
+        and case.domain == usercase.domain
+        and usercase.closed
+    )
 
 
 def get_usercase_from_checkin(checkin_case):
     username = checkin_case.get_case_property("username")
+    if not username:
+        return None
     query = (
         CaseSearchES()
         .domain(checkin_case.domain)
