@@ -125,12 +125,12 @@ def check_db_tables(app_configs, **kwargs):
             with connections[db].cursor() as cursor:
                 cursor.execute("SELECT %s::regclass", [model_class._meta.db_table])
         except Exception as e:
-            return checks.Error('checks.Error querying model on database "{}": "{}.{}": {}.{}({})'.format(
+            errors.append(checks.Error('checks.Error querying model on database "{}": "{}.{}": {}.{}({})'.format(
                 using or DEFAULT_DB_ALIAS,
                 model_class._meta.app_label, model_class.__name__,
                 e.__class__.__module__, e.__class__.__name__,
                 e
-            ))
+            )))
 
     for model in apps.get_models():
         app_label = model._meta.app_label
@@ -143,9 +143,7 @@ def check_db_tables(app_configs, **kwargs):
 
         if issubclass(model, PartitionedModel):
             for db in get_db_aliases_for_partitioned_query():
-                checks.Error = _check_model(model, using=db)
-                checks.Error and errors.append(checks.Error)
+                _check_model(model, using=db)
         else:
-            checks.Error = _check_model(model)
-            checks.Error and errors.append(checks.Error)
+            _check_model(model)
     return errors
