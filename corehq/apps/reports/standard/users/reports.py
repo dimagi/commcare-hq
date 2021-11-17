@@ -32,6 +32,7 @@ from corehq.apps.users.audit.change_messages import (
     get_messages,
 )
 from corehq.apps.users.models import UserHistory
+from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 
@@ -190,8 +191,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     def _user_history_row(self, record, domain, timezone):
         return [
-            record.user_repr,
-            record.changed_by_repr,
+            cached_user_id_to_username(record.user_id),
+            cached_user_id_to_username(record.changed_by),
             _get_action_display(record.action),
             record.changed_via,
             self._user_history_details_cell(record.changes, domain),
