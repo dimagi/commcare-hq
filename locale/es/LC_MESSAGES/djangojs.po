@@ -6,15 +6,16 @@
 # Translators:
 # Dimagi Dev <devops@dimagi.com>, 2021
 # Gladys Teos <info@enestranslations.com>, 2021
+# Michelle B. Sultan <msultan@dimagi.com>, 2021
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-10 20:28+0000\n"
+"POT-Creation-Date: 2021-11-17 20:01+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Gladys Teos <info@enestranslations.com>, 2021\n"
+"Last-Translator: Michelle B. Sultan <msultan@dimagi.com>, 2021\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -3084,19 +3085,15 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js:28
 msgid "AND"
-msgstr ""
+msgstr "Y"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js:33
-#, fuzzy
-#| msgid "True when ANY of the expressions are true."
 msgid "True when ANY of the case properties match"
-msgstr "Es verdadero cuando CUALQUIERA de las expresiones es verdadera"
+msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js:35
-#, fuzzy
-#| msgid "True when ALL of the expressions are true."
 msgid "True when ALL of the case properties match"
-msgstr "Es verdadero cuando TODAS las expresiones son verdaderas"
+msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:168
 msgid "Case Reassignment (via HQ)"
