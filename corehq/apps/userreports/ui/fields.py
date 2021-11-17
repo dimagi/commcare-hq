@@ -61,5 +61,4 @@ class JsonField(forms.CharField):
             raise forms.ValidationError(self.error_messages['required'])
         if self.expected_type and not isinstance(value, self.expected_type):
             raise forms.ValidationError(
-                _('Expected {} but was {}'.format(self.expected_type.__name__, type(value).__name__))
-            )
+                _('Expected {} but was {}').format(self.expected_type.__name__, type(value).__name__))
