@@ -104,7 +104,6 @@ def create_new_user_from_old_user(old_user, new_username):
         User.objects.make_random_password(),
         None,
         USER_CHANGE_VIA_CLONE,
-        email=new_username,
         by_domain_required_for_log=False,
     )
     new_user = copy_user_fields(old_user, new_user)
@@ -185,6 +184,7 @@ def copy_user_fields(from_user, to_user):
     to_user.is_staff = from_user.is_staff
     to_user.is_active = from_user.is_active
     to_user.is_superuser = from_user.is_superuser
+    to_user.email = from_user.email or from_user.username
 
     # CouchUser fields
     # ignoring device_ids, last_device, created_on, last_modified
