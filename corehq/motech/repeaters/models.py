@@ -193,7 +193,7 @@ class RepeaterSuperProxy(models.Model):
     # See https://stackoverflow.com/questions/241250/single-table-inheritance-in-django/60894618#60894618
     PROXY_FIELD_NAME = "repeater_type"
 
-    repeater_type = models.CharField(max_length=64)
+    repeater_type = models.CharField(max_length=64, blank=True)
 
     class Meta:
         abstract = True
@@ -260,22 +260,27 @@ class SQLRepeater(RepeaterSuperProxy):
         default=V2,
     )
     white_listed_case_types = ArrayField(
-        models.CharField(max_length=255, default=list)
+        models.CharField(max_length=255),
+        default=list
     )
     black_listed_users = ArrayField(
-        models.CharField(max_length=255, default=list)
+        models.CharField(max_length=255),
+        default=list
     )
 
     #attributes used in FormRepeaters and it's subclases
     include_app_id_param = models.BooleanField(default=True)
     white_listed_case_types = ArrayField(
-        models.CharField(max_length=255, default=list)
+        models.CharField(max_length=255),
+        default=list
     )
 
     # attributes used in FormRepeaters and CaseRepeaters
     format = models.CharField(
         max_length=16,
         choices=REPEATER_FORMAT_OPTIONS,
+        blank=True,
+        null=True
     )
 
     objects = RepeaterManager()
