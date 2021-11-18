@@ -277,14 +277,15 @@ def run_rules_for_case(case, rules, now):
         try:
             last_result = rule.run_rule(case, now)
         except Exception:
+            last_result = CaseRuleActionResult(num_errors=1)
             notify_exception(None, "Error applying case update rule", {
                 'domain': case.domain,
                 'rule_pk': rule.pk,
                 'case_id': case.case_id,
             })
-        else:
-            aggregated_result.add_result(last_result)
-            if last_result.num_closes > 0:
-                break
+
+        aggregated_result.add_result(last_result)
+        if last_result.num_closes > 0:
+            break
 
     return aggregated_result

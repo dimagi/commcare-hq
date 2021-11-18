@@ -716,18 +716,21 @@ class CaseRuleActionResult(object):
         if not isinstance(value, int):
             raise ValueError("Expected int")
 
-    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0, num_related_closes=0, num_creates=0):
+    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0,
+                 num_related_closes=0, num_creates=0, num_errors=0):
         self._validate_int(num_updates)
         self._validate_int(num_closes)
         self._validate_int(num_related_updates)
         self._validate_int(num_related_closes)
         self._validate_int(num_creates)
+        self._validate_int(num_errors)
 
         self.num_updates = num_updates
         self.num_closes = num_closes
         self.num_related_updates = num_related_updates
         self.num_related_closes = num_related_closes
         self.num_creates = num_creates
+        self.num_errors = num_errors
 
     def add_result(self, result):
         self.num_updates += result.num_updates
@@ -735,6 +738,7 @@ class CaseRuleActionResult(object):
         self.num_related_updates += result.num_related_updates
         self.num_related_closes += result.num_related_closes
         self.num_creates += result.num_creates
+        self.num_errors += result.num_errors
 
     @property
     def total_updates(self):
@@ -1510,6 +1514,7 @@ class DomainCaseRuleRun(models.Model):
     STATUS_RUNNING = 'R'
     STATUS_FINISHED = 'F'
     STATUS_HALTED = 'H'
+    STATUS_HAD_ERRORS = 'E'
 
     domain = models.CharField(max_length=126)
     case_type = models.CharField(max_length=255, null=True)
@@ -1523,6 +1528,7 @@ class DomainCaseRuleRun(models.Model):
     num_related_updates = models.IntegerField(default=0)
     num_related_closes = models.IntegerField(default=0)
     num_creates = models.IntegerField(default=0)
+    num_errors = models.IntegerField(default=0)
 
     dbs_completed = JSONField(default=list)
 
@@ -1545,6 +1551,7 @@ class DomainCaseRuleRun(models.Model):
             run.num_related_updates += result.num_related_updates
             run.num_related_closes += result.num_related_closes
             run.num_creates += result.num_creates
+            run.num_errors += result.num_errors
 
             if db:
                 run.dbs_completed.append(db)
@@ -1557,6 +1564,8 @@ class DomainCaseRuleRun(models.Model):
 
             if halted or run.status == cls.STATUS_HALTED:
                 run.status = cls.STATUS_HALTED
+            elif run.num_errors > 0:
+                run.status = cls.STATUS_HAD_ERRORS
             elif run.finished_on:
                 run.status = cls.STATUS_FINISHED
             run.save()
