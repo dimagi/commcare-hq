@@ -380,6 +380,40 @@ def should_log_exception_for_backend(backend, exception):
         return True
 
 
+def register_sms_user(username, cleaned_phone_number, domain, send_welcome_sms=False):
+    try:
+        user_data = {}
+
+        username = process_username(username, domain)
+        password = random_password()
+        new_user = CommCareUser.create(
+            domain,
+            username,
+            password,
+            created_by=None,
+            created_via=USER_CHANGE_VIA_SMS,
+            metadata=user_data
+        )
+        new_user.add_phone_number(cleaned_phone_number)
+        new_user.save()
+
+        entry = new_user.get_or_create_phone_entry(cleaned_phone_number)
+        entry.set_two_way()
+        entry.set_verified()
+        entry.save()
+
+        if send_welcome_sms:
+            send_sms(
+                domain, None, cleaned_phone_number,
+                get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain)
+            )
+    except ValidationError as e:
+        send_sms(domain, None, cleaned_phone_number, e.messages[0])
+        return False
+    else:
+        return True
+
+
 def random_password():
     """
     This method creates a random password for an sms user registered via sms
@@ -458,31 +492,12 @@ def process_sms_registration(msg):
                         keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS
                         and domain_obj.sms_mobile_worker_registration_enabled
                 ):
-                    if keyword4 != '':
-                        username = keyword4
-                    else:
-                        username = cleaned_phone_number
-                    try:
-                        user_data = {}
-
-                        username = process_username(username, domain_obj)
-                        password = random_password()
-                        new_user = CommCareUser.create(domain_obj.name, username, password, created_by=None,
-                                                       created_via=USER_CHANGE_VIA_SMS, metadata=user_data)
-                        new_user.add_phone_number(cleaned_phone_number)
-                        new_user.save()
-
-                        entry = new_user.get_or_create_phone_entry(cleaned_phone_number)
-                        entry.set_two_way()
-                        entry.set_verified()
-                        entry.save()
-                        registration_processed = True
-
-                        if domain_obj.enable_registration_welcome_sms_for_mobile_worker:
-                            send_sms(domain_obj.name, None, cleaned_phone_number,
-                                     get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain_obj.name))
-                    except ValidationError as e:
-                        send_sms(domain_obj.name, None, cleaned_phone_number, e.messages[0])
+                    registration_processed = register_sms_user(
+                        username=cleaned_phone_number if keyword4 == '' else keyword4,
+                        domain=domain_obj.name,
+                        cleaned_phone_number=cleaned_phone_number,
+                        send_welcome_sms=domain_obj.enable_registration_welcome_sms_for_mobile_worker,
+                    )
 
                 elif domain_obj.sms_case_registration_enabled:
                     register_sms_contact(
