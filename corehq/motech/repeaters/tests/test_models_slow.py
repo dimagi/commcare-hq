@@ -46,7 +46,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             connection_settings_id=conn.id,
             include_app_id_param=False,
         )
-        cls.repeater.save()
+        cls.repeater.save(sync_to_sql=False)
         cls.sql_repeater = SQLRepeater.objects.create(
             domain=DOMAIN,
             repeater_id=cls.repeater.get_id,
