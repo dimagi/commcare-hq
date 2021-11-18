@@ -28,6 +28,7 @@ NOTIFY = 'notify'
 RUN = 'run'
 COMMAND_CHOICES = [NOTIFY, RUN]
 
+
 class OldUserNotFound(Exception):
     pass
 
@@ -87,6 +88,31 @@ def run_clone_process(file, dry_run):
         if not dry_run:
             deactivate_django_user(old_user.get_django_user())
             send_deprecation_email(old_user, new_user)
+
+    log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails)
+
+
+def notify_users(file, dry_run):
+    already_existing_users = []
+    non_existent_old_users = []
+    invalid_emails = []
+    for old_username, new_username in iterate_usernames_to_update(file):
+        if not re.search(EMAIL_REGEX_VALIDATION, new_username):
+            invalid_emails.append((old_username, new_username))
+            continue
+
+        try:
+            old_user = validate_usernames(old_username, new_username)
+        except OldUserNotFound:
+            non_existent_old_users.append((old_username, new_username))
+            continue
+        except (CouchUser.Inconsistent, NewUserAlreadyExists):
+            already_existing_users.append((old_username, new_username))
+            continue
+
+        logger.info(f'Notify {old_user.get_email()} of pending migration.')
+        if not dry_run:
+            send_notify_email(old_user, new_username)
 
     log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails)
 
@@ -277,6 +303,28 @@ def send_deprecation_email(old_user, new_user):
         email_from=settings.DEFAULT_FROM_EMAIL,
         file_attachments=[],
         cc=[new_user.get_email()]
+    )
+
+
+def send_notify_email(old_user, new_username):
+    context = {
+        'greeting': _("Dear {name},").format(name=old_user.first_name) if old_user.first_name else _("Hello,"),
+        'old_username': old_user.username,
+        'new_username': new_username,
+    }
+
+    #TODO: create new templates
+    email_html = render_to_string('users/email/deprecated_user.html', context)
+    email_plaintext = render_to_string('users/email/deprecated_user.txt', context)
+
+    logger.info(f'Sending 7 day notice email to {old_user.get_email()}.')
+    send_html_email_async.delay(
+        _("Pending Migration For Your CommCare User"),
+        old_user.get_email(),
+        email_html,
+        text_content=email_plaintext,
+        email_from=settings.DEFAULT_FROM_EMAIL,
+        file_attachments=[],
     )
 
 
