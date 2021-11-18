@@ -104,7 +104,9 @@ def notify_users_command(old_username, new_username, dry_run):
     old_user = validate_usernames(old_username, new_username)
 
     scheduled_date = date.today() + timedelta(days=7)
-    logger.info(f'Sending email notifying {old_user.get_email()} a migration is scheduled for {scheduled_date}.')
+    dry_run_tag = "[DRY_RUN]" if dry_run else ""
+    logger.info(f'{dry_run_tag}Sending email notifying {old_user.get_email()} a migration is scheduled for '
+                f'{scheduled_date}.')
     if not dry_run:
         send_scheduled_migration_email(old_user, new_username, scheduled_date)
 
@@ -173,6 +175,7 @@ def deactivate_django_user(django_user):
 
 
 def copy_domain_memberships(from_user, to_user, dry_run=False):
+    dry_run_tag = "[DRY_RUN]" if dry_run else ""
     for domain_membership in from_user.domain_memberships:
         # intentionally leave out last_accessed
         copied_membership = DomainMembership(
@@ -188,12 +191,13 @@ def copy_domain_memberships(from_user, to_user, dry_run=False):
         if not dry_run:
             to_user.domain_memberships.append(copied_membership)
             to_user.domains.append(copied_membership.domain)
-        logger.info(f'Copied {domain_membership.domain} domain membership.')
+        logger.info(f'{dry_run_tag}Copied {domain_membership.domain} domain membership.')
     if not dry_run:
         to_user.save()
 
 
 def transfer_exports(from_user, to_user, dry_run=False):
+    dry_run_tag = "[DRY_RUN]" if dry_run else ""
     for domain in from_user.domains:
         key = [domain]
         for export in _get_export_instance(ExportInstance, key):
@@ -201,28 +205,31 @@ def transfer_exports(from_user, to_user, dry_run=False):
                 if not dry_run:
                     export.owner_id = to_user.get_id
                     export.save()
-                logger.info(f'Transferred ownership of export {export._id}.')
+                logger.info(f'{dry_run_tag}Transferred ownership of export {export._id}.')
 
 
 def transfer_scheduled_reports(from_user, to_user_id, dry_run=False):
+    dry_run_tag = "[DRY_RUN]" if dry_run else ""
     for domain in from_user.domains:
         for scheduled_report in ReportNotification.by_domain_and_owner(domain, from_user._id, stale=False):
             if not dry_run:
                 scheduled_report.owner_id = to_user_id
                 scheduled_report.save()
-            logger.info(f'Transferred ownership of scheduled report {scheduled_report._id}.')
+            logger.info(f'{dry_run_tag}Transferred ownership of scheduled report {scheduled_report._id}.')
 
 
 def transfer_saved_reports(from_user, to_user, dry_run=False):
+    dry_run_tag = "[DRY_RUN]" if dry_run else ""
     for domain in from_user.domains:
         for saved_report in ReportConfig.by_domain_and_owner(domain, from_user.get_id, stale=False):
             if not dry_run:
                 saved_report.owner_id = to_user.get_id
                 saved_report.save()
-            logger.info(f'Transferred ownership of saved report {saved_report._id}.')
+            logger.info(f'{dry_run_tag}Transferred ownership of saved report {saved_report._id}.')
 
 
 def transfer_feature_flags(from_username, to_username, dry_run=False):
+    dry_run_tag = "[DRY_RUN]" if dry_run else ""
     enabled_toggles = toggles_enabled_for_user(from_username)
     by_name = all_toggles_by_name()
     for toggle_name in enabled_toggles:
@@ -230,7 +237,7 @@ def transfer_feature_flags(from_username, to_username, dry_run=False):
             toggle_slug = by_name[toggle_name].slug
             set_toggle(toggle_slug, from_username, False)
             set_toggle(toggle_slug, to_username, True)
-        logger.info(f'Updated toggle name {toggle_name} from {from_username} to {to_username}')
+        logger.info(f'{dry_run_tag}Updated toggle name {toggle_name} from {from_username} to {to_username}')
 
     if not dry_run:
         toggles_enabled_for_user.clear(from_username)
