@@ -449,6 +449,12 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         except InvalidSessionEndpoint as e:
             return json_response({'message': str(e)}, status_code=400)
 
+    if should_edit('function_datum_endpoints'):
+        if request.POST['function_datum_endpoints']:
+            form.function_datum_endpoints = request.POST['function_datum_endpoints'].replace(" ", "").split(",")
+        else:
+            form.function_datum_endpoints = []
+
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
