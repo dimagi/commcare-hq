@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 
 from ..xform import parse_xml
-from ..exceptions import XFormException
+from ..exceptions import DangerousXmlException
 
 
 class ParseXMLTests(SimpleTestCase):
@@ -36,5 +36,5 @@ class ParseXMLTests(SimpleTestCase):
         </html>
         '''.strip()
 
-        with self.assertRaises(XFormException):
+        with self.assertRaises(DangerousXmlException):
             parse_xml(xml)
