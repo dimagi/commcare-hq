@@ -821,6 +821,7 @@ REPEATER_CLASSES = [
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
     'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
     'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
+    'corehq.motech.repeaters.expression.repeaters.CaseExpressionRepeater',
 ]
 
 # Override this in localsettings to add new repeater types

@@ -1021,6 +1021,7 @@ class FormBase(DocumentSchema):
     is_release_notes_form = BooleanProperty(default=False)
     enable_release_notes = BooleanProperty(default=False)
     session_endpoint_id = StringProperty()  # See toggles.SESSION_ENDPOINTS
+    function_datum_endpoints = StringListProperty()  # computed datums IDs that are allowed in endpoints
 
     @classmethod
     def wrap(cls, data):

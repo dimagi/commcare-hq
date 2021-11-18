@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.test import RequestFactory, TestCase, override_settings
 
 from unittest import mock
@@ -14,9 +16,15 @@ from corehq.apps.analytics.utils import (
     is_domain_blocked_from_hubspot,
     hubspot_enabled_for_user,
     hubspot_enabled_for_email,
+    emails_that_accepted_invitations_to_blocked_hubspot_domains,
 )
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser, CouchUser, CommCareUser
+from corehq.apps.users.models import (
+    WebUser,
+    CouchUser,
+    CommCareUser,
+    Invitation,
+)
 
 from ..tasks import (
     HUBSPOT_COOKIE,
@@ -119,6 +127,18 @@ class TestBlockedHubspotData(TestCase):
             cls.second_blocked_user.username
         )
 
+        cls.blocked_invitation_user = WebUser.create(
+            cls.blocked_domain.name, 'blocked-by-invitation@gmail.com', '*****', None, None
+        )
+        invite_to_blocked_domain = Invitation(
+            email=cls.blocked_invitation_user.username,
+            is_accepted=True,
+            domain=cls.blocked_domain.name,
+            invited_on=datetime.now(),
+            invited_by="system@dimagi.com",
+        )
+        invite_to_blocked_domain.save()
+
         cls.blocked_commcare_user = CommCareUser.create(
             cls.blocked_domain.name, 'testuser', '****', None, None
         )
@@ -150,6 +170,22 @@ class TestBlockedHubspotData(TestCase):
         self.assertFalse(hubspot_enabled_for_email(self.second_blocked_user.username))
         self.assertTrue(hubspot_enabled_for_email(self.allowed_user.username))
 
+    def test_removed_user_is_still_blocked(self):
+        """
+        Ensure that users who have previously accepted an invitation to a domain
+        blocking hubspot data, continue to be blocked from hubspot once their
+        membership has been removed from that domain.
+        """
+        self.blocked_invitation_user.delete_domain_membership(self.blocked_domain.name)
+        self.blocked_invitation_user.save()
+        self.assertFalse(hubspot_enabled_for_email(self.blocked_invitation_user.username))
+
+    def test_emails_that_accepted_invitations_to_blocked_hubspot_domains(self):
+        self.assertListEqual(
+            [self.blocked_invitation_user.username],
+            list(emails_that_accepted_invitations_to_blocked_hubspot_domains())
+        )
+
     def test_couch_user_is_blocked(self):
         """
         Make sure that hubspot_enabled_for_user does not throw an error if a
@@ -161,6 +197,7 @@ class TestBlockedHubspotData(TestCase):
     def tearDownClass(cls):
         cls.blocked_user.delete(cls.blocked_domain.name, deleted_by=None)
         cls.second_blocked_user.delete(cls.second_blocked_domain.name, deleted_by=None)
+        cls.blocked_invitation_user.delete(cls.blocked_domain.name, deleted_by=None)
         cls.allowed_user.delete(cls.allowed_domain.name, deleted_by=None)
         cls.blocked_domain.delete()
         cls.second_blocked_domain.delete()
