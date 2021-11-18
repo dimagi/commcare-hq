@@ -875,6 +875,20 @@ class FormRepeater(Repeater):
         })
         return headers
 
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            'is_paused',
+            "connection_settings",
+            "include_app_id_param",
+            "white_listed_form_xmlns"
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLFormRepeater
+
 
 class CaseRepeater(SyncCouchToSQLMixin, Repeater):
     """
