@@ -244,16 +244,14 @@ def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_typ
             notify_error("Halting rule run for domain %s and case type %s." % (domain, case_type))
 
             return DomainCaseRuleRun.done(
-                run_id, DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result, db=db
+                run_id, cases_checked, case_update_result, db=db, halted=True
             )
 
         case_update_result.add_result(run_rules_for_case(case, rules, now))
         if progress_helper is not None:
             progress_helper.increment_current_case_count()
         cases_checked += 1
-    return DomainCaseRuleRun.done(
-        run_id, DomainCaseRuleRun.STATUS_FINISHED, cases_checked, case_update_result, db=db
-    )
+    return DomainCaseRuleRun.done(run_id, cases_checked, case_update_result, db=db)
 
 
 def _check_data_migration_in_progress(domain, last_migration_check_time):

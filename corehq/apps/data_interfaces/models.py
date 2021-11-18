@@ -1532,12 +1532,9 @@ class DomainCaseRuleRun(models.Model):
         )
 
     @classmethod
-    def done(cls, run_id, status, cases_checked, result, db=None):
+    def done(cls, run_id, cases_checked, result, db=None, halted=False):
         if not isinstance(result, CaseRuleActionResult):
             raise TypeError("Expected an instance of CaseRuleActionResult")
-
-        if status not in (cls.STATUS_HALTED, cls.STATUS_FINISHED):
-            raise ValueError("Expected STATUS_HALTED or STATUS_FINISHED")
 
         with CriticalSection(['update-domain-case-rule-run-%s' % run_id]):
             run = cls.objects.get(pk=run_id)
@@ -1558,10 +1555,9 @@ class DomainCaseRuleRun(models.Model):
             else:
                 run.finished_on = datetime.utcnow()
 
-            if status == cls.STATUS_HALTED:
-                run.status = status
-            elif status == cls.STATUS_FINISHED and run.status != cls.STATUS_HALTED and run.finished_on:
-                run.status = status
-
+            if halted or run.status == cls.STATUS_HALTED:
+                run.status = cls.STATUS_HALTED
+            elif run.finished_on:
+                run.status = cls.STATUS_FINISHED
             run.save()
             return run
