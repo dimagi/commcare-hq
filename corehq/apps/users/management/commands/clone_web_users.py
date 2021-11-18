@@ -29,6 +29,10 @@ class OldUserNotFound(Exception):
     pass
 
 
+class NewUserAlreadyExists(Exception):
+    pass
+
+
 class Command(BaseCommand):
     help = """
     Creates new web users with the same data as existing web users
@@ -62,7 +66,7 @@ class Command(BaseCommand):
             except OldUserNotFound:
                 non_existent_old_users.append((old_username, new_username))
                 continue
-            except CouchUser.Inconsistent:
+            except (CouchUser.Inconsistent, NewUserAlreadyExists):
                 already_existing_users.append((old_username, new_username))
                 continue
 
@@ -87,6 +91,9 @@ def clone_user(old_username, new_username, dry_run=False):
     old_user = WebUser.get_by_username(old_username)
     if not old_user:
         raise OldUserNotFound
+
+    if WebUser.get_by_username(new_username):
+        raise NewUserAlreadyExists
 
     new_user = None
     if not dry_run:
