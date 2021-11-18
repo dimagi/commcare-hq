@@ -71,7 +71,6 @@ branches:
     - ml/remove-pickles-reports # Minha Oct 21
     - jls/enable-usercase-button # Jenny Oct 27
     - bmb/update-datatables-dt  # Biyeun Nov 2
-    - rc/store-usernames-in-log # Robert Nov 4
     - gh/use-email-for-all-comms # Graham Nov 8 (passive QA testing: check back on Dec 6)
     - rp/status-embed # Rynhard Nov 9
     - jls/smart-linking-in-web-apps # Jenny Sept 22
