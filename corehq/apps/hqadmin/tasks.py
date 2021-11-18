@@ -73,15 +73,18 @@ def check_non_dimagi_superusers():
 
 
 @task(serializer='pickle', queue="email_queue")
-def send_mass_emails(username, real_email, subject, html, text):
+def send_mass_emails(email_for_requesting_user, real_email, subject, html, text):
+
     if real_email:
         recipients = [{
             'username': h['username'],
+            'email': h['email'] or h['username'],
             'first_name': h['first_name'] or 'CommCare User',
         } for h in UserES().web_users().run().hits]
     else:
         recipients = [{
-            'username': username,
+            'username': email_for_requesting_user,
+            'email': email_for_requesting_user,
             'first_name': 'CommCare User',
         }]
 
@@ -103,7 +106,7 @@ def send_mass_emails(username, real_email, subject, html, text):
         })
 
         try:
-            send_HTML_email(subject, recipient['username'], html_content, text_content=text_content)
+            send_HTML_email(subject, recipient['email'], html_content, text_content=text_content)
             successes.append((recipient['username'], None))
         except Exception as e:
             failures.append((recipient['username'], e))
@@ -118,7 +121,7 @@ def send_mass_emails(username, real_email, subject, html, text):
     )
 
     send_html_email_async(
-        "Mass email summary", username, message,
+        "Mass email summary", email_for_requesting_user, message,
         text_content=message, file_attachments=[
             _mass_email_attachment('successes', successes),
             _mass_email_attachment('failures', failures)]
