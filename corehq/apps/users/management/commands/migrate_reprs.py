@@ -7,6 +7,7 @@ from corehq.apps.users.util import cached_user_id_to_username
 
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.util.log import with_progress_bar
+from corehq.util.queries import queryset_to_iterator
 
 
 class Command(BaseCommand):
@@ -14,7 +15,8 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         records = UserHistory.objects.filter(Q(user_repr__isnull=True) | Q(changed_by_repr__isnull=True))
-        for user_history in with_progress_bar(records.order_by('pk').iterator(), records.count()):
+
+        for user_history in with_progress_bar(queryset_to_iterator(records, UserHistory), records.count()):
             try:
                 migrate(user_history)
             except Exception as e:
