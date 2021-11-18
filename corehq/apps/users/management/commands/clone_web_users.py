@@ -59,62 +59,46 @@ class Command(BaseCommand):
         dry_run = options['dry-run']
 
         if command == NOTIFY:
-            pass
+            command_to_run = notify_users
         elif command == RUN:
-            run_clone_process(file, dry_run)
+            command_to_run = run_clone_process
         else:
             raise CommandError(f"The '{command}' command is not supported.")
 
+        already_existing_users = []
+        non_existent_old_users = []
+        invalid_emails = []
+        for old_username, new_username in iterate_usernames_to_update(file):
+            if not re.search(EMAIL_REGEX_VALIDATION, new_username):
+                invalid_emails.append((old_username, new_username))
+                continue
 
-def run_clone_process(file, dry_run):
-    already_existing_users = []
-    non_existent_old_users = []
-    invalid_emails = []
-    for old_username, new_username in iterate_usernames_to_update(file):
-        if not re.search(EMAIL_REGEX_VALIDATION, new_username):
-            invalid_emails.append((old_username, new_username))
-            continue
-
-        try:
-            old_user, new_user = clone_user(old_username, new_username, dry_run=dry_run)
-        except OldUserNotFound:
-            non_existent_old_users.append((old_username, new_username))
-            continue
-        except (CouchUser.Inconsistent, NewUserAlreadyExists):
-            already_existing_users.append((old_username, new_username))
-            continue
-
-        logger.info(f'Successfully cloned old user {old_username} to new user {new_username}')
-        if not dry_run:
-            deactivate_django_user(old_user.get_django_user())
-            send_deprecation_email(old_user, new_user)
-
-    log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails)
+            try:
+                command_to_run(old_username, new_username, dry_run)
+            except OldUserNotFound:
+                non_existent_old_users.append((old_username, new_username))
+                continue
+            except (CouchUser.Inconsistent, NewUserAlreadyExists):
+                already_existing_users.append((old_username, new_username))
+                continue
+        log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails)
 
 
-def notify_users(file, dry_run):
-    already_existing_users = []
-    non_existent_old_users = []
-    invalid_emails = []
-    for old_username, new_username in iterate_usernames_to_update(file):
-        if not re.search(EMAIL_REGEX_VALIDATION, new_username):
-            invalid_emails.append((old_username, new_username))
-            continue
+def run_clone_process(old_username, new_username, dry_run):
+    old_user, new_user = clone_user(old_username, new_username, dry_run=dry_run)
 
-        try:
-            old_user = validate_usernames(old_username, new_username)
-        except OldUserNotFound:
-            non_existent_old_users.append((old_username, new_username))
-            continue
-        except (CouchUser.Inconsistent, NewUserAlreadyExists):
-            already_existing_users.append((old_username, new_username))
-            continue
+    logger.info(f'Successfully cloned old user {old_username} to new user {new_username}')
+    if not dry_run:
+        deactivate_django_user(old_user.get_django_user())
+        send_deprecation_email(old_user, new_user)
 
-        logger.info(f'Notify {old_user.get_email()} of pending migration.')
-        if not dry_run:
-            send_notify_email(old_user, new_username)
 
-    log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails)
+def notify_users(old_username, new_username, dry_run):
+    old_user = validate_usernames(old_username, new_username)
+
+    logger.info(f'Notify {old_user.get_email()} of pending migration.')
+    if not dry_run:
+        send_notify_email(old_user, new_username)
 
 
 def iterate_usernames_to_update(file):
