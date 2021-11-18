@@ -3,12 +3,10 @@ import base64
 from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import incoming
-from corehq.apps.sms.models import (
-    OUTGOING,
-    SMS,
-    SQLMobileBackendMapping,
-)
+from corehq.apps.sms.models import OUTGOING, SMS, SQLMobileBackendMapping
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
+from corehq.apps.sms.util import strip_plus
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
@@ -27,8 +25,9 @@ class RegistrationTestCase(BaseSMSTest):
 
     def setUp(self):
         super(RegistrationTestCase, self).setUp()
+        delete_all_users()
 
-        self.domain = 'sms-reg-test-domain'
+        self.domain = 'sms-reg-test-domain-1'
         self.domain_obj = Domain(name=self.domain)
         self.domain_obj.save()
 
@@ -52,6 +51,7 @@ class RegistrationTestCase(BaseSMSTest):
         delete_domain_phone_numbers(self.domain)
         SQLMobileBackendMapping.unset_default_domain_backend(self.domain)
         self.backend.delete()
+        delete_all_users()
         self.domain_obj.delete()
 
         super(RegistrationTestCase, self).tearDown()
@@ -80,17 +80,25 @@ class RegistrationTestCase(BaseSMSTest):
 
     def test_sms_registration(self):
         formatted_username = format_username('tester', self.domain)
+        phone_number = "+9991234567"
 
         # Test without mobile worker registration enabled
-        incoming('+9991234567', 'JOIN {} WORKER tester'.format(self.domain), self.backend.hq_api_id)
+        incoming(phone_number, 'JOIN {} WORKER tester'.format(self.domain), self.backend.hq_api_id)
         self.assertIsNone(CommCareUser.get_by_username(formatted_username))
 
         # Test with mobile worker registration enabled
         self.domain_obj.sms_mobile_worker_registration_enabled = True
         self.domain_obj.save()
 
-        incoming('+9991234567', 'JOIN {} WORKER tester'.format(self.domain), self.backend.hq_api_id)
+        incoming(phone_number, 'JOIN {} WORKER tester'.format(self.domain), self.backend.hq_api_id)
         self.assertIsNotNone(CommCareUser.get_by_username(formatted_username))
+
+        # Test with no username
+        no_username_phone_number = "+99912345678"
+        incoming(no_username_phone_number, 'JOIN {} WORKER'.format(self.domain), self.backend.hq_api_id)
+        self.assertIsNotNone(CommCareUser.get_by_username(
+            format_username(strip_plus(phone_number), self.domain)
+        ))
 
         # Test a duplicate registration
         prev_num_users = num_mobile_users(self.domain)
