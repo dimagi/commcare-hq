@@ -55,7 +55,7 @@ class Command(BaseCommand):
 
     def handle(self, command, file, **options):
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
-        dry_run = options['dry-run']
+        dry_run = options['dry_run']
 
         if command == NOTIFY:
             command_to_run = notify_users_command
