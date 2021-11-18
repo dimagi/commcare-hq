@@ -250,12 +250,15 @@ def test_generator_required_fields():
 
 def test_generator_copy_from_other_case():
     builder = IntentCaseBuilder() \
-        .case_properties(intent_prop="intent_prop_val")\
+        .case_properties(intent_prop="intent_prop_val", overwrite_prop="new_val")\
         .copy_props_from("other_domain", "other_case_id", "other_case_type")
 
     registry_cases = _mock_registry()
     registry_cases["other_case_id"] = _mock_case(
-        "other_case_id", domain="other_domain", case_type="other_case_type", props={"other_prop": "other_val"}
+        "other_case_id", domain="other_domain", case_type="other_case_type", props={
+            "other_prop": "other_val",
+            "overwrite_prop": "old_val"
+        }
     )
     _test_payload_generator(
         intent_case=builder.get_case(),
@@ -264,6 +267,7 @@ def test_generator_copy_from_other_case():
             "1": {
                 "intent_prop": "intent_prop_val",
                 "other_prop": "other_val",
+                "overwrite_prop": "new_val",
             }})
 
 

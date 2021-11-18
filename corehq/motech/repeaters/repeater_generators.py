@@ -519,7 +519,7 @@ class CaseUpdateConfig:
         )
 
     def get_case_updates(self, couch_user, registry_helper, repeat_record):
-        updates = self._get_case_updates_from_source(self.intent_case, self.includes, self.excludes)
+        updates = {}
         if self.copy_case_id:
             copy_from = self._get_registry_case(
                 self.copy_domain, self.copy_case_id, self.copy_case_type, False,
@@ -527,6 +527,8 @@ class CaseUpdateConfig:
             )
             updates.update(self._get_case_updates_from_source(
                 copy_from, self.copy_includelist, self.copy_excludelist))
+        # properties on the intent case override properties from the other case
+        updates.update(self._get_case_updates_from_source(self.intent_case, self.includes, self.excludes))
         return updates
 
     def _get_case_updates_from_source(self, from_case, includes, excludes):
