@@ -74,9 +74,7 @@ branches:
     - rc/store-usernames-in-log # Robert Nov 4
     - gh/use-email-for-all-comms # Graham Nov 8 (passive QA testing: check back on Dec 6)
     - rp/status-embed # Rynhard Nov 9
-    - sr/session-endpoints+jls/smart-linking-in-web-apps # Sravan Nov 10
     - jls/smart-linking-in-web-apps # Jenny Sept 22
-    - sr/session-endpoints  # Sravan Nov 9
     - ad/tab-structure-for-check-boxes # Addison Nov 11
     - revert-30687-revert-30182-jm/remove-es-scan  # Joel Nov 12
     - gh/mrm/only-admins-can-link # Graham Nov 16
