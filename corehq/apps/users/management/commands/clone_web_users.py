@@ -25,8 +25,8 @@ OLD_USERNAME = 'old_username'
 NEW_USERNAME = 'new_username'
 
 NOTIFY = 'notify'
-RUN = 'run'
-COMMAND_CHOICES = [NOTIFY, RUN]
+RUN_MIGRATION = 'run'
+COMMAND_CHOICES = [NOTIFY, RUN_MIGRATION]
 
 
 class OldUserNotFound(Exception):
@@ -39,13 +39,10 @@ class NewUserAlreadyExists(Exception):
 
 class Command(BaseCommand):
     help = """
-    Creates new web users with the same data as existing web users
-    - Input is a CSV file with old_username and new_username columns
-    - The new user is created, data is copied/transferred over, and the old user is deactivated which will log
-    users out on their next request
-    - Sends an email to the new user's preferred email and old user's preferred email informing them of the change
-    If a user wants to reactivate their old account, they can request this via support who has the ability to make
-    this change in hq admin  under User Administration -> Lookup user by email -> Disable/Enable User Account
+    `notify` command - sends an email to specified users explaining a planned migration will take place in 7 days
+    `run` command - creates new web users based on existing users, copying/transferring data like reports, domain
+    memberships, and feature flags. Passwords are reset, and 2FA and API keys are not copied over.
+    cchq --control <env> django-manage clone_web_users <command> <file.csv> --verbose --dry-run
     """
 
     def add_arguments(self, parser):
@@ -59,9 +56,9 @@ class Command(BaseCommand):
         dry_run = options['dry-run']
 
         if command == NOTIFY:
-            command_to_run = notify_users
-        elif command == RUN:
-            command_to_run = run_clone_process
+            command_to_run = notify_users_command
+        elif command == RUN_MIGRATION:
+            command_to_run = run_migration_command
         else:
             raise CommandError(f"The '{command}' command is not supported.")
 
@@ -84,7 +81,11 @@ class Command(BaseCommand):
         log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails)
 
 
-def run_clone_process(old_username, new_username, dry_run):
+def run_migration_command(old_username, new_username, dry_run):
+    """
+    This is responsible for running the actual cloning process
+    This signature should be the same as other commands in this file
+    """
     old_user, new_user = clone_user(old_username, new_username, dry_run=dry_run)
 
     logger.info(f'Successfully cloned old user {old_username} to new user {new_username}')
@@ -93,7 +94,11 @@ def run_clone_process(old_username, new_username, dry_run):
         send_deprecation_email(old_user, new_user)
 
 
-def notify_users(old_username, new_username, dry_run):
+def notify_users_command(old_username, new_username, dry_run):
+    """
+    This is responsible for notifying users of a planned migration
+    This signature should be the same as other commands in this file
+    """
     old_user = validate_usernames(old_username, new_username)
 
     logger.info(f'Notify {old_user.get_email()} of pending migration.')
