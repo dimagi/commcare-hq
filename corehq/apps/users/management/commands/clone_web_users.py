@@ -43,9 +43,12 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('file', help='')
         parser.add_argument('--verbose', action="store_true")
+        parser.add_argument('--dry-run', action="store_true")
 
     def handle(self, file, **options):
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
+        dry_run = options['dry-run']
+
         already_existing_users = []
         non_existent_old_users = []
         invalid_emails = []
@@ -55,7 +58,7 @@ class Command(BaseCommand):
                 continue
 
             try:
-                old_user, new_user = clone_user(old_username, new_username)
+                old_user, new_user = clone_user(old_username, new_username, dry_run=dry_run)
             except OldUserNotFound:
                 non_existent_old_users.append((old_username, new_username))
                 continue
@@ -64,8 +67,9 @@ class Command(BaseCommand):
                 continue
 
             logger.info(f'Successfully cloned old user {old_username} to new user {new_username}')
-            deactivate_django_user(old_user.get_django_user())
-            send_deprecation_email(old_user, new_user)
+            if not dry_run:
+                deactivate_django_user(old_user.get_django_user())
+                send_deprecation_email(old_user, new_user)
 
         log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails)
 
@@ -77,22 +81,25 @@ def iterate_usernames_to_update(file):
             yield row[OLD_USERNAME], row[NEW_USERNAME]
 
 
-def clone_user(old_username, new_username):
+def clone_user(old_username, new_username, dry_run=False):
     new_username = new_username.lower()
     old_username = old_username.lower()
     old_user = WebUser.get_by_username(old_username)
     if not old_user:
         raise OldUserNotFound
-    new_user = create_new_user_from_old_user(old_user, new_username)
-    new_user.save()
+
+    new_user = None
+    if not dry_run:
+        new_user = create_new_user_from_old_user(old_user, new_username)
+        new_user.save()
 
     # Copy methods do not impact the existing user
-    copy_domain_memberships(old_user, new_user)
+    copy_domain_memberships(old_user, new_user, dry_run=dry_run)
     # Transfer methods do impact the existing user
-    transfer_exports(old_user, new_user)
-    transfer_scheduled_reports(old_user, new_user.get_id)
-    transfer_saved_reports(old_user, new_user)
-    transfer_feature_flags(old_user, new_user)
+    transfer_exports(old_user, new_user, dry_run=dry_run)
+    transfer_scheduled_reports(old_user, new_user.get_id, dry_run=dry_run)
+    transfer_saved_reports(old_user, new_user, dry_run=dry_run)
+    transfer_feature_flags(old_user, new_user, dry_run=dry_run)
 
     return old_user, new_user
 
@@ -117,7 +124,7 @@ def deactivate_django_user(django_user):
     logger.info(f'Deactivated user {django_user.username}.')
 
 
-def copy_domain_memberships(from_user, to_user):
+def copy_domain_memberships(from_user, to_user, dry_run=False):
     for domain_membership in from_user.domain_memberships:
         # intentionally leave out last_accessed
         copied_membership = DomainMembership(
@@ -130,51 +137,56 @@ def copy_domain_memberships(from_user, to_user):
             program_id=domain_membership.program_id,
             is_admin=domain_membership.is_admin,
         )
-        to_user.domain_memberships.append(copied_membership)
-        to_user.domains.append(copied_membership.domain)
+        if not dry_run:
+            to_user.domain_memberships.append(copied_membership)
+            to_user.domains.append(copied_membership.domain)
         logger.info(f'Copied {domain_membership.domain} domain membership.')
+    if not dry_run:
+        to_user.save()
 
-    to_user.save()
 
-
-def transfer_exports(from_user, to_user):
+def transfer_exports(from_user, to_user, dry_run=False):
     for domain in from_user.domains:
         key = [domain]
         for export in _get_export_instance(ExportInstance, key):
             if export.owner_id == from_user.get_id:
-                export.owner_id = to_user.get_id
-                export.save()
+                if not dry_run:
+                    export.owner_id = to_user.get_id
+                    export.save()
                 logger.info(f'Transferred ownership of export {export._id}.')
 
 
-def transfer_scheduled_reports(from_user, to_user_id):
+def transfer_scheduled_reports(from_user, to_user_id, dry_run=False):
     for domain in from_user.domains:
         for scheduled_report in ReportNotification.by_domain_and_owner(domain, from_user._id, stale=False):
-            scheduled_report.owner_id = to_user_id
-            scheduled_report.save()
+            if not dry_run:
+                scheduled_report.owner_id = to_user_id
+                scheduled_report.save()
             logger.info(f'Transferred ownership of scheduled report {scheduled_report._id}.')
 
 
-def transfer_saved_reports(from_user, to_user):
+def transfer_saved_reports(from_user, to_user, dry_run=False):
     for domain in from_user.domains:
         for saved_report in ReportConfig.by_domain_and_owner(domain, from_user.get_id, stale=False):
-            saved_report.owner_id = to_user.get_id
-            saved_report.save()
+            if not dry_run:
+                saved_report.owner_id = to_user.get_id
+                saved_report.save()
             logger.info(f'Transferred ownership of saved report {saved_report._id}.')
 
 
-def transfer_feature_flags(from_user, to_user):
-    enabled_toggles = toggles_enabled_for_user(from_user.username)
+def transfer_feature_flags(from_username, to_username, dry_run=False):
+    enabled_toggles = toggles_enabled_for_user(from_username)
     by_name = all_toggles_by_name()
     for toggle_name in enabled_toggles:
-        logger.info(f'Updating toggle name {toggle_name} from {from_user.username} to {to_user.username}')
-        toggle_slug = by_name[toggle_name].slug
-        set_toggle(toggle_slug, from_user.username, False)
-        set_toggle(toggle_slug, to_user.username, True)
-        logger.info(f'Transferred access to toggle slug {toggle_slug}.')
+        if not dry_run:
+            toggle_slug = by_name[toggle_name].slug
+            set_toggle(toggle_slug, from_username, False)
+            set_toggle(toggle_slug, to_username, True)
+        logger.info(f'Updated toggle name {toggle_name} from {from_username} to {to_username}')
 
-    toggles_enabled_for_user.clear(from_user.username)
-    toggles_enabled_for_user.clear(to_user.username)
+    if not dry_run:
+        toggles_enabled_for_user.clear(from_username)
+        toggles_enabled_for_user.clear(to_username)
 
 
 def copy_user_fields(from_user, to_user):
