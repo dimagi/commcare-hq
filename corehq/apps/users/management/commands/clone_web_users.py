@@ -98,15 +98,25 @@ def iterate_usernames_to_update(file):
             yield row[OLD_USERNAME], row[NEW_USERNAME]
 
 
-def clone_user(old_username, new_username, dry_run=False):
-    new_username = new_username.lower()
+def validate_usernames(old_username, new_username):
+    """
+    Ensures the old_username has an existing user, and the new_username does not
+    :return: the old user that was fetched from the DB if all went well
+    """
     old_username = old_username.lower()
     old_user = WebUser.get_by_username(old_username)
     if not old_user:
         raise OldUserNotFound
 
+    new_username = new_username.lower()
     if WebUser.get_by_username(new_username):
         raise NewUserAlreadyExists
+
+    return old_user
+
+
+def clone_user(old_username, new_username, dry_run=False):
+    old_user = validate_usernames(old_username, new_username)
 
     new_user = None
     if not dry_run:
