@@ -258,6 +258,18 @@
                   {% trans "Data Registry Workflow" %}
               </label>
               <div class="{% css_field_class %}">
+                  <select class="form-control" data-bind="value: smartLinkEndpointId">
+                    {% for id in endpoint_ids %}
+                      <option>{{ id }}</option>
+                    {% endfor %}
+                  </select>
+              </div>
+          </div>
+          <div class="form-group" data-bind="visible: dataRegistryWorkflow() == 'smart_link'">
+              <label for="data-registry" class="{% css_label_class %} control-label">
+                  {% trans "Smart Linking Endpoint" %}
+              </label>
+              <div class="{% css_field_class %}">
                   <select class="form-control" data-bind="value: dataRegistryWorkflow">
                     {% for slug, name in data_registry_workflow_choices %}
                       <option value="{{ slug }}">{{ name }}</option>

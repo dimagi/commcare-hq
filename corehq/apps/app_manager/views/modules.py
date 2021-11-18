@@ -198,6 +198,14 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     '''
     item_lists = item_lists_by_app(app) if app.enable_search_prompt_appearance else []
     case_types = set(module.search_config.additional_case_types) | {module.case_type}
+    endpoint_ids = sorted([
+        m.session_endpoint_id for m in app.get_modules()
+        if m.session_endpoint_id and m.unique_id != module.unique_id
+    ] + [
+        f.session_endpoint_id for f in app.get_forms() if f.session_endpoint_id
+    ])
+    if module.session_endpoint_id:
+        endpoint_ids = [module.session_endpoint_id] + endpoint_ids
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
@@ -211,6 +219,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             (REGISTRY_WORKFLOW_LOAD_CASE, _("Load external case into form")),
             (REGISTRY_WORKFLOW_SMART_LINK, _("Smart link to external domain")),
         ),
+        'endpoint_ids': endpoint_ids,
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
@@ -243,6 +252,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
             'data_registry': module.search_config.data_registry,
             'data_registry_workflow': module.search_config.data_registry_workflow,
+            'smart_link_endpoint_id': module.search_config.smart_link_endpoint_id,
             'additional_registry_cases': module.search_config.additional_registry_cases,
         },
     }
@@ -1257,6 +1267,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 ],
                 data_registry=data_registry_slug,
                 data_registry_workflow=data_registry_workflow,
+                smart_link_endpoint_id=search_properties.get("smart_link_endpoint_id"),
                 additional_registry_cases=additional_registry_cases,
             )
 
