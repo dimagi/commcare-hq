@@ -2,6 +2,8 @@ import csv
 import logging
 import re
 
+from datetime import date, timedelta
+
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
@@ -101,9 +103,10 @@ def notify_users_command(old_username, new_username, dry_run):
     """
     old_user = validate_usernames(old_username, new_username)
 
-    logger.info(f'Notify {old_user.get_email()} of pending migration.')
+    scheduled_date = date.today() + timedelta(days=7)
+    logger.info(f'Sending email notifying {old_user.get_email()} a migration is scheduled for {scheduled_date}.')
     if not dry_run:
-        send_notify_email(old_user, new_username)
+        send_scheduled_migration_email(old_user, new_username, scheduled_date)
 
 
 def iterate_usernames_to_update(file):
@@ -282,10 +285,8 @@ def send_deprecation_email(old_user, new_user):
     email_html = render_to_string('users/email/deprecated_user.html', context)
     email_plaintext = render_to_string('users/email/deprecated_user.txt', context)
 
-    logger.info(f'Sending email with deprecated notice to old email {old_user.get_email()} and '
-                f'new email {new_user.get_email()}.')
     send_html_email_async.delay(
-        _("Deprecated User"),
+        _("Your CommCare User Was Migrated"),
         old_user.get_email(),
         email_html,
         text_content=email_plaintext,
@@ -295,20 +296,19 @@ def send_deprecation_email(old_user, new_user):
     )
 
 
-def send_notify_email(old_user, new_username):
+def send_scheduled_migration_email(old_user, new_username, scheduled_date):
     context = {
         'greeting': _("Dear {name},").format(name=old_user.first_name) if old_user.first_name else _("Hello,"),
         'old_username': old_user.username,
         'new_username': new_username,
+        'date': scheduled_date
     }
 
-    #TODO: create new templates
-    email_html = render_to_string('users/email/deprecated_user.html', context)
-    email_plaintext = render_to_string('users/email/deprecated_user.txt', context)
+    email_html = render_to_string('users/email/notify_scheduled_user_migration.html', context)
+    email_plaintext = render_to_string('users/email/notify_scheduled_user_migration.txt', context)
 
-    logger.info(f'Sending 7 day notice email to {old_user.get_email()}.')
     send_html_email_async.delay(
-        _("Pending Migration For Your CommCare User"),
+        _("Scheduled Migration For Your CommCare User"),
         old_user.get_email(),
         email_html,
         text_content=email_plaintext,

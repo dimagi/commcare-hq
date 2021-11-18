@@ -1,0 +1,28 @@
+{% load i18n %}
+
+{{ greeting }}
+
+{% blocktrans %}
+We have scheduled a migration to be run on {{ date }} that will impact your CommCare user. Your
+organization has requested that your user, {{ old_username }}, be migrated to a new user with the username
+{{ new_username }}.
+
+The following data will be copied to your new user:
+ - general user data (name, phone number, email, etc)
+ - project space memberships (including roles and locations)
+ - saved/scheduled report ownership
+
+The following data will not be copied to your new user:
+ - API keys
+ - pending CommCare invitations
+
+Additionally, your password will be reset for your new user, and 2FA will be disabled by default. If you are exempt
+from SSO, you will be able to follow the Forgot Password workflow to log in.
+
+Once the migration is complete, you will not have access to the user associated with the username {{ old_username }}.
+Please take the following week to prepare for this transition.
+
+
+Thanks,
+CommCareHQ
+{% endblocktrans %}
