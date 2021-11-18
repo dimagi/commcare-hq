@@ -37,6 +37,7 @@ from .exceptions import (
     XFormException,
     XFormValidationError,
     XFormValidationFailed,
+    DangerousXmlException,
 )
 from .suite_xml.xml_models import Instance
 from .xpath import CaseIDXPath, QualifiedScheduleFormXPath, session_var
@@ -49,10 +50,24 @@ def parse_xml(string):
     # declaration are not supported.
     if isinstance(string, str):
         string = string.encode("utf-8")
+
+    parser = ET.XMLParser(encoding="utf-8", remove_comments=True, resolve_entities=False)
     try:
-        return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
+        parsed = ET.fromstring(string, parser=parser)
     except ET.ParseError as e:
         raise XFormException(_("Error parsing XML: {}").format(e))
+
+    if _contains_entities(parsed):
+        raise DangerousXmlException(_("Error parsing XML: Entities are not allowed"))
+
+    return parsed
+
+
+def _contains_entities(xml_element):
+    tree = xml_element.getroottree()
+    entities = tree.iter(ET.Entity)
+    has_entities = any(True for _ in entities)  # Some entities evaluate to false, so changing them to True here
+    return has_entities
 
 
 namespaces = dict(

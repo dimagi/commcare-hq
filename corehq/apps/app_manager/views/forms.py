@@ -1,5 +1,4 @@
 import hashlib
-import itertools
 import json
 import logging
 import re
@@ -307,6 +306,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     xform = str(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
+
             if request.POST.get('cleanup', False):
                 try:
                     # First, we strip all newlines and reformat the DOM.
@@ -531,7 +531,12 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
-    xml = save_xform(app, form, xml.encode('utf-8'))
+
+    try:
+        xml = save_xform(app, form, xml.encode('utf-8'))
+    except XFormException:
+        return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
+
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
 
@@ -541,7 +546,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
-    return json_response(response_json)
+    return JsonResponse(response_json)
 
 
 def apply_patch(patch, text):
