@@ -55,3 +55,27 @@ class TestRevokePrivsForGrantees(SimpleTestCase):
             revoke_privs_for_grantees(privs_to_revoke_for_grantee)
 
         mock_deletegrants.assert_not_called()
+
+    def test_grantee_does_not_exist(self):
+        privs_to_revoke_for_grantee = [('grantee', ['privilege'])]
+        roles_by_slug = {'privilege': Role(slug='privilege')}
+
+        with patch('corehq.apps.accounting.utils.get_all_roles_by_slug', return_value=roles_by_slug),\
+             patch('corehq.apps.accounting.utils.logger.info') as mock_logger,\
+             patch('corehq.apps.accounting.utils.delete_grants') as mock_deletegrants:
+            revoke_privs_for_grantees(privs_to_revoke_for_grantee)
+
+        mock_logger.assert_called_with('grantee grantee does not exist.')
+        mock_deletegrants.assert_not_called()
+
+    def test_privilege_does_not_exist(self):
+        privs_to_revoke_for_grantee = [('grantee', ['privilege'])]
+        roles_by_slug = {'grantee': Role(slug='grantee')}
+
+        with patch('corehq.apps.accounting.utils.get_all_roles_by_slug', return_value=roles_by_slug),\
+             patch('corehq.apps.accounting.utils.logger.info') as mock_logger,\
+             patch('corehq.apps.accounting.utils.delete_grants') as mock_deletegrants:
+            revoke_privs_for_grantees(privs_to_revoke_for_grantee)
+
+        mock_logger.assert_called_with('privilege privilege does not exist.')
+        mock_deletegrants.assert_not_called()
