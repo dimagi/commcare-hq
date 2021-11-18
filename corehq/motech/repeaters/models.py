@@ -418,7 +418,7 @@ class SQLCreateCaseRepeater(SQLCaseRepeater):
         return CreateCaseRepeater
 
 
-class Repeater(QuickCachedDocumentMixin, Document):
+class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and
     other properties of the configuration.
