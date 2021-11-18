@@ -40,7 +40,7 @@ class TestRevokePrivsForGrantees(SimpleTestCase):
 
         mock_deletegrants.assert_not_called()
 
-    def test_no_grants_are_deleted_if_not_found(self):
+    def test_privilege_already_revoked(self):
         privs_to_revoke_for_grantee = [('grantee', ['privilege'])]
         roles_by_slug = {
             'grantee': Role(slug='grantee'),
@@ -51,9 +51,12 @@ class TestRevokePrivsForGrantees(SimpleTestCase):
 
         with patch('corehq.apps.accounting.utils.get_all_roles_by_slug', return_value=roles_by_slug),\
              patch('corehq.apps.accounting.utils.get_grants', return_value=expected_grants),\
+             patch('corehq.apps.accounting.utils.logger.info') as mock_logger,\
              patch('corehq.apps.accounting.utils.delete_grants') as mock_deletegrants:
-            revoke_privs_for_grantees(privs_to_revoke_for_grantee)
+            # only triggers message if verbose is true
+            revoke_privs_for_grantees(privs_to_revoke_for_grantee, verbose=True)
 
+        mock_logger.assert_called_with('Privilege already revoked: grantee => privilege')
         mock_deletegrants.assert_not_called()
 
     def test_grantee_does_not_exist(self):
