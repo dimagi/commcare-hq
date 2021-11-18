@@ -3,7 +3,7 @@ import logging
 import re
 
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
@@ -24,6 +24,9 @@ logger = logging.getLogger(__name__)
 OLD_USERNAME = 'old_username'
 NEW_USERNAME = 'new_username'
 
+NOTIFY = 'notify'
+RUN = 'run'
+COMMAND_CHOICES = [NOTIFY, RUN]
 
 class OldUserNotFound(Exception):
     pass
@@ -45,37 +48,47 @@ class Command(BaseCommand):
     """
 
     def add_arguments(self, parser):
+        parser.add_argument('command', choices=COMMAND_CHOICES)
         parser.add_argument('file', help='')
         parser.add_argument('--verbose', action="store_true")
         parser.add_argument('--dry-run', action="store_true")
 
-    def handle(self, file, **options):
+    def handle(self, command, file, **options):
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
         dry_run = options['dry-run']
 
-        already_existing_users = []
-        non_existent_old_users = []
-        invalid_emails = []
-        for old_username, new_username in iterate_usernames_to_update(file):
-            if not re.search(EMAIL_REGEX_VALIDATION, new_username):
-                invalid_emails.append((old_username, new_username))
-                continue
+        if command == NOTIFY:
+            pass
+        elif command == RUN:
+            run_clone_process(file, dry_run)
+        else:
+            raise CommandError(f"The '{command}' command is not supported.")
 
-            try:
-                old_user, new_user = clone_user(old_username, new_username, dry_run=dry_run)
-            except OldUserNotFound:
-                non_existent_old_users.append((old_username, new_username))
-                continue
-            except (CouchUser.Inconsistent, NewUserAlreadyExists):
-                already_existing_users.append((old_username, new_username))
-                continue
 
-            logger.info(f'Successfully cloned old user {old_username} to new user {new_username}')
-            if not dry_run:
-                deactivate_django_user(old_user.get_django_user())
-                send_deprecation_email(old_user, new_user)
+def run_clone_process(file, dry_run):
+    already_existing_users = []
+    non_existent_old_users = []
+    invalid_emails = []
+    for old_username, new_username in iterate_usernames_to_update(file):
+        if not re.search(EMAIL_REGEX_VALIDATION, new_username):
+            invalid_emails.append((old_username, new_username))
+            continue
 
-        log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails)
+        try:
+            old_user, new_user = clone_user(old_username, new_username, dry_run=dry_run)
+        except OldUserNotFound:
+            non_existent_old_users.append((old_username, new_username))
+            continue
+        except (CouchUser.Inconsistent, NewUserAlreadyExists):
+            already_existing_users.append((old_username, new_username))
+            continue
+
+        logger.info(f'Successfully cloned old user {old_username} to new user {new_username}')
+        if not dry_run:
+            deactivate_django_user(old_user.get_django_user())
+            send_deprecation_email(old_user, new_user)
+
+    log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails)
 
 
 def iterate_usernames_to_update(file):
