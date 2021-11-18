@@ -246,7 +246,7 @@ class RepeaterManager(models.Manager):
                 .filter(repeat_records_ready_to_send))
 
 
-class SQLRepeater(RepeaterSuperProxy):
+class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     domain = models.CharField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
     is_paused = models.BooleanField(default=False)
@@ -293,6 +293,8 @@ class SQLRepeater(RepeaterSuperProxy):
     class Meta:
         db_table = 'repeaters_repeater'
 
+    _migration_couch_id_name = 'repeater_id'
+
     @property
     @memoized
     def repeater(self):
@@ -330,8 +332,27 @@ class SQLRepeater(RepeaterSuperProxy):
             self.next_attempt_at = None
             self.save()
 
+    def _migration_sync_to_couch(self, couch_object):
+        for field_name in self._migration_get_fields():
+            value = getattr(self, field_name)
+            setattr(couch_object, field_name, value)
+        setattr(couch_object, 'connection_settings_id', self.connection_settings.id)
+        setattr(couch_object, 'paused', self.is_paused)
+        couch_object.save(sync_to_sql=False)
 
-class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater):
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return Repeater
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "format",
+        ]
+
+
+class SQLCaseRepeater(SQLRepeater):
     """
     Record that cases should be repeated to a new url
 
@@ -342,8 +363,6 @@ class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater):
     friendly_name = _("Forward Cases")
 
     payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
-
-    _migration_couch_id_name = 'repeater_id'
 
     @property
     def form_class_name(self):
@@ -368,14 +387,6 @@ class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater):
     @memoized
     def payload_doc(self, repeat_record):
         return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
-
-    def _migration_sync_to_couch(self, couch_object):
-        for field_name in self._migration_get_fields():
-            value = getattr(self, field_name)
-            setattr(couch_object, field_name, value)
-        setattr(couch_object, 'connection_settings_id', self.connection_settings.id)
-        setattr(couch_object, 'paused', self.is_paused)
-        couch_object.save(sync_to_sql=False)
 
     @classmethod
     def _migration_get_fields(cls):
