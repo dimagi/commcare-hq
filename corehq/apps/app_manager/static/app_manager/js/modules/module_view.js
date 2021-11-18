@@ -49,6 +49,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
                     dataRegistry: options.data_registry,
                     dataRegistryWorkflow: options.data_registry_workflow,
+                    smartLinkEndpointId: options.smart_link_endpoint_id,
                     additionalRegistryCases: options.additional_registry_cases,
                 });
 

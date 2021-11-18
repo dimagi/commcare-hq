@@ -2157,6 +2157,7 @@ class CaseSearch(DocumentSchema):
     additional_case_types = ListProperty(str)
     data_registry = StringProperty()
     data_registry_workflow = StringProperty()           # one of REGISTRY_WORKFLOW_*
+    smart_link_endpoint_id = StringProperty()
     additional_registry_cases = StringListProperty()  # list of xpath expressions
 
     @property
