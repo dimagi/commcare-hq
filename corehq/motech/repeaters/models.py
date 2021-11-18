@@ -890,7 +890,7 @@ class FormRepeater(Repeater):
         return SQLFormRepeater
 
 
-class CaseRepeater(SyncCouchToSQLMixin, Repeater):
+class CaseRepeater(Repeater):
     """
     Record that cases should be repeated to a new url
 
