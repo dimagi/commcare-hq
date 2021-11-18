@@ -104,6 +104,14 @@ class TestCloneWebUsers(TestCase):
         new_domain_membership = self.new_user.domain_memberships[0]
         self.assertEqual('abc123', new_domain_membership.location_id)
 
+    def test_dry_run_copy_domain_memberships(self):
+        self.assertEqual(1, len(self.old_user.domain_memberships))
+        self.assertEqual([], self.new_user.domain_memberships)
+
+        copy_domain_memberships(self.old_user, self.new_user, dry_run=True)
+
+        self.assertEqual(0, len(self.new_user.domain_memberships))
+
     def test_transfer_exports(self):
         export = FormExportInstance(owner_id=self.old_user._id, domain=self.domain)
         export.save()
@@ -114,16 +122,39 @@ class TestCloneWebUsers(TestCase):
         export = _get_export_instance(ExportInstance, [self.domain])[0]
         self.assertEqual(export.owner_id, self.new_user._id)
 
+    def test_dry_run_transfer_exports(self):
+        export = FormExportInstance(owner_id=self.old_user._id, domain=self.domain)
+        export.save()
+        self.addCleanup(export.delete)
+
+        transfer_exports(self.old_user, self.new_user, dry_run=True)
+
+        export = _get_export_instance(ExportInstance, [self.domain])[0]
+        self.assertNotEqual(export.owner_id, self.new_user._id)
+
     def test_transfer_scheduled_reports(self):
         scheduled_report = ReportNotification(owner_id=self.old_user._id, domain=self.domain)
         scheduled_report.save()
-        expected_id = scheduled_report._id
+        expected_report_id = scheduled_report._id
         self.addCleanup(scheduled_report.delete)
 
         transfer_scheduled_reports(self.old_user, self.new_user._id)
 
-        actual_id = ReportNotification.by_domain_and_owner(self.domain, self.new_user._id, stale=False)[0]._id
-        self.assertEqual(expected_id, actual_id)
+        scheduled_report = ReportNotification.by_domain_and_owner(self.domain, self.new_user._id, stale=False)[0]
+        self.assertEqual(expected_report_id, scheduled_report._id)
+        self.assertEqual(self.new_user._id, scheduled_report.owner_id)
+
+    def test_dry_run_transfer_scheduled_reports(self):
+        scheduled_report = ReportNotification(owner_id=self.old_user._id, domain=self.domain)
+        scheduled_report.save()
+        expected_report_id = scheduled_report._id
+        self.addCleanup(scheduled_report.delete)
+
+        transfer_scheduled_reports(self.old_user, self.new_user._id, dry_run=True)
+
+        scheduled_report = ReportNotification.by_domain_and_owner(self.domain, self.old_user._id, stale=False)[0]
+        self.assertEqual(expected_report_id, scheduled_report._id)
+        self.assertEqual(self.old_user._id, scheduled_report.owner_id)
 
     def test_transfer_saved_reports(self):
         saved_report = ReportConfig(
@@ -133,12 +164,29 @@ class TestCloneWebUsers(TestCase):
             report_type='project_report',
             domain=self.domain)
         saved_report.save()
-        expected_id = saved_report._id
+        expected_report_id = saved_report._id
         self.addCleanup(saved_report.delete)
         transfer_saved_reports(self.old_user, self.new_user)
 
-        actual_id = ReportConfig.by_domain_and_owner(self.domain, self.new_user._id, stale=False)[0]._id
-        self.assertEqual(expected_id, actual_id)
+        saved_report = ReportConfig.by_domain_and_owner(self.domain, self.new_user._id, stale=False)[0]
+        self.assertEqual(expected_report_id, saved_report._id)
+        self.assertEqual(self.new_user._id, saved_report.owner_id)
+
+    def test_dry_run_transfer_saved_reports(self):
+        saved_report = ReportConfig(
+            name='test',
+            owner_id=self.old_user._id,
+            report_slug='worker_activity',
+            report_type='project_report',
+            domain=self.domain)
+        saved_report.save()
+        expected_report_id = saved_report._id
+        self.addCleanup(saved_report.delete)
+        transfer_saved_reports(self.old_user, self.new_user, dry_run=True)
+
+        saved_report = ReportConfig.by_domain_and_owner(self.domain, self.old_user._id, stale=False)[0]
+        self.assertEqual(expected_report_id, saved_report._id)
+        self.assertEqual(self.old_user._id, saved_report.owner_id)
 
     def test_transfer_feature_flags(self):
         toggle = Toggle(slug='test_toggle', enabled_users=[self.old_user.username])
@@ -156,3 +204,20 @@ class TestCloneWebUsers(TestCase):
 
         self.assertFalse(toggle_enabled('test_toggle', self.old_user.username))
         self.assertTrue(toggle_enabled('test_toggle', self.new_user.username))
+
+    def test_dry_run_transfer_feature_flags(self):
+        toggle = Toggle(slug='test_toggle', enabled_users=[self.old_user.username])
+        toggle.save()
+        self.addCleanup(toggle.delete)
+
+        self.assertTrue(toggle_enabled('test_toggle', self.old_user.username))
+        self.assertFalse(toggle_enabled('test_toggle', self.new_user.username))
+
+        mock_togglesbyname = {'TEST_TOGGLE': TEST_TOGGLE}
+        with patch('corehq.toggles.all_toggles_by_name', return_value=mock_togglesbyname),\
+             patch('corehq.apps.users.management.commands.clone_web_users.all_toggles_by_name',
+                   return_value=mock_togglesbyname):
+            transfer_feature_flags(self.old_user, self.new_user, dry_run=True)
+
+        self.assertTrue(toggle_enabled('test_toggle', self.old_user.username))
+        self.assertFalse(toggle_enabled('test_toggle', self.new_user.username))
