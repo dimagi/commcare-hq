@@ -147,7 +147,7 @@ def clone_user(old_username, new_username, dry_run=False):
     copy_domain_memberships(old_user, new_user, dry_run=dry_run)
     # Transfer methods do impact the existing user
     transfer_exports(old_user, new_user, dry_run=dry_run)
-    transfer_scheduled_reports(old_user, new_user.get_id, dry_run=dry_run)
+    transfer_scheduled_reports(old_user, new_user, dry_run=dry_run)
     transfer_saved_reports(old_user, new_user, dry_run=dry_run)
     transfer_feature_flags(old_user, new_user, dry_run=dry_run)
 
@@ -208,12 +208,12 @@ def transfer_exports(from_user, to_user, dry_run=False):
                 logger.info(f'{dry_run_tag}Transferred ownership of export {export._id}.')
 
 
-def transfer_scheduled_reports(from_user, to_user_id, dry_run=False):
+def transfer_scheduled_reports(from_user, to_user, dry_run=False):
     dry_run_tag = "[DRY_RUN]" if dry_run else ""
     for domain in from_user.domains:
         for scheduled_report in ReportNotification.by_domain_and_owner(domain, from_user._id, stale=False):
             if not dry_run:
-                scheduled_report.owner_id = to_user_id
+                scheduled_report.owner_id = to_user._id
                 scheduled_report.save()
             logger.info(f'{dry_run_tag}Transferred ownership of scheduled report {scheduled_report._id}.')
 

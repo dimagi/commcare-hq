@@ -138,7 +138,7 @@ class TestCloneWebUsers(TestCase):
         expected_report_id = scheduled_report._id
         self.addCleanup(scheduled_report.delete)
 
-        transfer_scheduled_reports(self.old_user, self.new_user._id)
+        transfer_scheduled_reports(self.old_user, self.new_user)
 
         scheduled_report = ReportNotification.by_domain_and_owner(self.domain, self.new_user._id, stale=False)[0]
         self.assertEqual(expected_report_id, scheduled_report._id)
@@ -150,7 +150,7 @@ class TestCloneWebUsers(TestCase):
         expected_report_id = scheduled_report._id
         self.addCleanup(scheduled_report.delete)
 
-        transfer_scheduled_reports(self.old_user, self.new_user._id, dry_run=True)
+        transfer_scheduled_reports(self.old_user, self.new_user, dry_run=True)
 
         scheduled_report = ReportNotification.by_domain_and_owner(self.domain, self.old_user._id, stale=False)[0]
         self.assertEqual(expected_report_id, scheduled_report._id)
