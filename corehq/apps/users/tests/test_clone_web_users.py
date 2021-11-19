@@ -200,7 +200,7 @@ class TestCloneWebUsers(TestCase):
         with patch('corehq.toggles.all_toggles_by_name', return_value=mock_togglesbyname),\
              patch('corehq.apps.users.management.commands.clone_web_users.all_toggles_by_name',
                    return_value=mock_togglesbyname):
-            transfer_feature_flags(self.old_user.username, self.new_user.username)
+            transfer_feature_flags(self.old_user, self.new_user)
 
         self.assertFalse(toggle_enabled('test_toggle', self.old_user.username))
         self.assertTrue(toggle_enabled('test_toggle', self.new_user.username))
@@ -217,7 +217,7 @@ class TestCloneWebUsers(TestCase):
         with patch('corehq.toggles.all_toggles_by_name', return_value=mock_togglesbyname),\
              patch('corehq.apps.users.management.commands.clone_web_users.all_toggles_by_name',
                    return_value=mock_togglesbyname):
-            transfer_feature_flags(self.old_user.username, self.new_user.username, dry_run=True)
+            transfer_feature_flags(self.old_user, self.new_user, dry_run=True)
 
         self.assertTrue(toggle_enabled('test_toggle', self.old_user.username))
         self.assertFalse(toggle_enabled('test_toggle', self.new_user.username))
