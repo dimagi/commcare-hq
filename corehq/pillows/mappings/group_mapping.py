@@ -4,6 +4,11 @@ from pillowtop.es_utils import ElasticsearchIndexInfo, GROUP_HQ_INDEX_NAME
 GROUP_INDEX = prefix_for_tests("hqgroups_2017-05-29")
 GROUP_ES_ALIAS = prefix_for_tests('hqgroups')
 GROUP_MAPPING = {
+    "_meta": {
+        "comment": "Ethan updated on 2014-04-02",
+        "created": None
+    },
+    "date_detection": False,
     "date_formats": [
         "yyyy-MM-dd",
         "yyyy-MM-dd'T'HH:mm:ssZZ",
@@ -19,12 +24,10 @@ GROUP_MAPPING = {
         "mm/dd/yy' 'HH:mm:ss"
     ],
     "dynamic": False,
-    "_meta": {
-        "comment": "Ethan updated on 2014-04-02",
-        "created": None
-    },
-    "date_detection": False,
     "properties": {
+        "case_sharing": {
+            "type": "boolean"
+        },
         "doc_type": {
             "index": "not_analyzed",
             "type": "string"
@@ -46,7 +49,7 @@ GROUP_MAPPING = {
             "fields": {
                 "exact": {
                     "index": "not_analyzed",
-                    "type": "string",
+                    "type": "string"
                 },
                 "name": {
                     "index": "analyzed",
@@ -55,11 +58,18 @@ GROUP_MAPPING = {
             },
             "type": "multi_field"
         },
-        "reporting": {"type": "boolean"},
-        "path": {"type": "string"},
-        "case_sharing": {"type": "boolean"},
-        "users": {"type": "string"},
-        "removed_users": {"type": "string"},
+        "path": {
+            "type": "string"
+        },
+        "removed_users": {
+            "type": "string"
+        },
+        "reporting": {
+            "type": "boolean"
+        },
+        "users": {
+            "type": "string"
+        }
     }
 }
 

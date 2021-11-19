@@ -9,54 +9,54 @@ CASE_SEARCH_INDEX = prefix_for_tests(settings.ES_CASE_SEARCH_INDEX_NAME)
 CASE_SEARCH_ALIAS = prefix_for_tests('case_search')
 
 CASE_SEARCH_MAPPING = {
-    "date_detection": False,
-    "date_formats": DATE_FORMATS_ARR,
-    "dynamic": False,
+    "_all": {
+        "enabled": False
+    },
     "_meta": {
         "comment": "",
         "created": "2016-03-29 @frener"
     },
-    "_all": {
-        "enabled": False
-    },
+    "date_detection": False,
+    "date_formats": DATE_FORMATS_ARR,
+    "dynamic": False,
     "properties": {
         "@indexed_on": {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "case_properties": {
-            "type": "nested",
             "dynamic": False,
+            "type": "nested",
             "properties": {
                 "key": {
-                    "type": "string",
                     "fields": {
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
                         }
-                    }
+                    },
+                    "type": "string"
                 },
                 "value": {
-                    "type": "string",
-                    "null_value": "",
                     "fields": {
+                        "date": {
+                            "format": DATE_FORMATS_STRING,
+                            "ignore_malformed": True,
+                            "type": "date"
+                        },
                         "exact": {
+                            "ignore_above": 8191,
                             "index": "not_analyzed",
-                            "type": "string",
                             "null_value": "",
-                            "ignore_above": 8191
+                            "type": "string"
                         },
                         "numeric": {
-                            "type": "double",
-                            "ignore_malformed": True
-                        },
-                        "date": {
-                            "type": "date",
-                            "format": DATE_FORMATS_STRING,
-                            "ignore_malformed": True
+                            "ignore_malformed": True,
+                            "type": "double"
                         }
-                    }
+                    },
+                    "null_value": "",
+                    "type": "string"
                 }
             }
         },
@@ -64,8 +64,8 @@ CASE_SEARCH_MAPPING = {
             "type": "boolean"
         },
         "closed_by": {
-            "type": "string",
-            "index": "not_analyzed"
+            "index": "not_analyzed",
+            "type": "string"
         },
         "closed_on": {
             "format": DATE_FORMATS_STRING,
@@ -85,12 +85,12 @@ CASE_SEARCH_MAPPING = {
             "type": "multi_field"
         },
         "external_id": {
-            "type": "string",
-            "index": "not_analyzed"
+            "index": "not_analyzed",
+            "type": "string"
         },
         "indices": {
-            "type": "nested",
             "dynamic": False,
+            "type": "nested",
             "properties": {
                 "doc_type": {
                     "index": "not_analyzed",
@@ -115,33 +115,33 @@ CASE_SEARCH_MAPPING = {
             }
         },
         "location_id": {
-            "type": "string",
-            "index": "not_analyzed"
+            "index": "not_analyzed",
+            "type": "string"
         },
         "modified_on": {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "name": {
-            "type": "string",
             "fields": {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
                 }
-            }
+            },
+            "type": "string"
         },
         "opened_by": {
-            "type": "string",
-            "index": "not_analyzed"
+            "index": "not_analyzed",
+            "type": "string"
         },
         "opened_on": {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "owner_id": {
-            "type": "string",
-            "index": "not_analyzed"
+            "index": "not_analyzed",
+            "type": "string"
         },
         "server_modified_on": {
             "format": DATE_FORMATS_STRING,
@@ -161,8 +161,8 @@ CASE_SEARCH_MAPPING = {
             "type": "multi_field"
         },
         "user_id": {
-            "type": "string",
-            "index": "not_analyzed"
+            "index": "not_analyzed",
+            "type": "string"
         }
     }
 }
