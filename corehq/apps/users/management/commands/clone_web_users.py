@@ -149,7 +149,7 @@ def clone_user(old_username, new_username, dry_run=False):
     transfer_exports(old_user, new_user, dry_run=dry_run)
     transfer_scheduled_reports(old_user, new_user, dry_run=dry_run)
     transfer_saved_reports(old_user, new_user, dry_run=dry_run)
-    transfer_feature_flags(old_user.username, new_user.username, dry_run=dry_run)
+    transfer_feature_flags(old_user, new_user, dry_run=dry_run)
 
     return old_user, new_user
 
@@ -228,20 +228,20 @@ def transfer_saved_reports(from_user, to_user, dry_run=False):
             logger.info(f'{dry_run_tag}Transferred ownership of saved report {saved_report._id}.')
 
 
-def transfer_feature_flags(from_username, to_username, dry_run=False):
+def transfer_feature_flags(from_user, to_user, dry_run=False):
     dry_run_tag = "[DRY_RUN]" if dry_run else ""
-    enabled_toggles = toggles_enabled_for_user(from_username)
+    enabled_toggles = toggles_enabled_for_user(from_user.username)
     by_name = all_toggles_by_name()
     for toggle_name in enabled_toggles:
         if not dry_run:
             toggle_slug = by_name[toggle_name].slug
-            set_toggle(toggle_slug, from_username, False)
-            set_toggle(toggle_slug, to_username, True)
-        logger.info(f'{dry_run_tag}Updated toggle name {toggle_name} from {from_username} to {to_username}')
+            set_toggle(toggle_slug, from_user.username, False)
+            set_toggle(toggle_slug, to_user.username, True)
+        logger.info(f'{dry_run_tag}Transferred feature flag {toggle_name}.')
 
     if not dry_run:
-        toggles_enabled_for_user.clear(from_username)
-        toggles_enabled_for_user.clear(to_username)
+        toggles_enabled_for_user.clear(from_user.username)
+        toggles_enabled_for_user.clear(to_user.username)
 
 
 def copy_user_fields(from_user, to_user):
