@@ -149,7 +149,7 @@ def clone_user(old_username, new_username, dry_run=False):
     transfer_exports(old_user, new_user, dry_run=dry_run)
     transfer_scheduled_reports(old_user, new_user, dry_run=dry_run)
     transfer_saved_reports(old_user, new_user, dry_run=dry_run)
-    transfer_feature_flags(old_user, new_user, dry_run=dry_run)
+    transfer_feature_flags(old_user.username, new_user.username, dry_run=dry_run)
 
     return old_user, new_user
 
