@@ -30,11 +30,12 @@ def get_number_of_registry_report_configs_by_data_source(domain, data_source_id)
     Return the number of data registry report configurations that use the given data source.
     """
     from corehq.apps.userreports.models import RegistryReportConfiguration
-    return RegistryReportConfiguration.view(
+    result = RegistryReportConfiguration.view(
         'registry_report_configs/view',
         reduce=True,
         key=[domain, data_source_id]
-    ).one()['value']
+    ).one()
+    return result['value'] if result else 0
 
 
 def get_registry_report_configs_for_domain(domain):
