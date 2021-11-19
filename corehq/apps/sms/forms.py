@@ -21,7 +21,6 @@ from crispy_forms.layout import Div
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
-from corehq.toggles import TURN_IO_BACKEND
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.groups.models import Group
@@ -1187,7 +1186,7 @@ class InitiateAddSMSBackendForm(Form):
 
     def backend_classes_for_domain(self, domain):
         backends = copy.deepcopy(get_sms_backend_classes())
-        if (domain is not None) and (not TURN_IO_BACKEND.enabled(domain)):
+        if (domain is not None) and (not toggles.TURN_IO_BACKEND.enabled(domain)):
             backends.pop('TURN')
 
         return backends
