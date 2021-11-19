@@ -1,3 +1,4 @@
+from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, REPORT_CASE_HQ_INDEX_NAME
 
@@ -10,20 +11,7 @@ REPORT_CASE_MAPPING = {
         "created": None
     },
     "date_detection": False,
-    "date_formats": [
-        "yyyy-MM-dd",
-        "yyyy-MM-dd'T'HH:mm:ssZZ",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss'Z'",
-        "yyyy-MM-dd'T'HH:mm:ssZ",
-        "yyyy-MM-dd'T'HH:mm:ssZZ'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSZZ",
-        "yyyy-MM-dd'T'HH:mm:ss",
-        "yyyy-MM-dd' 'HH:mm:ss",
-        "yyyy-MM-dd' 'HH:mm:ss.SSSSSS",
-        "mm/dd/yy' 'HH:mm:ss"
-    ],
+    "date_formats": DATE_FORMATS_ARR,
     "dynamic": True,
     "dynamic_templates": [
         {
@@ -83,7 +71,7 @@ REPORT_CASE_MAPPING = {
                     }
                 },
                 "date": {
-                    "format": "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",  # noqa: E501
+                    "format": DATE_FORMATS_STRING,
                     "type": "date"
                 },
                 "doc_type": {
@@ -110,7 +98,7 @@ REPORT_CASE_MAPPING = {
                     }
                 },
                 "server_date": {
-                    "format": "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",  # noqa: E501
+                    "format": DATE_FORMATS_STRING,
                     "type": "date"
                 },
                 "sync_log_id": {
@@ -180,7 +168,7 @@ REPORT_CASE_MAPPING = {
             "type": "string"
         },
         "closed_on": {
-            "format": "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",  # noqa: E501
+            "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "computed_": {
@@ -188,7 +176,7 @@ REPORT_CASE_MAPPING = {
             "type": "object"
         },
         "computed_modified_on_": {
-            "format": "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",  # noqa: E501
+            "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "doc_type": {
@@ -250,7 +238,7 @@ REPORT_CASE_MAPPING = {
             "type": "string"
         },
         "modified_on": {
-            "format": "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",  # noqa: E501
+            "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "name": {
@@ -270,7 +258,7 @@ REPORT_CASE_MAPPING = {
             "type": "string"
         },
         "opened_on": {
-            "format": "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",  # noqa: E501
+            "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "owner_id": {
@@ -281,7 +269,7 @@ REPORT_CASE_MAPPING = {
             "type": "object"
         },
         "server_modified_on": {
-            "format": "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",  # noqa: E501
+            "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "type": {
