@@ -35,6 +35,10 @@ class OldUserNotFound(Exception):
     pass
 
 
+class MobileUserNotSupported(Exception):
+    pass
+
+
 class NewUserAlreadyExists(Exception):
     pass
 
@@ -66,6 +70,7 @@ class Command(BaseCommand):
 
         already_existing_users = []
         non_existent_old_users = []
+        mobile_users = []
         invalid_emails = []
         for old_username, new_username in iterate_usernames_to_update(file):
             if not re.search(EMAIL_REGEX_VALIDATION, new_username):
@@ -80,7 +85,11 @@ class Command(BaseCommand):
             except (CouchUser.Inconsistent, NewUserAlreadyExists):
                 already_existing_users.append((old_username, new_username))
                 continue
-        log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails)
+            except MobileUserNotSupported:
+                mobile_users.append((old_username, new_username))
+                continue
+
+        log_skipped_pairs(already_existing_users, non_existent_old_users, mobile_users, invalid_emails)
 
 
 def run_migration_command(old_username, new_username, dry_run):
@@ -130,6 +139,9 @@ def validate_usernames(old_username, new_username):
     old_user = WebUser.get_by_username(old_username)
     if not old_user:
         raise OldUserNotFound
+
+    if old_user.doc_type == 'CommCareUser':
+        raise MobileUserNotSupported
 
     new_username = new_username.lower()
     if WebUser.get_by_username(new_username):
@@ -327,13 +339,16 @@ def send_scheduled_migration_email(old_user, new_username, scheduled_date):
     )
 
 
-def log_skipped_pairs(already_existing_users, non_existent_old_users, invalid_emails):
+def log_skipped_pairs(already_existing_users, non_existent_old_users, mobile_users, invalid_emails):
     if already_existing_users:
         pairs = "\n".join([str(pair) for pair in already_existing_users])
         logger.warning(f'SKIPPED: New username already exists\n {pairs}')
     if non_existent_old_users:
         pairs = "\n".join([str(pair) for pair in non_existent_old_users])
         logger.warning(f'SKIPPED: Old user not found\n {pairs}')
+    if mobile_users:
+        pairs = "\n".join([str(pair) for pair in mobile_users])
+        logger.warning(f'SKIPPED: Mobile users not supported\n {pairs}')
     if invalid_emails:
         pairs = "\n".join([str(pair) for pair in invalid_emails])
         logger.warning(f'SKIPPED: New username is not a valid email\n {pairs}')
