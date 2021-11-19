@@ -9,16 +9,21 @@
     {{ new_username }}.
 
     The following data will be copied to your new user:
-     - general user data (name, phone number, email, etc)
-     - project space memberships (including roles and locations)
-     - saved/scheduled report ownership
+    <ul>
+      <li>General user data (name, phone number, email, etc.)</li>
+      <li>Project space memberships (including roles and locations)</li>
+      <li>Saved reports</li>
+      <li>Scheduled reports</li>
+    </ul>
 
     The following data will not be copied to your new user:
-     - API keys
-     - pending CommCare invitations
+    <ul>
+      <li>API keys</li>
+      <li>Pending CommCare invitations</li>
+    </ul>
 
     Additionally, your password will be reset for your new user, and 2FA will be disabled by default. If you are exempt
-    from SSO, you will be able to follow the Forgot Password workflow to log in.
+    from SSO, you will be able to follow the <i>Forgot Password</i> workflow to log in.
 
     Once the migration is complete, you will not have access to the user associated with the username
     {{ old_username }}. Please take the following week to prepare for this transition.

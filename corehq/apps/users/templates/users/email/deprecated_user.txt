@@ -7,13 +7,14 @@ As mentioned a week ago, your CommCare user {{ old_username }} has now been migr
 {{ new_username }}.
 
 The following data was copied to your new user:
- - general user data (name, phone number, email, etc)
- - project space memberships (including roles and locations)
- - saved/scheduled report ownership
+ - General user data (name, phone number, email, etc.)
+ - Project space memberships (including roles and locations)
+ - Saved reports
+ - Scheduled reports
 
 The following data was not copied to your new user:
  - API keys
- - pending CommCare invitations
+ - Pending CommCare invitations
 
 The {{ old_username }} user is no longer active. You can log into your new user with the username
 {{ new_username }}. If you are exempt from SSO, you can follow the Forgot Password workflow to successfully login.
