@@ -8,7 +8,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties_for_case_type,
 )
 from corehq.apps.case_importer.util import RESERVED_FIELDS
-from corehq.apps.data_dictionary.util import get_values_hints_dict
+from corehq.apps.data_dictionary.util import get_values_hints_dict, get_deprecated_fields
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 
 
@@ -33,11 +33,14 @@ def _combine_field_specs(field_specs, exclude_fields):
 def get_suggested_case_fields(domain, case_type, exclude=None):
     exclude_fields = set(RESERVED_FIELDS) | set(exclude or [])
     hints_dict = get_values_hints_dict(domain, case_type)
+    deprecated_fields = get_deprecated_fields(domain, case_type)
 
     special_field_specs = (field_spec for field_spec in get_special_fields(domain))
 
-    dynamic_field_specs = (FieldSpec(field=field, show_in_menu=True, values_hints=hints_dict[field])
-                           for field in get_all_case_properties_for_case_type(domain, case_type))
+    dynamic_field_specs = (
+        FieldSpec(field=field, show_in_menu=True, values_hints=hints_dict[field],
+                  deprecated=field in deprecated_fields)
+        for field in get_all_case_properties_for_case_type(domain, case_type))
 
     return _combine_field_specs(
         itertools.chain(special_field_specs, dynamic_field_specs),
@@ -51,6 +54,7 @@ class FieldSpec(jsonobject.StrictJsonObject):
     show_in_menu = jsonobject.BooleanProperty(default=False)
     discoverable = jsonobject.BooleanProperty(default=True)
     values_hints = jsonobject.ListProperty()
+    deprecated = jsonobject.BooleanProperty(default=False)
 
 
 def get_special_fields(domain=None):

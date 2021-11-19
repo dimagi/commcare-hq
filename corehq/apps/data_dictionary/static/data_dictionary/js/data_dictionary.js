@@ -6,6 +6,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "hqwebapp/js/main",
     "analytix/js/google",
     "hqwebapp/js/ui_elements/ui-element-key-val-list",
+    "DOMPurify/dist/purify.min",
     "hqwebapp/js/knockout_bindings.ko",
 ], function (
     $,
@@ -14,7 +15,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
     initialPageData,
     hqMain,
     googleAnalytics,
-    uiElementKeyValueList
+    uiElementKeyValueList,
+    DOMPurify
 ) {
     var caseType = function (name, fhirResourceType) {
         var self = {};
@@ -117,6 +119,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 var currentGroup = '';
                 _.each(self.casePropertyList(), function (element) {
                     if (!element.isGroup) {
+                        allowedValues = element.allowedValues.val()
+                        pureAllowedValues = {}
+                        for (const key in allowedValues) {
+                            pureAllowedValues[DOMPurify.sanitize(key)] = DOMPurify.sanitize(allowedValues[key]);
+                        }
                         var data = {
                             'caseType': element.caseType,
                             'name': element.name,
@@ -127,7 +134,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
                             'deprecated': element.deprecated(),
                             'removeFHIRResourcePropertyPath': element.removeFHIRResourcePropertyPath(),
-                            'allowed_values': element.allowedValues.val(),
+                            'allowed_values': pureAllowedValues,
                         };
                         postProperties.push(data);
                     } else {
