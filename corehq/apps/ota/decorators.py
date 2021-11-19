@@ -55,10 +55,18 @@ def _test_token_valid(origin_token):
 # It supports basic, session, and apikey auth, but not digest
 # Endpoints with this decorator will not enforce two factor authentication
 def mobile_auth(view_func):
-    return get_multi_auth_decorator(default=BASIC)(two_factor_exempt(view_func))
+    return get_multi_auth_decorator(default=BASIC)(
+        two_factor_exempt(
+            require_mobile_access(view_func)
+        )
+    )
 
 
 # This decorator is used only for anonymous web apps and SMS forms
 # Endpoints with this decorator will not enforce two factor authentication
 def mobile_auth_or_formplayer(view_func):
-    return get_multi_auth_decorator(default=BASIC, allow_formplayer=True)(two_factor_exempt(view_func))
+    return get_multi_auth_decorator(default=BASIC, allow_formplayer=True)(
+        two_factor_exempt(
+            require_mobile_access(view_func)
+        )
+    )

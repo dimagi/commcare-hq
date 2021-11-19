@@ -62,7 +62,6 @@ from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
 
-from .decorators import require_mobile_access
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .rate_limiter import rate_limit_restore
 from .utils import (
@@ -80,7 +79,6 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @location_safe
 @handle_401_response
 @mobile_auth_or_formplayer
-@require_mobile_access
 @check_domain_migration
 def restore(request, domain, app_id=None):
     """
