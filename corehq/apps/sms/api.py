@@ -5,6 +5,8 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.template.loader import render_to_string
+from django.utils.translation import ugettext_lazy as _
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_error, notify_exception
@@ -14,6 +16,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.messages import (
     MSG_DUPLICATE_USERNAME,
     MSG_OPTED_IN,
@@ -54,6 +57,7 @@ from corehq.form_processor.utils import is_commcarecase
 from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import sms_load_counter
 from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import absolute_reverse
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -380,7 +384,9 @@ def should_log_exception_for_backend(backend, exception):
         return True
 
 
-def register_sms_user(username, cleaned_phone_number, domain, send_welcome_sms=False):
+def register_sms_user(
+    username, cleaned_phone_number, domain, msg, send_welcome_sms=False, admin_alert_emails=None
+):
     try:
         user_data = {}
 
@@ -407,6 +413,8 @@ def register_sms_user(username, cleaned_phone_number, domain, send_welcome_sms=F
                 domain, None, cleaned_phone_number,
                 get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain)
             )
+        if admin_alert_emails:
+            send_admin_registration_alert(domain, admin_alert_emails, new_user, msg)
     except ValidationError as e:
         send_sms(domain, None, cleaned_phone_number, e.messages[0])
         return False
@@ -434,6 +442,23 @@ def process_username(username, domain):
         name_too_long_message=get_message(MSG_USERNAME_TOO_LONG, context=(username, max_length)),
         name_exists_message=get_message(MSG_DUPLICATE_USERNAME, context=(username,))
     )
+
+
+def send_admin_registration_alert(domain, recipients, user, msg):
+    from corehq.apps.users.views.mobile.users import EditCommCareUserView
+    subject = _("New user {username} registered for {domain} through SMS from number {number}").format(
+        username=user.username,
+        domain=domain,
+        number=msg.phone_number
+    )
+    html_content = render_to_string('sms/email/new_sms_user.html', {
+        "username": user.username,
+        "domain": domain,
+        "number": msg.phone_number,
+        "message_text": msg.text,
+        "url": absolute_reverse(EditCommCareUserView.urlname, args=[domain, user.get_id])
+    })
+    send_html_email_async.delay(subject, recipients, html_content, domain=domain)
 
 
 def is_registration_text(text):
@@ -492,13 +517,15 @@ def process_sms_registration(msg):
                         keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS
                         and domain_obj.sms_mobile_worker_registration_enabled
                 ):
+                    username = cleaned_phone_number if keyword4 == '' else keyword4
                     registration_processed = register_sms_user(
-                        username=cleaned_phone_number if keyword4 == '' else keyword4,
+                        username=username,
                         domain=domain_obj.name,
+                        msg=msg,
                         cleaned_phone_number=cleaned_phone_number,
                         send_welcome_sms=domain_obj.enable_registration_welcome_sms_for_mobile_worker,
+                        admin_alert_emails=domain_obj.sms_worker_registration_alert_emails,
                     )
-
                 elif domain_obj.sms_case_registration_enabled:
                     register_sms_contact(
                         domain=domain_obj.name,

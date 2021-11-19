@@ -1,4 +1,5 @@
 import base64
+from django.core import mail
 
 from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain
@@ -97,7 +98,7 @@ class RegistrationTestCase(BaseSMSTest):
         no_username_phone_number = "+99912345678"
         incoming(no_username_phone_number, 'JOIN {} WORKER'.format(self.domain), self.backend.hq_api_id)
         self.assertIsNotNone(CommCareUser.get_by_username(
-            format_username(strip_plus(phone_number), self.domain)
+            format_username(strip_plus(no_username_phone_number), self.domain)
         ))
 
         # Test a duplicate registration
@@ -105,3 +106,12 @@ class RegistrationTestCase(BaseSMSTest):
         incoming('+9991234568', 'JOIN {} WORKER tester'.format(self.domain), self.backend.hq_api_id)
         current_num_users = num_mobile_users(self.domain)
         self.assertEqual(prev_num_users, current_num_users)
+
+    def test_send_admin_registration_alert(self):
+        self.domain_obj.sms_mobile_worker_registration_enabled = True
+        self.domain_obj.sms_worker_registration_alert_emails = ['test@test.com', 'foo@bar.org']
+        self.domain_obj.save()
+        mail.outbox = []
+        incoming("+123456789", 'JOIN {} WORKER'.format(self.domain), self.backend.hq_api_id)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertListEqual(mail.outbox[0].recipients(), self.domain_obj.sms_worker_registration_alert_emails)

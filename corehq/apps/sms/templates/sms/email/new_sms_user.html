@@ -1,0 +1,19 @@
+{% load i18n %}
+{% blocktrans %}
+  <p>
+    A new user {{ username }} registered for project {{ domain }} through SMS from the number {{ number }}.
+  </p>
+
+  <p>
+    Here is the full content of their registration message: {{ message_text }}
+  </p>
+
+  <p>
+    To modify, update or remove this user click <a href="{{ url }}">here</a>
+  </p>
+
+  <p>
+    Thanks,<br />
+    CommCareHQ
+  </p>
+{% endblocktrans %}
