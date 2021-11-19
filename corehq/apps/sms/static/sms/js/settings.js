@@ -82,7 +82,7 @@ hqDefine("sms/js/settings", [
                 return self.sms_case_registration_enabled() === "ENABLED";
             });
 
-            self.showAdminAlertEmails = ko.computed(function() {
+            self.showAdminAlertEmails = ko.computed(function () {
                 return self.sms_mobile_worker_registration_enabled() === "ENABLED";
             });
 
