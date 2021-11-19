@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.const import WORKFLOW_FORM
+from corehq.apps.app_manager.const import WORKFLOW_FORM, REGISTRY_WORKFLOW_LOAD_CASE
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
@@ -58,7 +58,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     nodeset="instance('colors')/colors_list/colors", label='name', sort='name', value='value'),
                 )
             ],
-            data_registry="myregistry"
+            data_registry="myregistry",
+            data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE
         )
 
         self.reg_module = self.app.add_module(Module.new_module("Registration", None))
@@ -173,7 +174,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_case_detail_tabs_with_registry_module(self, *args):
         self.app.get_module(0).case_details.long.tabs = [
-            DetailTab(starting_index=1)
+            DetailTab(starting_index=0),
+            DetailTab(starting_index=1, has_nodeset=True, nodeset_case_type="child")
         ]
 
         self.assertXmlPartialEqual(
@@ -227,7 +229,8 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, Su
 
         m1.search_config = CaseSearch(
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
-            data_registry="myregistry"
+            data_registry="myregistry",
+            data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE,
         )
 
         # link from f1 to f2 (both in the child module)
