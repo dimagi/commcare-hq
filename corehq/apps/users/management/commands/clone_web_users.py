@@ -104,9 +104,12 @@ def notify_users_command(old_username, new_username, dry_run):
     old_user = validate_usernames(old_username, new_username)
 
     scheduled_date = date.today() + timedelta(days=7)
+    scheduled_date = scheduled_date.strftime("%B %d, %Y")
+
     dry_run_tag = "[DRY_RUN]" if dry_run else ""
     logger.info(f'{dry_run_tag}Sending email notifying {old_user.get_email()} a migration is scheduled for '
                 f'{scheduled_date}.')
+
     if not dry_run:
         send_scheduled_migration_email(old_user, new_username, scheduled_date)
 
@@ -308,7 +311,7 @@ def send_scheduled_migration_email(old_user, new_username, scheduled_date):
         'greeting': _("Dear {name},").format(name=old_user.first_name) if old_user.first_name else _("Hello,"),
         'old_username': old_user.username,
         'new_username': new_username,
-        'date': scheduled_date
+        'scheduled_date': scheduled_date
     }
 
     email_html = render_to_string('users/email/notify_scheduled_user_migration.html', context)
