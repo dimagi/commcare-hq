@@ -43,16 +43,13 @@ from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.utils import get_case_search_results
-from corehq.apps.domain.decorators import (
-    check_domain_migration,
-    mobile_auth,
-    mobile_auth_or_formplayer,
-)
+from corehq.apps.domain.decorators import check_domain_migration
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import (
     location_safe,
     location_safe_bypass,
 )
+from corehq.apps.ota.decorators import mobile_auth, mobile_auth_or_formplayer
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,

@@ -351,7 +351,7 @@ def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain
     )
 
 
-def _get_multi_auth_decorator(default, allow_formplayer=False):
+def get_multi_auth_decorator(default, allow_formplayer=False):
     """
     :param allow_formplayer: If True this will allow one additional auth mechanism which is used
          by Formplayer:
@@ -391,22 +391,9 @@ def two_factor_exempt(view_func):
     return wraps(view_func, assigned=available_attrs(view_func))(wrapped_view)
 
 
-# This decorator should be used for any endpoints used by CommCare mobile
-# It supports basic, session, and apikey auth, but not digest
-# Endpoints with this decorator will not enforce two factor authentication
-def mobile_auth(view_func):
-    return _get_multi_auth_decorator(default=BASIC)(two_factor_exempt(view_func))
-
-
-# This decorator is used only for anonymous web apps and SMS forms
-# Endpoints with this decorator will not enforce two factor authentication
-def mobile_auth_or_formplayer(view_func):
-    return _get_multi_auth_decorator(default=BASIC, allow_formplayer=True)(two_factor_exempt(view_func))
-
-
 # Use this decorator to allow any auth type -
 # basic, digest, session, or apikey
-api_auth = _get_multi_auth_decorator(default=DIGEST)
+api_auth = get_multi_auth_decorator(default=DIGEST)
 
 # Use these decorators on views to allow sesson-auth or an extra authorization method
 login_or_digest = login_or_digest_ex()
