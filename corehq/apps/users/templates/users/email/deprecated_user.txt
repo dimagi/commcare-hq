@@ -3,15 +3,20 @@
 {{ greeting }}
 
 {% blocktrans %}
-As your organization has already communicated to you, your current CommCare user: {{ old_username }} is being
-migrated over to a new user: {{ new_username }}. You can now log in with the new user using SSO.
+As mentioned a week ago, your CommCare user {{ old_username }} has now been migrated to the new user:
+{{ new_username }}.
 
-This new user will have access to the same project spaces as the deprecated user, and saved exports, saved reports,
-and scheduled reports created by your deprecated user have been transferred to the new user.
+The following data was copied to your new user:
+ - general user data (name, phone number, email, etc)
+ - project space memberships (including roles and locations)
+ - saved/scheduled report ownership
 
-The deprecated user is no longer active. If for any reason you need to gain access to the old account, please
-contact support informing them your account associated with {{ old_username }} has been deactivated as a result of
-the MSI user migration.
+The following data was not copied to your new user:
+ - API keys
+ - pending CommCare invitations
+
+The {{ old_username }} user is no longer active. You can log into your new user with the username
+{{ new_username }}. If you are exempt from SSO, you can follow the Forgot Password workflow to successfully login.
 
 Thanks,
 CommCareHQ
