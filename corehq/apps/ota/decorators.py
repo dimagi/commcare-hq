@@ -1,14 +1,13 @@
 import logging
+from functools import wraps
+
+from django.http import HttpResponseForbidden
+
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq import toggles
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-
-from functools import wraps
-
-from django.http import HttpResponseForbidden
 
 auth_logger = logging.getLogger("commcare_auth")
 

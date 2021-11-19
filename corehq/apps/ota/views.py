@@ -2,6 +2,7 @@ import itertools
 import os
 from datetime import datetime
 from distutils.version import LooseVersion
+from urllib.parse import unquote
 
 from django.conf import settings
 from django.http import (
@@ -11,21 +12,18 @@ from django.http import (
     HttpResponseForbidden,
     HttpResponseNotFound,
     JsonResponse,
-    HttpResponseNotFound,
-    HttpResponseForbidden,
 )
-from django.utils.translation import ugettext as _, ngettext
+from django.utils.translation import ngettext
+from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
 from tastypie.http import HttpTooManyRequests
-from urllib.parse import unquote
 
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.restore import (
     RestoreCacheSettings,
     RestoreConfig,
@@ -42,6 +40,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
+from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.utils import get_case_search_results
 from corehq.apps.domain.decorators import (
@@ -50,11 +49,15 @@ from corehq.apps.domain.decorators import (
     mobile_auth_or_formplayer,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.permissions import location_safe, location_safe_bypass
-from corehq.apps.ota.decorators import require_mobile_access
-from corehq.apps.ota.rate_limiter import rate_limit_restore
+from corehq.apps.locations.permissions import (
+    location_safe,
+    location_safe_bypass,
+)
+from corehq.apps.registry.exceptions import (
+    RegistryAccessException,
+    RegistryNotFound,
+)
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
@@ -62,14 +65,15 @@ from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
 
+from .decorators import require_mobile_access
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
+from .rate_limiter import rate_limit_restore
 from .utils import (
     demo_user_restore_response,
     get_restore_user,
     handle_401_response,
     is_permitted_to_restore,
 )
-from ..case_search.const import COMMCARE_PROJECT
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
