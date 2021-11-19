@@ -5,7 +5,12 @@ import re
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.forms.fields import CharField, BooleanField, ChoiceField, IntegerField
+from django.forms.fields import (
+    BooleanField,
+    CharField,
+    ChoiceField,
+    IntegerField,
+)
 from django.forms.forms import Form
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -26,6 +31,7 @@ from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.hqwebapp.fields import MultiEmailField
 from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.forms import validate_time
@@ -34,7 +40,6 @@ from corehq.apps.sms.util import (
     ALLOWED_SURVEY_DATE_FORMATS,
     get_sms_backend_classes,
     is_superuser_or_contractor,
-    strip_plus,
     validate_phone_number,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -261,6 +266,10 @@ class SettingsForm(Form):
         choices=ENABLED_DISABLED_CHOICES,
         label=ugettext_noop("SMS Mobile Worker Registration"),
     )
+    sms_worker_registration_alert_emails = MultiEmailField(
+        required=False,
+        label=ugettext_noop("Emails to send alerts for new mobile worker registrations"),
+    )
     registration_welcome_message = ChoiceField(
         choices=WELCOME_RECIPIENT_CHOICES,
         label=ugettext_lazy("Send registration welcome message to"),
@@ -381,6 +390,14 @@ class SettingsForm(Form):
                     "[project] worker [username]' (where [project] is your "
                     " project space and [username] is an optional username)"
                     ", and the system will add them as a mobile worker."),
+                data_bind="value: sms_mobile_worker_registration_enabled",
+            ),
+            crispy.Div(
+                hqcrispy.FieldWithHelpBubble(
+                    "sms_worker_registration_alert_emails",
+                    help_bubble_text=_("Email these people when new users sign register through SMS"),
+                ),
+                data_bind="visible: showAdminAlertEmails",
             ),
             hqcrispy.FieldWithHelpBubble(
                 'registration_welcome_message',
@@ -598,6 +615,7 @@ class SettingsForm(Form):
         self.helper.layout = crispy.Layout(
             *self.sections
         )
+        self.set_admin_email_choices(data, kwargs)
 
         self.restricted_sms_times_widget_context = {
             "template_name": "ko-template-restricted-sms-times",
@@ -615,6 +633,17 @@ class SettingsForm(Form):
             "remove_window_method": "$parent.removeSMSConversationTime",
             "add_window_method": "addSMSConversationTime",
         }
+
+    def set_admin_email_choices(self, data, kwargs):
+        email_choices = []
+        if 'initial' in kwargs and 'sms_worker_registration_alert_emails' in kwargs['initial']:
+            email_choices = kwargs['initial']['sms_worker_registration_alert_emails']
+        elif data:
+            email_choices = data.getlist('sms_worker_registration_alert_emails')
+
+        self.fields['sms_worker_registration_alert_emails'].choices = [
+            (email, email) for email in email_choices
+        ]
 
     @property
     def enable_registration_welcome_sms_for_case(self):
@@ -1158,7 +1187,9 @@ class InitiateAddSMSBackendForm(Form):
         domain = kwargs.pop('domain', None)
         super(InitiateAddSMSBackendForm, self).__init__(*args, **kwargs)
 
-        from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+        from corehq.messaging.smsbackends.telerivet.models import (
+            SQLTelerivetBackend,
+        )
         backend_classes = self.backend_classes_for_domain(domain)
 
         backend_choices = []
