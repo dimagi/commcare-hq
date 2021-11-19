@@ -1960,7 +1960,7 @@ DOMAIN_MODULE_MAP = {
     'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',
 
-    #vectorlink domains
+    # vectorlink domains
     'abtmali': 'custom.abt',
     'airs': 'custom.abt',
     'airs-testing': 'custom.abt',
@@ -1973,6 +1973,7 @@ DOMAIN_MODULE_MAP = {
     'airstanzania': 'custom.abt',
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
+    'kenya-vca': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',
