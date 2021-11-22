@@ -63,12 +63,12 @@ hqDefine('case_importer/js/excel_fields', [
                 return row.caseFieldSpec().values_hints || [];
             });
             row.createNewChecked = ko.computed({
-                read: function() {
+                read: function () {
                     return _.isEmpty(row.caseFieldSpec());
                 },
                 write: row.isCustom,
             });
-            row.isDeprecated = ko.computed(function() {
+            row.isDeprecated = ko.computed(function () {
                 return row.caseFieldSpec().deprecated === true;
             });
 

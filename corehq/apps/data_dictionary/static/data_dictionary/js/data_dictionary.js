@@ -119,8 +119,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 var currentGroup = '';
                 _.each(self.casePropertyList(), function (element) {
                     if (!element.isGroup) {
-                        allowedValues = element.allowedValues.val()
-                        pureAllowedValues = {}
+                        const allowedValues = element.allowedValues.val();
+                        let pureAllowedValues = {};
                         for (const key in allowedValues) {
                             pureAllowedValues[DOMPurify.sanitize(key)] = DOMPurify.sanitize(allowedValues[key]);
                         }
