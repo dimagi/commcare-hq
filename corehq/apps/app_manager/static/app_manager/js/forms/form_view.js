@@ -45,11 +45,29 @@ hqDefine("app_manager/js/forms/form_view", function () {
             return false;
         });
 
+        self.isUsercaseInUse = ko.observable(initialPageData('is_usercase_in_use'));
         self.usercaseReferenceNotAllowed = ko.computed(function () {
-            return !initialPageData('is_usercase_in_use') && formFilterMatches(
+            return !self.isUsercaseInUse() && formFilterMatches(
                 self.formFilter(), patterns.usercase_substring
             );
         });
+
+        self.enableUsercaseInProgress = ko.observable(false);
+        self.enableUsercaseError = ko.observable();
+        self.enableUsercase = function () {
+            self.enableUsercaseInProgress(true);
+            const url = hqImport("hqwebapp/js/initial_page_data").reverse("enable_usercase");
+            $.ajax(url, {
+                method: "POST",
+                success: function () {
+                    self.isUsercaseInUse(true);
+                },
+                error: function () {
+                    self.enableUsercaseInProgress(false);
+                    self.enableUsercaseError(gettext("Could not enable user properties, please try again later."));
+                },
+            });
+        };
 
         self.allowed = ko.computed(function () {
             return !self.formFilter() || !self.caseReferenceNotAllowed() && !self.usercaseReferenceNotAllowed();
