@@ -446,15 +446,13 @@ def process_username(username, domain):
 
 def send_admin_registration_alert(domain, recipients, user, msg):
     from corehq.apps.users.views.mobile.users import EditCommCareUserView
-    subject = _("New user {username} registered for {domain} through SMS from number {number}").format(
+    subject = _("New user {username} registered for {domain} through SMS").format(
         username=user.username,
         domain=domain,
-        number=msg.phone_number
     )
     html_content = render_to_string('sms/email/new_sms_user.html', {
         "username": user.username,
         "domain": domain,
-        "number": msg.phone_number,
         "message_text": msg.text,
         "url": absolute_reverse(EditCommCareUserView.urlname, args=[domain, user.get_id])
     })
