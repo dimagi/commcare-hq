@@ -41,7 +41,7 @@ class EndpointsHelper(PostProcessor):
 
         stack = Stack()
         children = self.get_frame_children(module, form)
-        argument_ids = self._get_argument_ids(children, form)
+        argument_ids = self.get_argument_ids(children, form)
 
         # Add a claim request for each endpoint argument.
         # This assumes that all arguments are case ids.
@@ -67,7 +67,7 @@ class EndpointsHelper(PostProcessor):
             stack=stack,
         )
 
-    def _get_argument_ids(self, frame_children, form):
+    def get_argument_ids(self, frame_children, form=None):
 
         def should_include(child):
             if not isinstance(child, WorkflowDatumMeta):

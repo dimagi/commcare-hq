@@ -115,7 +115,7 @@
           </p>
 
           {% trans "Registration: This form opens a new case" as registers_case %}
-          {% if module_offers_registry_search %}
+          {% if module_loads_registry_case %}
             {% trans "Followup: This form loads a case from a data registry" as updates_case %}
           {% else %}
             {% trans "Followup: This form loads a case and may then update or close it" as updates_case %}
@@ -144,7 +144,7 @@
 
     {% if form.source %}
       <!--ko if: actionType() === 'update' -->
-      {% if module_offers_registry_search %}
+      {% if module_loads_registry_case %}
       <div class="panel panel-appmanager">
         <div class="panel-body">
           <p>{% blocktrans trimmed %}Updating cases directly is not supported when using data registry search. Refer
@@ -167,7 +167,7 @@
                       }"></div>
       <!--/ko-->
       {% if add_ons.subcases %}
-        {% if module_offers_registry_search %}
+        {% if module_loads_registry_case %}
         {# only allow subcases when also opening a case since we can't attach subcases to a case in another domain #}
         <!--ko if: actionType() === 'open'-->
         {% else %}
