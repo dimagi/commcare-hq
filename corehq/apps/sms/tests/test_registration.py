@@ -26,9 +26,8 @@ class RegistrationTestCase(BaseSMSTest):
 
     def setUp(self):
         super(RegistrationTestCase, self).setUp()
-        delete_all_users()
 
-        self.domain = 'sms-reg-test-domain-1'
+        self.domain = 'sms-reg-test-domain'
         self.domain_obj = Domain(name=self.domain)
         self.domain_obj.save()
 
