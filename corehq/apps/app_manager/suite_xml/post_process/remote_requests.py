@@ -288,6 +288,11 @@ class RemoteRequestFactory(object):
         return stack
 
     def get_smart_link_function(self):
+        # Returns XPath that will evaluate to a URL.
+        # For example, return value could be
+        #   concat('https://www.cchq.org/a/', $domain, '/app/v1/123/smartlink/', '?arg1=', $arg1, '&arg2=', $arg2)
+        # Which could evalute to
+        #   https://www.cchq.org/a/mydomain/app/v1/123/smartlink/?arg1=abd&arg2=def
         app_id = self.app.upstream_app_id if is_linked_app(self.app) else self.app.origin_id
         url = absolute_reverse("session_endpoint", args=["---", app_id, self.module.session_endpoint_id])
         prefix, suffix = url.split("---")
