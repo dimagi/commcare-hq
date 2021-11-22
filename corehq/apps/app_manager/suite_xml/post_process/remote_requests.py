@@ -271,7 +271,7 @@ class RemoteRequestFactory(object):
             # For case in same domain, do a regular case claim rewind
             rewind_if = self._get_case_domain_xpath().eq(user_domain_xpath)
             # For case in another domain, jump to that other domain
-            frame = PushFrame(if_clause=self._get_case_domain_xpath().neq(user_domain_xpath))
+            frame = PushFrame(if_clause=XPath.not_(rewind_if))
             frame.add_datum(StackJump(
                 url=Text(
                     xpath=TextXPath(
