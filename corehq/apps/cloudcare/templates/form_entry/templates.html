@@ -419,23 +419,20 @@
   <legend aria-hidden="true" class="sr-only">{% trans "Answer Choices" %}</legend>
     <div class="sel clear">
       <div data-bind="foreach: choices, as: 'choice'">
-        <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }, class: $parent.colStyleIfHideLabel">
+        <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
           <label>
-              <input data-bind="
-                          checked: $parent.rawAnswer,
-                          checkedValue: $index() + 1,
-                          attr: {
-                              id: 'group-' + $parent.entryId + '-choice-' + $index(),
-                              type: $parent.isMulti ? 'checkbox' : 'radio',
-                              name: $parent.entryId,
-                              class: 'group-' + $parent.entryId,
-                          },
-                      "/>
-            <!-- ko ifnot: $parent.hideLabel -->
-              <span data-bind="renderMarkdown: $data"></span>
-            <!-- /ko -->
+            <input data-bind="
+                        checked: $parent.rawAnswer,
+                        checkedValue: $index() + 1,
+                        attr: {
+                            id: 'group-' + $parent.entryId + '-choice-' + $index(),
+                            type: $parent.isMulti ? 'checkbox' : 'radio',
+                            name: $parent.entryId,
+                            class: 'group-' + $parent.entryId,
+                        },
+                    "/>
+            <span data-bind="renderMarkdown: $data"></span>
           </label>
-          </div>
         </div>
       </div>
       <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">
