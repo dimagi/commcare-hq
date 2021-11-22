@@ -30,6 +30,7 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_or_api_key,
 )
+from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
 from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag
@@ -45,14 +46,20 @@ from corehq.apps.linked_domain.const import (
     SUPERUSER_DATA_MODELS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
+    get_active_domain_link,
     get_available_domains_to_link,
     get_available_upstream_domains,
     get_linked_domains,
     get_upstream_domain_link,
 )
-from corehq.apps.linked_domain.decorators import require_linked_domain, require_access_to_linked_domains
+from corehq.apps.linked_domain.decorators import (
+    require_access_to_linked_domains,
+    require_linked_domain,
+)
 from corehq.apps.linked_domain.exceptions import (
+    DomainLinkAlreadyExists,
     DomainLinkError,
+    DomainLinkNotAllowed,
     UnsupportedActionError,
 )
 from corehq.apps.linked_domain.local_accessors import (
@@ -64,8 +71,8 @@ from corehq.apps.linked_domain.local_accessors import (
     get_fixture,
     get_hmac_callout_settings,
     get_otp_settings,
-    get_user_roles,
     get_tableau_server_and_visualizations,
+    get_user_roles,
 )
 from corehq.apps.linked_domain.models import (
     DomainLink,
@@ -83,6 +90,7 @@ from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
     pull_missing_multimedia_for_app,
     server_to_user_time,
+    user_has_admin_access_in_all_domains,
 )
 from corehq.apps.linked_domain.view_helpers import (
     build_domain_link_view_model,
@@ -398,36 +406,15 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     @allow_remote_invocation
     def create_domain_link(self, in_data):
         domain_to_link = in_data['downstream_domain']
-        if not domain_exists(domain_to_link):
-            return {
-                'success': False,
-                'message': ugettext("The project space {} does not exist. Make sure the name is "
-                                    "correct and this domain hasn't been deleted.").format(domain_to_link)
-            }
-
-        if DomainLink.objects.filter(master_domain=self.domain, linked_domain=domain_to_link):
-            return {
-                'success': False,
-                'message': ugettext(
-                    "The project space {} is already linked to this project space."
-                ).format(domain_to_link)
-            }
-
         try:
-            domain_link = DomainLink.link_domains(domain_to_link, self.domain)
-        except DomainLinkError as e:
-            return {
-                'success': False,
-                'message': str(e)
-            }
+            domain_link = link_domains(self.request.couch_user, self.domain, domain_to_link)
+        except (DomainDoesNotExist, DomainLinkAlreadyExists, DomainLinkNotAllowed, DomainLinkError) as e:
+            return {'success': False, 'message': str(e)}
 
         track_workflow(self.request.couch_user.username, "Linked domain: domain link created")
 
-        timezone = get_timezone_for_request()
-        return {
-            'success': True,
-            'domain_link': build_domain_link_view_model(domain_link, timezone)
-        }
+        domain_link_view_model = build_domain_link_view_model(domain_link, get_timezone_for_request())
+        return {'success': True, 'domain_link': domain_link_view_model}
 
     @allow_remote_invocation
     def create_remote_report_link(self, in_data):
@@ -444,6 +431,25 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
             return {'success': True}
         else:
             return {'success': False}
+
+
+def link_domains(couch_user, upstream_domain, downstream_domain):
+    if not domain_exists(downstream_domain):
+        error = ugettext("The project space {} does not exist. Verify that the name is correct, and that the "
+                         "domain has not been deleted.").format(downstream_domain)
+        raise DomainDoesNotExist(error)
+
+    if get_active_domain_link(upstream_domain, downstream_domain):
+        error = ugettext(
+            "The project space {} is already a downstream project space of {}."
+        ).format(downstream_domain, upstream_domain)
+        raise DomainLinkAlreadyExists(error)
+
+    if not user_has_admin_access_in_all_domains(couch_user, [upstream_domain, downstream_domain]):
+        error = ugettext("You must be an admin in both project spaces to create a link.")
+        raise DomainLinkNotAllowed(error)
+
+    return DomainLink.link_domains(downstream_domain, upstream_domain)
 
 
 class DomainLinkHistoryReport(GenericTabularReport):
