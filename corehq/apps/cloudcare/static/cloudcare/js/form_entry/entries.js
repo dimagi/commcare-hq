@@ -37,6 +37,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     }
     Entry.prototype.onAnswerChange = function () {};
 
+    // Allows multiple input entries on the same row for Combined Multiple Choice and Combined
+    // Checkbox questions in a Question List Group.
+    Entry.prototype.getColStyle = function (numChoices) {
+        var colWidth = parseInt(12 / (numChoices + 1)) || 1;
+        return 'col-xs-' + colWidth;
+    };
+
     // This should set the answer value if the answer is valid. If the raw answer is valid, this
     // function performs any sort of processing that needs to be done before setting the answer.
     Entry.prototype.onPreProcess = function (newValue) {
@@ -388,6 +395,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.templateType = 'select';
         self.choices = question.choices;
         self.isMulti = true;
+        self.hideLabel = options.hideLabel;
+
+        self.colStyleIfHideLabel = ko.computed(function () {
+            return self.hideLabel ? self.getColStyle(self.choices().length) : null;
+        });
 
         self.onClear = function () {
             self.rawAnswer([]);
@@ -476,7 +488,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     };
 
     /**
-     * Represents the label part of a Combined Multiple Choice question in a Question List
+     * This is used for the labels and inputs in a Combined Multiple Choice question in a Question
+     * List Group. It is also used for labels in a Combined Checkbox question.
      */
     function ChoiceLabelEntry(question, options) {
         var self = this;
@@ -484,12 +497,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.choices = question.choices;
         self.templateType = 'choice-label';
 
-        self.hideLabel = ko.observable(options.hideLabel);
+        self.hideLabel = options.hideLabel;
 
         self.colStyle = ko.computed(function () {
-            // Account for number of choices plus column for clear button
-            var colWidth = parseInt(12 / (self.choices().length + 1)) || 1;
-            return 'col-xs-' + colWidth;
+            return self.getColStyle(self.choices().length);
         });
 
         self.onClear = function () {
@@ -1059,8 +1070,21 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 break;
             case Const.MULTI_SELECT:
                 isMinimal = style === Const.MINIMAL;
+                if (style) {
+                    isLabel = style === Const.LABEL;
+                    hideLabel = style === Const.LIST_NOLABEL;
+                }
+
                 if (isMinimal) {
                     entry = new MultiDropdownEntry(question, {});
+                } else if (isLabel) {
+                    entry = new ChoiceLabelEntry(question, {
+                        hideLabel: false,
+                    });
+                } else if (hideLabel) {
+                    entry = new MultiSelectEntry(question, {
+                        hideLabel: true,
+                    });
                 } else {
                     entry = new MultiSelectEntry(question, {});
                 }
