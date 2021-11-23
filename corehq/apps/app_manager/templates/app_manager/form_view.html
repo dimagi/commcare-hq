@@ -152,6 +152,7 @@
   {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
     {% initial_page_data 'apps_modules' apps_modules %}
   {% endif %}
+  {% registerurl "enable_usercase" domain %}
   {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
 
   {# End of form navigation #}
@@ -188,6 +189,8 @@
         <li>
           <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
             {% trans "User Properties" %}
+            1: {{ allow_usercase }}
+            2: {{ form.uses_usercase }}
           </a>
         </li>
       {% endif %}{% endif %}
