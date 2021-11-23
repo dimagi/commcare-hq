@@ -43,8 +43,8 @@ class XPathTest(SimpleTestCase):
         self.assertEqual('(a or b) or c', XPath.or_(XPath.or_('a', 'b'), XPath('c')))
 
     def test_not(self):
-        self.assertEqual('not a', XPath.not_('a'))
-        self.assertEqual('not (a or b)', XPath.not_(XPath.or_('a', 'b')))
+        self.assertEqual('not(a)', XPath.not_('a'))
+        self.assertEqual('not((a or b))', XPath.not_(XPath.or_('a', 'b')))
 
     def test_date(self):
         self.assertEqual('date(a)', XPath.date('a'))
