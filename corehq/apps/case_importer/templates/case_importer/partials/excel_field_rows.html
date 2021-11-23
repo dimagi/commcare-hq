@@ -64,12 +64,15 @@
       </p>
     </div>
     <!--/ko-->
+    <div class="has-warning" data-bind="visible: isDeprecated()">
+        <p class="help-block">{% trans "This is a deprecated property" %}</p>
+    </div>
   </td>
 
   <td class="col-md-1">
     <div class="checkbox">
       <label>
-        <input type="checkbox" class="new_property" style="margin-left: auto;" data-bind="checked: isCustom"/>
+        <input type="checkbox" class="new_property" style="margin-left: auto;" data-bind="checked: createNewChecked"/>
       </label>
     </div>
   </td>

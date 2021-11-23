@@ -139,6 +139,14 @@ def get_values_hints_dict(domain, case_type_name):
     return values_hints_dict
 
 
+def get_deprecated_fields(domain, case_type_name):
+    deprecated_fields = set()
+    case_type = CaseType.objects.filter(domain=domain, name=case_type_name).first()
+    if case_type:
+        deprecated_fields = set(case_type.properties.filter(deprecated=True).values_list('name', flat=True))
+    return deprecated_fields
+
+
 def save_case_property(name, case_type, domain=None, data_type=None,
                        description=None, group=None, deprecated=None,
                        fhir_resource_prop_path=None, fhir_resource_type=None, remove_path=False,
@@ -191,12 +199,15 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         return ugettext('Unable to save valid values longer than {} characters').format(max_len)
 
 
-@quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
-def get_data_dict_props_by_case_type(domain):
+@quickcache(vary_on=['domain', 'exclude_deprecated'], timeout=24 * 60 * 60)
+def get_data_dict_props_by_case_type(domain, exclude_deprecated=True):
+    filter_kwargs = {'case_type__domain': domain}
+    if exclude_deprecated:
+        filter_kwargs['deprecated'] = False
     return {
         case_type: {prop.name for prop in props} for case_type, props in groupby(
             CaseProperty.objects
-            .filter(case_type__domain=domain, deprecated=False)
+            .filter(**filter_kwargs)
             .select_related("case_type")
             .order_by('case_type__name'),
             key=attrgetter('case_type.name')
