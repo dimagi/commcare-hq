@@ -15,7 +15,6 @@
                     + " (" + utils._truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
         },
         _getLabel: function (question, MAXLEN) {
-            question.label = question.label.replace('<', '&lt;').replace('>', '&gt;');
             return utils._truncateLabel((question.repeat ? '- ' : '')
                     + question.label, question.tag === 'hidden' ? ' (Hidden)' : '', MAXLEN);
         },
@@ -82,7 +81,16 @@
             $(element).select2({
                 placeholder: gettext('Select a Question'),
                 dropdownCssClass: 'bigdrop',
-                escapeMarkup: function (m) { return m; },
+                escapeMarkup: function (m) {
+                    var paperclip = '<i class="fa fa-paperclip"></i> ';
+                    if (m.includes(paperclip)) {
+                        m = m.replace(paperclip, '');
+                    }
+                    else {
+                        paperclip = '';
+                    }
+                    return paperclip + DOMPurify.sanitize(m).replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+                },
                 data: _valueToSelect2Data(optionObjects),
                 width: '100%',
                 templateSelection: function (o) {
