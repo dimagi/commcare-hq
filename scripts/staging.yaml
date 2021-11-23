@@ -73,9 +73,7 @@ branches:
     - bmb/update-datatables-dt  # Biyeun Nov 2
     - gh/use-email-for-all-comms # Graham Nov 8 (passive QA testing: check back on Dec 6)
     - rp/status-embed # Rynhard Nov 9
-    - jls/smart-linking-in-web-apps # Jenny Sept 22
-    - ad/tab-structure-for-check-boxes # Addison Nov 11
-    - revert-30687-revert-30182-jm/remove-es-scan  # Joel Nov 12
     - gh/mrm/only-admins-can-link # Graham Nov 16
     - sk/registry-ucr-processor # Simon Nov 22
+    - es/mobile-auth # Simon Nov 23
 submodules: { }
