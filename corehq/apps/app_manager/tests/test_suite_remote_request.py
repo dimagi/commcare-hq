@@ -73,9 +73,19 @@ class RemoteRequestSmartLinkTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def testSmartLinkFunction(self):
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
-            self.assertEqual(self.request_factory.get_smart_link_function(), f'''
-                concat('https://www.example.com/a/', $domain, '/app/v1/{self.app_id}/child_endpoint/', '?case_id_leaf=', $case_id_leaf, '&case_id=', $case_id)
-            '''.strip())
+            concat_params = [
+                "'https://www.example.com/a/'",
+                "$domain",
+                f"'/app/v1/{self.app_id}/child_endpoint/'",
+                "'?case_id_leaf='",
+                "$case_id_leaf",
+                "'&case_id='",
+                "$case_id",
+            ]
+            self.assertEqual(
+                self.request_factory.get_smart_link_function(),
+                f'concat({", ".join(concat_params)})'
+            )
 
     def testSmartLinkVariables(self):
         vars = self.request_factory.get_smart_link_variables()
