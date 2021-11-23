@@ -38,8 +38,11 @@ from corehq.util.test_utils import flag_enabled
 DOMAIN = 'test_domain'
 
 
+@patch_get_xform_resource_overrides()
 @patch.object(Application, 'supports_data_registry', lambda: True)
-class RemoteRequestSmartLinkURLTest(SimpleTestCase):
+class RemoteRequestSmartLinkTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+    file_path = ('data', 'suite')
+
     def setUp(self):
         self.factory = AppFactory(domain=DOMAIN)
         self.app_id = uuid4().hex
@@ -68,9 +71,11 @@ class RemoteRequestSmartLinkURLTest(SimpleTestCase):
         self.request_factory = RemoteRequestFactory(generator.suite, child_module, detail_section_elements)
 
     def testSmartLinkFunction(self):
-        self.assertEqual(self.request_factory.get_smart_link_function(), f'''
-            concat('http://localhost:8000/a/', $domain, '/app/v1/{self.app_id}/child_endpoint/', '?case_id_leaf=', $case_id_leaf, '&case_id=', $case_id)
-        '''.strip())
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            self.assertEqual(self.request_factory.get_smart_link_function(), f'''
+                concat('https://www.example.com/a/', $domain, '/app/v1/{self.app_id}/child_endpoint/', '?case_id_leaf=', $case_id_leaf, '&case_id=', $case_id)
+            '''.strip())
 
     def testSmartLinkVariables(self):
         vars = self.request_factory.get_smart_link_variables()
@@ -81,6 +86,17 @@ class RemoteRequestSmartLinkURLTest(SimpleTestCase):
             "instance('commcaresession')/session/data/case_id",
             "instance('commcaresession')/session/data/search_case_id",
         ])
+
+    def testSuite(self):
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            self.get_xml('smart_link_remote_request').decode('utf-8').format(app_id=self.app_id),
+            suite,
+            "./remote-request[1]"
+        )
+
 
 
 @patch_get_xform_resource_overrides()
