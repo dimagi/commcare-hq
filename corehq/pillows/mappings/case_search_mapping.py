@@ -82,7 +82,8 @@ CASE_SEARCH_MAPPING = {
                     "type": "string"
                 }
             },
-            "type": "multi_field"
+            "index": "no",  # only the `domain.exact` field is used in this index
+            "type": "string"
         },
         "external_id": {
             "index": "not_analyzed",
