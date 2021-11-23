@@ -30,14 +30,14 @@ hqDefine("case_importer/js/main", [
         $('input:file').change(function () {
             const fileName = $(this).val();
             if (fileName) {
-                $(':submit').attr('disabled', false).removeClass('disabled');
+                $(':submit').enableButton();
             } else {
-                $(':submit').attr('disabled', true).addClass('disabled');
+                $(':submit').disableButtonNoSpinner();
             }
         });
         // enable button in case of "Back" pressed, file chosen
         if ($('input:file').val()) {
-            $(':submit').attr('disabled', false).removeClass('disabled');
+            $(':submit').enableButton();
         }
     };
 

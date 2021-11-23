@@ -199,12 +199,15 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         return ugettext('Unable to save valid values longer than {} characters').format(max_len)
 
 
-@quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
-def get_data_dict_props_by_case_type(domain):
+@quickcache(vary_on=['domain', 'exclude_deprecated'], timeout=24 * 60 * 60)
+def get_data_dict_props_by_case_type(domain, exclude_deprecated=True):
+    filter_kwargs = {'case_type__domain': domain}
+    if exclude_deprecated:
+        filter_kwargs['deprecated'] = False
     return {
         case_type: {prop.name for prop in props} for case_type, props in groupby(
             CaseProperty.objects
-            .filter(case_type__domain=domain)
+            .filter(**filter_kwargs)
             .select_related("case_type")
             .order_by('case_type__name'),
             key=attrgetter('case_type.name')

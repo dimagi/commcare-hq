@@ -40,7 +40,7 @@ def get_suggested_case_fields(domain, case_type, exclude=None):
     dynamic_field_specs = (
         FieldSpec(field=field, show_in_menu=True, values_hints=hints_dict[field],
                   deprecated=field in deprecated_fields)
-        for field in get_all_case_properties_for_case_type(domain, case_type))
+        for field in get_all_case_properties_for_case_type(domain, case_type, exclude_deprecated_properties=False))
 
     return _combine_field_specs(
         itertools.chain(special_field_specs, dynamic_field_specs),
