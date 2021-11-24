@@ -77,4 +77,5 @@ branches:
     - sk/registry-ucr-processor # Simon Nov 22
     - es/mobile-auth # Simon Nov 23
     - smh/user-report-enterprise-domain-support # Steph Nov 23
+    - fr/client-oauth-divoc                     # Farid Nov 23
 submodules: { }
