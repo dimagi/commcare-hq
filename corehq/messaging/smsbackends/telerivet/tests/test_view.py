@@ -74,4 +74,4 @@ class TelerivetViewTestCase(TestCase):
         data = {'status': 'delivered', 'secret': 'not a secret'}
         response = self.client.post(reverse(self.view_path, kwargs={'message_id': self.sms.couch_id}), data)
 
-        self.assertTrue(response.status_code == 403)
+        self.assertTrue(response.status_code == 200)
