@@ -637,8 +637,10 @@ class SettingsForm(Form):
     def set_admin_email_choices(self, data, kwargs):
         email_choices = []
         if 'initial' in kwargs and 'sms_worker_registration_alert_emails' in kwargs['initial']:
+            # for a GET request, the form is populated by 'initial'
             email_choices = kwargs['initial']['sms_worker_registration_alert_emails']
-        elif data:
+        if data:
+            # for a POST request, we should return the list of emails that was given
             email_choices = data.getlist('sms_worker_registration_alert_emails')
 
         self.fields['sms_worker_registration_alert_emails'].choices = [
