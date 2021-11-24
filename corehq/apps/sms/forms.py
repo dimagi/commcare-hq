@@ -395,7 +395,7 @@ class SettingsForm(Form):
             crispy.Div(
                 hqcrispy.FieldWithHelpBubble(
                     "sms_worker_registration_alert_emails",
-                    help_bubble_text=_("Email these people when new users sign register through SMS"),
+                    help_bubble_text=_("Email these people when new users register through SMS"),
                 ),
                 data_bind="visible: showAdminAlertEmails",
             ),
