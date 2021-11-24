@@ -132,12 +132,15 @@ class ConnectionSettingsForm(forms.ModelForm):
             crispy.Field('plaintext_password'),
             crispy.Field('client_id'),
             crispy.Field('plaintext_client_secret'),
-            crispy.Fieldset(
-                _("Api Auth Settings"),
-                crispy.Field('auth_preset'),
-                crispy.Field('token_url'),
-                crispy.Field('refresh_url'),
-                twbscrispy.PrependedText('pass_credentials_in_header', ''),
+            crispy.Div(
+                crispy.Fieldset(
+                    _("OAuth 2.0 Settings"),
+                    crispy.Field('auth_preset'),
+                    crispy.Field('token_url'),
+                    crispy.Field('refresh_url'),
+                    twbscrispy.PrependedText('pass_credentials_in_header', ''),
+                ),
+                id="div_id_oauth_settings",
             ),
             twbscrispy.PrependedText('skip_cert_verify', ''),
             self.test_connection_button,

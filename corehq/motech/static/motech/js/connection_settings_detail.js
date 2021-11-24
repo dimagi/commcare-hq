@@ -38,10 +38,7 @@ hqDefine("motech/js/connection_settings_detail", [
                     'plaintext_password',
                     'client_id',
                     'plaintext_client_secret',
-                    'auth_preset',
-                    'token_url',
-                    'refresh_url',
-                    'pass_credentials_in_header',
+                    'oauth_settings',
                 ];
             switch ($(this).val()) {
                 case '':  // Auth type is "None"
@@ -54,16 +51,24 @@ hqDefine("motech/js/connection_settings_detail", [
                     ];
                     hidden = [
                         'client_id',
-                        'plaintext_client_secret',
-                        'token_url',
-                        'refresh_url',
-                        'pass_credentials_in_header',
+                        'auth_settings',
                     ];
                     break;
                 case 'oauth2_pwd':
-                visible = allFields;
-                hidden = ['token_url', 'refresh_url', 'pass_credentials_in_header'];
+                    visible = allFields;
+                    hidden = [];
                     break;
+               case 'oauth2_client':
+                    visible = [
+                        'client_id',
+                        'plaintext_client_secret',
+                        'oauth_settings',
+                    ];
+                    hidden = [
+                        'username',
+                        'plaintext_password'
+                    ];
+                break;
                 default:
                     visible = [
                         'username',
@@ -72,6 +77,7 @@ hqDefine("motech/js/connection_settings_detail", [
                     hidden = [
                         'client_id',
                         'plaintext_client_secret',
+                        'oauth_settings',
                     ];
             }
             _.each(visible, function (field) {

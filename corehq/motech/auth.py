@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 import attr
 import requests
-from oauthlib.oauth2 import LegacyApplicationClient
+from oauthlib.oauth2 import LegacyApplicationClient, BackendApplicationClient
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
@@ -196,6 +196,69 @@ class BearerAuthManager(AuthManager):
 
     def get_auth(self):
         return HTTPBearerAuth(self.username, self.password)
+
+
+class OAuth2ClientGrantManager(AuthManager):
+    """
+    Follows the OAuth 2.0 client credentials grant type flow
+    """
+
+    def __init__(
+        self,
+        base_url: str,
+        client_id: str,
+        client_secret: str,
+        token_url: str,
+        refresh_url: str,
+        connection_settings: 'ConnectionSettings',
+    ):
+        self.base_url = base_url
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.token_url = token_url
+        self.refresh_url = refresh_url
+        self.connection_settings = connection_settings
+
+    @property
+    def last_token(self) -> Optional[dict]:
+        return self.connection_settings.last_token
+
+    @last_token.setter
+    def last_token(self, value: dict):
+        """
+        Save ``ConnectionSettings.last_token`` whenever it is set or
+        refreshed so that it can be reused in the future.
+        """
+        self.connection_settings.last_token = value
+        self.connection_settings.save()
+
+    def get_session(self, domain_name: str) -> Session:
+        def set_last_token(token):
+            # Used by OAuth2Session
+            self.last_token = token
+
+        if not self.last_token:
+            client = BackendApplicationClient(client_id=self.client_id)
+            session = OAuth2Session(client=client)
+            self.last_token = session.fetch_token(
+                token_url=self.token_url,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+            )
+
+        refresh_kwargs = {
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+        }
+        session = OAuth2Session(
+            self.client_id,
+            token=self.last_token,
+            auto_refresh_url=self.refresh_url,
+            auto_refresh_kwargs=refresh_kwargs,
+            token_updater=set_last_token
+        )
+        make_session_public_only(session, domain_name, src='oauth_sent_attempt')
+        return session
 
 
 class OAuth2PasswordGrantManager(AuthManager):

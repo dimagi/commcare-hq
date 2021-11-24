@@ -16,6 +16,7 @@ from corehq.motech.auth import (
     BearerAuthManager,
     DigestAuthManager,
     OAuth1Manager,
+    OAuth2ClientGrantManager,
     OAuth2PasswordGrantManager,
     api_auth_settings_choices,
     oauth1_api_endpoints,
@@ -28,6 +29,7 @@ from corehq.motech.const import (
     BEARER_AUTH,
     DIGEST_AUTH,
     OAUTH1,
+    OAUTH2_CLIENT,
     OAUTH2_PWD,
     PASSWORD_PLACEHOLDER,
 )
@@ -187,6 +189,13 @@ class ConnectionSettings(models.Model):
                 pass_credentials_in_header=self.pass_credentials_in_header,
                 connection_settings=self,
             )
+        if self.auth_type == OAUTH2_CLIENT:
+            return OAuth2ClientGrantManager(
+                self.url,
+                client_id=self.client_id,
+                client_secret=self.plaintext_client_secret,
+                token_url=self.token_url,
+                refresh_url=self.refresh_url,
                 connection_settings=self,
             )
 

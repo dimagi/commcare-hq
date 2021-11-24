@@ -1,17 +1,20 @@
 import attr
 from django.utils.translation import ugettext_lazy as _
 
+
 BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
 BEARER_AUTH = "bearer"
 OAUTH2_PWD = "oauth2_pwd"
+OAUTH2_CLIENT = "oauth2_client"
 AUTH_TYPES = (
     (BASIC_AUTH, "HTTP Basic"),
     (DIGEST_AUTH, "HTTP Digest"),
     (BEARER_AUTH, "Bearer Token"),
     (OAUTH1, "OAuth1"),
-    (OAUTH2_PWD, "OAuth 2.0 Password Grant")
+    (OAUTH2_PWD, "OAuth 2.0 Password Grant"),
+    (OAUTH2_CLIENT, "OAuth 2.0 Client Grant"),
 )
 
 
