@@ -33,36 +33,6 @@ class OAuth1ApiEndpoints:
     access_token_endpoint: str
 
 
-@attr.s(auto_attribs=True, frozen=True, kw_only=True)
-class OAuth2ApiSettings:
-    """
-    Settings and endpoints for an OAuth 2.0 API
-    """
-    # Pass credentials in Basic Auth header when requesting a token?
-    # Otherwise they are passed in the request body.
-    pass_credentials_in_header: bool
-    # Endpoint to fetch bearer token. e.g. '/uaa/oauth/token' (DHIS2)
-    token_endpoint: str
-    # Endpoint to refresh bearer token. e.g. '/uaa/oauth/token'
-    refresh_endpoint: str
-
-
-# https://docs.dhis2.org/master/en/developer/html/webapi_authentication.html
-dhis2_auth_settings = OAuth2ApiSettings(
-    token_endpoint="/uaa/oauth/token",
-    refresh_endpoint="/uaa/oauth/token",
-    pass_credentials_in_header=True,
-)
-
-
-# https://docs.ipswitch.com/MOVEit/Automation2018/API/REST-API/index.html
-moveit_automation_settings = OAuth2ApiSettings(
-    token_endpoint="/api/v1/token",
-    refresh_endpoint="/api/v1/token",
-    pass_credentials_in_header=False,
-)
-
-
 oauth1_api_endpoints = tuple(
     # No integrations using OAuth1 authentication (yet?)
 )
@@ -241,7 +211,9 @@ class OAuth2PasswordGrantManager(AuthManager):
         password: str,
         client_id: str,
         client_secret: str,
-        api_settings: OAuth2ApiSettings,
+        token_url: str,
+        refresh_url: str,
+        pass_credentials_in_header: bool,
         connection_settings: 'ConnectionSettings',
     ):
         self.base_url = base_url
@@ -249,7 +221,9 @@ class OAuth2PasswordGrantManager(AuthManager):
         self.password = password
         self.client_id = client_id
         self.client_secret = client_secret
-        self.api_settings = api_settings
+        self.token_url = token_url
+        self.refresh_url = refresh_url
+        self.pass_credentials_in_header = pass_credentials_in_header
         self.connection_settings = connection_settings
 
     @property
@@ -274,20 +248,17 @@ class OAuth2PasswordGrantManager(AuthManager):
         if not self.last_token:
             client = LegacyApplicationClient(client_id=self.client_id)
             session = OAuth2Session(client=client)
-            token_url = get_endpoint_url(
-                self.base_url, self.api_settings.token_endpoint,
-            )
-            if self.api_settings.pass_credentials_in_header:
+            if self.pass_credentials_in_header:
                 auth = HTTPBasicAuth(self.client_id, self.client_secret)
                 self.last_token = session.fetch_token(
-                    token_url=token_url,
+                    token_url=self.token_url,
                     username=self.username,
                     password=self.password,
                     auth=auth,
                 )
             else:
                 self.last_token = session.fetch_token(
-                    token_url=token_url,
+                    token_url=self.token_url,
                     username=self.username,
                     password=self.password,
                     client_id=self.client_id,
@@ -295,9 +266,6 @@ class OAuth2PasswordGrantManager(AuthManager):
                 )
 
         # Return session that refreshes token automatically
-        refresh_url = get_endpoint_url(
-            self.base_url, self.api_settings.refresh_endpoint,
-        )
         refresh_kwargs = {
             'client_id': self.client_id,
             'client_secret': self.client_secret,
@@ -305,7 +273,7 @@ class OAuth2PasswordGrantManager(AuthManager):
         session = OAuth2Session(
             self.client_id,
             token=self.last_token,
-            auto_refresh_url=refresh_url,
+            auto_refresh_url=self.refresh_url,
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )

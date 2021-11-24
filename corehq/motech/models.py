@@ -77,6 +77,9 @@ class ConnectionSettings(models.Model):
     client_id = models.CharField(max_length=255, null=True, blank=True)
     client_secret = models.CharField(max_length=255, blank=True)
     skip_cert_verify = models.BooleanField(default=False)
+    token_url = models.CharField(max_length=255, blank=True, null=True)
+    refresh_url = models.CharField(max_length=255, blank=True, null=True)
+    pass_credentials_in_header = models.BooleanField(default=None, null=True)
     notify_addresses_str = models.CharField(max_length=255, default="")
     # last_token is stored encrypted because it can contain secrets
     last_token_aes = models.TextField(blank=True, default="")
@@ -179,7 +182,11 @@ class ConnectionSettings(models.Model):
                 self.plaintext_password,
                 client_id=self.client_id,
                 client_secret=self.plaintext_client_secret,
-                api_settings=self._get_oauth2_api_settings(),
+                token_url=self.token_url,
+                refresh_url=self.refresh_url,
+                pass_credentials_in_header=self.pass_credentials_in_header,
+                connection_settings=self,
+            )
                 connection_settings=self,
             )
 
@@ -188,15 +195,6 @@ class ConnectionSettings(models.Model):
             return getattr(corehq.motech.auth, self.api_auth_settings)
         raise ValueError(_(
             f'Unable to resolve API endpoints {self.api_auth_settings!r}. '
-            'Please select the applicable API auth settings for the '
-            f'{self.name!r} connection.'
-        ))
-
-    def _get_oauth2_api_settings(self):
-        if self.api_auth_settings in dict(oauth2_api_settings):
-            return getattr(corehq.motech.auth, self.api_auth_settings)
-        raise ValueError(_(
-            f'Unable to resolve API settings {self.api_auth_settings!r}. '
             'Please select the applicable API auth settings for the '
             f'{self.name!r} connection.'
         ))
