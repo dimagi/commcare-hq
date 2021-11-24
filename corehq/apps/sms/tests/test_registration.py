@@ -29,6 +29,7 @@ class RegistrationTestCase(BaseSMSTest):
 
         self.domain = 'sms-reg-test-domain'
         self.domain_obj = Domain(name=self.domain)
+        self.domain_obj.sms_mobile_worker_registration_enabled = True
         self.domain_obj.save()
 
         self.create_account_and_subscription(self.domain)
@@ -78,7 +79,9 @@ class RegistrationTestCase(BaseSMSTest):
         actual_texts = set([sms.text for sms in result])
         self.assertEqual(actual_texts, set(expected_texts))
 
-    def test_sms_registration(self):
+    def test_sms_registration_disabled(self):
+        self.domain_obj.sms_mobile_worker_registration_enabled = False
+        self.domain_obj.save()
         formatted_username = format_username('tester', self.domain)
         phone_number = "+9991234567"
 
@@ -86,19 +89,12 @@ class RegistrationTestCase(BaseSMSTest):
         incoming(phone_number, 'JOIN {} WORKER tester'.format(self.domain), self.backend.hq_api_id)
         self.assertIsNone(CommCareUser.get_by_username(formatted_username))
 
-        # Test with mobile worker registration enabled
-        self.domain_obj.sms_mobile_worker_registration_enabled = True
-        self.domain_obj.save()
+    def test_sms_registration(self):
+        formatted_username = format_username('tester', self.domain)
+        phone_number = "+9991234567"
 
         incoming(phone_number, 'JOIN {} WORKER tester'.format(self.domain), self.backend.hq_api_id)
         self.assertIsNotNone(CommCareUser.get_by_username(formatted_username))
-
-        # Test with no username
-        no_username_phone_number = "+99912345678"
-        incoming(no_username_phone_number, 'JOIN {} WORKER'.format(self.domain), self.backend.hq_api_id)
-        self.assertIsNotNone(CommCareUser.get_by_username(
-            format_username(strip_plus(no_username_phone_number), self.domain)
-        ))
 
         # Test a duplicate registration
         prev_num_users = num_mobile_users(self.domain)
@@ -106,8 +102,15 @@ class RegistrationTestCase(BaseSMSTest):
         current_num_users = num_mobile_users(self.domain)
         self.assertEqual(prev_num_users, current_num_users)
 
+    def test_sms_registration_no_user(self):
+        # Test with no username
+        no_username_phone_number = "+99912345678"
+        incoming(no_username_phone_number, 'JOIN {} WORKER'.format(self.domain), self.backend.hq_api_id)
+        self.assertIsNotNone(CommCareUser.get_by_username(
+            format_username(strip_plus(no_username_phone_number), self.domain)
+        ))
+
     def test_send_admin_registration_alert(self):
-        self.domain_obj.sms_mobile_worker_registration_enabled = True
         self.domain_obj.sms_worker_registration_alert_emails = ['test@test.com', 'foo@bar.org']
         self.domain_obj.save()
         mail.outbox = []
