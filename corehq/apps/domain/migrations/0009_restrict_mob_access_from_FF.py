@@ -10,8 +10,9 @@ from corehq.toggles import RESTRICT_MOBILE_ACCESS
 def _enable_restrict_mobile_access(apps, schema_editor):
     for domain in RESTRICT_MOBILE_ACCESS.get_enabled_domains():
         domain_obj = Domain.get_by_name(domain)
-        domain_obj.restrict_mobile_access = True
-        domain_obj.save()
+        if domain_obj and not domain_obj.restrict_mobile_access:
+            domain_obj.restrict_mobile_access = True
+            domain_obj.save()
 
 
 class Migration(migrations.Migration):
