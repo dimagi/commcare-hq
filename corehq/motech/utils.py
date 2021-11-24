@@ -202,3 +202,26 @@ def copy_api_auth_settings(connection):
     connection.pass_credentials_in_header = api_settings.pass_credentials_in_header
 
     connection.save()
+
+
+def api_setting_matches_preset(connection):
+    def split_url(url):
+        if not url:
+            return None
+        try:
+            return url.split(connection.url.rstrip('/'))[1]
+        except IndexError:
+            return None
+
+    for preset_slug, preset in AUTH_PRESETS.items():
+        if (
+            split_url(connection.token_url) == preset.token_endpoint
+            and split_url(connection.refresh_url) == preset.refresh_endpoint
+            and connection.pass_credentials_in_header == preset.pass_credentials_in_header
+        ):
+            return preset_slug
+
+    if connection.token_url is not None or connection.refresh_url is not None:
+        return 'CUSTOM'
+
+    return None

@@ -10,17 +10,38 @@ hqDefine("motech/js/connection_settings_detail", [
     $(function () {
         var $authTypeSelect = $('#id_auth_type'),
             $testConnectionButton = $('#test-connection-button'),
+            $authPreset = $("#id_auth_preset"),
             $testResult = $('#test-connection-result');
+
+        $authPreset.change(function () {
+            var authPreset = $(this).val(),
+                customAuthPresetFields = [
+                    'token_url', 'refresh_url', 'pass_credentials_in_header'
+                ];
+            if (authPreset === 'CUSTOM') {
+                _.each(customAuthPresetFields, function (field) {
+                    $('#div_id_' + field).show();
+                });
+            } else {
+                _.each(customAuthPresetFields, function (field) {
+                    $('#div_id_' + field).hide();
+                });
+            }
+
+        });
 
         $authTypeSelect.change(function () {
             var visible = [],
                 hidden = [],
                 allFields = [
-                    'api_auth_settings',
                     'username',
                     'plaintext_password',
                     'client_id',
                     'plaintext_client_secret',
+                    'auth_preset',
+                    'token_url',
+                    'refresh_url',
+                    'pass_credentials_in_header',
                 ];
             switch ($(this).val()) {
                 case '':  // Auth type is "None"
@@ -28,17 +49,20 @@ hqDefine("motech/js/connection_settings_detail", [
                     break;
                 case 'oauth1':
                     visible = [
-                        'api_auth_settings',
                         'username',
                         'plaintext_password',
                     ];
                     hidden = [
                         'client_id',
                         'plaintext_client_secret',
+                        'token_url',
+                        'refresh_url',
+                        'pass_credentials_in_header',
                     ];
                     break;
                 case 'oauth2_pwd':
-                    visible = allFields;
+                visible = allFields;
+                hidden = ['token_url', 'refresh_url', 'pass_credentials_in_header'];
                     break;
                 default:
                     visible = [
@@ -46,7 +70,6 @@ hqDefine("motech/js/connection_settings_detail", [
                         'plaintext_password',
                     ];
                     hidden = [
-                        'api_auth_settings',
                         'client_id',
                         'plaintext_client_secret',
                     ];
@@ -128,6 +151,7 @@ hqDefine("motech/js/connection_settings_detail", [
 
         // Set initial state
         $authTypeSelect.trigger('change');
+        $authPreset.trigger('change');
         $('#id_url').trigger('change');
     });
 });
