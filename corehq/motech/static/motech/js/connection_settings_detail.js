@@ -16,7 +16,9 @@ hqDefine("motech/js/connection_settings_detail", [
         $authPreset.change(function () {
             var authPreset = $(this).val(),
                 customAuthPresetFields = [
-                    'token_url', 'refresh_url', 'pass_credentials_in_header'
+                    'token_url',
+                    'refresh_url',
+                    'pass_credentials_in_header',
                 ];
             if (authPreset === 'CUSTOM') {
                 _.each(customAuthPresetFields, function (field) {
@@ -58,7 +60,7 @@ hqDefine("motech/js/connection_settings_detail", [
                     visible = allFields;
                     hidden = [];
                     break;
-               case 'oauth2_client':
+                case 'oauth2_client':
                     visible = [
                         'client_id',
                         'plaintext_client_secret',
@@ -66,9 +68,9 @@ hqDefine("motech/js/connection_settings_detail", [
                     ];
                     hidden = [
                         'username',
-                        'plaintext_password'
+                        'plaintext_password',
                     ];
-                break;
+                    break;
                 default:
                     visible = [
                         'username',
