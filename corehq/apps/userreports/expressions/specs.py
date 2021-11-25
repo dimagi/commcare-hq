@@ -23,7 +23,7 @@ from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.getters import (
     safe_recursive_lookup,
-    transform_from_datatype,
+    transform_for_datatype,
 )
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import EvaluationContext, TypeProperty
@@ -126,7 +126,7 @@ class PropertyNameGetterSpec(JsonObject):
 
     def __call__(self, item, context=None):
         raw_value = item.get(self._property_name_expression(item, context)) if isinstance(item, dict) else None
-        return transform_from_datatype(self.datatype)(raw_value)
+        return transform_for_datatype(self.datatype)(raw_value)
 
     def __str__(self):
         value = self.property_name
@@ -156,7 +156,7 @@ class PropertyPathGetterSpec(JsonObject):
     datatype = DataTypeProperty(required=False)
 
     def __call__(self, item, context=None):
-        transform = transform_from_datatype(self.datatype)
+        transform = transform_for_datatype(self.datatype)
         return transform(safe_recursive_lookup(item, self.property_path))
 
     def __str__(self):
@@ -699,7 +699,7 @@ class EvalExpressionSpec(JsonObject):
         var_dict = self.get_variables(item, context)
         try:
             untransformed_value = eval_statements(self.statement, var_dict)
-            return transform_from_datatype(self.datatype)(untransformed_value)
+            return transform_for_datatype(self.datatype)(untransformed_value)
         except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
 
