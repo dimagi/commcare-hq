@@ -937,7 +937,7 @@ class SplitStringExpressionSpec(JsonObject):
 class CoalesceExpressionSpec(JsonObject):
     """
     This expression returns the value of the expression provided, or the
-    value of the default_expression if the expression provided evalutes to a
+    value of the default_expression if the expression provided evaluates to a
     null or blank string.
 
     .. code:: json
