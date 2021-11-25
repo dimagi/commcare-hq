@@ -7,7 +7,6 @@ from unittest.mock import patch
 
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
-from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
     CustomDataFieldsDefinition,
@@ -15,23 +14,24 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.user_importer.exceptions import UserUploadError
-from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.user_importer.importer import (
     create_or_update_commcare_users_and_groups,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.audit.logger import UserChangeLogger
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import (
     CommCareUser,
     Invitation,
-    UserRole,
     UserHistory,
+    UserRole,
     WebUser,
 )
-from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
@@ -740,7 +740,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
         change_messages = {}
         change_messages.update(UserChangeMessage.password_reset())
-        change_messages.update(UserChangeMessage.phone_numbers_added(['23424123']))
+        change_messages.update(UserChangeMessage.phone_numbers_updated(added=['23424123']))
         change_messages.update(UserChangeMessage.role_change(self.role))
         self.assertDictEqual(user_history.change_messages, change_messages)
 
@@ -1067,12 +1067,9 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
 
-        change_messages = {"phone_numbers": {}}
-        change_messages["phone_numbers"].update(
-            UserChangeMessage.phone_numbers_added([number1, number2])['phone_numbers']
-        )
-        change_messages["phone_numbers"].update(
-            UserChangeMessage.phone_numbers_removed([initial_default_number])['phone_numbers']
+        change_messages = UserChangeMessage.phone_numbers_updated(
+            added=[number1, number2],
+            removed=[initial_default_number]
         )
         self.assertEqual(
             set(user_history.change_messages["phone_numbers"]["add_phone_numbers"]["phone_numbers"]),
@@ -1110,12 +1107,9 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
 
-        change_messages = {"phone_numbers": {}}
-        change_messages["phone_numbers"].update(
-            UserChangeMessage.phone_numbers_added([number2])["phone_numbers"]
-        )
-        change_messages["phone_numbers"].update(
-            UserChangeMessage.phone_numbers_removed([initial_default_number])["phone_numbers"]
+        change_messages = UserChangeMessage.phone_numbers_updated(
+            added=[number2],
+            removed=[initial_default_number]
         )
         change_messages.update(UserChangeMessage.password_reset())
         self.assertDictEqual(user_history.change_messages, change_messages)
@@ -1146,12 +1140,9 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
 
-        change_messages = {"phone_numbers": {}}
-        change_messages["phone_numbers"].update(
-            UserChangeMessage.phone_numbers_added([number1])["phone_numbers"]
-        )
-        change_messages["phone_numbers"].update(
-            UserChangeMessage.phone_numbers_removed(["12345678912"])["phone_numbers"]
+        change_messages = UserChangeMessage.phone_numbers_updated(
+            added=[number1],
+            removed=['12345678912']
         )
         change_messages.update(UserChangeMessage.password_reset())
         self.assertDictEqual(user_history.change_messages, change_messages)
@@ -1198,7 +1189,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
         change_messages = {}
-        change_messages.update(UserChangeMessage.phone_numbers_removed(['12345678912']))
+        change_messages.update(UserChangeMessage.phone_numbers_updated(removed=['12345678912']))
         change_messages.update(UserChangeMessage.password_reset())
         self.assertDictEqual(user_history.change_messages, change_messages)
 
@@ -1755,8 +1746,8 @@ class TestUserChangeLogger(SimpleTestCase):
     def test_add_change_message_duplicate_slug_entry(self):
         user = CommCareUser()
         user_change_logger = UserChangeLogger(
-            upload_domain=self.domain_name,
-            user_domain=self.domain_name,
+            by_domain=self.domain_name,
+            for_domain=self.domain_name,
             user=user,
             is_new_user=True,
             changed_by_user=self.uploading_user,
@@ -1772,8 +1763,8 @@ class TestUserChangeLogger(SimpleTestCase):
         user_change_logger.add_change_message(UserChangeMessage.password_reset())
 
         user_change_logger = UserChangeLogger(
-            upload_domain=self.domain_name,
-            user_domain=self.domain_name,
+            by_domain=self.domain_name,
+            for_domain=self.domain_name,
             user=user,
             is_new_user=False,
             changed_by_user=self.uploading_user,
@@ -1790,8 +1781,8 @@ class TestUserChangeLogger(SimpleTestCase):
     def test_add_info_duplicate_slug_entry(self):
         user = CommCareUser()
         user_change_logger = UserChangeLogger(
-            upload_domain=self.domain_name,
-            user_domain=self.domain_name,
+            by_domain=self.domain_name,
+            for_domain=self.domain_name,
             user=user,
             is_new_user=True,
             changed_by_user=self.uploading_user,
@@ -1806,8 +1797,8 @@ class TestUserChangeLogger(SimpleTestCase):
             user_change_logger.add_info(UserChangeMessage.program_change(None))
 
         user_change_logger = UserChangeLogger(
-            upload_domain=self.domain_name,
-            user_domain=self.domain_name,
+            by_domain=self.domain_name,
+            for_domain=self.domain_name,
             user=user,
             is_new_user=False,
             changed_by_user=self.uploading_user,

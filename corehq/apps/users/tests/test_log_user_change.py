@@ -48,7 +48,7 @@ class TestLogUserChange(TestCase):
 
         self.commcare_user.add_phone_number("9999999999")
 
-        change_messages = UserChangeMessage.phone_numbers_added(["9999999999"])
+        change_messages = UserChangeMessage.phone_numbers_updated(added=["9999999999"])
         user_history = log_user_change(
             self.domain,
             self.domain,

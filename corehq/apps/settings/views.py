@@ -193,7 +193,7 @@ class MyAccountSettingsView(BaseMyAccountView):
                     couch_user=user,
                     changed_by_user=user,
                     changed_via=USER_CHANGE_VIA_WEB,
-                    change_messages=UserChangeMessage.phone_numbers_added([self.phone_number]),
+                    change_messages=UserChangeMessage.phone_numbers_updated(added=[self.phone_number]),
                     by_domain_required_for_log=False,
                     for_domain_required_for_log=False,
                 )
@@ -211,7 +211,7 @@ class MyAccountSettingsView(BaseMyAccountView):
             couch_user=self.request.couch_user,
             changed_by_user=self.request.couch_user,
             changed_via=USER_CHANGE_VIA_WEB,
-            change_messages=UserChangeMessage.phone_numbers_removed([self.phone_number]),
+            change_messages=UserChangeMessage.phone_numbers_updated(removed=[self.phone_number]),
             by_domain_required_for_log=False,
             for_domain_required_for_log=False,
         )

@@ -238,19 +238,11 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                             source=list(old_phone_numbers)
                         )
 
-                        change_messages = {}
-                        if numbers_removed:
-                            change_messages.update(
-                                UserChangeMessage.phone_numbers_removed(list(numbers_removed))["phone_numbers"]
+                        if numbers_added or numbers_removed:
+                            user_change_logger.add_change_message(
+                                UserChangeMessage.phone_numbers_updated(added=list(numbers_added),
+                                                                        removed=list(numbers_removed))
                             )
-
-                        if numbers_added:
-                            change_messages.update(
-                                UserChangeMessage.phone_numbers_added(list(numbers_added))["phone_numbers"]
-                            )
-
-                        if change_messages:
-                            user_change_logger.add_change_message({'phone_numbers': change_messages})
                 elif key == 'groups':
                     group_ids = bundle.data.get("groups", [])
                     groups_updated = bundle.obj.set_groups(group_ids)
