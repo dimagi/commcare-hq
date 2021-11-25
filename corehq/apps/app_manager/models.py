@@ -2516,7 +2516,18 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     @classmethod
     def new_module(cls, name, lang):
-        detail = Detail(
+        short_detail = Detail(
+            display='short',
+            columns=[DetailColumn(
+                format='plain',
+                header={(lang or 'en'): _("Name")},
+                field='name',
+                model='case',
+                hasAutocomplete=True,
+            )]
+        )
+        long_detail = Detail(
+            display='long',
             columns=[DetailColumn(
                 format='plain',
                 header={(lang or 'en'): _("Name")},
@@ -2530,8 +2541,8 @@ class Module(ModuleBase, ModuleDetailsMixin):
             forms=[],
             case_type='',
             case_details=DetailPair(
-                short=Detail(detail.to_json()),
-                long=Detail(detail.to_json()),
+                short=Detail(short_detail.to_json()),
+                long=Detail(long_detail.to_json()),
             ),
         )
         module.get_or_create_unique_id()
@@ -3019,7 +3030,17 @@ class AdvancedModule(ModuleBase):
 
     @classmethod
     def new_module(cls, name, lang):
-        detail = Detail(
+        short_detail = Detail(
+            display='short',
+            columns=[DetailColumn(
+                format='plain',
+                header={(lang or 'en'): _("Name")},
+                field='name',
+                model='case',
+            )]
+        )
+        long_detail = Detail(
+            display='long',
             columns=[DetailColumn(
                 format='plain',
                 header={(lang or 'en'): _("Name")},
@@ -3033,8 +3054,8 @@ class AdvancedModule(ModuleBase):
             forms=[],
             case_type='',
             case_details=DetailPair(
-                short=Detail(detail.to_json()),
-                long=Detail(detail.to_json()),
+                short=Detail(short_detail.to_json()),
+                long=Detail(long_detail.to_json()),
             ),
             product_details=DetailPair(
                 short=Detail(
@@ -3816,7 +3837,17 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     @classmethod
     def new_module(cls, name, lang, shadow_module_version=2):
         lang = lang or 'en'
-        detail = Detail(
+        short_detail = Detail(
+            display='short',
+            columns=[DetailColumn(
+                format='plain',
+                header={(lang or 'en'): _("Name")},
+                field='name',
+                model='case',
+            )]
+        )
+        long_detail = Detail(
+            display='long',
             columns=[DetailColumn(
                 format='plain',
                 header={(lang or 'en'): _("Name")},
@@ -3827,8 +3858,8 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         module = ShadowModule(
             name={(lang or 'en'): name or _("Untitled Menu")},
             case_details=DetailPair(
-                short=Detail(detail.to_json()),
-                long=Detail(detail.to_json()),
+                short=Detail(short_detail.to_json()),
+                long=Detail(long_detail.to_json()),
             ),
             shadow_module_version=shadow_module_version,
         )

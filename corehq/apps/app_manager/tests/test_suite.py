@@ -611,6 +611,11 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         icon_mapping_spec = """
         <partial>
+          <template width="0">
+            <text>
+              <xpath function="if(gender = 'male' and age &lt;= 21, $h{key1_varname}, if(gender = 'female' and age &lt;= 21, $h{key2_varname}, if(gender = 'male' and age &gt; 21, $h{key3_varname}, if(gender = 'female' and age &gt; 21, $h{key4_varname}, ''))))"/>
+            </text>
+          </template>
           <template>
             <text>
               <xpath function="if(gender = 'male' and age &lt;= 21, $h{key1_varname}, if(gender = 'female' and age &lt;= 21, $h{key2_varname}, if(gender = 'male' and age &gt; 21, $h{key3_varname}, if(gender = 'female' and age &gt; 21, $h{key4_varname}, ''))))">
@@ -682,6 +687,11 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         icon_mapping_spec = """
         <partial>
+          <template width="0">
+            <text>
+              <xpath function="if(if(gender = 'male', 'boy', 'girl') = 'boy', 0, if(if(gender = 'male', 'boy', 'girl') = 'girl', 1, ''))"/>
+            </text>
+          </template>
           <template>
             <text>
               <xpath function="if(if(gender = 'male', 'boy', 'girl') = 'boy', $kboy, if(if(gender = 'male', 'boy', 'girl') = 'girl', $kgirl, ''))">
