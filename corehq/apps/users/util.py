@@ -129,18 +129,12 @@ def user_id_to_username(user_id, use_name_if_available=False):
         return raw_username(user_object['username']) if "username" in user_object else None
 
 
+@quickcache(['user_id'])
 def cached_user_id_to_username(user_id):
-    if not user_id:
+    if not user_id or (user_id in WEIRD_USER_IDS and user_id != DEMO_USER_ID):
         return None
 
-    key = 'user_id_username_cache_{id}'.format(id=user_id)
-    ret = cache.get(key)
-    if ret:
-        return ret
-    else:
-        ret = user_id_to_username(user_id)
-        cache.set(key, ret)
-        return ret
+    return user_id_to_username(user_id)
 
 
 @quickcache(['user_id'])

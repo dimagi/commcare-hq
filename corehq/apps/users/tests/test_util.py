@@ -8,7 +8,8 @@ from corehq.apps.users.util import (
     user_display_string,
     username_to_user_id,
     user_id_to_username,
-    cached_user_id_to_user_display
+    cached_user_id_to_user_display,
+    cached_user_id_to_username,
 )
 
 
@@ -89,6 +90,32 @@ class TestUserIdToUsernameToUserName(TestCase):
         # set username back because other tests rely on it
         self.user_with_first_name.first_name = 'Alice'
         self.user_with_first_name.save()
+
+    def test_cached_user_id_to_username(self):
+        self.assertEqual('first_name',
+                         cached_user_id_to_username(self.user_with_first_name.user_id))
+        self.assertEqual('full_name',
+                         cached_user_id_to_username(self.user_with_full_name.user_id))
+        self.user_with_first_name.first_name = 'Betty'
+        self.user_with_first_name.save()
+        self.assertEqual('first_name',
+                         cached_user_id_to_username(self.user_with_first_name.user_id))
+        self.assertEqual('full_name',
+                         cached_user_id_to_username(self.user_with_full_name.user_id))
+        # set username back because other tests rely on it
+        self.user_with_first_name.first_name = 'Alice'
+        self.user_with_first_name.save()
+
+    def test_cached_user_id_to_username__demo_user(self):
+        self.assertEqual(cached_user_id_to_username('demo_user'), 'demo_user')
+
+    def test_cached_user_id_to_username__weird_ids(self):
+        self.assertEqual(cached_user_id_to_username('system'), None)
+        self.assertEqual(cached_user_id_to_username('commtrack-system'), None)
+        self.assertEqual(cached_user_id_to_username('demo_user_group_id'), None)
+        self.assertEqual(cached_user_id_to_username('-'), None)
+        self.assertEqual(cached_user_id_to_username('_archive_'), None)
+        self.assertEqual(cached_user_id_to_username('callcenter-system'), None)
 
 
 class TestUserDisplayString(SimpleTestCase):
