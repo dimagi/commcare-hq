@@ -14,9 +14,11 @@ from corehq.apps.registry.models import RegistryAuditLog
 from corehq.apps.registry.tests.utils import create_registry_for_test
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
-from corehq.util.test_utils import generate_cases
+from corehq.util.test_utils import generate_cases, flag_enabled
 
 
+@flag_enabled("DATA_REGISTRY")
+@flag_enabled("SYNC_SEARCH_CASE_CLAIM")
 class RegistryCaseDetailsTests(TestCase):
     domain = 'registry-case-details'
 
@@ -152,6 +154,8 @@ class _FixtureCase:
     ({"case_id": "a"}, "'case_type', 'commcare_registry' are required parameters"),
     ({"case_id": "a", "case_type": "b"}, "'commcare_registry' is a required parameter"),
 ], RegistryCaseDetailsTests)
+@flag_enabled("SYNC_SEARCH_CASE_CLAIM")
+@flag_enabled("DATA_REGISTRY")
 def test_required_params(self, params, message):
     content = self._make_request(params, 400)
     self.assertEqual(content, message)
