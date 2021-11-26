@@ -1,7 +1,7 @@
 import uuid
 
 from django.test import SimpleTestCase, TestCase
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
@@ -53,7 +53,7 @@ class BulkTest(SimpleTestCase):
 
 
 @sharded
-@es_test
+@es_test(index=TEST_INDEX_INFO)
 class TestBulkDocOperations(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -142,7 +142,9 @@ class TestBulkDocOperations(TestCase):
         )
 
 
+@es_test(index=TEST_INDEX_INFO)
 class TestBulkOperationsCaseToSQL(TestCase):
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case

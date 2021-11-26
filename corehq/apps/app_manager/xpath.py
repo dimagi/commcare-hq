@@ -183,7 +183,7 @@ class XPath(str):
 
     @staticmethod
     def not_(a):
-        return XPath.expr("not {}", [a])
+        return XPath.expr("not({})", [a])
 
     @staticmethod
     def date(a):

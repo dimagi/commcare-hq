@@ -2,6 +2,7 @@ from django.core.management import BaseCommand
 
 from corehq.apps.analytics.utils import (
     remove_blocked_domain_contacts_from_hubspot,
+    remove_blocked_domain_invited_users_from_hubspot,
 )
 
 
@@ -10,3 +11,4 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         remove_blocked_domain_contacts_from_hubspot(self.stdout)
+        remove_blocked_domain_invited_users_from_hubspot(self.stdout)

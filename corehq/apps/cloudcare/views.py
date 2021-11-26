@@ -371,7 +371,7 @@ class LoginAsUsers(View):
 
 
 def _format_app_doc(doc):
-    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile']
+    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile', 'upstream_app_id']
     context = {key: doc.get(key) for key in keys}
     context['imageUri'] = doc.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
     return context
@@ -599,10 +599,13 @@ def session_endpoint(request, domain, app_id, endpoint_id):
                 build = _fetch_build(domain, request.couch_user.username, id_map[app_id][0])
         if not build:
             return _fail(_("Could not find application."))
-    build = wrap_app(build)
 
-    valid_endpoint_ids = {m.session_endpoint_id for m in build.get_modules() if m.session_endpoint_id}
-    valid_endpoint_ids |= {f.session_endpoint_id for f in build.get_forms() if f.session_endpoint_id}
+    valid_endpoint_ids = set()
+    for module in build.get("modules", []):
+        valid_endpoint_ids.add(module.get("session_endpoint_id"))
+        for form in module.get("forms", []):
+            valid_endpoint_ids.add(form.get("session_endpoint_id"))
+    valid_endpoint_ids = {i for i in valid_endpoint_ids if i}
     if endpoint_id not in valid_endpoint_ids:
         return _fail(_("This link does not exist. "
                        "Your app may have changed so that the given link is no longer valid."))
@@ -613,7 +616,7 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         return _fail(_("This user cannot access this link."))
 
     cloudcare_state = json.dumps({
-        "appId": build._id,
+        "appId": build["_id"],
         "endpointId": endpoint_id,
         "endpointArgs": {
             urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)

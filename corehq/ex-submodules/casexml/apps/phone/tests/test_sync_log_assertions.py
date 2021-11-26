@@ -2,7 +2,7 @@ import uuid
 
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.const import CASE_ACTION_UPDATE
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction

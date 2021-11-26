@@ -112,6 +112,7 @@ class AutomaticUpdateRule(models.Model):
     # that this rule belongs to.
     workflow = models.CharField(max_length=126)
 
+    upstream_id = models.CharField(max_length=32, null=True)
     locked_for_editing = models.BooleanField(default=False)
 
     class Meta(object):
@@ -440,6 +441,25 @@ class AutomaticUpdateRule(models.Model):
     def get_schedule(self):
         return self.get_action_definition().schedule
 
+    def to_json(self):
+        simple_fields = [
+            "domain",
+            "name",
+            "case_type",
+            "active",
+            "deleted",
+            "last_run",
+            "filter_on_server_modified",
+            "server_modified_boundary",
+            "workflow",
+            "locked_for_editing",
+            "upstream_id"
+        ]
+        data = {}
+        for field in simple_fields:
+            data[field] = getattr(self, field)
+        data['id'] = self.id
+        return data
 
 class CaseRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
@@ -696,18 +716,21 @@ class CaseRuleActionResult(object):
         if not isinstance(value, int):
             raise ValueError("Expected int")
 
-    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0, num_related_closes=0, num_creates=0):
+    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0,
+                 num_related_closes=0, num_creates=0, num_errors=0):
         self._validate_int(num_updates)
         self._validate_int(num_closes)
         self._validate_int(num_related_updates)
         self._validate_int(num_related_closes)
         self._validate_int(num_creates)
+        self._validate_int(num_errors)
 
         self.num_updates = num_updates
         self.num_closes = num_closes
         self.num_related_updates = num_related_updates
         self.num_related_closes = num_related_closes
         self.num_creates = num_creates
+        self.num_errors = num_errors
 
     def add_result(self, result):
         self.num_updates += result.num_updates
@@ -715,6 +738,7 @@ class CaseRuleActionResult(object):
         self.num_related_updates += result.num_related_updates
         self.num_related_closes += result.num_related_closes
         self.num_creates += result.num_creates
+        self.num_errors += result.num_errors
 
     @property
     def total_updates(self):
@@ -1490,6 +1514,7 @@ class DomainCaseRuleRun(models.Model):
     STATUS_RUNNING = 'R'
     STATUS_FINISHED = 'F'
     STATUS_HALTED = 'H'
+    STATUS_HAD_ERRORS = 'E'
 
     domain = models.CharField(max_length=126)
     case_type = models.CharField(max_length=255, null=True)
@@ -1503,6 +1528,7 @@ class DomainCaseRuleRun(models.Model):
     num_related_updates = models.IntegerField(default=0)
     num_related_closes = models.IntegerField(default=0)
     num_creates = models.IntegerField(default=0)
+    num_errors = models.IntegerField(default=0)
 
     dbs_completed = JSONField(default=list)
 
@@ -1512,12 +1538,9 @@ class DomainCaseRuleRun(models.Model):
         )
 
     @classmethod
-    def done(cls, run_id, status, cases_checked, result, db=None):
+    def done(cls, run_id, cases_checked, result, db=None, halted=False):
         if not isinstance(result, CaseRuleActionResult):
             raise TypeError("Expected an instance of CaseRuleActionResult")
-
-        if status not in (cls.STATUS_HALTED, cls.STATUS_FINISHED):
-            raise ValueError("Expected STATUS_HALTED or STATUS_FINISHED")
 
         with CriticalSection(['update-domain-case-rule-run-%s' % run_id]):
             run = cls.objects.get(pk=run_id)
@@ -1528,6 +1551,7 @@ class DomainCaseRuleRun(models.Model):
             run.num_related_updates += result.num_related_updates
             run.num_related_closes += result.num_related_closes
             run.num_creates += result.num_creates
+            run.num_errors += result.num_errors
 
             if db:
                 run.dbs_completed.append(db)
@@ -1538,10 +1562,11 @@ class DomainCaseRuleRun(models.Model):
             else:
                 run.finished_on = datetime.utcnow()
 
-            if status == cls.STATUS_HALTED:
-                run.status = status
-            elif status == cls.STATUS_FINISHED and run.status != cls.STATUS_HALTED and run.finished_on:
-                run.status = status
-
+            if halted or run.status == cls.STATUS_HALTED:
+                run.status = cls.STATUS_HALTED
+            elif run.num_errors > 0:
+                run.status = cls.STATUS_HAD_ERRORS
+            elif run.finished_on:
+                run.status = cls.STATUS_FINISHED
             run.save()
             return run

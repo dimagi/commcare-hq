@@ -2,7 +2,7 @@ import re
 from os.path import join
 
 from django.test import override_settings
-from mock import patch
+from unittest.mock import patch
 from testil import assert_raises, tempdir
 
 import corehq.blobs as mod

@@ -1,0 +1,8 @@
+# Service configurations specific to 'arm64' (Apple M1) architecture.
+
+version: '2.3'
+
+services:
+  postgres:
+    # TODO: enumerate differences with 'dimagi/docker-postgresql' image
+    image: arm64v8/postgres

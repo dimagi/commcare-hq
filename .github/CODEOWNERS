@@ -12,8 +12,9 @@
 /corehq/form_processor/ @snopoke
 /corehq/messaging/ @millerdev @orangejenny @mkangia
 /corehq/motech/ @kaapstorm
+/corehq/pillows/ @calellowitz
 /corehq/sql_accessors/ @snopoke
-/corehq/sql_db/ @snopoke
+/corehq/sql_db/ @snopoke @calellowitz
 /corehq/sql_proxy_accessors/ @snopoke
 /corehq/sql_proxy_standby_accessors/ @snopoke
 /corehq/tests/nose.py @millerdev
@@ -48,13 +49,14 @@
 /corehq/apps/smsbillables/ @dannyroberts @biyeun
 /corehq/apps/styleguide/ @orangejenny
 /corehq/apps/translations/app_translations/ @orangejenny
+/corehq/apps/userreports/ @calellowitz
 /corehq/apps/userreports/static/ @orangejenny
 /corehq/apps/userreports/templates/ @orangejenny
 /corehq/apps/userreports/reports/builder/ @kaapstorm
 /corehq/apps/users/ @esoergel
 /corehq/apps/users/static/ @esoergel @orangejenny
 /corehq/apps/users/templates/ @esoergel @orangejenny
-/corehq/ex-submodules/pillowtop @dannyroberts
+/corehq/ex-submodules/pillowtop @dannyroberts @calellowitz
 
 /custom/icds_reports/ @calellowitz @Rohit25negi
 /custom/icds_reports/templates/ @calellowitz @Rohit25negi

@@ -276,7 +276,7 @@ HQ_APPS = (
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
     'corehq.sql_proxy_standby_accessors',
-    'corehq.pillows',
+    'corehq.pillows.app_config.PillowsAppConfig',
     'couchforms',
     'couchexport',
     'dimagi.utils',
@@ -821,6 +821,7 @@ REPEATER_CLASSES = [
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
     'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
     'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
+    'corehq.motech.repeaters.expression.repeaters.CaseExpressionRepeater',
 ]
 
 # Override this in localsettings to add new repeater types
@@ -1960,7 +1961,7 @@ DOMAIN_MODULE_MAP = {
     'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',
 
-    #vectorlink domains
+    # vectorlink domains
     'abtmali': 'custom.abt',
     'airs': 'custom.abt',
     'airs-testing': 'custom.abt',
@@ -1973,6 +1974,7 @@ DOMAIN_MODULE_MAP = {
     'airstanzania': 'custom.abt',
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
+    'kenya-vca': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',

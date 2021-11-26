@@ -5,7 +5,7 @@ from datetime import date
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from casexml.apps.case.models import CommCareCase
 from pillowtop.es_utils import initialize_index_and_mapping

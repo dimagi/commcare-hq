@@ -4,7 +4,7 @@ from datetime import date, datetime, time
 from django.db.models import Q
 from django.test import TestCase
 
-from mock import call, patch
+from unittest.mock import call, patch
 
 from casexml.apps.case.tests.util import create_case
 from corehq.apps.app_manager.models import (

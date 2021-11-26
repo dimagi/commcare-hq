@@ -1,6 +1,6 @@
 import json
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.case_search.models import (
     CaseSearchConfig,

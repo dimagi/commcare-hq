@@ -1,7 +1,7 @@
 import uuid
 
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.models import DomainLink

@@ -17,13 +17,13 @@ def can_access_linked_domains(user, domain):
     if not user or not domain:
         return False
     if domain_has_privilege(domain, RELEASE_MANAGEMENT):
-        return user.is_domain_admin()
+        return user.is_domain_admin(domain)
     else:
         return toggles.LINKED_DOMAINS.enabled(domain)
 
 
 def can_access_release_management_feature(user, domain):
-    return domain_has_privilege(domain, RELEASE_MANAGEMENT) and user.is_domain_admin()
+    return domain_has_privilege(domain, RELEASE_MANAGEMENT) and user.is_domain_admin(domain)
 
 
 def _clean_json(doc):
@@ -56,11 +56,11 @@ def server_to_user_time(server_time, timezone):
     return user_time.strftime("%Y-%m-%d %H:%M")
 
 
-def pull_missing_multimedia_for_app_and_notify(domain, app_id, email):
+def pull_missing_multimedia_for_app_and_notify(domain, app_id, email, force=False):
     app = get_app(domain, app_id)
     subject = _("Update Status for linked app %s missing multimedia pull") % app.name
     try:
-        pull_missing_multimedia_for_app(app)
+        pull_missing_multimedia_for_app(app, force=force)
     except MultimediaMissingError as e:
         message = str(e)
     except Exception:
@@ -76,10 +76,13 @@ def pull_missing_multimedia_for_app_and_notify(domain, app_id, email):
     send_html_email_async.delay(subject, email, message)
 
 
-def pull_missing_multimedia_for_app(app, old_multimedia_ids=None):
-    missing_media = _get_missing_multimedia(app, old_multimedia_ids)
+def pull_missing_multimedia_for_app(app, old_multimedia_ids=None, force=False):
+    if force:
+        media_to_pull = _get_all_media(app)
+    else:
+        media_to_pull = _get_missing_multimedia(app, old_multimedia_ids)
     remote_details = app.domain_link.remote_details
-    fetch_remote_media(app.domain, missing_media, remote_details)
+    fetch_remote_media(app.domain, media_to_pull, remote_details)
     if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
         still_missing_media = _get_missing_multimedia(app, old_multimedia_ids)
         if still_missing_media:
@@ -89,6 +92,13 @@ def pull_missing_multimedia_for_app(app, old_multimedia_ids=None):
             ))
 
 
+def _get_all_media(app):
+    return [
+        (path.split('/')[-1], media_info)
+        for path, media_info in app.multimedia_map.items()
+    ]
+
+
 def _get_missing_multimedia(app, old_multimedia_ids=None):
     missing = []
     for path, media_info in app.multimedia_map.items():
@@ -96,7 +106,6 @@ def _get_missing_multimedia(app, old_multimedia_ids=None):
             continue
         try:
             local_media = CommCareMultimedia.get(media_info['multimedia_id'])
-            local_media.get_display_file()
         except ResourceNotFound:
             filename = path.split('/')[-1]
             missing.append((filename, media_info))
