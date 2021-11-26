@@ -406,12 +406,13 @@ def recovery_measures(request, domain, build_id):
 
 
 @location_safe_bypass
+@csrf_exempt
 @mobile_auth
-@require_GET
 def registry_case(request, domain, app_id):
-    case_ids = request.GET.getlist("case_id")
-    case_types = request.GET.getlist("case_type")
-    registry = request.GET.get("commcare_registry")
+    request_dict = request.GET if request.method == 'GET' else request.POST
+    case_ids = request_dict.getlist("case_id")
+    case_types = request_dict.getlist("case_type")
+    registry = request_dict.get("commcare_registry")
 
     missing = [
         name
