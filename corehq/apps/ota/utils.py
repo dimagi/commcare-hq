@@ -141,6 +141,23 @@ def _ensure_valid_restore_as_user(domain, couch_user, as_user_obj):
     if not as_user_obj.is_member_of(domain):
         raise RestorePermissionDenied(_("{} was not in the domain {}").format(as_user_obj.username, domain))
 
+    if _limit_login_as(domain, couch_user):
+        login_as_username = as_user_obj.metadata.get('login_as_user')
+        if login_as_username != couch_user.username:
+            if not _can_access_default_login_as_user(domain, couch_user) or login_as_username != 'default':
+                raise RestorePermissionDenied(_("{} not available as login-as user").format(as_user_obj.username))
+
+
+def _limit_login_as(domain, couch_user):
+    return (
+        couch_user.has_permission(domain, 'limited_login_as')
+        and not couch_user.has_permission(domain, 'login_as_all_users')
+    )
+
+
+def _can_access_default_login_as_user(domain, couch_user):
+    return couch_user.has_permission(domain, 'access_default_login_as_user')
+
 
 def _ensure_accessible_location(domain, couch_user, as_user_obj):
     if not user_can_access_other_user(domain, couch_user, as_user_obj):
