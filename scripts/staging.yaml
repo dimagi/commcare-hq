@@ -76,5 +76,6 @@ branches:
     - es/mobile-auth # Simon Nov 23
     - smh/user-report-enterprise-domain-support # Steph Nov 23
     - sk/registry-case-post # Simon Nov 29
+    - ap/web-app-refresh # Amit Nov 29
     - revert-30762-revert-30710-ad/tab-structure-for-check-boxes # Addison Nov 29
 submodules: { }
