@@ -79,4 +79,5 @@ branches:
     - smh/user-report-enterprise-domain-support # Steph Nov 23
     - fr/client-oauth-divoc                     # Farid Nov 23
     - ad/GA-mobile-access-setting # Addison Nov 24
+    - sk/registry-case-post # Simon Nov 29
 submodules: { }
