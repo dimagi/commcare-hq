@@ -7,6 +7,7 @@ from django.core.management import BaseCommand
 from corehq.apps.analytics.utils import (
     get_blocked_hubspot_domains,
     MAX_API_RETRIES,
+    get_first_conversion_status_for_emails,
 )
 from corehq.apps.es import UserES
 
@@ -81,7 +82,7 @@ class Command(BaseCommand):
                 blocked_emails.append(username)
                 if user_email and user_email != username:
                     blocked_emails.append(user_email)
-                users_not_blocked.update(self.get_blocked_status_for_emails(
+                users_not_blocked.update(get_first_conversion_status_for_emails(
                     list(set(blocked_emails))
                 ))
         if users_not_blocked:
@@ -98,36 +99,3 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(
                 f"All users in project {domain} are absent on HubSpot."
             ))
-
-    def get_blocked_status_for_emails(self, list_of_emails, retry_num=0):
-        try:
-            req = requests.get(
-                "https://api.hubapi.com/contacts/v1/contact/emails/batch/",
-                params={
-                    'hapikey': self.api_key,
-                    'email': list_of_emails,
-                },
-            )
-            if req.status_code == 404:
-                return {}
-            req.raise_for_status()
-        except (ConnectionError, requests.exceptions.HTTPError) as e:
-            if retry_num <= MAX_API_RETRIES:
-                return self.get_blocked_status_for_emails(list_of_emails, retry_num + 1)
-            else:
-                self.stdout.write(self.style.ERROR(
-                    f"Failed to get data from hubspot for "
-                    f"{list_of_emails.join(',')}."
-                ))
-        else:
-            status_summary = {}
-            for contact_id, data in req.json().items():
-                first_conversion_status = data.get(
-                    'properties', {}
-                ).get('first_conversion_clustered_', {}).get('value')
-                email = data.get(
-                    'properties', {}
-                ).get('email', {}).get('value')
-                status_summary[email] = first_conversion_status
-            return status_summary
-        return {}

@@ -211,6 +211,26 @@ def _get_contacts_from_hubspot(list_of_emails, retry_num=0, record_metrics=True)
     return {}
 
 
+def get_first_conversion_status_for_emails(list_of_emails):
+    """
+    This returns the First Conversion (clustered) property for each contact in
+    list_of_emails if that email is present in HubSpot
+    :param list_of_emails:
+    :return: list of contact ids
+    """
+    hubspot_contacts = _get_contacts_from_hubspot(list_of_emails)
+    status_summary = {}
+    for contact_id, data in hubspot_contacts.items():
+        first_conversion_status = data.get(
+            'properties', {}
+        ).get('first_conversion_clustered_', {}).get('value')
+        email = data.get(
+            'properties', {}
+        ).get('email', {}).get('value')
+        status_summary[email] = first_conversion_status
+    return status_summary
+
+
 def _get_contact_ids_to_delete(list_of_emails):
     """
     Gets a list of Contact IDs be deleted from Hubspot based on the
