@@ -962,6 +962,16 @@ class TestUserESAccessors(TestCase):
             UserES().domain(self.domain, allow_enterprise=True).values_list('username', flat=True)
         )
 
+    def test_domain_allow_enterprise_controlled_domains(self):
+        self._send_user_to_es()
+        self.assertEqual([], UserES().domain(self.source_domain).values_list('username', flat=True))
+        self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
+        self.assertEqual(
+            ['superman'],
+            UserES().domain(self.source_domain,
+                            allow_enterprise_controlled_domains=True).values_list('username', flat=True)
+        )
+
 
 @es_test
 class TestGroupESAccessors(SimpleTestCase):
