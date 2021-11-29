@@ -1,6 +1,5 @@
 from memoized import memoized
 
-from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import GroupES, UserES, groups
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
