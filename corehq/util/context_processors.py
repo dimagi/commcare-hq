@@ -266,3 +266,9 @@ def get_demo(request):
             'is_demo_visible': True,
         })
     return context
+
+
+def status_page(request):
+    return{
+        'show_status_page': settings.SERVER_ENVIRONMENT == 'staging',  # eventually production
+    }
