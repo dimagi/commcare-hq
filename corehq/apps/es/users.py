@@ -72,9 +72,7 @@ def domain(domain, allow_enterprise=False, allow_enterprise_controlled_domains=F
         if config.is_enabled and domain in config.domains:
             domain_list.append(config.source_domain)
     if allow_enterprise_controlled_domains:
-        config = EnterprisePermissions.get_by_domain(domain)
-        if config.is_enabled:
-            domain_list += config.get_domains(domain)
+        domain_list += EnterprisePermissions.get_domains(domain)
     return domains(domain_list)
 
 
