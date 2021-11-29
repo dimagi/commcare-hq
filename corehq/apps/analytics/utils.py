@@ -167,16 +167,14 @@ def _delete_hubspot_contact(vid, retry_num=0):
     return False
 
 
-def _get_contact_ids_to_delete(list_of_emails, retry_num=0):
+def _get_contacts_from_hubspot(list_of_emails, retry_num=0, record_metrics=True):
     """
-    Gets a list of Contact IDs on Hubspot from a list of emails.
+    Gets a list of Contacts on Hubspot from a list of emails.
     If an email in the list doesn't exist on Hubspot, it's simply ignored.
-    We also check the list returned from HubSpot to ensure that users
-    who engaged with HubSpot under an allowed first conversion action are
-    not removed from HubSpot.
     :param list_of_emails:
     :param retry_num: the number of the current retry attempt
-    :return: list of contact ids
+    :param record_metrics: whether metrics should be sent to datadog
+    :return: HubSpot contacts as dict
     """
     if retry_num > 0:
         time.sleep(10)  # wait 10 seconds if this is another retry attempt
@@ -195,12 +193,13 @@ def _get_contact_ids_to_delete(list_of_emails, retry_num=0):
                 return []
             req.raise_for_status()
         except (ConnectionError, requests.exceptions.HTTPError) as e:
-            metrics_counter(
-                'commcare.hubspot_data.retry.get_contact_ids_for_emails'
-            )
+            if record_metrics:
+                metrics_counter(
+                    'commcare.hubspot_data.retry.get_contact_ids_for_emails'
+                )
             if retry_num <= MAX_API_RETRIES:
-                return _get_contact_ids_to_delete(list_of_emails, retry_num + 1)
-            else:
+                return _get_contacts_from_hubspot(list_of_emails, retry_num + 1)
+            elif record_metrics:
                 metrics_counter(
                     'commcare.hubspot_data.error.get_contact_ids_for_emails',
                     tags={
@@ -208,21 +207,32 @@ def _get_contact_ids_to_delete(list_of_emails, retry_num=0):
                     }
                 )
         else:
-            ids_to_delete = []
-            for contact_id, data in req.json().items():
-                first_conversion_status = data.get(
-                    'properties', {}
-                ).get('first_conversion_clustered_', {}).get('value')
+            return req.json()
+    return {}
 
-                # If a user's first conversion IS in the allowed list, it means
-                # they have directly interacted with us and we want to keep them
-                # in the email list. However, we will not send project data
-                # about them to HubSpot as they will still be blocked from
-                # updates in track_periodic_data.
-                if first_conversion_status not in ALLOWED_CONVERSIONS:
-                    ids_to_delete.append(contact_id)
-            return ids_to_delete
-    return []
+
+def _get_contact_ids_to_delete(list_of_emails):
+    """
+    Gets a list of Contact IDs be deleted from Hubspot based on the
+    allowed First Conversion (clustered) property set on those contacts.
+    :param list_of_emails:
+    :return: list of contact ids
+    """
+    hubspot_contacts = _get_contacts_from_hubspot(list_of_emails)
+    ids_to_delete = []
+    for contact_id, data in hubspot_contacts.items():
+        first_conversion_status = data.get(
+            'properties', {}
+        ).get('first_conversion_clustered_', {}).get('value')
+
+        # If a user's first conversion IS in the allowed list, it means
+        # they have directly interacted with us and we want to keep them
+        # in the email list. However, we will not send project data
+        # about them to HubSpot as they will still be blocked from
+        # updates in track_periodic_data.
+        if first_conversion_status not in ALLOWED_CONVERSIONS:
+            ids_to_delete.append(contact_id)
+    return ids_to_delete
 
 
 def remove_blocked_domain_contacts_from_hubspot(stdout=None):
