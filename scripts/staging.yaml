@@ -69,15 +69,11 @@ branches:
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
     - ml/remove-pickles-reports # Minha Oct 21
-    - jls/enable-usercase-button # Jenny Oct 27
-    - bmb/update-datatables-dt  # Biyeun Nov 2
     - gh/use-email-for-all-comms # Graham Nov 8 (passive QA testing: check back on Dec 6)
     - rp/status-embed # Rynhard Nov 9
     - gh/mrm/only-admins-can-link # Graham Nov 16
     - sk/registry-ucr-processor # Simon Nov 22
     - es/mobile-auth # Simon Nov 23
     - smh/user-report-enterprise-domain-support # Steph Nov 23
-    - fr/client-oauth-divoc                     # Farid Nov 23
-    - ad/GA-mobile-access-setting # Addison Nov 24
     - sk/registry-case-post # Simon Nov 29
 submodules: { }
