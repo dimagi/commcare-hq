@@ -128,7 +128,7 @@ class EmwfOptionsController(object):
     def active_user_es_query(self, query):
         search_fields = ["first_name", "last_name", "base_username"]
         return (UserES()
-                .domain(self.domain)
+                .domain(self.domain, allow_enterprise_controlled_domains=True)
                 .search_string_query(query, default_fields=search_fields))
 
     def all_user_es_query(self, query):
