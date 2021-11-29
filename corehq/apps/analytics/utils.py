@@ -218,7 +218,9 @@ def get_first_conversion_status_for_emails(list_of_emails):
     :param list_of_emails:
     :return: list of contact ids
     """
-    hubspot_contacts = _get_contacts_from_hubspot(list_of_emails)
+    hubspot_contacts = _get_contacts_from_hubspot(
+        list_of_emails, record_metrics=False
+    )
     status_summary = {}
     for contact_id, data in hubspot_contacts.items():
         first_conversion_status = data.get(
