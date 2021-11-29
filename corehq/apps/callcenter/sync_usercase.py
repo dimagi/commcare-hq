@@ -6,9 +6,10 @@ from xml.etree import cElementTree as ElementTree
 from django.core.cache import cache
 
 from casexml.apps.case.mock import CaseBlock
+from corehq.apps.domain.models import Domain
 from dimagi.utils.couch import CriticalSection
 
-from corehq.apps.app_manager.const import USERCASE_TYPE, WEB_USER_USERCASE_TYPE
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -47,7 +48,7 @@ class _UserCaseHelper(object):
         for transaction in transactions:
             transaction.form.archive()
 
-    def create_usercase(self, user, fields):
+    def create_usercase(self, fields):
         self.case_blocks.append(CaseBlock.deprecated_init(
             create=True,
             case_id=uuid.uuid4().hex,
@@ -93,17 +94,17 @@ def _domain_has_new_fields(domain, field_names):
     return False
 
 
-def _get_sync_usercase_helper(user, domain_obj, case_type, owner_id, case=None):
+def _get_sync_usercase_helper(user, domain, case_type, owner_id, case=None):
     fields = _get_user_case_fields(user, case_type, owner_id)
-    case = case or CaseAccessors(domain_obj.name).get_case_by_domain_hq_user_id(user._id, case_type)
+    case = case or CaseAccessors(domain).get_case_by_domain_hq_user_id(user._id, case_type)
     close = user.to_be_deleted() or not user.is_active
-    user_case_helper = _UserCaseHelper(domain_obj.name, owner_id, user._id)
+    user_case_helper = _UserCaseHelper(domain, owner_id, user._id)
 
     def case_should_be_reopened(case, user_case_should_be_closed):
         return case and case.closed and not user_case_should_be_closed
 
     if not case:
-        user_case_helper.create_usercase(user, fields)
+        user_case_helper.create_usercase(fields)
     else:
         if case_should_be_reopened(case, close):
             user_case_helper.re_open_case(case)
@@ -187,7 +188,7 @@ def _iter_call_center_case_helpers(user, domain_obj):
     config = domain_obj.call_center_config
     if config.enabled and config.config_is_valid():
         case, owner_id = _get_call_center_case_and_owner(user, domain_obj)
-        yield _get_sync_usercase_helper(user, domain_obj, config.case_type, owner_id, case)
+        yield _get_sync_usercase_helper(user, domain_obj.name, config.case_type, owner_id, case)
 
 
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
@@ -231,17 +232,16 @@ def sync_usercase(user):
 
 
 def _iter_sync_usercase_helpers(user, domain_obj):
-    usercase_type = WEB_USER_USERCASE_TYPE if user.is_web_user() else USERCASE_TYPE
     if domain_obj.usercase_enabled:
         yield _get_sync_usercase_helper(
             user,
-            domain_obj,
-            usercase_type,
+            domain_obj.name,
+            USERCASE_TYPE,
             user.get_id
         )
 
 
-def sync_usercases(user, domain_obj):
+def sync_usercases(user, domain):
     """
     Each time a CommCareUser is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
@@ -249,6 +249,7 @@ def sync_usercases(user, domain_obj):
     This is also called to create usercases when the usercase is used for the
     first time.
     """
+    domain_obj = Domain.get_by_name(domain)
     with CriticalSection(get_sync_lock_key(user._id)):
         helpers = list(chain(
             _iter_sync_usercase_helpers(user, domain_obj),

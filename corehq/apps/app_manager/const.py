@@ -20,7 +20,6 @@ ATTACHMENT_PREFIX = 'attachment:'
 
 CASE_ID = 'case_id'
 USERCASE_TYPE = 'commcare-user'
-WEB_USER_USERCASE_TYPE = 'web-user'
 USERCASE_ID = 'usercase_id'
 USERCASE_PREFIX = 'user/'
 

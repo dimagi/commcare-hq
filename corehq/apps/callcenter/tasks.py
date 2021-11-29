@@ -46,15 +46,14 @@ def calculate_indicators():
         indicator_set.get_data()
 
 
-def sync_webuser_usercases_if_applicable(user_id, spawn_task):
-    user = CouchUser.get_by_user_id(user_id)
+def sync_web_user_usercases_if_applicable(user, spawn_task):
     for domain in user.get_domains():
         domain_obj = Domain.get_by_name(domain)
-        if domain_obj.call_center_config.enabled or domain_obj.usercase_enabled:
+        if domain_obj.usercase_enabled:
             if spawn_task:
-                sync_webuser_usercases_task.delay(user, domain_obj)
+                sync_web_user_usercases_task.delay(user._id, domain)
             else:
-                sync_webuser_usercases_task(user, domain_obj)
+                sync_usercases(user, domain)
 
 
 def bulk_sync_usercases_if_applicable(domain, user_ids):
@@ -69,18 +68,18 @@ def sync_usercases_if_applicable(user, spawn_task):
         return
     if (user.project.call_center_config.enabled or user.project.usercase_enabled):
         if spawn_task:
-            sync_usercases_task.delay(user._id, user.project)
+            sync_usercases_task.delay(user._id, user.domain)
         else:
-            sync_usercases_task(user._id, user.project)
+            sync_usercases(user, user.domain)
 
 
-@task(serializer='pickle', queue='background_queue')
-def sync_webuser_usercases_task(user, domain_obj):
-    sync_usercases(user, domain_obj)
-    return None
+@task(queue='background_queue')
+def sync_web_user_usercases_task(user_id, domain):
+    user = CouchUser.get_by_user_id(user_id)
+    sync_usercases(user, domain)
 
 
-@task(serializer='pickle', queue='background_queue')
-def sync_usercases_task(user_id, domain_obj):
+@task(queue='background_queue')
+def sync_usercases_task(user_id, domain):
     user = CommCareUser.get_by_user_id(user_id)
-    sync_usercases(user, domain_obj)
+    sync_usercases(user, domain)
