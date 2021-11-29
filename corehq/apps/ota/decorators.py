@@ -1,6 +1,7 @@
 import logging
 
 from corehq import toggles
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 
@@ -19,7 +20,7 @@ ORIGIN_TOKEN_SLUG = 'OriginToken'
 def require_mobile_access(fn):
     @wraps(fn)
     def _inner(request, domain, *args, **kwargs):
-        if toggles.RESTRICT_MOBILE_ACCESS.enabled(domain):
+        if Domain.get_by_name(domain).restrict_mobile_access:
             origin_token = request.META.get(ORIGIN_TOKEN_HEADER, None)
             if origin_token:
                 if _test_token_valid(origin_token):
