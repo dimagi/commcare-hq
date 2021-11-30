@@ -1823,13 +1823,19 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def test_remove_uploading_user(self):
         self.setup_users()
-        import_users_and_groups(
+        result_messages = import_users_and_groups(
             self.domain.name,
             [self._get_spec(username=self.uploading_user.username, remove='True')],
             [],
             self.uploading_user,
             self.upload_record.pk,
             True
+        )
+        user_result_row = result_messages['messages']['rows'][0]
+        self.assertEqual(user_result_row['username'], self.uploading_user.username)
+        self.assertEqual(
+            user_result_row['flag'],
+            'You cannot remove yourself from a domain via bulk upload'
         )
         web_user = WebUser.get_by_username(self.uploading_user.username)
         self.assertTrue(web_user.is_member_of(self.domain.name))
