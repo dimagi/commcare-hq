@@ -26,6 +26,7 @@ from corehq.apps.domain.auth import (
     determine_authtype_from_request,
 )
 from corehq.apps.domain.decorators import (
+    api_auth,
     check_domain_migration,
     login_or_basic_ex,
     login_or_digest_ex,
@@ -203,6 +204,11 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
         )
 
     metrics_counter('commcare.xform_submissions.count', tags=tags)
+
+
+@api_auth
+def post_api(request, domain, app_id=None):
+    return post(request, domain, app_id)
 
 
 @waf_allow('XSS_BODY')
