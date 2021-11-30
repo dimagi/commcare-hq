@@ -606,7 +606,7 @@ class _OwnerAccessor(object):
                 return None
 
         def get_group(name):
-            return Group.by_name(self.domain, name, one=True)
+            return Group.by_name(self.domain, name)
 
         def get_location(name):
             try:

@@ -191,9 +191,9 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         return get_group_ids_by_domain(domain)
 
     @classmethod
-    def by_name(cls, domain, name, one=True):
+    def by_name(cls, domain, name):
         result = stale_group_by_name(domain, name)
-        if one and result:
+        if result:
             return result[0]
         else:
             return result
