@@ -1,4 +1,5 @@
 from copy import deepcopy
+from datetime import datetime
 from unittest.mock import patch
 
 from django.contrib.admin.models import LogEntry
@@ -1033,7 +1034,43 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.changes, {})
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
 
-    def test_remove_web_user(self):
+    def test_remove_non_existing_web_user(self):
+        result_messages = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(web_user='a@a.com', remove_web_user='True')],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_result_row = result_messages['messages']['rows'][0]
+        self.assertEqual(user_result_row['row']['web_user'], 'a@a.com')
+        self.assertEqual(
+            user_result_row['flag'],
+            'You cannot remove a web user that is not a member of this project.'
+        )
+        self.assertEqual(UserHistory.objects.filter(action=UserModelAction.UPDATE.value).count(), 0)
+
+    def test_remove_non_member_web_user(self):
+        username = 'a@a.com'
+        WebUser.create(None, username, 'password', None, None)
+        result_messages = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(web_user='a@a.com', remove_web_user='True')],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_result_row = result_messages['messages']['rows'][0]
+        self.assertEqual(user_result_row['row']['web_user'], 'a@a.com')
+        self.assertEqual(
+            user_result_row['flag'],
+            'You cannot remove a web user that is not a member of this project.'
+        )
+        self.assertEqual(UserHistory.objects.filter(action=UserModelAction.UPDATE.value).count(), 0)
+
+    def test_remove_member_web_user(self):
         username = 'a@a.com'
         web_user = WebUser.create(self.domain.name, username, 'password', None, None)
         import_users_and_groups(
@@ -1717,7 +1754,32 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         change_messages = UserChangeMessage.domain_removal(self.domain.name)
         self.assertDictEqual(user_history.change_messages, change_messages)
 
-    def test_remove_invited_user(self):
+    def test_remove_invited_existing_user(self):
+        Invitation.objects.all().delete()
+        self.setup_users()
+        user = WebUser.create(None, 'tony@stark.com', '*jarvis*', None, None)
+        Invitation.objects.update_or_create(domain=self.domain_name, email=user.username,
+                                            invited_by=self.uploading_user.user_id,
+                                            invited_on=datetime.utcnow()
+                                            )
+        # remove invite in upload
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(username=user.username, remove='True')],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertIsNone(Invitation.objects.filter(domain=self.domain_name, email=user.username).first())
+
+        user_history = UserHistory.objects.filter(
+            user_id=user.get_id, changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
+        ).last()
+        change_messages = UserChangeMessage.invitation_revoked_for_domain(self.domain.name)
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+    def test_remove_invited_non_existing_user(self):
         Invitation.objects.all().delete()
         self.setup_users()
         import_users_and_groups(
