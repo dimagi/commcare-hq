@@ -19,7 +19,6 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.domain.calculations import cases_in_last, inactive_cases_in_last
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
-from corehq.apps.enterprise.utils import get_enterprise_domains, get_enterprise_controlled_domains
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.apps.es.tests.utils import es_test
@@ -966,34 +965,14 @@ class TestUserESAccessors(TestCase):
             'location_id': None
         })
 
-    def test_domain_get_enterprise_source_domain(self):
+    def test_domain(self):
         self._send_user_to_es(self.user)
         self._send_user_to_es(self.source_domain_user)
         self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
         self.assertEqual(['batman'], UserES().domain(self.source_domain).values_list('username', flat=True))
         self.assertEqual(
             set(['superman', 'batman']),
-            set(UserES().domain(get_enterprise_domains(self.domain)).values_list('username', flat=True))
-        )
-
-    def test_domain_get_enterprise_controlled_domains_on_source_domain(self):
-        self._send_user_to_es(self.user)
-        self._send_user_to_es(self.source_domain_user)
-        self.assertEqual(['batman'], UserES().domain(self.source_domain).values_list('username', flat=True))
-        self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
-        self.assertEqual(
-            set(['batman', 'superman']),
-            set(UserES().domain(get_enterprise_controlled_domains(self.source_domain)).values_list('username', flat=True))
-        )
-
-    def test_domain_get_enterprise_controlled_domains_on_mirrored_domain(self):
-        self._send_user_to_es(self.user)
-        self._send_user_to_es(self.source_domain_user)
-        self.assertEqual(['batman'], UserES().domain(self.source_domain).values_list('username', flat=True))
-        self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
-        self.assertEqual(
-            set(['superman']),
-            set(UserES().domain(get_enterprise_controlled_domains(self.domain)).values_list('username', flat=True))
+            set(UserES().domain([self.domain, self.source_domain]).values_list('username', flat=True))
         )
 
 
