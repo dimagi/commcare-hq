@@ -861,5 +861,14 @@ def cleanup_blocked_hubspot_contacts():
     if not HUBSPOT_ENABLED:
         return
 
+    time_started = datetime.utcnow()
+
     remove_blocked_domain_contacts_from_hubspot()
     remove_blocked_domain_invited_users_from_hubspot()
+
+    task_time = datetime.utcnow() - time_started
+    metrics_gauge(
+        'commcare.hubspot.runtimes.cleanup_blocked_hubspot_contacts',
+        task_time.seconds,
+        multiprocess_mode=MPM_LIVESUM
+    )
