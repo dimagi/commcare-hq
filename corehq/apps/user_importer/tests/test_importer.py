@@ -18,6 +18,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.user_importer.importer import (
+    check_headers,
     create_or_update_commcare_users_and_groups,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
@@ -35,6 +36,58 @@ from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
+from corehq.util.test_utils import flag_enabled
+
+
+class TestCheckHeaders(SimpleTestCase):
+    domain = 'test'
+    minimum_required_headers = ['username']
+
+    def test_deprecated_headers(self):
+        deprecated_header = 'location-sms-code'
+        headers = set(self.minimum_required_headers)
+        headers.add(deprecated_header)
+        with self.assertRaisesMessage(
+            UserUploadError,
+            "The column header 'location-sms-code' is deprecated, please use 'location_code' instead."
+        ):
+            check_headers(headers, self.domain)
+
+    def test_domain_header(self):
+        with self.assertRaisesMessage(
+            UserUploadError,
+            "The following are illegal column headers: domain."
+        ):
+            check_headers({'username', 'domain'}, self.domain)
+
+        with flag_enabled('DOMAIN_PERMISSIONS_MIRROR'):
+            check_headers({'username', 'domain'}, self.domain)
+
+    def test_web_upload_missing_headers(self):
+        with self.assertRaisesMessage(
+            UserUploadError,
+            "The following are required column headers: role."
+        ):
+            check_headers({'username'}, self.domain, is_web_upload=True)
+
+        with self.assertRaisesMessage(
+            UserUploadError,
+            "The following are required column headers: username."
+        ):
+            check_headers({'role'}, self.domain, is_web_upload=True)
+
+        # happy path
+        check_headers({'username', 'role'}, self.domain, is_web_upload=True)
+
+    def test_mobile_upload_missing_headers(self):
+        with self.assertRaisesMessage(
+            UserUploadError,
+            "The following are required column headers: username."
+        ):
+            check_headers(set(), self.domain)
+
+        # happy path
+        check_headers({'username'}, self.domain)
 
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
