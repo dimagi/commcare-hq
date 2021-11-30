@@ -790,7 +790,7 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
                 user_change_logger.add_info(UserChangeMessage.invitation_revoked_for_domain(domain))
         else:
             raise UserUploadError(_("You cannot remove a web user that is not a member of this project."))
-    elif username == upload_user.username:
+    elif user.username == upload_user.username:
         raise UserUploadError(_("You cannot remove yourself from a domain via bulk upload"))
     else:
         user.delete_domain_membership(domain)
