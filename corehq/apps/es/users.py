@@ -64,16 +64,8 @@ class UserES(HQESQuery):
         return query.is_active(False)
 
 
-def domain(domain, allow_enterprise=False, allow_enterprise_controlled_domains=False):
-    from corehq.apps.enterprise.models import EnterprisePermissions
-    domain_list = [domain]
-    if allow_enterprise:
-        config = EnterprisePermissions.get_by_domain(domain)
-        if config.is_enabled and domain in config.domains:
-            domain_list.append(config.source_domain)
-    if allow_enterprise_controlled_domains:
-        domain_list += EnterprisePermissions.get_domains(domain)
-    return domains(domain_list)
+def domain(domain):
+    return domains(domain)
 
 
 def domains(domains):

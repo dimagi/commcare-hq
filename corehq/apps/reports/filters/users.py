@@ -33,6 +33,8 @@ from .base import (
 )
 
 #TODO: replace with common code
+from ...enterprise.utils import get_enterprise_domains
+
 mark_safe_lazy = lazy(mark_safe, str)
 
 
@@ -346,10 +348,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return context
 
     @classmethod
-    def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user, include_enterprise_users=False):
+    def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
-        q = user_es.UserES().domain(domain, allow_enterprise=True,
-                                    allow_enterprise_controlled_domains=include_enterprise_users)
+        q = user_es.UserES().domain(get_enterprise_domains(domain))
         q = customize_user_query(request_user, domain, q)
         if (
             ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs)
