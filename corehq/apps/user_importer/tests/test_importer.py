@@ -14,11 +14,13 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
+from corehq.apps.groups.models import Group
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.user_importer.importer import (
     check_headers,
     create_or_update_commcare_users_and_groups,
+    create_or_update_groups,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
@@ -87,6 +89,74 @@ class TestCheckHeaders(SimpleTestCase):
 
         # happy path
         check_headers({'username'}, self.domain)
+
+
+class TestCreateOrUpdateGroups(TestCase):
+    domain = 'test'
+
+    def test_duplicate_names(self):
+        group_memoizer, log = create_or_update_groups(
+            self.domain,
+            [
+                {
+                    'id': '1',
+                    'name': 'group1'
+                },
+                {
+                    'id': '2',
+                    'name': 'group1'
+                },
+            ]
+        )
+        self.assertTrue(
+            'Your spreadsheet has multiple groups called "group1" and only the first was processed' in
+            log['errors']
+        )
+
+    def test_groups_with_no_name_or_id(self):
+        group_memoizer, log = create_or_update_groups(
+            self.domain,
+            [
+                {
+                    'id': '',
+                    'name': ''
+                },
+            ]
+        )
+        self.assertTrue(
+            'Your spreadsheet has a group with no name or id and it has been ignored' in log['errors']
+        )
+
+    def test_missing_group(self):
+        group_memoizer, log = create_or_update_groups(
+            self.domain,
+            [
+                {
+                    'id': '1',
+                },
+            ]
+        )
+        self.assertTrue(
+            'There are no groups on CommCare HQ with id "1"' in log['errors']
+        )
+
+    def test_group_rename(self):
+        group = Group(domain=self.domain, name='test-group')
+        group.save()
+        self.addCleanup(group.delete)
+
+        group_memoizer, log = create_or_update_groups(
+            self.domain,
+            [
+                {
+                    'id': group.get_id,
+                    'name': 'group1'
+                }
+            ]
+        )
+        self.assertEqual(
+            group_memoizer.groups_by_id[group.get_id].name, 'group1'
+        )
 
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
