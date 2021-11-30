@@ -277,7 +277,10 @@ def _send_hubspot_form_request(hubspot_id, form_id, data):
         form_id=form_id
     )
     response = requests.post(url, data=data)
-    metrics_counter('commcare.hubspot.sent_form', tags={'status_code': response.status_code})
+    metrics_counter('commcare.hubspot.sent_form', tags={
+        'status_code': response.status_code,
+        'form_id': form_id,
+    })
     return response
 
 
