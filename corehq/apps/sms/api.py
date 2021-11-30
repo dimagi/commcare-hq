@@ -385,7 +385,7 @@ def should_log_exception_for_backend(backend, exception):
 
 
 def register_sms_user(
-    username, cleaned_phone_number, domain, msg, send_welcome_sms=False, admin_alert_emails=None
+    username, cleaned_phone_number, domain, send_welcome_sms=False, admin_alert_emails=None
 ):
     try:
         user_data = {}
@@ -414,7 +414,7 @@ def register_sms_user(
                 get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain)
             )
         if admin_alert_emails:
-            send_admin_registration_alert(domain, admin_alert_emails, new_user, msg)
+            send_admin_registration_alert(domain, admin_alert_emails, new_user)
     except ValidationError as e:
         send_sms(domain, None, cleaned_phone_number, e.messages[0])
         return False
@@ -444,7 +444,7 @@ def process_username(username, domain):
     )
 
 
-def send_admin_registration_alert(domain, recipients, user, msg):
+def send_admin_registration_alert(domain, recipients, user):
     from corehq.apps.users.views.mobile.users import EditCommCareUserView
     subject = _("New user {username} registered for {domain} through SMS").format(
         username=user.username,
@@ -453,7 +453,6 @@ def send_admin_registration_alert(domain, recipients, user, msg):
     html_content = render_to_string('sms/email/new_sms_user.html', {
         "username": user.username,
         "domain": domain,
-        "message_text": msg.text,
         "url": absolute_reverse(EditCommCareUserView.urlname, args=[domain, user.get_id])
     })
     send_html_email_async.delay(subject, recipients, html_content, domain=domain)
@@ -519,7 +518,6 @@ def process_sms_registration(msg):
                     registration_processed = register_sms_user(
                         username=username,
                         domain=domain_obj.name,
-                        msg=msg,
                         cleaned_phone_number=cleaned_phone_number,
                         send_welcome_sms=domain_obj.enable_registration_welcome_sms_for_mobile_worker,
                         admin_alert_emails=domain_obj.sms_worker_registration_alert_emails,
