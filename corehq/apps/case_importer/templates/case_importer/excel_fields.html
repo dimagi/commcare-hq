@@ -43,7 +43,9 @@
         <th>{% trans "Excel Field" %}</th>
         <th></th>
         <th>{% trans "Case Property" %}</th>
-        <th class="col-md-1">{% trans "Create new property" %}</th>
+        <th{% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %} class="col-md-1"{% endif %}>
+          {% trans "Create new property" %}
+        </th>
         {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
           <th>{% include "data_dictionary/partials/valid_values_th_content.html" %}</th>
         {% endif %}

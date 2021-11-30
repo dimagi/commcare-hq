@@ -11,4 +11,4 @@ def setup_data_dictionary(domain, case_type_name, prop_list=None, allowed_values
         prop.save()
         if prop_name in allowed_values:
             for value in allowed_values[prop_name]:
-                CasePropertyAllowedValue.objects.create(case_property=prop, allowed_value=value)
+                CasePropertyAllowedValue.objects.get_or_create(case_property=prop, allowed_value=value)
