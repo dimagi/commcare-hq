@@ -8,7 +8,6 @@ from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import (
     BulkSaveError,
-    MultipleResultsFound,
     ResourceNotFound,
     ResourceConflict
 )
@@ -257,8 +256,6 @@ def create_or_update_groups(domain, group_specs):
                     group = group_memoizer.create(domain=domain, name=group_name)
         except ResourceNotFound:
             log["errors"].append('There are no groups on CommCare HQ with id "%s"' % group_id)
-        except MultipleResultsFound:
-            log["errors"].append("There are multiple groups on CommCare HQ named: %s" % group_name)
         else:
             if group_name:
                 group_memoizer.rename_group(group, group_name)
