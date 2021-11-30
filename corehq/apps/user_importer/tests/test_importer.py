@@ -1071,24 +1071,31 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(UserHistory.objects.filter(action=UserModelAction.UPDATE.value).count(), 0)
 
     def test_remove_uploading_user_as_web_user(self):
+        uploading_user = WebUser.create(self.domain_name, "stark@avengers.com", 'password', None, None,
+                                        is_superuser=True)
+        upload_record = UserUploadRecord(
+            domain=self.domain_name,
+            user_id=uploading_user.get_id
+        )
+        upload_record.save()
         user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
                                    created_by=None, created_via=None)
         result_messages = import_users_and_groups(
             self.domain.name,
-            [self._get_spec(user_id=user.get_id, web_user=self.uploading_user.username, remove_web_user='True')],
+            [self._get_spec(user_id=user.get_id, web_user=uploading_user.username, remove_web_user='True')],
             [],
-            self.uploading_user,
-            self.upload_record.pk,
+            uploading_user,
+            upload_record.pk,
             False
         )
         user_result_row = result_messages['messages']['rows'][0]
-        self.assertEqual(user_result_row['row']['web_user'], self.uploading_user.username)
+        self.assertEqual(user_result_row['row']['web_user'], uploading_user.username)
         self.assertEqual(
             user_result_row['flag'],
             'You cannot remove yourself from a domain via bulk upload'
         )
         self.assertEqual(UserHistory.objects.filter(action=UserModelAction.UPDATE.value,
-                                                    user_id=self.uploading_user.get_id).count(), 0)
+                                                    user_id=uploading_user.get_id).count(), 0)
 
     def test_remove_member_web_user(self):
         username = 'a@a.com'
