@@ -31,10 +31,9 @@ from .base import (
     BaseReportFilter,
     BaseSingleOptionFilter,
 )
-
-#TODO: replace with common code
 from ...enterprise.utils import get_enterprise_domains
 
+#TODO: replace with common code
 mark_safe_lazy = lazy(mark_safe, str)
 
 
