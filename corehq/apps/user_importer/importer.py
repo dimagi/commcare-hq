@@ -64,9 +64,8 @@ old_headers = {
 }
 
 
-def check_headers(user_specs, domain, is_web_upload=False):
+def check_headers(headers, domain, is_web_upload=False):
     messages = []
-    headers = set(user_specs.fieldnames)
 
     # Backwards warnings
     for (old_name, new_name) in old_headers.items():

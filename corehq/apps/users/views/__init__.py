@@ -1091,7 +1091,8 @@ class BaseUploadUser(BaseUserSettingsView):
             self.group_specs = []
         try:
             from corehq.apps.user_importer.importer import check_headers
-            check_headers(self.user_specs, self.domain, is_web_upload=self.is_web_upload)
+            headers = set(self.user_specs.fieldnames)
+            check_headers(headers, self.domain, is_web_upload=self.is_web_upload)
         except UserUploadError as e:
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
