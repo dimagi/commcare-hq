@@ -31,6 +31,7 @@ from .base import (
     BaseReportFilter,
     BaseSingleOptionFilter,
 )
+from ...enterprise.utils import get_enterprise_domains
 
 #TODO: replace with common code
 mark_safe_lazy = lazy(mark_safe, str)
@@ -348,7 +349,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
-        q = user_es.UserES().domain(domain, allow_enterprise=True)
+        q = user_es.UserES().domain(get_enterprise_domains(domain))
         q = customize_user_query(request_user, domain, q)
         if (
             ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs)
