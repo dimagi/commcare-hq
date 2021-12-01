@@ -535,6 +535,7 @@ def logout(req, default_domain_redirect='domain_login'):
 @two_factor_exempt
 def ping_response(request):
     app_id = request.GET.get('selected_app_id', '')
+    domain = request.GET.get('domain', '')
     new_app_version_available = False
     if app_id:
         current_app = get_app('', app_id)

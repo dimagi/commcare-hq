@@ -140,11 +140,14 @@ hqDefine('hqwebapp/js/inactivity', [
             } catch (error) {
                 console.log(error);
             }
-
+            var domain = initialPageData.get('domain');
             $.ajax({
                 url: initialPageData.reverse('ping_login'),
                 type: 'GET',
-                data: {selected_app_id: selectedAppId},
+                data: {
+                    selected_app_id: selectedAppId,
+                    domain: domain,
+                },
                 success: function (data) {
                     if (!data.success) {
                         _.each($(".select2-hidden-accessible"), function (el) {
