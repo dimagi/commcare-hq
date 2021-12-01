@@ -530,6 +530,8 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 if web_user_username:
                     user.update_metadata({'login_as_user': web_user_username})
 
+                user.save()
+
                 if web_user_username:
                     check_can_upload_web_users(upload_user)
                     web_user = CouchUser.get_by_username(web_user_username)
@@ -622,7 +624,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                         UserChangeMessage.groups_info(updated_groups)
                     )
 
-                user.save()
                 commcare_user_importer.save_log()
 
             except ValidationError as e:
