@@ -501,7 +501,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
         self.domain.save()
 
         self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***', None, None)
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain_name)
 
         self.group = Group(
             domain=self.domain_name,

@@ -200,7 +200,7 @@ def _get_call_center_case_and_owner(user, domain_obj):
     Return the appropriate owner id for the given users call center case.
     """
     config = domain_obj.call_center_config
-    case = CaseAccessors(domain_obj).get_case_by_domain_hq_user_id(
+    case = CaseAccessors(domain_obj.name).get_case_by_domain_hq_user_id(
         user._id, config.case_type
     )
     if config.use_user_location_as_owner:
