@@ -1,0 +1,21 @@
+{% load i18n %}
+
+<div class="modal fade" id ="newAppVersionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">{% trans "A new version of this app is available" %}</h4>
+        </div>
+        <div class="modal-body">
+          <p>{% trans "Please click on \"Get Latest App\" to get on the newer version. It's recomended that you work on the latest version of the app." %}</p>
+          <p> {% trans "Please note that all unsaved changes would be lost while moving to new version. You can submit the changes and manually refresh this page which will automatically take you to latest version."%}</p>
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button id="refreshApp" type="button" class="btn btn-primary">{% trans "Get Latest App" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
