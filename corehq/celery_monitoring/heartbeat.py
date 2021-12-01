@@ -42,7 +42,7 @@ class Heartbeat(object):
     def __init__(self, queue):
         self.queue = queue
         self._heartbeat_cache = HeartbeatCache(queue)
-        self._time_to_start_chace = HeartbeatTimeToStartCache(queue)
+        self._time_to_start_cache = HeartbeatTimeToStartCache(queue)
         self.threshold = settings.CELERY_HEARTBEAT_THRESHOLDS[self.queue]
 
     def get_last_seen(self):
