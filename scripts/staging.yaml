@@ -74,7 +74,6 @@ branches:
     - gh/mrm/only-admins-can-link # Graham Nov 16
     - sk/registry-ucr-processor # Simon Nov 22
     - smh/user-report-enterprise-domain-support # Steph Nov 23
-    - sk/registry-case-post # Simon Nov 29
     - ap/web-app-refresh # Amit Nov 29
     - ad/GA-mobile-access-setting-2_es/mobile-auth # Nov 29
     - ad/GA-mobile-access-setting-2 # Nov 29
