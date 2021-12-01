@@ -1,7 +1,7 @@
 import uuid
 
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.domain.shortcuts import create_user

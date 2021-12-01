@@ -26,7 +26,7 @@ from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     CaseXPathValidationError,
     FormNotFoundException,
-    LocationXpathValidationError,
+    LocationXPathValidationError,
     ModuleIdMissingException,
     ModuleNotFoundException,
     ParentModuleReferenceError,
@@ -40,6 +40,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.util import (
     app_callout_templates,
     module_case_hierarchy_has_circular_reference,
+    module_uses_smart_links,
     split_path,
     xpath_references_case,
     xpath_references_usercase,
@@ -374,6 +375,18 @@ class ModuleBaseValidator(object):
                 'module': self.get_module_info(),
             })
 
+        if module_uses_smart_links(self.module):
+            if not self.module.session_endpoint_id:
+                errors.append({
+                    'type': 'smart links missing endpoint',
+                    'module': self.get_module_info(),
+                })
+            if self.module.parent_select.active:
+                errors.append({
+                    'type': 'smart links select parent first',
+                    'module': self.get_module_info(),
+                })
+
         return errors
 
     def validate_detail_columns(self, columns):
@@ -389,13 +402,13 @@ class ModuleBaseValidator(object):
                 try:
                     if not should_sync_hierarchical_fixture(domain_obj, self.module.get_app()):
                         # discontinued feature on moving to flat fixture format
-                        raise LocationXpathValidationError(
+                        raise LocationXPathValidationError(
                             _('That format is no longer supported. To reference the location hierarchy you need to'
                               ' use the "Custom Calculations in Case List" feature preview. For more information '
                               'see: https://confluence.dimagi.com/pages/viewpage.action?pageId=38276915'))
                     hierarchy = hierarchy or parent_child(domain)
                     LocationXpath('').validate(column.field_property, hierarchy)
-                except LocationXpathValidationError as e:
+                except LocationXPathValidationError as e:
                     yield {
                         'type': 'invalid location xpath',
                         'details': str(e),

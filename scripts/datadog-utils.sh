@@ -15,6 +15,17 @@ function send_metric_to_datadog() {
         EXTRA_TAG="\"$4\","
     fi
 
+    if [ -n "$TRAVIS" ]; then
+      HOST=travis-ci.org
+      CI_ENV=travis
+    elif [ -n "$GITHUB_ACTIONS" ]; then
+      HOST=github.com
+      CI_ENV=github_actions
+    else
+      HOST=unknown
+      CI_ENV=unknown
+    fi
+
     currenttime=$(date +%s)
     curl  -X POST \
           -H "Content-type: application/json" \
@@ -24,13 +35,10 @@ function send_metric_to_datadog() {
                 [{\"metric\":\"$1\",
                   \"points\":[[$currenttime, $2]],
                   \"type\":\"$3\",
-                  \"host\":\"travis-ci.org\",
+                  \"host\":\"$HOST\",
                   \"tags\":[
                     $EXTRA_TAG
-                    \"environment:travis\",
-                    \"travis_build:$TRAVIS_BUILD_ID\",
-                    \"travis_number:$TRAVIS_BUILD_NUMBER\",
-                    \"travis_job_number:$TRAVIS_JOB_NUMBER\",
+                    \"environment:$CI_ENV\",
                     \"partition:$NOSE_DIVIDED_WE_RUN\"
                   ]}
                 ]

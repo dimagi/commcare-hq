@@ -117,7 +117,11 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=
         _iteratively_build_table(config, limit=limit)
 
 
-@task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
+@serial_task(
+    '{indicator_config_id}', default_retry_delay=60 * 10,
+    timeout=3 * 60 * 60, max_retries=20,
+    queue=UCR_CELERY_QUEUE, ignore_result=True
+)
 def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=None):
     config = get_ucr_datasource_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)

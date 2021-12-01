@@ -1,4 +1,3 @@
-/* global _, $, django, window */
 hqDefine('userreports/js/report_config', function () {
     return {
         reportBuilder: function () {
@@ -303,9 +302,9 @@ hqDefine('userreports/js/report_config', function () {
                     reorderItemCallback: function () {
                         _ga_track_config_change('Reorder User Filter');
                     },
-                    propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
-                    displayHelpText: django.gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
-                    formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
+                    propertyHelpText: gettext('Choose the property you would like to add as a filter to this report.'),
+                    displayHelpText: gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
+                    formatHelpText: gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
                     reportType: self.reportType(),
                     propertyOptions: config['dataSourceProperties'],
                     selectablePropertyOptions: self.selectablePropertyOptions,
@@ -331,9 +330,9 @@ hqDefine('userreports/js/report_config', function () {
                     reorderItemCallback: function () {
                         _ga_track_config_change('Reorder Default Filter');
                     },
-                    propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
-                    formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this to filter the property by a date range.<br/><strong>Value</strong>: Select this to filter the property by a single value.'),
-                    filterValueHelpText: django.gettext('What value or date range must the property be equal to?'),
+                    propertyHelpText: gettext('Choose the property you would like to add as a filter to this report.'),
+                    formatHelpText: gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this to filter the property by a date range.<br/><strong>Value</strong>: Select this to filter the property by a single value.'),
+                    filterValueHelpText: gettext('What value or date range must the property be equal to?'),
                     reportType: self.reportType(),
                     propertyOptions: config['dataSourceProperties'],
                     selectablePropertyOptions: self.selectablePropertyOptions,

@@ -6,8 +6,6 @@ from django.db.models import Q
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.signals import cases_received
 from casexml.apps.case.util import validate_phone_datetime, prune_previous_log
-from casexml.apps.phone.cleanliness import should_create_flags_on_submission
-from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.util import SYSTEM_USER_ID
@@ -24,76 +22,18 @@ from dimagi.utils.logging import notify_exception
 
 _soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
 
-# Lightweight class used to store the dirtiness of a case/owner pair.
-DirtinessFlag = namedtuple('DirtinessFlag', ['case_id', 'owner_id'])
-
 
 class CaseProcessingResult(object):
     """
     Lightweight class used to collect results of case processing
     """
 
-    def __init__(self, domain, cases, dirtiness_flags):
+    def __init__(self, domain, cases):
         self.domain = domain
         self.cases = cases
-        self.dirtiness_flags = dirtiness_flags
-
-    def get_clean_owner_ids(self):
-        dirty_flags = self.get_flags_to_save()
-        return {c.owner_id for c in self.cases if c.owner_id and c.owner_id not in dirty_flags}
 
     def set_cases(self, cases):
         self.cases = cases
-
-    def get_flags_to_save(self):
-        return {f.owner_id: f.case_id for f in self.dirtiness_flags}
-
-    def commit_dirtiness_flags(self):
-        """
-        Updates any dirtiness flags in the database.
-        """
-        if not self.domain:
-            return
-
-        domain_obj = Domain.get_by_name(self.domain)
-        if domain_obj is not None \
-           and (domain_obj.use_livequery or toggles.LIVEQUERY_SYNC.enabled(self.domain, toggles.NAMESPACE_DOMAIN)):
-            return
-
-        flags_to_save = self.get_flags_to_save()
-        if should_create_flags_on_submission(self.domain):
-            assert settings.UNIT_TESTING  # this is currently only true when unit testing
-            all_touched_ids = set(flags_to_save.keys()) | self.get_clean_owner_ids()
-            to_update = {f.owner_id: f for f in OwnershipCleanlinessFlag.objects.filter(
-                domain=self.domain,
-                owner_id__in=list(all_touched_ids),
-            )}
-            for owner_id in all_touched_ids:
-                if owner_id not in to_update:
-                    # making from scratch - default to clean, but set to dirty if needed
-                    flag = OwnershipCleanlinessFlag(domain=self.domain, owner_id=owner_id, is_clean=True)
-                    if owner_id in flags_to_save:
-                        flag.is_clean = False
-                        flag.hint = flags_to_save[owner_id]
-                    flag.save()
-                else:
-                    # updating - only save if we are marking dirty or setting a hint
-                    flag = to_update[owner_id]
-                    if owner_id in flags_to_save and (flag.is_clean or not flag.hint):
-                        flag.is_clean = False
-                        flag.hint = flags_to_save[owner_id]
-                        flag.save()
-        else:
-            # only update the flags that are already in the database
-            flags_to_update = OwnershipCleanlinessFlag.objects.filter(
-                Q(domain=self.domain),
-                Q(owner_id__in=list(flags_to_save)),
-                Q(is_clean=True) | Q(hint__isnull=True)
-            )
-            for flag in flags_to_update:
-                flag.is_clean = False
-                flag.hint = flags_to_save[flag.owner_id]
-                flag.save()
 
 
 def process_cases_with_casedb(xforms, case_db):
@@ -140,91 +80,10 @@ def _get_or_update_cases(xforms, case_db):
     domain = getattr(case_db, 'domain', None)
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
     _validate_indices(case_db, touched_cases.values())
-    dirtiness_flags = _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases)
     return CaseProcessingResult(
         domain,
         [update.case for update in touched_cases.values()],
-        dirtiness_flags,
     )
-
-
-def _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases):
-    # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
-    if domain:
-        domain_obj = Domain.get_by_name(domain)
-        if domain_obj and (domain_obj.use_livequery
-                           or toggles.LIVEQUERY_SYNC.enabled(domain, toggles.NAMESPACE_DOMAIN)):
-            return []
-
-    dirtiness_flags = list(_get_dirtiness_flags_for_reassigned_case(list(touched_cases.values())))
-    for case_update_meta in touched_cases.values():
-        dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case_db, case_update_meta.case))
-    dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(
-        case_db, [meta.case for meta in touched_cases.values()])
-    )
-    return dirtiness_flags
-
-
-def _get_dirtiness_flags_for_outgoing_indices(case_db, case, tree_owners=None):
-    """ if the outgoing indices touch cases owned by another user this cases owner is dirty """
-    if tree_owners is None:
-        tree_owners = set()
-
-    extension_indices = [index for index in case.indices
-                         if not index.is_deleted and index.relationship == CASE_INDEX_EXTENSION]
-
-    unowned_host_cases = []
-    for index in extension_indices:
-        host_case = case_db.get(index.referenced_id)
-        if (
-            host_case
-            and host_case.owner_id == UNOWNED_EXTENSION_OWNER_ID
-            and host_case not in unowned_host_cases
-        ):
-            unowned_host_cases.append(host_case)
-
-    owner_ids = {case_db.get(index.referenced_id).owner_id
-                 for index in case.indices
-                 if not index.is_deleted and case_db.get(index.referenced_id)} | tree_owners
-    potential_clean_owner_ids = owner_ids | set([UNOWNED_EXTENSION_OWNER_ID])
-    more_than_one_owner_touched = len(owner_ids) > 1
-    touches_different_owner = len(owner_ids) == 1 and case.owner_id not in potential_clean_owner_ids
-
-    if (more_than_one_owner_touched or touches_different_owner):
-        yield DirtinessFlag(case.case_id, case.owner_id)
-        if extension_indices:
-            # If this case is an extension, each of the touched cases is also dirty
-            for index in case.indices:
-                if not index.is_deleted:
-                    referenced_case = case_db.get(index.referenced_id)
-                    yield DirtinessFlag(referenced_case.case_id, referenced_case.owner_id)
-
-    if case.owner_id != UNOWNED_EXTENSION_OWNER_ID:
-        tree_owners.add(case.owner_id)
-    for unowned_host_case in unowned_host_cases:
-        # A host case of this extension is unowned, which means it could potentially touch an owned case
-        # Check these unowned cases' outgoing indices and mark dirty if appropriate
-        for dirtiness_flag in _get_dirtiness_flags_for_outgoing_indices(case_db, unowned_host_case,
-                                                                        tree_owners=tree_owners):
-            yield dirtiness_flag
-
-
-def _get_dirtiness_flags_for_child_cases(case_db, cases):
-    child_cases = case_db.get_reverse_indexed_cases([c.case_id for c in cases])
-    case_owner_map = dict((case.case_id, case.owner_id) for case in cases)
-    for child_case in child_cases:
-        for index in child_case.indices:
-            if (index.referenced_id in case_owner_map
-                    and child_case.owner_id != case_owner_map[index.referenced_id]):
-                yield DirtinessFlag(child_case.case_id, child_case.owner_id)
-
-
-def _get_dirtiness_flags_for_reassigned_case(case_metas):
-    # for reassigned cases, we mark them temporarily dirty to allow phones to sync
-    # the latest changes. these will get cleaned up when the weekly rebuild triggers
-    for case_update_meta in case_metas:
-        if _is_change_of_ownership(case_update_meta.previous_owner_id, case_update_meta.case.owner_id):
-            yield DirtinessFlag(case_update_meta.case.case_id, case_update_meta.previous_owner_id)
 
 
 def _validate_indices(case_db, case_updates):

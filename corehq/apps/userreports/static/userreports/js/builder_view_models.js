@@ -1,4 +1,3 @@
-/* global django */
 hqDefine('userreports/js/builder_view_models', function () {
     'use strict';
 
@@ -373,9 +372,9 @@ hqDefine('userreports/js/builder_view_models', function () {
             initialCols: userFilters,
             buttonText: 'Add User Filter',
             analyticsAction: 'Add User Filter',
-            propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
-            displayHelpText: django.gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
-            formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
+            propertyHelpText: gettext('Choose the property you would like to add as a filter to this report.'),
+            displayHelpText: gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
+            formatHelpText: gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
             reportType: reportType,
             propertyOptions: self.dataSourceIndicators,
             selectablePropertyOptions: self.selectableDataSourceIndicators,
@@ -388,9 +387,9 @@ hqDefine('userreports/js/builder_view_models', function () {
             initialCols: defaultFilters,
             buttonText: 'Add Default Filter',
             analyticsAction: 'Add Default Filter',
-            propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
-            formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this to filter the property by a date range.<br/><strong>Value</strong>: Select this to filter the property by a single value.'),
-            filterValueHelpText: django.gettext('What value or date range must the property be equal to?'),
+            propertyHelpText: gettext('Choose the property you would like to add as a filter to this report.'),
+            formatHelpText: gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this to filter the property by a date range.<br/><strong>Value</strong>: Select this to filter the property by a single value.'),
+            filterValueHelpText: gettext('What value or date range must the property be equal to?'),
             reportType: reportType,
             propertyOptions: self.dataSourceIndicators,
             selectablePropertyOptions: self.selectableDataSourceIndicators,
@@ -401,7 +400,7 @@ hqDefine('userreports/js/builder_view_models', function () {
             initialCols: columns,
             buttonText: 'Add Column',
             analyticsAction: 'Add Column',
-            calcHelpText: django.gettext("Column format selection will determine how each row's value is calculated."),
+            calcHelpText: gettext("Column format selection will determine how each row's value is calculated."),
             requireColumns: reportType !== "chart",
             requireColumnsText: "At least one column is required",
             noColumnsValidationCallback: function () {
@@ -430,7 +429,7 @@ hqDefine('userreports/js/builder_view_models', function () {
 
             if (!isValid) {
                 self.validationErrorText(
-                    django.gettext("Please check above for any errors in your configuration.")
+                    gettext("Please check above for any errors in your configuration.")
                 );
                 _.defer(function (el) {
                     $(el).find('.disable-on-submit').enableButton();

@@ -16,10 +16,8 @@ attrs==18.2.0
     # via
     #   -r base-requirements.in
     #   jsonschema
-babel==2.8.0
-    # via
-    #   django-phonenumber-field
-    #   sphinx
+babel==2.9.1
+    # via sphinx
 backcall==0.2.0
     # via ipython
 beautifulsoup4==4.10.0
@@ -34,7 +32,7 @@ botocore==1.20.85
     # via
     #   boto3
     #   s3transfer
-https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl
+https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
     # via
     #   -r base-requirements.in
     #   django-celery-results
@@ -157,7 +155,7 @@ django-otp==0.9.4
     #   django-two-factor-auth
 django-partial-index==0.6.0
     # via -r base-requirements.in
-django-phonenumber-field==2.3.1
+django-phonenumber-field==5.2.0
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -177,7 +175,7 @@ django-tastypie==0.14.3
     # via -r base-requirements.in
 django-transfer==0.4
     # via -r base-requirements.in
-django-two-factor-auth==1.12.1
+django-two-factor-auth==1.13.1
     # via -r base-requirements.in
 django-user-agents==0.4.0
     # via -r base-requirements.in
@@ -222,14 +220,14 @@ freezegun==1.1.0
     # via -r test-requirements.in
 future==0.18.2
     # via radon
-gevent==1.4.0
+gevent==21.8.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
     #   git-build-branch
 ghdiff==0.4
     # via -r base-requirements.in
-git-build-branch==0.1.10
+git-build-branch==0.1.13
     # via -r dev-requirements.in
 gitdb==4.0.7
     # via gitpython
@@ -237,7 +235,7 @@ gitpython==3.1.14
     # via transifex-client
 gnureadline==8.0.0
     # via -r dev-requirements.in
-greenlet==0.4.17
+greenlet==1.1.2
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -324,8 +322,6 @@ markupsafe==1.1.1
     #   mako
 mccabe==0.6.1
     # via flake8
-mock==2.0.0
-    # via -r base-requirements.in
 nose==1.3.7
     # via
     #   -r test-requirements.in
@@ -346,13 +342,13 @@ packaging==20.4
     # via sphinx
 parso==0.7.1
     # via jedi
-pbr==5.5.0
-    # via mock
 pep517==0.10.0
     # via pip-tools
 pexpect==4.8.0
     # via ipython
 phonenumberslite==8.12.10
+    # via -r base-requirements.in
+pickle5==0.0.11
     # via -r base-requirements.in
 pickleshare==0.7.5
     # via ipython
@@ -505,7 +501,7 @@ sh==1.14.2
     # via
     #   -r base-requirements.in
     #   git-build-branch
-git+git://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
 simplejson==3.17.2
     # via
@@ -533,7 +529,6 @@ six==1.15.0
     #   jsonpath-ng
     #   jsonschema
     #   mando
-    #   mock
     #   packaging
     #   protobuf
     #   pyopenssl
@@ -645,7 +640,7 @@ wheel==0.37.0
     #   pip-tools
 wrapt==1.12.1
     # via deprecated
-xlrd==1.0.0
+xlrd==2.0.1
     # via -r base-requirements.in
 xlwt==1.3.0
     # via -r base-requirements.in
@@ -657,6 +652,10 @@ zipp==3.2.0
     # via
     #   importlib-metadata
     #   pep517
+zope.event==4.5.0
+    # via gevent
+zope.interface==5.4.0
+    # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==21.2.4
@@ -664,6 +663,7 @@ pip==21.2.4
 setuptools==50.3.0
     # via
     #   django-websocket-redis
+    #   gevent
     #   gunicorn
     #   ipython
     #   jsonschema
@@ -671,3 +671,5 @@ setuptools==50.3.0
     #   protobuf
     #   python-termstyle
     #   sphinx
+    #   zope.event
+    #   zope.interface
