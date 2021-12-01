@@ -322,6 +322,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "two_factor_auth": self.domain_object.two_factor_auth,
             "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
             "ga_opt_out": self.domain_object.ga_opt_out,
+            "restrict_mobile_access": self.domain_object.restrict_mobile_access,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
