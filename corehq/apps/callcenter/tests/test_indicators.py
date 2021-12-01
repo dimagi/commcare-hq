@@ -55,7 +55,7 @@ def create_domain_and_user(domain_name, username):
     domain.call_center_config.case_type = CASE_TYPE
     domain.save()
 
-    sync_call_center_user_case(user)
+    sync_call_center_user_case(user, user.domain)
     return domain, user
 
 

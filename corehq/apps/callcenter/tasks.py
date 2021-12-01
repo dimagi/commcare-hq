@@ -15,6 +15,7 @@ from corehq.apps.callcenter.utils import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.toggles import USH_WEB_USER_CASE_CREATION
 
 logger = get_task_logger(__name__)
 
@@ -47,9 +48,11 @@ def calculate_indicators():
 
 
 def sync_web_user_usercases_if_applicable(user, spawn_task):
+    if settings.UNIT_TESTING:
+        return
     for domain in user.get_domains():
         domain_obj = Domain.get_by_name(domain)
-        if domain_obj.usercase_enabled:
+        if domain_obj.usercase_enabled and domain in USH_WEB_USER_CASE_CREATION.get_enabled_domains():
             if spawn_task:
                 sync_web_user_usercases_task.delay(user._id, domain)
             else:

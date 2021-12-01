@@ -179,9 +179,10 @@ def get_sync_lock_key(user_id):
     return ["sync_user_case_for_%s" % user_id]
 
 
-def sync_call_center_user_case(user):
+def sync_call_center_user_case(user, domain):
     with CriticalSection(get_sync_lock_key(user._id)):
-        _UserCaseHelper.commit(list(_iter_call_center_case_helpers(user)))
+        domain_obj = Domain.get_by_name(domain)
+        _UserCaseHelper.commit(list(_iter_call_center_case_helpers(user, domain_obj)))
 
 
 def _iter_call_center_case_helpers(user, domain_obj):
@@ -226,9 +227,10 @@ def _call_center_location_owner(user, ancestor_level):
     return owner_id
 
 
-def sync_usercase(user):
+def sync_usercase(user, domain):
     with CriticalSection(get_sync_lock_key(user._id)):
-        _UserCaseHelper.commit(list(_iter_sync_usercase_helpers(user)))
+        domain_obj = Domain.get_by_name(domain)
+        _UserCaseHelper.commit(list(_iter_sync_usercase_helpers(user, domain_obj)))
 
 
 def _iter_sync_usercase_helpers(user, domain_obj):

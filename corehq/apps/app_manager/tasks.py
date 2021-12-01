@@ -19,7 +19,7 @@ logger = get_task_logger(__name__)
 def create_usercases(domain_name):
     from corehq.apps.callcenter.sync_usercase import sync_usercase
     for user in CommCareUser.by_domain(domain_name):
-        sync_usercase(user)
+        sync_usercase(user, domain_name)
 
 
 # Can be deleted after deploy
