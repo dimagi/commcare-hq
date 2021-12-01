@@ -47,7 +47,6 @@ from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 from corehq.apps.sms.util import validate_phone_number
 
-
 required_headers = set(['username'])
 web_required_headers = set(['username', 'role'])
 allowed_headers = set([
@@ -531,9 +530,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 if web_user_username:
                     user.update_metadata({'login_as_user': web_user_username})
 
-                user.save()
-                commcare_user_importer.save_log()
-
                 if web_user_username:
                     check_can_upload_web_users(upload_user)
                     web_user = CouchUser.get_by_username(web_user_username)
@@ -582,12 +578,55 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                     # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
                     user.get_django_user(use_primary_db=True).check_password(password)
 
-                for group in domain_info.group_memoizer.by_user_id(user.user_id):
+                was_group_change = False
+                user_curr_groups = domain_info.group_memoizer.by_user_id(user.user_id)
+                user_curr_group_names = []
+                removed_from_groups = []
+                user_added_to_groups = []
+
+                for group in user_curr_groups:
+                    user_curr_group_names.append(group.name)
                     if group.name not in group_names:
+                        removed_from_groups.append(group)
+                        was_group_change = True
                         group.remove_user(user)
 
                 for group_name in group_names:
-                    domain_info.group_memoizer.by_name(group_name).add_user(user, save=False)
+                    if group_name not in user_curr_group_names:
+                        user_added_to_groups.append(domain_info.group_memoizer.by_name(group_name))
+                        was_group_change = True
+                        domain_info.group_memoizer.by_name(group_name).add_user(user, save=False)
+
+                try:
+                    for domain_info in domain_info_by_domain.values():
+                        domain_info.group_memoizer.save_all()
+                except BulkSaveError as e:
+                    _error_message = (
+                        "Oops! We were not able to save some of your group changes. "
+                        "Please make sure no one else is editing your groups "
+                        "and try again."
+                    )
+                    logging.exception((
+                        'BulkSaveError saving groups. '
+                        'User saw error message "%s". Errors: %s'
+                    ) % (_error_message, e.errors))
+                    ret['errors'].append(_error_message)
+
+                if was_group_change:
+                    updated_groups = []
+                    for group in user_curr_groups:
+                        if group not in removed_from_groups:
+                            updated_groups.append(group)
+                    updated_groups.extend(user_added_to_groups)
+                    commcare_user_importer.logger.add_info(
+                        UserChangeMessage.groups_info(updated_groups)
+                    )
+                    print("updated groups:", updated_groups)
+                    print("get groups:", domain_info.group_memoizer.by_user_id(user.user_id))
+
+                user.save()
+                commcare_user_importer.save_log()
+
             except ValidationError as e:
                 status_row['flag'] = e.message
             except (UserUploadError, CouchUser.Inconsistent) as e:
@@ -595,22 +634,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
             ret["rows"].append(status_row)
     finally:
-        try:
-            for domain_info in domain_info_by_domain.values():
-                domain_info.group_memoizer.save_all()
-        except BulkSaveError as e:
-            _error_message = (
-                "Oops! We were not able to save some of your group changes. "
-                "Please make sure no one else is editing your groups "
-                "and try again."
-            )
-            logging.exception((
-                'BulkSaveError saving groups. '
-                'User saw error message "%s". Errors: %s'
-            ) % (_error_message, e.errors))
-            ret['errors'].append(_error_message)
-
-    return ret
+        return ret
 
 
 def _get_or_create_commcare_user(domain, user_id, username, is_account_confirmed, web_user_username, password,
