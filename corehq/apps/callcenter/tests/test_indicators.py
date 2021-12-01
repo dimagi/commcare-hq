@@ -459,7 +459,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         self.domain.save()
 
         self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***', None, None)
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain.name)
 
         load_data(self.domain_name, self.user.user_id)
 
@@ -558,7 +558,7 @@ class CallCenterTestOpenedClosed(BaseCCTests):
         self.domain.save()
 
         self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***', None, None)
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain.name)
 
         load_data(self.domain_name, self.user.user_id, case_opened_by='not me', case_closed_by='not me')
 
