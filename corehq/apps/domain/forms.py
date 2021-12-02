@@ -699,7 +699,7 @@ class PrivacySecurityForm(forms.Form):
         domain.secure_submissions = secure_submissions
         domain.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
         domain.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
-        if RESTRICT_MOBILE_ACCESS.enabled(domain):
+        if RESTRICT_MOBILE_ACCESS.enabled(domain.name):
             domain.restrict_mobile_access = self.cleaned_data.get('restrict_mobile_access', False)
 
         domain.save()
