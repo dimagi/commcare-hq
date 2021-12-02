@@ -1,8 +1,7 @@
-from unittest.mock import patch
-
 from django.test import TestCase
 
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.ota.utils import get_restore_user, is_permitted_to_restore
@@ -214,99 +213,6 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
         )
         self.assertFalse(is_permitted)
         self.assertRegex(message, 'not in allowed locations')
-
-
-class RestorePermissionsTestLimitLoginAs(TestCase):
-    domain = 'goats_do_roam'
-
-    @classmethod
-    def setUpClass(cls):
-        super(RestorePermissionsTestLimitLoginAs, cls).setUpClass()
-
-        cls.project = Domain(name=cls.domain)
-        cls.project.save()
-
-        cls.restore_user = WebUser.create(
-            username=format_username('malbec', cls.domain),
-            domain=cls.domain,
-            password='***',
-            created_by=None,
-            created_via=None,
-        )
-        cls.commcare_user = CommCareUser.create(
-            username=format_username('shiraz', cls.domain),
-            domain=cls.domain,
-            password='***',
-            created_by=None,
-            created_via=None,
-        )
-        cls.commcare_user_login_as = CommCareUser.create(
-            username=format_username('merlot', cls.domain),
-            domain=cls.domain,
-            password='***',
-            created_by=None,
-            created_via=None,
-            metadata={
-                "login_as_user": cls.restore_user.username
-            },
-        )
-        cls.commcare_user_default_login_as = CommCareUser.create(
-            username=format_username('pinotage', cls.domain),
-            domain=cls.domain,
-            password='***',
-            created_by=None,
-            created_via=None,
-            metadata={
-                "login_as_user": 'default'
-            },
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        delete_all_users()
-        Domain.get_db().delete_doc(cls.project)
-        super(RestorePermissionsTestLimitLoginAs, cls).tearDownClass()
-
-    def test_user_limited_login_as_denied(self):
-        with patch("corehq.apps.ota.utils._limit_login_as", return_value=True):
-            is_permitted, message = is_permitted_to_restore(
-                self.domain,
-                self.restore_user,
-                self.commcare_user,
-            )
-            self.assertFalse(is_permitted)
-            self.assertRegex(message, "not available as login-as user")
-
-    def test_user_limited_login_as_permitted(self):
-        with patch("corehq.apps.ota.utils._limit_login_as", return_value=True):
-            is_permitted, message = is_permitted_to_restore(
-                self.domain,
-                self.restore_user,
-                self.commcare_user_login_as,
-            )
-            self.assertIsNone(message)
-            self.assertTrue(is_permitted)
-
-    def test_user_limited_login_as_default_denied(self):
-        with patch("corehq.apps.ota.utils._limit_login_as", return_value=True):
-            is_permitted, message = is_permitted_to_restore(
-                self.domain,
-                self.restore_user,
-                self.commcare_user_default_login_as,
-            )
-            self.assertFalse(is_permitted)
-            self.assertRegex(message, "not available as login-as user")
-
-    def test_user_limited_login_as_default_permitted(self):
-        with patch("corehq.apps.ota.utils._limit_login_as", return_value=True), \
-             patch("corehq.apps.ota.utils._can_access_default_login_as_user", return_value=True):
-            is_permitted, message = is_permitted_to_restore(
-                self.domain,
-                self.restore_user,
-                self.commcare_user_default_login_as,
-            )
-            self.assertIsNone(message)
-            self.assertTrue(is_permitted)
 
 
 class GetRestoreUserTest(TestCase):
