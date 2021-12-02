@@ -86,6 +86,16 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='webuser@example.com',
         )
+        cls.location_restricted_web_user = WebUser.create(
+            domain=cls.ccdomain.name,
+            username='LRWU',
+            password='secret',
+            created_by=None,
+            created_via=None,
+            email='lrwebuser@example.com',
+        )
+        cls.location_restricted_web_user.add_to_assigned_locations(domain=cls.ccdomain.name, location=cls.loc2)
+
         cls.ccuser_other_domain = CommCareUser.create(
             domain=cls.other_domain.name,
             username='cc_user_other_domain',
@@ -143,9 +153,9 @@ class AllCommCareUsersTest(TestCase):
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, {}), 3)
         self.assertItemsEqual(
             usernames(get_web_users_by_filters(self.ccdomain.name, {})),
-            usernames([self.web_user])
+            usernames([self.web_user, self.location_restricted_web_user])
         )
-        self.assertEqual(count_web_users_by_filters(self.ccdomain.name, {}), 1)
+        self.assertEqual(count_web_users_by_filters(self.ccdomain.name, {}), 2)
 
         # can search by username
         filters = {'search_string': 'user_1'}
@@ -190,6 +200,10 @@ class AllCommCareUsersTest(TestCase):
             [self.ccuser_inactive.username]
         )
 
+        assigned_location_ids = self.location_restricted_web_user.get_domain_membership(self.ccdomain.name).assigned_location_ids
+        filters = {'web_user_assigned_location_ids': list(assigned_location_ids)}
+        self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 2)
+
         ensure_index_deleted(USER_INDEX)
 
     def test_get_invitations_by_filters(self):
@@ -230,13 +244,13 @@ class AllCommCareUsersTest(TestCase):
         self.assertItemsEqual(actual_usernames, expected_usernames)
 
     def test_get_all_web_users_by_domain(self):
-        expected_users = [self.web_user]
+        expected_users = [self.web_user, self.location_restricted_web_user]
         expected_usernames = [user.username for user in expected_users]
         actual_usernames = [user.username for user in get_all_web_users_by_domain(self.ccdomain.name)]
         self.assertItemsEqual(actual_usernames, expected_usernames)
 
     def test_get_all_usernames_by_domain(self):
-        all_cc_users = [self.ccuser_1, self.ccuser_2, self.ccuser_inactive, self.web_user]
+        all_cc_users = [self.ccuser_1, self.ccuser_2, self.ccuser_inactive, self.web_user, self.location_restricted_web_user]
         expected_usernames = [user.username for user in all_cc_users]
         actual_usernames = get_all_usernames_by_domain(self.ccdomain.name)
         self.assertItemsEqual(actual_usernames, expected_usernames)
@@ -276,8 +290,8 @@ class AllCommCareUsersTest(TestCase):
 
     def test_get_all_ids(self):
         all_ids = get_all_user_ids()
-        self.assertEqual(5, len(all_ids))
-        for id in [self.ccuser_1._id, self.ccuser_2._id, self.web_user._id, self.ccuser_other_domain._id]:
+        self.assertEqual(6, len(all_ids))
+        for id in [self.ccuser_1._id, self.ccuser_2._id, self.web_user._id, self.ccuser_other_domain._id, self.location_restricted_web_user._id]:
             self.assertTrue(id in all_ids)
 
     def test_get_id_by_username(self):

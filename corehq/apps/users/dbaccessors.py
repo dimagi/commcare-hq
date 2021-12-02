@@ -150,14 +150,14 @@ def _get_users_by_filters(domain, user_type, user_filters, count_only=False):
         count_only: If True, returns count of search results
     """
     if not any([user_filters.get('role_id', None), user_filters.get('search_string', None),
-                user_filters.get('location_id', None), count_only]):
+                user_filters.get('location_id', None), user_filters.get('web_user_assigned_location_ids', []),
+                count_only]):
         if user_type == MOBILE_USER_TYPE:
             return get_all_commcare_users_by_domain(domain)
         if user_type == WEB_USER_TYPE:
             return get_all_web_users_by_domain(domain)
 
     query = _get_es_query(domain, user_type, user_filters)
-
     if count_only:
         return query.count()
     user_ids = query.scroll_ids()
