@@ -252,6 +252,25 @@ class CommCareUserImporter(BaseUserImporter):
             else:
                 self.logger.add_info(UserChangeMessage.primary_location_removed())
 
+    def update_user_groups(self, domain_info, group_names):
+        try:
+            old_group_ids = set()
+            for group in domain_info.group_memoizer.by_user_id(self.user.user_id):
+                old_group_ids.add(group.get_id)
+                if group.name not in group_names:
+                    group.remove_user(self.user)
+
+            new_groups = {}
+            for group_name in group_names:
+                group = domain_info.group_memoizer.by_name(group_name)
+                group.add_user(self.user, save=False)
+                new_groups[group.get_id] = group
+
+            if set(new_groups) != old_group_ids:
+                self.logger.add_info(UserChangeMessage.groups_info(list(new_groups.values())))
+        except Exception as e:
+            return str(e)
+
     def _log_phone_number_changes(self, old_phone_numbers, new_phone_numbers):
         (items_added, items_removed) = find_differences_in_list(
             target=new_phone_numbers,

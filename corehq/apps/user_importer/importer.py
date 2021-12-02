@@ -436,7 +436,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
     domain_info_by_domain = {}
 
     ret = {"errors": [], "rows": []}
-
     current = 0
     try:
         for row in user_specs:
@@ -580,25 +579,10 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                     # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
                     user.get_django_user(use_primary_db=True).check_password(password)
 
-                was_group_change = False
-                user_curr_groups = domain_info.group_memoizer.by_user_id(user.user_id)
-                user_curr_group_names = []
-                removed_from_groups = []
-                user_added_to_groups = []
-                # Remove user from groups and track the changes
-                for group in user_curr_groups:
-                    user_curr_group_names.append(group.name)
-                    if group.name not in group_names:
-                        removed_from_groups.append(group)
-                        was_group_change = True
-                        group.remove_user(user)
-                # Add user to groups and track the changes
-                for group_name in group_names:
-                    if group_name not in user_curr_group_names:
-                        user_added_to_groups.append(domain_info.group_memoizer.by_name(group_name))
-                        was_group_change = True
-                        domain_info.group_memoizer.by_name(group_name).add_user(user, save=False)
-
+                error = commcare_user_importer.update_user_groups(domain_info, group_names)
+                if error:
+                    error_message = f"{user.user_id}: {error}"
+                    ret['errors'].append(_(error_message))
                 try:
                     for domain_info in domain_info_by_domain.values():
                         domain_info.group_memoizer.save_all()
@@ -613,16 +597,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                         'User saw error message "%s". Errors: %s'
                     ) % (_error_message, e.errors))
                     ret['errors'].append(_error_message)
-                # Collect updated group memberships and add change messages for updated groups to logger
-                if was_group_change:
-                    updated_groups = []
-                    for group in user_curr_groups:
-                        if group not in removed_from_groups:
-                            updated_groups.append(group)
-                    updated_groups.extend(user_added_to_groups)
-                    commcare_user_importer.logger.add_info(
-                        UserChangeMessage.groups_info(updated_groups)
-                    )
 
                 commcare_user_importer.save_log()
 
