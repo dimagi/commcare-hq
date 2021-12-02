@@ -810,9 +810,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         ret['actions'] = lazy_serialize_case_transactions(self)
         ret['xform_ids'] = lazy_serialize_case_xform_ids(self)
         ret['case_attachments'] = lazy_serialize_case_attachments(self)
-        for key in self.case_json:
-            if key not in ret:
-                ret[key] = self.case_json[key]
+        ret = self.case_json | ret
         ret['backend_id'] = 'sql'
         return ret
 
