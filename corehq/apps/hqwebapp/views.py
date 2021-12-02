@@ -56,7 +56,7 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics import ab_tests
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app_cached, get_latest_released_build_id
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
@@ -534,13 +534,15 @@ def logout(req, default_domain_redirect='domain_login'):
 @location_safe
 @two_factor_exempt
 def ping_response(request):
-    app_id = request.GET.get('selected_app_id', '')
+    current_build_id = request.GET.get('selected_app_id', '')
     domain = request.GET.get('domain', '')
     new_app_version_available = False
-    if app_id:
-        current_app = get_app('', app_id)
-        latest_app = get_app('', app_id, latest=True)
-        new_app_version_available = current_app['_id'] != latest_app['_id']
+    if current_build_id and domain:
+        app = get_app_cached(domain, current_build_id)
+        app_id = app['copy_of'] if app['copy_of'] else app['_id']
+        latest_build_id = get_latest_released_build_id(domain, app_id)
+        if latest_build_id:
+            new_app_version_available = current_build_id != latest_build_id
 
     return JsonResponse({
         'success': request.user.is_authenticated,
