@@ -1496,6 +1496,6 @@ class UserFilterForm(forms.Form):
             # 2) restrict user access
             domain_membership = self.couch_user.get_domain_membership(self.domain)
             if domain_membership.assigned_location_ids:
-                data['web_user_assigned_location_ids'] = domain_membership.assigned_location_ids
+                data['web_user_assigned_location_ids'] = list(domain_membership.assigned_location_ids)
 
         return data
