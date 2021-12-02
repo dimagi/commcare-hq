@@ -72,9 +72,7 @@ branches:
     - gh/use-email-for-all-comms # Graham Nov 8 (passive QA testing: check back on Dec 6)
     - rp/status-embed # Rynhard Nov 9
     - gh/mrm/only-admins-can-link # Graham Nov 16
-    - sk/registry-ucr-processor # Simon Nov 22
     - ap/web-app-refresh # Amit Nov 29
     - ad/GA-mobile-access-setting-2_es/mobile-auth # Nov 29
-    - ad/GA-mobile-access-setting-2 # Nov 29
     - es/mobile-auth # Simon Nov 23
 submodules: { }
