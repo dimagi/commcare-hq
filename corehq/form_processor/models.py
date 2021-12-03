@@ -805,12 +805,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             lazy_serialize_case_xform_ids, lazy_serialize_case_attachments
         )
         serializer = CommCareCaseSQLSerializer(self)
-        ret = dict(serializer.data)
+        ret = self.case_json | dict(serializer.data)
         ret['indices'] = lazy_serialize_case_indices(self)
         ret['actions'] = lazy_serialize_case_transactions(self)
         ret['xform_ids'] = lazy_serialize_case_xform_ids(self)
         ret['case_attachments'] = lazy_serialize_case_attachments(self)
-        ret = self.case_json | ret
         ret['backend_id'] = 'sql'
         return ret
 
