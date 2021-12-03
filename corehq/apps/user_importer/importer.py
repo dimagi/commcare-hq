@@ -531,6 +531,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 user.update_metadata({'login_as_user': web_user_username})
 
             user.save()
+            log = commcare_user_importer.save_log()
 
             if web_user_username:
                 check_can_upload_web_users(upload_user)
@@ -580,10 +581,9 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
                 user.get_django_user(use_primary_db=True).check_password(password)
 
-            error = commcare_user_importer.update_user_groups(domain_info, group_names)
-            if error:
-                error_message = f"{user.user_id}: {error}"
-                ret['errors'].append(_(error_message))
+            if group_names:
+                group_change_message = commcare_user_importer.update_user_groups(domain_info, group_names)
+
             try:
                 for group_id in domain_info.group_memoizer.updated_groups:
                     group = domain_info.group_memoizer.groups_by_id[group_id]
@@ -602,7 +602,9 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 ) % (_error_message, e.errors))
                 ret['errors'].append(_error_message)
 
-            commcare_user_importer.save_log()
+            if log:
+                log.change_messages.update(group_change_message)
+                log.save()
 
         except ValidationError as e:
             status_row['flag'] = e.message

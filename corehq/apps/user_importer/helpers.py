@@ -88,7 +88,7 @@ class UserChangeLogger(object):
         if self.is_new_user or self._save:
             action = UserModelAction.CREATE if self.is_new_user else UserModelAction.UPDATE
             fields_changed = None if self.is_new_user else self.fields_changed
-            log_user_change(
+            return log_user_change(
                 by_domain=self.upload_domain,
                 for_domain=self.user_domain,
                 couch_user=self.user,
@@ -142,7 +142,7 @@ class BaseUserImporter(object):
             self.logger.add_info(UserChangeMessage.role_change(new_role))
 
         self._include_user_data_changes()
-        self.logger.save()
+        return self.logger.save()
 
     def _include_user_data_changes(self):
         # ToDo: consider putting just the diff
@@ -253,27 +253,24 @@ class CommCareUserImporter(BaseUserImporter):
                 self.logger.add_info(UserChangeMessage.primary_location_removed())
 
     def update_user_groups(self, domain_info, group_names):
-        try:
-            old_group_ids = set()
-            for group in domain_info.group_memoizer.by_user_id(self.user.user_id):
-                old_group_ids.add(group.get_id)
-                if group.name not in group_names:
-                    group.remove_user(self.user)
-                    domain_info.group_memoizer.updated_groups.add(group.get_id)
+        old_group_ids = set()
+        for group in domain_info.group_memoizer.by_user_id(self.user.user_id):
+            old_group_ids.add(group.get_id)
+            if group.name not in group_names:
+                group.remove_user(self.user)
+                domain_info.group_memoizer.updated_groups.add(group.get_id)
 
-            new_groups = {}
-            for group_name in group_names:
-                group = domain_info.group_memoizer.by_name(group_name)
-                group.add_user(self.user, save=False)
-                new_groups[group.get_id] = group
-                if group.get_id not in old_group_ids:
-                    domain_info.group_memoizer.updated_groups.add(group.get_id)
+        new_groups = {}
+        for group_name in group_names:
+            group = domain_info.group_memoizer.by_name(group_name)
+            group.add_user(self.user, save=False)
+            new_groups[group.get_id] = group
+            if group.get_id not in old_group_ids:
+                domain_info.group_memoizer.updated_groups.add(group.get_id)
 
-            if set(new_groups) != old_group_ids:
-                self.logger.add_info(UserChangeMessage.groups_info(list(new_groups.values())))
+        if set(new_groups) != old_group_ids:
+            return UserChangeMessage.groups_info(list(new_groups.values()))
 
-        except Exception as e:
-            return str(e)
 
     def _log_phone_number_changes(self, old_phone_numbers, new_phone_numbers):
         (items_added, items_removed) = find_differences_in_list(
