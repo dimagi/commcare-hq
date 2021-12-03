@@ -139,6 +139,7 @@ class AllCommCareUsersTest(TestCase):
             self.ccuser_1.to_json(),
             self.ccuser_2.to_json(),
             self.web_user.to_json(),
+            self.location_restricted_web_user.to_json(),
             self.ccuser_inactive.to_json(),
         ])
 
@@ -155,6 +156,7 @@ class AllCommCareUsersTest(TestCase):
             usernames(get_web_users_by_filters(self.ccdomain.name, {})),
             usernames([self.web_user, self.location_restricted_web_user])
         )
+
         self.assertEqual(count_web_users_by_filters(self.ccdomain.name, {}), 2)
 
         # can search by username
@@ -200,6 +202,7 @@ class AllCommCareUsersTest(TestCase):
             [self.ccuser_inactive.username]
         )
 
+        # Location restricted user has default access to only users assigned that location
         assigned_location_ids = self.location_restricted_web_user.get_domain_membership(self.ccdomain.name).assigned_location_ids
         filters = {'web_user_assigned_location_ids': list(assigned_location_ids)}
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 2)
