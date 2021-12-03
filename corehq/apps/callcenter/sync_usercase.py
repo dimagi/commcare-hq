@@ -7,6 +7,7 @@ from django.core.cache import cache
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.domain.models import Domain
+from corehq.toggles import USH_WEB_USER_CASE_CREATION
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -236,6 +237,8 @@ def sync_usercase(user, domain):
 
 
 def _iter_sync_usercase_helpers(user, domain_obj):
+    if user.is_web_user() and not USH_WEB_USER_CASE_CREATION.enabled(domain_obj.name):
+        return
     if domain_obj.usercase_enabled:
         yield _get_sync_usercase_helper(
             user,
