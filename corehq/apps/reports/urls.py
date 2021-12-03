@@ -30,6 +30,7 @@ from .views import (
     AddSavedReportConfigView,
     CaseAttachmentsView,
     CaseDataView,
+    FormAttachmentView,
     EditFormInstance,
     FormDataView,
     MySavedReportsView,
@@ -120,6 +121,8 @@ urlpatterns = [
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', archive_form, name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', unarchive_form, name='unarchive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', resave_form_view, name='resave_form'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/attachment/(?P<attachment_id>.*)$', FormAttachmentView.as_view(),
+        name=FormAttachmentView.urlname),
 
     # project health ajax
     url(r'^project_health/ajax/(?P<user_id>[\w\-]+)/$', project_health_user_details,

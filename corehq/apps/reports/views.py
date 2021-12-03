@@ -1869,6 +1869,17 @@ class BaseFormAttachmentView(View):
         )
 
 
+class FormAttachmentView(BaseFormAttachmentView):
+    """
+        Open form attachment in browser
+    """
+    urlname = "form_attachment_view"
+
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+
 @location_safe
 @require_form_view_permission
 @login_and_domain_required
