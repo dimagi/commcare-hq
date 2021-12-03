@@ -187,7 +187,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         builder = RegistryCaseDataSourceHelper(self.domain, registry.slug, 'case', case_type_for_registry.name)
 
         expected_property_names = ['closed', 'closed_on', 'registry_property', 'computed/owner_name',
-                                   'computed/user_name']
+                                   'computed/user_name', 'commcare_project']
         self.assertEqual(expected_property_names, list(builder.data_source_properties.keys()))
         registry_prop = builder.data_source_properties['registry_property']
         self.assertEqual('registry_property', registry_prop.get_id())
