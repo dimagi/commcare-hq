@@ -75,4 +75,5 @@ branches:
     - ap/web-app-refresh # Amit Nov 29
     - ad/GA-mobile-access-setting-2_es/mobile-auth # Nov 29
     - es/mobile-auth # Simon Nov 23
+    - jls/profile-smart-links # Jenny Dec 3
 submodules: { }
