@@ -1,6 +1,7 @@
 import json
 import sys
-from collections import OrderedDict
+
+from corehq.pillows.mappings.utils import mapping_sort_key
 
 
 def pprint(obj, namespace={}, stream=sys.stdout, indent=4, separators=(',', ': ')):
@@ -57,17 +58,12 @@ class ElasticMappingEncoder(json.JSONEncoder):
         if isinstance(obj, (tuple, list)):
             return [self.inject_proxies(v, reg) for v in obj]
         elif isinstance(obj, dict):
-            injected = OrderedDict()  # not required for Python 3.8+
-            for key, value in sorted(obj.items(), key=self.dict_sort):
+            injected = {}
+            for key, value in sorted(obj.items(), key=mapping_sort_key):
                 injected[key] = self.inject_proxies(value, reg)
             return injected
         else:
             return obj
-
-    @staticmethod
-    def dict_sort(item):
-        key, value = item
-        return 1 if key == "properties" else 0, key, value
 
 
 class ProxyRegistry:

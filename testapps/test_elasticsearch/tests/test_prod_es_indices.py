@@ -39,6 +39,9 @@ class ProdIndexManagementTest(SimpleTestCase):
             # for now don't test this property, just ensure it exist
             self.assertTrue(info['mapping'])
             del info['mapping']
+            # TODO: test mappings.  Seems related, but different from
+            # `corehq/pillows/mappings/tests`. The tests here in this module
+            # should probably move over there some day.
 
         def alias(info):
             return info['alias']

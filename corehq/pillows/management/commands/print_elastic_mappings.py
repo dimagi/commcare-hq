@@ -3,8 +3,9 @@ from contextlib import contextmanager
 from django.core.management.base import BaseCommand
 
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-from corehq.pillows.mappings.const import NULL_VALUE
 from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
+from corehq.pillows.mappings.const import NULL_VALUE
+from corehq.pillows.mappings.tests.utils import fetch_elastic_mapping
 
 from .utils import pprint
 
@@ -24,6 +25,8 @@ class Command(BaseCommand):
             help="write output to %(metavar)s rather than STDOUT")
         parser.add_argument("--no-names", action="store_true", default=False,
             help="do not replace special values with names")
+        parser.add_argument("--from-elastic", action="store_true", default=False,
+            help="pull mappings from elastic index instead of code definitions")
         parser.add_argument("-t", "--transforms", metavar="TRANSFORMS", default="",
             help=f"perform transforms on the mapping, chain multiple by "
                  f"providing a comma-delimited list (options: "
@@ -46,7 +49,11 @@ class Command(BaseCommand):
 
         else:
             opener = open
-        mapping = CANONICAL_NAME_INFO_MAP[cname].mapping
+        index_info = CANONICAL_NAME_INFO_MAP[cname]
+        if options["from_elastic"]:
+            mapping = fetch_elastic_mapping(index_info.alias, index_info.type)
+        else:
+            mapping = index_info.mapping
         for key in iter(k.strip() for k in options["transforms"].split(",")):
             if key:
                 self.stderr.write(f"applying transform: {key}\n", style_func=lambda x: x)
