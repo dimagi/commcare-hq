@@ -124,7 +124,8 @@ def api_url_patterns():
     yield url(r'v0\.6/case(?:/(?P<case_id>[\w-]+))?/?$', case_api, name='case_api')
     yield from versioned_apis(API_LIST)
     yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
-    yield url(r'^form/attachment/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")
+    yield url(r'^form/attachment/(?P<instance_id>[\w\-:]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(),
+              name="api_form_attachment")
 
 
 urlpatterns = list(api_url_patterns())
