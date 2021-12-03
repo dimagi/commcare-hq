@@ -13,8 +13,9 @@ from corehq.apps.callcenter.utils import (
     get_call_center_domains,
     is_midnight_for_domain,
 )
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import CouchUser
+from corehq.toggles import USH_WEB_USER_CASE_CREATION
 
 logger = get_task_logger(__name__)
 
@@ -46,6 +47,17 @@ def calculate_indicators():
         indicator_set.get_data()
 
 
+def sync_web_user_usercases_if_applicable(user, domain, spawn_task):
+    domain_obj = Domain.get_by_name(domain)
+    if not domain_obj and settings.UNIT_TESTING:
+        return
+    if domain_obj.usercase_enabled and USH_WEB_USER_CASE_CREATION.enabled(domain):
+        if spawn_task:
+            sync_usercases_task.delay(user._id, domain)
+        else:
+            sync_usercases(user, domain)
+
+
 def bulk_sync_usercases_if_applicable(domain, user_ids):
     domain_obj = Domain.get_by_name(domain)
     if domain_obj.call_center_config.enabled or domain_obj.usercase_enabled:
@@ -58,12 +70,12 @@ def sync_usercases_if_applicable(user, spawn_task):
         return
     if (user.project.call_center_config.enabled or user.project.usercase_enabled):
         if spawn_task:
-            sync_usercases_task.delay(user._id)
+            sync_usercases_task.delay(user._id, user.domain)
         else:
-            sync_usercases_task(user._id)
+            sync_usercases(user, user.domain)
 
 
-@task(serializer='pickle', queue='background_queue')
-def sync_usercases_task(user_id):
-    user = CommCareUser.get_by_user_id(user_id)
-    sync_usercases(user)
+@task(queue='background_queue')
+def sync_usercases_task(user_id, domain):
+    user = CouchUser.get_by_user_id(user_id)
+    sync_usercases(user, domain)

@@ -849,6 +849,16 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     """
 )
 
+USH_WEB_USER_CASE_CREATION = StaticToggle(
+    'web_user_case_creation',
+    "USH: Enable the creation of user cases for web users.",
+    TAG_CUSTOM,
+    help_link='.',
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Toggle to enable the creation of usercases for web users."""
+)
+
 WEBAPPS_STICKY_SEARCH = StaticToggle(
     "webapps_sticky_search",
     "USH: Sticky search: In web apps, save user's most recent inputs on case search & claim screen.",

@@ -2433,6 +2433,12 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
 
+    def save(self, fire_signals=True, **params):
+        super().save(fire_signals=fire_signals, **params)
+        from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
+        for domain in self.get_domains():
+            sync_web_user_usercases_if_applicable(self, domain, spawn_task=True)
+
     def add_to_assigned_locations(self, domain, location):
         membership = self.get_domain_membership(domain)
 
