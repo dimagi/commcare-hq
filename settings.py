@@ -1452,7 +1452,7 @@ LOGGING = {
         },
         'commcare_auth': {
             'handlers': ['file'],
-            'level': 'ERROR',
+            'level': 'INFO',
             'propagate': False,
         }
     }
