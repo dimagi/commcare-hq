@@ -53,7 +53,6 @@ branches:
     # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-    - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
     - sr/cs-multiselect  # Sravan May 31
     - ce/bulk-case-search # Cal July 6
@@ -75,5 +74,7 @@ branches:
     - ap/web-app-refresh # Amit Nov 29
     - es/mobile-auth # Simon Nov 23
     - do/create-usercase-web-users # Dominic Dec 3
+    - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
     - jm/elastic-modernize-mappings  # Joel Dec 3
+    - sr/case-reindex-staging # Sravan Oct 14
 submodules: { }
