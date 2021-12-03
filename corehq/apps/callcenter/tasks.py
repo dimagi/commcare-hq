@@ -14,7 +14,7 @@ from corehq.apps.callcenter.utils import (
     is_midnight_for_domain,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CouchUser
 from corehq.toggles import USH_WEB_USER_CASE_CREATION
 
 logger = get_task_logger(__name__)

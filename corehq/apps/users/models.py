@@ -1453,11 +1453,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
         if fire_signals:
             from .signals import couch_user_post_save
-            from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
             results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            for domain in self.get_domains():
-                sync_web_user_usercases_if_applicable(self, domain, spawn_task=True)
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
@@ -2435,6 +2432,12 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         for user_doc in iter_docs(cls.get_db(), user_ids):
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
+
+    def save(self, fire_signals=True, **params):
+        super().save(fire_signals=fire_signals, **params)
+        from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
+        for domain in self.get_domains():
+            sync_web_user_usercases_if_applicable(self, domain, spawn_task=True)
 
     def add_to_assigned_locations(self, domain, location):
         membership = self.get_domain_membership(domain)
