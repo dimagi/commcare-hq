@@ -1234,7 +1234,7 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(asctime)s %(levelname)s %(message)s'
+            'format': '%(asctime)s %(levelname)s [%(name)s] %(message)s'
         },
         'pillowtop': {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
