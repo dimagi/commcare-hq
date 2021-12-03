@@ -602,7 +602,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 ) % (_error_message, e.errors))
                 ret['errors'].append(_error_message)
 
-            if log:
+            if log and group_change_message:
                 log.change_messages.update(group_change_message)
                 log.save()
 
