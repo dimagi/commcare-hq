@@ -186,6 +186,8 @@ def sync_call_center_user_case(user, domain):
 
 
 def _iter_call_center_case_helpers(user, domain_obj):
+    if user.is_web_user():
+        return
     config = domain_obj.call_center_config
     if config.enabled and config.config_is_valid():
         case, owner_id = _get_call_center_case_and_owner(user, domain_obj)

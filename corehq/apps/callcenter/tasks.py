@@ -47,16 +47,15 @@ def calculate_indicators():
         indicator_set.get_data()
 
 
-def sync_web_user_usercases_if_applicable(user, spawn_task):
-    if settings.UNIT_TESTING:
+def sync_web_user_usercases_if_applicable(user, domain, spawn_task):
+    domain_obj = Domain.get_by_name(domain)
+    if not domain_obj and settings.UNIT_TESTING:
         return
-    for domain in user.get_domains():
-        domain_obj = Domain.get_by_name(domain)
-        if domain_obj.usercase_enabled and domain in USH_WEB_USER_CASE_CREATION.get_enabled_domains():
-            if spawn_task:
-                sync_web_user_usercases_task.delay(user._id, domain)
-            else:
-                sync_usercases(user, domain)
+    if domain_obj.usercase_enabled and USH_WEB_USER_CASE_CREATION.enabled(domain):
+        if spawn_task:
+            sync_usercases_task.delay(user._id, domain)
+        else:
+            sync_usercases(user, domain)
 
 
 def bulk_sync_usercases_if_applicable(domain, user_ids):
@@ -77,12 +76,6 @@ def sync_usercases_if_applicable(user, spawn_task):
 
 
 @task(queue='background_queue')
-def sync_web_user_usercases_task(user_id, domain):
-    user = CouchUser.get_by_user_id(user_id)
-    sync_usercases(user, domain)
-
-
-@task(queue='background_queue')
 def sync_usercases_task(user_id, domain):
-    user = CommCareUser.get_by_user_id(user_id)
+    user = CouchUser.get_by_user_id(user_id)
     sync_usercases(user, domain)

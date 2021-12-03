@@ -1456,7 +1456,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
             results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            sync_web_user_usercases_if_applicable(self, spawn_task=True)
+            for domain in self.get_domains():
+                sync_web_user_usercases_if_applicable(self, domain, spawn_task=True)
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
