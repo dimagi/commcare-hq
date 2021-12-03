@@ -105,6 +105,7 @@ class GroupMemoizer(object):
         self.groups_by_name = {}
         self.groups_by_id = {}
         self.groups = set()
+        self.updated_groups = set()
         self.domain = domain
         self.groups_by_user_id = defaultdict(set)
         self.loaded = False
@@ -584,8 +585,11 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 error_message = f"{user.user_id}: {error}"
                 ret['errors'].append(_(error_message))
             try:
-                for domain_info in domain_info_by_domain.values():
-                    domain_info.group_memoizer.save_all()
+                for group_id in domain_info.group_memoizer.updated_groups:
+                    group = domain_info.group_memoizer.groups_by_id[group_id]
+                    group.save()
+                domain_info.group_memoizer.updated_groups.clear()
+
             except BulkSaveError as e:
                 _error_message = (
                     "Oops! We were not able to save some of your group changes. "
