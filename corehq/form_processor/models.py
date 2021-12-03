@@ -805,13 +805,13 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             lazy_serialize_case_xform_ids, lazy_serialize_case_attachments
         )
         serializer = CommCareCaseSQLSerializer(self)
-        ret = self.case_json | dict(serializer.data)
-        ret['indices'] = lazy_serialize_case_indices(self)
-        ret['actions'] = lazy_serialize_case_transactions(self)
-        ret['xform_ids'] = lazy_serialize_case_xform_ids(self)
-        ret['case_attachments'] = lazy_serialize_case_attachments(self)
-        ret['backend_id'] = 'sql'
-        return ret
+        return self.case_json | dict(serializer.data) | {
+            'indices': lazy_serialize_case_indices(self),
+            'actions': lazy_serialize_case_transactions(self),
+            'xform_ids': lazy_serialize_case_xform_ids(self),
+            'case_attachments': lazy_serialize_case_attachments(self),
+            'backend_id': 'sql',
+        }
 
     def dumps(self, pretty=False):
         indent = 4 if pretty else None
