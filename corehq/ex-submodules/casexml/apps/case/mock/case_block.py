@@ -59,6 +59,14 @@ class CaseBlock(object):
 
     @classmethod
     def deprecated_init(cls, *args, **kwargs):
+        """
+        You almost certainly don't need this - it defaults date_opened to today
+        at midnight, instead of now(). This method exists so we don't have to
+        update a bunch of tests built on the old, bad behavior.
+
+        Replace any CaseBlock.deprecated_init(...) with CaseBlock(...) and just
+        make sure tests pass
+        """
         return cls(date_opened_deprecated_behavior=True, *args, **kwargs)
 
     def _updatable_built_ins(self):
