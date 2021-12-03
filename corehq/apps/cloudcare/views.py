@@ -1,3 +1,4 @@
+from dimagi.utils.decorators.profile import profile_dump
 import json
 import re
 import string
@@ -579,6 +580,7 @@ def _message_to_sentry_thread_topic(message):
 @require_cloudcare_access
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @location_safe
+@profile_dump('session_endpoint.prof', 1, limit=10)
 def session_endpoint(request, domain, app_id, endpoint_id):
     def _fail(error):
         messages.error(request, error)
