@@ -3,7 +3,7 @@ from corehq.pillows.mappings.const import NULL_VALUE
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, CASE_HQ_INDEX_NAME
 
-CASE_INDEX = prefix_for_tests("hqcases_2016-03-04")
+CASE_INDEX = prefix_for_tests("hqcases_2020-03-04")
 CASE_ES_TYPE = 'case'
 
 CASE_MAPPING = {
@@ -202,6 +202,7 @@ CASE_MAPPING = {
             "type": "string"
         },
         "version": {
+            "index": "not_analyzed",
             "type": "string"
         },
         "xform_ids": {
@@ -211,7 +212,7 @@ CASE_MAPPING = {
     }
 }
 
-CASE_ES_ALIAS = prefix_for_tests("hqcases")
+CASE_ES_ALIAS = prefix_for_tests("hqcases_new")
 
 CASE_INDEX_INFO = ElasticsearchIndexInfo(
     index=CASE_INDEX,
