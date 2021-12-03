@@ -96,10 +96,9 @@ def transform_multi_field(mapping, key=None):
                 # {"index": "analyzed"} is the default
                 del mapping["index"]
         return {k: transform_multi_field(v, k) for k, v in mapping.items()}
-    elif isinstance(mapping, (tuple, list, set)):
+    if isinstance(mapping, (tuple, list, set)):
         return [transform_multi_field(v) for v in mapping]
-    else:
-        return mapping
+    return mapping
 
 
 ALL_TRANSFORMS = {

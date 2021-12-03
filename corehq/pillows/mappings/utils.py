@@ -6,7 +6,7 @@ def sorted_mapping(mapping):
         for key, value in sorted(mapping.items(), key=mapping_sort_key):
             mapping_[key] = sorted_mapping(value)
         return mapping_
-    elif isinstance(mapping, (tuple, list)):
+    if isinstance(mapping, (tuple, list)):
         return [sorted_mapping(item) for item in mapping]
     return mapping
 

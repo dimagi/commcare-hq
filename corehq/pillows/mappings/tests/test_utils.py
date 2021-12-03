@@ -9,7 +9,7 @@ class TestMappingsUtils(SimpleTestCase):
 
     def setUp(self):
         keys = ["items", "properties", "zulu", "alpha"]
-        order_items = dict((key, None) for key in keys)
+        order_items = {key: None for key in keys}
         self.mapping = order_items.copy()
         self.mapping["items"] = [order_items.copy()]
         self.mapping["properties"] = order_items.copy()
@@ -17,6 +17,6 @@ class TestMappingsUtils(SimpleTestCase):
     def test_sorted_mapping(self):
         key_order = ["alpha", "items", "zulu", "properties"]
         mapping = sorted_mapping(self.mapping)
-        self.assertEqual(key_order, list(mapping.keys()))
-        self.assertEqual(key_order, list(mapping["items"][0].keys()))
-        self.assertEqual(key_order, list(mapping["properties"].keys()))
+        self.assertEqual(key_order, list(mapping))
+        self.assertEqual(key_order, list(mapping["items"][0]))
+        self.assertEqual(key_order, list(mapping["properties"]))

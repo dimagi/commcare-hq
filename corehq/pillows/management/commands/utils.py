@@ -30,7 +30,7 @@ class ElasticMappingEncoder(json.JSONEncoder):
     representation."""
 
     # Use tuple value because hash(True)==1 and hash(False)==0
-    SCALARS = dict((s, (s, str(s))) for s in [True, False, None])
+    SCALARS = {s: (s, str(s)) for s in [True, False, None]}
 
     def __init__(self, namespace={}, scalars=SCALARS, **kw):
         """
@@ -80,9 +80,8 @@ class ElasticMappingEncoder(json.JSONEncoder):
                 if obj == value:
                     name = key
                     break
-        finally:
-            if name is not None:
-                return reg.make_proxy(name)
+        if name is not None:
+            return reg.make_proxy(name)
         if isinstance(obj, (tuple, list)):
             return [self.inject_proxies(v, reg) for v in obj]
         elif isinstance(obj, dict):
