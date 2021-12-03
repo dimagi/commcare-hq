@@ -31,8 +31,8 @@ from .const import (
 )
 from .models import SQLDataSetMap, SQLDataValueMap
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.util.couch import get_document_or_not_found
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.apps.userreports.util import get_report_config_or_not_found
 
 
 class DataSetMapForm(forms.ModelForm):
@@ -176,7 +176,7 @@ class DataSetMapForm(forms.ModelForm):
         ucr_id = cleaned_data.get('ucr_id')
         ucr = None
         if ucr_id:
-            ucr = get_document_or_not_found(ReportConfiguration, self.domain, ucr_id)
+            ucr = get_report_config_or_not_found(self.domain, ucr_id)
 
         if cleaned_data.get('org_unit_id'):
             org_unit_id = cleaned_data.get('org_unit_id')
