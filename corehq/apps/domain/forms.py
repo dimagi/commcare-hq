@@ -680,29 +680,29 @@ class PrivacySecurityForm(forms.Form):
             )
         )
 
-    def save(self, domain):
-        domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
-        domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
-        domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
-        domain.secure_sessions_timeout = self.cleaned_data.get('secure_sessions_timeout', None)
-        domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
+    def save(self, domain_obj):
+        domain_obj.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
+        domain_obj.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
+        domain_obj.secure_sessions = self.cleaned_data.get('secure_sessions', False)
+        domain_obj.secure_sessions_timeout = self.cleaned_data.get('secure_sessions_timeout', None)
+        domain_obj.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
 
-        domain.strong_mobile_passwords = self.cleaned_data.get('strong_mobile_passwords', False)
+        domain_obj.strong_mobile_passwords = self.cleaned_data.get('strong_mobile_passwords', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
         apps_to_save = []
-        if secure_submissions != domain.secure_submissions:
-            for app in get_apps_in_domain(domain.name):
+        if secure_submissions != domain_obj.secure_submissions:
+            for app in get_apps_in_domain(domain_obj.name):
                 if app.secure_submissions != secure_submissions:
                     app.secure_submissions = secure_submissions
                     apps_to_save.append(app)
-        domain.secure_submissions = secure_submissions
-        domain.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
-        domain.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
-        if RESTRICT_MOBILE_ACCESS.enabled(domain):
-            domain.restrict_mobile_access = self.cleaned_data.get('restrict_mobile_access', False)
+        domain_obj.secure_submissions = secure_submissions
+        domain_obj.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
+        domain_obj.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
+        if RESTRICT_MOBILE_ACCESS.enabled(domain_obj.name):
+            domain_obj.restrict_mobile_access = self.cleaned_data.get('restrict_mobile_access', False)
 
-        domain.save()
+        domain_obj.save()
 
         if apps_to_save:
             apps = [app for app in apps_to_save if isinstance(app, Application)]
