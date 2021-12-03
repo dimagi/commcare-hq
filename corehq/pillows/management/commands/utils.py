@@ -5,16 +5,44 @@ from corehq.pillows.mappings.utils import mapping_sort_key
 
 
 def pprint(obj, namespace={}, stream=sys.stdout, indent=4, separators=(',', ': ')):
+    """Pretty-print an Elastic mapping. Like `json.dump()`, but output valid
+    Python code rather than JSON.
+
+    :param obj: object to be 'printed'
+    :param namespace: (optional dict) see ElasticMappingEncoder `namespace` arg
+    :param stream: (optional) file-like object where output is written,
+                   default=`sys.stdout`
+    :param indent: (int) see `json.dump`
+    :param separators: (tuple) see `json.dump`
+    """
     encoder = ElasticMappingEncoder(namespace, indent=indent, separators=separators)
     for chunk in encoder.iterencode(obj):
         stream.write(chunk)
 
 
 class ElasticMappingEncoder(json.JSONEncoder):
+    """Encodes an Elastic mapping (nested python dict) as properly indented
+    python code.
 
+    A JSONEncoder which writes 'True', 'False' and 'None' instead of 'true',
+    'false' and 'null'; with the extra ability to replace objects (provided via
+    the `namespace` argument) with a literal name rather than their value
+    representation."""
+
+    # Use tuple value because hash(True)==1 and hash(False)==0
     SCALARS = dict((s, (s, str(s))) for s in [True, False, None])
 
     def __init__(self, namespace={}, scalars=SCALARS, **kw):
+        """
+        :param namespace: (optional dict) replace output with literal name
+                          (dict key) anywhere value (dict value) is found within
+                          `obj`.
+        :param scalars: (optional dict) collection of scalars to be replaced
+                        with their python literal value. Format:
+                        {<scalar>: (<scalar>, <literal_string>), ...}.
+        :param **kw: additional keyword arguments are passed to `JSONEncoder`
+                     verbatim.
+        """
         self.scalars = scalars
         self.by_name = {}
         self.by_value = {}
@@ -67,6 +95,8 @@ class ElasticMappingEncoder(json.JSONEncoder):
 
 
 class ProxyRegistry:
+    """Registry for managing proxy objects, allowing them to traverse the JSON
+    serialization process and get printed as a name in the output."""
 
     PROXY_ID_DELIMITER = "__PROXY_ID_DELIMITER__"
 
@@ -75,11 +105,14 @@ class ProxyRegistry:
         self.extracted = {}
 
     def verify(self):
+        """Ensure all registered proxies have been claimed."""
         unclaimed = [it for it in self.registry if it is not None]
         if unclaimed:
             raise ValueError(f"Unclaimed proxies: {unclaimed}")
 
     def make_proxy(self, name):
+        """Create and return a new proxy object which can be identified and
+        replaced with its name later via `extract()`."""
         index = len(self.registry)
         proxy = PythonLiteralProxy(name)
         ident = id(proxy)
@@ -88,6 +121,8 @@ class ProxyRegistry:
         return proxy
 
     def extract(self, chunk):
+        """Process a chunk of an object and detect if it is a proxy. If so,
+        return its name (`proxy.value`) otherwise return the chunk verbatim."""
         if not chunk.startswith('"') or not chunk.endswith('"'):
             return chunk
         head, delim, tail = chunk[1:-1].partition(self.PROXY_ID_DELIMITER)
