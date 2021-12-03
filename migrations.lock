@@ -278,6 +278,7 @@ domain
  [X] 0006_fix_domain_es_docs
  [X] 0007_auto_20200924_1753
  [X] 0008_use_livequery
+ [X] 0009_restrict_mob_access_from_FF
 domain_migration_flags
  [X] 0001_initial
  [X] 0002_migrate_data_from_tzmigration
@@ -509,6 +510,8 @@ motech
  [X] 0006_connection_settings
  [X] 0007_auto_20200909_2138
  [X] 0008_requestlog_response_headers
+ [X] 0009_auto_20211122_2011
+ [X] 0010_auto_20211124_1931
 notifications
  [X] 0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  [X] 0002_auto_20160505_2058
@@ -959,6 +962,7 @@ users
  [X] 0038_add_ucr_permissions
  [X] 0039_merge_20211007_0556
  [X] 0040_add_repr_and_changed_by_repr
+ [X] 0041_migrate_reprs
 util
  [X] 0001_initial
  [X] 0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
