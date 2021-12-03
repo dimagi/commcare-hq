@@ -21,6 +21,7 @@ from toggle.models import Toggle
 from toggle.shortcuts import set_toggle, toggle_enabled
 
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 
 
 @attrs(frozen=True)
@@ -156,6 +157,19 @@ class StaticToggle(object):
         ):
             # Don't even bother looking it up in the cache
             return False
+
+        # item should be a string
+        _soft_assert = soft_assert(notify_admins=False, send_to_ops=True)
+        _soft_assert(
+            isinstance(item, str),
+            'StaticToggle.enabled() was passed something other than a string.', {
+                'toggle_slug': self.slug,
+                'toggle_description': self.description,
+                'item_type': type(item),
+                'namespace': namespace
+            }
+        )
+
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
