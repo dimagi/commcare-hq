@@ -97,6 +97,7 @@ def restore(request, domain, app_id=None):
 @csrf_exempt
 @mobile_auth
 @check_domain_migration
+@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def search(request, domain):
     return app_aware_search(request, domain, None)
 
@@ -105,6 +106,7 @@ def search(request, domain):
 @csrf_exempt
 @mobile_auth
 @check_domain_migration
+@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def app_aware_search(request, domain, app_id):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
@@ -128,6 +130,7 @@ def app_aware_search(request, domain, app_id):
 @require_POST
 @mobile_auth
 @check_domain_migration
+@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def claim(request, domain):
     """
     Allows a user to claim a case that they don't own.
@@ -405,12 +408,15 @@ def recovery_measures(request, domain, build_id):
 
 
 @location_safe_bypass
+@csrf_exempt
 @mobile_auth
-@require_GET
+@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+@toggles.DATA_REGISTRY.required_decorator()
 def registry_case(request, domain, app_id):
-    case_ids = request.GET.getlist("case_id")
-    case_types = request.GET.getlist("case_type")
-    registry = request.GET.get("commcare_registry")
+    request_dict = request.GET if request.method == 'GET' else request.POST
+    case_ids = request_dict.getlist("case_id")
+    case_types = request_dict.getlist("case_type")
+    registry = request_dict.get("commcare_registry")
 
     missing = [
         name

@@ -377,6 +377,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     count_messages_as_read_by_anyone = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
+    sms_worker_registration_alert_emails = StringListProperty()
     sms_survey_date_format = StringProperty()
 
     granted_messaging_access = BooleanProperty(default=False)
@@ -449,6 +450,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     default_mobile_ucr_sync_interval = IntegerProperty()
 
     ga_opt_out = BooleanProperty(default=False)
+
+    restrict_mobile_access = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):

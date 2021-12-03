@@ -472,15 +472,8 @@ Devs using computers with the ARM64 architecture (often Apple computers with the
 
 - Postgres
 
-    In your hq-compose.yml, try updating the following:
-        ```
-        image: dimagi/docker-postgresql
-        ```
-        to
-        ```
-        image: arm64v8/postgres
-        ```
-        So that you are using a Postgres image built for ARM64 archtecture. Now your Docker service should run properly. Note that you may run into errors while testing because of this different image--see details on a fix in the testing section farther down.
+    The Docker scripts should detect what architecture you have and automatically use the [Postgres image made for ARM64](https://hub.docker.com/r/arm64v8/postgres/). Note that this image doesn't include the pghashlib and plproxy extensions that the [Dimagi Postgres image](https://github.com/dimagi/docker-postgresql) uses, but you shouldn't need these extensions for your development environment (exception: note the `USE_PARTITIONED_DATABASE` setting when running tests in the "Running Tests" section below).
+
 - Elasticsearch
     
     Download the TAR for ES 2.4.2 from [here](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-2). Open it, and move it somewhere you can reliably remember, maybe your root directory. In a new tab/window:

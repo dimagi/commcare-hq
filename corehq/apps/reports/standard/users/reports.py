@@ -8,7 +8,7 @@ from django.utils.translation import ugettext_lazy
 
 from memoized import memoized
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -32,7 +32,6 @@ from corehq.apps.users.audit.change_messages import (
     get_messages,
 )
 from corehq.apps.users.models import UserHistory
-from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 
@@ -129,6 +128,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             self.domain,
             slugs,
             self.request.couch_user,
+            include_enterprise_users=toggles.DOMAIN_PERMISSIONS_MIRROR.enabled(self.domain),
         )
 
     def _build_query(self, user_ids, changed_by_user_ids, user_property, actions, user_upload_record_id):
@@ -195,8 +195,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     def _user_history_row(self, record, domain, timezone):
         return [
-            cached_user_id_to_username(record.user_id),
-            cached_user_id_to_username(record.changed_by),
+            record.user_repr,
+            record.changed_by_repr,
             _get_action_display(record.action),
             record.changed_via,
             self._user_history_details_cell(record.changes, domain),
