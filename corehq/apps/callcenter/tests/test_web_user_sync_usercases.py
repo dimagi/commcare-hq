@@ -31,7 +31,6 @@ class TestWebUserSyncUsercase(TestCase):
     @flag_enabled('USH_WEB_USER_CASE_CREATION')
     def test_sync_usercases(self):
         sync_usercases(self.user, self.domain_name)
-        case_ids = self.accessor.get_case_ids_in_domain(self.domain_name)
         usercase = self.accessor.get_case_by_domain_hq_user_id(self.user_id, USERCASE_TYPE)
         self.assertIsNotNone(usercase)
         self.assertEqual(usercase.name, self.username)
