@@ -180,10 +180,9 @@ def get_sync_lock_key(user_id):
     return ["sync_user_case_for_%s" % user_id]
 
 
-def sync_call_center_user_case(user, domain):
+def sync_call_center_user_case(user):
     with CriticalSection(get_sync_lock_key(user._id)):
-        domain_obj = Domain.get_by_name(domain)
-        _UserCaseHelper.commit(list(_iter_call_center_case_helpers(user, domain_obj)))
+        _UserCaseHelper.commit(list(_iter_call_center_case_helpers(user)))
 
 
 def _iter_call_center_case_helpers(user):
