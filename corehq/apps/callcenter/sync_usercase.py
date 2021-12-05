@@ -186,13 +186,13 @@ def sync_call_center_user_case(user, domain):
         _UserCaseHelper.commit(list(_iter_call_center_case_helpers(user, domain_obj)))
 
 
-def _iter_call_center_case_helpers(user, domain_obj):
+def _iter_call_center_case_helpers(user):
     if user.is_web_user():
         return
-    config = domain_obj.call_center_config
+    config = user.project.call_center_config
     if config.enabled and config.config_is_valid():
-        case, owner_id = _get_call_center_case_and_owner(user, domain_obj)
-        yield _get_sync_usercase_helper(user, domain_obj.name, config.case_type, owner_id, case)
+        case, owner_id = _get_call_center_case_and_owner(user, user.project)
+        yield _get_sync_usercase_helper(user, user.domain, config.case_type, owner_id, case)
 
 
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
@@ -260,7 +260,7 @@ def sync_usercases(user, domain):
     with CriticalSection(get_sync_lock_key(user._id)):
         helpers = list(chain(
             _iter_sync_usercase_helpers(user, domain_obj),
-            _iter_call_center_case_helpers(user, domain_obj),
+            _iter_call_center_case_helpers(user),
         ))
         if helpers:
             _UserCaseHelper.commit(helpers)

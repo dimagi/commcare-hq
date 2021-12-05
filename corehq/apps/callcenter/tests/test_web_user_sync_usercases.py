@@ -35,6 +35,5 @@ class TestWebUserSyncUsercase(TestCase):
         for id in case_ids:
             print(self.accessor.get_case(id).name)
         usercase = self.accessor.get_case_by_domain_hq_user_id(self.user_id, USERCASE_TYPE)
-        print(usercase)
         self.assertIsNotNone(usercase)
         self.assertEqual(usercase.name, self.username)
