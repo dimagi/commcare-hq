@@ -100,7 +100,7 @@ services:
       - ./files/elasticsearch_2.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   elasticsearch5:
-    image: arm64v8/elasticsearch:7.14.1
+    image: elasticsearch:5.6.16
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m -Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     expose:
