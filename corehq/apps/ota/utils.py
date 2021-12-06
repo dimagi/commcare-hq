@@ -143,8 +143,9 @@ def _ensure_valid_restore_as_user(domain, couch_user, as_user_obj):
 
     if _limit_login_as(domain, couch_user):
         login_as_username = as_user_obj.metadata.get('login_as_user') or ''
-        if login_as_username.lower() != couch_user.username.lower():
-            is_default = login_as_username.lower() == 'default'
+        candidates = login_as_username.lower().split()
+        if couch_user.username.lower() not in candidates:
+            is_default = 'default' in candidates
             if not _can_access_default_login_as_user(domain, couch_user) or not is_default:
                 raise RestorePermissionDenied(_("{} not available as login-as user").format(as_user_obj.username))
 
