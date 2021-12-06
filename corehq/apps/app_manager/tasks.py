@@ -9,7 +9,8 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_id,
 )
 from corehq.apps.app_manager.exceptions import SavedAppBuildException, AppValidationError
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.toggles import USH_WEB_USER_CASE_CREATION
 from corehq.util.decorators import serial_task
 
 logger = get_task_logger(__name__)
@@ -18,7 +19,11 @@ logger = get_task_logger(__name__)
 @task(queue='background_queue', ignore_result=True)
 def create_usercases(domain_name):
     from corehq.apps.callcenter.sync_usercase import sync_usercase
-    for user in CouchUser.by_domain(domain_name):
+    if USH_WEB_USER_CASE_CREATION.enabled(domain_name):
+        users = CouchUser.by_domain(domain_name)
+    else:
+        users = CommCareUser.by_domain(domain_name)
+    for user in users:
         sync_usercase(user, domain_name)
 
 

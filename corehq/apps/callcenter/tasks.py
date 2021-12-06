@@ -47,15 +47,10 @@ def calculate_indicators():
         indicator_set.get_data()
 
 
-def sync_web_user_usercases_if_applicable(user, domain, spawn_task):
+def sync_web_user_usercases_if_applicable(user, domain):
     domain_obj = Domain.get_by_name(domain)
-    if settings.UNIT_TESTING:
-        return
     if domain_obj.usercase_enabled and USH_WEB_USER_CASE_CREATION.enabled(domain):
-        if spawn_task:
-            sync_usercases_task.delay(user._id, domain)
-        else:
-            sync_usercases(user, domain)
+        sync_usercases_task.delay(user._id, domain)
 
 
 def bulk_sync_usercases_if_applicable(domain, user_ids):
