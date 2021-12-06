@@ -1,3 +1,5 @@
+import argparse
+import sys
 from contextlib import contextmanager
 
 from django.core.management.base import BaseCommand
@@ -22,6 +24,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("-o", "--outfile", metavar="FILE",
+            type=argparse.FileType("w"), default=sys.stdout,
             help="write output to %(metavar)s rather than STDOUT")
         parser.add_argument("--no-names", action="store_true", default=False,
             help="do not replace special values with names")
@@ -35,20 +38,10 @@ class Command(BaseCommand):
             help="print mapping for %(metavar)s")
 
     def handle(self, cname, **options):
-        outpath = options["outfile"]
         if options["no_names"]:
             namespace = {}
         else:
             namespace = MAPPING_SPECIAL_VALUES
-        if outpath is None:
-            outpath = self.stdout._out  # Why, OutputWrapper.write()? Why?
-
-            @contextmanager
-            def opener(file, mode):
-                yield file
-
-        else:
-            opener = open
         index_info = CANONICAL_NAME_INFO_MAP[cname]
         if options["from_elastic"]:
             mapping = fetch_elastic_mapping(index_info.alias, index_info.type)
@@ -58,8 +51,7 @@ class Command(BaseCommand):
             if key:
                 self.stderr.write(f"applying transform: {key}\n", style_func=lambda x: x)
                 mapping = ALL_TRANSFORMS[key](mapping)
-        with opener(outpath, "w") as outfile:
-            pprint(mapping, namespace, stream=outfile)
+        pprint(mapping, namespace, stream=options["outfile"])
 
 
 def transform_multi_field(mapping, key=None):
