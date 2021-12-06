@@ -17,27 +17,27 @@ class DataSourceResumeBuildTest(SimpleTestCase):
         self._resume_helper.clear_resume_info()
 
     def test_add_types(self):
-        self.assertEqual([], self._resume_helper.get_completed_case_type_or_xmlns())
+        self.assertEqual([], self._resume_helper.get_completed_iterations())
 
         case_type = 'type1'
-        self._resume_helper.add_completed_case_type_or_xmlns(case_type)
-        self.assertEqual([case_type.encode('utf-8')], self._resume_helper.get_completed_case_type_or_xmlns())
+        self._resume_helper.add_completed_iteration("domain1", case_type)
+        self.assertEqual([["domain1", case_type]], self._resume_helper.get_completed_iterations())
 
         case_type_2 = 'type2'
-        self._resume_helper.add_completed_case_type_or_xmlns(case_type_2)
+        self._resume_helper.add_completed_iteration("domain1", case_type_2)
         self.assertEqual(
-            [case_type.encode('utf-8'), case_type_2.encode('utf-8')],
-            self._resume_helper.get_completed_case_type_or_xmlns()
+            [["domain1", case_type], ["domain1", case_type_2]],
+            self._resume_helper.get_completed_iterations()
         )
 
     def test_clear_resume_info(self):
-        self._resume_helper.add_completed_case_type_or_xmlns('type1')
+        self._resume_helper.add_completed_iteration("domain1", 'type1')
         self._resume_helper.clear_resume_info()
-        self.assertEqual([], self._resume_helper.get_completed_case_type_or_xmlns())
+        self.assertEqual([], self._resume_helper.get_completed_iterations())
 
     def test_has_resume_info_false(self):
         self.assertEqual(False, self._resume_helper.has_resume_info())
 
     def test_has_resume_info_true(self):
-        self._resume_helper.add_completed_case_type_or_xmlns('type1')
+        self._resume_helper.add_completed_iteration("domain1", 'type1')
         self.assertEqual(True, self._resume_helper.has_resume_info())
