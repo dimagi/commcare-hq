@@ -16,11 +16,11 @@ from corehq.util.elastic import ensure_index_deleted
 
 
 @es_test
-class TestCloudcareESAccessors(SimpleTestCase):
+class TestLoginAsUserQuery(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestCloudcareESAccessors, cls).setUpClass()
+        super(TestLoginAsUserQuery, cls).setUpClass()
         cls.username = 'superman'
         cls.first_name = 'clark'
         cls.last_name = 'kent'
@@ -36,7 +36,7 @@ class TestCloudcareESAccessors(SimpleTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(TestCloudcareESAccessors, cls).tearDownClass()
+        super(TestLoginAsUserQuery, cls).tearDownClass()
 
     def _send_user_to_es(self, _id=None, username=None, user_data=None):
         user = CommCareUser(
