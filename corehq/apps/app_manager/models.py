@@ -1015,9 +1015,9 @@ class FormBase(DocumentSchema):
     auto_gps_capture = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty(exclude_if_none=True)
-    custom_assertions = SchemaListProperty(CustomAssertion, exclude_if_none=True)
-    custom_instances = SchemaListProperty(CustomInstance, exclude_if_none=True)
-    case_references_data = SchemaProperty(CaseReferences, exclude_if_none=True)
+    custom_assertions = SchemaListProperty(CustomAssertion)
+    custom_instances = SchemaListProperty(CustomInstance)
+    case_references_data = SchemaProperty(CaseReferences)
     is_release_notes_form = BooleanProperty(default=False)
     enable_release_notes = BooleanProperty(default=False)
     session_endpoint_id = StringProperty(exclude_if_none=True)  # See toggles.SESSION_ENDPOINTS
@@ -1570,7 +1570,7 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
 
     form_filter = StringProperty(exclude_if_none=True)
     requires = StringProperty(choices=["case", "referral", "none"], default="none", exclude_if_none=True)
-    actions = SchemaProperty(FormActions, exclude_if_none=True)
+    actions = SchemaProperty(FormActions)
 
     @classmethod
     def wrap(cls, data):
@@ -1795,9 +1795,9 @@ class GraphSeries(DocumentSchema):
 class GraphConfiguration(DocumentSchema):
     config = DictProperty(exclude_if_none=True)
     locale_specific_config = DictProperty(exclude_if_none=True)
-    annotations = SchemaListProperty(GraphAnnotations, exclude_if_none=True)
+    annotations = SchemaListProperty(GraphAnnotations)
     graph_type = StringProperty(exclude_if_none=True)
-    series = SchemaListProperty(GraphSeries, exclude_if_none=True)
+    series = SchemaListProperty(GraphSeries)
 
 
 class DetailTab(IndexedSchema):
@@ -1845,8 +1845,8 @@ class DetailColumn(IndexedSchema):
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
 
-    enum = SchemaListProperty(MappingItem, exclude_if_none=True)
-    graph_configuration = SchemaProperty(GraphConfiguration, exclude_if_none=True)
+    enum = SchemaListProperty(MappingItem)
+    graph_configuration = SchemaProperty(GraphConfiguration)
     case_tile_field = StringProperty(exclude_if_none=True)
 
     late_flag = IntegerProperty(default=30, exclude_if_none=True)
@@ -1968,8 +1968,8 @@ class CaseListLookupMixin(DocumentSchema):
     lookup_name = StringProperty(exclude_if_none=True)
     lookup_image = JRResourceProperty(required=False, exclude_if_none=True)
 
-    lookup_extras = SchemaListProperty(exclude_if_none=True)
-    lookup_responses = SchemaListProperty(exclude_if_none=True)
+    lookup_extras = SchemaListProperty()
+    lookup_responses = SchemaListProperty()
 
     lookup_display_results = BooleanProperty(default=False)  # Display callout results in case list?
     lookup_field_header = DictProperty(exclude_if_none=True)
@@ -1986,10 +1986,10 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     columns = SchemaListProperty(DetailColumn)
     get_columns = IndexedSchema.Getter('columns')
 
-    tabs = SchemaListProperty(DetailTab, exclude_if_none=True)
+    tabs = SchemaListProperty(DetailTab)
     get_tabs = IndexedSchema.Getter('tabs')
 
-    sort_elements = SchemaListProperty(SortElement, exclude_if_none=True)
+    sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty(exclude_if_none=True)
 
     instance_name = StringProperty(default='casedb', exclude_if_none=True)
@@ -2117,7 +2117,7 @@ class CaseSearchProperty(DocumentSchema):
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
-    itemset = SchemaProperty(Itemset, exclude_if_none=True)
+    itemset = SchemaProperty(Itemset)
 
 
 class DefaultCaseSearchProperty(DocumentSchema):
@@ -2145,16 +2145,16 @@ class CaseSearch(DocumentSchema):
     """
     command_label = DictProperty(default={'en': 'Search All Cases'}, exclude_if_none=True)
     again_label = DictProperty(default={'en': 'Search Again'}, exclude_if_none=True)
-    search_label = SchemaProperty(CaseSearchLabel, exclude_if_none=True)
-    search_again_label = SchemaProperty(CaseSearchAgainLabel, exclude_if_none=True)
-    properties = SchemaListProperty(CaseSearchProperty, exclude_if_none=True)
+    search_label = SchemaProperty(CaseSearchLabel)
+    search_again_label = SchemaProperty(CaseSearchAgainLabel)
+    properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
     default_relevant = BooleanProperty(default=True)
     additional_relevant = StringProperty(exclude_if_none=True)
     search_filter = StringProperty(exclude_if_none=True)
     search_button_display_condition = StringProperty(exclude_if_none=True)
-    default_properties = SchemaListProperty(DefaultCaseSearchProperty, exclude_if_none=True)
+    default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty(exclude_if_none=True)
     additional_case_types = ListProperty(str, exclude_if_none=True)
     data_registry = StringProperty(exclude_if_none=True)
@@ -2250,7 +2250,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     module_filter = StringProperty(exclude_if_none=True)
     put_in_root = BooleanProperty(default=False)
     root_module_id = StringProperty(exclude_if_none=True)
-    fixture_select = SchemaProperty(FixtureSelect, exclude_if_none=True)
+    fixture_select = SchemaProperty(FixtureSelect)
     report_context_tile = BooleanProperty(default=False)
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
@@ -2503,13 +2503,13 @@ class Module(ModuleBase, ModuleDetailsMixin):
     """
     module_type = 'basic'
     forms = SchemaListProperty(Form)
-    case_details = SchemaProperty(DetailPair, exclude_if_none=True)
-    ref_details = SchemaProperty(DetailPair, exclude_if_none=True)
-    case_list = SchemaProperty(CaseList, exclude_if_none=True)
-    referral_list = SchemaProperty(CaseList, exclude_if_none=True)
-    task_list = SchemaProperty(CaseList, exclude_if_none=True)
-    parent_select = SchemaProperty(ParentSelect, exclude_if_none=True)
-    search_config = SchemaProperty(CaseSearch, exclude_if_none=True)
+    case_details = SchemaProperty(DetailPair)
+    ref_details = SchemaProperty(DetailPair)
+    case_list = SchemaProperty(CaseList)
+    referral_list = SchemaProperty(CaseList)
+    task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+    search_config = SchemaProperty(CaseSearch)
     display_style = StringProperty(default='list', exclude_if_none=True)
 
     @classmethod
@@ -3724,14 +3724,14 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     module_type = 'shadow'
     source_module_id = StringProperty()
     forms = []
-    excluded_form_ids = SchemaListProperty(exclude_if_none=True)
-    case_details = SchemaProperty(DetailPair, exclude_if_none=True)
-    ref_details = SchemaProperty(DetailPair, exclude_if_none=True)
-    case_list = SchemaProperty(CaseList, exclude_if_none=True)
-    referral_list = SchemaProperty(CaseList, exclude_if_none=True)
-    task_list = SchemaProperty(CaseList, exclude_if_none=True)
-    parent_select = SchemaProperty(ParentSelect, exclude_if_none=True)
-    search_config = SchemaProperty(CaseSearch, exclude_if_none=True)
+    excluded_form_ids = SchemaListProperty()
+    case_details = SchemaProperty(DetailPair)
+    ref_details = SchemaProperty(DetailPair)
+    case_list = SchemaProperty(CaseList)
+    referral_list = SchemaProperty(CaseList)
+    task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+    search_config = SchemaProperty(CaseSearch)
 
     # Current allowed versions are '1' and '2'. version 1 had incorrect child
     # module behaviour, which was fixed for version 2. Apps in the wild were
