@@ -501,7 +501,7 @@ class CaseUpdateConfig:
 
         target_case = self._get_target_case(couch_user, registry_helper, repeat_record)
         updates = self.get_case_updates(couch_user, registry_helper, repeat_record)
-        indices = self.get_case_indices(target_case)
+        indices = self.get_case_indices(self.domain, target_case)
         return CaseBlock(
             case_id=self.case_id,
             owner_id=self.owner_id,
@@ -550,8 +550,8 @@ class CaseUpdateConfig:
             for prop in update_props
         }
 
-    def get_case_indices(self, target_case):
-        indices = self.get_create_case_index(target_case)
+    def get_case_indices(self, target_domain, target_case):
+        indices = self.get_create_case_index(target_domain)
         if not self.index_remove_case_id:
             return indices
 
@@ -560,7 +560,7 @@ class CaseUpdateConfig:
 
         return indices
 
-    def get_create_case_index(self, target_case):
+    def get_create_case_index(self, target_domain):
         if not (self.index_create_case_id and self.index_create_case_type):
             return {}
 
@@ -569,7 +569,7 @@ class CaseUpdateConfig:
         except CaseNotFound:
             raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
-        if index_case.domain != target_case.domain:
+        if index_case.domain != target_domain:
             raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
         if index_case.type != self.index_create_case_type:
