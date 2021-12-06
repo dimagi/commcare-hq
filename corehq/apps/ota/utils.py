@@ -142,14 +142,11 @@ def _ensure_valid_restore_as_user(domain, couch_user, as_user_obj):
         raise RestorePermissionDenied(_("{} was not in the domain {}").format(as_user_obj.username, domain))
 
     if _limit_login_as(domain, couch_user):
-        login_as_username = as_user_obj.metadata.get('login_as_user')
-        error_message = _("{} not available as login-as user").format(as_user_obj.username)
-        if login_as_username is None:
-            raise RestorePermissionDenied(error_message)
+        login_as_username = as_user_obj.metadata.get('login_as_user') or ''
         if login_as_username.lower() != couch_user.username.lower():
             is_default = login_as_username.lower() == 'default'
             if not _can_access_default_login_as_user(domain, couch_user) or not is_default:
-                raise RestorePermissionDenied(error_message)
+                raise RestorePermissionDenied(_("{} not available as login-as user").format(as_user_obj.username))
 
 
 def _limit_login_as(domain, couch_user):
