@@ -36,7 +36,7 @@ https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-no
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2020.6.20
+certifi==2021.5.30
     # via
     #   requests
     #   sentry-sdk
