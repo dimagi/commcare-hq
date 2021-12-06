@@ -76,5 +76,6 @@ branches:
     - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
     - jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
+    - rp/gsheets+depandabot-pip # Rynhard Dec 6
     - rp/gsheets-PoC # Rynhard Dec 6
 submodules: { }
