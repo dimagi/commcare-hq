@@ -7,6 +7,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "analytix/js/google",
     "hqwebapp/js/ui_elements/ui-element-key-val-list",
     "DOMPurify/dist/purify.min",
+    "hqwebapp/js/toggles",
     "hqwebapp/js/knockout_bindings.ko",
 ], function (
     $,
@@ -16,7 +17,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
     hqMain,
     googleAnalytics,
     uiElementKeyValueList,
-    DOMPurify
+    DOMPurify,
+    toggles
 ) {
     var caseType = function (name, fhirResourceType) {
         var self = {};
@@ -61,10 +63,16 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
+        let subTitle;
+        if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
+            subTitle = gettext("When importing data, CommCare will not save a row if its cells don't match these valid values.");
+        } else {
+            subTitle = gettext("Help colleagues upload correct data into case properties by listing the valid values here.");
+        }
         self.allowedValues = uiElementKeyValueList.new(
             String(Math.random()).slice(2), /* guid */
             interpolate('Edit valid values for "%s"', [name]), /* modalTitle */
-            gettext("When importing case data, CommCare will warn if rows don't match valid values"), /* subTitle */
+            subTitle, /* subTitle */
             {"key": gettext("valid value"), "value": gettext("description")}, /* placeholders */
             10 /* maxDisplay */
         );
