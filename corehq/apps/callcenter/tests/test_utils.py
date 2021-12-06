@@ -264,7 +264,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
         self.user.update_metadata({
             'completed_training': 'yes',
         })
-        sync_usercase(self.user)
+        sync_usercase(self.user, self.domain.name)
         case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertEqual(case.dynamic_case_properties()['completed_training'], 'yes')
         self._check_update_matches(case, {'completed_training': 'yes'})
