@@ -37,7 +37,7 @@ class Command(BaseCommand):
     def show_status_of_possibly_unblocked_user(self, email, blocked_domains):
         self.stdout.write(
             f"\n{email} is not a member of any projects actively blocking "
-            f"data from HubSpot."
+            f"data from HubSpot.\n"
         )
         blocked_domains_invited = Invitation.objects.filter(
             domain__in=list(blocked_domains),
@@ -71,7 +71,7 @@ class Command(BaseCommand):
             first_conversion = hubspot_contact_info[email]
             self.stdout.write(
                 f"\n{email} found in HubSpot with First Conversion "
-                f"(clustered) as '{first_conversion}'."
+                f"(clustered) as '{first_conversion}'.\n"
             )
             if first_conversion in ALLOWED_CONVERSIONS:
                 self.stdout.write(
