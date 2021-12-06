@@ -1108,7 +1108,7 @@ class BaseUploadUser(BaseUserSettingsView):
             task = parallel_user_import.delay(
                 self.domain,
                 list(self.user_specs),
-                request.couch_user
+                request.couch_user.user_id
             )
         else:
             upload_record = UserUploadRecord(
@@ -1120,7 +1120,7 @@ class BaseUploadUser(BaseUserSettingsView):
                 self.domain,
                 list(self.user_specs),
                 list(self.group_specs),
-                request.couch_user,
+                request.couch_user.user_id,
                 upload_record.pk,
                 self.is_web_upload
             )
