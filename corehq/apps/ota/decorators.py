@@ -3,9 +3,6 @@ from functools import wraps
 
 from django.http import HttpResponseForbidden
 
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-
-from corehq import toggles
 from corehq.apps.domain.auth import BASIC
 from corehq.apps.domain.decorators import (
     get_multi_auth_decorator,
@@ -14,6 +11,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 auth_logger = logging.getLogger("commcare_auth")
 
