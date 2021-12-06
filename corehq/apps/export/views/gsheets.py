@@ -9,10 +9,7 @@ from corehq.apps.export.esaccessors import get_case_export_base_query
 
 from corehq.apps.export.models.gsuite import GoogleApiToken
 from corehq.apps.export.exceptions import InvalidLoginException
-from corehq.apps.export.dbaccessors import _get_export_instance
-from corehq.apps.settings.views import default
 from corehq.blobs.util import _utcnow
-from corehq.elastic import SIZE_LIMIT
 
 from corehq.util.couch import get_document_or_404
 
@@ -52,7 +49,15 @@ def load_credentials(stringified_credentials):
 
 
 def redirect_oauth_view(request, domain):
-    config = {"web":{"client_id":"699334824903-fsomonub18fa0en5c7t0ao01l0fhduil.apps.googleusercontent.com","project_id":"manifest-ivy-331810","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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"}}
+    config = {"web":
+        {"client_id": "699334824903-fsomonub18fa0en5c7t0ao01l0fhduil.apps.googleusercontent.com",
+        "project_id": "manifest-ivy-331810",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url":
+        "https://www.googleapis.com/oauth2/v1/certs",
+        "client_secret":
+        "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"}}
     scopes = ['https://www.googleapis.com/auth/spreadsheets']
     redirect_uri = 'https://staging.commcarehq.org/a/{}/data/export/google_sheets_oauth/callback/'.format(domain)
     INDEX_URL = 0
@@ -62,7 +67,7 @@ def redirect_oauth_view(request, domain):
     except GoogleApiToken.DoesNotExist:
         token = None
 
-    if(token == None):
+    if token is None:
         flow = Flow.from_client_config(config, scopes, redirect_uri=redirect_uri)
         auth_tuple = flow.authorization_url(prompt='consent')
         return HttpResponseRedirect(auth_tuple[INDEX_URL])
@@ -71,7 +76,15 @@ def redirect_oauth_view(request, domain):
 
 
 def call_back_view(request, domain):
-    config = {"web":{"client_id":"699334824903-fsomonub18fa0en5c7t0ao01l0fhduil.apps.googleusercontent.com","project_id":"manifest-ivy-331810","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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"}}
+    config = {"web":
+        {"client_id": "699334824903-fsomonub18fa0en5c7t0ao01l0fhduil.apps.googleusercontent.com",
+        "project_id": "manifest-ivy-331810",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url":
+        "https://www.googleapis.com/oauth2/v1/certs",
+        "client_secret":
+        "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"}}
     scopes = ['https://www.googleapis.com/auth/spreadsheets']
     redirect_uri = 'https://staging.commcarehq.org/a/{}/data/export/google_sheets_oauth/callback/'.format(domain)
 

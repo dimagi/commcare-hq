@@ -1,9 +1,7 @@
 from django.db import models
-from django.db.models.deletion import CASCADE
 from django.db.models.fields import CharField, DateField
 
 from django.contrib.auth.models import User
-from django.utils.translation import ugettext_lazy
 
 
 class GoogleApiToken(models.Model):
