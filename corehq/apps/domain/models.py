@@ -958,7 +958,7 @@ class TransferDomainRequest(models.Model):
 
         send_html_email_async.delay(
             _('Transfer of ownership for CommCare project space.'),
-            self.to_user.email,
+            self.to_user.get_email(),
             html_content,
             text_content=text_content)
 
@@ -975,7 +975,7 @@ class TransferDomainRequest(models.Model):
 
         send_html_email_async.delay(
             _('Transfer of ownership for CommCare project space.'),
-            self.from_user.email,
+            self.from_user.get_email(),
             html_content,
             text_content=text_content)
 
