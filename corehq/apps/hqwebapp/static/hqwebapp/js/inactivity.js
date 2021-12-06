@@ -58,7 +58,8 @@ hqDefine('hqwebapp/js/inactivity', [
 
     $(function () {
         var $modal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
-            $warningModal = $("#inactivityWarningModal");
+            $warningModal = $("#inactivityWarningModal"),
+            $newVersionModal = $('#newAppVersionModal');
 
         // Avoid popping up the warning modal when the user is actively doing something with the keyboard or mouse.
         // The keyboardOrMouseActive flag is turned on whenever a keypress or mousemove is detected, then turned
@@ -74,7 +75,12 @@ hqDefine('hqwebapp/js/inactivity', [
             log("Could not find modal, returning");
             return;
         }
-
+        if ($newVersionModal.length) {
+            $('#refreshApp').click(function () {
+                history.pushState("", document.title, window.location.pathname + window.location.search);
+                window.location.reload();
+            });
+        }
         /**
           * Determine when to poll next. Poll more frequently as expiration approaches, to
           * increase the chance the modal pops up before the user takes an action and gets rejected.
@@ -95,6 +101,10 @@ hqDefine('hqwebapp/js/inactivity', [
                 shouldShowWarning = true;
             } else {
                 shouldShowWarning = false;
+                // Close the New version modal before showing warning modal
+                if (isModalOpen($newVersionModal)) {
+                    $newVersionModal.modal('hide');
+                }
                 $warningModal.modal('show');
             }
         };
@@ -110,16 +120,41 @@ hqDefine('hqwebapp/js/inactivity', [
             shouldShowWarning = false;
         };
 
+        var isModalOpen = function (element) {
+            // https://stackoverflow.com/questions/19506672/how-to-check-if-bootstrap-modal-is-open-so-i-can-use-jquery-validate
+            return (element.data('bs.modal') || {}).isShown;
+        };
+
+        var showPageRefreshModal = function () {
+            if (!isModalOpen($modal) && !isModalOpen($warningModal)) {
+                $newVersionModal.modal('show');
+            }
+        };
+
         var pollToShowModal = function () {
             log("polling HQ's ping_login to decide about showing login modal");
+            var selectedAppId = '';
+            try {
+                var urlParams = JSON.parse(decodeURIComponent(window.location.hash.substr(1)));
+                selectedAppId = urlParams.appId;
+            } catch (error) {
+                console.log(error);
+            }
+            var domain = initialPageData.get('domain');
             $.ajax({
                 url: initialPageData.reverse('ping_login'),
                 type: 'GET',
+                data: {
+                    selected_app_id: selectedAppId,
+                    domain: domain,
+                },
                 success: function (data) {
                     if (!data.success) {
                         _.each($(".select2-hidden-accessible"), function (el) {
                             $(el).select2('close');
                         });
+                        // Close the New version modal before showing login iframe
+                        $newVersionModal.modal('hide');
                         log("ping_login failed, showing login modal");
                         var $body = $modal.find(".modal-body");
                         var src = initialPageData.reverse('iframe_domain_login');
@@ -139,6 +174,12 @@ hqDefine('hqwebapp/js/inactivity', [
                     } else {
                         log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
+                    }
+                    if (
+                        data.success &&
+                        data.new_app_version_available
+                    ) {
+                        showPageRefreshModal();
                     }
                 },
             });
