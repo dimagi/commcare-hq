@@ -1562,7 +1562,6 @@ COUCHDB_APPS = [
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('mc', 'fluff-mc'),
-    ('m4change', 'm4change'),  # todo: remove once code that uses is removed
     ('export', META_DB),
     ('callcenter', META_DB),
 
@@ -1852,7 +1851,6 @@ PILLOWTOPS = {
         },
     ],
     'fluff': [
-        'custom.m4change.models.M4ChangeFormFluffPillow',
     ],
     'experimental': [
         {
