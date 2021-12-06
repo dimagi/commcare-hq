@@ -1785,19 +1785,19 @@ class GraphAnnotations(IndexedSchema):
 
 class GraphSeries(DocumentSchema):
     config = DictProperty()
-    locale_specific_config = DictProperty()
-    data_path = StringProperty()
-    x_function = StringProperty()
-    y_function = StringProperty()
-    radius_function = StringProperty()
+    locale_specific_config = DictProperty(exclude_if_none=True)
+    data_path = StringProperty(exclude_if_none=True)
+    x_function = StringProperty(exclude_if_none=True)
+    y_function = StringProperty(exclude_if_none=True)
+    radius_function = StringProperty(exclude_if_none=True)
 
 
 class GraphConfiguration(DocumentSchema):
-    config = DictProperty()
-    locale_specific_config = DictProperty()
-    annotations = SchemaListProperty(GraphAnnotations)
-    graph_type = StringProperty()
-    series = SchemaListProperty(GraphSeries)
+    config = DictProperty(exclude_if_none=True)
+    locale_specific_config = DictProperty(exclude_if_none=True)
+    annotations = SchemaListProperty(GraphAnnotations, exclude_if_none=True)
+    graph_type = StringProperty(exclude_if_none=True)
+    series = SchemaListProperty(GraphSeries, exclude_if_none=True)
 
 
 class DetailTab(IndexedSchema):
