@@ -5,7 +5,11 @@
   class="hq-help-template"
   data-title="{% trans_html_attr 'Valid values or format' %}"
   data-content="
-    {% trans_html_attr 'When importing data, CommCare will only save rows with cells that match the listed values or format.' %}
+    {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+        {% trans_html_attr 'When importing data, CommCare will only save rows with cells that match the listed values or format.' %}
+    {% else %}
+        {% trans_html_attr 'Help colleagues upload correct data into case properties by listing the valid values here.' %}
+    {% endif %}
     {% if mirroring_enabled %}
         {% trans_html_attr 'Cases being created or updated in different project spaces may have different valid values.' %}
     {% endif %}
