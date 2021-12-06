@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
+from corehq.apps.es.cases import user
 from corehq.apps.users.decorators import get_permission_name
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
@@ -807,6 +808,15 @@ class ProjectDataTab(UITab):
                     'title': _(ODataFeedListView.page_title),
                     'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
                     'icon': 'fa fa-plug',
+                    'show_in_dropdown': False,
+                    'subpages': subpages
+                })
+
+            if(toggles.GOOGLE_SHEET_INTEGRATION.enabled(self.couch_user.username)):
+                export_data_views.append({
+                    'title': _("Live Google Sheet Integration"),
+                    'url': reverse("google_sheet_oauth_redirect", args=(self.domain,)),
+                    'icon': 'fa fa-google',
                     'show_in_dropdown': False,
                     'subpages': subpages
                 })
