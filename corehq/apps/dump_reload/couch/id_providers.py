@@ -80,7 +80,7 @@ class WebUserIDProvider(BaseIDProvider):
     doc_type = 'WebUser'
 
     def get_doc_ids(self, domain):
-        from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
+        from corehq.apps.users.dbaccessors import get_all_user_ids_by_domain
         from corehq.apps.users.models import WebUser
         user_ids = get_all_user_ids_by_domain(
             domain, include_web_users=True, include_mobile_users=False

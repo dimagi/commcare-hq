@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.const import WORKFLOW_PREVIOUS
 from corehq.apps.app_manager.models import (
@@ -332,7 +332,7 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         )
 
 
-class UserCaseOnlyModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
+class UsercaseOnlyModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     """
     Even though a module might be usercase-only, if it acts as a parent module
     then the user should still be prompted for a case of the parent module's

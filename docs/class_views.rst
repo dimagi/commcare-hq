@@ -140,13 +140,6 @@ in addition to:
             {# a great place to put modals #}
         {% endblock %}
 
-.. note:: Organizing Section Templates
-
-    Currently, the practice is to extend `hqwebapp/base_section.html` in a base template for
-    your section (e.g. `users/base_template.html`) and your section page will then extend
-    its section's base template.
-
-
 Adding to Urlpatterns
 ---------------------
 

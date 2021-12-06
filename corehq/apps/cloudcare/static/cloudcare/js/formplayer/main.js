@@ -13,7 +13,6 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             debuggerEnabled: initialPageData('debugger_enabled'),
             singleAppMode: initialPageData('single_app_mode'),
             environment: initialPageData('environment'),
-            useLiveQuery: toggles.toggleEnabled('FORMPLAYER_USE_LIVEQUERY'),
             changeFormLanguage: toggles.toggleEnabled('CHANGE_FORM_LANGUAGE'),
         };
         hqImport("cloudcare/js/formplayer/app").start(options);
@@ -58,5 +57,6 @@ hqDefine("cloudcare/js/formplayer/main", function () {
                 $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
             }
         });
+
     });
 });

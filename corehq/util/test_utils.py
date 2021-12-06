@@ -1,3 +1,10 @@
+"""DO NOT ADD NEW THINGS TO THIS MODULE
+
+New test utilities should be added to a module in the
+`corehq.tests.util` package. Things in this module may be moved there as
+it makes sense to do so. See the docstring on that package for important
+guidelines.
+"""
 import functools
 import json
 import logging
@@ -10,7 +17,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from io import StringIO, open
 from textwrap import indent, wrap
-from time import time
+from time import sleep, time
 from unittest import SkipTest, TestCase
 
 from django.conf import settings
@@ -19,7 +26,7 @@ from django.db.backends import utils
 from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 
-import mock
+from unittest import mock
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
@@ -426,6 +433,7 @@ def timelimit(limit):
         limit = timedelta(seconds=limit)
         return lambda func: timelimit((func, limit))
     func, limit = limit
+
     @wraps(func)
     def time_limit(*args, **kw):
         from corehq.tests.noseplugins.timing import add_time_limit
@@ -474,7 +482,7 @@ patch_max_test_time.__test__ = False
 
 
 def patch_foreign_value_caches():
-    """Patch django.test to clear ForeignValue.get_related LRU caches
+    """Patch django.test to clear ForeignValue LRU caches
 
     This complements `django.test.TransactionTestCase` and
     `django.test.TestCase` automatic database cleanup feature. It is
@@ -483,10 +491,10 @@ def patch_foreign_value_caches():
     """
     from corehq.util.models import ForeignValue
 
-    def wrap(get_related, cache_clear=None):
-        @wraps(get_related)
-        def monitored_get_related(self):
-            value = get_related(self)
+    def wrap(cached_prop, cache_clear=None):
+        @wraps(cached_prop)
+        def monitored_getter(self):
+            value = cached_prop(self)
             if cache_clear is None:
                 if self.cache_size:
                     value = wrap(value, value.cache_clear)
@@ -495,12 +503,14 @@ def patch_foreign_value_caches():
             return value
 
         if cache_clear is not None:
-            for name in dir(get_related):
+            # copy 'public' fields of `cached_prop` to `monitored_getter`
+            # e.g. cache_clear, cache_info
+            for name in dir(cached_prop):
                 if not name.startswith("_"):
-                    value = getattr(get_related, name)
-                    setattr(monitored_get_related, name, value)
+                    value = getattr(cached_prop, name)
+                    setattr(monitored_getter, name, value)
 
-        return monitored_get_related
+        return monitored_getter
 
     def post_teardown(self):
         if clear_funcs:
@@ -511,6 +521,7 @@ def patch_foreign_value_caches():
 
     clear_funcs = set()
     ForeignValue.get_related.func = wrap(ForeignValue.get_related.func)
+    ForeignValue.get_value.func = wrap(ForeignValue.get_value.func)
     django_post_teardown = TransactionTestCase._post_teardown
     TransactionTestCase._post_teardown = post_teardown
 
@@ -571,7 +582,7 @@ def _create_case(domain, **kwargs):
 
 
 def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None,
-        drop_signals=True, owner_id=None, user_id=None):
+        drop_signals=True, owner_id=None, user_id=None, index=None):
     from casexml.apps.case.signals import case_post_save
     from corehq.form_processor.signals import sql_case_post_save
 
@@ -580,6 +591,7 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
         'case_id': case_id,
         'case_name': case_name,
         'update': case_properties,
+        'index': index,
     }
 
     if case_type:
@@ -606,7 +618,6 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
         case_id=None, owner_id=None, user_id=None):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-    from corehq.form_processor.utils.general import should_use_sql_backend
     from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import delete_schedule_instances_by_case_id
 
     case = create_and_save_a_case(domain, case_id or uuid.uuid4().hex, case_name,
@@ -617,10 +628,7 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
     finally:
         delete_phone_numbers_for_owners([case.case_id])
         delete_schedule_instances_by_case_id(domain, case.case_id)
-        if should_use_sql_backend(domain):
-            CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
-        else:
-            case.delete()
+        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
 
 
 create_test_case.__test__ = False
@@ -815,3 +823,33 @@ def require_db_context(fn):
         if not isinstance(Domain.get_db(), mock.Mock):
             return fn(*args, **kwargs)
     return inner
+
+
+def disable_quickcache(test_case=None):
+    """A patch/decorator that disables quickcache
+
+    :param test_case: Optional test class or function. The patch is
+    applied as a decorator to this object if provided.
+    :returns: A `mock.patch` object that disables the cache when started
+    and re-enables it when stopped OR a decorated test case when
+    `test_case` is provided.
+    """
+    def call(self, *args, **kw):
+        return self.fn(*args, **kw)
+    patch = mock.patch("quickcache.quickcache_helper.QuickCacheHelper.__call__", call)
+    return patch if test_case is None else patch(test_case)
+
+
+def flaky_slow(test=None, max_runs=5, min_passes=1, rerun_filter=lambda *a: True):
+    """A flaky test decorator that waits between reruns
+
+    Use for tests that depend on eventual database consistency.
+    """
+    from flaky import flaky
+
+    def rerun(*args):
+        sleep(0.5)
+        return rerun_filter(*args)
+
+    deco = flaky(max_runs=max_runs, min_passes=min_passes, rerun_filter=rerun)
+    return deco if test is None else deco(test)

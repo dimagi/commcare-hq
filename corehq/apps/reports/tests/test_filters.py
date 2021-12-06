@@ -5,7 +5,7 @@ from corehq.util.elastic import ensure_index_deleted
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
@@ -259,7 +259,7 @@ class TestEMWFilterOutput(TestCase):
     def tearDownClass(cls):
         ensure_index_deleted(USER_INDEX)
         for user in cls.user_list:
-            user.delete(deleted_by='')
+            user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
 
     def _send_users_to_es(self):

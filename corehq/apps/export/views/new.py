@@ -3,10 +3,11 @@ import json
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import SuspiciousOperation
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.generic import View
@@ -51,7 +52,7 @@ from corehq.apps.export.views.utils import (
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, API_ACCESS
 
 
 class BaseExportView(BaseProjectDataView):
@@ -90,7 +91,8 @@ class BaseExportView(BaseProjectDataView):
     def terminology(self):
         return {
             'page_header': _("Export Settings"),
-            'help_text': mark_safe(_("""
+            'help_text': mark_safe(  # nosec: no user input
+                _("""
                 Learn more about exports on our <a
                 href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview"
                 target="_blank">Help Site</a>.
@@ -124,6 +126,7 @@ class BaseExportView(BaseProjectDataView):
             'allow_deid': allow_deid,
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
+            'has_api_access': domain_has_privilege(self.domain, API_ACCESS),
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
             'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,
             'owner_name': WebUser.get_by_user_id(owner_id).username if owner_id else None,
@@ -192,11 +195,7 @@ class BaseExportView(BaseProjectDataView):
         export.save()
         messages.success(
             request,
-            mark_safe(
-                _("Export <strong>{}</strong> saved.").format(
-                    export.name
-                )
-            )
+            format_html(_("Export <strong>{}</strong> saved."), export.name)
         )
         return export._id
 
@@ -229,6 +228,8 @@ class BaseExportView(BaseProjectDataView):
                 return json_response({
                     'redirect': url,
                 })
+            if request.POST.get("count"):
+                return HttpResponse(url)
             return HttpResponseRedirect(url)
 
     @memoized
@@ -364,18 +365,38 @@ class DeleteNewCustomExportView(BaseExportView):
             raise Http404()
 
     def commit(self, request):
-        self.export_type = self.kwargs.get('export_type')
-        export = self.export_instance
-        export.delete()
-        messages.success(
-            request,
-            mark_safe(
-                _("Export <strong>{}</strong> was deleted.").format(
-                    export.name
-                )
+        count = request.POST.get("count")
+        if count:
+            deletelist = json.loads(request.POST.get("deleteList"))
+            self.export_type = self.kwargs.get('export_type')
+            export = self.export_instance
+            export.delete()
+            for item in deletelist:
+                bulkexport = self.export_instance_cls.get(item["id"])
+                bulkexport.delete()
+
+            if self.export_instance.is_odata_config or self.export_instance.export_format == "html":
+                delete = "feed"
+            else:
+                delete = "export"
+            if int(count) > 1:
+                message = format_html(_("<strong>{}</strong> {}{} were deleted."), count, delete, "s")
+            else:
+                message = format_html(_("<strong>{}</strong> {}{} was deleted."), count, delete, "")
+            messages.success(
+                request,
+                message
             )
-        )
-        return export._id
+            return export._id
+        else:
+            self.export_type = self.kwargs.get('export_type')
+            export = self.export_instance
+            export.delete()
+            messages.success(
+                request,
+                format_html(_("Export <strong>{}</strong> was deleted."), export.name)
+            )
+            return export._id
 
     @property
     @memoized
@@ -425,11 +446,7 @@ class CopyExportView(View):
             new_export.save()
             messages.success(
                 request,
-                mark_safe(
-                    _("Export <strong>{}</strong> created.").format(
-                        new_export.name
-                    )
-                )
+                format_html(_("Export <strong>{}</strong> created."), new_export.name)
             )
         redirect = request.GET.get('next', reverse('data_interfaces_default', args=[domain]))
         return HttpResponseRedirect(redirect)

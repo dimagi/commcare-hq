@@ -12,9 +12,6 @@ from dimagi.utils.couch.loosechange import map_reduce
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
-from corehq.apps.commtrack.dbaccessors import (
-    get_supply_point_ids_in_domain_by_location,
-)
 from corehq.apps.consumption.shortcuts import (
     build_consumption_dict,
     get_loaded_default_monthly_consumption,
@@ -167,8 +164,7 @@ class LocationExporter(object):
             # we'll be needing these, so init 'em:
             self.products = Product.by_domain(self.domain)
             self.product_codes = [p.code for p in self.products]
-            self.supply_point_map = get_supply_point_ids_in_domain_by_location(
-                self.domain)
+            self.supply_point_map = SupplyInterface(self.domain).get_supply_point_ids_by_location()
             self.administrative_types = {
                 lt.name for lt in self.location_types
                 if lt.administrative

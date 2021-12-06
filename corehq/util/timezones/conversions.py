@@ -1,8 +1,6 @@
 from django.utils.encoding import smart_str
 import pytz
 
-from corehq.apps.tzmigration.api import phone_timezones_have_been_processed
-
 from corehq.const import USER_DATETIME_FORMAT, SERVER_DATETIME_FORMAT
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.dates import safe_strftime
@@ -62,6 +60,11 @@ class UserTime(_HQTZTime):
 
 
 class PhoneTime(_HQTZTime):
+    """Utility for dealing with datetime fields that were originally in the phone TZ
+    such as form.meta.timeEnd.
+
+    This utility transparently handles the timezone migration for legacy couch domains.
+    """
 
     def server_time(self):
         return ServerTime(_adjust_phone_datetime_to_utc(
@@ -127,10 +130,7 @@ def _adjust_phone_datetime_to_utc(value, phone_tz):
     """
     phone_tz = _soft_assert_tz_not_string(phone_tz)
     assert value.tzinfo is None
-    if phone_timezones_have_been_processed():
-        return value
-    else:
-        return _adjust_datetime_to_utc(value, phone_tz)
+    return value
 
 
 def _adjust_utc_datetime_to_phone_datetime(value, phone_tz):
@@ -143,7 +143,4 @@ def _adjust_utc_datetime_to_phone_datetime(value, phone_tz):
     """
     phone_tz = _soft_assert_tz_not_string(phone_tz)
     assert value.tzinfo is None
-    if phone_timezones_have_been_processed():
-        return value.replace(tzinfo=pytz.utc)
-    else:
-        return _adjust_utc_datetime_to_timezone(value, phone_tz)
+    return value.replace(tzinfo=pytz.utc)

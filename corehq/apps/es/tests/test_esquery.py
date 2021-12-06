@@ -1,6 +1,6 @@
 from copy import deepcopy
 from django.test import SimpleTestCase
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.es import filters, forms, users
 from corehq.apps.es.es_query import HQESQuery

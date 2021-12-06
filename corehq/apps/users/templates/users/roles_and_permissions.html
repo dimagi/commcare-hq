@@ -12,7 +12,6 @@
   {% initial_page_data "can_edit_roles" can_edit_roles %}
   {% initial_page_data "default_role" default_role %}
   {% initial_page_data "report_list" report_list %}
-  {% initial_page_data "web_apps_list" web_apps_list %}
   {% initial_page_data "apps_list" apps_list %}
   {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
   {% initial_page_data "landing_page_choices" landing_page_choices %}
@@ -20,6 +19,7 @@
   {% initial_page_data "has_report_builder_access" has_report_builder_access %}
   {% initial_page_data "data_file_download_enabled" data_file_download_enabled %}
   {% initial_page_data "export_ownership_enabled" export_ownership_enabled %}
+  {% initial_page_data "data_registry_choices" data_registry_choices %}
 
   <p class="lead">
     {% if can_edit_roles %}
@@ -95,6 +95,9 @@
           <th class="text-center">
             {% trans "Apps" %}
           </th>
+          <th class="text-center">
+            {% trans "Messaging" %}
+          </th>
           {% if show_integration %}
             <th class="text-center">
               {% trans "Integration" %}
@@ -106,6 +109,11 @@
           <th class="text-center">
             {% trans "Subscription Info" %}
           </th>
+          {% if request|toggle_enabled:"DATA_REGISTRY" %}
+          <th class="text-center">
+            {% trans "Data Registries" %}
+          </th>
+          {% endif %}
           <th>{% trans "Actions" %}</th>
         </tr>
         </thead>
@@ -160,6 +168,11 @@
                                               view: permissions.view_apps,
                                             }"></div>
           </td>
+          <td class="text-center">
+            <div data-bind="permissionIcon: {
+                                              edit: permissions.edit_messaging,
+                                            }"></div>
+          </td>
           {% if show_integration %}
             <td class="text-center">
               <div data-bind="permissionIcon: {
@@ -175,7 +188,7 @@
             <div data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length">
               <strong>{% trans "Only" %}</strong><br/>
               <span data-bind="foreach: reportPermissions.specific">
-                                    <span class="label label-default" data-bind="html: name, visible: value"></span><br data-bind="visible: value" />
+                                    <span class="label label-default" data-bind="text: name, visible: value"></span><br data-bind="visible: value" />
                                 </span>
             </div>
           </td>
@@ -185,6 +198,25 @@
                                               manage: permissions.edit_billing
                                             }"></div>
           </td>
+          {% if request|toggle_enabled:"DATA_REGISTRY" %}
+          <td class="text-center">
+            <div data-bind="visible: manageRegistryPermission.all()">{% trans "Manage All" %}</div>
+            <div data-bind="visible: !manageRegistryPermission.all() && manageRegistryPermission.filteredSpecific().length">
+              <strong>{% trans "Manage Only" %}</strong><br/>
+              <span data-bind="foreach: manageRegistryPermission.filteredSpecific">
+                  <span class="label label-default" data-bind="text: name"></span><br />
+              </span>
+            </div>
+            <br/>
+            <div data-bind="visible: viewRegistryContentsPermission.all()">{% trans "View All Data" %}</div>
+            <div data-bind="visible: !viewRegistryContentsPermission.all() && viewRegistryContentsPermission.filteredSpecific().length">
+              <strong>{% trans "View Data From" %}</strong><br/>
+              <span data-bind="foreach: viewRegistryContentsPermission.filteredSpecific">
+                  <span class="label label-default" data-bind="text: name"></span><br />
+              </span>
+            </div>
+          </td>
+          {% endif %}
           <td>
             <button class="btn btn-default" data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null">
                                 <span data-bind="visible: !$root.allowEdit">

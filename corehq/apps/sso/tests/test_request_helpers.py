@@ -130,8 +130,8 @@ class TestIsRequestBlockedFromViewingDomainDueToSso(TestCase):
     def tearDownClass(cls):
         AuthenticatedEmailDomain.objects.all().delete()
         IdentityProvider.objects.all().delete()
-        cls.user_without_idp.delete(None)
-        cls.user.delete(None)
+        cls.user_without_idp.delete(cls.external_domain.name, deleted_by=None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain_created_by_user.delete()
         cls.external_domain.delete()
         cls.domain.delete()

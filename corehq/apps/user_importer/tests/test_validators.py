@@ -1,5 +1,5 @@
 from faker import Faker
-from mock import patch
+from unittest.mock import patch
 from testil import assert_raises
 
 from corehq.apps.user_importer.exceptions import UserUploadError
@@ -97,8 +97,8 @@ TEST_CASES = [
             {'email': 'Joe Smith <email@example.com>'},
             {'email': 'email@example.com'}
         ],
-        EmailValidator('domain'),
-        {0: EmailValidator.error_message}
+        EmailValidator('domain', 'email'),
+        {0: EmailValidator.error_message.format('email')}
     ),
     (
         [

@@ -27,7 +27,7 @@
     <select class="form-control js-lang">
       <% _.each(langs, function(lang) { %>
       <option <% if (lang === currentLang) { %>selected<% } %>>
-      <%= lang %>
+      <%- lang %>
       </option>
       <% }) %>
     </select>

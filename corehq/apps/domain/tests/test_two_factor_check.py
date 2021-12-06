@@ -2,7 +2,7 @@ import json
 
 from django.test import RequestFactory, TestCase
 
-from mock import Mock, mock
+from unittest.mock import Mock, patch
 
 from corehq.apps.domain.decorators import (
     OTP_AUTH_FAIL_RESPONSE,
@@ -11,6 +11,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.sso.tests.generator import create_request_session
 from corehq.apps.users.models import CouchUser
 from corehq.util.test_utils import flag_enabled
 
@@ -37,14 +38,32 @@ class TestTwoFactorCheck(TestCase):
     def test_two_factor_required_with_feature_flag(self):
         view_func = 'dummy_view_func'
         request = self.request
-        two_factor_required_bool = _two_factor_required(view_func, self.domain, request.couch_user)
+        two_factor_required_bool = _two_factor_required(
+            view_func,
+            self.domain,
+            request
+        )
         self.assertTrue(two_factor_required_bool)
+
+    def test_two_factor_check_with_sso_request(self):
+        view_func = 'dummy_view_func'
+        request = self.request
+        create_request_session(request, use_sso=True)
+        two_factor_required_bool = _two_factor_required(
+            view_func,
+            self.domain,
+            request
+        )
+        self.assertFalse(two_factor_required_bool)
 
     def test_two_factor_required_without_feature_flag(self):
         view_func = 'dummy_view_func'
         request = self.request
-        two_factor_required_bool = _two_factor_required(view_func, self.domain,
-                                                        request.couch_user)
+        two_factor_required_bool = _two_factor_required(
+            view_func,
+            self.domain,
+            request
+        )
         self.assertFalse(two_factor_required_bool)
 
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
@@ -56,7 +75,7 @@ class TestTwoFactorCheck(TestCase):
         view_func = 'dummy_view_func'
         two_factor_check_fn = two_factor_check(view_func, api_key)
         function_getting_checked_with_auth = two_factor_check_fn(mock_fn_to_call)
-        with mock.patch('corehq.apps.domain.decorators._ensure_request_couch_user',
+        with patch('corehq.apps.domain.decorators._ensure_request_couch_user',
                         return_value=request.couch_user):
             response = function_getting_checked_with_auth(request, self.domain.name)
             self.assertEqual(response.status_code, 401)
@@ -73,7 +92,7 @@ class TestTwoFactorCheck(TestCase):
         view_func = 'dummy_view_func'
         two_factor_check_fn = two_factor_check(view_func, api_key)
         function_getting_checked_with_auth = two_factor_check_fn(mock_fn_to_call)
-        with mock.patch('corehq.apps.domain.decorators._ensure_request_couch_user',
+        with patch('corehq.apps.domain.decorators._ensure_request_couch_user',
                         return_value=request.couch_user):
             response = function_getting_checked_with_auth(request, self.domain.name)
             self.assertEqual(response, 'Function was called!')

@@ -26,7 +26,7 @@
   </p>
   <!--/ko-->
 </div>
-<!--ko if: !_.isEmpty(result.errors)-->
+<!--ko if: !$root._.isEmpty(result.errors)-->
 <div class="alert alert-warning">
   <ul class="list-unstyled">
     <!--ko foreach: result.errors-->
@@ -55,7 +55,7 @@
   <p>{% trans "Unable to retrieve details" %}</p>
 </div>
 <!--/ko-->
-<!--ko if: state === $root.states.FAILED && result && !_.isEmpty(result.errors)-->
+<!--ko if: state === $root.states.FAILED && result && !$root._.isEmpty(result.errors)-->
 <div class="alert alert-warning">
   <ul class="list-unstyled">
     <!--ko foreach: result.errors-->

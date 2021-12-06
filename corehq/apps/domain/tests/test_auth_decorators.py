@@ -1,10 +1,12 @@
 from functools import wraps
 
 from django.contrib.auth.models import AnonymousUser
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponse
 from django.test import SimpleTestCase, TestCase, RequestFactory
-from mock import mock
+from unittest.mock import patch
 
+from corehq.apps.api.cors import ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW, ACCESS_CONTROL_ALLOW_HEADERS
+from corehq.apps.api.decorators import allow_cors
 from corehq.apps.domain.decorators import _login_or_challenge, api_auth
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -204,9 +206,9 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
         decorated_view = api_auth(sample_view)
         request = _get_request()
         request.META['HTTP_AUTHORIZATION'] = auth_header
-        with mock.patch(decorator_to_mock, mock_successful_auth):
+        with patch(decorator_to_mock, mock_successful_auth):
             self.assertEqual(SUCCESS, decorated_view(request, self.domain_name))
-        with mock.patch(decorator_to_mock, mock_failed_auth):
+        with patch(decorator_to_mock, mock_failed_auth):
             self.assertForbidden(decorated_view(request, self.domain_name))
 
     def test_api_auth_oauth(self):
@@ -227,10 +229,45 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
         decorated_view = api_auth(sample_view)
         request = _get_request()
         request.META['HTTP_X_MAC_DIGEST'] = 'fomplayerAuth'
-        with mock.patch(decorator_to_mock, mock_successful_auth):
+        with patch(decorator_to_mock, mock_successful_auth):
             # even if formplayer returns successful auth, the api_auth decorator rejects it because
             # it calls _get_multi_auth_decorator with allow_formplayer=False, short-circuiting
             # any additional auth checkng.
             self.assertForbidden(decorated_view(request, self.domain_name))
-        with mock.patch(decorator_to_mock, mock_failed_auth):
+        with patch(decorator_to_mock, mock_failed_auth):
             self.assertForbidden(decorated_view(request, self.domain_name))
+
+
+def sample_view_with_response(request, *args, **kwargs):
+    return HttpResponse(SUCCESS)
+
+
+class AllowCORSDecoratorTest(TestCase):
+    domain_name = 'allow-cors-test'
+
+    def _assert_no_cors(self, response):
+        self.assertFalse(response.has_header(ACCESS_CONTROL_ALLOW_ORIGIN))
+
+    def _assert_cors(self, response):
+        self.assertEqual(response[ACCESS_CONTROL_ALLOW_ORIGIN], '*')
+        self.assertEqual(response[ACCESS_CONTROL_ALLOW_HEADERS], 'Content-Type, Authorization')
+
+    def test_no_decorator_no_cors_headers(self):
+        self._assert_no_cors(sample_view_with_response(_get_request()))
+
+    def test_decorator_has_headers(self):
+        response = allow_cors(['GET'])(sample_view_with_response)(_get_request())
+        self._assert_cors(response)
+
+    def test_method_exclusions(self):
+        response = allow_cors(['POST'])(sample_view_with_response)(_get_request())
+        self._assert_no_cors(response)
+
+    def test_options_no_decorator(self):
+        response = sample_view_with_response(RequestFactory().options('/foobar/'))
+        self._assert_no_cors(response)
+
+    def test_options(self):
+        response = allow_cors(['POST'])(sample_view_with_response)(RequestFactory().options('/foobar/'))
+        self._assert_cors(response)
+        self.assertEqual(response[ACCESS_CONTROL_ALLOW], 'POST, OPTIONS')

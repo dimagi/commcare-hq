@@ -1,6 +1,6 @@
 import uuid
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -10,11 +10,9 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (
     change_meta_from_kafka_message,
 )
-from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
-from corehq.apps.change_feed.topics import get_multi_topic_offset
+from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata, get_simple_form_xml
@@ -49,18 +47,8 @@ class FormPillowTest(TestCase):
         ensure_index_deleted(USER_INDEX)
         super().tearDownClass()
 
-    def test_xform_pillow_couch(self):
-        form = self._make_form()
-        kafka_seq = self._get_kafka_seq()
-        producer.send_change(topics.FORM, doc_to_change(form.to_json()).metadata)
-        self.assertFalse(self.app.has_submissions)
-
-        self.pillow.process_changes(since=kafka_seq, forever=False)
-        self.assertTrue(Application.get(self.app._id).has_submissions)
-
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_pillow_sql(self):
-        consumer = get_test_kafka_consumer(topics.FORM, topics.FORM_SQL)
+        consumer = get_test_kafka_consumer(topics.FORM_SQL)
         kafka_seq = self._get_kafka_seq()
 
         form = self._make_form()
@@ -75,9 +63,8 @@ class FormPillowTest(TestCase):
         self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertTrue(Application.get(self.app._id).has_submissions)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_pillow_non_existant_build_id(self):
-        consumer = get_test_kafka_consumer(topics.FORM, topics.FORM_SQL)
+        consumer = get_test_kafka_consumer(topics.FORM_SQL)
         kafka_seq = self._get_kafka_seq()
 
         form = self._make_form(build_id='not-here')
@@ -92,9 +79,8 @@ class FormPillowTest(TestCase):
         self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertFalse(Application.get(self.app._id).has_submissions)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_pillow_mismatch_domains(self):
-        consumer = get_test_kafka_consumer(topics.FORM, topics.FORM_SQL)
+        consumer = get_test_kafka_consumer(topics.FORM_SQL)
         kafka_seq = self._get_kafka_seq()
         self.app.domain = 'not-this-domain'
         self.app.save()
@@ -111,7 +97,6 @@ class FormPillowTest(TestCase):
         self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertFalse(Application.get(self.app._id).has_submissions)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_two_forms_with_same_app(self):
         """Ensures two forms submitted to the same app does not error"""
         kafka_seq = self._get_kafka_seq()
@@ -144,6 +129,4 @@ class FormPillowTest(TestCase):
         return result.xform
 
     def _get_kafka_seq(self):
-        # KafkaChangeFeed listens for multiple topics (form, form-sql) in the form pillow,
-        # so we need to provide a dict of seqs to kafka
-        return get_multi_topic_offset([topics.FORM, topics.FORM_SQL])
+        return get_topic_offset(topics.FORM_SQL)

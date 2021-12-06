@@ -18,13 +18,16 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
-from corehq.apps.users.dbaccessors.all_commcare_users import (
-    get_commcare_users_by_filters,
+from corehq.apps.users.dbaccessors import (
+    count_invitations_by_filters,
+    count_mobile_users_by_filters,
+    count_web_users_by_filters,
+    get_invitations_by_filters,
+    get_mobile_users_by_filters,
     get_mobile_usernames_by_filters,
-    get_all_user_rows,
-    get_web_user_count,
+    get_web_users_by_filters,
 )
-from corehq.apps.users.models import CouchUser, UserRole, Invitation
+from corehq.apps.users.models import UserRole
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
     flatten_json,
@@ -47,6 +50,7 @@ def build_data_headers(keys, header_prefix='data'):
         {header_prefix: {key: None for key in keys}}
     )
 
+
 def get_devices(user):
     """
     Returns a comma-separated list of IMEI numbers of the user's devices, sorted with most-recently-used first
@@ -54,6 +58,37 @@ def get_devices(user):
     return ', '.join([device.device_id for device in sorted(
         user.devices, key=lambda d: d.last_used, reverse=True
     )])
+
+
+def get_location_codes(location_cache, loc_id, assigned_loc_ids):
+    location_codes = []
+    try:
+        location_codes.append(location_cache.get(loc_id))
+    except SQLLocation.DoesNotExist:
+        pass
+    for location_id in assigned_loc_ids:
+        # skip if primary location_id, as it is already added to the start of list above
+        if location_id != loc_id:
+            try:
+                location_codes.append(location_cache.get(location_id))
+            except SQLLocation.DoesNotExist:
+                pass
+    return location_codes
+
+
+def get_phone_numbers(user_data):
+    phone_numbers_dict = {}
+    if user_data.phone_number:
+        phone_numbers_dict.update({
+            'phone-number 1': user_data.phone_number
+        })
+        user_data.phone_numbers.remove(user_data.phone_number)
+
+        for n, mobile_number in enumerate(user_data.phone_numbers):
+            # Add 2 to n, so number index will start at 2
+            # since phone-number-1 is reserved for primary number
+            phone_numbers_dict.update({f'phone-number {n + 2}': mobile_number})
+    return phone_numbers_dict
 
 
 def make_mobile_user_dict(user, group_names, location_cache, domain, fields_definition):
@@ -70,30 +105,17 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
         except CustomDataFieldsProfile.DoesNotExist:
             profile = None
     activity = user.reporting_metadata
-
-    location_codes = []
-    try:
-        location_codes.append(location_cache.get(user.location_id))
-    except SQLLocation.DoesNotExist:
-        pass
-    for location_id in user.assigned_location_ids:
-        # skip if primary location_id, as it is already added to the start of list above
-        if location_id != user.location_id:
-            try:
-                location_codes.append(location_cache.get(location_id))
-            except SQLLocation.DoesNotExist:
-                pass
+    location_codes = get_location_codes(location_cache, user.location_id, user.assigned_location_ids)
 
     def _format_date(date):
         return date.strftime('%Y-%m-%d %H:%M:%S') if date else ''
 
-    return {
+    user_dict = {
         'data': model_data,
         'uncategorized_data': uncategorized_data,
         'group': group_names,
         'name': user.full_name,
         'password': "********",  # dummy display string for passwords
-        'phone-number': user.phone_number,
         'email': user.email,
         'username': user.raw_username,
         'language': user.language,
@@ -109,6 +131,10 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
         'last_sync (read only)': activity.last_sync_for_user.sync_date,
     }
 
+    user_dict.update(get_phone_numbers(user))
+
+    return user_dict
+
 
 def get_user_role_name(domain_membership):
     if domain_membership.is_admin:
@@ -117,40 +143,50 @@ def get_user_role_name(domain_membership):
         role_name = ''
         if domain_membership.role_id:
             try:
-                role_name = UserRole.get(domain_membership.role_id).name
-            except ResourceNotFound:
+                role_name = UserRole.objects.by_couch_id(domain_membership.role_id).name
+            except UserRole.DoesNotExist:
                 role_name = ugettext('Unknown Role')
     return role_name
 
 
-def make_web_user_dict(user, domain):
-    user = CouchUser.wrap_correctly(user['doc'])
+def make_web_user_dict(user, location_cache, domain):
     domain_membership = user.get_domain_membership(domain)
     role_name = get_user_role_name(domain_membership)
+    location_codes = get_location_codes(location_cache, domain_membership.location_id,
+                                        domain_membership.assigned_location_ids)
     return {
         'username': user.username,
         'first_name': user.first_name,
         'last_name': user.last_name,
         'email': user.email,
         'role': role_name,
+        'location_code': location_codes,
         'status': ugettext('Active User'),
         'last_access_date (read only)': domain_membership.last_accessed,
         'last_login (read only)': user.last_login,
         'remove': '',
+        'domain': domain,
     }
 
 
-def make_invited_web_user_dict(invite):
+def make_invited_web_user_dict(invite, location_cache):
+    location_codes = []
+    try:
+        location_codes.append(location_cache.get(invite.supply_point))
+    except SQLLocation.DoesNotExist:
+        pass
     return {
         'username': invite.email,
         'first_name': 'N/A',
         'last_name': 'N/A',
         'email': invite.email,
         'role': invite.get_role_name(),
+        'location_code': location_codes,
         'status': ugettext('Invited'),
         'last_access_date (read only)': 'N/A',
         'last_login (read only)': 'N/A',
         'remove': '',
+        'domain': invite.domain,
     }
 
 
@@ -166,40 +202,42 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
         domain,
         UserFieldsView.field_type
     )
-
     unrecognized_user_data_keys = set()
     user_groups_length = 0
     max_location_length = 0
+    phone_numbers_length = 0
     user_dicts = []
-    domains_list = [domain]
-    is_multi_domain_download = False
-    if 'domains' in user_filters:
-        domains_list = user_filters['domains']
-    if domains_list != [domain]:
-        is_multi_domain_download = True
+    (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
 
     current_user_downloaded_count = 0
     for current_domain in domains_list:
         location_cache = LocationIdToSiteCodeCache(current_domain)
-        for n, user in enumerate(get_commcare_users_by_filters(current_domain, user_filters)):
+        for n, user in enumerate(get_mobile_users_by_filters(current_domain, user_filters)):
             group_memoizer = load_memoizer(current_domain)
             group_names = sorted([
                 group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
             ], key=alphanumeric_sort_key)
+
             user_dict = make_mobile_user_dict(user, group_names, location_cache, current_domain, fields_definition)
             user_dicts.append(user_dict)
             unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
             user_groups_length = max(user_groups_length, len(group_names))
             max_location_length = max(max_location_length, len(user_dict["location_code"]))
-            if task:
-                DownloadBase.set_progress(task, n + current_user_downloaded_count, total_count)
-        current_user_downloaded_count += n + 1
+
+            user_phone_numbers = [k for k in user_dict.keys() if 'phone-number' in k]
+            phone_numbers_length = max(phone_numbers_length, len(user_phone_numbers))
+            current_user_downloaded_count += 1
+            DownloadBase.set_progress(task, current_user_downloaded_count, total_count)
 
     user_headers = [
-        'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
-        'registered_on (read only)', 'last_submission (read only)', 'last_sync (read only)'
+        'username', 'password', 'name', 'email', 'language', 'role',
+        'user_id', 'is_active', 'User IMEIs (read only)', 'registered_on (read only)',
+        'last_submission (read only)', 'last_sync (read only)',
     ]
+
+    user_headers.extend(json_to_headers(
+        {'phone-number': list(range(1, phone_numbers_length + 1))}
+    ))
 
     if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
         user_headers += ['user_profile']
@@ -216,30 +254,51 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
         user_headers.extend(json_to_headers(
             {'location_code': list(range(1, max_location_length + 1))}
         ))
-    if is_multi_domain_download:
+    if is_cross_domain:
         user_headers += ['domain']
     return user_headers, get_user_rows(user_dicts, user_headers)
 
 
-def parse_web_users(domain, task=None, total_count=None):
+def parse_web_users(domain, user_filters, task=None, total_count=None):
     user_dicts = []
-    for n, user in enumerate(get_all_user_rows(domain, include_web_users=True, include_mobile_users=False,
-                                               include_inactive=False, include_docs=True)):
-        user_dict = make_web_user_dict(user, domain)
-        user_dicts.append(user_dict)
-        if task:
-            DownloadBase.set_progress(task, n, total_count)
-    for m, invite in enumerate(Invitation.by_domain(domain)):
-        user_dict = make_invited_web_user_dict(invite)
-        user_dicts.append(user_dict)
-        if task:
-            DownloadBase.set_progress(task, n + m, total_count)
+    max_location_length = 0
+    (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
+    progress = 0
+    for current_domain in domains_list:
+        location_cache = LocationIdToSiteCodeCache(current_domain)
+        for user in get_web_users_by_filters(current_domain, user_filters):
+            user_dict = make_web_user_dict(user, location_cache, current_domain)
+            user_dicts.append(user_dict)
+            max_location_length = max(max_location_length, len(user_dict["location_code"]))
+            progress += 1
+            DownloadBase.set_progress(task, progress, total_count)
+        for invite in get_invitations_by_filters(current_domain, user_filters):
+            user_dict = make_invited_web_user_dict(invite, location_cache)
+            user_dicts.append(user_dict)
+            progress += 1
+            DownloadBase.set_progress(task, progress, total_count)
 
     user_headers = [
         'username', 'first_name', 'last_name', 'email', 'role', 'last_access_date (read only)',
         'last_login (read only)', 'status', 'remove'
     ]
+    if domain_has_privilege(domain, privileges.LOCATIONS):
+        user_headers.extend(json_to_headers(
+            {'location_code': list(range(1, max_location_length + 1))}
+        ))
+    if is_cross_domain:
+        user_headers += ['domain']
     return user_headers, get_user_rows(user_dicts, user_headers)
+
+
+def get_domains_from_user_filters(domain, user_filters):
+    domains_list = [domain]
+    is_cross_domain = False
+    if 'domains' in user_filters:
+        domains_list = user_filters['domains']
+    if domains_list != [domain]:
+        is_cross_domain = True
+    return (is_cross_domain, domains_list)
 
 
 def parse_groups(groups):
@@ -269,23 +328,22 @@ def parse_groups(groups):
         for group_dict in group_dicts:
             row = dict(flatten_json(group_dict))
             yield [row.get(header, '') for header in group_headers]
+
     return group_headers, _get_group_rows()
 
 
 def count_users_and_groups(domain, user_filters, group_memoizer):
-    users_count = get_commcare_users_by_filters(domain, user_filters, count_only=True)
+    users_count = count_mobile_users_by_filters(domain, user_filters)
     groups_count = len(group_memoizer.groups)
 
     return users_count + groups_count
 
 
 def dump_usernames(domain, download_id, user_filters, task, owner_id):
-    domains_list = [domain]
-    if 'domains' in user_filters:
-        domains_list = user_filters['domains']  # for instances of multi-domain download
+    (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
     users_count = 0
     for download_domain in domains_list:
-        users_count += get_commcare_users_by_filters(download_domain, user_filters, count_only=True)
+        users_count += count_web_users_by_filters(download_domain, user_filters)
     DownloadBase.set_progress(task, 0, users_count)
 
     usernames = []
@@ -336,8 +394,7 @@ def load_memoizer(domain):
 
 
 def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
-
-    domains_list = user_filters['domains']
+    (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
 
     users_groups_count = 0
     groups = set()
@@ -369,17 +426,22 @@ def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
     _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_groups_count, owner_id)
 
 
-def dump_web_users(domain, download_id, task, owner_id):
-    users_count = get_web_user_count(domain, include_inactive=False)
-    DownloadBase.set_progress(task, 0, users_count)
+def dump_web_users(domain, download_id, user_filters, task, owner_id):
+    (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
+    total_count = 0
+    for current_domain in domains_list:
+        total_count += count_web_users_by_filters(current_domain, user_filters)
+        total_count += count_invitations_by_filters(current_domain, user_filters)
 
-    user_headers, user_rows = parse_web_users(domain, task, users_count)
+    DownloadBase.set_progress(task, 0, total_count)
+
+    user_headers, user_rows = parse_web_users(domain, user_filters, task, total_count)
 
     headers = [('users', [user_headers])]
     rows = [('users', user_rows)]
 
     filename = "{}_users_{}.xlsx".format(domain, uuid.uuid4().hex)
-    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_count, owner_id)
+    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, total_count, owner_id)
 
 
 class GroupNameError(Exception):

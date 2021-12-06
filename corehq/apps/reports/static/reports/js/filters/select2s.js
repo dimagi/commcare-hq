@@ -3,10 +3,12 @@
  */
 hqDefine("reports/js/filters/select2s", [
     'jquery',
+    'underscore',
     'knockout',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
+    _,
     ko
 ) {
     var initSingle = function (el) {
@@ -71,7 +73,6 @@ hqDefine("reports/js/filters/select2s", [
         if (!data.endpoint) {
             $filter.select2({
                 width: '100%',
-                escapeMarkup: function (m) { return m; },
             });
             return;
         }
@@ -120,7 +121,6 @@ hqDefine("reports/js/filters/select2s", [
                 },
             },
             multiple: true,
-            escapeMarkup: function (m) { return m; },
             width: '100%',
         });
 

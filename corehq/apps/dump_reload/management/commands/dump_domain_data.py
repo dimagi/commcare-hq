@@ -72,7 +72,7 @@ class Command(BaseCommand):
 
         if not console:
             with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:
-                z.writestr('meta.json', json.dumps(meta))
+                z.writestr('meta.json', json.dumps(meta, indent=4))
 
         self._print_stats(meta)
         self.stdout.write('\nData dumped to file: {}'.format(zipname))

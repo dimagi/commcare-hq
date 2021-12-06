@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.exceptions import CaseXPathValidationError
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -31,7 +31,7 @@ class FormFilterErrorTests(SimpleTestCase, TestXmlMixin):
         with self.assertRaises(CaseXPathValidationError):
             self.factory.app.create_suite()
 
-    def test_no_error_when_user_case(self, *args):
+    def test_no_error_when_usercase(self, *args):
         self.suite_xml_is_usercase_in_use_mock.return_value = True
 
         __, reg_form = self.factory.new_basic_module('reg_module', 'mother')

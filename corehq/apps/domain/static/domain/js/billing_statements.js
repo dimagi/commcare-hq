@@ -1,5 +1,6 @@
 hqDefine("domain/js/billing_statements", [
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
     'accounting/js/payment_method_handler',
@@ -7,6 +8,7 @@ hqDefine("domain/js/billing_statements", [
     'accounting/js/lib/stripe',
 ], function (
     $,
+    _,
     ko,
     initialPageData,
     paymentMethodHandlers,

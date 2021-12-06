@@ -10,7 +10,7 @@ from corehq.apps.formplayer_api.management.commands.prime_formplayer_restores im
     _get_user_rows, _get_users_from_csv
 )
 from corehq.apps.users.models import CouchUser
-from corehq.util.argparse_types import validate_integer
+from corehq.util.argparse_types import validate_range
 from custom.covid.tasks import get_prime_restore_user_params, clear_formplayer_db_for_user
 
 
@@ -48,14 +48,15 @@ class Command(BaseCommand):
                                  'only users in this file will be synced.')
 
         parser.add_argument('--domains', nargs='+', help='Match users in these domains.')
-        parser.add_argument('--last-synced-hours', action=validate_integer(gt=0, lt=673), default=48,
+        parser.add_argument('--last-synced-hours', type=int, action=validate_range(gt=0, lt=673), default=48,
                             help='Match users who have synced within the given window. '
-                                 'Defaults to 48 hours. Max = 472 (4 week).')
-        parser.add_argument('--not-synced-hours', action=validate_integer(gt=0, lt=169),
+                                 'Defaults to %(default)s hours. Max = 472 (4 weeks).')
+        parser.add_argument('--not-synced-hours', type=int, action=validate_range(gt=0, lt=169),
                             help='Exclude users who have synced within the given window. '
                                  'Max = 168 (1 week).')
 
-        parser.add_argument('--limit', action=validate_integer(gt=0), help='Limit the number of users matched.')
+        parser.add_argument('--limit', type=int, action=validate_range(gt=0),
+                            help='Limit the number of users matched.')
         parser.add_argument('--dry-run', action='store_true', help='Only print the list of users.')
         parser.add_argument('--dry-run-count', action='store_true', help='Only print the count of matched users.')
 

@@ -41,6 +41,12 @@
               {% trans "Email when finished (recommended for applications with large number of multimedia files or heavy files)" %}
             </label>
           </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="force">
+              {% trans "Force pull all multimedia (this can take a long time and will re-write all the multimedia in your app)" %}
+            </label>
+          </div>
           <button type="submit" class="btn btn-primary">
             <i class="fa fa-refresh"></i>
             {% trans "Sync" %}
@@ -50,45 +56,6 @@
     </div>
   {% endif %}
 
-  {% if request|toggle_enabled:"MULTI_MASTER_LINKED_DOMAINS" %}
-    <div class="panel panel-appmanager">
-      <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">{% trans 'Copy Multimedia from Another Application' %}</h4>
-      </div>
-      <div class="panel-body">
-        {% if import_apps %}
-          <form action="{% url "copy_multimedia" domain app.id %}" method="POST">
-            <p class="help-block">
-              Select an app to copy over any media that is present in the selected app but missing in this app.
-            </p>
-            <p>
-              {% csrf_token %}
-              <select name="app_id" class="form-control hqwebapp-select2"
-                      data-placeholder="{% trans_html_attr "Select an app" %}">
-                <option value=""></option>
-                {% for app in import_apps %}
-                  {# Poor readability because any whitespace within the option will also appear in the title attribute and therefore on hover #}
-                  <option value="{{ app.id }}">{{ app.name }} ({% for id, count in import_app_counts.items %}{% if id == app.id %}{% blocktrans with c=count %}{{ c }} item(s) to import{% endblocktrans %}{% endif %}{% endfor %})</option>
-                {% endfor %}
-              </select>
-            </p>
-            <p>
-              <button type="submit" class="btn btn-primary">
-                <i class="fa fa-copy"></i>
-                {% trans "Copy Multimedia" %}
-              </button>
-            </p>
-          </form>
-        {% else %}
-          <p>
-            <div class="alert alert-info">
-              There is no multimedia in this app that can be copied from other apps.
-            </div>
-          </p>
-        {% endif %}
-      </div>
-    </div>
-  {% endif %}
 {% else %}
   <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
 {% endif %}

@@ -39,13 +39,17 @@ from corehq.apps.export.exceptions import (
     ExportAsyncException,
     ExportFormValidationException,
 )
-from corehq.apps.export.export import get_export_download, get_export_size
+from corehq.apps.export.export import (
+    get_export_download,
+    get_export_query,
+    get_export_size,
+)
 from corehq.apps.export.forms import (
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
     FilterSmsESExportDownloadForm,
 )
-from corehq.apps.export.models import ExportInstance, FormExportInstance
+from corehq.apps.export.models import FormExportInstance
 from corehq.apps.export.models.new import EmailExportWhenDoneRequest
 from corehq.apps.export.utils import get_export
 from corehq.apps.export.views.utils import (
@@ -59,11 +63,10 @@ from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.tasks import build_form_multimedia_zip
+from corehq.apps.reports.tasks import build_form_multimedia_zipfile
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import CouchUser
-from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.toggles import PAGINATED_EXPORTS
 
 
@@ -308,6 +311,7 @@ def prepare_custom_export(request, domain):
             'error': _("Form did not validate."),
         })
     export_filters = filter_form.get_export_filters(request, filter_form_data)
+    export_es_filters = [f.to_es_filter() for f in export_filters]
 
     export_specs = json.loads(request.POST.get('exports'))
     export_ids = [spec['export_id'] for spec in export_specs]
@@ -332,7 +336,7 @@ def prepare_custom_export(request, domain):
         export_ids,
         view_helper.model,
         request.couch_user.username,
-        filters=export_filters,
+        es_filters=export_es_filters,
         owner_id=request.couch_user.get_id,
         filename=filename,
     )
@@ -437,10 +441,10 @@ def prepare_form_multimedia(request, domain):
         })
 
     export = view_helper.get_export(export_specs[0]['export_id'])
-    datespan = filter_form.cleaned_data['date_range']
-    user_types = filter_form.get_es_user_types(filter_form_data)
+    filters = filter_form.get_export_filters(request, filter_form_data)
+    export_es_query = get_export_query(export, filters)
 
-    if media_export_is_too_big(domain, export.app_id, export.xmlns, datespan, user_types):
+    if media_export_is_too_big(export_es_query):
         return json_response({
             'success': False,
             'error': _("This is too many files to export at once.  "
@@ -448,11 +452,10 @@ def prepare_form_multimedia(request, domain):
         })
 
     download = DownloadBase()
-    download.set_task(build_form_multimedia_zip.delay(
+    download.set_task(build_form_multimedia_zipfile.delay(
         domain=domain,
         export_id=export.get_id,
-        datespan=datespan,
-        user_types=user_types,
+        es_filters=filters,
         download_id=download.download_id,
         owner_id=request.couch_user.get_id,
     ))
@@ -475,17 +478,9 @@ def has_multimedia(request, domain):
     permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
     permissions.access_download_export_or_404()
     export_object = FormExportInstance.get(request.GET.get('export_id'))
-    if isinstance(export_object, ExportInstance):
-        has_multimedia = export_object.has_multimedia
-    else:
-        has_multimedia = forms_have_multimedia(
-            domain,
-            export_object.app_id,
-            getattr(export_object, 'xmlns', '')
-        )
     return json_response({
         'success': True,
-        'hasMultimedia': has_multimedia,
+        'hasMultimedia': export_object.has_multimedia,
     })
 
 

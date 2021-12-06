@@ -8,16 +8,16 @@ from corehq.apps.app_manager.dbaccessors import (
     get_auto_generated_built_apps,
     get_latest_build_id,
 )
-from corehq.apps.app_manager.exceptions import SavedAppBuildException
+from corehq.apps.app_manager.exceptions import SavedAppBuildException, AppValidationError
 from corehq.apps.users.models import CommCareUser
 from corehq.util.decorators import serial_task
 
 logger = get_task_logger(__name__)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
-def create_user_cases(domain_name):
-    from corehq.apps.callcenter.sync_user_case import sync_usercase
+@task(queue='background_queue', ignore_result=True)
+def create_usercases(domain_name):
+    from corehq.apps.callcenter.sync_usercase import sync_usercase
     for user in CommCareUser.by_domain(domain_name):
         sync_usercase(user)
 
@@ -26,12 +26,13 @@ def create_user_cases(domain_name):
 @serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
 def make_async_build_v2(app_id, domain, version, allow_prune=True, comment=None):
     app = get_app(domain, app_id)
-    errors = app.validate_app()
-    if not errors:
+    try:
         copy = app.make_build(comment=comment)
-        copy.is_auto_generated = allow_prune
-        copy.save(increment_version=False)
-        return copy
+    except AppValidationError:
+        return
+    copy.is_auto_generated = allow_prune
+    copy.save(increment_version=False)
+    return copy
 
 
 def autogenerate_build(app, username):
@@ -44,15 +45,10 @@ def autogenerate_build(app, username):
 
 @serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
 def autogenerate_build_task(app_id, domain, version, comment):
-    app = get_app(domain, app_id)
-    errors = app.validate_app()
-    if not errors:
-        copy = app.make_build(comment=comment)
-        copy.is_auto_generated = True
-        copy.save(increment_version=False)
+    make_async_build_v2(app_id, domain, version, allow_prune=True, comment=comment)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
+@task(queue='background_queue', ignore_result=True)
 def create_build_files_for_all_app_profiles(domain, build_id):
     app = get_app(domain, build_id)
     build_profiles = app.build_profiles
@@ -65,7 +61,7 @@ def create_build_files_for_all_app_profiles(domain, build_id):
         app.save()
 
 
-@task(serializer='pickle', queue='background_queue')
+@task(queue='background_queue')
 def prune_auto_generated_builds(domain, app_id):
     last_build_id = get_latest_build_id(domain, app_id)
     saved_builds = get_auto_generated_built_apps(domain, app_id)
@@ -81,7 +77,7 @@ def prune_auto_generated_builds(domain, app_id):
         app.save(increment_version=False)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
+@task(queue='background_queue', ignore_result=True)
 def update_linked_app_and_notify_task(domain, app_id, master_app_id, user_id, email):
     from corehq.apps.app_manager.views.utils import update_linked_app_and_notify
     update_linked_app_and_notify(domain, app_id, master_app_id, user_id, email)

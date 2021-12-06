@@ -10,11 +10,13 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import languages_mapping
+from corehq.util.timer import time_method
 
 
 class FormResourceContributor(SectionContributor):
     section_name = 'xform_resources'
 
+    @time_method()
     def get_section_elements(self):
         from corehq.apps.app_manager.models import ShadowForm
         for form_stuff in self.app.get_forms(bare=False):
@@ -53,6 +55,7 @@ class FormResourceContributor(SectionContributor):
 class LocaleResourceContributor(SectionContributor):
     section_name = 'locale_resources'
 
+    @time_method()
     def get_section_elements(self):
         langs = self.app.get_build_langs(self.build_profile_id)
         for lang in ["default"] + langs:

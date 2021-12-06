@@ -4,11 +4,11 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     base_path: [morning_mobilization_grp, Q1]
     comment: [hand_washing_station_comments]
     flag_name: "1. Is there a hand-washing station at the entrance of the operations site?"
-    flag_name_fr: "1. "
+    flag_name_fr: "1. Y a-t'il une station de lavage de main à l'entrée du site?"
     flag_name_por: "1. "
     answer: "no"
     warning: "Problem reported: Hand-washing station not at operations site"
-    warning_fr: ""
+    warning_fr: "Problème rapporté: pas de station de lavage de mains à l'entrée du site"
     warning_por: ""
     responsible_follow_up: "District Coordinator"
   - question: [people_hand_washing ]
@@ -19,7 +19,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     flag_name_por: "1.a "
     answer: "no"
     warning: "Problem reported: Not washing hands before entering operations site"
-    warning_fr: ""
+    warning_fr: "Problème signalé: Ne se lavent pas les mains avant d'entre sur le site d'opérations"
     warning_por: ""
     responsible_follow_up: "District Coordinator"
   - question: [sop_physical]
@@ -52,7 +52,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     flag_name_por: "3. "
     answer: "no"
     warning: "Problem reported: Some personnel not wearing mask or maintaining appropriate distance"
-    warning_fr: ""
+    warning_fr: "Problème signalé: du personnel ne porte pas le masque ou ne matient pas les distances de sécurité"
     warning_por: ""
     responsible_follow_up: "District Coordinator"
   - question: [sop_eaten]
@@ -74,7 +74,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     flag_name_por: "5. "
     answer: "no"
     warning: "Problem reported: Storekeeper not recording all insecticide serial numbers"
-    warning_fr: "Problème signalé: "
+    warning_fr: "Problème signalé: Magasinier n'enregistre pas les numéros de série de tous les insecticides"
     warning_por: "Problema reportado: "
     responsible_follow_up: "ECO"
   - question: [teamlead_record]
@@ -85,7 +85,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     flag_name_por: "6. "
     answer: "no"
     warning: "Problem reported: Team leader not recording all insecticide serial numbers"
-    warning_fr: "Problème signalé: "
+    warning_fr: "Problème signalé: Le chef d'équipe n'enregistre pas tous les numéros de série des insecticides"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
   - question: [distrib_sign]
@@ -96,7 +96,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     flag_name_por: "7. "
     answer: "no"
     warning: "Problem reported: Team leader and spray operator not signing insecticide distribution form"
-    warning_fr: "Problème signalé: "
+    warning_fr: "Problème signalé: chefs d'équipes et opérateurs de pulvérisation ne signent pas le formulaire de distribution d'insecticide"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
   - question: [sop_full_ppe]
@@ -153,7 +153,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     flag_name_por: "12. "
     answer: "no"
     warning: "Problem reported: Team members not properly spaced out in vehicle"
-    warning_fr: "Problème signalé: "
+    warning_fr: "Problème signalé: les membres de l'équipe ne s'espacent pas correctement dans le véhicule"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
 # Module 1 Form 3: Spray Operator Transportation Vehicle Inspection
@@ -228,11 +228,11 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     base_path: [vehicle_inspection_grp, Q7]
     comment: [driver_masked_comments]
     flag_name: "7. If there are passengers in the driver’s compartment, Is the driver wearing their face mask?"
-    flag_name_fr: "7. "
+    flag_name_fr: "7. S’il y a des passagers dans le compartiment du conducteur, celui-ci porte-t-il son masque?"
     flag_name_por: "7. "
     answer: "no"
     warning: "Problem reported: Driver not wearing face mask in the vehicle"
-    warning_fr: "Problème signalé: "
+    warning_fr: "Problème signalé: Conducteur ne porte pas son masque"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
   - question: [pesticides_secured]
@@ -355,11 +355,11 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     base_path: [obs_rcd_mgmt_grp, Q3]
     comment: [reconcile_insecticide_comments]
     flag_name: "3. Does the team leader reconcile all sachets/bottles and serial numbers prior to spray operators performing triple rinse and/or PPE cleaning?"
-    flag_name_fr: "3. "
+    flag_name_fr: "3. Le chef d’équipe réconcilie-t-il tous les sachets/bouteilles et numéros de série avant que les opérateurs de pulvérisation n'effectuent un triple rinçage et/ou le nettoyage de l’EPI?"
     flag_name_por: "3. "
     answer: "no"
     warning: "Problem reported: Team leader not reci=onciling insecticide units before progressive rinsing"
-    warning_fr: "Problème signalé: "
+    warning_fr: "Problème signalé: Chef d'équipe ne réconcilie pas les unités d'insecticide avant le rinçage progressif"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
   - question: [wash_criteria_met]
@@ -540,18 +540,18 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     flag_name_por: "17. "
     answer: "no"
     warning: "Problem reported: Workers not washing their hands and face"
-    warning_fr: "Problème signalé: "
+    warning_fr: "Problème signalé: Les travailleurs ne se lavent pas les mains et le visage"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
   - question: [mask_distance]
     base_path: [fsp_grp, Q18]
     comment: [copy-1-of-worker_wash_comments]
     flag_name: "18. Do the workers don their personal face mask and maintain 2 meter personal distancing after washing face and hands?"
-    flag_name_fr: "18. "
+    flag_name_fr: "18. Est-ce que les travailleurs portent leur masque et maintiennent 2 mètres de distance personnelle après s'être lavé les mains et le visage?"
     flag_name_por: "18. "
     answer: "no"
     warning: "Problem reported: Workers not donning their face mask after washing up"
-    warning_fr: "Problème signalé: "
+    warning_fr: "Problème signalé: Les travailleurs ne remettent pas leur masque après s'être lavés"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
   - question: [contaminated_water_disposed]
@@ -756,11 +756,11 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     base_path: [msp_grp, Q37]
     comment: [face_mask_comments]
     flag_name: "37. Do the workers don their face masks and maintain 2-meter personal distancing after washing face and hands?"
-    flag_name_fr: "37. "
+    flag_name_fr: "37. Les travailleurs enfilent-ils leur masque et maintiennent-ils une distance personnelle de 2 mètres après s’être lavé le visage et les mains?"
     flag_name_por: "37. "
     answer: "no"
     warning: "Problem reported: Workers not donning their face mask after washing up"
-    warning_fr: "Problème signalé: "
+    warning_fr: "Problème signalé: Les travailleurs ne mettent pas leur masque après s'être lavés"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
   - question: [msp_used]
@@ -1011,11 +1011,11 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     base_path: [safety_reqs_grp, Q14]
     comment: [covid_practices_comments]
     flag_name: "14. Does the storekeeper wear an N95 or equivalent mask and maintain 2-meter personal distancing?"
-    flag_name_fr: "14. "
+    flag_name_fr: "14. Est-ce que le magasinier porte un masque N95 ou équivalent et maintient une distance personnelle de 2 mètres ?"
     flag_name_por: "14. "
     answer: "no"
     warning: "Problem reported: Storekeeper not wearing the right mask"
-    warning_fr: "Problème signalé: "
+    warning_fr: "Problème signalé: Magasinier ne porte pas le masque approprié"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
   - question: [pesticide_mishandling]
@@ -1238,22 +1238,22 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     base_path: [household_prep_grp, Q2]
     comment: [perso_distance_comments]
     flag_name: "2. Does the spray operator observe the 2-meter personal distancing during interaction with the homeowner?"
-    flag_name_fr: "2. "
+    flag_name_fr: "2. L’opérateur de pulvérisation observe-t-il la distanciation personnelle de 2 mètres pendant l’interaction avec le propriétaire?"
     flag_name_por: "2. "
     answer: "no"
     warning: "Problem reported: Spray operator not observing appropriate separation"
-    warning_fr: "Problème signalé: "
+    warning_fr: "Problème signalé: L'opérateur n'observe pas les distances de séparation adéquates"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
   - question: [hand_washing]
     base_path: [household_prep_grp, Q3]
     comment: [hand_washing_comments]
     flag_name: "3. Did the spray operator wash their hands with soap and water before assisting with household preparation?"
-    flag_name_fr: "3. "
+    flag_name_fr: "3. L’opérateur de pulvérisation s’est-il lavé les mains avec de l’eau et du savon avant d’aider à la préparation de la maison?"
     flag_name_por: "3. "
     answer: "no"
     warning: "Problem reported: Spray operator did not wash hands before assisting homeowner"
-    warning_fr: "Problème signalé: "
+    warning_fr: "Problème signalé: L'opérateur ne s'est pas lavé les mains avant d'aider le propriétaire"
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
   - question: [furniture_covered]
@@ -1304,11 +1304,11 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     base_path: [household_prep_grp, Q8]
     comment: [sop_wash_bf_glove_comments]
     flag_name: "8. Did the spray operator wash their hands before putting the long gloves back on?"
-    flag_name_fr: "8. "
+    flag_name_fr: "8. L’opérateur de pulvérisation s’est-il lavé les mains avant de remettre les gants longs?"
     flag_name_por: "8. "
     answer: "no"
-    warning: "Problem reported: Spray operator did not wash hands putting gloves back on"
-    warning_fr: "Problème signalé: "
+    warning: "Problem reported: Spray operator did not wash hands before putting gloves back on"
+    warning_fr: "Problème signalé: Un opérateur ne s'est pas lavé les mains avant de remettre les gants "
     warning_por: "Problema reportado: "
     responsible_follow_up: "District Coordinator"
   - question: [sop_full_ppe]
@@ -1423,10 +1423,10 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
   - question: [loose_items_removed]
     comment: [loose_items_removed_comments]
     base_path: [spray_observe_grp, Q18]
-    flag_name: "18. Have all loose items (clothes, mosquito nets, posters/pictures on the wall) been taken out of the house?"
-    flag_name_fr: "18. Est-ce-que tous les objets en vrac (vêtements, moustiquaires, affiches / photos sur le mur) ont été retirés de la maison?"
-    flag_name_por: "18. Todos os artigos (roupas, redes mosquiteiras, cartazes, fotos na parede) foram retirados para fora da casa?"
-    answer: "no"
+    flag_name: "18. Are there any loose items (clothes, mosquito nets, posters/pictures on the wall) still in the house?"
+    flag_name_fr: "18. Y a-t-il encore des objets en vrac (vêtements, moustiquaires, affiches / photos sur le mur) dans la maison?"
+    flag_name_por: "18. Ainda há artigos soltos (roupas, redes mosquiteiras, cartazes, fotos na parede) na casa?"
+    answer: "yes"
     warning: "Problem reported: Loose items (clothes, mosquito nets, pictures/posters) not removed from the house before spraying"
     warning_fr: "Problème signalé: Les objets en vrac (vêtements, moustiquaires, photos / affiches) ne sont pas retirés de la maison avant d'être pulvérisés"
     warning_por: "Problema reportado: items soltos (roupa, rede mosquiteiras, fotografias/cartazes) não removidos da casa antes da pulverização"

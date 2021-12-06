@@ -74,21 +74,22 @@ domain_specific = [
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
     url(r'^up_nrhm/', include('custom.up_nrhm.urls')),
-    url(r'^', include('custom.m4change.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
     url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
+    url(r'^', include('corehq.motech.fhir.urls')),
     url(r'^openmrs/', include('corehq.motech.openmrs.urls')),
     url(r'^_base_template/$', login_and_domain_required(
-        lambda request, domain: render(request, 'hqwebapp/base.html', {'domain': domain})
+        lambda request, domain: render(request, 'hqwebapp/base_navigation.html', {'domain': domain})
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
     url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
     url(r'^translations/', include('corehq.apps.translations.urls')),
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
     url(r'^integration/', include('corehq.apps.integration.urls')),
+    url(r'^registries/', include('corehq.apps.registry.urls')),
 ]
 
 for url_module in extension_points.domain_specific_urls():
@@ -106,7 +107,6 @@ urlpatterns = [
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
     url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')),
-    url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
     url(r'^hq/accounting/', include('corehq.apps.accounting.urls')),

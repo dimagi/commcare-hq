@@ -1,3 +1,6 @@
+# WARNING this module looks up cases in Couch, but the domain (crs-remind) has
+# been migrated to SQL, so any cases created or updated after the migration was
+# completed (2021-05-12) will either cause errors or incorrect report output.
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from django.shortcuts import render
@@ -9,7 +12,6 @@ from casexml.apps.case.templatetags.case_tags import case_inline_display
 from corehq.apps.users.models import CommCareUser
 from django.template.loader import get_template
 from django.http import HttpResponse
-# import weasyprint
 from custom.apps.crs_reports import MOTHER_POSTPARTUM_VISIT_FORM_XMLNS, BABY_POSTPARTUM_VISIT_FORM_XMLNS
 
 

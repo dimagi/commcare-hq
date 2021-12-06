@@ -14,6 +14,7 @@ CREATE_SHORT = """
             <external_id>someexternal</external_id>
         </create>
         <update>
+            <owner_id>{user_id}</owner_id>
             <date_opened>2010-06-29</date_opened>
         </update>
     </case>"""
@@ -27,6 +28,7 @@ UPDATE_SHORT = """
             <user_id>{user_id}</user_id>
             <case_name>test case name</case_name>
             <external_id>someexternal</external_id>
+            <owner_id>{user_id}</owner_id>
             <date_opened>2010-06-29</date_opened>
             <somenewthing>update!</somenewthing>
         </update>

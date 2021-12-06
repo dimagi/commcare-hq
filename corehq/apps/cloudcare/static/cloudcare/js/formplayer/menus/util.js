@@ -139,14 +139,18 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
                 var searchText = urlObject.search;
                 var event = "Viewed Case List";
-                var eventData = menuResponse.title;
                 if (searchText) {
                     event = "Searched Case List";
                 }
-                hqImport('analytix/js/kissmetrix').track.event(event, {
+                var eventData = {
                     domain: FormplayerFrontend.getChannel().request("currentUser").domain,
-                    name: eventData,
-                });
+                    name: menuResponse.title,
+                };
+                var fields = _.pick(Util.getCurrentQueryInputs(), function (v) { return !!v; });
+                if (!_.isEmpty(fields)) {
+                    eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
+                }
+                hqImport('analytix/js/kissmetrix').track.event(event, eventData);
             }
             if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
                 return hqImport("cloudcare/js/formplayer/menus/views").CaseListView(menuData);

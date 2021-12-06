@@ -3,8 +3,8 @@
  */
 
 hqDefine("cloudcare/js/formplayer/menus/api", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-    var Util = hqImport("cloudcare/js/formplayer/utils/util");
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        Util = hqImport("cloudcare/js/formplayer/utils/util");
 
     var API = {
         queryFormplayer: function (params, route) {
@@ -56,8 +56,26 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 FormplayerFrontend.lastError = currentUrl;
                                 FormplayerFrontend.trigger('navigation:back');
                             }
+                            defer.reject();
 
                         } else {
+                            if (response.smartLinkRedirect) {
+                                if (user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
+                                    FormplayerFrontend.trigger('showSuccess', gettext("You have selected a case in a different domain. App Preview does not support this feature.", 5000));
+                                    FormplayerFrontend.trigger('navigateHome');
+                                    return;
+                                }
+
+                                // Drop last selection to avoid redirect loop if user presses back in the future
+                                var urlObject = Util.currentUrlToObject();
+                                urlObject.setSelections(_.initial(urlObject.selections || []));
+                                Util.setUrlToObject(urlObject, true);
+
+                                console.log("Redirecting to " + response.smartLinkRedirect);
+                                document.location = response.smartLinkRedirect;
+                                return;
+                            }
+
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
@@ -86,8 +104,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             );
                         }
                         var urlObject = Util.currentUrlToObject();
-                        if (urlObject.steps) {
-                            urlObject.steps.pop();
+                        if (urlObject.selections) {
+                            urlObject.selections.pop();
                             Util.setUrlToObject(urlObject);
                         }
                         defer.reject();
@@ -99,8 +117,10 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "restoreAs": user.restoreAs,
                     "domain": user.domain,
                     "app_id": params.appId,
+                    "endpoint_id": params.endpointId,
+                    "endpoint_args": params.endpointArgs,
                     "locale": displayOptions.language,
-                    "selections": params.steps,
+                    "selections": params.selections,
                     "offset": params.page * casesPerPage,
                     "search_text": params.search,
                     "menu_session_id": params.sessionId,
@@ -109,7 +129,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "cases_per_page": casesPerPage,
                     "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                     "isPersistent": params.isPersistent,
-                    "useLiveQuery": user.useLiveQuery,
                     "sortIndex": params.sortIndex,
                     "preview": params.preview,
                     "geo_location": lastRecordedLocation,
@@ -131,8 +150,24 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
     };
 
     FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
-        var isInitial = options.isInitial;
-        return API.queryFormplayer(options, isInitial ? 'navigate_menu_start' : 'navigate_menu');
+        if (!options.endpointId) {
+            return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
+        }
+
+        var user = FormplayerFrontend.getChannel().request('currentUser');
+        if (options.forceLoginAs && !user.restoreAs) {
+            // Workflow requires a mobile user, likely because we're trying to access
+            // a session endpoint as a web user. If user isn't logged in as, send them
+            // to Login As and save the current request options for when that's done.
+            FormplayerFrontend.trigger("setLoginAsNextOptions", options);
+            FormplayerFrontend.trigger("restore_as:list");
+
+            // Caller expects a menu response, return a fake one
+            return {abort: true};
+        }
+
+        // If an endpoint is provided, first claim any cases it references, then navigate
+        return API.queryFormplayer(options, "get_endpoint");
     });
 
     FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent) {

@@ -72,12 +72,12 @@ StockLevelField = partial(models.DecimalField, max_digits=10, decimal_places=1)
 def stock_level_config_for_domain(domain, commtrack_enabled):
     if not commtrack_enabled:
         return None
-    from corehq.apps.commtrack.models import SQLCommtrackConfig
-    ct_config = SQLCommtrackConfig.for_domain(domain)
-    if ct_config is None or not hasattr(ct_config, 'sqlstocklevelsconfig'):
+    from corehq.apps.commtrack.models import CommtrackConfig
+    ct_config = CommtrackConfig.for_domain(domain)
+    if ct_config is None or not hasattr(ct_config, 'stocklevelsconfig'):
         return None
     else:
-        return ct_config.sqlstocklevelsconfig
+        return ct_config.stocklevelsconfig
 
 
 class LocationType(models.Model):
@@ -170,17 +170,16 @@ class LocationType(models.Model):
             self._populate_stock_levels(config)
 
         is_not_first_save = self.pk is not None
-        saved = super(LocationType, self).save(*args, **kwargs)
+        super(LocationType, self).save(*args, **kwargs)
 
         if is_not_first_save:
             self.sync_administrative_status()
 
-        return saved
-
     def sync_administrative_status(self, sync_supply_points=True):
         from .tasks import sync_administrative_status
         if self._administrative_old != self.administrative:
-            sync_administrative_status.delay(self, sync_supply_points=sync_supply_points)
+            if sync_supply_points:
+                sync_administrative_status.delay(self)
             self._administrative_old = self.administrative
 
     def __str__(self):

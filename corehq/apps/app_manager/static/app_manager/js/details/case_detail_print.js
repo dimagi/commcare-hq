@@ -7,10 +7,8 @@ hqDefine("app_manager/js/details/case_detail_print", function () {
         printTemplateUploader = new HQMediaFileUploadController(
             print_uploader.slug,
             print_uploader.media_type,
-            _.extend({}, print_uploader.options, {
-                swfURL: initial_page_data('swfURL'),
-                sessionid: initial_page_data('sessionid'),
-            }));
+            print_uploader.options
+        );
         printTemplateUploader.init();
         printRef = hqImport('hqmedia/js/media_reference_models').BaseMediaReference(initial_page_data('print_ref'));
         printRef.upload_controller = printTemplateUploader;

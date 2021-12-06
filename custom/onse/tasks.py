@@ -1,4 +1,5 @@
 import sys
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from time import sleep
@@ -7,7 +8,7 @@ from urllib.error import HTTPError
 
 import attr
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from requests import RequestException
 
@@ -26,6 +27,8 @@ from custom.onse.const import (
     CONNECTION_SETTINGS_NAME,
     DOMAIN,
     LAST_IMPORTED_PROPERTY,
+    MAX_RETRY_ATTEMPTS,
+    TASK_RETRY_FACTOR
 )
 from custom.onse.models import iter_mappings
 
@@ -36,7 +39,6 @@ from custom.onse.models import iter_mappings
 # Set ``DROP_API_PREFIX = True`` to drop the "/api" before "/resource",
 # so that resource URLs end up as "service/dhis2core/api/v0/resource".
 DROP_API_PREFIX = True
-
 MAX_THREAD_WORKERS = 10
 
 _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
@@ -69,7 +71,51 @@ class CassiusMarcellus:  # TODO: Come up with a better name. Please!
                       hour=22, minute=30),
     queue='background_queue',
 )
-def update_facility_cases_from_dhis2_data_elements(
+def update_facility_cases_from_dhis2_data_elements():
+    _update_facility_cases_from_dhis2_data_elements.delay()
+
+
+@task(bind=True, max_retries=MAX_RETRY_ATTEMPTS)
+def _update_facility_cases_from_dhis2_data_elements(self, period, print_notifications):
+    if not domain_exists(DOMAIN):
+        return
+    dhis2_server = get_dhis2_server(print_notifications)
+    server_status = check_server_status(dhis2_server)
+
+    if server_status['ready']:
+        execute_update_facility_cases_from_dhis2_data_elements(dhis2_server, period, print_notifications)
+    else:
+        exception = server_status['error']
+        retry_days = 2 ** self.request.retries
+
+        message = f'Importing {DOMAIN.upper()} cases from {CONNECTION_SETTINGS_NAME} failed: {exception}. ' \
+                  f'Retrying in {retry_days} days'
+        _notify_message(print_notifications, message, dhis2_server, exception)
+
+        self.retry(countdown=(retry_days * TASK_RETRY_FACTOR))
+
+
+def check_server_status(dhis2_server: ConnectionSettings):
+    server_status = {
+        'ready': True,
+        'error': None
+    }
+    requests = dhis2_server.get_requests()
+    try:
+        requests.send_request("HEAD", dhis2_server.url, raise_for_status=True)
+    except HTTPError as e:
+        if e.response.status_code != 405:  # ignore method not allowed
+            server_status['ready'] = False
+            server_status['error'] = e
+    except RequestException as re:
+        server_status['ready'] = False
+        server_status['error'] = re
+
+    return server_status
+
+
+def execute_update_facility_cases_from_dhis2_data_elements(
+    dhis2_server: ConnectionSettings,
     period: Optional[str] = None,
     print_notifications: bool = False,
 ):
@@ -77,15 +123,14 @@ def update_facility_cases_from_dhis2_data_elements(
     Update facility_supervision cases with indicators collected in DHIS2
     over the last quarter.
 
+    :param dhis2_server: The ConnectionSettings instance to connect to
+        the remote API.
     :param period: The period of data to import. e.g. "2020Q1". Defaults
         to last quarter.
     :param print_notifications: If True, notifications are printed,
         otherwise they are emailed.
 
     """
-    if not domain_exists(DOMAIN):
-        return
-    dhis2_server = get_dhis2_server(print_notifications)
     try:
         clays = get_clays()
         with ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor:
@@ -321,23 +366,27 @@ def handle_error(
     dhis2_server: ConnectionSettings,
     print_notifications: bool,
 ):
-    message = f'Importing ONSE ISS facility cases from DHIS2 failed: {err}'
-    if print_notifications:
-        print(message, file=sys.stderr)
-    else:
-        dhis2_server.get_requests().notify_exception(message)
-        raise err
+    message = f'Importing {DOMAIN.upper()} cases from {CONNECTION_SETTINGS_NAME} failed: {err}'
+    _notify_message(print_notifications, message, dhis2_server, err)
 
 
 def handle_success(
     dhis2_server: ConnectionSettings,
     print_notifications: bool,
 ):
-    message = 'Successfully imported ONSE ISS facility cases from DHIS2'
+    message = f'Successfully imported {DOMAIN.upper()} cases from {CONNECTION_SETTINGS_NAME}'
+    _notify_message(print_notifications, message, dhis2_server)
+
+
+def _notify_message(print_notifications, message, connection_settings, exception=None):
     if print_notifications:
         print(message, file=sys.stderr)
     else:
-        # For most things we pass silently. But we can repurpose
-        # `notify_error()` to tell admins that the import went through,
-        # because it only happens once a quarter.
-        dhis2_server.get_requests().notify_error(message)
+        if exception is not None:
+            connection_settings.get_requests().notify_exception(message)
+            raise exception
+        else:
+            # For most things we pass silently. But we can repurpose
+            # `notify_error()` to tell admins that the import went through,
+            # because it only happens once a quarter.
+            connection_settings.get_requests().notify_error(message)

@@ -9,7 +9,7 @@ from django.test.client import Client
 from django.urls import reverse
 
 from botocore.exceptions import ConnectionClosedError
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.exceptions import IllegalCaseId
 from couchforms.models import UnfinishedSubmissionStub
@@ -26,7 +26,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    sharded,
 )
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.test_utils import TestFileMixin, flag_enabled, capture_log_output
@@ -39,6 +39,7 @@ def tmpfile(mode='w', *args, **kwargs):
     return (os.fdopen(fd, mode), path)
 
 
+@sharded
 class SubmissionErrorTest(TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
@@ -56,7 +57,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls.couch_user.delete(deleted_by=None)
+        cls.couch_user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         super(SubmissionErrorTest, cls).tearDownClass()
 
@@ -191,11 +192,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             'corehq.form_processor.backends.sql.processor.FormProcessorSQL.save_processed_models',
             side_effect=InternalError
         )
-        couch_patch = patch(
-            'corehq.form_processor.backends.couch.processor.FormProcessorCouch.save_processed_models',
-            side_effect=InternalError
-        )
-        with sql_patch, couch_patch:
+        with sql_patch:
             with self.assertRaises(InternalError):
                 _, res = self._submit('form_with_case.xml')
 
@@ -279,10 +276,6 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             lock.release()
         self.assertEqual(response.status_code, 423)
 
-
-@use_sql_backend
-class SubmissionErrorTestSQL(SubmissionErrorTest):
-
     def test_error_publishing_to_kafka(self):
         sql_patch = patch(
             'corehq.form_processor.backends.sql.processor.FormProcessorSQL.publish_changes_to_kafka',
@@ -305,6 +298,7 @@ class SubmissionErrorTestSQL(SubmissionErrorTest):
         error = ConnectionClosedError(endpoint_url='url')
         with self.assertRaises(ConnectionClosedError), patch.object(get_blob_db(), 'put', side_effect=error):
             self._submit('form_with_case.xml')
+        self.client.exc_info = None  # clear error to prevent it from being raised on next request
 
         stubs = UnfinishedSubmissionStub.objects.filter(
             domain=self.domain, saved=False, xform_id=FORM_WITH_CASE_ID

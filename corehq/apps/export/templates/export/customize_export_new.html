@@ -161,8 +161,29 @@
                 {% endif %}
               </div>
             {% endif %}
-
-
+            <div class="checkbox">
+              <label>
+                <input type="checkbox"
+                       id="det-config-checkbox"
+                       data-bind="checked: show_det_config_download,
+                                  attr: { disabled: !{{ has_api_access|JSON }}}" />
+                {% trans "Generate a Data Export Tool config file?" %}
+              </label>
+              {% trans "Download a Data Export Tool configuration file for this export" as det_help %}
+              <span class="hq-help-template"
+                    data-content='{% blocktrans %}
+                                    <p>Checking this will add a button to download a configuration file
+                                       for the <a href="https://confluence.dimagi.com/display/commcarepublic/CommCare+Data+Export+Tool" target="_blank">
+                                       CommCare Data Export Tool</a> for the export.</p>
+                                   {% endblocktrans %}
+                                   {% if not has_api_access %}
+                                   {% blocktrans %}
+                                    <p>The Data Export Tool requires API access, which is only available on the Pro Plan or higher.
+                                       Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.</p>
+                                  {% endblocktrans %}
+                                  {% endif %}'
+                ></span>
+            </div>
             {% if export_instance.type == 'form' %}
               <div class="checkbox"
                    {% if not request|toggle_enabled:'SUPPORT' %}data-bind="visible: initiallyIncludeErrors"{% endif %}>

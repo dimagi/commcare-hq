@@ -5,6 +5,8 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.template.loader import render_to_string
+from django.utils.translation import ugettext_lazy as _
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_error, notify_exception
@@ -14,6 +16,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.messages import (
     MSG_DUPLICATE_USERNAME,
     MSG_OPTED_IN,
@@ -54,6 +57,7 @@ from corehq.form_processor.utils import is_commcarecase
 from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import sms_load_counter
 from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import absolute_reverse
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -153,6 +157,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     if domain and contact and is_commcarecase(contact):
         backend_name = contact.get_case_property('contact_backend_id')
         backend_name = backend_name.strip() if isinstance(backend_name, str) else ''
+
         if backend_name:
             try:
                 backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
@@ -167,7 +172,6 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     add_msg_tags(msg, metadata)
 
     return queue_outgoing_sms(msg)
-
 
 def send_sms_to_verified_number(verified_number, text, metadata=None,
         logged_subevent=None, events=[]):
@@ -330,7 +334,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         msg.backend_id = backend.couch_id
         msg.save()
         return True
-    except Exception:
+    except Exception as e:
         metrics_counter("commcare.sms.outbound_message", tags={
             'domain': msg.domain,
             'status': 'error',
@@ -339,7 +343,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         should_log_exception = True
 
         if backend:
-            should_log_exception = should_log_exception_for_backend(backend)
+            should_log_exception = should_log_exception_for_backend(backend, e)
 
         if should_log_exception:
             log_sms_exception(msg)
@@ -364,19 +368,57 @@ def _get_backend_tag(backend=None, backend_id=None):
         return f'{backend.domain}/{backend.name}'
 
 
-def should_log_exception_for_backend(backend):
+def should_log_exception_for_backend(backend, exception):
     """
-    Only returns True if an exception hasn't been logged for the given backend
+    Only returns True if the exception hasn't been logged for the given backend
     in the last hour.
     """
     client = get_redis_client()
-    key = 'exception-logged-for-backend-%s' % backend.couch_id
+    key = f'exception-logged-for-backend-{backend.couch_id}-{hash(str(exception))}'
 
     if client.get(key):
         return False
     else:
         client.set(key, 1)
         client.expire(key, 60 * 60)
+        return True
+
+
+def register_sms_user(
+    username, cleaned_phone_number, domain, send_welcome_sms=False, admin_alert_emails=None
+):
+    try:
+        user_data = {}
+
+        username = process_username(username, domain)
+        password = random_password()
+        new_user = CommCareUser.create(
+            domain,
+            username,
+            password,
+            created_by=None,
+            created_via=USER_CHANGE_VIA_SMS,
+            metadata=user_data
+        )
+        new_user.add_phone_number(cleaned_phone_number)
+        new_user.save()
+
+        entry = new_user.get_or_create_phone_entry(cleaned_phone_number)
+        entry.set_two_way()
+        entry.set_verified()
+        entry.save()
+
+        if send_welcome_sms:
+            send_sms(
+                domain, None, cleaned_phone_number,
+                get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain)
+            )
+        if admin_alert_emails:
+            send_admin_registration_alert(domain, admin_alert_emails, new_user)
+    except ValidationError as e:
+        send_sms(domain, None, cleaned_phone_number, e.messages[0])
+        return False
+    else:
         return True
 
 
@@ -400,6 +442,20 @@ def process_username(username, domain):
         name_too_long_message=get_message(MSG_USERNAME_TOO_LONG, context=(username, max_length)),
         name_exists_message=get_message(MSG_DUPLICATE_USERNAME, context=(username,))
     )
+
+
+def send_admin_registration_alert(domain, recipients, user):
+    from corehq.apps.users.views.mobile.users import EditCommCareUserView
+    subject = _("New user {username} registered for {domain} through SMS").format(
+        username=user.username,
+        domain=domain,
+    )
+    html_content = render_to_string('sms/email/new_sms_user.html', {
+        "username": user.username,
+        "domain": domain,
+        "url": absolute_reverse(EditCommCareUserView.urlname, args=[domain, user.get_id])
+    })
+    send_html_email_async.delay(subject, recipients, html_content, domain=domain)
 
 
 def is_registration_text(text):
@@ -458,32 +514,14 @@ def process_sms_registration(msg):
                         keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS
                         and domain_obj.sms_mobile_worker_registration_enabled
                 ):
-                    if keyword4 != '':
-                        username = keyword4
-                    else:
-                        username = cleaned_phone_number
-                    try:
-                        user_data = {}
-
-                        username = process_username(username, domain_obj)
-                        password = random_password()
-                        new_user = CommCareUser.create(domain_obj.name, username, password, created_by=None,
-                                                       created_via=USER_CHANGE_VIA_SMS, metadata=user_data)
-                        new_user.add_phone_number(cleaned_phone_number)
-                        new_user.save()
-
-                        entry = new_user.get_or_create_phone_entry(cleaned_phone_number)
-                        entry.set_two_way()
-                        entry.set_verified()
-                        entry.save()
-                        registration_processed = True
-
-                        if domain_obj.enable_registration_welcome_sms_for_mobile_worker:
-                            send_sms(domain_obj.name, None, cleaned_phone_number,
-                                     get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain_obj.name))
-                    except ValidationError as e:
-                        send_sms(domain_obj.name, None, cleaned_phone_number, e.messages[0])
-
+                    username = cleaned_phone_number if keyword4 == '' else keyword4
+                    registration_processed = register_sms_user(
+                        username=username,
+                        domain=domain_obj.name,
+                        cleaned_phone_number=cleaned_phone_number,
+                        send_welcome_sms=domain_obj.enable_registration_welcome_sms_for_mobile_worker,
+                        admin_alert_emails=domain_obj.sms_worker_registration_alert_emails,
+                    )
                 elif domain_obj.sms_case_registration_enabled:
                     register_sms_contact(
                         domain=domain_obj.name,
@@ -754,8 +792,8 @@ def create_billable_for_sms(msg, delay=True):
     try:
         from corehq.apps.sms.tasks import store_billable
         if delay:
-            store_billable.delay(msg)
+            store_billable.delay(msg.couch_id)
         else:
-            store_billable(msg)
+            store_billable(msg.couch_id)
     except Exception as e:
         log_smsbillables_error("Errors Creating SMS Billable: %s" % e)

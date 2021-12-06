@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from django.test.client import Client
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
@@ -23,8 +23,7 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         cls.forwarding_url = 'http://not-a-real-url-at-all'
 
         cls.domain = 'bedazzled'
-        cls.domain_obj = Domain(name=cls.domain)
-        cls.domain_obj.save()
+        cls.domain_obj = Domain.get_or_create_with_name(cls.domain)
 
         # DATA_FORWARDING is on PRO and above
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
@@ -77,7 +76,7 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         self.app_structure_repeater.save()
         self.addCleanup(self.app_structure_repeater.delete)
 
-        with patch('corehq.motech.repeaters.models.simple_post') as mock_fire:
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire:
             self.application = Application(domain=self.domain)
             self.application.save()
             self.addCleanup(self.application.delete)

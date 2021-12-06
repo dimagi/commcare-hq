@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.core import mail
 from django.db import models
 
-import mock
+from unittest import mock
 
 from dimagi.utils.dates import add_months_to_date
 
@@ -168,6 +168,12 @@ class TestSubscription(BaseAccountingTest):
             date_end=add_months_to_date(this_subscription_date_end, 1),
         )
         self.assertEqual(self.subscription.next_subscription, next_future_subscription)
+
+    def test_get_active_domains_for_account(self):
+        tasks.activate_subscriptions(based_on_date=self.subscription.date_start)
+        test_domains = ['test']
+        domains = Subscription.get_active_domains_for_account(self.account)
+        self.assertEqual(list(domains), test_domains)
 
     def tearDown(self):
         self.domain.delete()

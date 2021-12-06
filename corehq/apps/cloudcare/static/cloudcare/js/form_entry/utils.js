@@ -8,13 +8,17 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return hqImport("cloudcare/js/form_entry/errors").GENERIC_ERROR + message;
     };
 
+    module.isWebApps = function () {
+        var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+            environment = FormplayerFrontend.getChannel().request('currentUser').environment;
+        return environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT;
+    };
+
     module.reloginErrorHtml = function () {
-        var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-        var isWebApps = FormplayerFrontend.getChannel().request('currentUser').environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT;
-        if (isWebApps) {
+        if (module.isWebApps()) {
             var url = hqImport("hqwebapp/js/initial_page_data").reverse('login_new_window');
             return _.template(gettext("Looks like you got logged out because of inactivity, but your work is safe. " +
-                                      "<a href='<%= url %>' target='_blank'>Click here to log back in.</a>"))({url: url});
+                                      "<a href='<%- url %>' target='_blank'>Click here to log back in.</a>"))({url: url});
         } else {
             // target=_blank doesn't work properly within an iframe
             return gettext("You have been logged out because of inactivity.");
@@ -42,7 +46,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {Object} $div - The jquery element that the form will be rendered in.
      */
     module.initialRender = function (formJSON, resourceMap, $div) {
-        var form = hqImport("cloudcare/js/form_entry/fullform-ui").Form(formJSON),  // circular dependency
+        var form = hqImport("cloudcare/js/form_entry/form_ui").Form(formJSON),  // circular dependency
             $debug = $('#cloudcare-debugger'),
             CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry,
             cloudCareDebugger;

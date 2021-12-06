@@ -4,7 +4,7 @@ from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.apps.fixtures.utils import get_fields_without_attributes
-from corehq.util.workbook_json.excel import WorksheetNotFound
+from corehq.util.workbook_json.excel import JSONReaderError, WorksheetNotFound
 
 
 def validate_fixture_file_format(file_or_filename):
@@ -25,6 +25,8 @@ def _validate_fixture_upload(workbook):
         type_sheets = workbook.get_all_type_sheets()
     except FixtureUploadError as e:
         return e.errors
+    except JSONReaderError as e:
+        return e.args
 
     error_messages = []
 

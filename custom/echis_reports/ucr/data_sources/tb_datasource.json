@@ -1,0 +1,3138 @@
+{
+    "domains": [
+        "fmoh-echis",
+        "fmoh-echis-staging",
+        "fmoh-echis-link-test"
+    ],
+    "server_environment": [
+        "production",
+        "echis"
+    ],
+    "config": {
+        "configured_indicators": [
+            
+            {
+              "type": "expression",
+              "column_id": "health_post_id",
+              "datatype": "string",
+              "display_name": "health_post_id",
+              "expression": {
+                "test": {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id",
+                    "datatype": null
+                  },
+                  "type": "boolean_expression",
+                  "comment": null,
+                  "property_value": "-"
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "value_expression": {
+                    "value_expression": {
+                      "type": "property_name",
+                      "property_name": "_id",
+                      "datatype": null
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "Location",
+                    "doc_id_expression": {
+                      "test": {
+                        "operator": "eq",
+                        "type": "boolean_expression",
+                        "expression": {
+                          "type": "location_parent_id",
+                          "location_id_expression": {
+                            "type": "property_name",
+                            "property_name": "owner_id",
+                            "datatype": null
+                          }
+                        },
+                        "comment": null,
+                        "property_value": ""
+                      },
+                      "expression_if_false": {
+                        "type": "property_name",
+                        "property_name": "owner_id",
+                        "datatype": null
+                      },
+                      "type": "conditional",
+                      "expression_if_true": {
+                        "constant": "-",
+                        "type": "constant"
+                      }
+                    }
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "doc_id_expression": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "referenced_id"
+                    },
+                    "type": "nested",
+                    "argument_expression": {
+                      "type": "array_index",
+                      "array_expression": {
+                        "type": "property_name",
+                        "property_name": "indices",
+                        "datatype": null
+                      },
+                      "index_expression": {
+                        "type": "constant",
+                        "constant": 0
+                      }
+                    }
+                  }
+                },
+                "expression_if_false": {
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "_id",
+                    "datatype": null
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "Location",
+                  "doc_id_expression": {
+                    "test": {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "location_parent_id",
+                        "location_id_expression": {
+                          "type": "property_name",
+                          "property_name": "owner_id",
+                          "datatype": null
+                        }
+                      },
+                      "comment": null,
+                      "property_value": ""
+                    },
+                    "expression_if_false": {
+                      "type": "property_name",
+                      "property_name": "owner_id",
+                      "datatype": null
+                    },
+                    "type": "conditional",
+                    "expression_if_true": {
+                      "constant": "-",
+                      "type": "constant"
+                    }
+                  }
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": null
+            },
+            {
+              "comment": null,
+              "create_index": false,
+              "display_name": "report_week_date",
+              "datatype": "string",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "illness_start_report_week"
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "report_week_date"
+            },
+            {
+              "comment": null,
+              "create_index": false,
+              "display_name": "report_week_date_for_filter_gregorian",
+              "datatype": "date",
+              "type": "expression",
+              "transform": {
+                "type": "custom",
+                "custom_type": "ethiopian_date_to_gregorian_date"
+              },
+              "is_primary_key": false,
+              "is_nullable": true,
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "illness_start_report_week"
+              },
+              "column_id": "report_week_date_for_filter_gregorian"
+            },
+            {
+              "comment": null,
+              "create_index": true,
+              "display_name": "report_month_date",
+              "datatype": "string",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "illness_start_report_month"
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "report_month_date"
+            },
+            {
+              "comment": null,
+              "create_index": true,
+              "display_name": "report_month_date_for_filter_gregorian",
+              "datatype": "date",
+              "type": "expression",
+              "transform": {
+                "type": "custom",
+                "custom_type": "ethiopian_date_to_gregorian_date"
+              },
+              "is_primary_key": false,
+              "is_nullable": true,
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "illness_start_report_month"
+              },
+              "column_id": "report_month_date_for_filter_gregorian"
+            },
+            {
+              "type": "expression",
+              "column_id": "is_closed",
+              "datatype": "string",
+              "display_name": "is_closed",
+              "expression": {
+                "type": "property_name",
+                "property_name": "closed",
+                "datatype": "string"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": null
+            },
+            {
+              "comment": null,
+              "create_index": true,
+              "display_name": "test_or_real",
+              "datatype": "string",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "test_or_real"
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "test_or_real"
+            },
+            {
+              "comment": null,
+              "create_index": true,
+              "display_name": "report_date",
+              "datatype": "date",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "hew_screening_date"
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "report_date"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_Pres_1",
+              "datatype": "integer",
+              "display_name": "TB_Pres_1",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of HP reporting presumed TB cases in the reporting  Month"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_Pres_Ref_1",
+              "datatype": "integer",
+              "display_name": "TB_Pres_Ref_1",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "share_illness_with_hc"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Total number of presumed TB cases referred to Health facility(HC or Hospital) in the reporting Month"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_Pres_Ref_1_1",
+              "datatype": "integer",
+              "display_name": "TB_Pres_Ref_1_1",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "share_illness_with_hc"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "lt",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 5,
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "gender"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "male",
+                      "comment": null
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of TB Presumed and Referred - < 5 yr : Male"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_Pres_Ref_1_2",
+              "datatype": "integer",
+              "display_name": "TB_Pres_Ref_1_2",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "share_illness_with_hc"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "lt",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 5,
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "gender"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "female",
+                      "comment": null
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of TB Presumed and Referred - < 5 yr : Female"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_Pres_Ref_1_3",
+              "datatype": "integer",
+              "display_name": "TB_Pres_Ref_1_3",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "share_illness_with_hc"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "gte",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 5,
+                      "comment": null
+                    },
+                    {
+                      "operator": "lte",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 14,
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "gender"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "male",
+                      "comment": null
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of TB Presumed and Referred - >= 5 <= 14 yr : Male"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_Pres_Ref_1_4",
+              "datatype": "integer",
+              "display_name": "TB_Pres_Ref_1_4",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "share_illness_with_hc"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "gte",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 5,
+                      "comment": null
+                    },
+                    {
+                      "operator": "lte",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 14,
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "gender"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "female",
+                      "comment": null
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of TB Presumed and Referred - >= 5 <= 14 yr : FeMale"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_Pres_Ref_1_5",
+              "datatype": "integer",
+              "display_name": "TB_Pres_Ref_1_5",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "share_illness_with_hc"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "gte",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 15,
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "gender"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "male",
+                      "comment": null
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of TB Presumed and Referred - >= 15 yr : Male"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_Pres_Ref_1_6",
+              "datatype": "integer",
+              "display_name": "TB_Pres_Ref_1_6",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "share_illness_with_hc"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "gte",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 15,
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "gender"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "female",
+                      "comment": null
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of TB Presumed and Referred - >= 15 yr :FeMale"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_Pres_Pos_1",
+              "datatype": "integer",
+              "display_name": "TB_Pres_Pos_1",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "tb_positive"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of TB case identified from Presumed TB cases( all forms)"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_DR_Pres_Pos_2",
+              "datatype": "integer",
+              "display_name": "TB_DR_Pres_Pos_2",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_tb_screening_drug_susceptibility_type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "drug_resistant"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "tb_positive"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of DR TB case identified from Presumed TB cases"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_DR_Pres_Pos_3",
+              "datatype": "integer",
+              "display_name": "TB_DR_Pres_Pos_3",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_tb_screening_drug_susceptibility_type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "drug_susceptible"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "tb_positive"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of DS TB case identified from Presumed TB cases"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_LAT_1",
+              "datatype": "integer",
+              "display_name": "TB_LAT_1",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "latent_tb_infection"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Total number of individuals on treatment on prevention of latent TB infection in the reporting  period"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_LAT_1_2",
+              "datatype": "integer",
+              "display_name": "TB_LAT_1_2",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "lt",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 5,
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "gender"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "male",
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "latent_tb_infection"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of  Individuals on Latent TB Treatment < 5 yr : Male"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_LAT_1_3",
+              "datatype": "integer",
+              "display_name": "TB_LAT_1_3",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "lt",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 5,
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "gender"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "female",
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "latent_tb_infection"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of  Individuals on Latent TB Treatment < 5 yr : FeMale"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_LAT_1_4",
+              "datatype": "integer",
+              "display_name": "TB_LAT_1_4",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "gte",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 5,
+                      "comment": null
+                    },
+                    {
+                      "operator": "lte",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 14,
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "gender"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "male",
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "latent_tb_infection"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of  Individuals on Latent TB Treatment >= 5 -<= 14 yr : Male"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_LAT_1_5",
+              "datatype": "integer",
+              "display_name": "TB_LAT_1_5",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "gte",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 5,
+                      "comment": null
+                    },
+                    {
+                      "operator": "lte",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 14,
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "gender"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "female",
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "latent_tb_infection"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of  Individuals on Latent TB Treatment >= 5 -<= 14 yr : FeMale"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_LAT_1_6",
+              "datatype": "integer",
+              "display_name": "TB_LAT_1_6",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "gte",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 15,
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "gender"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "male",
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "latent_tb_infection"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of  Individuals on Latent TB Treatment >= 15  yr : Male"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_LAT_1_7",
+              "datatype": "integer",
+              "display_name": "TB_LAT_1_7",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hew_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "TB Presumed"
+                    },
+                    {
+                      "operator": "gte",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": "integer",
+                          "type": "property_name",
+                          "property_name": "age_years"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": 15,
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "gender"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "female",
+                      "comment": null
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "latent_tb_infection"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of  Individuals on Latent TB Treatment >= 15  yr : feMale"
+            },
+            {
+              "type": "expression",
+              "column_id": "TB_CUR",
+              "datatype": "integer",
+              "display_name": "TB_CUR",
+              "expression": {
+                "datatype": "integer",
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "type"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "illness"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "illness_next_visit_location"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "health_post"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "tb_positive"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "illness_completed"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "illness_status"
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "cured"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "tb_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                              "type": "property_name",
+                              "property_name": "indices",
+                              "datatype": null
+                            },
+                            "index_expression": {
+                              "type": "constant",
+                              "constant": 0
+                            }
+                          }
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
+                    }
+                  ]
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": "Number of TB cases followed  TB treatment at HP and successfully completed their treatment (cured+ completed) in the reporting period"
+            }
+          ],
+        "base_item_expression": {},
+        "configured_filter": {
+            "type": "or",
+            "filters": [
+              {
+                "operator": "eq",
+                "expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "type"
+                },
+                "type": "boolean_expression",
+                "comment": null,
+                "property_value": "illness"
+              },
+              {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "closed"
+                    },
+                    "comment": null,
+                    "property_value": false
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "client"
+                  }
+                ]
+              }
+            ]
+          },
+        "description": "",
+        "referenced_doc_type": "CommCareCase",
+        "display_name": "TB Datasource",
+        "table_id": "static_tb_datasource"
+    }
+}

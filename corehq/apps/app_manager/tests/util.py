@@ -1,10 +1,9 @@
-import difflib
 import os
+import uuid
 
-import lxml
-import mock
+from unittest import mock
 from lxml import etree
-from lxml.doctestcompare import LHTMLOutputChecker, LXMLOutputChecker
+from nose.tools import nottest
 
 import commcare_translations
 from corehq.apps.app_manager.models import Application
@@ -13,6 +12,11 @@ from corehq.apps.builds.models import (
     BuildSpec,
     CommCareBuild,
     CommCareBuildConfig,
+)
+from corehq.tests.util.xml import (
+    assert_html_equal,
+    assert_xml_equal,
+    parse_normalize,
 )
 from corehq.util.test_utils import TestFileMixin, unit_testing_only
 
@@ -31,10 +35,7 @@ class TestXmlMixin(TestFileMixin):
         self.assertXmlEqual(expected, actual, normalize=False)
 
     def assertXmlEqual(self, expected, actual, normalize=True):
-        if normalize:
-            expected = parse_normalize(expected)
-            actual = parse_normalize(actual)
-        _check_shared(expected, actual, LXMLOutputChecker(), "xml")
+        assert_xml_equal(expected, actual, normalize)
 
     def assertXmlHasXpath(self, element, xpath):
         message = "Could not find xpath expression '{}' in below XML\n".format(xpath)
@@ -47,13 +48,10 @@ class TestXmlMixin(TestFileMixin):
     def _assertXpathHelper(self, element, xpath, message, should_not_exist):
         element = parse_normalize(element, to_string=False)
         if bool(element.xpath(xpath)) == should_not_exist:
-            raise AssertionError(message + lxml.etree.tostring(element, pretty_print=True, encoding='utf-8'))
+            raise AssertionError(message + etree.tostring(element, pretty_print=True, encoding='unicode'))
 
     def assertHtmlEqual(self, expected, actual, normalize=True):
-        if normalize:
-            expected = parse_normalize(expected, is_html=True)
-            actual = parse_normalize(actual, is_html=True)
-        _check_shared(expected, actual, LHTMLOutputChecker(), "html")
+        assert_html_equal(expected, actual, normalize)
 
 
 class SuiteMixin(TestFileMixin):
@@ -89,59 +87,13 @@ class SuiteMixin(TestFileMixin):
         self._assertHasAllStrings(app_xml, app_strings)
 
 
-def normalize_attributes(xml):
-    """Sort XML attributes to make it easier to find differences"""
-    for node in xml.iterfind(".//*"):
-        if node.attrib:
-            attrs = sorted(node.attrib.items())
-            node.attrib.clear()
-            node.attrib.update(attrs)
-    return xml
-
-
-def parse_normalize(xml, to_string=True, is_html=False):
-    parser_class = lxml.etree.XMLParser
-    markup_class = lxml.etree.XML
-    meth = "xml"
-    if is_html:
-        parser_class = lxml.etree.HTMLParser
-        markup_class = lxml.etree.HTML
-        meth = "html"
-    parser = parser_class(remove_blank_text=True)
-    parse = lambda *args: normalize_attributes(markup_class(*args))
-    parsed = parse(xml, parser)
-    return lxml.etree.tostring(parsed, pretty_print=True, method=meth, encoding='utf-8') if to_string else parsed
-
-
-def _check_shared(expected, actual, checker, extension):
-    # snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
-    if isinstance(expected, bytes):
-        expected = expected.decode('utf-8')
-    if isinstance(actual, bytes):
-        actual = actual.decode('utf-8')
-    if not checker.check_output(expected, actual, 0):
-        original_message = message = "{} mismatch\n\n".format(extension.upper())
-        diff = difflib.unified_diff(
-            expected.splitlines(keepends=True),
-            actual.splitlines(keepends=True),
-            fromfile='want.{}'.format(extension),
-            tofile='got.{}'.format(extension)
-        )
-        for line in diff:
-            message += line
-        if message != original_message:
-            # check that there was actually a diff, because checker.check_output
-            # doesn't work with unicode characters in xml node names
-            raise AssertionError(message)
-
-
 def extract_xml_partial(xml, xpath):
     actual = parse_normalize(xml, to_string=False)
     nodes = actual.findall(xpath)
-    root = lxml.etree.Element('partial')
+    root = etree.Element('partial')
     for node in nodes:
         root.append(node)
-    return lxml.etree.tostring(root, pretty_print=True, encoding='utf-8')
+    return etree.tostring(root, pretty_print=True, encoding='utf-8')
 
 
 def add_build(version, build_number):
@@ -150,12 +102,18 @@ def add_build(version, build_number):
     return CommCareBuild.create_from_zip(jad_path, version, build_number)
 
 
-def _get_default(self):
+@nottest
+def get_build_spec_for_tests(version=None):
     return BuildSpec({
-        "version": "2.7.0",
+        "version": version or "2.7.0",
         "build_number": None,
         "latest": True
     })
+
+
+def _get_default(self):
+    return get_build_spec_for_tests()
+
 
 patch_default_builds = mock.patch.object(CommCareBuildConfig, 'get_default',
                                          _get_default)
@@ -183,6 +141,10 @@ def patch_get_xform_resource_overrides():
     )
 
 
+def patch_validate_xform():
+    return mock.patch('corehq.apps.app_manager.models.validate_xform', lambda _, __: None)
+
+
 @unit_testing_only
 def delete_all_apps():
     for doc_type in app_doc_types():
@@ -195,3 +157,39 @@ def delete_all_apps():
         )
         for row in res:
             Application.get_db().delete_doc(row['doc'])
+
+
+def get_simple_form(xmlns=None):
+    xmlns = xmlns or uuid.uuid4().hex
+    return """<?xml version="1.0" encoding="UTF-8" ?>
+    <h:html xmlns:h="http://www.w3.org/1999/xhtml"
+            xmlns:orx="http://openrosa.org/jr/xforms"
+            xmlns="http://www.w3.org/2002/xforms"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:jr="http://openrosa.org/javarosa">
+        <h:head>
+            <h:title>New Form</h:title>
+            <model>
+                <instance>
+                    <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+                          xmlns="{xmlns}" uiVersion="1" version="1" name="New Form">
+                        <question1 />
+                    </data>
+                </instance>
+                <bind nodeset="/data/question1" type="xsd:string" />
+                <itext>
+                    <translation lang="en" default="">
+                        <text id="question1-label">
+                            <value>question1</value>
+                        </text>
+                    </translation>
+                </itext>
+            </model>
+        </h:head>
+        <h:body>
+            <input ref="/data/question1">
+                <label ref="jr:itext('question1-label')" />
+            </input>
+        </h:body>
+    </h:html>
+    """.format(xmlns=xmlns)

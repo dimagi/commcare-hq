@@ -1,0 +1,52 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{# Required to define ACE #}
+{% load compress %}
+{% block js %}{{ block.super }}
+  {% compress js %}
+    <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
+    <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
+    <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
+    <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
+  {% endcompress %}
+{% endblock %}
+
+{% requirejs_main "dhis2/js/dataset_map_json" %}
+
+{% block page_content %}
+{% initial_page_data 'dataset_map' dataset_map %}
+
+<h2>{% trans "DataSet Map" %}</h2>
+
+<form id="dataset-map"
+      class="form-horizontal"
+      method="post"
+      data-bind="submit: submit">
+
+  <div class="form-group">
+    <div class="controls col-sm-9 col-md-8 col-lg-6">
+      {% comment %}
+      Use "observablejsonwidget" class instead of "jsonwidget" to prevent
+      ACE initializing it before it is an observable.
+      {% endcomment %}
+      <textarea name="dataSetMap"
+                class="observablejsonwidget form-control"
+                required=""
+                data-bind="value: dataSetMap"></textarea>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <div class="col-sm-offset-3 col-md-offset-2
+                controls col-sm-9 col-md-8 col-lg-6">
+      <button type="submit"
+              class="btn btn-primary">
+        {% trans "Save DataSet map" %}
+      </button>
+    </div>
+  </div>
+</form>
+
+{% endblock %}

@@ -14,13 +14,16 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 });
             });
             $(".hq-help").hqHelp();
+        },
+        itemsetValue = function (item) {
+            return "instance('" + item.id + "')" + item.path;
         };
 
     var itemsetModel = function (options, saveButton) {
         options = _.defaults(options, {
             'instance_id': '',
             'instance_uri': '',
-            'nodeset': '',
+            'nodeset': null,
             'label': '',
             'value': '',
             'sort': '',
@@ -29,35 +32,48 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         self.lookupTableNodeset = ko.pureComputed({
             write: function (value) {
-                self.nodeset(value);
-                var reg = /instance\(['"]([\w\-:]+)['"]\)/g,
-                    matches = reg.exec(value);
-                if (matches && matches.length > 1) {
-                    var instanceId = matches[1],
-                        itemList = _.findWhere(get('js_options').item_lists, {'id': instanceId});
-
-                    self.instance_id(instanceId);
-                    if (itemList) {
-                        self.instance_uri(itemList['uri']);
+                if (value === undefined) {
+                    self.nodeset(null);
+                }
+                else {
+                    self.instance_id(value);
+                    var itemList = _.filter(get('js_options').item_lists, function (item) {
+                        return item.id === value;
+                    });
+                    if (itemList && itemList.length === 1) {
+                        self.instance_uri(itemList[0]['uri']);
+                        self.nodeset(itemsetValue(itemList[0]));
+                    }
+                    else {
+                        self.nodeset(null);
                     }
                 }
             },
             read: function () {
-                // is the nodeset a lookup table that we know about?
-                var itemLists = get('js_options').item_lists,
-                    itemListNodesets = _.map(itemLists, function (item) {
-                        return "instance('" + item.id + "')" + item.path;
-                    });
-                if (itemListNodesets.indexOf(self.nodeset()) !== -1) {
-
-                    return self.nodeset();
-                } else {
-                    return '';
-                }
+                return self.instance_id();
             },
         });
-
-        subscribeToSave(self, ['nodeset', 'label', 'value', 'sort'], saveButton);
+        self.nodesetValid = ko.computed(function () {
+            if (self.nodeset() === null) {
+                return true;
+            }
+            var itemLists = _.map(get('js_options').item_lists, function (item) {
+                    return itemsetValue(item);
+                });
+            if (self.nodeset().split("/").length === 0) {
+                return false;
+            }
+            var instancePart = self.nodeset().split("/")[0];
+            for (var i = itemLists.length - 1; i >= 0; i--) {
+                var groups = itemLists[i].split("/");
+                if (groups.length > 0 && groups[0] === instancePart) {
+                    return true;
+                }
+            }
+            return false;
+        });
+        subscribeToSave(self,
+            ['nodeset', 'label', 'value', 'sort', 'instance_uri'], saveButton);
 
         return self;
     };
@@ -68,7 +84,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
             label: '',
             hint: '',
             appearance: '',
+            isMultiselect: false,
+            allowBlankValue: false,
             defaultValue: '',
+            hidden: false,
             receiverExpression: '',
             itemsetOptions: {},
         });
@@ -78,13 +97,63 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.label = ko.observable(options.label);
         self.hint = ko.observable(options.hint);
         self.appearance = ko.observable(options.appearance);
+        self.isMultiselect = ko.observable(options.isMultiselect);
+        self.allowBlankValue = ko.observable(options.allowBlankValue);
         self.defaultValue = ko.observable(options.defaultValue);
+        self.hidden = ko.observable(options.hidden);
+        self.appearanceFinal = ko.computed(function () {
+            var appearance = self.appearance();
+            if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
+                return 'fixture';
+            }
+            else {
+                return appearance;
+            }
+        });
+        self.dropdownLabels = ko.computed(function () {
+            if (self.appearance() === 'report_fixture') {
+                return {
+                    'labelPlaceholder': 'column_0',
+                    'valuePlaceholder': 'column_0',
+                    'optionsLabel': gettext("Mobile UCR Options"),
+                    'tableLabel': gettext("Mobile UCR Report"),
+                    'selectLabel': gettext("Select a Report..."),
+                    'advancedLabel': gettext("Advanced Mobile UCR Options"),
+                };
+            }
+            else {
+                return {
+                    'labelPlaceholder': 'name',
+                    'valuePlaceholder': 'id',
+                    'optionsLabel': gettext("Lookup Table Options"),
+                    'tableLabel': gettext("Lookup Table"),
+                    'selectLabel': gettext("Select a Lookup Table..."),
+                    'advancedLabel': gettext("Advanced Lookup Table Options"),
+                };
+            }
+        });
 
         self.receiverExpression = ko.observable(options.receiverExpression);
+        self.itemListOptions = ko.computed(function () {
+            var itemLists = get('js_options').item_lists;
+            return _.map(
+                _.filter(itemLists, function (p) {
+                    return p.fixture_type === self.appearance();
+                }),
+                function (p) {
+                    return {
+                        "value": p.id,
+                        "name": p.name,
+                    };
+                }
+            );
+        });
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
-        subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue', 'receiverExpression'], saveButton);
-
+        subscribeToSave(self, [
+            'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
+            'receiverExpression', 'isMultiselect', 'allowBlankValue',
+        ], saveButton);
         return self;
     };
 
@@ -100,20 +169,47 @@ hqDefine("app_manager/js/details/case_claim", function () {
         return self;
     };
 
+    var additionalRegistryCaseModel = function (xpath, saveButton) {
+        var self = {};
+        self.uniqueId = generateSemiRandomId();
+        self.caseIdXpath = ko.observable(xpath || '');
+        subscribeToSave(self, ['caseIdXpath'], saveButton);
+        return self;
+    };
+
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
-        'searchButtonDisplayCondition', 'searchCommandLabel', 'searchFilter', 'searchDefaultRelevant',
-        'searchAdditionalRelevant',
+        'searchButtonDisplayCondition', 'searchLabel', 'searchFilter', 'searchDefaultRelevant',
+        'searchAdditionalRelevant', 'dataRegistry', 'dataRegistryWorkflow', 'additionalRegistryCases',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
 
-        options.searchCommandLabel = options.searchCommandLabel[lang] || "";
+        options.searchLabel = options.searchLabel[lang] || "";
         options.searchAgainLabel = options.searchAgainLabel[lang] || "";
-        var self = ko.mapping.fromJS(options);
+        var mapping = {
+            'additionalRegistryCases': {
+                create: function(options) {
+                    return additionalRegistryCaseModel(options.data, saveButton);
+                },
+            },
+        };
+        var self = ko.mapping.fromJS(options, mapping);
+
+        self.restrictWorkflowForDataRegistry = ko.pureComputed(() => {
+            return self.dataRegistry() && self.dataRegistryWorkflow() === 'load_case';
+        });
 
         self.workflow = ko.computed({
             read: function () {
+                if (self.restrictWorkflowForDataRegistry()) {
+                    if (self.autoLaunch()) {
+                        if (self.defaultSearch()) {
+                            return "es_only";
+                        }
+                    }
+                    return "auto_launch";
+                }
                 if (self.autoLaunch()) {
                     if (self.defaultSearch()) {
                         return "es_only";
@@ -142,6 +238,22 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
         subscribeToSave(self, searchConfigKeys, saveButton);
+        // media image/audio buttons
+        $(".case-search-multimedia-input button").on("click", function () {
+            saveButton.fire('change');
+        });
+        // checkbox to select media for all languages
+        $(".case-search-multimedia-input input[type='checkbox']").on('change', function () {
+            saveButton.fire('change');
+        });
+
+        self.addRegistryQuery = function () {
+            self.additionalRegistryCases.push(additionalRegistryCaseModel('', saveButton));
+        };
+
+        self.removeRegistryQuery = function (model) {
+            self.additionalRegistryCases.remove(model);
+        };
 
         self.serialize = function () {
             return {
@@ -150,10 +262,31 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 search_default_relevant: self.searchDefaultRelevant(),
                 search_additional_relevant: self.searchAdditionalRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
-                search_command_label: self.searchCommandLabel(),
+                data_registry: self.dataRegistry(),
+                data_registry_workflow: self.dataRegistryWorkflow(),
+                search_label: self.searchLabel(),
+                search_label_image:
+                    $("#case_search-search_label_media_media_image input[type=hidden][name='case_search-search_label_media_media_image']").val() || null,
+                search_label_image_for_all:
+                    $("#case_search-search_label_media_media_image input[type=hidden][name='case_search-search_label_media_use_default_image_for_all']").val() || null,
+                search_label_audio:
+                    $("#case_search-search_label_media_media_audio input[type=hidden][name='case_search-search_label_media_media_audio']").val() || null,
+                search_label_audio_for_all:
+                    $("#case_search-search_label_media_media_audio input[type=hidden][name='case_search-search_label_media_use_default_audio_for_all']").val() || null,
                 search_again_label: self.searchAgainLabel(),
+                search_again_label_image:
+                    $("#case_search-search_again_label_media_media_image input[type=hidden][name='case_search-search_again_label_media_media_image']").val() || null,
+                search_again_label_image_for_all:
+                    $("#case_search-search_again_label_media_media_image input[type=hidden][name='case_search-search_again_label_media_use_default_image_for_all']").val() || null,
+                search_again_label_audio:
+                    $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_media_audio']").val() || null,
+                search_again_label_audio_for_all:
+                    $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_use_default_audio_for_all']").val() || null,
                 search_filter: self.searchFilter(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
+                additional_registry_cases: self.dataRegistryWorkflow() === "load_case" ?  self.additionalRegistryCases().map((query) => {
+                    return query.caseIdXpath();
+                }) : [],
             };
         };
 
@@ -169,12 +302,19 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
+                // searchProperties is a list of CaseSearchProperty objects
                 // property labels/hints come in keyed by lang.
                 var label = searchProperties[i].label[lang];
                 var hint = searchProperties[i].hint[lang] || "";
                 var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
-                if (searchProperties[i].input_ === "select1") {
-                    appearance = "fixture";
+                if (searchProperties[i].input_ === "select1" || searchProperties[i].input_ === "select") {
+                    var uri = searchProperties[i].itemset.instance_uri;
+                    if (uri !== null && uri.includes("commcare-reports")) {
+                        appearance = "report_fixture";
+                    }
+                    else {
+                        appearance = "lookup_table_fixture";
+                    }
                 }
                 if (searchProperties[i].appearance === "address") {
                     appearance = "address";
@@ -182,12 +322,16 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "daterange") {
                     appearance = "daterange";
                 }
+                var isMultiselect = searchProperties[i].input_ === "select";
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: label,
                     hint: hint,
                     appearance: appearance,
+                    isMultiselect: isMultiselect,
+                    allowBlankValue: searchProperties[i].allow_blank_value,
                     defaultValue: searchProperties[i].default_value,
+                    hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
                     itemsetOptions: {
                         instance_id: searchProperties[i].itemset.instance_id,
@@ -221,8 +365,11 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
                         hint: p.hint(),
-                        appearance: p.appearance(),
+                        appearance: p.appearanceFinal(),
+                        is_multiselect: p.isMultiselect(),
+                        allow_blank_value: p.allowBlankValue(),
                         default_value: p.defaultValue(),
+                        hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
                     };
@@ -259,6 +406,25 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     };
                 }
             );
+        };
+
+        self.commonProperties = ko.computed(function () {
+            var defaultProperties = _.map(self._getDefaultProperties(), function (p) {
+                return p.property;
+            });
+            var commonProperties = self.searchProperties().filter(function (n) {
+                return n.name().length > 0 && defaultProperties.indexOf(n.name()) !== -1;
+            });
+            return _.map(
+                commonProperties,
+                function (p) {
+                    return p.name();
+                }
+            );
+        });
+
+        self.isCommon = function (prop) {
+            return self.commonProperties().indexOf(prop) !== -1;
         };
 
         self.serialize = function () {

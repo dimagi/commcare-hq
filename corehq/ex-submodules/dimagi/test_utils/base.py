@@ -5,8 +5,8 @@ if not settings.configured:
     settings.configure(DEBUG=True)
 
 
-from mock import MagicMock, NonCallableMock, patch
-from unittest2 import TestCase
+from unittest.mock import MagicMock, NonCallableMock, patch
+from unittest import TestCase
 
 from memoized import memoized
 from dimagi.utils.chunked import chunked

@@ -1,12 +1,23 @@
+from datetime import datetime, timedelta
+from typing import List, Optional
+
+from django.conf import settings
 from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound
 
+from dimagi.utils.logging import notify_error, notify_exception
 from soil import DownloadBase
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_tracker):
@@ -116,11 +127,16 @@ def property_references_parent(case_property):
     )
 
 
-def operate_on_payloads(repeat_record_ids, domain, action, task=None, from_excel=False):
+def operate_on_payloads(
+    repeat_record_ids: List[str],
+    domain: str,
+    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
+    use_sql: bool,
+    task: Optional = None,
+    from_excel: bool = False,
+):
     if not repeat_record_ids:
         return {'messages': {'errors': [_('No payloads specified')]}}
-    if not action:
-        return {'messages': {'errors': [_('No action specified')]}}
 
     response = {
         'errors': [],
@@ -133,22 +149,30 @@ def operate_on_payloads(repeat_record_ids, domain, action, task=None, from_excel
         DownloadBase.set_progress(task, 0, len(repeat_record_ids))
 
     for record_id in repeat_record_ids:
-        valid_record = _validate_record(record_id, domain)
+        if use_sql:
+            record = _get_sql_repeat_record(domain, record_id)
+        else:
+            record = _get_couch_repeat_record(domain, record_id)
 
-        if valid_record:
+        if record:
             try:
-                message = ''
                 if action == 'resend':
-                    valid_record.fire(force_send=True)
+                    record.fire(force_send=True)
                     message = _("Successfully resent repeat record (id={})").format(record_id)
                 elif action == 'cancel':
-                    valid_record.cancel()
-                    valid_record.save()
+                    if use_sql:
+                        record.state = RECORD_CANCELLED_STATE
+                    else:
+                        record.cancel()
+                    record.save()
                     message = _("Successfully cancelled repeat record (id={})").format(record_id)
                 elif action == 'requeue':
-                    valid_record.requeue()
-                    valid_record.save()
+                    record.requeue()
+                    if not use_sql:
+                        record.save()
                     message = _("Successfully requeued repeat record (id={})").format(record_id)
+                else:
+                    raise ValueError(f'Unknown action {action!r}')
                 response['success'].append(message)
                 success_count = success_count + 1
             except Exception as e:
@@ -161,18 +185,107 @@ def operate_on_payloads(repeat_record_ids, domain, action, task=None, from_excel
     if from_excel:
         return response
 
-    response["success_count_msg"] = \
-        _("Successfully {action} {count} form(s)".format(action=action, count=success_count))
+    if success_count:
+        response["success_count_msg"] = _(
+            "Successfully performed {action} action on {count} form(s)"
+        ).format(action=action, count=success_count)
+    else:
+        response["success_count_msg"] = ''
 
     return {"messages": response}
 
 
-def _validate_record(r, domain):
+def _get_couch_repeat_record(domain, record_id):
     from corehq.motech.repeaters.models import RepeatRecord
+
     try:
-        payload = RepeatRecord.get(r)
+        couch_record = RepeatRecord.get(record_id)
     except ResourceNotFound:
         return None
-    if payload.domain != domain:
+    if couch_record.domain != domain:
         return None
-    return payload
+    return couch_record
+
+
+def _get_sql_repeat_record(domain, record_id):
+    from corehq.motech.repeaters.models import SQLRepeatRecord
+
+    try:
+        return SQLRepeatRecord.objects.get(domain=domain, pk=record_id)
+    except SQLRepeatRecord.DoesNotExist:
+        return None
+
+
+def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_type, db=None, progress_helper=None):
+    from corehq.apps.data_interfaces.models import (
+        CaseRuleActionResult,
+        DomainCaseRuleRun,
+    )
+    HALT_AFTER = 23 * 60 * 60
+
+    domain_obj = Domain.get_by_name(domain)
+    max_allowed_updates = domain_obj.auto_case_update_limit or settings.MAX_RULE_UPDATES_IN_ONE_RUN
+    start_run = datetime.utcnow()
+    case_update_result = CaseRuleActionResult()
+
+    cases_checked = 0
+    last_migration_check_time = None
+
+    for case in case_iterator:
+        migration_in_progress, last_migration_check_time = _check_data_migration_in_progress(
+            domain, last_migration_check_time
+        )
+
+        time_elapsed = datetime.utcnow() - start_run
+        if (
+            time_elapsed.seconds > HALT_AFTER or case_update_result.total_updates >= max_allowed_updates
+            or migration_in_progress
+        ):
+            notify_error("Halting rule run for domain %s and case type %s." % (domain, case_type))
+
+            return DomainCaseRuleRun.done(
+                run_id, cases_checked, case_update_result, db=db, halted=True
+            )
+
+        case_update_result.add_result(run_rules_for_case(case, rules, now))
+        if progress_helper is not None:
+            progress_helper.increment_current_case_count()
+        cases_checked += 1
+    return DomainCaseRuleRun.done(run_id, cases_checked, case_update_result, db=db)
+
+
+def _check_data_migration_in_progress(domain, last_migration_check_time):
+    utcnow = datetime.utcnow()
+    if last_migration_check_time is None or (utcnow - last_migration_check_time) > timedelta(minutes=1):
+        return any_migrations_in_progress(domain), utcnow
+
+    return False, last_migration_check_time
+
+
+def run_rules_for_case(case, rules, now):
+    from corehq.apps.data_interfaces.models import CaseRuleActionResult
+    aggregated_result = CaseRuleActionResult()
+    last_result = None
+    for rule in rules:
+        if last_result:
+            if (
+                last_result.num_updates > 0 or last_result.num_related_updates > 0
+                or last_result.num_related_closes > 0
+            ):
+                case = CaseAccessors(case.domain).get_case(case.case_id)
+
+        try:
+            last_result = rule.run_rule(case, now)
+        except Exception:
+            last_result = CaseRuleActionResult(num_errors=1)
+            notify_exception(None, "Error applying case update rule", {
+                'domain': case.domain,
+                'rule_pk': rule.pk,
+                'case_id': case.case_id,
+            })
+
+        aggregated_result.add_result(last_result)
+        if last_result.num_closes > 0:
+            break
+
+    return aggregated_result

@@ -43,7 +43,7 @@ It essentially has two parts.
 Putting those together, it looks something like this:
 
 ```javascript
-MYNAMESPACE.myModule = (function () {
+MYNAMESPACE.myModule = function () {
     // things inside here are private
     var myPrivateGreeting = "Hello";
     // unless you put them in the return object
@@ -52,9 +52,9 @@ MYNAMESPACE.myModule = (function () {
     };
     return {
         sayHi: sayHi,
-        favoriteColor: “blue”,
+        favoriteColor: "blue",
     };
-}());
+}();
 ```
 
 This uses a pattern so common in JavaScript that it has its own
@@ -89,7 +89,7 @@ var sayHi = function (name) {
 // also a global
 myModule = {
     sayHi: sayHi,
-    favoriteColor: “blue”,
+    favoriteColor: "blue",
 };
 ```
 
@@ -139,7 +139,7 @@ hqDefine('myapp/js/myModule', function () {
     };
     return {
         sayHi: sayHi,
-        favoriteColor: “blue”,
+        favoriteColor: "blue",
     };
 });
 ```

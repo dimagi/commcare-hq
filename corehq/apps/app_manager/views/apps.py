@@ -5,19 +5,17 @@ from collections import defaultdict
 
 from django.contrib import messages
 from django.http import (
-    Http404,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils.http import urlencode as django_urlencode
 from django.utils.translation import ugettext as _
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 import urllib3
-from couchdbkit.exceptions import ResourceConflict
 from django_prbac.utils import has_privilege
 
 from dimagi.utils.logging import notify_exception
@@ -25,6 +23,7 @@ from dimagi.utils.web import json_request, json_response
 from toggle.shortcuts import set_toggle
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_APP_TEMPLATE_FORM_ID,
     send_hubspot_form,
@@ -52,7 +51,7 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppLinkError,
     IncompatibleFormTypeException,
-    RearrangeError,
+    RearrangeError, AppValidationError,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
@@ -76,6 +75,7 @@ from corehq.apps.app_manager.util import (
     is_linked_app,
     is_remote_app,
 )
+from corehq.apps.app_manager.util import enable_usercase as enable_usercase_util
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
     clear_xmlns_app_id_cache,
@@ -98,15 +98,14 @@ from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
-from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
+from corehq.apps.linked_domain.dbaccessors import is_active_upstream_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_practice_mode_mobile_workers,
 )
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
-from corehq.util.compression import decompress
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
@@ -164,6 +163,13 @@ def default_new_app(request, domain):
     clear_app_cache(request, domain)
     app.save()
     return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
+
+
+@require_POST
+@require_can_edit_apps
+def enable_usercase(request, domain):
+    enable_usercase_util(domain)
+    return JsonResponse({"success": 1})
 
 
 def get_app_view_context(request, app):
@@ -305,41 +311,44 @@ def get_app_view_context(request, app):
     })
     if is_linked_app(app):
         try:
-            master_versions_by_id = app.get_latest_master_releases_versions()
-            master_briefs = [brief for brief in app.get_master_app_briefs() if brief.id in master_versions_by_id]
+            upstream_versions_by_id = app.get_latest_master_releases_versions()
+            upstream_briefs = [
+                brief for brief in app.get_master_app_briefs() if brief.id in upstream_versions_by_id
+            ]
         except RemoteRequestError:
-            messages.error(request, "Unable to reach remote master server. Please try again later.")
-            master_versions_by_id = {}
-            master_briefs = []
+            messages.error(request, "Unable to reach remote upstream server. Please try again later.")
+            upstream_versions_by_id = {}
+            upstream_briefs = []
         upstream_brief = {}
-        for b in master_briefs:
+        for b in upstream_briefs:
             if b.id == app.upstream_app_id:
                 upstream_brief = b
         context.update({
-            'master_briefs': master_briefs,
-            'master_versions_by_id': master_versions_by_id,
-            'multiple_masters': app.enable_multi_master and len(master_briefs) > 1,
+            'upstream_briefs': upstream_briefs,
+            'upstream_versions_by_id': upstream_versions_by_id,
+            'multiple_upstreams': app.enable_multi_master and len(upstream_briefs) > 1,
             'upstream_version': app.upstream_version,
             'upstream_brief': upstream_brief,
             'upstream_url': _get_upstream_url(app, request.couch_user),
-            'upstream_url_template': _get_upstream_url(app, request.couch_user, master_app_id='---'),
+            'upstream_url_template': _get_upstream_url(app, request.couch_user, upstream_app_id='---'),
         })
     return context
 
 
-def _get_upstream_url(app, request_user, master_app_id=None):
-    """Get the upstream url if the user has access"""
-    if (
-            app.domain_link and (
-                request_user.is_superuser or (
-                    not app.domain_link.is_remote
-                    and request_user.is_member_of(app.domain_link.master_domain)
-                )
-            )
-    ):
-        if master_app_id is None:
-            master_app_id = app.upstream_app_id
-        url = reverse('view_app', args=[app.domain_link.master_domain, master_app_id])
+def _get_upstream_url(app, user, upstream_app_id=None):
+    """
+    Get the upstream url if the user has access
+    :param user: couch_user from a request
+    """
+    if not app.domain_link:
+        return None
+
+    is_member_of_local_domain = user.is_member_of(app.domain_link.master_domain) and not app.domain_link.is_remote
+    user_has_access = is_member_of_local_domain or user.is_superuser
+
+    if user_has_access:
+        upstream_app_id = upstream_app_id or app.upstream_app_id
+        url = reverse('view_app', args=[app.domain_link.master_domain, upstream_app_id])
         if app.domain_link.is_remote:
             url = '{}{}'.format(app.domain_link.remote_base_url, url)
         return url
@@ -389,7 +398,7 @@ def get_apps_base_context(request, domain, app):
         )
 
         disable_report_modules = (
-            is_master_linked_domain(domain)
+            is_active_upstream_domain(domain)
             and not toggles.MOBILE_UCR_LINKED_DOMAIN.enabled(domain)
         )
 
@@ -459,7 +468,7 @@ def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_a
     # Linked apps can only be created from released versions
     error = None
     if from_domain == to_domain:
-        error = _("You may not create a linked app in the same domain as its master app.")
+        error = _("You cannot create a linked app in the same project space as the upstream app.")
     elif build_id:
         from_app = Application.get(build_id)
         if not from_app.is_released:
@@ -540,15 +549,17 @@ def load_app_from_slug(domain, username, slug):
 
 
 def _build_sample_app(app):
-    errors = app.validate_app()
-    if not errors:
-        comment = _("A sample CommCare application for you to explore")
+    comment = _("A sample CommCare application for you to explore")
+    try:
         copy = app.make_build(comment=comment)
-        copy.is_released = True
-        copy.save(increment_version=False)
-        return copy
-    else:
-        notify_exception(None, 'Validation errors building sample app', details=errors)
+    except AppValidationError as e:
+        notify_exception(None, 'Validation errors building sample app', details=e.errors)
+        return
+
+    copy.is_released = True
+    copy.save(increment_version=False)
+    return copy
+
 
 
 @require_can_edit_apps
@@ -562,6 +573,10 @@ def app_exchange(request, domain):
             continue
         results.reverse()
         first = results[0]
+
+        required_privileges = str(obj.required_privileges or '').split()
+        if not all(domain_has_privilege(domain, privilege) for privilege in required_privileges):
+            continue
 
         def _version_text(result):
             if result['_id'] == first['_id']:
@@ -589,6 +604,10 @@ def app_exchange(request, domain):
     if request.method == "POST":
         clear_app_cache(request, domain)
         from_app_id = request.POST.get('from_app_id')
+        if not _valid_exchange_record_exists_helper(from_app_id, records):
+            messages.error(request, _("Invalid application id requested for exchange import"))
+            return render(request, template, context)
+
         app_copy = import_app_util(from_app_id, domain, {
             'created_from_template': from_app_id,
         })
@@ -597,29 +616,42 @@ def app_exchange(request, domain):
     return render(request, template, context)
 
 
+def _valid_exchange_record_exists_helper(app_id, records):
+    for record in records:
+        for version in record["versions"]:
+            if version["id"] == app_id:
+                return True
+    return False
+
+
 @require_can_edit_apps
 def import_app(request, domain):
     template = "app_manager/import_app.html"
     if request.method == "POST":
         clear_app_cache(request, domain)
         name = request.POST.get('name')
-        compressed = request.POST.get('compressed')
+        file = request.FILES.get('source_file')
 
         valid_request = True
         if not name:
             messages.error(request, _("You must submit a name for the application you are importing."))
             valid_request = False
-        if not compressed:
-            messages.error(request, _("You must submit the source data."))
+        if not file:
+            messages.error(request, _("You must upload the app source file."))
+            valid_request = False
+
+        try:
+            if valid_request:
+                source = json.load(file)
+        except json.decoder.JSONDecodeError:
+            messages.error(request, _("The file uploaded is an invalid JSON file"))
             valid_request = False
 
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
-        source = json.loads(source)
         assert(source is not None)
-        app = import_app_util(source, domain, {'name': name})
+        app = import_app_util(source, domain, {'name': name}, request=request)
 
         return back_to_main(request, domain, app_id=app._id)
     else:
@@ -981,7 +1013,7 @@ def move_child_modules_after_parents(request, domain, app_id):
 
 @require_GET
 @require_can_edit_apps
-def drop_user_case(request, domain, app_id):
+def drop_usercase(request, domain, app_id):
     app = get_app(domain, app_id)
     for module in app.get_modules():
         for form in module.get_forms():
@@ -1003,35 +1035,25 @@ def drop_user_case(request, domain, app_id):
 
 
 @require_can_edit_apps
-def pull_master_app(request, domain, app_id):
-    master_app_id = request.POST.get('master_app_id')
-    if not master_app_id:
-        messages.error(request, _("Please select a master app."))
+def pull_upstream_app(request, domain, app_id):
+    upstream_app_id = request.POST.get('upstream_app_id')
+    if not upstream_app_id:
+        messages.error(request, _("Please select an upstream app."))
         return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
     async_update = request.POST.get('notify') == 'on'
     if async_update:
-        update_linked_app_and_notify_task.delay(domain, app_id, master_app_id,
-                                                request.couch_user.get_id, request.couch_user.email)
+        update_linked_app_and_notify_task.delay(domain, app_id, upstream_app_id,
+                                                request.couch_user.get_id, request.couch_user.get_email())
         messages.success(request,
                          _('Your request has been submitted. We will notify you via email once completed.'))
     else:
         app = get_current_app(domain, app_id)
         try:
-            update_linked_app(app, master_app_id, request.couch_user.get_id)
+            update_linked_app(app, upstream_app_id, request.couch_user.get_id)
         except AppLinkError as e:
             messages.error(request, str(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
-    track_workflow(request.couch_user.username, "Linked domain: master app pulled")
+    track_workflow(request.couch_user.username, "Linked domain: upstream app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def update_linked_whitelist(request, domain, app_id):
-    app = get_current_app(domain, app_id)
-    new_whitelist = json.loads(request.POST.get('whitelist'))
-    app.linked_whitelist = new_whitelist
-    app.save()
-    return HttpResponse()

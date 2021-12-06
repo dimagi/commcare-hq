@@ -21,7 +21,6 @@ from couchdbkit import NoResultFound, ResourceNotFound
 from django_prbac.decorators import requires_privilege
 from django_prbac.utils import has_privilege
 
-from corehq.util.metrics import metrics_histogram_timer
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.web import json_response
 from phonelog.models import UserErrorEntry
@@ -49,6 +48,7 @@ from corehq.apps.app_manager.decorators import (
     require_deploy_apps,
 )
 from corehq.apps.app_manager.exceptions import (
+    AppValidationError,
     BuildConflictException,
     ModuleIdMissingException,
     PracticeUserException,
@@ -68,13 +68,17 @@ from corehq.apps.app_manager.tasks import (
 from corehq.apps.app_manager.util import get_and_assert_practice_user_in_domain
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
-from corehq.apps.app_manager.views.utils import back_to_main, get_langs
+from corehq.apps.app_manager.views.utils import (
+    back_to_main,
+    get_langs,
+    report_build_time,
+)
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
     login_or_api_key,
     track_domain_request,
-    LoginAndDomainMixin,
 )
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import queries
@@ -84,7 +88,6 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.apps.users.permissions import can_manage_releases
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
 
@@ -204,7 +207,6 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
-        'can_manage_releases': can_manage_releases(request.couch_user, request.domain, app_id),
         'can_edit_apps': request.couch_user.can_edit_apps(),
     }
     if not app.is_remote_app():
@@ -286,56 +288,48 @@ def release_build(request, domain, app_id, saved_app_id):
 def save_copy(request, domain, app_id):
     """
     Saves a copy of the app to a new doc.
-    See ApplicationBase.save_copy
-
     """
     track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     try:
-        errors = app.validate_app()
-    except ModuleIdMissingException:
-        # For apps (mainly Exchange apps) that lost unique_id attributes on Module
-        app.ensure_module_unique_ids(should_save=True)
-        errors = app.validate_app()
+        user_id = request.couch_user.get_id
+        with report_build_time(domain, app._id, 'new_release'):
+            copy = make_app_build(app, comment, user_id)
+        CouchUser.get(user_id).set_has_built_app()
+    except AppValidationError as e:
+        lang, langs = get_langs(request, app)
+        return JsonResponse({
+            "saved_app": None,
+            "error_html": render_to_string("app_manager/partials/build_errors.html", {
+                'app': get_app(domain, app_id),
+                'build_errors': e.errors,
+                'domain': domain,
+                'langs': langs,
+            }),
+        })
+    except BuildConflictException:
+        return JsonResponse({
+            'error': _("There is already a version build in progress. Please wait.")
+        }, status=400)
+    except XFormValidationFailed:
+        return JsonResponse({
+            'error': _("Unable to validate forms.")
+        }, status=400)
+    finally:
+        # To make a RemoteApp always available for building
+        if app.is_remote_app():
+            app.save(increment_version=True)
 
-    if not errors:
-        try:
-            user_id = request.couch_user.get_id
-            buckets = (1, 10, 30, 60, 120, 240)
-            with metrics_histogram_timer('commcare.app_build.new_release', timing_buckets=buckets):
-                copy = make_app_build(app, comment, user_id)
-            CouchUser.get(user_id).set_has_built_app()
-        except BuildConflictException:
-            return JsonResponse({
-                'error': _("There is already a version build in progress. Please wait.")
-            }, status=400)
-        except XFormValidationFailed:
-            return JsonResponse({
-                'error': _("Unable to validate forms.")
-            }, status=400)
-        finally:
-            # To make a RemoteApp always available for building
-            if app.is_remote_app():
-                app.save(increment_version=True)
+    _track_build_for_app_preview(domain, request.couch_user, app_id, 'User created a build')
 
-        _track_build_for_app_preview(domain, request.couch_user, app_id, 'User created a build')
-
-    else:
-        copy = None
-    copy = copy and SavedAppBuild.wrap(copy.to_json()).releases_list_json(
+    copy_json = copy and SavedAppBuild.wrap(copy.to_json()).releases_list_json(
         get_timezone_for_user(request.couch_user, domain)
     )
-    lang, langs = get_langs(request, app)
 
-    return json_response({
-        "saved_app": copy,
-        "error_html": render_to_string("app_manager/partials/build_errors.html", {
-            'app': get_app(domain, app_id),
-            'build_errors': errors,
-            'domain': domain,
-            'langs': langs,
-        }),
+    return JsonResponse({
+        "saved_app": copy_json,
+        "error_html": "",
     })
 
 

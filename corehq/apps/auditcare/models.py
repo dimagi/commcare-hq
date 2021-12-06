@@ -6,12 +6,16 @@ import architect
 
 from django.contrib.auth.models import AnonymousUser, User
 from django.db import models
-from django.utils.functional import cached_property
 
 from dimagi.utils.web import get_ip
 
 from corehq.apps.domain.utils import get_domain_from_url
-from corehq.util.models import ForeignValue, NullJsonField, foreign_value_init
+from corehq.util.models import (
+    ForeignValue,
+    NullJsonField,
+    TruncatingCharField,
+    foreign_value_init,
+)
 
 log = logging.getLogger(__name__)
 
@@ -47,15 +51,15 @@ STANDARD_HEADER_KEYS = [
 
 
 class UserAgent(models.Model):
-    value = models.CharField(max_length=255, db_index=True)
+    value = models.CharField(max_length=255, db_index=True, unique=True)
 
 
 class HttpAccept(models.Model):
-    value = models.CharField(max_length=255, db_index=True)
+    value = models.CharField(max_length=255, db_index=True, unique=True)
 
 
 class ViewName(models.Model):
-    value = models.CharField(max_length=255, db_index=True)
+    value = models.CharField(max_length=255, db_index=True, unique=True)
 
 
 class AuditEvent(models.Model):
@@ -63,12 +67,13 @@ class AuditEvent(models.Model):
     user = models.CharField(max_length=255, null=True, blank=True)
     domain = models.CharField(max_length=126, null=True, blank=True)
     event_date = models.DateTimeField(default=getdate, db_index=True)
-    path = models.CharField(max_length=255, blank=True, default='')
+    path = TruncatingCharField(max_length=255, blank=True, default='')
     ip_address = models.CharField(max_length=45, blank=True, default='')
     session_key = models.CharField(max_length=255, blank=True, null=True)
     user_agent_fk = models.ForeignKey(
         UserAgent, null=True, db_index=False, on_delete=models.PROTECT)
     user_agent = ForeignValue(user_agent_fk, truncate=True)
+    couch_id = models.CharField(max_length=126, null=True)
 
     @property
     def doc_type(self):
@@ -80,9 +85,9 @@ class AuditEvent(models.Model):
 
     class Meta:
         abstract = True
-        index_together = [
-            ("user", "event_date"),
-            ("domain", "event_date"),
+        indexes = [
+            models.Index(fields=["user", "event_date"]),
+            models.Index(fields=["domain", "event_date"]),
         ]
 
     def __str__(self):
@@ -92,7 +97,7 @@ class AuditEvent(models.Model):
     def create_audit(cls, request, user):
         audit = cls()
         audit.domain = get_domain(request)
-        audit.path = request.path[:255]
+        audit.path = request.path
         audit.ip_address = get_ip(request)
         audit.session_key = request.session.session_key
         audit.user_agent = request.META.get('HTTP_USER_AGENT')
@@ -113,7 +118,7 @@ class NavigationEventAudit(AuditEvent):
     """
     Audit event to track happenings within the system, ie, view access
     """
-    params = models.CharField(max_length=512, blank=True, default='')
+    params = TruncatingCharField(max_length=4096, blank=True, default='')
     view_fk = models.ForeignKey(
         ViewName, null=True, db_index=False, on_delete=models.PROTECT)
     view = ForeignValue(view_fk, truncate=True)
@@ -121,32 +126,35 @@ class NavigationEventAudit(AuditEvent):
     headers = NullJsonField(default=dict)
     status_code = models.SmallIntegerField(default=0)
 
+    class Meta(AuditEvent.Meta):
+        constraints = [
+            models.UniqueConstraint(fields=['couch_id'], condition=models.Q(couch_id__isnull=False),
+                                    name="audit_nav_couch_875bc_idx"),
+        ]
+
     @property
     def description(self):
         return self.user or ""
 
-    @cached_property
+    @property
     def request_path(self):
         return f"{self.path}?{self.params}"
 
     @classmethod
     def audit_view(cls, request, user, view_func, view_kwargs):
-        try:
-            audit = cls.create_audit(request, user)
-            if request.GET:
-                audit.params = request.META.get("QUERY_STRING", "")[:512]
-            audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
-            for k in STANDARD_HEADER_KEYS:
-                header_item = request.META.get(k, None)
-                if header_item is not None:
-                    audit.headers[k] = header_item
-            # it's a bit verbose to go to that extreme, TODO: need to have
-            # targeted fields in the META, but due to server differences, it's
-            # hard to make it universal.
-            audit.view_kwargs = view_kwargs
-            return audit
-        except Exception:
-            log.exception("NavigationEventAudit.audit_view error")
+        audit = cls.create_audit(request, user)
+        if request.GET:
+            audit.params = request.META.get("QUERY_STRING", "")
+        audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
+        for k in STANDARD_HEADER_KEYS:
+            header_item = request.META.get(k, None)
+            if header_item is not None:
+                audit.headers[k] = header_item
+        # it's a bit verbose to go to that extreme, TODO: need to have
+        # targeted fields in the META, but due to server differences, it's
+        # hard to make it universal.
+        audit.view_kwargs = view_kwargs
+        return audit
 
 
 ACCESS_LOGIN = 'i'
@@ -167,6 +175,12 @@ class AccessAudit(AuditEvent):
         HttpAccept, null=True, db_index=False, on_delete=models.PROTECT)
     http_accept = ForeignValue(http_accept_fk, truncate=True)
     trace_id = models.CharField(max_length=127, null=True, blank=True)
+
+    class Meta(AuditEvent.Meta):
+        constraints = [
+            models.UniqueConstraint(fields=['couch_id'], condition=models.Q(couch_id__isnull=False),
+                                    name="audit_access_couch_10d1b_idx"),
+        ]
 
     # Optional (django-ified) settings.AUDIT_TRACE_ID_HEADER set by AuditcareConfig
     trace_id_header = None
@@ -199,6 +213,24 @@ class AccessAudit(AuditEvent):
     def audit_logout(cls, request, user):
         audit = cls.create_audit(request, user, ACCESS_LOGOUT)
         audit.save()
+
+
+class AuditcareMigrationMeta(models.Model):
+    STARTED = "s"
+    FINISHED = "f"
+    ERRORED = "e"
+    MIGRATION_STATES = {
+        STARTED: "Started",
+        FINISHED: "Finished",
+        ERRORED: "Errored",
+    }
+    key = models.CharField(max_length=50, db_index=True, unique=True)
+    state = models.CharField(max_length=1, choices=MIGRATION_STATES.items())
+    record_count = models.PositiveIntegerField(default=0)
+    other_doc_type_count = models.PositiveIntegerField(default=0)
+    last_doc_processed = models.CharField(max_length=50, null=True)
+    created_at = models.DateTimeField(null=True)
+    finished_at = models.DateTimeField(null=True)
 
 
 def audit_login(sender, *, request, user, **kwargs):

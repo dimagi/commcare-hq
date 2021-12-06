@@ -1,7 +1,7 @@
 """Utilities for assessing and repairing CouchDB corruption"""
 import logging
 from collections import defaultdict
-from itertools import chain, islice
+from itertools import islice
 from json.decoder import JSONDecodeError
 from urllib.parse import urljoin, urlparse, urlunparse
 
@@ -12,9 +12,6 @@ from dateutil.parser import parse as parse_date
 from django.conf import settings
 from memoized import memoized
 
-from casexml.apps.case.models import CommCareCase
-from couchforms.models import XFormInstance
-from custom.m4change.models import FixtureReportResult
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.couch.database import retry_on_couch_error
@@ -29,15 +26,14 @@ from corehq.apps.domain.models import Domain
 from corehq.motech.repeaters.models import Repeater
 from corehq.util.couch_helpers import NoSkipArgsProvider
 from corehq.util.pagination import ResumableFunctionIterator
+from toggle.models import Toggle
 
 log = logging.getLogger(__name__)
 COUCH_NODE_PORT = 15984
 DOC_TYPES_BY_NAME = {
-    "forms": {
-        "type": XFormInstance,
-        "date_range": True,
-        "use_domain": True,
-        "doc_types": [
+    "main": {
+        "type": Toggle,
+        "exclude_types": {
             'XFormInstance',
             'XFormArchived',
             'XFormDeprecated',
@@ -46,19 +42,9 @@ DOC_TYPES_BY_NAME = {
             'SubmissionErrorLog',
             'XFormInstance-Deleted',
             'HQSubmission',
-        ],
-    },
-    "cases": {
-        "type": CommCareCase,
-        "use_domain": True,
-        "doc_types": [
             "CommCareCase",
             "CommCareCase-Deleted",
-        ],
-    },
-    "main": {
-        "type": XFormInstance,
-        "exclude_types": ["forms", "cases"],
+        },
     },
     "users": {
         "type": CommCareUser,
@@ -77,10 +63,6 @@ DOC_TYPES_BY_NAME = {
     "fixtures": {
         "type": FixtureDataType,
         "use_domain": True
-    },
-    "m4change": {
-        "type": FixtureReportResult,
-        "view": "m4change/fixture_by_composite_key",
     },
     "receiver_wrapper_repeaters": {
         "type": Repeater,
@@ -220,9 +202,7 @@ def iter_missing_ids(min_tries, params, repair=False):
 def get_doc_types(group):
     if "exclude_types" in group:
         assert "doc_types" not in group, group
-        excludes = set(chain.from_iterable(
-            DOC_TYPES_BY_NAME[n]["doc_types"] for n in group["exclude_types"]
-        ))
+        excludes = group["exclude_types"]
         db = group["type"].get_db()
         results = db.view("all_docs/by_doc_type", group_level=1)
         return [r["key"][0] for r in results if r["key"][0] not in excludes]
@@ -262,7 +242,7 @@ def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params, repair)
         return [last_result]
 
     args_provider = NoSkipArgsProvider(view_params)
-    return ResumableFunctionIterator(resume_key, data_function, args_provider, item_getter=None)
+    return ResumableFunctionIterator(resume_key, data_function, args_provider)
 
 
 def repair_couch_docs(db, missing, get_doc_ids, min_tries):

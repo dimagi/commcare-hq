@@ -159,14 +159,14 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.role_with_permission = UserRole.get_or_create_with_permissions(
-            cls.domain, Permissions(edit_data=True), 'edit-data'
+        cls.role_with_permission = UserRole.create(
+            cls.domain, 'edit-data', permissions=Permissions(edit_data=True)
         )
-        cls.role_without_permission = UserRole.get_or_create_with_permissions(
-            cls.domain, Permissions(edit_data=False), 'no-edit-data'
+        cls.role_without_permission = UserRole.create(
+            cls.domain, 'no-edit-data', permissions=Permissions(edit_data=False)
         )
-        cls.role_with_permission_but_no_api_access = UserRole.get_or_create_with_permissions(
-            cls.domain, Permissions(edit_data=True, access_api=False), 'no-api-access'
+        cls.role_with_permission_but_no_api_access = UserRole.create(
+            cls.domain, 'no-api-access', permissions=Permissions(edit_data=True, access_api=False)
         )
         cls.domain_admin = WebUser.create(cls.domain, 'domain_admin', cls.password, None, None, is_admin=True)
         cls.user_with_permission = WebUser.create(cls.domain, 'permission', cls.password, None, None,
@@ -339,7 +339,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         user = WebUser.create(self.domain, 'multi_domain_admin', '***', None, None, is_admin=True)
         user.add_domain_membership(project.name, is_admin=True)
         user.save()
-        self.addCleanup(lambda: user.delete(None))
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         unscoped_api_key, _ = HQApiKey.objects.get_or_create(
             user=WebUser.get_django_user(user),
             name='unscoped',

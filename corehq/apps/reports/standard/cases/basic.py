@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib import messages
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -25,7 +24,7 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
-from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.elastic import ESError
 from corehq.toggles import CASE_LIST_EXPLORER
 from corehq.util.timezones.conversions import PhoneTime
@@ -154,7 +153,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     def get_subpages(cls):
         def _get_case_name(request=None, **context):
             if 'case' in context and context['case'].name:
-                return mark_safe(context['case'].name)
+                return context['case'].name
             else:
                 return _('View Case')
 
@@ -181,7 +180,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
         if self.can_upgrade_to_case_list_explorer:
             messages.warning(
                 self.request,
-                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/ccinternal/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',
+                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/saas/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',
                 extra_tags='html',
             )
         return super(CaseListReport, self).view_response
@@ -229,7 +228,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     @property
     def rows(self):
         for row in self.es_results['hits'].get('hits', []):
-            display = CaseDisplay(self, self.get_case(row))
+            display = CaseDisplay(self.get_case(row), self.timezone, self.individual)
 
             yield [
                 display.case_type,
@@ -240,10 +239,3 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
                 display.modified_on,
                 display.closed_display
             ]
-
-    def date_to_json(self, date):
-        if date:
-            return (PhoneTime(date, self.timezone).user_time(self.timezone)
-                    .ui_string(SERVER_DATETIME_FORMAT))
-        else:
-            return ''

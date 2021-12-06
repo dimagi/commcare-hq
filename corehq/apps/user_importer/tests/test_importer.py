@@ -1,34 +1,43 @@
 from copy import deepcopy
+
 from django.contrib.admin.models import LogEntry
+from django.test import SimpleTestCase, TestCase
 
-from django.test import TestCase
-
-from mock import patch, mock
+from unittest.mock import patch
 
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
+from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
-    PROFILE_SLUG,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.user_importer.exceptions import UserUploadError
+from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.user_importer.importer import (
-    create_or_update_users_and_groups,
+    create_or_update_commcare_users_and_groups,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
-    CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser, Invitation
+    CommCareUser,
+    Invitation,
+    UserRole,
+    UserHistory,
+    WebUser,
 )
+from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
 
 
-class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
+class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -36,12 +45,17 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.domain_name = 'mydomain'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
+        create_enterprise_permissions("a@a.com", cls.domain_name, [cls.other_domain.name])
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
                                             is_superuser=True)
 
-        permissions = Permissions(edit_apps=True, view_apps=True, view_reports=True)
-        cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
-        cls.other_role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'admin')
+        cls.role = UserRole.create(cls.domain.name, 'edit-apps')
+        cls.other_role = UserRole.create(cls.domain.name, 'admin')
+        cls.upload_record = UserUploadRecord(
+            domain=cls.domain_name,
+            user_id=cls.uploading_user.get_id
+        )
+        cls.upload_record.save()
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
@@ -73,6 +87,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def tearDownClass(cls):
+        cls.upload_record.delete()
         cls.domain.delete()
         cls.other_domain.delete()
         cls.patcher.stop()
@@ -95,7 +110,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             'name': 'Another One',
             'language': None,
             'is_active': 'True',
-            'phone-number': '23424123',
+            'phone-number': ['23424123'],
             'password': 123,
             'email': None
         }
@@ -111,7 +126,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(user_id='missing')],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
 
         self.assertIsNone(self.user)
@@ -126,12 +142,25 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(location_code=self.loc1.site_code)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.location_id, self.loc1._id)
         self.assertEqual(self.user.location_id, self.user.metadata.get('commcare_location_id'))
         # multiple locations
         self.assertListEqual([self.loc1._id], self.user.assigned_location_ids)
+
+        user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
+                                               user_id=self.user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        change_messages = {}
+        change_messages.update(UserChangeMessage.assigned_locations_info([self.loc1]))
+        change_messages.update(UserChangeMessage.primary_location_info(self.loc1))
+        self.assertEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changes['assigned_location_ids'],
+                         [self.loc1.get_id])
+        self.assertEqual(user_history.changes['location_id'], self.loc1.get_id)
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_unknown_site_code(self):
@@ -139,10 +168,11 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # location_code should be an array of multiple excel columns
         # with self.assertRaises(UserUploadError):
-        result = create_or_update_users_and_groups(
+        result = create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code='unknownsite')],
-            self.uploading_user
+            self.uploading_user,
+            self.upload_record.pk,
         )
         self.assertEqual(len(result["rows"]), 1)
 
@@ -154,7 +184,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         # first location should be primary location
         self.assertEqual(self.user.location_id, self.loc1._id)
@@ -163,6 +194,18 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertListEqual([l._id for l in [self.loc1, self.loc2]], self.user.assigned_location_ids)
         # non-primary location
         self.assertTrue(self.loc2._id in self.user.metadata.get('commcare_location_ids'))
+
+        user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
+                                               user_id=self.user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        change_messages = {}
+        change_messages.update(UserChangeMessage.assigned_locations_info([self.loc1, self.loc2]))
+        change_messages.update(UserChangeMessage.primary_location_info(self.loc1))
+        self.assertDictEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changes['assigned_location_ids'],
+                         [self.loc1.get_id, self.loc2.get_id])
+        self.assertEqual(user_history.changes['location_id'], self.loc1.get_id)
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_remove(self):
@@ -173,16 +216,30 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
+
+        user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
+                                               user_id=self.user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        change_messages = {}
+        change_messages.update(UserChangeMessage.assigned_locations_info([self.loc1, self.loc2]))
+        change_messages.update(UserChangeMessage.primary_location_info(self.loc1))
+        self.assertDictEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changes['location_id'], self.loc1.get_id)
+        self.assertEqual(user_history.changes['assigned_location_ids'],
+                         [self.loc1.get_id, self.loc2.get_id])
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
 
         # deassign all locations
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(location_code=[], user_id=self.user._id)],
+            [self._get_spec(location_code=[], user_id=self.user._id, delete_keys=['password'])],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
 
         # user should have no locations
@@ -190,14 +247,26 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.metadata.get('commcare_location_id'), None)
         self.assertListEqual(self.user.assigned_location_ids, [])
 
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=self.user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        change_messages = {}
+        change_messages.update(UserChangeMessage.assigned_locations_info([]))
+        change_messages.update(UserChangeMessage.primary_location_removed())
+        self.assertEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changes['assigned_location_ids'], [])
+        self.assertEqual(user_history.changes['location_id'], None)
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_primary_location_replace(self):
         self.setup_locations()
         # first assign to loc1
-        create_or_update_users_and_groups(
+        create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
-            self.uploading_user
+            self.uploading_user,
+            self.upload_record.pk,
         )
 
         # user's primary location should be loc1
@@ -206,11 +275,24 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.metadata.get('commcare_location_ids'), " ".join([self.loc1._id, self.loc2._id]))
         self.assertListEqual(self.user.assigned_location_ids, [self.loc1._id, self.loc2._id])
 
+        user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
+                                               user_id=self.user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        change_messages = {}
+        change_messages.update(UserChangeMessage.assigned_locations_info([self.loc1, self.loc2]))
+        change_messages.update(UserChangeMessage.primary_location_info(self.loc1))
+        self.assertDictEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changes['location_id'], self.loc1._id)
+        self.assertEqual(user_history.changes['assigned_location_ids'],
+                         [self.loc1.get_id, self.loc2.get_id])
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+
         # reassign to loc2
-        create_or_update_users_and_groups(
+        create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)],
-            self.uploading_user
+            self.uploading_user,
+            self.upload_record.pk,
         )
 
         # user's location should now be loc2
@@ -219,28 +301,65 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
 
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=self.user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        change_messages = {}
+        change_messages.update(UserChangeMessage.assigned_locations_info([self.loc2]))
+        change_messages.update(UserChangeMessage.primary_location_info(self.loc2))
+        change_messages.update(UserChangeMessage.password_reset())
+        self.assertDictEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changes['assigned_location_ids'], [self.loc2.get_id])
+        self.assertEqual(user_history.changes['location_id'], self.loc2._id)
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_replace(self):
         self.setup_locations()
 
         # first assign to loc1
-        create_or_update_users_and_groups(
+        create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[self.loc1.site_code])],
-            self.uploading_user
+            self.uploading_user,
+            self.upload_record.pk,
         )
 
+        user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
+                                               user_id=self.user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        change_messages = {}
+        change_messages.update(UserChangeMessage.assigned_locations_info([self.loc1]))
+        change_messages.update(UserChangeMessage.primary_location_info(self.loc1))
+        self.assertDictEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changes['location_id'], self.loc1._id)
+        self.assertEqual(user_history.changes['assigned_location_ids'], [self.loc1.get_id])
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+
         # reassign to loc2
-        create_or_update_users_and_groups(
+        create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)],
-            self.uploading_user
+            self.uploading_user,
+            self.upload_record.pk,
         )
 
         # user's location should now be loc2
         self.assertEqual(self.user.location_id, self.loc2._id)
         self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
+
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=self.user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        change_messages = {}
+        change_messages.update(UserChangeMessage.assigned_locations_info([self.loc2]))
+        change_messages.update(UserChangeMessage.primary_location_info(self.loc2))
+        change_messages.update(UserChangeMessage.password_reset())
+        self.assertDictEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changes['location_id'], self.loc2._id)
+        self.assertEqual(user_history.changes['assigned_location_ids'], [self.loc2.get_id])
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
 
     def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
@@ -255,7 +374,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(name=1234)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.full_name, "1234")
 
@@ -269,7 +389,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(name=None)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.full_name, "")
 
@@ -280,7 +401,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'key': 'F#'})],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'F#'})
 
@@ -290,7 +412,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'key': 'Bb'}, user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'Bb'})
 
@@ -300,7 +423,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'key': ''}, user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
 
@@ -310,7 +434,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'play_count': 0}, user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'play_count': 0})
 
@@ -321,7 +446,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(uncategorized_data={'tempo': 'presto'})],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'presto'})
 
@@ -331,7 +457,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(uncategorized_data={'tempo': 'andante'}, user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'andante'})
 
@@ -341,7 +468,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(uncategorized_data={'tempo': ''}, user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
 
@@ -351,7 +479,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'tempo': 'andante'})],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'andante'})
 
@@ -360,7 +489,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'tempo': ''}, user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
 
@@ -372,7 +502,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'key': 'F#'}, location_code=self.loc1.site_code)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {
             'commcare_project': 'mydomain',
@@ -387,7 +518,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(user_id=self.user.user_id, data={'key': 'G#'}, location_code=self.loc1.site_code)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {
             'commcare_project': 'mydomain',
@@ -403,7 +535,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'key': 'F#', PROFILE_SLUG: self.profile.id})],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {
             'commcare_project': 'mydomain',
@@ -412,13 +545,57 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             PROFILE_SLUG: self.profile.id,
         })
 
+        user_history = UserHistory.objects.get(user_id=self.user.get_id, changed_by=self.uploading_user.get_id,
+                                               action=UserModelAction.CREATE.value)
+        change_messages = UserChangeMessage.profile_info(self.profile.id, self.profile.name)
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(
+                data={'key': 'F#', PROFILE_SLUG: ''},
+                password="skyfall",
+                user_id=self.user.get_id)],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+
+        user_history = UserHistory.objects.get(
+            user_id=self.user.get_id, changed_by=self.uploading_user.get_id,
+            action=UserModelAction.UPDATE.value)
+
+        change_messages = UserChangeMessage.password_reset()
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(
+                data={'key': 'F#', PROFILE_SLUG: self.profile.id},
+                password="******",
+                user_id=self.user.get_id)],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+
+        user_history = UserHistory.objects.filter(
+            user_id=self.user.get_id, changed_by=self.uploading_user.get_id,
+            action=UserModelAction.UPDATE.value
+        ).last()
+        change_messages = UserChangeMessage.profile_info(self.profile.id, self.profile.name)
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
     def test_metadata_profile_redundant(self):
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': 'minor'})],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {
             'commcare_project': 'mydomain',
@@ -437,7 +614,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': ''})],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.metadata, {
             'commcare_project': 'mydomain',
@@ -451,7 +629,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': 'major'})],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "metadata properties conflict with profile: mode")
 
@@ -462,7 +641,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={PROFILE_SLUG: bad_id})],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "Could not find profile with id {}".format(bad_id))
 
@@ -476,7 +656,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(email=email)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.email, email.lower())
 
@@ -486,27 +667,82 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(role=self.role.name)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
 
-    def test_tracking_updates(self):
-        self.assertEqual(LogEntry.objects.count(), 0)
+    def test_tracking_new_commcare_user(self):
+        self.assertEqual(
+            UserHistory.objects.filter(
+                action=UserModelAction.CREATE.value, changed_by=self.uploading_user.get_id).count(),
+            0
+        )
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(role=self.role.name)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
-        log_entry = LogEntry.objects.order_by('action_time').first()
+
+        # create
+        created_user = self.user
         self.assertEqual(
-            log_entry.change_message,
-            f"created_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
-        log_entry = LogEntry.objects.order_by('action_time').last()
-        self.assertEqual(
-            log_entry.change_message,
-            f"role: {self.role.name}[{self.role.get_id}], updated_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
+            LogEntry.objects.filter(action_flag=UserModelAction.CREATE.value).count(),
+            0
+        )  # deprecated
+        user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
+                                               changed_by=self.uploading_user.get_id)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.user_type, "CommCareUser")
+        self.assertEqual(user_history.user_id, created_user.get_id)
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+        self.assertEqual(user_history.changes['username'], created_user.username)
+        change_messages = UserChangeMessage.role_change(self.role)
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+    def test_tracking_update_to_existing_commcare_user(self):
+        CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                            created_by=None, created_via=None)
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(
+                password="skyfall",
+                name="James Bond",
+                language='hin',
+                email="hello@gmail.org",
+                is_active=False,
+                data={'post': 'SE'},
+                role=self.role.name,
+                user_id=self.user._id,
+            )],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               changed_by=self.uploading_user.get_id)
+        self.assertDictEqual(
+            user_history.changes,
+            {
+                'first_name': 'James',
+                'last_name': 'Bond',
+                'language': 'hin',
+                'email': 'hello@gmail.org',
+                'is_active': False,
+                'user_data': {'commcare_project': 'mydomain', 'post': 'SE'}
+            }
+        )
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+        change_messages = {}
+        change_messages.update(UserChangeMessage.password_reset())
+        change_messages.update(UserChangeMessage.phone_numbers_added(['23424123']))
+        change_messages.update(UserChangeMessage.role_change(self.role))
+        self.assertDictEqual(user_history.change_messages, change_messages)
 
     def test_blank_is_active(self):
         import_users_and_groups(
@@ -514,7 +750,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(is_active='')],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertTrue(self.user.is_active)
 
@@ -524,7 +761,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec()],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertIsNotNone(self.user)
 
@@ -533,7 +771,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(user_id=self.user._id, username='')],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
 
     def test_update_user_numeric_username(self):
@@ -542,7 +781,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(username=123)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertIsNotNone(
             CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.domain.name))
@@ -554,14 +794,15 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(delete_keys=['is_active'], is_account_confirmed='False')],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         user = self.user
         self.assertIsNotNone(user)
         self.assertEqual(False, user.is_active)
         self.assertEqual(False, user.is_account_confirmed)
 
-    @mock.patch('corehq.apps.user_importer.importer.send_account_confirmation_if_necessary')
+    @patch('corehq.apps.user_importer.importer.send_account_confirmation_if_necessary')
     def test_upload_with_unconfirmed_account_send_email(self, mock_account_confirm_email):
         import_users_and_groups(
             self.domain.name,
@@ -586,12 +827,13 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             ],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(mock_account_confirm_email.call_count, 1)
         self.assertEqual('with_email', mock_account_confirm_email.call_args[0][0].raw_username)
 
-    @mock.patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
+    @patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
     def test_upload_invite_web_user(self, mock_send_activation_email):
         import_users_and_groups(
             self.domain.name,
@@ -605,25 +847,47 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             ],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(mock_send_activation_email.call_count, 1)
 
-    @mock.patch('corehq.apps.user_importer.importer.Invitation')
+        # only one entry for the mobile worker created
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        self.assertEqual(user_history.user_id, self.user.get_id)
+        self.assertEqual(user_history.action, UserModelAction.CREATE.value)
+
+    @patch('corehq.apps.user_importer.importer.Invitation')
     def test_upload_add_web_user(self, mock_invitation_class):
+        self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
+
         username = 'a@a.com'
         web_user = WebUser.create(self.other_domain.name, username, 'password', None, None)
         mock_invite = mock_invitation_class.return_value
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(web_user='a@a.com', is_account_confirmed='True', role=self.role.name)],
+            [self._get_spec(web_user='a@a.com', is_account_confirmed='True', role=self.role.name,
+                            location_code=[self.loc1.site_code])],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         web_user = WebUser.get_by_username(username)
         self.assertFalse(mock_invite.send_activation_email.called)
         self.assertTrue(web_user.is_member_of(self.domain.name))
+
+        # History record for the web user getting added as web user
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=web_user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        change_messages = {}
+        change_messages.update(UserChangeMessage.added_as_web_user(self.domain.name))
+        change_messages.update(UserChangeMessage.primary_location_info(self.loc1))
+        change_messages.update(UserChangeMessage.role_change(self.role))
+        self.assertDictEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changes, {})
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
 
     def test_upload_edit_web_user(self):
         username = 'a@a.com'
@@ -633,10 +897,19 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(web_user='a@a.com', role=self.role.name)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         web_user = WebUser.get_by_username(username)
         self.assertEqual(web_user.get_role(self.domain.name).name, self.role.name)
+
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=web_user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        change_messages = UserChangeMessage.role_change(self.role)
+        self.assertDictEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changes, {})
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
 
     def test_remove_web_user(self):
         username = 'a@a.com'
@@ -646,26 +919,40 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(web_user='a@a.com', remove_web_user='True')],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         web_user = WebUser.get_by_username(username)
         self.assertFalse(web_user.is_member_of(self.domain.name))
 
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=web_user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        change_messages = UserChangeMessage.domain_removal(self.domain.name)
+        self.assertDictEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changes, {})
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+
     def test_multi_domain(self):
-        dm = DomainPermissionsMirror(source=self.domain.name, mirror=self.other_domain.name)
-        dm.save()
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(username=123, domain=self.other_domain.name)],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
-        self.assertIsNotNone(
-            CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.other_domain.name))
-        )
+        commcare_user = CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.other_domain.name))
+        self.assertIsNotNone(commcare_user)
 
-    @mock.patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
+        # logged under correct domain
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.for_domain, self.other_domain.name)
+        self.assertEqual(user_history.user_id, commcare_user.get_id)
+        self.assertEqual(user_history.action, UserModelAction.CREATE.value)
+
+    @patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
     def test_update_pending_user_role(self, mock_send_activation_email):
         import_users_and_groups(
             self.domain.name,
@@ -679,11 +966,17 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             ],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(mock_send_activation_email.call_count, 1)
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
-        self.assertEqual(Invitation.by_email('a@a.com')[0].role.split(":")[1], self.role._id)
+        self.assertEqual(Invitation.by_email('a@a.com')[0].role.split(":")[1], self.role.get_id)
+
+        # only one entry for mobile user create, none for corresponding web user
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        self.assertEqual(user_history.user_id, self.user.get_id)
+        self.assertEqual(user_history.action, UserModelAction.CREATE.value)
 
         added_user_id = self.user._id
         import_users_and_groups(
@@ -699,12 +992,249 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             ],
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )
         self.assertEqual(mock_send_activation_email.call_count, 1)  # invite only sent once
         self.assertEqual(len(Invitation.by_email('a@a.com')), 1)  # only one invite associated with user
         self.assertEqual(self.user.get_role(self.domain.name).name, self.other_role.name)
         self.assertEqual(Invitation.by_email('a@a.com')[0].role, self.other_role.get_qualified_id())
+
+        # one more added just for commcare user update, none for corresponding web user
+        user_historys = list(UserHistory.objects.filter(changed_by=self.uploading_user.get_id))
+        self.assertEqual(len(user_historys), 2)
+        last_entry = user_historys[1]
+        self.assertEqual(last_entry.user_id, self.user.user_id)
+        self.assertEqual(last_entry.action, UserModelAction.UPDATE.value)
+
+    def test_ensure_user_history_on_only_userdata_update(self):
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None)
+        import_users_and_groups(
+            self.domain.name,
+            [{'data': {'key': 'F#'}, 'user_id': user._id}],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               changed_by=self.uploading_user.get_id)
+        self.assertDictEqual(
+            user_history.changes,
+            {
+                'user_data': {'commcare_project': 'mydomain', 'key': 'F#'}
+            }
+        )
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+        self.assertEqual(user_history.change_messages, {})
+
+    def test_upload_with_phone_number(self):
+        user_specs = self._get_spec()
+        user_specs['phone-number'] = ['8765547824']
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+
+        numbers = user_history.changes['phone_numbers']
+        self.assertEqual(numbers, ['8765547824'])
+
+    def test_upload_with_multiple_phone_numbers(self):
+        initial_default_number = '12345678912'
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None, phone_number='12345678912')
+
+        number1 = '8765547824'
+        number2 = '7765547823'
+
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+        user_specs['phone-number'] = [number1, number2]
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+
+        change_messages = {"phone_numbers": {}}
+        change_messages["phone_numbers"].update(
+            UserChangeMessage.phone_numbers_added([number1, number2])['phone_numbers']
+        )
+        change_messages["phone_numbers"].update(
+            UserChangeMessage.phone_numbers_removed([initial_default_number])['phone_numbers']
+        )
+        self.assertEqual(
+            set(user_history.change_messages["phone_numbers"]["add_phone_numbers"]["phone_numbers"]),
+            set(change_messages["phone_numbers"]["add_phone_numbers"]["phone_numbers"])
+        )
+        self.assertEqual(
+            set(user_history.change_messages["phone_numbers"]["remove_phone_numbers"]["phone_numbers"]),
+            set(change_messages["phone_numbers"]["remove_phone_numbers"]["phone_numbers"])
+        )
+
+        # Check if user is updated
+        users = CommCareUser.by_domain(self.domain.name)
+        user = next((u for u in users if u._id == user._id))
+
+        self.assertEqual(user.default_phone_number, number1)
+        self.assertEqual(user.phone_numbers, [number1, number2])
+
+    def test_upload_with_multiple_phone_numbers_and_some_blank(self):
+        initial_default_number = '12345678912'
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None, phone_number='12345678912')
+        number1 = ''
+        number2 = '7765547823'
+
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+        user_specs['phone-number'] = [number1, number2]
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+
+        change_messages = {"phone_numbers": {}}
+        change_messages["phone_numbers"].update(
+            UserChangeMessage.phone_numbers_added([number2])["phone_numbers"]
+        )
+        change_messages["phone_numbers"].update(
+            UserChangeMessage.phone_numbers_removed([initial_default_number])["phone_numbers"]
+        )
+        change_messages.update(UserChangeMessage.password_reset())
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+        # Check if user is updated
+        users = CommCareUser.by_domain(self.domain.name)
+        user = next((u for u in users if u._id == user._id))
+
+        self.assertEqual(user.default_phone_number, number2)
+        self.assertEqual(user.phone_numbers, [number2])
+
+    def test_upload_with_multiple_phone_numbers_with_duplicates(self):
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None, phone_number='12345678912')
+        number1 = '7765547823'
+        duplicate_number = number1
+
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+        user_specs['phone-number'] = [number1, duplicate_number]
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+
+        change_messages = {"phone_numbers": {}}
+        change_messages["phone_numbers"].update(
+            UserChangeMessage.phone_numbers_added([number1])["phone_numbers"]
+        )
+        change_messages["phone_numbers"].update(
+            UserChangeMessage.phone_numbers_removed(["12345678912"])["phone_numbers"]
+        )
+        change_messages.update(UserChangeMessage.password_reset())
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+        # Check if user is updated
+        users = CommCareUser.by_domain(self.domain.name)
+        user = next((u for u in users if u._id == user._id))
+
+        self.assertEqual(user.default_phone_number, number1)
+        self.assertEqual(user.phone_numbers, [number1])
+
+    def test_upload_with_badly_formatted_phone_numbers(self):
+        number1 = '+27893224921'
+        bad_number = '2o34532445665'
+
+        user_specs = self._get_spec(delete_keys=['phone-number'])
+        user_specs['phone-number'] = [number1, bad_number]
+
+        res = import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+
+        self.assertEqual(res['messages']['rows'][0]['flag'], f'Invalid phone number detected: {bad_number}')
+
+    def test_upload_with_no_phone_numbers(self):
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None, phone_number='12345678912')
+
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+        user_specs['phone-number'] = []
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        change_messages = {}
+        change_messages.update(UserChangeMessage.phone_numbers_removed(['12345678912']))
+        change_messages.update(UserChangeMessage.password_reset())
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+        # Check if user is updated
+        users = CommCareUser.by_domain(self.domain.name)
+        user = next((u for u in users if u._id == user._id))
+
+        self.assertEqual(user.default_phone_number, None)
+        self.assertEqual(user.phone_number, None)
+        self.assertEqual(user.phone_numbers, [])
+
+    def test_upload_with_no_phone_number_in_row(self):
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None, phone_number='12345678912')
+
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        # assert no phone number change
+        self.assertFalse("phone_numbers" in user_history.change_messages)
+
+        # Check if user is updated
+        users = CommCareUser.by_domain(self.domain.name)
+        user = next((u for u in users if u._id == user._id))
+
+        self.assertEqual(user.default_phone_number, '12345678912')
+        self.assertEqual(user.phone_number, '12345678912')
+        self.assertEqual(user.phone_numbers, ['12345678912'])
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
@@ -719,9 +1249,15 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         cls.domain.save()
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
                                             is_superuser=True)
+        cls.upload_record = UserUploadRecord(
+            domain=cls.domain_name,
+            user_id=cls.uploading_user.get_id
+        )
+        cls.upload_record.save()
 
     @classmethod
     def tearDownClass(cls):
+        cls.upload_record.delete()
         cls.domain.delete()
         cls.patcher.stop()
         super().tearDownClass()
@@ -757,7 +1293,8 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             list(user_spec + self.user_specs),
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "'password' values must be unique")
 
@@ -771,7 +1308,8 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             list([updated_user_spec]),
             [],
             self.uploading_user,
-            mock.MagicMock()
+            self.upload_record.pk,
+            False
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')
 
@@ -804,18 +1342,481 @@ class TestUserUploadRecord(TestCase):
     def test_user_upload_record(self):
         upload_record = UserUploadRecord(
             domain=self.domain,
-            user_id='5'
+            user_id=self.uploading_user.get_id
         )
         upload_record.save()
+        self.addCleanup(upload_record.delete)
 
         task_result = import_users_and_groups.si(
             self.domain.name,
             [self.spec],
             [],
             self.uploading_user,
-            upload_record.pk
+            upload_record.pk,
+            False
         ).apply()
         rows = task_result.result
 
         upload_record.refresh_from_db()
         self.assertEqual(rows['messages'], upload_record.result)
+
+
+class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        delete_all_users()
+        cls.domain_name = 'mydomain'
+        cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
+        cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
+        cls.role = UserRole.create(cls.domain.name, 'edit-apps')
+        cls.other_role = UserRole.create(cls.domain.name, 'admin')
+        cls.other_domain_role = UserRole.create(cls.other_domain.name, 'view-apps')
+        create_enterprise_permissions("a@a.com", cls.domain_name, [cls.other_domain.name])
+        cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
+        cls.patcher.start()
+
+        cls.upload_record = UserUploadRecord(
+            domain=cls.domain_name,
+            user_id=1,
+        )
+        cls.upload_record.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.upload_record.delete()
+        cls.domain.delete()
+        cls.other_domain.delete()
+        cls.patcher.stop()
+        super().tearDownClass()
+
+    def tearDown(self):
+        Invitation.objects.all().delete()
+        delete_all_users()
+
+    def setup_users(self):
+        self.user1 = WebUser.create(self.domain_name, 'hello@world.com', 'password', None, None,
+                                    email='hello@world.com', is_superuser=False, first_name='Sally',
+                                    last_name='Sitwell')
+        self.uploading_user = WebUser.create(self.domain_name, 'upload@user.com', 'password', None, None,
+                                             email='upload@user.com', is_superuser=True)
+
+    @property
+    def user(self):
+        return WebUser.get_by_username('hello@world.com')
+
+    @property
+    def user_invite(self):
+        return Invitation.objects.filter(domain=self.domain_name, email='invited@user.com').first()
+
+    def _get_spec(self, delete_keys=None, **kwargs):
+        spec = {
+            'username': 'hello@world.com',
+            'first_name': 'Sally',
+            'last_name': 'Sitwell',
+            'status': 'Active User',
+            'email': 'hello@world.com',
+            'role': self.role.name,
+        }
+        if delete_keys:
+            for key in delete_keys:
+                spec.pop(key)
+        spec.update(kwargs)
+        return spec
+
+    def _get_invited_spec(self, delete_keys=None, **kwargs):
+        spec = {
+            'username': 'invited@user.com',
+            'status': 'Invited User',
+            'email': 'invited@user.com',
+            'role': self.role.name,
+        }
+        if delete_keys:
+            for key in delete_keys:
+                spec.pop(key)
+        spec.update(kwargs)
+        return spec
+
+    def test_upload_with_missing_role(self):
+        self.setup_users()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(role='')],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertIsNone(self.user_invite)
+
+    def test_upload_existing_web_user(self):
+        self.setup_users()
+        web_user = WebUser.create(self.other_domain.name, 'existing@user.com', 'abc', None, None,
+                                  email='existing@user.com')
+        self.assertIsNone(Invitation.objects.filter(email='existing@user.com').first())
+        import_users_and_groups(
+            self.domain.name,
+            [{'username': 'existing@user.com',
+              'status': 'Active User',
+              'email': 'existing@user.com',
+              'role': self.role.name}],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertIsNotNone(Invitation.objects.filter(email='existing@user.com').first())
+        user_history = UserHistory.objects.get(
+            user_id=web_user.get_id, changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
+        )
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.for_domain, self.domain.name)
+        change_messages = UserChangeMessage.invited_to_domain(self.domain.name)
+        self.assertDictEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+        self.assertEqual(user_history.changes, {})
+
+    def test_web_user_user_name_change(self):
+        self.setup_users()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(first_name='', last_name='')],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        # should not be changed
+        self.assertNotEqual(self.user.first_name, "")
+        self.assertNotEqual(self.user.last_name, "")
+
+        user_history = UserHistory.objects.get()
+        self.assertNotIn('first_name', user_history.changes)
+        self.assertNotIn('last_name', user_history.changes)
+
+    def test_upper_case_email(self):
+        self.setup_users()
+        email = 'hELlo@WoRld.Com'
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(email=email)],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(self.user.email, email.lower())
+
+        # no change recorded for email
+        user_history = UserHistory.objects.get()
+        self.assertNotIn('email', user_history.changes)
+
+    def test_set_role(self):
+        self.setup_users()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(role=self.role.name)],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
+        user_history = UserHistory.objects.get(
+            changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
+        )
+        change_messages = UserChangeMessage.role_change(self.role)
+        self.assertDictEqual(user_history.change_messages, change_messages)
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+        self.assertEqual(user_history.changes, {})
+
+    def test_update_role_current_user(self):
+        self.setup_users()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(role=self.role.name)],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(role=self.other_role.name)],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(self.user.get_role(self.domain_name).name, self.other_role.name)
+
+    def test_update_role_invited_user(self):
+        self.setup_users()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(role=self.role.name)],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(self.user_invite.get_role_name(), self.role.name)
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(role=self.other_role.name)],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(self.user_invite.get_role_name(), self.other_role.name)
+
+    def test_remove_user(self):
+        self.setup_users()
+        username = 'a@a.com'
+        WebUser.create(self.domain.name, username, 'password', None, None)
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(username='a@a.com', remove='True')],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        web_user = WebUser.get_by_username(username)
+        self.assertFalse(web_user.is_member_of(self.domain.name))
+        self.assertIsNone(Invitation.objects.filter(domain=self.domain_name, email=username).first())
+
+        user_history = UserHistory.objects.filter(
+            user_id=web_user.get_id, changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
+        ).last()
+        change_messages = UserChangeMessage.domain_removal(self.domain.name)
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+    def test_remove_invited_user(self):
+        Invitation.objects.all().delete()
+        self.setup_users()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec()],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertIsNotNone(self.user_invite)
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(remove='True')],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertIsNone(self.user_invite)
+
+    def test_remove_uploading_user(self):
+        self.setup_users()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(username=self.uploading_user.username, remove='True')],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        web_user = WebUser.get_by_username(self.uploading_user.username)
+        self.assertTrue(web_user.is_member_of(self.domain.name))
+
+    @patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
+    def test_upload_invite(self, mock_send_activation_email):
+        self.setup_users()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec()],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(mock_send_activation_email.call_count, 1)
+
+    def test_multi_domain(self):
+        self.setup_users()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(username='123@email.com',
+                            domain=self.other_domain.name,
+                            role=self.other_domain_role.name,
+                            email='123@email.com'
+                            )],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertIsNotNone(Invitation.objects.filter(email='123@email.com').first())
+        self.assertEqual(Invitation.objects.filter(email='123@email.com').first().domain, self.other_domain.name)
+
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
+    def test_web_user_location_add(self):
+        self.setup_users()
+        self.setup_locations()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        membership = self.user.get_domain_membership(self.domain_name)
+        # test that first location should be primary location
+        self.assertEqual(membership.location_id, self.loc1._id)
+        # test for multiple locations
+        self.assertListEqual([loc._id for loc in [self.loc1, self.loc2]], membership.assigned_location_ids)
+
+        user_history = UserHistory.objects.get()
+        change_messages = {}
+        change_messages.update(UserChangeMessage.assigned_locations_info([self.loc1, self.loc2]))
+        change_messages.update(UserChangeMessage.primary_location_info(self.loc1))
+        change_messages.update(UserChangeMessage.role_change(self.role))
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
+    def test_web_user_location_remove(self):
+        self.setup_users()
+        self.setup_locations()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+
+        user_history = UserHistory.objects.get()
+        change_messages = {}
+        change_messages.update(UserChangeMessage.assigned_locations_info([self.loc1, self.loc2]))
+        change_messages.update(UserChangeMessage.primary_location_info(self.loc1))
+        change_messages.update(UserChangeMessage.role_change(self.role))
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(location_code=[], user_id=self.user._id)],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        membership = self.user.get_domain_membership(self.domain_name)
+        self.assertEqual(membership.location_id, None)
+        self.assertListEqual(membership.assigned_location_ids, [])
+        user_history = UserHistory.objects.filter(user_id=self.user.get_id).last()
+        change_messages = {}
+        change_messages.update(UserChangeMessage.assigned_locations_info([]))
+        change_messages.update(UserChangeMessage.primary_location_info(None))
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
+    def test_invite_location_add(self):
+        self.setup_users()
+        self.setup_locations()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(location_code=[a.site_code for a in [self.loc1]])],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(self.user_invite.supply_point, self.loc1._id)
+
+    def setup_locations(self):
+        self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
+        self.loc2 = make_loc('loc2', type='state', domain=self.domain_name)
+
+
+class TestUserChangeLogger(SimpleTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_name = 'mydomain'
+        cls.uploading_user = WebUser(username="admin@xyz.com")
+        cls.upload_record = UserUploadRecord(
+            domain=cls.domain_name,
+            user_id=cls.uploading_user.get_id
+        )
+
+    def test_add_change_message_duplicate_slug_entry(self):
+        user = CommCareUser()
+        user_change_logger = UserChangeLogger(
+            upload_domain=self.domain_name,
+            user_domain=self.domain_name,
+            user=user,
+            is_new_user=True,
+            changed_by_user=self.uploading_user,
+            changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
+            upload_record_id=1
+        )
+        user_change_logger.add_change_message(UserChangeMessage.password_reset())
+
+        # no change noted for new user
+        self.assertEqual(user_change_logger.change_messages, {})
+
+        # no exception raised for new user
+        user_change_logger.add_change_message(UserChangeMessage.password_reset())
+
+        user_change_logger = UserChangeLogger(
+            upload_domain=self.domain_name,
+            user_domain=self.domain_name,
+            user=user,
+            is_new_user=False,
+            changed_by_user=self.uploading_user,
+            changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
+            upload_record_id=self.upload_record.pk
+        )
+        user_change_logger.add_change_message(UserChangeMessage.password_reset())
+
+        self.assertEqual(user_change_logger.change_messages, UserChangeMessage.password_reset())
+
+        with self.assertRaisesMessage(UserUploadError, "Double Entry for password"):
+            user_change_logger.add_change_message(UserChangeMessage.password_reset())
+
+    def test_add_info_duplicate_slug_entry(self):
+        user = CommCareUser()
+        user_change_logger = UserChangeLogger(
+            upload_domain=self.domain_name,
+            user_domain=self.domain_name,
+            user=user,
+            is_new_user=True,
+            changed_by_user=self.uploading_user,
+            changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
+            upload_record_id=self.upload_record.pk
+        )
+        user_change_logger.add_info(UserChangeMessage.program_change(None))
+
+        self.assertEqual(user_change_logger.change_messages, UserChangeMessage.program_change(None))
+
+        with self.assertRaisesMessage(UserUploadError, "Double Entry for program"):
+            user_change_logger.add_info(UserChangeMessage.program_change(None))
+
+        user_change_logger = UserChangeLogger(
+            upload_domain=self.domain_name,
+            user_domain=self.domain_name,
+            user=user,
+            is_new_user=False,
+            changed_by_user=self.uploading_user,
+            changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
+            upload_record_id=self.upload_record.pk
+        )
+        user_change_logger.add_info(UserChangeMessage.program_change(None))
+
+        self.assertEqual(user_change_logger.change_messages, UserChangeMessage.program_change(None))
+
+        with self.assertRaisesMessage(UserUploadError, "Double Entry for program"):
+            user_change_logger.add_info(UserChangeMessage.program_change(None))

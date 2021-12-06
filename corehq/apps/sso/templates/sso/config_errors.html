@@ -1,0 +1,93 @@
+{% extends login_template %}
+{% load i18n %}
+
+{% block title %}{% trans "Single Sign-On is misconfigured" %}{% endblock title %}
+
+{% block login-content %}
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="reg-form-container sign-in-container">
+          <div class="form-bubble form-bubble-lg">
+            <h2>
+              {% blocktrans %}
+                Single Sign-On
+              {% endblocktrans %}
+            </h2>
+
+            {% if error.code == error.REDIRECT_INVALID_URL %}
+              <p class="lead">
+                {% blocktrans %}
+                  Your Redirect URL is invalid.
+                {% endblocktrans %}
+              </p>
+              <p>
+                {% blocktrans %}
+                  The redirect URL you have specified is not valid. Please
+                  remove the text after "next=" in the url to temporarily
+                  resolve this issue. If the issue persists, please contact
+                  support so we can find a permanent solution.
+                {% endblocktrans %}
+              </p>
+            {% elif request.idp.is_active %}
+              <p class="lead">
+                {% blocktrans with request.idp.is_active as idp_name %}
+                  It looks like there is an issue with {{ idp_name }}'s configuration.
+                {% endblocktrans %}
+              </p>
+              <p>
+                {% blocktrans %}
+                  Please reach out to support so we can quickly resolve this
+                  problem. Thank you!
+                {% endblocktrans %}
+              </p>
+            {% else %}
+              {% if error.code == error.SETTINGS_INVALID %}
+                <p class="lead">
+                  {% blocktrans %}
+                    It looks like your setup is not complete.
+                  {% endblocktrans %}
+                </p>
+                <p>
+                  {% blocktrans %}
+                    Information seems to be missing from your SSO configuration.
+                    Please review the <a href="{{ docs_link }}">documentation</a>
+                    for setting up SSO.
+                  {% endblocktrans %}
+                </p>
+              {% elif error.code == error.CERT_NOT_FOUND %}
+                <p class="lead">
+                  {% blocktrans %}
+                    It looks like we are missing your certificate.
+                  {% endblocktrans %}
+                </p>
+                <p>
+                  {% blocktrans %}
+                    It looks like your x509 certificate is missing from your
+                    SSO setup.  Please review the
+                    <a href="{{ docs_link }}">documentation</a>
+                    for setting up SSO.
+                  {% endblocktrans %}
+                </p>
+              {% else %}
+                <p class="lead">
+                  {% blocktrans %}
+                    It looks like there is an issue with your SSO configuration.
+                  {% endblocktrans %}
+                </p>
+                <p>
+                  {% blocktrans with error.code as error_code %}
+                    The error code is "{{ error_code }}". Please reach out to
+                    your support contact with this information so we can
+                    assist with this issue.
+                  {% endblocktrans %}
+                </p>
+              {% endif %}
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

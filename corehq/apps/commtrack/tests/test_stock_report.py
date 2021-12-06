@@ -7,7 +7,6 @@ from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
-from casexml.apps.stock.models import StockReport, StockTransaction
 
 from corehq.apps.commtrack.models import SQLProduct
 from corehq.apps.commtrack.processing import StockProcessingResult
@@ -18,9 +17,7 @@ from corehq.form_processor.parsers.ledgers.helpers import (
     StockReportHelper,
     StockTransactionHelper,
 )
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import get_simple_wrapped_form
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import TestFormMetadata
 
 DOMAIN_MAX_LENGTH = 25
@@ -45,13 +42,10 @@ class StockReportDomainTest(TestCase):
         return report, form
 
     def _create_models_for_stock_report_helper(self, form, stock_report_helper):
+        from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
         processing_result = StockProcessingResult(form, stock_report_helpers=[stock_report_helper])
         processing_result.populate_models()
-        if should_use_sql_backend(self.domain):
-            from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-            LedgerAccessorSQL.save_ledger_values(processing_result.models_to_save)
-        else:
-            processing_result.commit()
+        LedgerAccessorSQL.save_ledger_values(processing_result.models_to_save)
 
     @classmethod
     def setUpClass(cls):
@@ -99,19 +93,8 @@ class StockReportDomainTest(TestCase):
     def tearDown(self):
         delete_all_xforms()
         delete_all_ledgers()
-        StockReport.objects.all().delete()
-        StockTransaction.objects.all().delete()
         super(StockReportDomainTest, self).tearDown()
 
-    def test_stock_report(self):
-        self.create_report()
-        filtered_stock_report = StockReport.objects.filter(domain=self.domain)
-        self.assertEqual(filtered_stock_report.count(), 1)
-        stock_report = filtered_stock_report.get()
-        self.assertEqual(stock_report.form_id, self.form._id)
-        self.assertEqual(stock_report.domain, self.domain)
-
-    @run_with_all_backends
     def test_get_case_ledger_state(self):
         for case_id in self.case_ids:
             state = LedgerAccessors(self.domain).get_case_ledger_state(case_id)
@@ -157,7 +140,6 @@ class StockReportDomainTest(TestCase):
 
         tester_fn(new_trans)
 
-    @run_with_all_backends
     def test_get_case_ledger_state_1(self):
         def test_transactions(expected):
             for case_id in self.case_ids:
@@ -168,7 +150,6 @@ class StockReportDomainTest(TestCase):
 
         self.assertEqual({}, LedgerAccessors(self.domain).get_case_ledger_state('non-existent'))
 
-    @run_with_all_backends
     def test_get_current_ledger_state(self):
         def test_transactions(expected):
             state = LedgerAccessors(self.domain).get_current_ledger_state(list(self.case_ids))

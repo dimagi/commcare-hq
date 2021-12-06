@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from django.conf import settings
@@ -11,7 +12,10 @@ from celery.task import periodic_task, task
 from dimagi.utils.web import get_site_domain, get_static_url_prefix
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.registration.models import (
+    RegistrationRequest,
+    AsyncSignupRequest,
+)
 from corehq.apps.users.models import WebUser
 
 
@@ -43,8 +47,9 @@ def activation_24hr_reminder_email():
             'registration/email/confirm_account.html', email_context)
         subject = ugettext('Reminder to Activate your CommCare project')
 
+        recipient = user.get_email() if user else request.new_user_username
         send_html_email_async.delay(
-            subject, request.new_user_username, message_html,
+            subject, recipient, message_html,
             text_content=message_plaintext,
             email_from=settings.DEFAULT_FROM_EMAIL
         )
@@ -55,7 +60,7 @@ FORUM_LINK = 'https://forum.dimagi.com/'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
-@task(serializer='pickle', queue="email_queue")
+@task(queue="email_queue")
 def send_domain_registration_email(recipient, domain_name, guid, full_name, first_name):
     registration_link = 'http://' + get_site_domain() + reverse('registration_confirm_domain') + guid + '/'
     params = {
@@ -79,3 +84,15 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name, firs
                                     email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
+
+
+@periodic_task(
+    run_every=crontab(hour=5),  # execute once every day
+    queue='background_queue',
+)
+def delete_old_async_signup_requests():
+    """
+    This task deletes AsyncSignupRequests that are older than 1 day.
+    """
+    yesterday = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+    AsyncSignupRequest.objects.filter(date_created__lte=yesterday).delete()

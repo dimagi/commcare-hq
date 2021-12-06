@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase
 
 import casexml.apps.phone.utils as mod
 from casexml.apps.case.mock import CaseStructure
@@ -34,7 +34,6 @@ class TestUtils(SimpleTestCase):
 
 
 @flag_enabled('NON_COMMTRACK_LEDGERS')
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class MockDeviceLedgersTest(BaseSyncTest, TestXmlMixin):
     def setUp(self):
         super(MockDeviceLedgersTest, self).setUp()

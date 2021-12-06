@@ -14,6 +14,7 @@ from corehq.motech.repeaters.models import (
     ReferCaseRepeater,
     UpdateCaseRepeater,
     domain_can_forward,
+    DataRegistryCaseUpdateRepeater,
 )
 
 
@@ -25,10 +26,13 @@ def create_form_repeat_records(sender, xform, **kwargs):
 
 def create_case_repeat_records(sender, case, **kwargs):
     from corehq.motech.repeaters.models import CaseRepeater
+    from corehq.motech.repeaters.expression.repeaters import CaseExpressionRepeater
     create_repeat_records(CaseRepeater, case)
     create_repeat_records(CreateCaseRepeater, case)
     create_repeat_records(UpdateCaseRepeater, case)
     create_repeat_records(ReferCaseRepeater, case)
+    create_repeat_records(DataRegistryCaseUpdateRepeater, case)
+    create_repeat_records(CaseExpressionRepeater, case)
 
 
 def create_short_form_repeat_records(sender, xform, **kwargs):
@@ -44,7 +48,7 @@ def create_repeat_records(repeater_cls, payload):
     domain = payload.domain
 
     if domain_can_forward(domain):
-        repeaters = repeater_cls.by_domain(domain)
+        repeaters = repeater_cls.by_domain(domain, stale_query=True)
         for repeater in repeaters:
             repeater.register(payload)
 

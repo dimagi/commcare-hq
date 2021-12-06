@@ -1,0 +1,18 @@
+<partial>
+  <action auto_launch="false()" redo_last="true">
+    <display>
+      <text>
+        <locale id="case_search.m0.again"/>
+      </text>
+      <text form="audio">
+        <locale id="case_search.m0.again.audio"/>
+      </text>
+    </display>
+    <stack>
+      <push>
+        <mark/>
+        <command value="'search_command.m0'"/>
+      </push>
+    </stack>
+  </action>
+</partial>

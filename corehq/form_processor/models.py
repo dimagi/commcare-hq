@@ -29,9 +29,9 @@ from corehq.blobs.util import get_content_md5
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import UnknownActionType, MissingFormXml
 from corehq.form_processor.track_related import TrackRelatedChanges
-from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
+from corehq.util.models import TruncatingCharField
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.ext import jsonobject
@@ -41,6 +41,8 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from memoized import memoized
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, IsImageMixin
 from .exceptions import AttachmentNotFound
+
+STANDARD_CHARFIELD_LENGTH = 255
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormOperationSQL_DB_TABLE = 'form_processor_xformoperationsql'
@@ -53,18 +55,6 @@ LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 LedgerTransaction_DB_TABLE = 'form_processor_ledgertransaction'
 
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
-
-
-class TruncatingCharField(models.CharField):
-    """
-    http://stackoverflow.com/a/3460942
-    """
-
-    def get_prep_value(self, value):
-        value = super(TruncatingCharField, self).get_prep_value(value)
-        if value:
-            return value[:self.max_length]
-        return value
 
 
 @attr.s
@@ -354,6 +344,16 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         (SUBMISSION_ERROR_LOG, 'submission_error'),
         (DELETED, 'deleted'),
     )
+    DOC_TYPE_TO_STATE = {
+        "XFormInstance": NORMAL,
+        "XFormError": ERROR,
+        "XFormDuplicate": DUPLICATE,
+        "XFormDeprecated": DEPRECATED,
+        "XFormArchived": ARCHIVED,
+        "SubmissionErrorLog": SUBMISSION_ERROR_LOG
+    }
+    ALL_DOC_TYPES = {'XFormInstance-Deleted'} | DOC_TYPE_TO_STATE.keys()
+    STATE_TO_DOC_TYPE = {v: k for k, v in DOC_TYPE_TO_STATE.items()}
 
     form_id = models.CharField(max_length=255, unique=True, db_index=True, default=None)
 
@@ -476,10 +476,9 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     @property
     def doc_type(self):
         """Comparability with couch forms"""
-        from corehq.form_processor.backends.sql.dbaccessors import state_to_doc_type
         if self.is_deleted:
             return 'XFormInstance' + DELETED_SUFFIX
-        return state_to_doc_type.get(self.state, 'XFormInstance')
+        return self.STATE_TO_DOC_TYPE.get(self.state, 'XFormInstance')
 
     @property
     @memoized
@@ -508,9 +507,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             form_json = convert_xform_to_json(xml)
         except XMLSyntaxError:
             return {}
-        # we can assume all sql domains are new timezone domains
-        with force_phone_timezones_should_be_processed():
-            adjust_datetimes(form_json)
+        adjust_datetimes(form_json)
 
         scrub_form_meta(self.form_id, form_json)
         return form_json
@@ -704,29 +701,9 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
             return LooseVersion(version_text)
 
 
-class SupplyPointCaseMixin(object):
-    CASE_TYPE = 'supply-point'
-
-    @property
-    @memoized
-    def location(self):
-        from corehq.apps.locations.models import SQLLocation
-        if self.location_id is None:
-            return None
-        try:
-            return self.sql_location
-        except SQLLocation.DoesNotExist:
-            return None
-
-    @property
-    def sql_location(self):
-        from corehq.apps.locations.models import SQLLocation
-        return SQLLocation.objects.get(location_id=self.location_id)
-
-
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
-                      SupplyPointCaseMixin, MessagingCaseContactMixin):
+                      MessagingCaseContactMixin):
     partition_attr = 'case_id'
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -780,6 +757,27 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     @memoized
     def xform_ids(self):
         return [t.form_id for t in self.transactions if not t.revoked and t.is_form_transaction]
+
+    @property
+    @memoized
+    def location(self):
+        """Get supply point location or `None` if it does not exist."""
+        from corehq.apps.locations.models import SQLLocation
+        if self.location_id is None:
+            return None
+        try:
+            return self.sql_location
+        except SQLLocation.DoesNotExist:
+            return None
+
+    @property
+    def sql_location(self):
+        """Get supply point location
+
+        Raises `SQLLocation.DoesNotExist` if not found.
+        """
+        from corehq.apps.locations.models import SQLLocation
+        return SQLLocation.objects.get(location_id=self.location_id)
 
     @property
     def user_id(self):
@@ -867,8 +865,12 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return indices
 
     @property
+    def live_indices(self):
+        return [i for i in self.indices if not i.is_deleted]
+
+    @property
     def has_indices(self):
-        return self.indices or self.reverse_indices
+        return self.live_indices or self.reverse_indices
 
     def has_index(self, index_id):
         return any(index.identifier == index_id for index in self.indices)
@@ -1010,7 +1012,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         if relationship:
             indices = [index for index in indices if index.relationship_id == relationship]
 
-        return [index.referenced_case for index in indices]
+        return [index.referenced_case for index in indices if index.referenced_id]
 
     @property
     def parent(self):
@@ -1191,6 +1193,10 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         return self.domain, self.case, self.identifier
 
     @property
+    def is_deleted(self):
+        return not self.referenced_id
+
+    @property
     @memoized
     def referenced_case(self):
         """
@@ -1201,7 +1207,10 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         :return: referenced case
         """
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_case(self.referenced_id)
+        if self.referenced_id:
+            return CaseAccessorSQL.get_case(self.referenced_id)
+        else:
+            return None
 
     @property
     def relationship(self):
@@ -1213,11 +1222,11 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
 
     def __eq__(self, other):
         return isinstance(other, CommCareCaseIndexSQL) and (
-            self.case_id == other.case_id and
-            self.identifier == other.identifier,
-            self.referenced_id == other.referenced_id,
-            self.referenced_type == other.referenced_type,
-            self.relationship_id == other.relationship_id,
+            self.case_id == other.case_id
+            and self.identifier == other.identifier
+            and self.referenced_id == other.referenced_id
+            and self.referenced_type == other.referenced_type
+            and self.relationship_id == other.relationship_id
         )
 
     def __hash__(self):
@@ -1558,7 +1567,7 @@ class FormReprocessRebuild(CaseTransactionDetail):
 
 class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedChanges):
     """
-    Represents the current state of a ledger. Supercedes StockState
+    Represents the current state of a ledger.
     """
     partition_attr = 'case_id'
 

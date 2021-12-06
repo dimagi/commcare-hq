@@ -1,3 +1,5 @@
+import contextlib
+
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -5,8 +7,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.views import MySavedReportsView
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
     Permissions,
@@ -29,16 +30,18 @@ class TestDefaultLandingPages(TestCase):
         cls.domain_object = Domain(name=cls.domain, is_active=True)
         cls.domain_object.save()
 
-        cls.reports_role = UserRole(
+        cls.reports_role = UserRole.create(
             domain=cls.domain, name='reports-role', default_landing_page='reports',
             permissions=Permissions(view_reports=True),
         )
-        cls.reports_role.save()
-        cls.webapps_role = UserRole(
+        cls.webapps_role = UserRole.create(
             domain=cls.domain, name='webapps-role', default_landing_page='webapps',
             permissions=Permissions(access_web_apps=True),
         )
-        cls.webapps_role.save()
+        cls.downloads_role = UserRole.create(
+            domain=cls.domain, name='webapps-role', default_landing_page='downloads',
+            permissions=Permissions.max(),
+        )
         cls.global_password = 'secret'
 
         # make an app because not having one changes the default dashboard redirect to the apps page
@@ -69,7 +72,7 @@ class TestDefaultLandingPages(TestCase):
 
     def test_no_role_cant_access(self):
         user = self._make_web_user('elodin@theuniversity.com')
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         user.delete_domain_membership(self.domain)
         user.save()
         self.client.login(username=user.username, password=self.global_password)
@@ -78,9 +81,9 @@ class TestDefaultLandingPages(TestCase):
 
     def test_formplayer_default_override(self):
         web_user = self._make_web_user('elodin@theuniversity.com', role=self.webapps_role)
-        self.addCleanup(web_user.delete, deleted_by=None)
+        self.addCleanup(web_user.delete, self.domain, deleted_by=None)
         mobile_worker = self._make_commcare_user('kvothe')
-        self.addCleanup(mobile_worker.delete, deleted_by=None)
+        self.addCleanup(mobile_worker.delete, self.domain, deleted_by=None)
         for user in [web_user, mobile_worker]:
             self.client.login(username=user.username, password=self.global_password)
 
@@ -94,18 +97,21 @@ class TestDefaultLandingPages(TestCase):
     (None, DomainDashboardView.urlname),
     ('reports_role', "reports_home"),
     ('webapps_role', FormplayerMain.urlname),
+    ('downloads_role', DomainDashboardView.urlname),
+    ('downloads_role', 'download_data_files', 'DATA_FILE_DOWNLOAD'),
 ], TestDefaultLandingPages)
-def test_web_user_landing_page(self, role, expected_urlname, extra_url_args=None):
+def test_web_user_landing_page(self, role, expected_urlname, enabled_toggle=None):
     if role is not None:
         role = getattr(self, role)
-    extra_url_args = extra_url_args or []
     user = self._make_web_user('elodin@theuniversity.com', role=role)
-    self.addCleanup(user.delete, deleted_by=None)
+    self.addCleanup(user.delete, self.domain, deleted_by=None)
     self.client.login(username=user.username, password=self.global_password)
 
-    response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
+    context = flag_enabled(enabled_toggle) if enabled_toggle else contextlib.suppress()  # noop context
+    with context:
+        response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
     self.assertEqual(response.status_code, 200)
-    self.assertEqual(reverse(expected_urlname, args=[self.domain] + extra_url_args),
+    self.assertEqual(reverse(expected_urlname, args=[self.domain]),
                      response.request['PATH_INFO'])
 
 
@@ -113,16 +119,19 @@ def test_web_user_landing_page(self, role, expected_urlname, extra_url_args=None
     (None, FormplayerMain.urlname),
     ('reports_role', "reports_home"),
     ('webapps_role', FormplayerMain.urlname),
+    ('downloads_role', FormplayerMain.urlname),
+    ('downloads_role', 'download_data_files', 'DATA_FILE_DOWNLOAD'),
 ], TestDefaultLandingPages)
-def test_mobile_worker_landing_page(self, role, expected_urlname, extra_url_args=None):
+def test_mobile_worker_landing_page(self, role, expected_urlname, enabled_toggle=None):
     if role is not None:
         role = getattr(self, role)
-    extra_url_args = extra_url_args or []
     user = self._make_commcare_user('kvothe', role=role)
-    self.addCleanup(user.delete, deleted_by=None)
+    self.addCleanup(user.delete, self.domain, deleted_by=None)
     self.client.login(username=user.username, password=self.global_password)
 
-    response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
+    context = flag_enabled(enabled_toggle) if enabled_toggle else contextlib.suppress()  # noop context
+    with context:
+        response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
     self.assertEqual(response.status_code, 200)
-    self.assertEqual(reverse(expected_urlname, args=[self.domain] + extra_url_args),
+    self.assertEqual(reverse(expected_urlname, args=[self.domain]),
                      response.request['PATH_INFO'])

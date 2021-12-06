@@ -8,21 +8,26 @@ from flaky import flaky
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
-    PROFILE_SLUG,
 )
-from corehq.apps.groups.models import Group
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import (
     CommCareUser,
-    Permissions,
+    UserHistory,
     UserRole,
+    UserRolePresets,
     WebUser,
 )
+from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.const import USER_CHANGE_VIA_API
 from corehq.elastic import send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
@@ -71,7 +76,7 @@ class TestCommCareUserResource(APIResourceTest):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
                                             created_by=None, created_via=None)
-        self.addCleanup(commcare_user.delete, deleted_by=None)
+        self.addCleanup(commcare_user.delete, self.domain.name, deleted_by=None)
         backend_id = commcare_user.get_id
         update_analytics_indexes()
 
@@ -99,7 +104,7 @@ class TestCommCareUserResource(APIResourceTest):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
                                             created_by=None, created_via=None)
-        self.addCleanup(commcare_user.delete, deleted_by=None)
+        self.addCleanup(commcare_user.delete, self.domain.name, deleted_by=None)
         backend_id = commcare_user._id
 
         response = self._assert_auth_get_resource(self.single_endpoint(backend_id))
@@ -151,7 +156,7 @@ class TestCommCareUserResource(APIResourceTest):
                                     content_type='application/json')
         self.assertEqual(response.status_code, 201)
         [user_back] = CommCareUser.by_domain(self.domain.name)
-        self.addCleanup(user_back.delete, deleted_by=None)
+        self.addCleanup(user_back.delete, self.domain.name, deleted_by=None)
         self.addCleanup(lambda: send_to_elasticsearch('users', user_back.to_json(), delete=True))
 
         self.assertEqual(user_back.username, "jdoe")
@@ -166,11 +171,11 @@ class TestCommCareUserResource(APIResourceTest):
     def test_update(self):
 
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None)
+                                   created_by=None, created_via=None, phone_number="50253311398")
         group = Group({"name": "test"})
         group.save()
 
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
         self.addCleanup(group.delete)
 
         user_json = {
@@ -188,7 +193,8 @@ class TestCommCareUserResource(APIResourceTest):
             "user_data": {
                 PROFILE_SLUG: self.profile.id,
                 "chw_id": "13/43/DFA"
-            }
+            },
+            "password": "qwerty1234"
         }
 
         backend_id = user._id
@@ -210,11 +216,41 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(modified.metadata["imaginary"], "yes")
         self.assertEqual(modified.default_phone_number, "50253311399")
 
+        # test user history audit
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=user._id)
+        self.assertDictEqual(
+            user_history.changes,
+            {
+                'email': 'tlast@example.org',
+                'language': 'pol',
+                'last_name': 'last',
+                'first_name': 'test',
+                'user_data': {
+                    'chw_id': '13/43/DFA',
+                    'commcare_profile': self.profile.id,
+                    'commcare_project': 'qwerty'
+                }
+            }
+        )
+        self.assertTrue("50253311398" in
+                        user_history.change_messages['phone_numbers']['remove_phone_numbers']['phone_numbers'])
+        self.assertTrue("50253311399" in
+                        user_history.change_messages['phone_numbers']['add_phone_numbers']['phone_numbers'])
+        self.assertTrue("50253314588" in
+                        user_history.change_messages['phone_numbers']['add_phone_numbers']['phone_numbers'])
+        self.assertEqual(
+            user_history.change_messages['groups'],
+            UserChangeMessage.groups_info([group])['groups']
+        )
+        self.assertEqual(user_history.change_messages['password'], UserChangeMessage.password_reset()['password'])
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_API)
+
     def test_update_profile_conflict(self):
 
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None)
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
 
         user_json = {
             "first_name": "florence",
@@ -241,7 +277,7 @@ class TestCommCareUserResource(APIResourceTest):
 
 class TestWebUserResource(APIResourceTest):
     """
-    Basic sanity checking of v0_1.CommCareUserResource
+    Basic sanity checking of v0_5.WebUserResource
     """
     resource = v0_5.WebUserResource
     api_name = 'v0.5'
@@ -274,6 +310,11 @@ class TestWebUserResource(APIResourceTest):
         ],
         "role": "Admin"
     }
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        initialize_domain_with_default_roles(cls.domain.name)
 
     def _check_user_data(self, user, json_user):
         self.assertEqual(user._id, json_user['id'])
@@ -310,9 +351,10 @@ class TestWebUserResource(APIResourceTest):
         self._check_user_data(self.user, api_users[0])
 
         another_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
-        another_user.set_role(self.domain.name, 'field-implementer')
+        role = UserRole.objects.get(domain=self.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
+        another_user.set_role(self.domain.name, role.get_qualified_id())
         another_user.save()
-        self.addCleanup(another_user.delete, deleted_by=None)
+        self.addCleanup(another_user.delete, self.domain.name, deleted_by=None)
 
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
@@ -339,112 +381,10 @@ class TestWebUserResource(APIResourceTest):
         api_user = json.loads(response.content)
         self._check_user_data(self.user, api_user)
 
-    def test_create(self):
-        user_json = deepcopy(self.default_user_json)
-        response = self._assert_auth_post_resource(self.list_endpoint,
-                                                   json.dumps(user_json),
-                                                   content_type='application/json')
-        self.assertEqual(response.status_code, 201)
-        user_back = WebUser.get_by_username("test_1234")
-        self.assertEqual(user_back.username, "test_1234")
-        self.assertEqual(user_back.first_name, "Joe")
-        self.assertEqual(user_back.last_name, "Admin")
-        self.assertEqual(user_back.email, "admin@example.com")
-        self.assertTrue(user_back.is_domain_admin(self.domain.name))
-        user_back.delete(deleted_by=None)
-
-    def test_create_admin_without_role(self):
-        user_json = deepcopy(self.default_user_json)
-        user_json.pop('role')
-        response = self._assert_auth_post_resource(self.list_endpoint,
-                                                   json.dumps(user_json),
-                                                   content_type='application/json')
-        self.assertEqual(response.status_code, 201)
-        user_back = WebUser.get_by_username("test_1234")
-        self.assertEqual(user_back.username, "test_1234")
-        self.assertEqual(user_back.first_name, "Joe")
-        self.assertEqual(user_back.last_name, "Admin")
-        self.assertEqual(user_back.email, "admin@example.com")
-        self.assertTrue(user_back.is_domain_admin(self.domain.name))
-        user_back.delete(deleted_by=None)
-
-    def test_create_with_preset_role(self):
-        user_json = deepcopy(self.default_user_json)
-        user_json["role"] = "Field Implementer"
-        user_json["is_admin"] = False
-        response = self._assert_auth_post_resource(self.list_endpoint,
-                                                   json.dumps(user_json),
-                                                   content_type='application/json')
-        self.assertEqual(response.status_code, 201)
-        user_back = WebUser.get_by_username("test_1234")
-        self.assertEqual(user_back.role, 'Field Implementer')
-        user_back.delete(deleted_by=None)
-
-    def test_create_with_custom_role(self):
-        new_user_role = UserRole.get_or_create_with_permissions(
-            self.domain.name,
-            Permissions(edit_apps=True, view_apps=True, view_reports=True),
-            'awesomeness')
-        user_json = deepcopy(self.default_user_json)
-        user_json["role"] = new_user_role.name
-        user_json["is_admin"] = False
-        response = self._assert_auth_post_resource(self.list_endpoint,
-                                                   json.dumps(user_json),
-                                                   content_type='application/json')
-        self.assertEqual(response.status_code, 201)
-        user_back = WebUser.get_by_username("test_1234")
-        self.assertEqual(user_back.role, new_user_role.name)
-        user_back.delete(deleted_by=None)
-
-    def test_create_with_invalid_admin_role(self):
-        user_json = deepcopy(self.default_user_json)
-        user_json["role"] = 'Jack of all trades'
-        response = self._assert_auth_post_resource(self.list_endpoint,
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   failure_code=400)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content.decode('utf-8'), '{"error": "An admin can have only one role : Admin"}')
-
-    def test_create_with_invalid_non_admin_role(self):
-        user_json = deepcopy(self.default_user_json)
-        user_json['is_admin'] = False
-        user_json["role"] = 'Jack of all trades'
-        response = self._assert_auth_post_resource(self.list_endpoint,
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   failure_code=400)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content.decode('utf-8'), '{"error": "Invalid User Role Jack of all trades"}')
-
-    def test_create_with_missing_non_admin_role(self):
-        user_json = deepcopy(self.default_user_json)
-        user_json['is_admin'] = False
-        user_json.pop("role")
-        response = self._assert_auth_post_resource(self.list_endpoint,
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   failure_code=400)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content.decode('utf-8'), '{"error": "Please assign role for non admin user"}')
-
-    def test_update(self):
-        user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                              created_by=None, created_via=None)
-        self.addCleanup(user.delete, deleted_by=None)
-        user_json = deepcopy(self.default_user_json)
-        user_json.pop('username')
-        backend_id = user._id
-        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        self.assertEqual(response.status_code, 200, response.content)
-        modified = WebUser.get(backend_id)
-        self.assertEqual(modified.username, "test")
-        self.assertEqual(modified.first_name, "Joe")
-        self.assertEqual(modified.last_name, "Admin")
-        self.assertEqual(modified.email, "admin@example.com")
+    def _delete_user(self, username):
+        user = WebUser.get_by_username(username)
+        if user:
+            user.delete(self.domain.name, deleted_by=None)
 
 
 class FakeUserES(object):

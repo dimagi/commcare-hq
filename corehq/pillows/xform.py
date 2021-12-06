@@ -11,21 +11,20 @@ from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
 from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
+from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
+from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.user import UnknownUsersProcessor
 from corehq.pillows.utils import get_user_type, format_form_meta_for_es
-from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
-from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
-    XFormDuplicate, SubmissionErrorLog
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
@@ -70,8 +69,9 @@ def xform_pillow_filter(doc_dict):
 
 def transform_xform_for_elasticsearch(doc_dict):
     """
-    Given an XFormInstance, return a copy that is ready to be sent to elasticsearch,
-    or None, if the form should not be saved to elasticsearch
+    Given xform JSON such as that returned by `XFormInstanceSQL.to_json()`,
+    return a copy that is ready to be sent to elasticsearch, or None, if the
+    form should not be saved to elasticsearch
     """
     doc_ret = copy.deepcopy(doc_dict)
 
@@ -152,6 +152,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
+        change_filter_fn=is_couch_change_for_sql_domain
     )
     kafka_change_feed = KafkaChangeFeed(
         topics=FORM_TOPICS, client_id='forms-to-es', num_processes=num_processes, process_num=process_num
@@ -179,6 +180,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
       - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
       - :py:class:`corehq.pillows.user.UnknownUsersProcessor` (disabled when RUN_UNKNOWN_USER_PILLOW=False)
       - :py:class:`pillowtop.form.FormSubmissionMetadataTrackerProcessor` (disabled when RUN_FORM_META_PILLOW=False)
+      - :py:class:`corehq.apps.data_interfaces.pillow.CaseDeduplicationPillow``
     """
     # avoid circular dependency
     from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
@@ -191,18 +193,24 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         dedicated_migration_process=dedicated_migration_process
     )
 
-    ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider('XFormInstance'), StaticDataSourceProvider('XFormInstance')],
+    ucr_processor = get_ucr_processor(
+        data_source_providers=[
+            DynamicDataSourceProvider('XFormInstance'),
+            StaticDataSourceProvider('XFormInstance')
+        ],
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
         run_migrations=(process_num == 0),  # only first process runs migrations
+        ucr_configs=ucr_configs
     )
+
     xform_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
+        change_filter_fn=is_couch_change_for_sql_domain
     )
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
@@ -213,23 +221,26 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor
     )
-    if ucr_configs:
-        ucr_processor.bootstrap(ucr_configs)
     processors = [xform_to_es_processor]
     if settings.RUN_UNKNOWN_USER_PILLOW:
         processors.append(unknown_user_form_processor)
     if settings.RUN_FORM_META_PILLOW:
         processors.append(form_meta_processor)
+    if settings.RUN_DEDUPLICATION_PILLOW:
+        processors.append(CaseDeduplicationProcessor())
+
     if not settings.ENTERPRISE_MODE:
         xform_to_report_es_processor = BulkElasticProcessor(
             elasticsearch=get_es_new(),
             index_info=REPORT_XFORM_INDEX_INFO,
             doc_prep_fn=transform_xform_for_report_forms_index,
-            doc_filter_fn=report_xform_filter
+            doc_filter_fn=report_xform_filter,
+            change_filter_fn=is_couch_change_for_sql_domain
         )
         processors.append(xform_to_report_es_processor)
     if not skip_ucr:
         processors.append(ucr_processor)
+
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,
@@ -240,36 +251,6 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         process_num=process_num,
         is_dedicated_migration_process=dedicated_migration_process and (process_num == 0)
     )
-
-
-class CouchFormReindexerFactory(ReindexerFactory):
-    slug = 'form'
-    arg_contributors = [
-        ReindexerFactory.resumable_reindexer_args,
-        ReindexerFactory.elastic_reindexer_args,
-    ]
-
-    def build(self):
-        iteration_key = "CouchXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
-        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-            XFormInstance,
-            XFormArchived,
-            XFormError,
-            XFormDeprecated,
-            XFormDuplicate,
-            ('XFormInstance-Deleted', XFormInstance),
-            ('HQSubmission', XFormInstance),
-            SubmissionErrorLog,
-        ])
-        return ResumableBulkElasticPillowReindexer(
-            doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=XFORM_INDEX_INFO,
-            doc_filter=xform_pillow_filter,
-            pillow=get_xform_to_elasticsearch_pillow(),
-            doc_transform=transform_xform_for_elasticsearch,
-            **self.options
-        )
 
 
 class SqlFormReindexerFactory(ReindexerFactory):

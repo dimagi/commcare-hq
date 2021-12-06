@@ -35,6 +35,7 @@
       <script src="{% static 'app_manager/js/forms/advanced/case_properties.js' %}"></script>
       <script src="{% static 'app_manager/js/forms/advanced/actions.js' %}"></script>
       <script src="{% static 'app_manager/js/forms/advanced/case_config_ui.js' %}"></script>
+      <script src="{% static 'app_manager/js/details/utils.js' %}"></script>
       <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
     {% endcompress %}
   {% else %}
@@ -144,15 +145,14 @@
   {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
   {% initial_page_data 'root_requires_same_case' root_requires_same_case %}
   {% initial_page_data 'put_in_root' module.put_in_root %}
-  {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
   {% initial_page_data 'shadow_parent_form_id' form.shadow_parent_form_id %}
   {% initial_page_data 'is_release_notes_form' form.is_release_notes_form %}
   {% initial_page_data 'is_allowed_to_be_release_notes_form' is_allowed_to_be_release_notes_form %}
   {% initial_page_data 'is_training_module' is_training_module %}
-  {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
   {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
     {% initial_page_data 'apps_modules' apps_modules %}
   {% endif %}
+  {% registerurl "enable_usercase" domain %}
   {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
 
   {# End of form navigation #}
@@ -290,7 +290,7 @@
                       <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary">
                         {% trans "Change your subscription" %}
                       </a>
-                      <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger">
+                      <a href="{% url 'drop_usercase' domain app.id %}" class="btn btn-danger">
                         {% trans "Remove User Properties" %}
                       </a>
                     </p>

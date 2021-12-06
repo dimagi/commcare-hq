@@ -6,7 +6,6 @@ from corehq.apps.locations.util import (
     location_hierarchy_config,
 )
 from corehq.apps.reports.filters.base import BaseReportFilter
-from custom.icds_core.view_utils import icds_pre_release_features
 
 
 class AsyncLocationFilter(BaseReportFilter):
@@ -36,8 +35,8 @@ class AsyncLocationFilter(BaseReportFilter):
         user = self.request.couch_user
         loc_id = self.request.GET.get('location_id')
         if not loc_id:
-            # Don't use mirroring, because any location found via mirroring won't exist in this domain
-            domain_membership = user.get_domain_membership(self.domain, allow_mirroring=False)
+            # Don't use enterprise permissions, because any location not in the current domain won't exist
+            domain_membership = user.get_domain_membership(self.domain, allow_enterprise=False)
             if domain_membership:
                 loc_id = domain_membership.location_id
         return {
@@ -50,7 +49,6 @@ class AsyncLocationFilter(BaseReportFilter):
             'make_optional': self.make_optional,
             'hierarchy': self.location_hierarchy_config,
             'path': self.request.path,
-            'have_access_to_icds_dashboard_features': icds_pre_release_features(user)
         }
 
     @classmethod

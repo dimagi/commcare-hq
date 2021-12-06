@@ -1,9 +1,11 @@
+from datetime import datetime
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
 from django.urls import reverse
+from memoized import memoized
 
 from tastypie import fields
 from tastypie.authentication import Authentication
@@ -12,7 +14,7 @@ from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.api.query_adapters import GroupQuerySetAdapter
-from couchforms.models import doc_types
+from corehq.apps.api.resources.pagination import DoesNothingPaginatorCompat
 
 from corehq.apps.api.es import ElasticAPIQuerySet, FormESView, es_query_from_get_params
 from corehq.apps.api.fields import (
@@ -43,7 +45,7 @@ from corehq.apps.api.serializers import (
 )
 from corehq.apps.api.util import get_obj, get_object_or_not_exist
 from corehq.apps.app_manager.app_schemas.case_properties import (
-    get_case_properties,
+    get_all_case_properties,
 )
 from corehq.apps.app_manager.dbaccessors import (
     get_all_built_app_results,
@@ -62,8 +64,6 @@ from no_exceptions.exceptions import Http400
 # so as a hack until this can be remedied, there is a global that
 # can be set to provide a mock.
 MOCK_XFORM_ES = None
-
-xform_doc_types = doc_types()
 
 
 class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -371,7 +371,8 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
 class BaseApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        return get_apps_in_domain(domain, include_remote=False)
+        return sorted(get_apps_in_domain(domain, include_remote=False),
+                      key=lambda app: app.date_created or datetime.min)
 
     def obj_get(self, bundle, **kwargs):
         # support returning linked applications upon receiving an application request
@@ -384,6 +385,7 @@ class BaseApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecific
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'application'
+        paginator_class = DoesNothingPaginatorCompat
 
 
 class ApplicationResource(BaseApplicationResource):
@@ -415,8 +417,11 @@ class ApplicationResource(BaseApplicationResource):
             for result in results
         ]
 
-    @staticmethod
-    def dehydrate_module(app, module, langs):
+    @memoized
+    def get_all_case_properties_local(self, app):
+        return get_all_case_properties(app, exclude_invalid_properties=False)
+
+    def dehydrate_module(self, app, module, langs):
         """
         Convert a Module object to a JValue representation
         with just the good parts.
@@ -429,9 +434,8 @@ class ApplicationResource(BaseApplicationResource):
 
             dehydrated['case_type'] = module.case_type
 
-            dehydrated['case_properties'] = get_case_properties(
-                app, [module.case_type], defaults=['name']
-            )[module.case_type]
+            all_case_properties = self.get_all_case_properties_local(app)
+            dehydrated['case_properties'] = all_case_properties[module.case_type]
 
             dehydrated['unique_id'] = module.unique_id
 

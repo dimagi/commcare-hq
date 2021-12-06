@@ -1,5 +1,7 @@
 import json
+import time
 from collections import defaultdict
+from contextlib import contextmanager
 from copy import deepcopy
 from functools import partial
 
@@ -8,6 +10,7 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
@@ -42,7 +45,9 @@ from corehq.apps.linked_domain.exceptions import (
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
+from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.util import get_static_report_mapping
+from corehq.util.metrics import metrics_gauge, metrics_histogram_timer
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -350,6 +355,11 @@ def update_linked_app(app, master_app_id_or_build, user_id):
     ):
         old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
         report_map = get_static_report_mapping(master_build.domain, app['domain'])
+        report_map.update({
+            c.report_meta.master_id: c._id
+            for c in get_report_configs_for_domain(app.domain)
+            if c.report_meta.master_id
+        })
 
         try:
             app = overwrite_app(app, master_build, report_map)
@@ -357,7 +367,8 @@ def update_linked_app(app, master_app_id_or_build, user_id):
             raise AppLinkError(
                 _(
                     'This application uses mobile UCRs '
-                    'which are not available in the linked domain: {ucr_id}'
+                    'which are not available in the linked domain: {ucr_id}. '
+                    'Try linking these reports first and try again.'
                 ).format(ucr_id=str(e))
             )
 
@@ -438,14 +449,42 @@ def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
     return total_size
 
 
+def _copy_as_dict(attribute):
+    return deepcopy(dict(attribute))
+
+
+def _copy_list_of_dict(attribute):
+    dict_list = [dict(schema) for schema in attribute]
+    return deepcopy(dict_list)
+
+
 SHADOW_MODULE_PROPERTIES_TO_COPY = [
-    ('case_details', True),
-    ('ref_details', True),
-    ('case_list', True),
-    ('referral_list', True),
-    ('task_list', True),
-    ('parent_select', False),
-    ('search_config', False),
+    ('case_details', deepcopy),
+    ('ref_details', deepcopy),
+    ('case_list', deepcopy),
+    ('referral_list', deepcopy),
+    ('task_list', deepcopy),
+    ('parent_select', None),
+    ('search_config', None),
+]
+
+
+MODULE_BASE_PROPERTIES_TO_COPY = [
+    ('module_filter', None),
+    ('put_in_root', None),
+
+    ('fixture_select', deepcopy),
+    ('report_context_tile', None),
+    ('auto_select_case', None),
+    ('is_training_module', None),
+    ('case_list_form', deepcopy),
+
+    # deepcopy cannot handle DictProperty, so convert to normal python dict first
+    ('media_image', _copy_as_dict),
+    ('media_audio', _copy_as_dict),
+    ('custom_icons', _copy_list_of_dict),
+    ('use_default_image_for_all', None),
+    ('use_default_audio_for_all', None),
 ]
 
 
@@ -504,20 +543,17 @@ def handle_shadow_child_modules(app, shadow_parent):
         changes = True
         new_shadow = ShadowModule.new_module(source_child.default_name(app=app), app.default_language)
         new_shadow.source_module_id = source_child.unique_id
-
-        # ModuleBase properties
-        new_shadow.module_filter = source_child.module_filter
-        new_shadow.put_in_root = source_child.put_in_root
         new_shadow.root_module_id = shadow_parent.unique_id
-        new_shadow.fixture_select = deepcopy(source_child.fixture_select)
-        new_shadow.report_context_tile = source_child.report_context_tile
-        new_shadow.auto_select_case = source_child.auto_select_case
-        new_shadow.is_training_module = source_child.is_training_module
+
+        # BaseModule properties
+        for prop, transform in MODULE_BASE_PROPERTIES_TO_COPY:
+            new_value = getattr(source_child, prop)
+            setattr(new_shadow, prop, transform(new_value) if transform is not None else new_value)
 
         # ShadowModule properties
-        for prop, to_deepcopy in SHADOW_MODULE_PROPERTIES_TO_COPY:
+        for prop, transform in SHADOW_MODULE_PROPERTIES_TO_COPY:
             new_value = getattr(source_child, prop)
-            setattr(new_shadow, prop, deepcopy(new_value) if to_deepcopy else new_value)
+            setattr(new_shadow, prop, transform(new_value) if transform is not None else new_value)
 
         # move excluded form ids
         source_child_form_ids = set(
@@ -534,3 +570,61 @@ def handle_shadow_child_modules(app, shadow_parent):
         app.save()
 
     return changes
+
+
+class InvalidSessionEndpoint(Exception):
+    pass
+
+
+def set_session_endpoint(module_or_form, raw_endpoint_id, app):
+    raw_endpoint_id = raw_endpoint_id.strip()
+    cleaned_id = slugify(raw_endpoint_id)
+    if cleaned_id != raw_endpoint_id:
+        raise InvalidSessionEndpoint(_(
+            "'{invalid_id}' is not a valid session endpoint ID. It must contain only "
+            "lowercase letters, numbers, underscores, and hyphens. Try {valid_id}."
+        ).format(invalid_id=raw_endpoint_id, valid_id=cleaned_id))
+
+    if _is_duplicate_endpoint_id(cleaned_id, module_or_form.session_endpoint_id, app):
+        raise InvalidSessionEndpoint(_(
+            "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
+        ).format(endpoint_id=cleaned_id))
+
+    module_or_form.session_endpoint_id = cleaned_id
+
+
+def _is_duplicate_endpoint_id(new_id, old_id, app):
+    if not new_id or new_id == old_id:
+        return False
+
+    all_endpoint_ids = []
+    for module in app.modules:
+        all_endpoint_ids.append(module.session_endpoint_id)
+        for form in module.get_suite_forms():
+            all_endpoint_ids.append(form.session_endpoint_id)
+
+    return new_id in all_endpoint_ids
+
+
+@contextmanager
+def report_build_time(domain, app_id, build_type):
+    start = time.time()
+
+    # Histogram of all app builds
+    name = {
+        "new_release": 'commcare.app_build.new_release',
+        "live_preview": 'commcare.app_build.live_preview',
+    }[build_type]
+    buckets = (1, 10, 30, 60, 120, 240)
+    with metrics_histogram_timer(name, timing_buckets=buckets):
+        yield
+
+    # Detailed information for all apps that take longer than 30s to build
+    end = time.time()
+    duration = end - start
+    if duration > 30:
+        metrics_gauge('commcare.app_build.duration', duration, tags={
+            "domain": domain,
+            "app_id": app_id,
+            "build_type": build_type,
+        })

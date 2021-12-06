@@ -1,5 +1,4 @@
 import os
-from django.test.utils import override_settings
 from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -21,7 +20,9 @@ class OutOfOrderCaseTest(TestCase):
                 xml_data = f.read()
             submit_form_locally(xml_data, 'test-domain')
 
-        case = CaseAccessors().get_case('30bc51f6-3247-4966-b4ae-994f572e85fe')
-        self.assertEqual('from the update form', case.pupdate)
-        self.assertEqual('from the create form', case.pcreate)
-        self.assertEqual('overridden by the update form', case.pboth)
+        case = CaseAccessors('test-domain').get_case('30bc51f6-3247-4966-b4ae-994f572e85fe')
+        self.assertEqual('from the update form', case.case_json['pupdate'])
+        self.assertEqual('from the create form', case.case_json['pcreate'])
+        # NOTE the SQL form processor works differently than the Couch one did:
+        # it processes submissions in the order they are received
+        self.assertEqual('this should get overridden', case.case_json['pboth'])

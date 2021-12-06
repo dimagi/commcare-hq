@@ -5,7 +5,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import StockActions
 from corehq.apps.commtrack.exceptions import MissingProductId
-from corehq.apps.commtrack.models import SQLActionConfig
+from corehq.apps.commtrack.models import ActionConfig
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.products.models import SQLProduct
 
@@ -92,7 +92,7 @@ class StockTransactionHelper(jsonobject.JsonObject):
             return self.quantity
 
     def action_config(self, commtrack_config):
-        action = SQLActionConfig(action=self.action, subaction=self.subaction)
+        action = ActionConfig(action=self.action, subaction=self.subaction)
         for a in commtrack_config.all_actions:
             if a.name == action.name:
                 return a

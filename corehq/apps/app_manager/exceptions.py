@@ -116,7 +116,7 @@ class SuiteValidationError(SuiteError):
     pass
 
 
-class LocationXpathValidationError(AppManagerException):
+class LocationXPathValidationError(AppManagerException):
     pass
 
 
@@ -148,7 +148,7 @@ class CaseXPathValidationError(XPathValidationError):
     pass
 
 
-class UserCaseXPathValidationError(XPathValidationError):
+class UsercaseXPathValidationError(XPathValidationError):
     pass
 
 
@@ -180,4 +180,13 @@ class BuildNotFoundException(AppManagerException):
 
 
 class BuildConflictException(Exception):
+    pass
+
+
+class AppValidationError(AppManagerException):
+    def __init__(self, errors):
+        self.errors = errors
+
+
+class DangerousXmlException(Exception):
     pass

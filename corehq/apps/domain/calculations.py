@@ -6,6 +6,7 @@ from django.utils.translation import ugettext as _
 
 from dateutil.relativedelta import relativedelta
 
+from corehq.apps.users.role_utils import get_custom_roles_for_domain
 from couchforms.analytics import (
     domain_has_submission_in_last_30_days,
     get_first_form_submission_received,
@@ -36,7 +37,7 @@ from corehq.apps.userreports.util import (
     number_of_report_builder_reports,
     number_of_ucr_reports,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
 )
@@ -328,7 +329,7 @@ def dom_calc(calc_tag, dom, extra_arg=''):
     return ans
 
 
-@quickcache([], timeout=60 * 60)
+@quickcache([], timeout=23 * 60 * 60)
 def all_domain_stats():
     webuser_counts = defaultdict(int)
     commcare_counts = defaultdict(int)
@@ -441,12 +442,11 @@ def use_domain_security_settings(domain_obj):
 
 
 def num_custom_roles(domain):
-    custom_roles = [r for r in UserRole.get_custom_roles_by_domain(domain) if not r.is_archived]
-    return len(custom_roles)
+    return len(get_custom_roles_for_domain(domain))
 
 
 def num_location_restricted_roles(domain):
-    roles = [r for r in UserRole.by_domain(domain)
+    roles = [r for r in UserRole.objects.get_by_domain(domain)
              if not r.permissions.access_all_locations]
     return len(roles)
 

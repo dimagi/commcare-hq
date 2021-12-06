@@ -43,7 +43,8 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     apps/settings
     apps/advanced_app_features
     apps/builds
-    cloudcare
+    web_apps
+    formplayer
 
 .. toctree::
     :caption: Application Data Layer
@@ -67,6 +68,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     ucr
     change_feeds
     pillows
+    email_monitoring_SES
 
 .. toctree::
     :caption: Messaging
@@ -79,7 +81,17 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :maxdepth: 1
 
     api
+    fhir/index
     openmrs
+    value_source
+
+.. toctree::
+    :caption: Single Sign On (SSO)
+    :maxdepth: 1
+
+    sso/overview
+    sso/architecture
+    sso/local_setup
 
 .. toctree::
     :caption: UI and Front End
@@ -113,9 +125,12 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
 
     toggles
     migrations
+    couch_to_sql_models
     commtrack
     elasticsearch
     es_query
+    middleware
+    migration_command_pattern
     nfs
     forms_and_cases
     couchdb
@@ -123,6 +138,14 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     databases
     metrics
     extensions
+    custom
+
+.. toctree::
+    :caption: Architecture Decisions
+    :maxdepth: 1
+    :glob:
+
+    decisions/*
 
 .. toctree::
     :caption: Documentation Tips

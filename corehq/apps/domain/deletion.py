@@ -5,7 +5,7 @@ from datetime import date
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import connection, transaction
+from django.db import transaction
 from django.db.models import Q
 
 from corehq.apps.accounting.models import Subscription
@@ -14,7 +14,9 @@ from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.userreports.dbaccessors import (
     delete_all_ucr_tables_for_domain,
 )
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
+from corehq.apps.users.util import log_user_change, SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.elastic import ESError
@@ -63,17 +65,6 @@ class CustomDeletion(BaseDeletion):
     def execute(self, domain_name):
         if self.is_app_installed():
             self.deletion_fn(domain_name)
-
-
-class RawDeletion(BaseDeletion):
-
-    def __init__(self, app_label, models, raw_query):
-        super(RawDeletion, self).__init__(app_label, models)
-        self.raw_query = raw_query
-
-    def execute(self, cursor, domain_name):
-        if self.is_app_installed():
-            cursor.execute(self.raw_query, [domain_name])
 
 
 class ModelDeletion(BaseDeletion):
@@ -137,9 +128,16 @@ def _delete_web_user_membership(domain_name):
     for web_user in list(active_web_users) + list(inactive_web_users):
         web_user.delete_domain_membership(domain_name)
         if settings.UNIT_TESTING and not web_user.domain_memberships:
-            web_user.delete(deleted_by=None)
+            web_user.delete(domain_name, deleted_by=None)
         else:
             web_user.save()
+            _log_web_user_membership_removed(web_user, domain_name, __name__ + "._delete_web_user_membership")
+
+
+def _log_web_user_membership_removed(user, domain, via):
+    log_user_change(by_domain=None, for_domain=domain, couch_user=user,
+                    changed_by_user=SYSTEM_USER_ID, changed_via=via,
+                    change_messages=UserChangeMessage.domain_removal(domain))
 
 
 def _terminate_subscriptions(domain_name):
@@ -246,19 +244,11 @@ def _delete_demo_user_restores(domain_name):
             except DemoUserRestore.DoesNotExist:
                 pass
 
+
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
 DOMAIN_DELETE_OPERATIONS = [
-    RawDeletion('stock', ['stocktransaction'], """
-        DELETE FROM stock_stocktransaction
-        WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)
-    """),
-    RawDeletion('stock', ['stockreport'], "DELETE FROM stock_stockreport WHERE domain=%s"),
-    RawDeletion('commtrack', ['stockstate'], """
-        DELETE FROM commtrack_stockstate
-        WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)
-    """),
     DjangoUserRelatedModelDeletion('otp_static', 'StaticDevice', 'user__username', ['StaticToken']),
     DjangoUserRelatedModelDeletion('otp_totp', 'TOTPDevice', 'user__username'),
     DjangoUserRelatedModelDeletion('two_factor', 'PhoneDevice', 'user__username'),
@@ -267,7 +257,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('products', 'SQLProduct', 'domain'),
     ModelDeletion('locations', 'SQLLocation', 'domain'),
     ModelDeletion('locations', 'LocationType', 'domain'),
-    ModelDeletion('stock', 'DocDomainMapping', 'domain_name'),
     ModelDeletion('domain_migration_flags', 'DomainMigrationProgress', 'domain'),
     ModelDeletion('sms', 'DailyOutboundSMSLimitReached', 'domain'),
     ModelDeletion('sms', 'SMS', 'domain'),
@@ -302,12 +291,14 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
     ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
     ModelDeletion('cloudcare', 'ApplicationAccess', 'domain', ['SQLAppGroup']),
-    ModelDeletion('commtrack', 'SQLCommtrackConfig', 'domain', [
-        'SQLActionConfig', 'SQLAlertConfig', 'SQLConsumptionConfig',
-        'SQLStockLevelsConfig', 'SQLStockRestoreConfig',
+    ModelDeletion('commtrack', 'CommtrackConfig', 'domain', [
+        'ActionConfig', 'AlertConfig', 'ConsumptionConfig',
+        'StockLevelsConfig', 'StockRestoreConfig',
     ]),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
-    ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', ['CustomDataFieldsProfile', 'Field']),
+    ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', [
+        'CustomDataFieldsProfile', 'Field',
+    ]),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_dictionary', 'CaseType', 'domain', [
@@ -318,6 +309,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'MatchPropertyDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'UpdateCaseDefinition', 'caseruleaction__rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseDuplicate', 'action__caseruleaction__rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseDeduplicationActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CreateScheduleInstanceActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleAction', 'rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleCriteria', 'rule__domain'),
@@ -354,18 +347,23 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('export', 'IncrementalExport', 'domain', ['IncrementalExportCheckpoint']),
     CustomDeletion('export', _delete_data_files, []),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
-    ModelDeletion('mobile_auth', 'SQLMobileAuthKeyRecord', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('ota', 'DeviceLogRequest', 'domain'),
-    ModelDeletion('phone', 'OwnershipCleanlinessFlag', 'domain'),
     ModelDeletion('phone', 'SyncLogSQL', 'domain'),
     CustomDeletion('ota', _delete_demo_user_restores, ['DemoUserRestore']),
     ModelDeletion('phonelog', 'ForceCloseEntry', 'domain'),
     ModelDeletion('phonelog', 'UserErrorEntry', 'domain'),
     ModelDeletion('registration', 'RegistrationRequest', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
+    ModelDeletion('registry', 'DataRegistry', 'domain', [
+        'RegistryInvitation', 'RegistryGrant', 'RegistryAuditLog'
+    ]),
+    ModelDeletion('registry', 'RegistryGrant', 'from_domain'),
+    ModelDeletion('registry', 'RegistryInvitation', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
+    ModelDeletion('reports', 'TableauServer', 'domain'),
+    ModelDeletion('reports', 'TableauVisualization', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     ModelDeletion('translations', 'TransifexOrganization', 'transifexproject__domain'),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
@@ -379,14 +377,21 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('userreports', 'ReportComparisonTiming', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('users', 'Invitation', 'domain'),
-    ModelDeletion('users', 'DomainPermissionsMirror', 'source'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
+    ModelDeletion('users', 'UserRole', 'domain', [
+        'RolePermission', 'RoleAssignableBy', 'SQLPermission'
+    ]),
     ModelDeletion('user_importer', 'UserUploadRecord', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
-    ModelDeletion('dhis2', 'Dhis2Connection', 'domain'),
+    ModelDeletion('dhis2', 'SQLDataValueMap', 'dataset_map__domain'),
+    ModelDeletion('dhis2', 'SQLDataSetMap', 'domain'),
     ModelDeletion('motech', 'RequestLog', 'domain'),
+    ModelDeletion('fhir', 'FHIRImportConfig', 'domain', [
+        'FHIRImportResourceType', 'ResourceTypeRelationship',
+        'FHIRImportResourceProperty',
+    ]),
+    ModelDeletion('repeaters', 'SQLRepeater', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain'),
-    ModelDeletion('repeaters', 'RepeaterStub', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecord', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecordAttempt', 'repeat_record__domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
@@ -394,23 +399,7 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
 ]
 
+
 def apply_deletion_operations(domain_name):
-    raw_ops, model_ops = _split_ops_by_type(DOMAIN_DELETE_OPERATIONS)
-
-    with connection.cursor() as cursor:
-        for op in raw_ops:
-            op.execute(cursor, domain_name)
-
-    for op in model_ops:
+    for op in DOMAIN_DELETE_OPERATIONS:
         op.execute(domain_name)
-
-
-def _split_ops_by_type(ops):
-    raw_ops = []
-    model_ops = []
-    for op in ops:
-        if isinstance(op, RawDeletion):
-            raw_ops.append(op)
-        else:
-            model_ops.append(op)
-    return raw_ops, model_ops

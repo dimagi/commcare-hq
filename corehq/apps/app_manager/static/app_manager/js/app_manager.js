@@ -1,4 +1,3 @@
-/* globals hqDefine django hqImport */
 hqDefine('app_manager/js/app_manager', function () {
     'use strict';
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
@@ -141,7 +140,7 @@ hqDefine('app_manager/js/app_manager', function () {
      */
     var _initAddItemPopovers = function () {
         $('.js-add-new-item').popover({
-            title: django.gettext("Add"),
+            title: gettext("Add"),
             container: 'body',
             sanitize: false,
             content: function () {
@@ -423,11 +422,6 @@ hqDefine('app_manager/js/app_manager', function () {
                                 $form.find('[name="' + key + '"]').val(data.corrections[key]);
                                 $(document).trigger('correction', [key, data.corrections[key]]);
                             }
-                        }
-                        if (_.has(data, 'case_list-show') &&
-                            _.has(module, 'module_view')) {
-                            var requiresCaseDetails = hqImport('app_manager/js/details/screen_config').state.requiresCaseDetails;
-                            requiresCaseDetails(data['case_list-show']);
                         }
                         if (_.has(data, 'redirect')) {
                             window.location = data.redirect;

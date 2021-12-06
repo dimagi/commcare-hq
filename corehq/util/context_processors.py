@@ -9,6 +9,7 @@ from ws4redis.context_processors import default
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.models import BillingAccount, SubscriptionType
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.utils import is_hubspot_js_allowed_for_request
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 
 COMMCARE = 'commcare'
@@ -24,16 +25,6 @@ def base_template(request):
         'env': get_environment_friendly_name(),
         'secure_cookies': settings.SECURE_COOKIES,
     }
-
-
-def is_commtrack(project, request):
-    if project:
-        return project.commtrack_enabled
-    try:
-        return 'commtrack.org' in request.get_host()
-    except Exception:
-        # get_host might fail for bad requests, e.g. scheduled reports
-        return False
 
 
 def get_per_domain_context(project, request=None):
@@ -114,6 +105,14 @@ def js_api_keys(request):
     }
     if getattr(request, 'project', None) and request.project.ga_opt_out and api_keys['ANALYTICS_IDS'].get('GOOGLE_ANALYTICS_API_ID'):
         del api_keys['ANALYTICS_IDS']['GOOGLE_ANALYTICS_API_ID']
+
+    if (api_keys['ANALYTICS_IDS'].get('HUBSPOT_API_ID')
+            and not is_hubspot_js_allowed_for_request(request)):
+        # set to an empty string rather than delete. otherwise a strange race
+        # happens in redis, throwing an error
+        api_keys['ANALYTICS_IDS']['HUBSPOT_API_ID'] = ''
+        api_keys['ANALYTICS_IDS']['HUBSPOT_API_KEY'] = ''
+
     return api_keys
 
 

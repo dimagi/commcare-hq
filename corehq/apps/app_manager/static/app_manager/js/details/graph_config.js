@@ -22,8 +22,8 @@ hqDefine('app_manager/js/details/graph_config', function () {
         var $editButtonDiv = $(
             '<div>' +
             '<button class="btn btn-default" data-bind="click: openModal">' +
-            '<i class="fa fa-pencil"></i>' +
-            ' Edit Graph' +
+            '<i class="fa fa-pencil"></i> ' +
+            gettext('Edit Graph') +
             '</button>' +
             '</div>'
         );

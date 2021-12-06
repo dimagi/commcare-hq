@@ -515,15 +515,18 @@ class DomainFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
     @property
     def query(self):
         db = Domain.get_db()
-        startkey = self.search_string
-        endkey = "{}Z".format(self.search_string) if startkey else ''
-        query = db.view(
-            'domain/domains',
-            reduce=False,
-            startkey=startkey,
-            endkey=endkey,
-            limit=20,
-        )
+
+        search_params = {
+            'reduce': False,
+            'limit': 20
+        }
+
+        if self.search_string:
+            # Search by string range: https://docs.couchdb.org/en/latest/ddocs/views/collation.html#string-ranges
+            search_params['startkey'] = self.search_string
+            search_params['endkey'] = "{}\ufff0".format(self.search_string)
+
+        query = db.view('domain/domains', **search_params)
         return query
 
     @property

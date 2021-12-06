@@ -4,8 +4,11 @@
   <td class="text-center">
     <i class="grip sortable-handle hq-icon-full fa fa-arrows-v"></i>
   </td>
-  <td>
+  <td data-bind="css: {'has-error': $parent.isCommon(ko.unwrap(name()))}">
     <input class="form-control" type="text" data-bind="value: name"/>
+    <div data-bind="visible: $parent.isCommon(ko.unwrap(name()))" class="help-block">
+      {% trans "A property is not allowed both here and Default Search Filters. Please remove from one of the lists" %}
+    </div>
   </td>
   <td>
     <input class="form-control" type="text" data-bind="value: label"/>
@@ -53,6 +56,9 @@
                     <p class="help-block" data-bind="visible: appearance() == 'daterange'">
                       {% trans 'In "YYYY-MM-DD to YYYY-MM-DD" format' %}
                     </p>
+                    <p class="help-block" data-bind="visible: appearanceFinal() == 'fixture' && isMultiselect()">
+                      {% trans 'e.g. Use #,# as separator to select multiple values' %}
+                    </p>
                   </div>
                 </div>
                 {% endif %}
@@ -66,52 +72,76 @@
                         <option value="">{% trans "Text" %}</option>
                         <option value="daterange">{% trans "Date Range" %}</option>
                         <option value="barcode_scan">{% trans "Barcode" %}</option>
-                        <option value="fixture">{% trans "Lookup Table Selection" %}</option>
+                        {% if js_options.has_lookup_tables %}
+                        <option value="lookup_table_fixture">{% trans "Lookup Table Selection" %}</option>
+                        {% endif %}
+                        {% if js_options.has_mobile_ucr %}
+                          <option value="report_fixture">{% trans "Mobile UCR Selection" %}</option>
+                        {% endif %}
                         {% if js_options.has_geocoder_privs %}
                           <option value="address">{% trans "Geocoder Broadcast" %}</option>
                         {% endif %}
                       </select>
                     </div>
                   </div>
+                  <div class="form-group" data-bind="visible: appearanceFinal() == 'fixture'">
+                      <label class="control-label col-xs-12 col-sm-3">
+                          {% trans "Allow multiple selections" %}
+                      </label>
+                      <div class="col-xs-12 col-sm-9">
+                          <input type="checkbox" data-bind="checked: isMultiselect"/>
+                      </div>
+                  </div>
+                {% endif %}
+                {% if js_options.default_value_expression_enabled %}
+                  <div class="form-group">
+                    <label class="control-label col-xs-12 col-sm-3">
+                      {% trans "Allow searching for blank values" %}
+                    </label>
+                    <div class="col-xs-12 col-sm-9">
+                      <input type="checkbox" data-bind="checked: allowBlankValue"/>
+                    </div>
+                  </div>
                 {% endif %}
               </fieldset>
               {% if js_options.search_prompt_appearance_enabled %}
-              <fieldset data-bind="visible: appearance() == 'fixture'">
-                <legend>{% trans "Lookup Table Options" %}</legend>
+              <fieldset data-bind="visible: appearanceFinal() == 'fixture'">
+                <legend data-bind="text: dropdownLabels().optionsLabel"></legend>
                 <div class="form-group">
-                  <label class="control-label col-xs-12 col-sm-3">
-                    {% trans "Lookup Table" %}
+                  <label class="control-label col-xs-12 col-sm-3"
+                         data-bind="text: dropdownLabels().tableLabel">
                   </label>
                   <div class="col-xs-12 col-sm-9">
-                    <select class="form-control" data-bind="value: itemset.lookupTableNodeset">
-                      <option value="">{% trans "Select a lookup table..." %}</option>
-                      {% for item in  js_options.item_lists %}
-                        <option value="instance('{{ item.id }}'){{ item.path }}">{{ item.name }}</option>
-                      {% endfor %}
+                    <select class="form-control" data-bind="
+                      value: itemset.lookupTableNodeset,
+                      options: itemListOptions(),
+                      optionsText: 'name',
+                      optionsValue: 'value',
+                      optionsCaption: dropdownLabels().selectLabel">
                     </select>
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="control-label col-xs-12 col-sm-3">{% trans "Label Field" %}</label>
                   <div class="col-xs-12 col-sm-9">
-                    <input class="form-control" type="text" data-bind="value: itemset.label" placeholder="name"/>
+                    <input class="form-control" type="text" data-bind="value: itemset.label, attr:{placeholder:dropdownLabels().labelPlaceholder}"/>
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="control-label col-xs-12 col-sm-3">{% trans "Value Field" %}</label>
                   <div class="col-xs-12 col-sm-9">
-                    <input class="form-control" type="text" data-bind="value: itemset.value" placeholder="id"/>
+                    <input class="form-control" type="text" data-bind="value: itemset.value, attr:{placeholder:dropdownLabels().valuePlaceholder}"/>
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="control-label col-xs-12 col-sm-3">{% trans "Sort Field" %}</label>
                   <div class="col-xs-12 col-sm-9">
-                    <input class="form-control" type="text" data-bind="value: itemset.sort" placeholder="name"/>
+                    <input class="form-control" type="text" data-bind="value: itemset.sort, attr:{placeholder:dropdownLabels().labelPlaceholder}"/>
                   </div>
                 </div>
                 </fieldset>
                 {% if js_options.has_geocoder_privs %}
-                    <fieldset data-bind="visible: appearance() == 'fixture' || appearance() == ''">
+                    <fieldset data-bind="visible: appearanceFinal() == 'fixture' || appearance() == ''">
                       <legend>{% trans "Advanced Options" %}</legend>
                       <div class="form-group">
                         <label class="control-label col-xs-12 col-sm-3">
@@ -121,10 +151,18 @@
                           <input class="form-control" type="text" data-bind="value: receiverExpression"/>
                         </div>
                       </div>
+                      <div class="form-group">
+                        <label class="control-label col-xs-12 col-sm-3">
+                          {% trans "Hide in Search Screen" %}
+                        </label>
+                        <div class="col-xs-12 col-sm-9">
+                          <input type="checkbox" data-bind="checked: hidden" />
+                        </div>
+                      </div>
                   </fieldset>
                 {% endif %}
-                <fieldset data-bind="visible: appearance() == 'fixture'">
-                  <legend>{% trans "Advanced Lookup Table Options" %}</legend>
+                <fieldset data-bind="visible: appearanceFinal() == 'fixture'">
+                  <legend  data-bind="text: dropdownLabels().advancedLabel"></legend>
                   <div class="form-group">
                     <label class="control-label col-xs-12 col-sm-3">
                       {% trans "Instance URI" %}
@@ -135,18 +173,13 @@
                   </div>
                   <div class="form-group">
                     <label class="control-label col-xs-12 col-sm-3">
-                      {% trans "Instance ID" %}
-                    </label>
-                    <div class="col-xs-12 col-sm-9">
-                      <input class="form-control" type="text" data-bind="value: itemset.instance_id"/>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-3">
                       {% trans "Instance Nodeset" %}
                     </label>
                     <div class="col-xs-12 col-sm-9">
                       <input class="form-control" type="text" data-bind="value: itemset.nodeset"/>
+                      <p class="alert alert-warning" data-bind="visible: !itemset.nodesetValid()">
+                        {% trans "This refers to data other than selected report/lookup-table." %}
+                      </p>
                     </div>
                   </div>
               </fieldset>

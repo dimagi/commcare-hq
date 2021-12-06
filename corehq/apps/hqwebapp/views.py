@@ -1,4 +1,3 @@
-import functools
 import json
 import logging
 import os
@@ -8,7 +7,10 @@ import traceback
 import uuid
 from datetime import datetime
 from urllib.parse import urlparse
+from oauth2_provider.models import get_application_model
 
+import httpagentparser
+import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -17,6 +19,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import LogoutView
 from django.core import cache
 from django.core.mail.message import EmailMessage
+from django.forms import modelform_factory
 from django.http import (
     Http404,
     HttpResponse,
@@ -38,38 +41,20 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import LANGUAGE_SESSION_KEY
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
-from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import TemplateView
 from django.views.generic.base import View
-
-import httpagentparser
-import requests
-from couchdbkit import ResourceNotFound
 from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.views import LoginView
 
-from corehq.apps.hqwebapp.decorators import waf_allow
-from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
-from corehq.apps.users.event_handlers import handle_email_invite_message
-from corehq.util.email_event_utils import handle_email_sns_event
-from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
-from dimagi.utils.django.request import mutable_querydict
-from dimagi.utils.logging import notify_exception, notify_error
-from dimagi.utils.web import get_site_domain, get_url_base, json_response
-from soil import DownloadBase
-from soil import views as soil_views
-
-from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.decorators import (
     always_allow_project_access,
 )
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics import ab_tests
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -90,7 +75,9 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
-from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
+from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
@@ -98,30 +85,35 @@ from corehq.apps.hqwebapp.forms import (
     HQAuthenticationTokenForm,
     HQBackupTokenForm
 )
+from corehq.apps.hqwebapp.models import HQOauthApplication
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import (
     get_environment_friendly_name,
     update_session_language,
 )
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.users.landing_pages import (
-    get_cloudcare_urlname,
-    get_redirect_url,
-)
+from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
+from corehq.apps.users.event_handlers import handle_email_invite_message
+from corehq.apps.users.landing_pages import get_redirect_url
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import format_username
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    FormAccessorSQL,
-)
-from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
+from corehq.util.email_event_utils import handle_email_sns_event
+from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
+from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
+from dimagi.utils.django.request import mutable_querydict
+from dimagi.utils.logging import notify_exception, notify_error
+from dimagi.utils.web import get_url_base
 from no_exceptions.exceptions import Http403
+from soil import DownloadBase
+from soil import views as soil_views
 
 
 def is_deploy_in_progress():
@@ -201,52 +193,64 @@ def not_found(request, template_name='404.html', exception=None):
 @always_allow_project_access
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated:
-        if domain != None:
+        if domain is not None:
             url = reverse('domain_login', args=[domain])
         else:
             url = reverse('login')
-    elif domain and _two_factor_needed(domain, req):
+        return HttpResponseRedirect(url)
+
+    if domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
             template='two_factor/core/otp_required.html',
             status=403,
         )
-    else:
-        if domain:
-            domain = normalize_domain_name(domain)
-            domains = [Domain.get_by_name(domain)]
-        else:
-            domains = Domain.active_for_user(req.user)
 
-        if 0 == len(domains) and not req.user.is_superuser:
-            return redirect('registration_domain')
-        elif 1 == len(domains):
-            from corehq.apps.users.models import DomainMembershipError
-            if domains[0]:
-                domain = domains[0].name
-                couch_user = req.couch_user
-                try:
-                    role = couch_user.get_role(domain)
-                except DomainMembershipError:
-                    # commcare users without roles should always be denied access
-                    if couch_user.is_commcare_user():
-                        raise Http404()
-                    else:
-                        # web users without roles are redirected to the dashboard default
-                        # view since some domains allow web users to request access if they
-                        # don't have it
-                        url = reverse("dashboard_domain", args=[domain])
-                else:
-                    if role and role.default_landing_page:
-                        url = get_redirect_url(role.default_landing_page, domain)
-                    elif couch_user.is_commcare_user():
-                        url = reverse(get_cloudcare_urlname(domain), args=[domain])
-                    else:
-                        url = reverse("dashboard_domain", args=[domain])
-            else:
-                raise Http404()
+    if domain:
+        domain = normalize_domain_name(domain)
+        domains = [Domain.get_by_name(domain)]
+    else:
+        domains = Domain.active_for_user(req.user)
+
+    if not domains:
+        return redirect('registration_domain')
+
+    if len(domains) > 1:
+        return HttpResponseRedirect(settings.DOMAIN_SELECT_URL)
+
+    from corehq.apps.users.models import DomainMembershipError
+
+    domain = domains[0]
+    if not domain:
+        raise Http404()
+
+    domain_name = domain.name
+    couch_user = req.couch_user
+    try:
+        role = couch_user.get_role(domain_name)
+    except DomainMembershipError:
+        # commcare users without roles should always be denied access
+        if couch_user.is_commcare_user():
+            raise Http404()
         else:
-            url = settings.DOMAIN_SELECT_URL
+            # web users without roles are redirected to the dashboard default
+            # view since some domains allow web users to request access if they
+            # don't have it
+            url = reverse("dashboard_domain", args=[domain_name])
+    else:
+        url = None
+        if role and role.default_landing_page:
+            try:
+                url = get_redirect_url(role.default_landing_page, domain_name)
+            except ValueError:
+                pass  # landing page no longer accessible to domain
+
+        if url is None:
+            if couch_user.is_commcare_user():
+                url = reverse('formplayer_main', args=[domain_name])
+            else:
+                url = reverse("dashboard_domain", args=[domain_name])
+
     return HttpResponseRedirect(url)
 
 
@@ -259,18 +263,6 @@ def _two_factor_needed(domain_name, request):
             and not request.couch_user.two_factor_disabled
             and not request.user.is_verified()
         )
-
-
-def yui_crossdomain(req):
-    x_domain = """<?xml version="1.0"?>
-<!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
-<cross-domain-policy>
-    <allow-access-from domain="yui.yahooapis.com"/>
-    <allow-access-from domain="%s"/>
-    <site-control permitted-cross-domain-policies="master-only"/>
-</cross-domain-policy>""" % get_site_domain()
-    return HttpResponse(x_domain, content_type="application/xml")
-
 
 @login_required()
 def password_change(req):
@@ -462,7 +454,16 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
 def iframe_domain_login(req, domain):
     return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
         'current_page': {'page_name': _('Your session has expired')},
+        'restrict_domain_creation': True,
+        'is_session_expiration': True,
+        'ANALYTICS_IDS': {},
     })
+
+
+@xframe_options_sameorigin
+@location_safe
+def iframe_sso_login_pending(request):
+    return TemplateView.as_view(template_name='hqwebapp/iframe_sso_login_pending.html')(request)
 
 
 class HQLoginView(LoginView):
@@ -473,6 +474,15 @@ class HQLoginView(LoginView):
     ]
     extra_context = {}
 
+    def post(self, *args, **kwargs):
+        if settings.ENFORCE_SSO_LOGIN and self.steps.current == 'auth':
+            # catch anyone who by-passes the javascript and tries to log in directly
+            username = self.request.POST.get('auth-username')
+            idp = IdentityProvider.get_required_identity_provider(username) if username else None
+            if idp:
+                return HttpResponseRedirect(idp.get_login_url(username=username))
+        return super().post(*args, **kwargs)
+
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
@@ -482,6 +492,15 @@ class HQLoginView(LoginView):
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
+        context['enforce_sso_login'] = (
+            settings.ENFORCE_SSO_LOGIN
+            and self.steps.current == 'auth'
+        )
+        domain = context.get('domain')
+        if domain and not is_domain_using_sso(domain):
+            # ensure that domain login pages not associated with SSO do not
+            # enforce SSO on the login screen
+            context['enforce_sso_login'] = False
         return context
 
 
@@ -532,8 +551,11 @@ def login_new_window(request):
 @xframe_options_sameorigin
 @location_safe
 @login_required
-def iframe_domain_login_new_window(request):
-    return TemplateView.as_view(template_name='hqwebapp/iframe_close_window.html')(request)
+def domain_login_new_window(request):
+    template = ('hqwebapp/iframe_sso_login_success.html'
+                if is_request_using_sso(request)
+                else 'hqwebapp/iframe_close_window.html')
+    return TemplateView.as_view(template_name=template)(request)
 
 
 @login_and_domain_required
@@ -725,7 +747,6 @@ class BugReportView(View):
         debug_context = {
             'datetime': datetime.utcnow(),
             'self_started': '<unknown>',
-            'scale_backend': '<unknown>',
             'has_handoff_info': '<unknown>',
             'project_description': '<unknown>',
             'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL', ''), report['sentry_id'])
@@ -746,7 +767,6 @@ class BugReportView(View):
 
             debug_context.update({
                 'self_started': domain_object.internal.self_started,
-                'scale_backend': should_use_sql_backend(domain),
                 'has_handoff_info': bool(domain_object.internal.partner_contact),
                 'project_description': domain_object.project_description,
             })
@@ -770,7 +790,6 @@ class BugReportView(View):
             extra_debug_info = (
                 "datetime: {datetime}\n"
                 "Is self start: {self_started}\n"
-                "Is scale backend: {scale_backend}\n"
                 "Has Support Hand-off Info: {has_handoff_info}\n"
                 "Project description: {project_description}\n"
                 "Sentry Error: {sentry_error}\n"
@@ -987,7 +1006,8 @@ class CRUDPaginatedViewMixin(object):
                     'deleted_items': self.deleted_items_header,
                     'new_items': self.new_items_header,
                 },
-                'create_item_form': self.get_create_form_response(create_form) if create_form else None,
+                'create_item_form': (
+                    html.escape(self.get_create_form_response(create_form)) if create_form else None),
                 'create_item_form_class': self.create_item_form_class,
             }
         }
@@ -1171,55 +1191,22 @@ def quick_find(request):
     if not query:
         return HttpResponseBadRequest('GET param "q" must be provided')
 
-    def deal_with_doc(doc, domain, doc_info_fn):
-        is_member = domain and request.couch_user.is_member_of(domain, allow_mirroring=True)
-        if is_member or request.couch_user.is_superuser:
-            doc_info = doc_info_fn(doc)
-        else:
-            raise Http404()
-        if redirect and doc_info.link:
-            messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
-            return HttpResponseRedirect(doc_info.link)
-        elif redirect and request.couch_user.is_superuser:
-            return HttpResponseRedirect('{}?id={}'.format(reverse('raw_doc'), doc.get('_id')))
-        else:
-            return json_response(doc_info)
+    result = lookup_doc_id(query)
+    if not result:
+        raise Http404()
 
-    couch_dbs = [None] + settings.COUCH_SETTINGS_HELPER.extra_db_names
-    for db_name in couch_dbs:
-        try:
-            doc = get_db(db_name).get(query)
-        except ResourceNotFound:
-            pass
-        else:
-            domain = doc.get('domain') or doc.get('domains', [None])[0]
-            doc_info_fn = functools.partial(get_doc_info, domain_hint=domain)
-            return deal_with_doc(doc, domain, doc_info_fn)
-
-    for accessor in (FormAccessorSQL.get_form, CaseAccessorSQL.get_case):
-        try:
-            doc = accessor(query)
-        except (XFormNotFound, CaseNotFound):
-            pass
-        else:
-            domain = doc.domain
-            return deal_with_doc(doc, domain, get_object_info)
-
-    for django_model in (SQLLocation,):
-        try:
-            if hasattr(django_model, 'by_id') and callable(django_model.by_id):
-                doc = django_model.by_id(query)
-            else:
-                doc = django_model.objects.get(pk=query)
-        except django_model.DoesNotExist:
-            continue
-        else:
-            if doc is None:
-                continue
-            domain = doc.domain
-            return deal_with_doc(doc, domain, get_object_info)
-
-    raise Http404()
+    is_member = result.domain and request.couch_user.is_member_of(result.domain, allow_enterprise=True)
+    if is_member or request.couch_user.is_superuser:
+        doc_info = get_doc_info(result.doc)
+    else:
+        raise Http404()
+    if redirect and doc_info.link:
+        messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
+        return HttpResponseRedirect(doc_info.link)
+    elif redirect and request.couch_user.is_superuser:
+        return HttpResponseRedirect('{}?id={}'.format(reverse('raw_doc'), result.doc_id))
+    else:
+        return JsonResponse(doc_info.to_json())
 
 
 def osdd(request, template='osdd.xml'):
@@ -1348,3 +1335,89 @@ def log_email_event(request, secret):
     handle_email_sns_event(message)
 
     return HttpResponse()
+
+
+@method_decorator(require_superuser, name="dispatch")
+class OauthApplicationRegistration(BasePageView):
+    urlname = 'oauth_application_registration'
+    page_title = "Oauth Application Registration"
+    template_name = "hqwebapp/oauth_application_registration_form.html"
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def base_application_form(self):
+        return modelform_factory(
+            get_application_model(),
+            fields=(
+                "name",
+                "client_id",
+                "client_secret",
+                "client_type",
+                "authorization_grant_type",
+                "redirect_uris",
+            ),
+        )
+
+    @property
+    def hq_application_form(self):
+        return modelform_factory(
+            HQOauthApplication,
+            fields=(
+                "pkce_required",
+            ),
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if 'forms' not in kwargs:
+            context['forms'] = [self.base_application_form(), self.hq_application_form()]
+        return context
+
+    def post(self, request, *args, **kwargs):
+
+        base_application_form = self.base_application_form(data=self.request.POST)
+        hq_application_form = self.hq_application_form(data=self.request.POST)
+
+        if base_application_form.is_valid() and hq_application_form.is_valid():
+            base_application_form.instance.user = self.request.user
+            base_application = base_application_form.save()
+            HQOauthApplication.objects.create(
+                application=base_application,
+                **hq_application_form.cleaned_data,
+            )
+        else:
+            return self.render_to_response(self.get_context_data(
+                forms=[base_application_form, hq_application_form]
+            ))
+
+        return HttpResponseRedirect(reverse('oauth2_provider:detail', args=[str(base_application.id)]))
+
+
+@csrf_exempt
+@require_POST
+def check_sso_login_status(request):
+    """
+    Checks to see if a given username must sign in or sign up with SSO and
+    returns the url for the SSO's login endpoint.
+    :param request: HttpRequest
+    :return: HttpResponse (as JSON)
+    """
+    username = request.POST['username']
+    is_sso_required = False
+    sso_url = None
+    continue_text = None
+
+    idp = IdentityProvider.get_required_identity_provider(username)
+    if idp:
+        is_sso_required = True
+        sso_url = idp.get_login_url(username=username)
+        continue_text = _("Continue to {}").format(idp.name)
+
+    return JsonResponse({
+        'is_sso_required': is_sso_required,
+        'sso_url': sso_url,
+        'continue_text': continue_text,
+    })

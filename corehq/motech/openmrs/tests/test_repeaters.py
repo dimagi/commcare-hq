@@ -7,7 +7,7 @@ import uuid
 
 from django.test import SimpleTestCase, TestCase
 
-import mock
+from unittest import mock
 from requests import RequestException
 from testil import eq
 
@@ -16,7 +16,7 @@ from casexml.apps.case.models import CommCareCase
 import corehq.motech.openmrs.repeater_helpers
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
@@ -301,7 +301,7 @@ class AllowedToForwardTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.owner.delete(deleted_by=None)
+        cls.owner.delete(DOMAIN, deleted_by=None)
         super(AllowedToForwardTests, cls).tearDownClass()
 
     def test_update_from_openmrs(self):

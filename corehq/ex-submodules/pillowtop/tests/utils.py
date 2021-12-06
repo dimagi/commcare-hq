@@ -1,4 +1,3 @@
-from django.conf import settings
 from corehq.util.es.elasticsearch import TransportError
 
 from pillowtop.checkpoints.manager import PillowCheckpoint
@@ -40,10 +39,7 @@ def get_doc_count(es, index, refresh_first=True):
 
 def get_index_mapping(es, index, doc_type):
     try:
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            return es.indices.get_mapping(index).get(index, {}).get('mappings', {})
-        else:
-            return es.indices.get_mapping(index, doc_type).get(index, {}).get('mappings', {}).get(doc_type, {})
+        return es.indices.get_mapping(index, doc_type).get(index, {}).get('mappings', {}).get(doc_type, {})
     except TransportError:
         return {}
 

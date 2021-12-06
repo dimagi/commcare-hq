@@ -21,6 +21,8 @@ from dimagi.utils.couch import CriticalSection
 from corehq import toggles
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_USERCASE,
+    REGISTRY_WORKFLOW_LOAD_CASE,
+    REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_ID,
     USERCASE_PREFIX,
     USERCASE_TYPE,
@@ -33,9 +35,9 @@ from corehq.apps.app_manager.exceptions import (
     SuiteValidationError,
     XFormException,
 )
-from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.app_manager.tasks import create_usercases
 from corehq.apps.app_manager.xform import XForm, parse_xml
-from corehq.apps.app_manager.xpath import UserCaseXPath
+from corehq.apps.app_manager.xpath import UsercaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
@@ -53,9 +55,9 @@ CASE_XPATH_SUBSTRING_MATCHES = [
     "#host",
 ]
 
-USER_CASE_XPATH_SUBSTRING_MATCHES = [
+USERCASE_XPATH_SUBSTRING_MATCHES = [
     "#user",
-    UserCaseXPath().case(),
+    UsercaseXPath().case(),
 ]
 
 
@@ -111,9 +113,9 @@ def _check_xpath_for_matches(xpath, substring_matches=None, pattern_matches=None
 def xpath_references_case(xpath):
     # We want to determine here if the xpath references any cases other
     # than the user case. To determine if the xpath references the user
-    # case, see xpath_references_user_case()
+    # case, see xpath_references_usercase()
     # Assumes xpath has already been dot interpolated as needed.
-    for substring in USER_CASE_XPATH_SUBSTRING_MATCHES:
+    for substring in USERCASE_XPATH_SUBSTRING_MATCHES:
         xpath = xpath.replace(substring, '')
 
     return _check_xpath_for_matches(
@@ -122,11 +124,11 @@ def xpath_references_case(xpath):
     )
 
 
-def xpath_references_user_case(xpath):
+def xpath_references_usercase(xpath):
     # Assumes xpath has already been dot interpolated as needed.
     return _check_xpath_for_matches(
         xpath,
-        substring_matches=USER_CASE_XPATH_SUBSTRING_MATCHES,
+        substring_matches=USERCASE_XPATH_SUBSTRING_MATCHES,
     )
 
 
@@ -369,11 +371,33 @@ def enable_usercase(domain_name):
         if not domain_obj.usercase_enabled:
             domain_obj.usercase_enabled = True
             domain_obj.save()
-            create_user_cases.delay(domain_name)
+            create_usercases.delay(domain_name)
 
 
 def prefix_usercase_properties(properties):
     return {'{}{}'.format(USERCASE_PREFIX, prop) for prop in properties}
+
+
+def module_offers_registry_search(module):
+    return (
+        module_offers_search(module)
+        and module.get_app().supports_data_registry
+        and module.search_config.data_registry
+    )
+
+
+def module_loads_registry_case(module):
+    return (
+        module_offers_registry_search(module)
+        and module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_LOAD_CASE
+    )
+
+
+def module_uses_smart_links(module):
+    return (
+        module_offers_registry_search(module)
+        and module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_SMART_LINK
+    )
 
 
 def module_offers_search(module):
@@ -510,14 +534,14 @@ def purge_report_from_mobile_ucr(report_config):
 SortOnlyElement = namedtuple("SortOnlyElement", "field, sort_element, order")
 
 
-def get_sort_and_sort_only_columns(detail, sort_elements):
+def get_sort_and_sort_only_columns(detail_columns, sort_elements):
     """
     extracts out info about columns that are added as only sort fields and columns added as both
     sort and display fields
     """
     sort_elements = OrderedDict((s.field, (s, i + 1)) for i, s in enumerate(sort_elements))
     sort_columns = {}
-    for column in detail.get_columns():
+    for column in detail_columns:
         sort_element, order = sort_elements.pop(column.field, (None, None))
         if sort_element:
             sort_columns[column.field] = (sort_element, order)

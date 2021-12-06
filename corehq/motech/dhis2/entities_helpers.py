@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Any, Dict, List
 
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from requests import HTTPError
@@ -9,8 +10,9 @@ from schema import Schema, SchemaError
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.dhis2.const import XMLNS_DHIS2
-from corehq.motech.dhis2.events_helpers import get_event
+from corehq.motech.dhis2.events_helpers import get_event, _get_coordinate
 from corehq.motech.dhis2.exceptions import (
     BadTrackedEntityInstanceID,
     Dhis2Exception,
@@ -21,7 +23,10 @@ from corehq.motech.dhis2.schema import get_tracked_entity_schema
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.utils import pformat_json
-from corehq.motech.value_source import CaseTriggerInfo, get_value
+from corehq.motech.value_source import (
+    get_case_trigger_info_for_case,
+    get_value,
+)
 
 
 def send_dhis2_entities(requests, repeater, case_trigger_infos):
@@ -29,13 +34,8 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
     Send request to register / update tracked entities
     """
     errors = []
-    for info in case_trigger_infos:
-        assert isinstance(info, CaseTriggerInfo)
-        case_config = get_case_config_for_case_type(info.type, repeater.dhis2_entity_config)
-        if not case_config:
-            # This payload includes a case of a case type that does not correspond to a tracked entity type
-            continue
-
+    info_config_pairs = _get_info_config_pairs(repeater, case_trigger_infos)
+    for info, case_config in info_config_pairs:
         try:
             tracked_entity, etag = get_tracked_entity_and_etag(requests, info, case_config)
             if tracked_entity:
@@ -45,11 +45,41 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
 
+    # Create relationships after handling tracked entity instances, to
+    # ensure that both the instances in the relationship have been created.
+    for info, case_config in info_config_pairs:
+        if not case_config.relationships_to_export:
+            continue
+        try:
+            create_relationships(
+                requests,
+                info,
+                case_config,
+                repeater.dhis2_entity_config,
+            )
+        except (Dhis2Exception, HTTPError) as err:
+            errors.append(str(err))
+
     if errors:
         errors_str = f"Errors sending to {repeater}: " + pformat_json([str(e) for e in errors])
         requests.notify_error(errors_str)
         return RepeaterResponse(400, 'Bad Request', errors_str)
     return RepeaterResponse(200, "OK")
+
+
+def _get_info_config_pairs(repeater, case_trigger_infos):
+    info_config_pairs = []
+    for info in case_trigger_infos:
+        case_config = get_case_config_for_case_type(
+            info.type,
+            repeater.dhis2_entity_config,
+        )
+        if not case_config:
+            # This payload includes a case of a case type that does not
+            # correspond to a tracked entity type
+            continue
+        info_config_pairs.append((info, case_config))
+    return info_config_pairs
 
 
 def get_case_config_for_case_type(case_type, dhis2_entity_config):
@@ -79,9 +109,8 @@ def get_tracked_entity_and_etag(requests, case_trigger_info, case_config):
             return (None, None)
         if len(tracked_entities) > 1:
             raise MultipleInstancesFound(_(
-                f'Found {len(tracked_entities)} Tracked Entity instances for '
-                f'case trigger info {case_trigger_info}'
-            ))
+                '{n} tracked entity instances were found for case {case}'
+            ).format(n=len(tracked_entities), case=case_trigger_info))
         tei_id = tracked_entities[0]["trackedEntityInstance"]
     return get_tracked_entity_instance_and_etag_by_id(
         requests, tei_id, case_trigger_info
@@ -112,9 +141,9 @@ def get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_in
         return response.json(), response.headers["ETag"]
     else:
         raise BadTrackedEntityInstanceID(_(
-            f'The tracked entity instance ID "{tei_id}" of '
-            f'{case_trigger_info} was not found on its DHIS2 server.'
-        ))
+            'The tracked entity instance ID "{id}" of case {case} was not '
+            'found on its DHIS2 server.'
+        ).format(id=tei_id, case=case_trigger_info))
 
 
 def find_tracked_entity_instances(requests, case_trigger_info, case_config):
@@ -133,7 +162,10 @@ def update_tracked_entity_instance(
         )
         set_te_attr(tracked_entity["attributes"], attr_id, value)
         case_updates.update(case_update)
-    enrollments_with_new_events = get_enrollments(case_trigger_info, case_config)
+    enrollments_with_new_events = get_enrollments(
+        case_trigger_info,
+        case_config,
+    )
     if enrollments_with_new_events:
         tracked_entity["enrollments"] = update_enrollments(
             tracked_entity, enrollments_with_new_events
@@ -190,6 +222,7 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
         "orgUnit": get_value(case_config.org_unit_id, case_trigger_info),
         "attributes": [],
     }
+
     for attr_id, value_source_config in case_config.attributes.items():
         value, case_update = get_or_generate_value(
             requests, attr_id, value_source_config, case_trigger_info
@@ -205,15 +238,109 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     summaries = response.json()["response"]["importSummaries"]
     if len(summaries) != 1:
         raise Dhis2Exception(_(
-            f'{len(summaries)} tracked entity instances registered from '
-            f'{case_trigger_info}.'
-        ))
+            '{n} tracked entity instances were registered from case {case}.'
+        ).format(n=len(summaries), case=case_trigger_info))
     if case_config["tei_id"] and "case_property" in case_config["tei_id"]:
         case_property = case_config["tei_id"]["case_property"]
         tei_id = summaries[0]["reference"]
         case_updates[case_property] = tei_id
+        # Store `tei_id` in `case_trigger_info` because we might need it
+        # when we create relationships.
+        case_trigger_info.extra_fields[case_property] = tei_id
     if case_updates:
         save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
+
+
+def create_relationships(
+    requests,
+    subcase_trigger_info,
+    subcase_config,
+    dhis2_entity_config,
+):
+    """
+    Creates two relationships in DHIS2; one corresponding to a
+    subcase-to-supercase relationship, and the other corresponding to a
+    supercase-to-subcase relationship.
+    """
+    subcase_tei_id = get_value(subcase_config.tei_id, subcase_trigger_info)
+    if not subcase_tei_id:
+        raise Dhis2Exception(_(
+            'Unable to create DHIS2 relationship: The case {case} is not '
+            'registered in DHIS2.'
+        ).format(case=subcase_trigger_info))
+
+    for rel_config in subcase_config.relationships_to_export:
+        supercase = get_supercase(subcase_trigger_info, rel_config)
+        supercase_config = get_case_config_for_case_type(
+            supercase.type,
+            dhis2_entity_config,
+        )
+        supercase_info = get_case_trigger_info_for_case(
+            supercase,
+            [supercase_config.tei_id],
+        )
+        supercase_tei_id = get_value(supercase_config.tei_id, supercase_info)
+        if not supercase_tei_id:
+            # The problem could be that the relationship is configured
+            # in the CaseConfig for the subcase's case type, but there
+            # is no CaseConfig for the supercase's case type.
+            # Alternatively, registering the supercase in DHIS2 failed.
+            raise ConfigurationError(_(
+                'Unable to create DHIS2 relationship: The case {case} is not '
+                'registered in DHIS2.'
+            ).format(case=supercase_info))
+        if rel_config.supercase_to_subcase_dhis2_id:
+            create_relationship(
+                requests,
+                rel_config.supercase_to_subcase_dhis2_id,
+                supercase_tei_id,
+                subcase_tei_id,
+            )
+        if rel_config.subcase_to_supercase_dhis2_id:
+            create_relationship(
+                requests,
+                rel_config.subcase_to_supercase_dhis2_id,
+                subcase_tei_id,
+                supercase_tei_id,
+            )
+
+
+def get_supercase(case_trigger_info, relationship_config):
+    case_accessor = CaseAccessors(case_trigger_info.domain)
+    case = case_accessor.get_case(case_trigger_info.case_id)
+    for index in case.live_indices:
+        index_matches_config = (
+            index.identifier == relationship_config.identifier
+            and index.referenced_type == relationship_config.referenced_type
+            and index.relationship == relationship_config.relationship
+        )
+        if index_matches_config:
+            return case_accessor.get_case(index.referenced_id)
+
+
+def create_relationship(requests, rel_type_id, from_tei_id, to_tei_id):
+    relationship = {
+        'relationshipType': rel_type_id,
+        'from': {
+            'trackedEntityInstance': {
+                'trackedEntityInstance': from_tei_id
+            }
+        },
+        'to': {
+            'trackedEntityInstance': {
+                'trackedEntityInstance': to_tei_id
+            }
+        }
+    }
+    endpoint = '/api/relationships/'
+    response = requests.post(endpoint, json=relationship, raise_for_status=True)
+    num_imported = response.json()['response']['imported']
+    if num_imported != 1:
+        from corehq.motech.views import MotechLogListView
+        raise Dhis2Exception(_(
+            'DHIS2 created {n} relationships. Errors from DHIS2 can be found '
+            'in Remote API Logs: {url}'
+        ).format(n=num_imported, url=reverse(MotechLogListView.urlname)))
 
 
 def get_or_generate_value(requests, attr_id, value_source_config, case_trigger_info):
@@ -287,6 +414,8 @@ def get_enrollments(case_trigger_info, case_config):
             "status": program["status"],
             "events": program["events"],
         }
+        if program.get("geometry"):
+            enrollment["geometry"] = program["geometry"]
         if program.get("enrollmentDate"):
             enrollment["enrollmentDate"] = program["enrollmentDate"]
         if program.get("incidentDate"):
@@ -306,6 +435,7 @@ def get_programs_by_id(case_trigger_info, case_config):
             program["events"].append(event)
             program["orgUnit"] = get_value(form_config.org_unit_id, case_trigger_info)
             program["status"] = get_value(form_config.program_status, case_trigger_info)
+            program["geometry"] = get_geo_json(form_config, case_trigger_info)
             program.update(get_program_dates(form_config, case_trigger_info))
     return programs_by_id
 
@@ -374,3 +504,23 @@ def validate_tracked_entity(tracked_entity):
         Schema(get_tracked_entity_schema()).validate(tracked_entity)
     except SchemaError as err:
         raise ConfigurationError from err
+
+
+def get_tracked_entity_type(requests, entity_type_id):
+    endpoint = f"/api/trackedEntityTypes/{entity_type_id}"
+    response = requests.get(endpoint, raise_for_status=True)
+    return response.json()
+
+
+def get_geo_json(form_config, case_trigger_info):
+    coordinate_dict = _get_coordinate(form_config, case_trigger_info)
+    if coordinate_dict.get('coordinate'):
+        point = coordinate_dict['coordinate']
+        return {
+            'type': 'Point',
+            'coordinates': [
+                point['latitude'],
+                point['longitude']
+            ]
+        }
+    return {}

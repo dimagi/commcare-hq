@@ -7,7 +7,7 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
-import mock
+from unittest import mock
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow
@@ -24,6 +24,7 @@ from corehq.form_processor.utils.xform import (
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import reset_es_index
 from corehq.util.es import elasticsearch
@@ -37,7 +38,6 @@ class ExitEarlyException(Exception):
 @es_test
 class TestStaleDataInESSQL(TestCase):
 
-    use_sql_backend = True
     project_name = 'sql-project'
     case_type = 'patient'
     form_xmlns = None
@@ -88,9 +88,6 @@ class TestStaleDataInESSQL(TestCase):
                 )
 
         form, cases = self._submit_form(self.project.name, new_cases=4)
-        if not self.use_sql_backend:
-            # the couch view is sorted by case_id
-            cases = list(sorted(cases, key=lambda c: c.case_id))
 
         # process first 2 then raise exception
         self._assert_not_in_sync(call(2, expect_exception=ExitEarlyException), rows=[
@@ -199,7 +196,7 @@ class TestStaleDataInESSQL(TestCase):
     def _stale_data_in_es(self, *args, **kwargs):
         f = StringIO()
         expect_exception = kwargs.pop('expect_exception', None)
-        with mock.patch('sys.stdout', f):
+        with mock.patch('sys.stdout', f), mock.patch('sys.stderr', StringIO()):
             if expect_exception:
                 with self.assertRaises(expect_exception):
                     call_command('stale_data_in_es', *args, stdout=f, **kwargs)
@@ -291,12 +288,12 @@ class TestStaleDataInESSQL(TestCase):
     @classmethod
     def setUpClass(cls):
         delete_all_cases()
-        cls.project = Domain.get_or_create_with_name(
-            cls.project_name, is_active=True, use_sql_backend=cls.use_sql_backend)
+        cls.project = Domain.get_or_create_with_name(cls.project_name, is_active=True)
         cls.project.save()
         cls.elasticsearch = get_es_new()
         reset_es_index(XFORM_INDEX_INFO)
         reset_es_index(CASE_INDEX_INFO)
+        reset_es_index(CASE_SEARCH_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):
@@ -311,12 +308,3 @@ class TestStaleDataInESSQL(TestCase):
         delete_all_cases()
         self._delete_forms_from_es(self.forms_to_delete_from_es)
         self._delete_cases_from_es(self.cases_to_delete_from_es)
-
-
-@es_test
-class TestStaleDataInESCouch(TestStaleDataInESSQL):
-
-    use_sql_backend = False
-    project_name = 'couch-project'
-    case_type = 'COUCH_TYPE_NOT_SUPPORTED'
-    form_xmlns = 'COUCH_XMLNS_NOT_SUPPORTED'

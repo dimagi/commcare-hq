@@ -1,5 +1,5 @@
 import pytz
-from mock import patch
+from unittest.mock import patch
 
 from django.test import SimpleTestCase, override_settings
 
@@ -28,9 +28,7 @@ class GetTimezoneForUserTest(SimpleTestCase):
         domain_membership_mock.return_value = domain_membership
 
         # if not override_global_tz
-        self.assertEqual(get_timezone_for_user(couch_user, "test"), domain_membership_timezone)
-        with override_settings(SERVER_ENVIRONMENT='icds'):
-            self.assertEqual(get_timezone_for_user(couch_user, "test"), DOMAIN_TIMEZONE)
+        self.assertEqual(get_timezone_for_user(couch_user, "test"), DOMAIN_TIMEZONE)
 
         # if override_global_tz
         domain_membership.override_global_tz = True

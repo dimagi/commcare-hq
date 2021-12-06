@@ -11,10 +11,11 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import render
-from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
+from django.utils.html import conditional_escape
 
 from celery.utils.log import get_task_logger
 from memoized import memoized
@@ -45,6 +46,23 @@ from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
 from corehq import toggles
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
+
+
+def _sanitize_rows(rows):
+    return [_sanitize_row(row) for row in rows]
+
+
+def _sanitize_row(row):
+    return [_sanitize_col(col) for col in row]
+
+
+def _sanitize_col(col):
+    if isinstance(col, str):
+        return conditional_escape(col)
+
+    # HACK: dictionaries make it here. The dictionaries I've seen have an 'html' key
+    # which I expect to be sanitized already, but there is no guaranteee
+    return col
 
 
 class GenericReportView(object):
@@ -468,7 +486,6 @@ class GenericReportView(object):
             show_time_notice=self.show_time_notice,
             domain=self.domain,
             layout_flush_content=self.flush_layout,
-            hasAccessToIcdsDashboardFeatures=self.icds_pre_release_features()
         )
 
     @property
@@ -492,9 +509,6 @@ class GenericReportView(object):
             'urlRoot': self.url_root,
             'asyncUrl': async_url
         }
-
-    def icds_pre_release_features(self):
-        return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username)
 
     def update_filter_context(self):
         """
@@ -708,6 +722,15 @@ class GenericReportView(object):
         return absolute_reverse(cls.dispatcher.name(), args=url_args + [cls.slug])
 
     @classmethod
+    def allow_access(cls, request):
+        """
+        Override to add additional constraints on report access on top of
+        what's provided by the dispatcher. For feature flags, see the toggles
+        attribute
+        """
+        return True
+
+    @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return True
 
@@ -897,7 +920,7 @@ class GenericTabularReport(GenericReportView):
             self.pagination.start (skip)
             self.pagination.count (limit)
         """
-        rows = list(self.rows)
+        rows = _sanitize_rows(self.rows)
         total_records = self.total_records
         if not isinstance(total_records, int):
             raise ValueError("Property 'total_records' should return an int.")
@@ -1095,10 +1118,11 @@ class GenericTabularReport(GenericReportView):
         return context
 
     def table_cell(self, value, html=None, zerostyle=False):
-        styled_value = '<span class="text-muted">0</span>' if zerostyle and value == 0 else value
+        empty_indicator = mark_safe('<span class="text-muted">0</span>')  # nosec: no user input
+        styled_value = empty_indicator if zerostyle and value == 0 else value
         return dict(
             sort_key=value,
-            html="%s" % styled_value if html is None else html
+            html=styled_value if html is None else html
         )
 
 

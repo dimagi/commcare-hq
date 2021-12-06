@@ -8,6 +8,8 @@ from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
+from django.utils.functional import lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
@@ -76,6 +78,9 @@ from corehq.apps.users.permissions import (
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
+
+
+mark_safe_lazy = lazy(mark_safe, str)  # TODO: replace with library function
 
 
 class ExportListHelper(object):
@@ -219,7 +224,10 @@ class ExportListHelper(object):
             'formname': formname,
             'deleteUrl': reverse(DeleteNewCustomExportView.urlname,
                                  args=(self.domain, export.type, export.get_id)),
+            'domain': self.domain,
+            'type': export.type,
             'downloadUrl': reverse(self._download_view(export).urlname, args=(self.domain, export.get_id)),
+            'showDetDownload': export.show_det_config_download,
             'detSchemaUrl': reverse(DownloadDETSchemaView.urlname,
                                     args=(self.domain, export.get_id)),
             'editUrl': reverse(self._edit_view(export).urlname, args=(self.domain, export.get_id)),
@@ -478,10 +486,11 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
 class BaseExportListView(BaseProjectDataView):
     template_name = 'export/export_list.html'
-    lead_text = ugettext_lazy('''
+    lead_text = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+        '''
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
         for use in third-party data analysis tools.
-    ''')
+    '''))
     is_odata = False
 
     @method_decorator(login_and_domain_required)
@@ -510,7 +519,7 @@ class BaseExportListView(BaseProjectDataView):
             "model_type": self.form_or_case,
             "static_model_type": True,
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
-            'lead_text': mark_safe(self.lead_text),
+            'lead_text': self.lead_text,
             "export_filter_form": (
                 DashboardFeedFilterForm(
                     self.domain_object,
@@ -1007,7 +1016,7 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
 
     @property
     def lead_text(self):
-        return _("""
+        return format_html(_("""
         Use OData feeds to integrate your CommCare data with Power BI or Tableau.
         <a href="https://confluence.dimagi.com/pages/viewpage.action?pageId=63013347"
            id="js-odata-track-learn-more"
@@ -1016,10 +1025,9 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
         </a><br />
         This feature allows {odata_feed_limit} feed configurations. Need more?
         Please write to us at <a href="mailto:{sales_email}">{sales_email}</a>.
-        """).format(
+        """),
             odata_feed_limit=self.odata_feed_limit,
-            sales_email=settings.SALES_EMAIL,
-        )
+            sales_email=settings.SALES_EMAIL,)
 
     @property
     def page_context(self):

@@ -4,6 +4,8 @@ import mimetypes
 import os
 import datetime
 import re
+from datetime import timedelta
+
 from django.conf import settings
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import MiddlewareNotUsed
@@ -11,11 +13,14 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.views import LogoutView
 from django.utils.deprecation import MiddlewareMixin
+from sentry_sdk import add_breadcrumb
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
+from corehq.util.timer import DURATION_REPORTING_THRESHOLD
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
@@ -97,16 +102,39 @@ class TimingMiddleware(object):
 
 
 class LogLongRequestMiddleware(MiddlewareMixin):
+    """Report requests that violate the timing threshold configured for the view.
+
+    Use `corehq.util.timer.set_request_duration_reporting_threshold` to override the
+    default threshold for specific views.
+    """
+    DEFAULT_THRESHOLD = timedelta(minutes=10).total_seconds()  # 10 minutes
 
     def process_request(self, request):
         request._profile_starttime = datetime.datetime.utcnow()
 
+    def process_view(self, request, view_fn, view_args, view_kwargs):
+        view_func = get_view_func(view_fn, view_kwargs)
+        reporting_threshold = getattr(view_func, DURATION_REPORTING_THRESHOLD, self.DEFAULT_THRESHOLD)
+        setattr(request, DURATION_REPORTING_THRESHOLD, reporting_threshold)
+
     def process_response(self, request, response):
+        request_timer = getattr(response, 'request_timer', None)
+        if request_timer:
+            for sub in request_timer.to_list(exclude_root=True):
+                add_breadcrumb(
+                    category="timing",
+                    message=f"{sub.name}: {sub.duration:0.3f}",
+                    level="info",
+                )
+
         if hasattr(request, '_profile_starttime'):
             duration = datetime.datetime.utcnow() - request._profile_starttime
-            if duration > datetime.timedelta(minutes=10):
-                notify_exception(request, "Request took a very long time.", details={
+            threshold = getattr(request, DURATION_REPORTING_THRESHOLD, self.DEFAULT_THRESHOLD)
+            if duration.total_seconds() > threshold:
+                notify_exception(request, "Request timing above threshold", details={
+                    'threshold': threshold,
                     'duration': duration.total_seconds(),
+                    'status_code': response.status_code
                 })
         return response
 
@@ -139,22 +167,23 @@ class TimeoutMiddleware(MiddlewareMixin):
 
     @classmethod
     def _get_relevant_domains(cls, couch_user, domain=None):
-        domains = []
+        domains = set()
 
         # Include current domain, which user may not be a member of
         if domain:
-            domains.append(domain)
+            domains.add(domain)
 
         if not couch_user:
             return domains
 
-        domains.extend(couch_user.get_domains())
+        domains = domains | set(couch_user.get_domains())
 
-        from corehq.apps.users.models import DomainPermissionsMirror
+        from corehq.apps.enterprise.models import EnterprisePermissions
+        subdomains = set()
         for domain in domains:
-            domains.extend(DomainPermissionsMirror.mirror_domains(domain))
+            subdomains = subdomains | set(EnterprisePermissions.get_domains(domain))
 
-        return domains
+        return domains | subdomains
 
     @staticmethod
     def _session_expired(timeout, activity):
@@ -284,3 +313,26 @@ class SelectiveSessionMiddleware(SessionMiddleware):
         if self._bypass_sessions(request):
             request.session.save = lambda *x: None
             request._bypass_sessions = True
+
+
+def get_view_func(view_fn, view_kwargs):
+    """Given a view_fn from the `process_view` middleware function return the actual
+    function or class that represents the view.
+
+    :returns: the view function or class or None if not able to determine the view class
+    """
+    if getattr(view_fn, 'is_hq_report', False):  # HQ report
+        dispatcher = view_fn.view_class
+        domain = view_kwargs.get("domain", None)
+        slug = view_kwargs.get("report_slug", None)
+        try:
+            class_name = dispatcher.get_report_class_name(domain, slug)
+            return to_function(class_name) if class_name else None
+        except:
+            # custom report dispatchers may do things differently
+            return
+
+    if hasattr(view_fn, "view_class"):  # Django view
+        return view_fn.view_class
+
+    return view_fn

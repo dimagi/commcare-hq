@@ -6,8 +6,9 @@ from django.utils.translation import gettext_lazy as _
 
 import attr
 import requests
-from oauthlib.oauth2 import LegacyApplicationClient
+from oauthlib.oauth2 import LegacyApplicationClient, BackendApplicationClient
 from requests import Session
+from requests.adapters import HTTPAdapter
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import RequestException
 from requests_oauthlib import OAuth1, OAuth2Session
@@ -30,36 +31,6 @@ class OAuth1ApiEndpoints:
     authorization_endpoint: str
     # Endpoint to fetch access token. e.g. '/oauth/access_token'
     access_token_endpoint: str
-
-
-@attr.s(auto_attribs=True, frozen=True, kw_only=True)
-class OAuth2ApiSettings:
-    """
-    Settings and endpoints for an OAuth 2.0 API
-    """
-    # Pass credentials in Basic Auth header when requesting a token?
-    # Otherwise they are passed in the request body.
-    pass_credentials_in_header: bool
-    # Endpoint to fetch bearer token. e.g. '/uaa/oauth/token' (DHIS2)
-    token_endpoint: str
-    # Endpoint to refresh bearer token. e.g. '/uaa/oauth/token'
-    refresh_endpoint: str
-
-
-# https://docs.dhis2.org/master/en/developer/html/webapi_authentication.html
-dhis2_auth_settings = OAuth2ApiSettings(
-    token_endpoint="/uaa/oauth/token",
-    refresh_endpoint="/uaa/oauth/token",
-    pass_credentials_in_header=True,
-)
-
-
-# https://docs.ipswitch.com/MOVEit/Automation2018/API/REST-API/index.html
-moveit_automation_settings = OAuth2ApiSettings(
-    token_endpoint="/api/v1/token",
-    refresh_endpoint="/api/v1/token",
-    pass_credentials_in_header=False,
-)
 
 
 oauth1_api_endpoints = tuple(
@@ -113,6 +84,31 @@ class HTTPBearerAuth(AuthBase):
         return r
 
 
+class PublicOnlyHttpAdapter(HTTPAdapter):
+    def __init__(self, domain_name, src):
+        self.domain_name = domain_name
+        self.src = src
+        super().__init__()
+
+    def get_connection(self, url, proxies=None):
+        from corehq.motech.requests import validate_user_input_url_for_repeaters
+        validate_user_input_url_for_repeaters(url, domain=self.domain_name, src=self.src)
+        return super().get_connection(url, proxies=proxies)
+
+
+def make_session_public_only(session, domain_name, src):
+    """
+    Modifies `session` to validate urls before sending and accept only hosts resolving to public IPs
+
+    Once this function has been called on a session, session.request, etc., will
+    raise PossibleSSRFAttempt whenever called with a url host that resolves to a non-public IP.
+    """
+    # the following two lines entirely replace the default adapters with our custom ones
+    # by redefining the adapter to use for the two default prefixes
+    session.mount('http://', PublicOnlyHttpAdapter(domain_name=domain_name, src=src))
+    session.mount('https://', PublicOnlyHttpAdapter(domain_name=domain_name, src=src))
+
+
 class AuthManager:
 
     def get_auth(self) -> Optional[AuthBase]:
@@ -122,12 +118,13 @@ class AuthManager:
         """
         return None
 
-    def get_session(self) -> Session:
+    def get_session(self, domain_name: str) -> Session:
         """
         Returns an instance of requests.Session. Manages authentication
         tokens, if applicable.
         """
         session = Session()
+        make_session_public_only(session, domain_name, src='sent_attempt')
         session.auth = self.get_auth()
         return session
 
@@ -201,28 +198,25 @@ class BearerAuthManager(AuthManager):
         return HTTPBearerAuth(self.username, self.password)
 
 
-class OAuth2PasswordGrantManager(AuthManager):
+class OAuth2ClientGrantManager(AuthManager):
     """
-    Follows the OAuth 2.0 resource owner password credentials (aka
-    password) grant type flow.
+    Follows the OAuth 2.0 client credentials grant type flow
     """
 
     def __init__(
         self,
         base_url: str,
-        username: str,
-        password: str,
         client_id: str,
         client_secret: str,
-        api_settings: OAuth2ApiSettings,
+        token_url: str,
+        refresh_url: str,
         connection_settings: 'ConnectionSettings',
     ):
         self.base_url = base_url
-        self.username = username
-        self.password = password
         self.client_id = client_id
         self.client_secret = client_secret
-        self.api_settings = api_settings
+        self.token_url = token_url
+        self.refresh_url = refresh_url
         self.connection_settings = connection_settings
 
     @property
@@ -238,7 +232,77 @@ class OAuth2PasswordGrantManager(AuthManager):
         self.connection_settings.last_token = value
         self.connection_settings.save()
 
-    def get_session(self):
+    def get_session(self, domain_name: str) -> Session:
+        def set_last_token(token):
+            # Used by OAuth2Session
+            self.last_token = token
+
+        if not self.last_token:
+            client = BackendApplicationClient(client_id=self.client_id)
+            session = OAuth2Session(client=client)
+            self.last_token = session.fetch_token(
+                token_url=self.token_url,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+            )
+
+        refresh_kwargs = {
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+        }
+        session = OAuth2Session(
+            self.client_id,
+            token=self.last_token,
+            auto_refresh_url=self.refresh_url,
+            auto_refresh_kwargs=refresh_kwargs,
+            token_updater=set_last_token
+        )
+        make_session_public_only(session, domain_name, src='oauth_sent_attempt')
+        return session
+
+
+class OAuth2PasswordGrantManager(AuthManager):
+    """
+    Follows the OAuth 2.0 resource owner password credentials (aka
+    password) grant type flow.
+    """
+
+    def __init__(
+        self,
+        base_url: str,
+        username: str,
+        password: str,
+        client_id: str,
+        client_secret: str,
+        token_url: str,
+        refresh_url: str,
+        pass_credentials_in_header: bool,
+        connection_settings: 'ConnectionSettings',
+    ):
+        self.base_url = base_url
+        self.username = username
+        self.password = password
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.token_url = token_url
+        self.refresh_url = refresh_url
+        self.pass_credentials_in_header = pass_credentials_in_header
+        self.connection_settings = connection_settings
+
+    @property
+    def last_token(self) -> Optional[dict]:
+        return self.connection_settings.last_token
+
+    @last_token.setter
+    def last_token(self, value: dict):
+        """
+        Save ``ConnectionSettings.last_token`` whenever it is set or
+        refreshed so that it can be reused in the future.
+        """
+        self.connection_settings.last_token = value
+        self.connection_settings.save()
+
+    def get_session(self, domain_name: str) -> Session:
 
         def set_last_token(token):
             # Used by OAuth2Session
@@ -247,20 +311,17 @@ class OAuth2PasswordGrantManager(AuthManager):
         if not self.last_token:
             client = LegacyApplicationClient(client_id=self.client_id)
             session = OAuth2Session(client=client)
-            token_url = get_endpoint_url(
-                self.base_url, self.api_settings.token_endpoint,
-            )
-            if self.api_settings.pass_credentials_in_header:
+            if self.pass_credentials_in_header:
                 auth = HTTPBasicAuth(self.client_id, self.client_secret)
                 self.last_token = session.fetch_token(
-                    token_url=token_url,
+                    token_url=self.token_url,
                     username=self.username,
                     password=self.password,
                     auth=auth,
                 )
             else:
                 self.last_token = session.fetch_token(
-                    token_url=token_url,
+                    token_url=self.token_url,
                     username=self.username,
                     password=self.password,
                     client_id=self.client_id,
@@ -268,17 +329,16 @@ class OAuth2PasswordGrantManager(AuthManager):
                 )
 
         # Return session that refreshes token automatically
-        refresh_url = get_endpoint_url(
-            self.base_url, self.api_settings.refresh_endpoint,
-        )
         refresh_kwargs = {
             'client_id': self.client_id,
             'client_secret': self.client_secret,
         }
-        return OAuth2Session(
+        session = OAuth2Session(
             self.client_id,
             token=self.last_token,
-            auto_refresh_url=refresh_url,
+            auto_refresh_url=self.refresh_url,
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )
+        make_session_public_only(session, domain_name, src='oauth_sent_attempt')
+        return session

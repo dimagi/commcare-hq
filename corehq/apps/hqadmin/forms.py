@@ -20,51 +20,6 @@ class EmailForm(forms.Form):
     email_body_text = forms.CharField()
     real_email = forms.BooleanField(required=False)
 
-
-class AuthenticateAsForm(forms.Form):
-    username = forms.CharField(max_length=255)
-    domain = forms.CharField(label="Domain", max_length=255, required=False)
-
-    @property
-    @memoized
-    def full_username(self):
-        domain = self.cleaned_data['domain']
-        if domain:
-            return "{}@{}.commcarehq.org".format(self.cleaned_data['username'], domain)
-        else:
-            return self.cleaned_data['username']
-
-    def clean(self):
-        user = CommCareUser.get_by_username(username=self.full_username)
-        if user is None:
-            raise forms.ValidationError("Cannot find user '{}'".format(self.full_username))
-        # Allowed only login as mobile user
-        # web user would need stronger checks
-        # https://github.com/dimagi/commcare-hq/pull/6940#issuecomment-108765585
-        if not user.is_commcare_user():
-            raise forms.ValidationError("User '{}' is not a CommCareUser".format(self.full_username))
-        return self.cleaned_data
-
-    def __init__(self, *args, **kwargs):
-        super(AuthenticateAsForm, self).__init__(*args, **kwargs)
-
-        self.helper = FormHelper()
-        self.helper.form_class = "form-horizontal"
-        self.helper.form_id = 'auth-as-form'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.layout = crispy.Layout(
-            'username',
-            'domain',
-            FormActions(
-                crispy.Submit(
-                    'authenticate_as',
-                    'Authenticate As'
-                )
-            )
-        )
-
-
 class ReprocessMessagingCaseUpdatesForm(forms.Form):
     case_ids = forms.CharField(widget=forms.Textarea)
 

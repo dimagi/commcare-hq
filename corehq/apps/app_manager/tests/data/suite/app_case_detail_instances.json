@@ -510,8 +510,10 @@
         "default_properties": [
           
         ],
-        "command_label": {
-          "en": "Search All Cases"
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          }
         },
         "search_button_display_condition": "",
         "properties": [
@@ -1234,8 +1236,10 @@
         "default_properties": [
           
         ],
-        "command_label": {
-          "en": "Search All Cases"
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          }
         },
         "search_button_display_condition": "",
         "properties": [
@@ -1554,9 +1558,6 @@
   },
   "build_comment": null,
   "short_odk_media_url": "http:\/\/bit.ly\/2sOUBmi",
-  "linked_whitelist": [
-    
-  ],
   "multimedia_map": {
     
   },

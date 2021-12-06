@@ -2,7 +2,7 @@ import datetime
 
 from django.db import transaction
 from django.urls import reverse
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ungettext
 
@@ -18,7 +18,13 @@ from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
 )
-from corehq.apps.users.models import CommCareUser, UserRole
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.role_utils import (
+    get_custom_roles_for_domain,
+    archive_custom_roles_for_domain,
+    unarchive_roles_for_domain,
+    reset_initial_roles_for_domain,
+)
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
@@ -237,24 +243,12 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         - Set user roles using custom roles to Read Only.
         - Reset initial roles to standard permissions.
         """
-        custom_roles = [r.get_id for r in UserRole.get_custom_roles_by_domain(domain.name)]
+        custom_roles = get_custom_roles_for_domain(domain.name)
         from corehq.apps.accounting.models import SoftwarePlanEdition
         if not custom_roles or (new_plan_version.plan.edition == SoftwarePlanEdition.PAUSED):
             return True
-        # temporarily disable this part of the downgrade until we
-        # have a better user experience for notifying the downgraded user
-        # read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
-        # web_users = WebUser.by_domain(self.domain.name)
-        # for web_user in web_users:
-        #     if web_user.get_domain_membership(self.domain.name).role_id in custom_roles:
-        #         web_user.set_role(self.domain.name, read_only_role.get_qualified_id())
-        #         web_user.save()
-        # for cc_user in CommCareUser.by_domain(self.domain.name):
-        #     if cc_user.get_domain_membership(self.domain.name).role_id in custom_roles:
-        #         cc_user.set_role(self.domain.name, 'none')
-        #         cc_user.save()
-        UserRole.archive_custom_roles_for_domain(domain.name)
-        UserRole.reset_initial_roles_for_domain(domain.name)
+        archive_custom_roles_for_domain(domain.name)
+        reset_initial_roles_for_domain(domain.name)
         return True
 
     @staticmethod
@@ -369,7 +363,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         Perform Role Based Access Upgrade
         - Un-archive custom roles.
         """
-        UserRole.unarchive_roles_for_domain(domain.name)
+        unarchive_roles_for_domain(domain.name)
         return True
 
     @staticmethod
@@ -478,10 +472,13 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             ) % {
                 'num_apps': num_apps,
             },
-            [mark_safe('<a href="%(url)s">%(title)s</a>') % {
-                'title': app['name'],
-                'url': reverse('view_app', args=[domain.name, app['_id']])
-            } for app in cloudcare_enabled_apps],
+            [
+                format_html(
+                    '<a href="{}">{}</a>',
+                    reverse('view_app', args=[domain.name, app['_id']]),
+                    app['name']
+                ) for app in cloudcare_enabled_apps
+            ],
         )
 
     @staticmethod
@@ -655,7 +652,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Alert the user if there are currently custom roles set up for the domain.
         """
-        custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(domain.name)]
+        custom_roles = [role.name for role in get_custom_roles_for_domain(domain.name)]
         num_roles = len(custom_roles)
         from corehq.apps.accounting.models import SoftwarePlanEdition
         if new_plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
@@ -784,8 +781,11 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             ) % {
                 'num_apps': len(apps),
             },
-            [mark_safe('<a href="%(url)s">%(title)s</a>') % {
-                'title': app['name'],
-                'url': reverse('view_app', args=[project.name, app['_id']])
-            } for app in apps],
+            [
+                format_html(
+                    '<a href="{}">{}</a>',
+                    reverse('view_app', args=[project.name, app['_id']]),
+                    app['name']
+                ) for app in apps
+            ],
         )

@@ -4,7 +4,7 @@ from xml.etree import cElementTree as ElementTree
 
 from django.test import SimpleTestCase, TestCase
 
-import mock
+from unittest import mock
 
 from casexml.apps.phone.tests.utils import (
     call_fixture_generator,
@@ -53,7 +53,7 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_report_config,
     mock_datasource_config,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.toggles import (
     ADD_ROW_INDEX_TO_MOBILE_UCRS,
     MOBILE_UCR,
@@ -150,6 +150,8 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         return report_configuration
 
     @classmethod
+    @flag_enabled('MOBILE_UCR')
+    @flag_enabled('ADD_ROW_INDEX_TO_MOBILE_UCRS')
     def setUpClass(cls):
         super(ReportFiltersSuiteTest, cls).setUpClass()
         delete_all_users()
@@ -161,9 +163,6 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             domain=cls.domain,
             username='ralph',
         )
-        MOBILE_UCR.set(cls.domain, True, NAMESPACE_DOMAIN)
-        ADD_ROW_INDEX_TO_MOBILE_UCRS.set(cls.domain, True, NAMESPACE_DOMAIN)
-
         report_configuration = cls.make_report_config(cls.domain, cls.report_id)
 
         # also make a report with a hidden column

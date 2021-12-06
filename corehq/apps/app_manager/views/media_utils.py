@@ -35,7 +35,7 @@ def handle_media_edits(request, item, should_edit, resp, lang, prefix=''):
         param = prefix + attribute
         if should_edit(param):
             media_path = process_media_attribute(param, resp, request.POST.get(param))
-            item._set_media(attribute, lang, media_path)
+            item.set_media(attribute, lang, media_path)
 
     for attribute in ('use_default_image_for_all', 'use_default_audio_for_all'):
         param = prefix + attribute

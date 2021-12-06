@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html, format_html_join
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -107,6 +108,11 @@ class BillingAccountBasicForm(forms.Form):
         required=False,
         initial=False
     )
+    is_sms_billable_report_visible = forms.BooleanField(
+        label="",
+        required=False,
+        initial=False
+    )
     enterprise_admin_emails = forms.CharField(
         label="Enterprise Admin Emails",
         required=False,
@@ -154,13 +160,6 @@ class BillingAccountBasicForm(forms.Form):
         help_text="Users in any projects connected to this account will not "
                   "have data sent to Hubspot",
     )
-    block_email_domains_from_hubspot = forms.CharField(
-        label="Block Email Domains From Hubspot Data",
-        required=False,
-        help_text="(ex: dimagi.com, commcarehq.org) Anyone with a username or "
-                  "email matching an email-domain here, regardless of "
-                  "project membership, will not have data synced with Hubspot.",
-    )
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -173,6 +172,7 @@ class BillingAccountBasicForm(forms.Form):
                 'email_list': contact_info.email_list,
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
+                'is_sms_billable_report_visible': account.is_sms_billable_report_visible,
                 'enterprise_admin_emails': account.enterprise_admin_emails,
                 'enterprise_restricted_signup_domains': ','.join(account.enterprise_restricted_signup_domains),
                 'invoicing_plan': account.invoicing_plan,
@@ -181,7 +181,6 @@ class BillingAccountBasicForm(forms.Form):
                 'last_payment_method': account.last_payment_method,
                 'pre_or_post_pay': account.pre_or_post_pay,
                 'block_hubspot_data_for_all_users': account.block_hubspot_data_for_all_users,
-                'block_email_domains_from_hubspot': ', '.join(account.block_email_domains_from_hubspot),
             }
         else:
             kwargs['initial'] = {
@@ -230,6 +229,16 @@ class BillingAccountBasicForm(forms.Form):
                 )
             )
             additional_fields.append(
+                hqcrispy.B3MultiField(
+                    "SMS Billable Report Visible",
+                    hqcrispy.MultiInlineField(
+                        'is_sms_billable_report_visible',
+                        data_bind="checked: is_sms_billable_report_visible",
+                    ),
+                    data_bind='visible: is_customer_billing_account',
+                ),
+            )
+            additional_fields.append(
                 crispy.Div(
                     crispy.Field(
                         'enterprise_restricted_signup_domains',
@@ -253,10 +262,6 @@ class BillingAccountBasicForm(forms.Form):
                     hqcrispy.MultiInlineField(
                         'block_hubspot_data_for_all_users',
                     ),
-                ),
-                crispy.Field(
-                    'block_email_domains_from_hubspot',
-                    css_class='input-xxlarge',
                 ),
             ])
         self.helper.layout = crispy.Layout(
@@ -363,12 +368,6 @@ class BillingAccountBasicForm(forms.Form):
             )
         return transfer_subs
 
-    def clean_block_email_domains_from_hubspot(self):
-        email_domains = self.cleaned_data['block_email_domains_from_hubspot']
-        if email_domains:
-            return [e.strip() for e in email_domains.split(r',')]
-        return []  # Do not return a list with an empty string
-
     @transaction.atomic
     def create_account(self):
         name = self.cleaned_data['name']
@@ -399,11 +398,11 @@ class BillingAccountBasicForm(forms.Form):
         account.name = self.cleaned_data['name']
         account.is_active = self.cleaned_data['is_active']
         account.is_customer_billing_account = self.cleaned_data['is_customer_billing_account']
+        account.is_sms_billable_report_visible = self.cleaned_data['is_sms_billable_report_visible']
         account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
         account.enterprise_restricted_signup_domains = self.cleaned_data['enterprise_restricted_signup_domains']
         account.invoicing_plan = self.cleaned_data['invoicing_plan']
         account.block_hubspot_data_for_all_users = self.cleaned_data['block_hubspot_data_for_all_users']
-        account.block_email_domains_from_hubspot = self.cleaned_data['block_email_domains_from_hubspot']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
@@ -813,14 +812,14 @@ class SubscriptionForm(forms.Form):
                 )
             ):
                 from corehq.apps.accounting.views import ManageBillingAccountView
-                raise forms.ValidationError(mark_safe(_(
+                raise forms.ValidationError(format_html(_(
                     "Please update 'Client Contact Emails' "
-                    '<strong><a href=%(link)s target="_blank">here</a></strong> '
-                    "before using Billing Account <strong>%(account)s</strong>."
-                ) % {
-                    'link': reverse(ManageBillingAccountView.urlname, args=[account.id]),
-                    'account': account.name,
-                }))
+                    '<strong><a href={link} target="_blank">here</a></strong> '
+                    "before using Billing Account <strong>{account}</strong>."
+                ),
+                    link=reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                    account=account.name,
+                ))
 
         start_date = self.cleaned_data.get('start_date')
         if not start_date:
@@ -1009,7 +1008,7 @@ class CreditForm(forms.Form):
         amount = self.cleaned_data['amount']
         field_metadata = CreditAdjustment._meta.get_field('amount')
         if amount >= 10 ** (field_metadata.max_digits - field_metadata.decimal_places):
-            raise ValidationError(mark_safe(_(
+            raise ValidationError(mark_safe(_(  # nosec: no user input
                 'Amount over maximum size.  If you need support for '
                 'quantities this large, please <a data-toggle="modal" '
                 'data-target="#modalReportIssue" href="#modalReportIssue">'
@@ -1147,11 +1146,14 @@ class SuppressSubscriptionForm(forms.Form):
 
         invoices = self.subscription.invoice_set.all()
         if invoices:
-            raise ValidationError(mark_safe(
-                "Cannot suppress subscription. Suppress these invoices first: %s"
-                % ', '.join(['<a href="{edit_url}">{name}</a>'.format(
-                        edit_url=reverse(InvoiceSummaryView.urlname, args=[invoice.id]),
-                        name=invoice.invoice_number,
+            raise ValidationError(format_html(
+                "Cannot suppress subscription. Suppress these invoices first: {}",
+                format_html_join(
+                    ', ',
+                    '<a href="{}">{}</a>',
+                    [(
+                        reverse(InvoiceSummaryView.urlname, args=[invoice.id]),
+                        invoice.invoice_number,
                     ) for invoice in invoices])
             ))
 
@@ -2509,14 +2511,15 @@ class InvoiceInfoForm(forms.Form):
             ManageBillingAccountView,
         )
         if not invoice.is_wire and not invoice.is_customer_invoice:
-            subscription_link = mark_safe(make_anchor_tag(
+            subscription_link = make_anchor_tag(
                 reverse(EditSubscriptionView.urlname, args=(subscription.id,)),
-                '{plan_name} ({start_date} - {end_date})'.format(
+                format_html(
+                    '{plan_name} ({start_date} - {end_date})',
                     plan_name=subscription.plan_version,
                     start_date=subscription.date_start,
                     end_date=subscription.date_end,
                 )
-            ))
+            )
         else:
             subscription_link = 'N/A'
 
@@ -2541,16 +2544,13 @@ class InvoiceInfoForm(forms.Form):
         self.helper.layout[0].extend([
             hqcrispy.B3TextField(
                 'account',
-                mark_safe(
-                    '<a href="%(account_link)s">'
-                    '%(account_name)s'
-                    '</a>' % {
-                        'account_link': reverse(
-                            ManageBillingAccountView.urlname,
-                            args=(invoice.account.id,)
-                        ),
-                        'account_name': invoice.account.name,
-                    }
+                format_html(
+                    '<a href="{}">Super {}</a>',
+                    reverse(
+                        ManageBillingAccountView.urlname,
+                        args=(invoice.account.id,)
+                    ),
+                    invoice.account.name
                 ),
             ),
             hqcrispy.B3TextField(
@@ -2723,7 +2723,7 @@ class CreateAdminForm(forms.Form):
                 css_id="select-admin-username",
             ),
             StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % "Add Admin"),
+                format_html('<i class="fa fa-plus"></i> {}', 'Add Admin'),
                 css_class="btn-primary disable-on-submit",
                 type="submit",
             )

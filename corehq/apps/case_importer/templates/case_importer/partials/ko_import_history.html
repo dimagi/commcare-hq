@@ -15,7 +15,7 @@
                   "></search-box>
     </div>
   </h2>
-  <!--ko if: state() == states.SUCCESS && !_.isEmpty(case_uploads())-->
+  <!--ko if: state() == states.SUCCESS && !$root._.isEmpty(case_uploads())-->
   <table class="table table-striped">
     <tr>
       <th class="col-md-1">{% trans "Status" %}</th>
@@ -34,10 +34,10 @@
     <tr>
       <td class="col-md-1">
         <!--ko if: task_status().state == $root.states.SUCCESS && task_status().result-->
-        <!--ko if: _.isEmpty(task_status().result.errors)-->
+        <!--ko if: $root._.isEmpty(task_status().result.errors)-->
         <span class="label label-success">{% trans "Success" %}</span>
         <!--/ko-->
-        <!--ko if: !_.isEmpty(task_status().result.errors)-->
+        <!--ko if: !$root._.isEmpty(task_status().result.errors)-->
         <span class="label label-warning">{% trans "Success with warnings" %}</span>
         <!--/ko-->
         <!--/ko-->
@@ -125,7 +125,7 @@
                       totalItems: totalItems,
                       showSpinner: showPaginationSpinner"></pagination>
   <!--/ko-->
-  <!--ko if: state() === states.SUCCESS && _.isEmpty(case_uploads())-->
+  <!--ko if: state() === states.SUCCESS && $root._.isEmpty(case_uploads())-->
   <div class="alert alert-info">
     {% trans "No recent uploads found." %}
   </div>

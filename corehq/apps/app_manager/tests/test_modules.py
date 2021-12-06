@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import (
@@ -9,6 +9,10 @@ from corehq.apps.app_manager.models import (
     Application,
     AutoSelectCase,
     CaseIndex,
+    CaseSearch,
+    CaseSearchLabel,
+    CaseSearchProperty,
+    DefaultCaseSearchProperty,
     LoadUpdateAction,
     Module,
     ReportAppConfig,
@@ -157,78 +161,141 @@ class ReportModuleTests(SimpleTestCase):
 class OverwriteModuleDetailTests(SimpleTestCase):
 
     def setUp(self):
-        self.attrs_dict1 = {
-            'columns': True,
-            'filter': True,
-            'sort_elements': True,
-            'sort_nodeset_columns': True,
-            'custom_variables': True,
-            'custom_xml': True,
-            'case_tile_configuration': True,
-            'print_template': True
-        }
-        self.attrs_dict2 = {
-            'columns': True,
-            'filter': True,
-            'sort_elements': False,
-            'sort_nodeset_columns': False,
-            'custom_variables': False,
-            'custom_xml': False,
-            'case_tile_configuration': False,
-            'print_template': False
-        }
-        self.attrs_dict3 = {
-            'columns': False,
-            'filter': False,
-            'sort_elements': False,
-            'sort_nodeset_columns': False,
-            'custom_variables': False,
-            'custom_xml': False,
-            'case_tile_configuration': True,
-            'print_template': False
-        }
+        self.all_attrs = ['columns', 'filter', 'sort_elements', 'custom_variables', 'custom_xml',
+                          'case_tile_configuration', 'print_template']
+        self.cols_and_filter = ['columns', 'filter']
+        self.case_tile = ['case_tile_configuration']
 
         self.app = Application.new_app('domain', "Untitled Application")
         self.src_module = self.app.add_module(Module.new_module('Src Module', lang='en'))
-        self.src_module_detail_type = getattr(self.src_module.case_details, "short")
-        self.header_ = getattr(self.src_module_detail_type.columns[0], 'header')
+        self.src_detail = getattr(self.src_module.case_details, "short")
+        self.header_ = getattr(self.src_detail.columns[0], 'header')
         self.header_['en'] = 'status'
-        self.filter_ = setattr(self.src_module_detail_type, 'filter', 'a > b')
-        self.sort_nodeset_columns = setattr(self.src_module_detail_type, 'sort_nodeset_columns', True)
-        self.custom_variables = setattr(self.src_module_detail_type, 'custom_variables', 'def')
-        self.custom_xml = setattr(self.src_module_detail_type, 'custom_xml', 'ghi')
-        self.print_template = getattr(self.src_module_detail_type, 'print_template')
+        self.filter_ = setattr(self.src_detail, 'filter', 'a > b')
+        self.custom_variables = setattr(self.src_detail, 'custom_variables', 'def')
+        self.custom_xml = setattr(self.src_detail, 'custom_xml', 'ghi')
+        self.print_template = getattr(self.src_detail, 'print_template')
         self.print_template['name'] = 'test'
-        self.case_tile_configuration = setattr(self.src_module_detail_type, 'persist_tile_on_forms', True)
+        self.case_tile_configuration = setattr(self.src_detail, 'persist_tile_on_forms', True)
 
     def test_overwrite_all(self):
         dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
-        dest_module_detail_type = getattr(dest_module.case_details, "short")
-        dest_module_detail_type.overwrite_from_module_detail(self.src_module_detail_type, self.attrs_dict1)
-        self.assertEqual(self.src_module_detail_type.to_json(), dest_module_detail_type.to_json())
+        dest_detail = getattr(dest_module.case_details, "short")
+        dest_detail.overwrite_attrs(self.src_detail, self.all_attrs)
+        self.assertEqual(self.src_detail.to_json(), dest_detail.to_json())
 
     def test_overwrite_filter_column(self):
         dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
-        dest_module_detail_type = getattr(dest_module.case_details, "short")
-        dest_module_detail_type.overwrite_from_module_detail(self.src_module_detail_type, self.attrs_dict2)
+        dest_detail = getattr(dest_module.case_details, "short")
+        dest_detail.overwrite_attrs(self.src_detail, self.cols_and_filter)
 
-        self.assertEqual(self.src_module_detail_type.columns, dest_module_detail_type.columns)
-        self.assertEqual(self.src_module_detail_type.filter, dest_module_detail_type.filter)
-        self.remove_attrs(dest_module_detail_type)
-        self.assertNotEqual(self.src_module_detail_type.to_json(), dest_module_detail_type.to_json())
+        self.assertEqual(self.src_detail.columns, dest_detail.columns)
+        self.assertEqual(self.src_detail.filter, dest_detail.filter)
+        self.remove_attrs(dest_detail)
+        self.assertNotEqual(self.src_detail.to_json(), dest_detail.to_json())
 
     def test_overwrite_other_configs(self):
         dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
-        dest_module_detail_type = getattr(dest_module.case_details, "short")
-        dest_module_detail_type.overwrite_from_module_detail(self.src_module_detail_type, self.attrs_dict3)
+        dest_detail = getattr(dest_module.case_details, "short")
+        dest_detail.overwrite_attrs(self.src_detail, self.case_tile)
 
-        self.assertNotEqual(str(self.src_module_detail_type.columns), str(dest_module_detail_type.columns))
-        self.assertNotEqual(self.src_module_detail_type.filter, dest_module_detail_type.filter)
-        self.assertEqual(self.src_module_detail_type.persist_tile_on_forms,
-                 dest_module_detail_type.persist_tile_on_forms)
+        self.assertNotEqual(str(self.src_detail.columns), str(dest_detail.columns))
+        self.assertNotEqual(self.src_detail.filter, dest_detail.filter)
+        self.assertEqual(self.src_detail.persist_tile_on_forms, dest_detail.persist_tile_on_forms)
 
-    def remove_attrs(self, dest_module_detail_type):
-        delattr(self.src_module_detail_type, 'filter')
-        delattr(self.src_module_detail_type, 'columns')
-        delattr(dest_module_detail_type, 'filter')
-        delattr(dest_module_detail_type, 'columns')
+    def remove_attrs(self, dest_detail):
+        delattr(self.src_detail, 'filter')
+        delattr(self.src_detail, 'columns')
+        delattr(dest_detail, 'filter')
+        delattr(dest_detail, 'columns')
+
+
+class OverwriteCaseSearchConfigTests(SimpleTestCase):
+    def setUp(self):
+        self.all_attrs = ['search_properties', 'search_default_properties', 'search_claim_options']
+
+        self.app = Application.new_app('domain', "Untitled Application")
+        self.src_module = self.app.add_module(Module.new_module('Src Module', lang='en'))
+        self.case_search_config = CaseSearch(
+            search_label=CaseSearchLabel(
+                label={
+                    'en': 'Search Patients Nationally'
+                }
+            ),
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+                CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
+            ],
+            auto_launch=True,
+            default_search=True,
+            default_relevant=False,
+            additional_relevant="instance('groups')/groups/group",
+            search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
+            search_button_display_condition="false()",
+            blacklisted_owner_ids_expression="instance('commcaresession')/session/context/userid",
+            default_properties=[
+                DefaultCaseSearchProperty(
+                    property='ɨŧsȺŧɍȺᵽ',
+                    defaultValue=("instance('casedb')/case"
+                                  "[@case_id='instance('commcaresession')/session/data/case_id']/ɨŧsȺŧɍȺᵽ")),
+                DefaultCaseSearchProperty(
+                    property='name',
+                    defaultValue="instance('locations')/locations/location[@id=123]/@type"),
+            ],
+        )
+        self.src_module.search_config = self.case_search_config
+        self.dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
+
+    def test_overwrite_all(self):
+        self.dest_module.search_config.overwrite_attrs(self.src_module.search_config, self.all_attrs)
+        self.assertEqual(self.src_module.search_config.to_json(), self.dest_module.search_config.to_json())
+
+    def test_overwrite_properties(self):
+        self.dest_module.search_config = CaseSearch()
+        self.dest_module.search_config.overwrite_attrs(self.src_module.search_config, ["search_properties"])
+        self.assertEqual(
+            self.src_module.search_config.to_json()["properties"],
+            self.dest_module.search_config.to_json()["properties"]
+        )
+        # ensure that the rest is the same as the default config
+        dest_json = self.dest_module.search_config.to_json()
+        dest_json.pop("properties")
+        blank_json = CaseSearch().to_json()
+        blank_json.pop("properties")
+        self.assertEqual(dest_json, blank_json)
+
+    def test_overwrite_default_properties(self):
+        self.dest_module.search_config = CaseSearch()
+        self.dest_module.search_config.overwrite_attrs(self.src_module.search_config, ["search_default_properties"])
+        self.assertEqual(
+            self.src_module.search_config.to_json()["default_properties"],
+            self.dest_module.search_config.to_json()["default_properties"]
+        )
+        # ensure that the rest is the same as the default config
+        dest_json = self.dest_module.search_config.to_json()
+        dest_json.pop("default_properties")
+        blank_json = CaseSearch().to_json()
+        blank_json.pop("default_properties")
+        self.assertEqual(dest_json, blank_json)
+
+    def test_overwrite_options(self):
+        self.dest_module.search_config = CaseSearch(
+            properties=[CaseSearchProperty(name='age', label={'en': 'Age'})],
+            default_properties=[DefaultCaseSearchProperty(
+                property='location', defaultValue="instance('locations')/locations/location[@id=123]/location_id"
+            )]
+        )
+        original_json = self.dest_module.search_config.to_json()
+        self.dest_module.search_config.overwrite_attrs(self.src_module.search_config, ["search_claim_options"])
+        final_json = self.dest_module.search_config.to_json()
+
+        # properties and default properties should be unchanged
+        self.assertEqual(original_json["properties"], final_json["properties"])
+        self.assertEqual(original_json["default_properties"], final_json["default_properties"])
+
+        # everything else should match the source config
+        src_json = self.src_module.search_config.to_json()
+        for config_dict in (final_json, src_json):
+            config_dict.pop("properties")
+            config_dict.pop("default_properties")
+        self.assertEqual(final_json, src_json)

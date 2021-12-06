@@ -13,7 +13,7 @@ from corehq.util.elastic import ensure_index_deleted, reset_es_index
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 
 @patch('corehq.apps.sms.change_publishers.do_publish')
@@ -35,10 +35,15 @@ class SqlSMSPillowTest(TestCase):
         super(SqlSMSPillowTest, self).tearDown()
 
     def _to_json(self, sms_dict, sms):
-        result = {'_id': sms.couch_id, 'id': sms.pk}
+        result = {
+            '_id': sms.couch_id,
+            'id': sms.pk,
+            'date_modified': json_format_datetime(sms.date_modified)
+        }
         for k, v in sms_dict.items():
-            value = json_format_datetime(v) if isinstance(v, datetime) else v
-            result[k] = value
+            if k != 'couch_id':
+                value = json_format_datetime(v) if isinstance(v, datetime) else v
+                result[k] = value
 
         return result
 

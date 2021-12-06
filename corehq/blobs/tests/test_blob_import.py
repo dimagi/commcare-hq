@@ -6,7 +6,7 @@ from timeit import Timer
 
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.blobs.management.commands.run_blob_import import (
     NUM_WORKERS,
@@ -31,7 +31,8 @@ def import_sleep():
             NamedTemporaryFile() as tempfile:
         mock_.return_value = SleeperBlobDB()
         make_blob_export(tempfile.name)
-        import_blobs_from_tgz(tempfile.name)
+        results = import_blobs_from_tgz(tempfile.name)
+        assert len(results) == NUM_WORKERS
 
 
 def make_blob_export(filename):
@@ -49,8 +50,8 @@ class BlobImportTests(SimpleTestCase):
             'import_sleep()',
             setup="from corehq.blobs.tests.test_blob_import import import_sleep",
         ).timeit(1)
-        # 5 workers each sleeping 0.1s should take less than 0.2s
-        self.assertLess(duration, 0.2)
+        # 5 workers each sleeping 0.1s should take less than 0.5s
+        self.assertLess(duration, 0.1 * NUM_WORKERS)
 
     def test_errors(self):
         with patch('corehq.blobs.management.commands.run_blob_import.get_blob_db') as mock_, \

@@ -11,9 +11,9 @@
           <select class="form-control per-page-limit">
             <% for(var i = 0; i < rowRange.length; i++) { %>
               <% if (rowRange[i] === limit) { %>
-                <option value="<%= rowRange[i] %>" selected>{% trans "<%= rowRange[i] %> per page" %}</option>
+                <option value="<%- rowRange[i] %>" selected>{% trans "<%- rowRange[i] %> per page" %}</option>
               <% } else { %>
-                <option value="<%= rowRange[i] %>">{% trans "<%= rowRange[i] %> per page" %}</option>
+                <option value="<%- rowRange[i] %>">{% trans "<%- rowRange[i] %> per page" %}</option>
               <% } %>
             <% } %>
           </select>
@@ -29,7 +29,7 @@
                   <a class="js-page" aria-label='{% trans_html_attr "First Page" %}' tabindex="0" data-id="0">
                   <span><i class="fa fa-fast-backward"></i></span>
                 </a>
-                <a class="js-page" aria-label='{% trans_html_attr "Previous" %}' tabindex="0" data-id="<%= currentPage - 1 %>">
+                <a class="js-page" aria-label='{% trans_html_attr "Previous" %}' tabindex="0" data-id="<%- currentPage - 1 %>">
                   <span><i class="fa fa-caret-left"></i></span>
                 </a>
                 </li>
@@ -38,7 +38,7 @@
                 <a class="js-page" data-id="0">
                   <span><i class="fa fa-fast-backward"></i></span>
                 </a>
-                <a class="js-page" data-id="<%= currentPage - 1 %>">
+                <a class="js-page" data-id="<%- currentPage - 1 %>">
                   <span><i class="fa fa-caret-left"></i></span>
                 </a>
                 </li>
@@ -46,45 +46,45 @@
               <!-- Render page buttons -->
               <% if (pageCount <= 5) { %>
                   <% for (i = startPage-1; i < endPage; i++) { %>
-                    <li class="js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%= i %>"><a aria-label="<%= pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current ='page'<% } %> tabindex="0"><%= i + 1 %></a></li>
+                    <li class="js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%- i %>"><a aria-label="<%- pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current ='page'<% } %> tabindex="0"><%- i + 1 %></a></li>
                   <% } %>
               <% } else { %>
                 <% if (startPage <= 3) { %>
                   <% for (i = 0; i < startPage; i++) { %>
-                    <li class="js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%= i %>"><a aria-label="<%= pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0"><%= i + 1 %></a></li>
+                    <li class="js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%- i %>"><a aria-label="<%- pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0"><%- i + 1 %></a></li>
                   <% } %>
                 <% } else { %>
-                    <li class="js-page" data-id="0"><a aria-label="<%= pageNumLabel({num: 1}) %>" tabindex="0">{% trans "1" %}</a></li>
+                    <li class="js-page" data-id="0"><a aria-label="<%- pageNumLabel({num: 1}) %>" tabindex="0">{% trans "1" %}</a></li>
                     <li class="js-page"><a class="paginate-disabled">{% trans "..." %}</a></li>
                 <% } %>
                 <% for (i = startPage; i < endPage; i++) { %>
-                  <li class="js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%= i %>"><a aria-label="<%= pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0"><%= i + 1 %></a></li>
+                  <li class="js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%- i %>"><a aria-label="<%- pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0"><%- i + 1 %></a></li>
                 <% } %>
                 <% if (endPage >= pageCount - 2) { %>
                   <% for (i = endPage+1; i <= pageCount; i++) { %>
-                    <li class="js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%= i - 1 %>"><a aria-label="<%= pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0"><%= i %></a></li>
+                    <li class="js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%- i - 1 %>"><a aria-label="<%- pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0"><%- i %></a></li>
                   <% } %>
                 <% } else { %>
                   <li class="js-page"><a class="paginate-disabled">{% trans "..." %}</a></li>
-                  <li class="js-page" data-id="<%= pageCount - 1 %>"><a aria-label="<%= pageNumLabel({num: pageCount}) %>" tabindex="0"><%= pageCount %></a></li>
+                  <li class="js-page" data-id="<%- pageCount - 1 %>"><a aria-label="<%- pageNumLabel({num: pageCount}) %>" tabindex="0"><%- pageCount %></a></li>
                 <% } %>
               <% } %>
               <!-- Render Next buttons -->
               <% if (currentPage >= pageCount - 1) { %>
                 <li class="paginate-disabled">
-                  <a class="js-page" data-id="<%= currentPage + 1 %>">
+                  <a class="js-page" data-id="<%- currentPage + 1 %>">
                   <span><i class="fa fa-caret-right"></i></span>
                 </a>
-                <a class="js-page" data-id="<%= pageCount - 1 %>">
+                <a class="js-page" data-id="<%- pageCount - 1 %>">
                   <span><i class="fa fa-fast-forward"></i></span>
                 </a>
                 </li>
               <% } else { %>
                 <li>
-                <a class="js-page" aria-label='{% trans_html_attr "Next" %}' tabindex="0" data-id="<%= currentPage + 1 %>">
+                <a class="js-page" aria-label='{% trans_html_attr "Next" %}' tabindex="0" data-id="<%- currentPage + 1 %>">
                   <span><i class="fa fa-caret-right"></i></span>
                 </a>
-                <a class="js-page" aria-label='{% trans_html_attr "Last Page" %}' tabindex="0" data-id="<%= pageCount - 1 %>">
+                <a class="js-page" aria-label='{% trans_html_attr "Last Page" %}' tabindex="0" data-id="<%- pageCount - 1 %>">
                   <span><i class="fa fa-fast-forward"></i></span>
                 </a>
                 </li>

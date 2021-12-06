@@ -1,5 +1,5 @@
 import os
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from xml.sax.saxutils import escape
 
 from eulxml.xmlmap.core import load_xmlobject_from_string
@@ -15,9 +15,6 @@ from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.features.scheduler import (
     schedule_detail_variables,
-)
-from corehq.apps.app_manager.suite_xml.post_process.instances import (
-    get_all_instances_referenced_in_xpaths,
 )
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
@@ -39,24 +36,26 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Style,
     Template,
     Text,
-    Xpath,
-    XpathVariable,
+    TextXPath,
+    XPathVariable,
 )
 from corehq.apps.app_manager.util import (
     create_temp_sort_column,
     get_sort_and_sort_only_columns,
+    module_loads_registry_case,
     module_offers_search,
 )
-from corehq.apps.app_manager.xpath import XPath, session_var
+from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, session_var
+from corehq.util.timer import time_method
+
+AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
 
 
 class DetailContributor(SectionContributor):
     section_name = 'details'
 
+    @time_method()
     def get_section_elements(self):
-        def include_sort(detail_type, detail):
-            return detail_type.endswith('short') or detail.sort_nodeset_columns_for_detail()
-
         if self.app.use_custom_suite:
             return []
 
@@ -69,11 +68,15 @@ class DetailContributor(SectionContributor):
                 if detail.custom_xml:
                     elements.append(self._get_custom_xml_detail(module, detail, detail_type))
                 else:
-                    detail_column_infos = get_detail_column_infos(
-                        detail_type,
-                        detail,
-                        include_sort=include_sort(detail_type, detail),
-                    )  # list of DetailColumnInfo named tuples
+                    if detail.sort_nodeset_columns_for_detail():
+                        # list of DetailColumnInfo named tuples
+                        detail_column_infos = get_detail_column_infos_for_tabs_with_sorting(detail)
+                    else:
+                        detail_column_infos = get_detail_column_infos(
+                            detail_type,
+                            detail,
+                            include_sort=detail_type.endswith('short'),
+                        )  # list of DetailColumnInfo named tuples
                     if detail_column_infos:
                         if detail.use_case_tiles:
                             helper = CaseTileHelper(self.app, module, detail,
@@ -140,7 +143,7 @@ class DetailContributor(SectionContributor):
                     title=Text(locale_id=id_strings.detail_tab_title_locale(
                         module, detail_type, tab
                     )),
-                    nodeset=tab.nodeset if tab.has_nodeset else None,
+                    nodeset=self._get_detail_tab_nodeset(module, detail, tab),
                     start=tab_spans[tab.id][0],
                     end=tab_spans[tab.id][1],
                     relevant=tab_relevant,
@@ -186,12 +189,18 @@ class DetailContributor(SectionContributor):
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
                 if module.case_list_form.form_id:
-                    target_form = self.app.get_form(module.case_list_form.form_id)
-                    if target_form.is_registration_form(module.case_type):
-                        d.actions.append(self._get_reg_form_action(module))
+                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+                    form = self.app.get_form(module.case_list_form.form_id)
+                    if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
+                        valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, module)]
+                    else:
+                        valid_forms = []
+                    if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
+                        d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module):
-                    d.actions.append(self._get_case_search_action(module, in_search="search" in id))
+                    in_search = module_loads_registry_case(module) or "search" in id
+                    d.actions.append(self._get_case_search_action(module, in_search=in_search))
 
             try:
                 if not self.app.enable_multi_sort:
@@ -213,6 +222,23 @@ class DetailContributor(SectionContributor):
                 load_xmlobject_from_string(etree.tostring(e, encoding='utf-8'), xmlclass=DetailVariable)
                 for e in custom_variable_elements
             ])
+
+    def _get_detail_tab_nodeset(self, module, detail, tab):
+        if not tab.has_nodeset:
+            return None
+
+        if tab.nodeset:
+            return tab.nodeset
+
+        if tab.nodeset_case_type:
+            nodeset = CaseTypeXpath(tab.nodeset_case_type)
+            nodeset = nodeset.case(instance_name=detail.get_instance_name(module))
+            nodeset = nodeset.select(CaseXPath().parent_id(),
+                                     CaseXPath("current()").property("@case_id"))
+            nodeset = nodeset.select("@status", "open")
+            return nodeset
+
+        return None
 
     def _get_lookup_element(self, detail, module):
         if detail.lookup_display_results:
@@ -237,9 +263,9 @@ class DetailContributor(SectionContributor):
             field=field,
         )
 
-    def _get_reg_form_action(self, module):
+    def _get_case_list_form_action(self, module):
         """
-        Returns registration form action
+        Returns registration/followup form action
         """
         form = self.app.get_form(module.case_list_form.form_id)
 
@@ -261,8 +287,12 @@ class DetailContributor(SectionContributor):
                     media_image=module.case_list_form.default_media_image,
                     media_audio=module.case_list_form.default_media_audio,
                 ),
-                stack=Stack()
+                stack=Stack(),
             )
+
+        action_relevant = module.case_list_form.relevancy_expression
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain) and action_relevant:
+            action.relevant = action_relevant
 
         frame = PushFrame()
         frame.add_command(XPath.string(id_strings.form_command(form)))
@@ -294,31 +324,75 @@ class DetailContributor(SectionContributor):
         action.stack.add_frame(frame)
         return action
 
-    @staticmethod
-    def _get_case_search_action(module, in_search=False):
-        relevant_kwarg = {}
-        if not in_search and module.search_config.search_button_display_condition:
-            relevant_kwarg = dict(
-                relevant=XPath(module.search_config.search_button_display_condition),
-            )
-        allow_auto_launch = toggles.CASE_CLAIM_AUTOLAUNCH.enabled(module.get_app().domain) and not in_search
-        action = Action(
-            display=Display(
-                text=Text(locale_id=(
+    def _get_case_search_action(self, module, in_search=False):
+        action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
+        if in_search:
+            search_label = module.search_config.search_again_label
+        else:
+            search_label = module.search_config.search_label
+
+        if self.app.enable_localized_menu_media:
+            action = LocalizedAction(
+                menu_locale_id=(
                     id_strings.case_search_again_locale(module) if in_search
                     else id_strings.case_search_locale(module)
-                ))
-            ),
-            stack=Stack(),
-            auto_launch=allow_auto_launch and module.search_config.auto_launch,
-            redo_last=in_search,
-            **relevant_kwarg
-        )
+                ),
+                media_image=search_label.uses_image(build_profile_id=self.build_profile_id),
+                media_audio=search_label.uses_audio(build_profile_id=self.build_profile_id),
+                image_locale_id=(
+                    id_strings.case_search_again_icon_locale(module) if in_search
+                    else id_strings.case_search_icon_locale(module)
+                ),
+                audio_locale_id=(
+                    id_strings.case_search_again_audio_locale(module) if in_search
+                    else id_strings.case_search_audio_locale(module)
+                ),
+                stack=Stack(),
+                for_action_menu=True,
+                **action_kwargs,
+            )
+        else:
+            action = Action(
+                display=Display(
+                    text=Text(locale_id=(
+                        id_strings.case_search_again_locale(module) if in_search
+                        else id_strings.case_search_locale(module)
+                    )),
+                    media_image=search_label.default_media_image,
+                    media_audio=search_label.default_media_audio
+                ),
+                stack=Stack(),
+                **action_kwargs
+            )
         frame = PushFrame()
         frame.add_mark()
         frame.add_command(XPath.string(id_strings.search_command(module)))
         action.stack.add_frame(frame)
         return action
+
+    @staticmethod
+    def _get_action_kwargs(module, in_search):
+        action_kwargs = {
+            'auto_launch': DetailContributor._get_auto_launch_expression(module, in_search),
+            'redo_last': in_search,
+        }
+        relevant = DetailContributor._get_relevant_expression(module, in_search)
+        if relevant:
+            action_kwargs["relevant"] = relevant
+        return action_kwargs
+
+    @staticmethod
+    def _get_relevant_expression(module, in_search):
+        if not in_search and module.search_config.search_button_display_condition:
+            return XPath(module.search_config.search_button_display_condition)
+
+    @staticmethod
+    def _get_auto_launch_expression(module, in_search):
+        allow_auto_launch = toggles.USH_CASE_CLAIM_UPDATES.enabled(module.get_app().domain) and not in_search
+        auto_launch_expression = "false()"
+        if allow_auto_launch and module.search_config.auto_launch:
+            auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSION)
+        return auto_launch_expression
 
     def _get_custom_xml_detail(self, module, detail, detail_type):
         d = load_xmlobject_from_string(
@@ -357,7 +431,9 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def _get_report_context_tile_detail():
-        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MOBILE_UCR_TILE_DETAIL_ID
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
+            MOBILE_UCR_TILE_DETAIL_ID,
+        )
         return Detail(
             id=MOBILE_UCR_TILE_DETAIL_ID,
             title=Text(),
@@ -371,9 +447,9 @@ class DetailContributor(SectionContributor):
                     grid_y=0,
                 ),
                 header=Header(text=Text()),
-                template=Template(text=Text(xpath=Xpath(
+                template=Template(text=Text(xpath=TextXPath(
                     function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",
-                    variables=[XpathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
+                    variables=[XPathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
                 ))),
             )]
         )
@@ -384,7 +460,7 @@ class DetailContributor(SectionContributor):
             id=id_strings.fixture_detail(module),
             title=Text(),
         )
-        xpath = Xpath(function=module.fixture_select.display_column)
+        xpath = TextXPath(function=module.fixture_select.display_column)
         if module.fixture_select.localize:
             template_text = Text(locale=Locale(child_id=Id(xpath=xpath)))
         else:
@@ -427,14 +503,14 @@ class DetailsHelper(object):
 
 def get_nodeset_sort_elements(detail):
     from corehq.apps.app_manager.models import SortElement
-    sort_elements = []
+    sort_elements = defaultdict(list)
     tab_spans = detail.get_tab_spans()
     for tab in detail.get_tabs():
-        if tab.nodeset:
+        if tab.has_nodeset:
             tab_span = tab_spans[tab.id]
             for column in detail.columns[tab_span[0]:tab_span[1]]:
                 if column.invisible:
-                    sort_elements.append(SortElement(
+                    sort_elements[tab.id].append(SortElement(
                         field=column.field,
                         type='string',
                         direction='ascending'
@@ -470,25 +546,21 @@ def get_default_sort_elements(detail):
     return sort_elements
 
 
-def get_detail_column_infos(detail_type, detail, include_sort):
-    """
-    This is not intented to be a widely used format
-    just a packaging of column info into a form most convenient for rendering
-    """
-    DetailColumnInfo = namedtuple('DetailColumnInfo',
-                                  'column sort_element order')
+# This is not intended to be a widely used format
+# just a packaging of column info into a form most convenient for rendering
+DetailColumnInfo = namedtuple('DetailColumnInfo', 'column sort_element order')
 
+
+def get_detail_column_infos(detail_type, detail, include_sort):
     if not include_sort:
         return [DetailColumnInfo(column, None, None) for column in detail.get_columns()]
 
     if detail.sort_elements:
         sort_elements = detail.sort_elements
-    elif detail.sort_nodeset_columns_for_detail():
-        sort_elements = get_nodeset_sort_elements(detail)
     else:
         sort_elements = get_default_sort_elements(detail)
 
-    sort_only, sort_columns = get_sort_and_sort_only_columns(detail, sort_elements)
+    sort_only, sort_columns = get_sort_and_sort_only_columns(detail.get_columns(), sort_elements)
 
     columns = []
     for column in detail.get_columns():
@@ -507,26 +579,34 @@ def get_detail_column_infos(detail_type, detail, include_sort):
     return columns
 
 
-def get_instances_for_module(app, module, detail_section_elements):
-    """
-    This method is used by CloudCare when filtering cases.
-    """
-    modules = list(app.get_modules())
-    helper = DetailsHelper(app, modules)
-    details = detail_section_elements
-    detail_mapping = {detail.id: detail for detail in details}
-    details_by_id = detail_mapping
-    detail_ids = [helper.get_detail_id_safe(module, detail_type)
-                  for detail_type, detail, enabled in module.get_details()
-                  if enabled]
-    detail_ids = [_f for _f in detail_ids if _f]
-    xpaths = set()
+def get_detail_column_infos_for_tabs_with_sorting(detail):
+    """This serves the same purpose as `get_detail_column_infos` except
+    that it only applies to 'short' details that have tabs with nodesets and sorting
+    configured."""
+    sort_elements = get_nodeset_sort_elements(detail)
 
-    for detail_id in detail_ids:
-        xpaths.update(details_by_id[detail_id].get_all_xpaths())
+    columns = []
+    tab_spans = detail.get_tab_spans()
+    detail_columns = list(detail.get_columns())  # do this to ensure we get the indexed values
+    for tab in detail.get_tabs():
+        tab_span = tab_spans[tab.id]
+        tab_columns = detail_columns[tab_span[0]:tab_span[1]]
+        if tab.has_nodeset and sort_elements[tab.id]:
+            tab_sorts = sort_elements[tab.id]
+            _, sort_columns = get_sort_and_sort_only_columns(tab_columns, tab_sorts)
+            for column in tab_columns:
+                if column.invisible:
+                    sort_element, order = sort_columns.pop(column.field, (None, None))
+                    columns.append(DetailColumnInfo(column, sort_element, order))
+                else:
+                    columns.append(DetailColumnInfo(column, None, None))
+        else:
+            columns.extend([
+                DetailColumnInfo(column, None, None)
+                for column in tab_columns
+            ])
 
-    instances, _ = get_all_instances_referenced_in_xpaths(app, xpaths)
-    return instances
+    return columns
 
 
 class CaseTileHelper(object):
@@ -619,7 +699,7 @@ class CaseTileHelper(object):
         variables = []
         for i, mapping in enumerate(column.enum):
             variables.append(
-                XpathVariable(
+                XPathVariable(
                     name=mapping.key_as_variable,
                     locale_id=id_strings.detail_column_enum_variable(
                         self.module, self.detail_type, column, mapping.key_as_variable

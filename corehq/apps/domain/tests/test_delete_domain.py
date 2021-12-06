@@ -6,18 +6,13 @@ from io import BytesIO
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from dateutil.relativedelta import relativedelta
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
-from casexml.apps.phone.models import OwnershipCleanlinessFlag, SyncLogSQL
-from casexml.apps.stock.models import (
-    DocDomainMapping,
-    StockReport,
-    StockTransaction,
-)
+from casexml.apps.phone.models import SyncLogSQL
 from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.apps.accounting.models import (
@@ -53,7 +48,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.commtrack.models import SQLCommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
@@ -65,7 +60,6 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
-from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
@@ -75,13 +69,15 @@ from corehq.apps.locations.models import (
     SQLLocation,
     make_location,
 )
-from corehq.apps.mobile_auth.models import SQLMobileAuthKeyRecord
-from corehq.apps.mobile_auth.utils import new_key_record
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.reminders.models import EmailUsage
-from corehq.apps.reports.models import ReportsSidebarOrdering
+from corehq.apps.reports.models import (
+    ReportsSidebarOrdering,
+    TableauServer,
+    TableauVisualization,
+)
 from corehq.apps.sms.models import (
     SMS,
     DailyOutboundSMSLimitReached,
@@ -100,7 +96,19 @@ from corehq.apps.sms.models import (
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
 from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.users.models import DomainRequest, Invitation
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.models import (
+    DomainRequest,
+    Invitation,
+    PermissionInfo,
+    Permissions,
+    RoleAssignableBy,
+    RolePermission,
+    UserRole,
+    UserHistory,
+    WebUser,
+)
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import CODES, NotFound, get_blob_db
@@ -115,10 +123,10 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.motech.models import RequestLog
+from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import (
-    RepeaterStub,
+    SQLRepeater,
     SQLRepeatRecord,
     SQLRepeatRecordAttempt,
 )
@@ -138,23 +146,6 @@ class TestDeleteDomain(TestCase):
             location_type='facility'
         )
         location.save()
-        report = StockReport.objects.create(
-            type='balance',
-            domain=domain_name,
-            form_id='fake',
-            date=datetime.utcnow(),
-            server_date=datetime.utcnow(),
-        )
-
-        StockTransaction.objects.create(
-            report=report,
-            product_id=product.get_id,
-            sql_product=SQLProduct.objects.get(product_id=product.get_id),
-            section_id='stock',
-            type='stockonhand',
-            case_id=location.linked_supply_point().get_id,
-            stock_on_hand=100
-        )
 
         SMS.objects.create(domain=domain_name)
         Call.objects.create(domain=domain_name)
@@ -188,6 +179,7 @@ class TestDeleteDomain(TestCase):
         super(TestDeleteDomain, self).setUp()
         self.domain = Domain(name="test", is_active=True)
         self.domain.save()
+        self.addCleanup(ensure_deleted, self.domain)
         self.domain.convert_to_commtrack()
         self.current_subscription = Subscription.new_domain_subscription(
             BillingAccount.get_or_create_account_by_domain(self.domain.name, created_by='tests')[0],
@@ -198,6 +190,7 @@ class TestDeleteDomain(TestCase):
 
         self.domain2 = Domain(name="test2", is_active=True)
         self.domain2.save()
+        self.addCleanup(self.domain2.delete)
         self.domain2.convert_to_commtrack()
 
         LocationType.objects.create(
@@ -218,11 +211,8 @@ class TestDeleteDomain(TestCase):
         )
 
     def _assert_sql_counts(self, domain, number):
-        self.assertEqual(StockTransaction.objects.filter(report__domain=domain).count(), number)
-        self.assertEqual(StockReport.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLLocation.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLProduct.objects.filter(domain=domain).count(), number)
-        self.assertEqual(DocDomainMapping.objects.filter(domain_name=domain).count(), number)
         self.assertEqual(LocationType.objects.filter(domain=domain).count(), number)
 
         self.assertEqual(SMS.objects.filter(domain=domain).count(), number)
@@ -315,15 +305,9 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
         self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_case_deletion_sql(self):
         self._test_case_deletion()
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
-    def test_case_deletion_couch(self):
-        self._test_case_deletion()
-
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_deletion(self):
         form_states = [state_tuple[0] for state_tuple in XFormInstanceSQL.STATES]
 
@@ -669,21 +653,6 @@ class TestDeleteDomain(TestCase):
         self._assert_location_counts(self.domain.name, 0)
         self._assert_location_counts(self.domain2.name, 1)
 
-    def _assert_mobile_auth_counts(self, domain_name, count):
-        self._assert_queryset_count([
-            SQLMobileAuthKeyRecord.objects.filter(domain=domain_name),
-        ], count)
-
-    def test_mobile_auth(self):
-        for domain_name in [self.domain.name, self.domain2.name]:
-            record = new_key_record(domain=domain_name, user_id='123')
-            record.save()
-
-        self.domain.delete()
-
-        self._assert_mobile_auth_counts(self.domain.name, 0)
-        self._assert_mobile_auth_counts(self.domain2.name, 1)
-
     def _assert_ota_counts(self, domain_name, count):
         self._assert_queryset_count([
             MobileRecoveryMeasure.objects.filter(domain=domain_name),
@@ -703,12 +672,26 @@ class TestDeleteDomain(TestCase):
 
     def _assert_reports_counts(self, domain_name, count):
         self._assert_queryset_count([
-            ReportsSidebarOrdering.objects.filter(domain=domain_name)
+            ReportsSidebarOrdering.objects.filter(domain=domain_name),
+            TableauServer.objects.filter(domain=domain_name),
+            TableauVisualization.objects.filter(domain=domain_name),
         ], count)
 
     def test_reports_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             ReportsSidebarOrdering.objects.create(domain=domain_name)
+            server = TableauServer.objects.create(
+                domain=domain_name,
+                server_type='server',
+                server_name='my_server',
+                target_site='my_site',
+                domain_username='my_username',
+            )
+            TableauVisualization.objects.create(
+                domain=domain_name,
+                server=server,
+                view_url='my_url',
+            )
             self._assert_reports_counts(domain_name, 1)
 
         self.domain.delete()
@@ -718,13 +701,11 @@ class TestDeleteDomain(TestCase):
 
     def _assert_phone_counts(self, domain_name, count):
         self._assert_queryset_count([
-            OwnershipCleanlinessFlag.objects.filter(domain=domain_name),
             SyncLogSQL.objects.filter(domain=domain_name)
         ], count)
 
     def test_phone_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            OwnershipCleanlinessFlag.objects.create(domain=domain_name)
             SyncLogSQL.objects.create(
                 domain=domain_name,
                 doc={},
@@ -875,6 +856,56 @@ class TestDeleteDomain(TestCase):
         self._assert_users_counts(self.domain.name, 0)
         self._assert_users_counts(self.domain2.name, 1)
 
+    def test_users_domain_membership(self):
+        web_user = WebUser.create(self.domain.name, f'webuser@{self.domain.name}.{HQ_ACCOUNT_ROOT}', '******',
+                                  created_by=None, created_via=None)
+
+        another_domain = Domain(name="another-test", is_active=True)
+        another_domain.save()
+        self.addCleanup(another_domain.delete)
+
+        # add more than 1 domain membership to trigger _log_web_user_membership_removed in tests
+        web_user.add_domain_membership(another_domain.name)
+        web_user.save()
+
+        self.domain.delete()
+
+        user_history = UserHistory.objects.last()
+        self.assertEqual(user_history.by_domain, None)
+        self.assertEqual(user_history.for_domain, self.domain.name)
+        self.assertEqual(user_history.changed_by, SYSTEM_USER_ID)
+        self.assertEqual(user_history.user_id, web_user.get_id)
+        self.assertEqual(user_history.change_messages, UserChangeMessage.domain_removal(self.domain.name))
+        self.assertEqual(user_history.changed_via,
+                         'corehq.apps.domain.deletion._delete_web_user_membership')
+        self.assertEqual(user_history.changes, {})
+
+    def _assert_role_counts(self, domain_name, roles, permissions, assignments):
+        self.assertEqual(UserRole.objects.filter(domain=domain_name).count(), roles)
+        self.assertEqual(RolePermission.objects.filter(role__domain=domain_name).count(), permissions)
+        self.assertEqual(RoleAssignableBy.objects.filter(role__domain=domain_name).count(), assignments)
+
+    def test_roles_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            role1 = UserRole.objects.create(
+                domain=domain_name,
+                name="role1"
+            )
+            role = UserRole.objects.create(
+                domain=domain_name,
+                name="role2"
+            )
+            role.set_permissions([
+                PermissionInfo(Permissions.view_reports.name, allow=PermissionInfo.ALLOW_ALL)
+            ])
+            role.set_assignable_by([role1.id])
+            self._assert_role_counts(domain_name, 2, 1, 1)
+
+        self.domain.delete()
+
+        self._assert_role_counts(self.domain.name, 0, 0, 0)
+        self._assert_role_counts(self.domain2.name, 2, 1, 1)
+
     def _assert_zapier_counts(self, domain_name, count):
         self._assert_queryset_count([
             ZapierSubscription.objects.filter(domain=domain_name),
@@ -913,18 +944,24 @@ class TestDeleteDomain(TestCase):
 
     def _assert_repeaters_count(self, domain_name, count):
         self._assert_queryset_count([
-            RepeaterStub.objects.filter(domain=domain_name),
+            SQLRepeater.objects.filter(domain=domain_name),
             SQLRepeatRecord.objects.filter(domain=domain_name),
             SQLRepeatRecordAttempt.objects.filter(repeat_record__domain=domain_name),
         ], count)
 
     def test_repeaters_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            stub = RepeaterStub.objects.create(
+            conn = ConnectionSettings.objects.create(
+                domain=domain_name,
+                name='To Be Deleted',
+                url="http://localhost/api/"
+            )
+            repeater = SQLRepeater.objects.create(
                 domain=domain_name,
                 repeater_id=str(uuid.uuid4()),
+                connection_settings=conn
             )
-            record = stub.repeat_records.create(
+            record = repeater.repeat_records.create(
                 domain=domain_name,
                 payload_id=str(uuid.uuid4()),
                 registered_at=datetime.utcnow(),
@@ -960,13 +997,9 @@ class TestDeleteDomain(TestCase):
 
     def test_delete_commtrack_config(self):
         # Config will have been created by convert_to_commtrack in setUp
-        self.assertIsNotNone(SQLCommtrackConfig.for_domain(self.domain.name))
+        self.assertIsNotNone(CommtrackConfig.for_domain(self.domain.name))
         self.domain.delete()
-        self.assertIsNone(SQLCommtrackConfig.for_domain(self.domain.name))
-
-    def tearDown(self):
-        self.domain2.delete()
-        super(TestDeleteDomain, self).tearDown()
+        self.assertIsNone(CommtrackConfig.for_domain(self.domain.name))
 
 
 class TestHardDeleteSQLFormsAndCases(TestCase):
@@ -975,16 +1008,16 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         super(TestHardDeleteSQLFormsAndCases, self).setUp()
         self.domain = Domain(name='test')
         self.domain.save()
+        self.addCleanup(ensure_deleted, self.domain)
         self.domain2 = Domain(name='test2')
         self.domain2.save()
+        self.addCleanup(self.domain2.delete)
 
     def tearDown(self):
-        self.domain2.delete()
         call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name, noinput=True)
         call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
         super(TestHardDeleteSQLFormsAndCases, self).tearDown()
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_hard_delete_forms(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             create_form_for_test(domain_name)
@@ -1007,7 +1040,6 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 0)
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_hard_delete_forms_none_to_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             create_form_for_test(domain_name)
@@ -1030,7 +1062,6 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 2)
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_hard_delete_cases(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             CaseFactory(domain_name).create_case()
@@ -1052,7 +1083,6 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 0)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_hard_delete_cases_none_to_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             CaseFactory(domain_name).create_case()
@@ -1073,3 +1103,8 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
 
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
+
+
+def ensure_deleted(domain):
+    if domain._rev:
+        domain.delete()

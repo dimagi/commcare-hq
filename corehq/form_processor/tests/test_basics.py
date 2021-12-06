@@ -2,11 +2,9 @@ from datetime import datetime
 import uuid
 from io import BytesIO
 
-from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
-from django.test.utils import override_settings
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import deprecated_check_user_has_case
@@ -16,17 +14,18 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, XFormQuestionValueIterator
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
-from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.form_processor.utils import get_simple_form_xml
+from corehq.util.dates import coerce_to_datetime
 
 DOMAIN = 'fundamentals'
 
 
+@sharded
 class FundamentalBaseTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -47,7 +46,7 @@ class FundamentalBaseTests(TestCase):
         self.formdb = FormAccessors(DOMAIN)
 
 
-class FundamentalFormTestsCouch(FundamentalBaseTests):
+class FundamentalFormTests(FundamentalBaseTests):
     def test_modified_on(self):
         form_id = uuid.uuid4().hex
         before = datetime.utcnow()
@@ -94,11 +93,6 @@ class FundamentalFormTestsCouch(FundamentalBaseTests):
         self.assertGreater(form.server_modified_on, before)
 
 
-@use_sql_backend
-class FundamentalFormTestsSQL(FundamentalFormTestsCouch):
-    pass
-
-
 class FundamentalCaseTests(FundamentalBaseTests):
     def test_create_case(self):
         case_id = uuid.uuid4().hex
@@ -123,12 +117,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
         self.assertTrue(case.server_modified_on > modified_on)
         self.assertFalse(case.closed)
         self.assertIsNone(case.closed_on)
-
-        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            self.assertIsNone(case.closed_by)
-        else:
-            self.assertEqual(case.closed_by, '')
-
+        self.assertIsNone(case.closed_by)
         self.assertEqual(case.dynamic_case_properties()['dynamic'], '123')
 
     def test_create_case_unicode_name(self):
@@ -295,7 +284,8 @@ class FundamentalCaseTests(FundamentalBaseTests):
             }
         )
         case = self.casedb.get_case(child_case_id)
-        self.assertEqual(len(case.indices), 0)
+        self.assertEqual(len(case.indices), 1)
+        self.assertEqual(case.indices[0].referenced_id, '')
 
     def test_invalid_index(self):
         invalid_case_id = uuid.uuid4().hex
@@ -418,37 +408,6 @@ class FundamentalCaseTests(FundamentalBaseTests):
         with self.assertRaisesMessage(AssertionError, 'Case created without create block'):
             _submit_form_with_cc_version("2.43")
 
-    def test_globally_unique_form_id(self):
-        form_id = uuid.uuid4().hex
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
-            xform = self._submit_dummy_form('domain1', user_id='123', form_id=form_id).xform
-            self.assertEqual(form_id, xform.form_id)
-
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
-            # form with duplicate ID submitted to different domain gets a new ID
-            xform = self._submit_dummy_form('domain2', user_id='123', form_id=form_id).xform
-            self.assertNotEqual(form_id, xform.form_id)
-
-    def test_globally_unique_case_id(self):
-        case_id = uuid.uuid4().hex
-        case = CaseBlock.deprecated_init(
-            create=True,
-            case_id=case_id,
-            user_id='user1',
-            owner_id='user1',
-            case_type='demo',
-            case_name='create_case'
-        )
-
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
-            post_case_blocks([case.as_xml()], domain='domain1')
-
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
-            xform, cases = post_case_blocks([case.as_xml()], domain='domain2')
-            self.assertEqual(0, len(cases))
-            self.assertTrue(xform.is_error)
-            self.assertIn('IllegalCaseId', xform.problem)
-
     def test_duplicate_with_attachment(self):
         def main():
             attachments = {
@@ -477,9 +436,6 @@ class FundamentalCaseTests(FundamentalBaseTests):
 
         main()
 
-
-@use_sql_backend
-class FundamentalCaseTestsSQL(FundamentalCaseTests):
     def test_long_value_validation(self):
         case_id = uuid.uuid4().hex
         case = CaseBlock.deprecated_init(

@@ -5,7 +5,6 @@ from xml.etree import cElementTree as ElementTree
 from django.template.loader import render_to_string
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import property_changed_in_action
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es import filters
@@ -18,7 +17,6 @@ from corehq.form_processor.exceptions import (
     MissingFormXml,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.utils import should_use_sql_backend
 
 CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
@@ -37,7 +35,7 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
                        xmlns=None, attachments=None, form_id=None,
-                       form_extras=None, case_db=None, device_id=None):
+                       form_extras=None, case_db=None, device_id=None, max_wait=...):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
@@ -52,6 +50,9 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
     make it easier to trace the source. All new code should use this
     argument. A human recognizable value is recommended outside of test
     code. Example: "auto-close-rule-<GUID>"
+    :param max_wait: Maximum time (in seconds) to allow the process to be delayed if
+    the project is over its submission rate limit.
+    See the docstring for submit_form_locally for meaning of values.
 
     returns the UID of the resulting form.
     """
@@ -76,52 +77,10 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
         domain=domain,
         attachments=attachments,
         case_db=case_db,
+        max_wait=max_wait,
         **form_extras
     )
     return result.xform, result.cases
-
-
-def get_case_wrapper(data):
-    from corehq.apps.commtrack.util import get_case_wrapper as commtrack_wrapper
-
-    def pact_wrapper(data):
-        if data['domain'] == 'pact' and data['type'] == 'cc_path_client':
-            from pact.models import PactPatientCase
-            return PactPatientCase
-
-    wrapper_funcs = [pact_wrapper, commtrack_wrapper]
-
-    wrapper = None
-    for wf in wrapper_funcs:
-        wrapper = wf(data)
-        if wrapper is not None:
-            break
-    return wrapper
-
-
-def _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs):
-    return CommCareCase.view(
-        'case_by_domain_hq_user_id_type/view',
-        key=[domain, user_id, case_type],
-        reduce=False,
-        include_docs=include_docs
-    ).all()
-
-
-def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-    """
-    Return the first case of case_type owned by user_id
-    """
-    cases = _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs=True)
-    return cases[0] if cases else None
-
-
-def get_case_id_by_domain_hq_user_id(domain, user_id, case_type):
-    """
-    Return the ID of the first case of case_type owned by user_id
-    """
-    rows = _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs=False)
-    return rows[0]['id'] if rows else None
 
 
 def get_case_by_identifier(domain, identifier):
@@ -197,7 +156,7 @@ def update_case(domain, case_id, case_properties=None, close=False,
     )
 
 
-def bulk_update_cases(domain, case_changes, device_id):
+def bulk_update_cases(domain, case_changes, device_id, xmlns=None):
     """
     Updates or closes a list of cases (or both) by submitting a form.
     domain - the cases' domain
@@ -212,18 +171,12 @@ def bulk_update_cases(domain, case_changes, device_id):
     for case_id, case_properties, close in case_changes:
         case_block = _get_update_or_close_case_block(case_id, case_properties, close)
         case_blocks.append(case_block.as_text())
-    return submit_case_blocks(case_blocks, domain, device_id=device_id)
+    return submit_case_blocks(case_blocks, domain, device_id=device_id, xmlns=xmlns)
 
 
 def resave_case(domain, case, send_post_save_signal=True):
     from corehq.form_processor.change_publishers import publish_case_saved
-    if should_use_sql_backend(domain):
-        publish_case_saved(case, send_post_save_signal)
-    else:
-        if send_post_save_signal:
-            case.save()
-        else:
-            CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+    publish_case_saved(case, send_post_save_signal)
 
 
 def get_last_non_blank_value(case, case_property):

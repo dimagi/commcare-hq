@@ -3,7 +3,7 @@ from django.test import TestCase
 from dimagi.utils.couch import get_cached_property
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 
 
@@ -22,7 +22,7 @@ class PhoneUsersTestCase(TestCase):
     def tearDown(self):
         user = WebUser.get_by_username(self.username)
         if user:
-            user.delete(deleted_by=None)
+            user.delete(self.domain, deleted_by=None)
 
         domain_obj = Domain.get_by_name(self.domain)
         if domain_obj:
@@ -54,7 +54,7 @@ class PhoneUsersTestCase(TestCase):
         self.assertEqual(self.couch_user.default_phone_number, '789')
 
     def testPhoneUsersViewLastCommCareUsername(self):
-        self.couch_user.delete(deleted_by=None)
+        self.couch_user.delete(self.domain, deleted_by=None)
         phone_user_count = CouchUser.phone_users_by_domain(self.domain).count()
         self.assertEqual(phone_user_count, 0)
 

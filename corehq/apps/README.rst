@@ -155,13 +155,11 @@ These apps are developer-facing tools.
 cachehq
    Caching functinality for CouchDB.
 case_migrations
-   Functionality to support users defining and excuting data migrations on cases. Candidate for deprecation.
+   Functionality to support users defining and excuting data migrations on cases. Most of this logic can potentially be deprecated, but the case-specific restore defined in this app **is** in use, by the SMS self-registration workflow. The restore URL isn't referenced in HQ but is referenced in the formplayer repo, in `RestoreFactory <https://github.com/dimagi/formplayer/blob/15a3cc3ad6ed198b971ff5f9cc61379928826fde/src/main/java/org/commcare/formplayer/services/RestoreFactory.java#L666>`_
 change_feed
    Infrastructure for propagating changes in primary data stores (couch, postgres) to secondary sources (ElasticSearch).
 cleanup
    Miscellaneous commands for cleaning up data: deleting duplicate mobile users, deleting couch documents for models that have been moved to postgres, etc.
-couch_sql_migration
-   Utiltiy code for migration form and case data from couch to postgres.
 data_analytics
    Internal impact-related metrics.
 data_pipeline_audit
@@ -180,8 +178,6 @@ hqcase
    Utility functions for handling cases, such as the ability to programmatically submit cases.
 mocha
    JavaScript testing framework.
-tzmigration
-   This relates to a timezone migration done in 2015. See `#6341 <https://github.com/dimagi/commcare-hq/pull/6341>`_ if curious.
 
 Limited-Use and Retired Apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -5,8 +5,8 @@ from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from corehq.apps.callcenter.sync_user_case import (
-    sync_user_cases
+from corehq.apps.callcenter.sync_usercase import (
+    sync_usercases
 )
 from corehq.apps.callcenter.utils import (
     get_call_center_cases,
@@ -14,6 +14,7 @@ from corehq.apps.callcenter.utils import (
     is_midnight_for_domain,
 )
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.domain.models import Domain
 
 logger = get_task_logger(__name__)
 
@@ -45,17 +46,24 @@ def calculate_indicators():
         indicator_set.get_data()
 
 
-def sync_user_cases_if_applicable(user, spawn_task):
+def bulk_sync_usercases_if_applicable(domain, user_ids):
+    domain_obj = Domain.get_by_name(domain)
+    if domain_obj.call_center_config.enabled or domain_obj.usercase_enabled:
+        for user_id in user_ids:
+            sync_usercases_task.delay(user_id)
+
+
+def sync_usercases_if_applicable(user, spawn_task):
     if settings.UNIT_TESTING and not user.project:
         return
     if (user.project.call_center_config.enabled or user.project.usercase_enabled):
         if spawn_task:
-            sync_user_cases_task.delay(user._id)
+            sync_usercases_task.delay(user._id)
         else:
-            sync_user_cases_task(user._id)
+            sync_usercases_task(user._id)
 
 
 @task(serializer='pickle', queue='background_queue')
-def sync_user_cases_task(user_id):
+def sync_usercases_task(user_id):
     user = CommCareUser.get_by_user_id(user_id)
-    sync_user_cases(user)
+    sync_usercases(user)

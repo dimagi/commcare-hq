@@ -389,7 +389,7 @@ Dict expressions
 
 
 "Add Hours" expressions
-''''''''''''''''''''''
+'''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.date_specs.AddHoursExpressionSpec
 
@@ -1411,18 +1411,14 @@ Keep in mind that the only variables available for formatting are
 | "%b (%y)" | "Sep (08)"        |
 +-----------+-------------------+
 
-IntegerBucketsColumn and AgeInMonthsBucketsColumn
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+IntegerBucketsColumn
+~~~~~~~~~~~~~~~~~~~~
 
 Bucket columns allow you to define a series of ranges with corresponding names,
 then group together rows where a specific field's value falls within those ranges.
 These ranges are inclusive, since they are implemented using the ``between`` operator.
 It is the user's responsibility to make sure the ranges do not overlap; if a value
 falls into multiple ranges, it is undefined behavior which bucket it will be assigned to.
-
-There are two types: ``integer_buckets`` for integer values, and
-``age_in_months_buckets``, where the given field must be a date
-and the buckets are based on the number of months since that date.
 
 Here's an example that groups children based on their age at the time of
 registration:
@@ -1444,24 +1440,6 @@ registration:
 
 The ``"ranges"`` attribute maps conditional expressions to labels. If the field's value
 does not fall into any of these ranges, the row will receive the ``"else_"`` value, if provided.
-
-Here's an example using ``age_in_months_buckets``:
-
-.. code:: json
-
-   {
-       "display": "Age Group",
-       "column_id": "age_group",
-       "type": "age_in_months_buckets",
-       "field": "dob",
-       "ranges": {
-            "0_to_5": [0, 5],
-            "6_to_11": [6, 11],
-            "12_to_35": [12, 35],
-            "36_to_59": [36, 59],
-            "60_to_71": [60, 71],
-       }
-   }
 
 SumWhenColumn and SumWhenTemplateColumn
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1601,6 +1579,9 @@ column.
            }
        }
    }
+
+**Expression columns cannot be used in aggregations or filters.**
+If you need to group by a derived value, then you must add that directly to your data source.
 
 The "aggregation" column property
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2068,7 +2049,7 @@ Please note that the columns used in distinct on clause should also be present
 in the sort expression as the first set of columns in the same order.
 
 Pick distinct by a single column
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Sort expression should have column1 and then other columns if needed
 
 .. code:: json
@@ -2091,7 +2072,7 @@ and distinct on would be
    ["column1"]
 
 Pick distinct result based on two columns
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sort expression should have column1 and column2 in same order,
 More columns can be added after these if needed

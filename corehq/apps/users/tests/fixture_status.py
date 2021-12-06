@@ -2,12 +2,12 @@ from datetime import datetime
 
 from django.test import TestCase
 
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.fixtures.models import UserFixtureStatus, UserFixtureType
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, get_fixture_statuses
 
 

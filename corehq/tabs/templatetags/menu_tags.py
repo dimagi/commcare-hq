@@ -1,7 +1,6 @@
 from corehq.apps.users.models import DomainMembershipError
 from django import template
 from django.template.loader import render_to_string
-from django.utils.safestring import mark_safe
 
 from corehq.tabs.config import MENU_TABS
 from corehq.tabs.exceptions import TabClassError, TabClassErrorSummary
@@ -90,21 +89,21 @@ class MainMenuNode(template.Node):
 
         # set the context variable in the highest scope so it can be used in
         # other blocks
-        role_rev = None
+        role_version = None
         try:
             if couch_user:
-                user_role = couch_user.get_role(domain, allow_mirroring=True)
-                role_rev = user_role._rev if user_role else None
+                user_role = couch_user.get_role(domain, allow_enterprise=True)
+                role_version = user_role.cache_version if user_role else None
         except DomainMembershipError:
-            role_rev = None
+            role_version = None
 
         context.dicts[0]['active_tab'] = active_tab
         flat = context.flatten()
         flat.update({
             'tabs': visible_tabs,
-            'role_rev': role_rev
+            'role_version': role_version
         })
-        return mark_safe(render_to_string('tabs/menu_main.html', flat))
+        return render_to_string('tabs/menu_main.html', flat)
 
 
 @register.tag(name="format_main_menu")
@@ -143,7 +142,7 @@ def format_sidebar(context):
                             nav['subpage'] = subpage
                             break
 
-    return mark_safe(render_to_string(
+    return render_to_string(
         'hqwebapp/partials/navigation_left_sidebar.html',
         {'sections': sections}
-    ))
+    )

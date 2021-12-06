@@ -1,9 +1,8 @@
 import uuid
 
-from django.conf import settings
 from django.test import TestCase
 from corehq.util.es.elasticsearch import ConnectionError
-import mock
+from unittest import mock
 
 from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.case_search.models import CaseSearchConfig
@@ -14,18 +13,30 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import get_es_new
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
-    run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.pillows.application import AppReindexerFactory
+from corehq.pillows.case import (
+    CouchCaseReindexerFactory,
+    SqlCaseReindexerFactory,
+)
 from corehq.pillows.case_search import domains_needing_search_index
+from corehq.pillows.domain import DomainReindexerFactory
+from corehq.pillows.group import GroupReindexerFactory
+from corehq.pillows.groups_to_user import GroupToUserReindexerFactory
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.pillows.reportcase import ReportCaseReindexerFactory
+from corehq.pillows.reportxform import ReportFormReindexerFactory
+from corehq.pillows.sms import SmsReindexerFactory
+from corehq.pillows.user import UserReindexerFactory
+from corehq.pillows.xform import SqlFormReindexerFactory
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_form, create_and_save_a_case, generate_cases
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -64,17 +75,15 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual('Domain', domain_doc['doc_type'])
         delete_es_index(DOMAIN_INDEX)
 
-    @run_with_all_backends
     def test_case_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 
-        index_id = 'sql-case' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'case'
+        index_id = 'sql-case'
         reindex_and_clean(index_id, reset=True)
 
         self._assert_case_is_in_es(case)
 
-    @run_with_all_backends
     def test_case_search_reindexer(self):
         es = get_es_new()
         FormProcessorTestUtils.delete_all_cases()
@@ -97,12 +106,11 @@ class PillowtopReindexerTest(TestCase):
         es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_case_is_in_es(case, esquery=CaseSearchES())
 
-    @run_with_all_backends
     def test_xform_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_xforms()
         form = create_and_save_a_form(DOMAIN)
 
-        index_id = 'sql-form' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'form'
+        index_id = 'sql-form'
         reindex_and_clean(index_id, reset=True)
 
         self._assert_form_is_in_es(form)
@@ -139,17 +147,16 @@ class CheckpointCreationTest(CallCenterDomainMockTest):
 
 
 @generate_cases([
-    ('app', 'ApplicationToElasticsearchPillow'),
-    ('case', 'CaseToElasticsearchPillow'),
-    ('form', 'XFormToElasticsearchPillow'),
-    ('domain', 'KafkaDomainPillow'),
-    ('user', 'UserPillow'),
-    ('group', 'GroupPillow'),
-    ('sms', 'SqlSMSPillow'),
-    ('report-case', 'ReportCaseToElasticsearchPillow'),
-    ('report-xform', 'ReportXFormToElasticsearchPillow'),
+    (AppReindexerFactory, 'ApplicationToElasticsearchPillow'),
+    (CouchCaseReindexerFactory, 'CaseToElasticsearchPillow'),
+    (DomainReindexerFactory, 'KafkaDomainPillow'),
+    (UserReindexerFactory, 'UserPillow'),
+    (GroupReindexerFactory, 'GroupPillow'),
+    (SmsReindexerFactory, 'SqlSMSPillow'),
+    (ReportCaseReindexerFactory, 'ReportCaseToElasticsearchPillow'),
+    (ReportFormReindexerFactory, 'ReportXFormToElasticsearchPillow'),
 ], CheckpointCreationTest)
-def test_checkpoint_creation(self, reindex_id, pillow_name):
+def test_checkpoint_creation(self, reindexer_factory, pillow_name):
     # checks that checkpoipnts are set to the latest checkpoints after reindexing
     with real_pillow_settings():
         pillow = get_pillow_by_name(pillow_name)
@@ -161,7 +168,7 @@ def test_checkpoint_creation(self, reindex_id, pillow_name):
         self.assertNotEqual(current_offsets, pillow.checkpoint.get_current_sequence_as_dict())
         self.assertEqual(bad_offsets, pillow.checkpoint.get_current_sequence_as_dict())
 
-        reindex_and_clean(reindex_id)
+        reindex_and_clean(reindexer_factory.slug)
         pillow = get_pillow_by_name(pillow_name)
         self.assertNotEqual(bad_offsets, pillow.checkpoint.get_current_sequence_as_dict())
         self.assertEqual(
@@ -175,17 +182,16 @@ def test_checkpoint_creation(self, reindex_id, pillow_name):
 
 
 @generate_cases([
-    ('sql-case', 'case-pillow'),
-    ('sql-form', 'xform-pillow'),
-    ('groups-to-user', 'UserPillow'),
-    ('case', 'case-pillow'),
-    ('form', 'xform-pillow'),
-    ('report-case', 'case-pillow'),
-    ('report-xform', 'xform-pillow'),
-    ('user', 'user-pillow'),
-    ('group', 'group-pillow'),
+    (SqlCaseReindexerFactory, 'case-pillow'),
+    (SqlFormReindexerFactory, 'xform-pillow'),
+    (GroupToUserReindexerFactory, 'UserPillow'),
+    (CouchCaseReindexerFactory, 'case-pillow'),
+    (ReportCaseReindexerFactory, 'case-pillow'),
+    (ReportFormReindexerFactory, 'xform-pillow'),
+    (UserReindexerFactory, 'user-pillow'),
+    (GroupReindexerFactory, 'group-pillow'),
 ], CheckpointCreationTest)
-def test_no_checkpoint_creation(self, reindex_id, pillow_name):
+def test_no_checkpoint_creation(self, reindexer_factory, pillow_name):
     # these pillows should not touch checkpoints since they are run with other
     # reindexers
     with real_pillow_settings():
@@ -197,7 +203,7 @@ def test_no_checkpoint_creation(self, reindex_id, pillow_name):
         pillow.checkpoint.update_to(bad_offsets)
         self.assertNotEqual(current_offsets, pillow.checkpoint.get_current_sequence_as_dict())
         self.assertEqual(bad_offsets, pillow.checkpoint.get_current_sequence_as_dict())
-        reindex_and_clean(reindex_id)
+        reindex_and_clean(reindexer_factory.slug)
 
         # make sure they are still bad
         pillow = get_pillow_by_name(pillow_name)

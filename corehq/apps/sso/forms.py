@@ -1,4 +1,6 @@
-import dateutil
+import datetime
+import logging
+
 from django import forms
 from django.db import transaction
 from django.template.defaultfilters import slugify
@@ -14,8 +16,12 @@ from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
+from corehq.apps.sso import certificates
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils import url_helpers
+from corehq.apps.sso.utils.url_helpers import get_documentation_url
+
+log = logging.getLogger(__name__)
 
 TIME_FORMAT = "%Y/%m/%d %I:%M %p"
 
@@ -124,15 +130,15 @@ class ServiceProviderDetailsForm(forms.Form):
     required service provider information that's needed to link with an
     identity provider."""
     sp_entity_id = forms.CharField(
-        label=ugettext_lazy("Entity ID"),
+        label=ugettext_lazy("Identifier (Entity ID)"),
         required=False,
     )
     sp_acs_url = forms.CharField(
-        label=ugettext_lazy("Assertion Consumer Service"),
+        label=ugettext_lazy("Reply URL (Assertion Consumer Service)"),
         required=False,
     )
-    sp_logout_url = forms.CharField(
-        label=ugettext_lazy("Logout URL"),
+    sp_sign_on_url = forms.CharField(
+        label=ugettext_lazy("Sign on URL"),
         required=False,
     )
     sp_public_cert = forms.CharField(
@@ -148,20 +154,17 @@ class ServiceProviderDetailsForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, identity_provider, show_public_cert=True,
-                 show_rollover_cert=True, show_help_block=True, *args, **kwargs):
+    def __init__(self, identity_provider, show_help_block=True, *args, **kwargs):
         self.idp = identity_provider
         # todo eventually have a setting for IdentityProvider toggles based on
         #  whether SP signing is enforced (dependent on client's Azure tier)
-        self.show_public_cert = show_public_cert
-        self.show_rollover_cert = show_rollover_cert
         self.show_help_block = show_help_block
 
         super().__init__(*args, **kwargs)
 
     @property
     def service_provider_help_block(self):
-        help_link = "#"  # todo
+        help_link = get_documentation_url(self.idp)
         help_text = format_html(
             _('<a href="{}">Please read this guide</a> on how to set up '
               'CommCare HQ with Azure AD.<br />You will need the following '
@@ -173,8 +176,18 @@ class ServiceProviderDetailsForm(forms.Form):
         )
 
     @property
+    def token_encryption_help_block(self):
+        help_text = _(
+            'This is a high security feature  that ensures Assertions are '
+            'fully encrypted. This feature requires a Premium Azure AD '
+            'subscription. '
+        )
+        return crispy.HTML(
+            format_html('<p class="help-block">{}</p>', help_text)
+        )
+
+    @property
     def service_provider_fields(self):
-        download = _("Download")
         shown_fields = []
         if self.show_help_block:
             shown_fields.append(self.service_provider_help_block)
@@ -188,34 +201,38 @@ class ServiceProviderDetailsForm(forms.Form):
                 url_helpers.get_saml_acs_url(self.idp),
             ),
             hqcrispy.B3TextField(
-                'sp_logout_url',
-                url_helpers.get_saml_sls_url(self.idp),
+                'sp_sign_on_url',
+                url_helpers.get_saml_login_url(self.idp),
             ),
         ])
-        if self.show_public_cert:
-            shown_fields.extend([
-                hqcrispy.B3TextField(
-                    'sp_public_cert',
-                    format_html(
-                        '<a href="?sp_cert_public" target="_blank">{}</a>',
-                        download
-                    ),
+        return shown_fields
+
+    @property
+    def token_encryption_fields(self):
+        download = _("Download")
+        return [
+            hqcrispy.B3TextField(
+                'sp_public_cert',
+                format_html(
+                    '<a href="?sp_cert_public" target="_blank">{}</a>',
+                    download
                 ),
-                hqcrispy.B3TextField(
-                    'sp_public_cert_expiration',
-                    self.idp.date_sp_cert_expiration.strftime(
-                        '%d %B %Y at %H:%M UTC'
-                    ),
+            ),
+            hqcrispy.B3TextField(
+                'sp_public_cert_expiration',
+                self.idp.date_sp_cert_expiration.strftime(
+                    '%d %B %Y at %H:%M UTC'
                 ),
-            ])
-        if self.show_rollover_cert:
-            shown_fields.append(hqcrispy.B3TextField(
+            ),
+            hqcrispy.B3TextField(
                 'sp_rollover_cert',
-                (format_html('<a href="?sp_rollover_cert_public" target="_blank">{}</a>', download)
+                (format_html(
+                    '<a href="?sp_rollover_cert_public" target="_blank">{}</a>',
+                    download)
                  if self.idp.sp_rollover_cert_public
                  else _("Not needed/generated yet.")),
-            ))
-        return shown_fields
+            ),
+        ]
 
 
 class EditIdentityProviderAdminForm(forms.Form):
@@ -242,7 +259,7 @@ class EditIdentityProviderAdminForm(forms.Form):
         )
     )
     is_editable = forms.BooleanField(
-        label=ugettext_lazy("Enterprise Dashboard"),
+        label=ugettext_lazy("Enterprise Console"),
         required=False,
         widget=BootstrapCheckboxInput(
             inline_label=ugettext_lazy(
@@ -321,7 +338,8 @@ class EditIdentityProviderAdminForm(forms.Form):
                     crispy.Fieldset(
                         _('Service Provider Settings'),
                         'slug',
-                        *sp_details_form.service_provider_fields
+                        crispy.Div(*sp_details_form.service_provider_fields),
+                        crispy.Div(*sp_details_form.token_encryption_fields),
                     ),
                     css_class="panel-body"
                 ),
@@ -411,7 +429,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
         required=False,
     )
     entity_id = forms.CharField(
-        label=ugettext_lazy("Issuer/Entity ID"),
+        label=ugettext_lazy("Azure AD Identifier"),
         required=False,
     )
     login_url = forms.CharField(
@@ -422,14 +440,26 @@ class SSOEnterpriseSettingsForm(forms.Form):
         label=ugettext_lazy("Logout URL"),
         required=False,
     )
-    idp_cert_public = forms.CharField(
-        label=ugettext_lazy("Public Signing Certificate"),
-        widget=forms.Textarea,
+    idp_cert_public = forms.FileField(
+        label=ugettext_lazy("Upload Certificate (Base64)"),
+        required=False,
+    )
+    download_idp_cert_public = forms.CharField(
+        label=ugettext_lazy("Certificate (Base64)"),
         required=False,
     )
     date_idp_cert_expiration = forms.CharField(
-        label=ugettext_lazy("Certificate Expiration"),
+        label=ugettext_lazy("Certificate Expires On"),
         required=False,
+    )
+    require_encrypted_assertions = forms.BooleanField(
+        label=ugettext_lazy("Token Encryption"),
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=ugettext_lazy(
+                "Use Token Encryption"
+            ),
+        ),
     )
 
     def __init__(self, identity_provider, *args, **kwargs):
@@ -439,16 +469,31 @@ class SSOEnterpriseSettingsForm(forms.Form):
             'entity_id': identity_provider.entity_id,
             'login_url': identity_provider.login_url,
             'logout_url': identity_provider.logout_url,
-            'idp_cert_public': identity_provider.idp_cert_public,
-            'date_idp_cert_expiration': (
-                identity_provider.date_idp_cert_expiration.isoformat()
-                if identity_provider.date_idp_cert_expiration else ''
-            ),
+            'require_encrypted_assertions': identity_provider.require_encrypted_assertions,
         }
         super().__init__(*args, **kwargs)
 
         sp_details_form = ServiceProviderDetailsForm(identity_provider)
         self.fields.update(sp_details_form.fields)
+
+        certificate_details = []
+        if self.idp.idp_cert_public:
+            self.fields['idp_cert_public'].label = _("Upload New Certificate (Base64)")
+            certificate_details = [
+                hqcrispy.B3TextField(
+                    'download_idp_cert_public',
+                    format_html(
+                        '<a href="?idp_cert_public" target="_blank">{}</a>',
+                        _("Download")
+                    ),
+                ),
+                hqcrispy.B3TextField(
+                    'date_idp_cert_expiration',
+                    self.idp.date_idp_cert_expiration.strftime(
+                        '%d %B %Y at %H:%M UTC'
+                    ),
+                ),
+            ]
 
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
@@ -457,8 +502,34 @@ class SSOEnterpriseSettingsForm(forms.Form):
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
-                        _('Service Provider Details for Azure AD'),
+                        _('Basic SAML Configuration for Azure AD'),
                         *sp_details_form.service_provider_fields
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('Connection Details from Azure AD'),
+                        'login_url',
+                        'entity_id',
+                        'logout_url',
+                        crispy.Div(*certificate_details),
+                        'idp_cert_public',
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('SAML Token Encryption'),
+                        sp_details_form.token_encryption_help_block,
+                        twbscrispy.PrependedText('require_encrypted_assertions', ''),
+                        crispy.Div(*sp_details_form.token_encryption_fields),
                     ),
                     css_class="panel-body"
                 ),
@@ -482,23 +553,6 @@ class SSOEnterpriseSettingsForm(forms.Form):
                 ),
                 css_class="panel panel-modern-gray panel-form-only"
             ),
-            crispy.Div(
-                crispy.Div(
-                    crispy.Fieldset(
-                        _('Connection Details from Azure AD'),
-                        'entity_id',
-                        'login_url',
-                        'logout_url',
-                        'idp_cert_public',
-                        crispy.Field(
-                            'date_idp_cert_expiration',
-                            placeholder="YYYY/MM/DD HH:MM AM/PM",
-                        ),
-                    ),
-                    css_class="panel-body"
-                ),
-                css_class="panel panel-modern-gray panel-form-only"
-            ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     ugettext_lazy("Update Configuration"),
@@ -515,45 +569,59 @@ class SSOEnterpriseSettingsForm(forms.Form):
         return is_active
 
     def clean_entity_id(self):
+        is_active = bool(self.data.get('is_active'))
         entity_id = self.cleaned_data['entity_id']
-        _check_required_when_active(self.cleaned_data['is_active'], entity_id)
+        _check_required_when_active(is_active, entity_id)
         return entity_id
 
     def clean_login_url(self):
+        is_active = bool(self.data.get('is_active'))
         login_url = self.cleaned_data['login_url']
-        _check_required_when_active(self.cleaned_data['is_active'], login_url)
+        _check_required_when_active(is_active, login_url)
         return login_url
 
     def clean_logout_url(self):
+        is_active = bool(self.data.get('is_active'))
         logout_url = self.cleaned_data['logout_url']
-        _check_required_when_active(self.cleaned_data['is_active'], logout_url)
+        _check_required_when_active(is_active, logout_url)
         return logout_url
 
     def clean_idp_cert_public(self):
-        idp_cert_public = self.cleaned_data['idp_cert_public']
-        _check_required_when_active(self.cleaned_data['is_active'], idp_cert_public)
-        return idp_cert_public
-
-    def clean_date_idp_cert_expiration(self):
-        date_idp_cert_expiration = self.cleaned_data['date_idp_cert_expiration']
-        _check_required_when_active(self.cleaned_data['is_active'], date_idp_cert_expiration)
-        if date_idp_cert_expiration:
+        is_active = bool(self.data.get('is_active'))
+        idp_cert_file = self.cleaned_data['idp_cert_public']
+        if idp_cert_file:
             try:
-                date_idp_cert_expiration = dateutil.parser.parse(date_idp_cert_expiration)
-            except dateutil.parser.ParserError:
+                cert = certificates.get_certificate_from_file(idp_cert_file)
+                public_key = certificates.get_public_key(cert)
+                date_expiration = certificates.get_expiration_date(cert)
+            except certificates.crypto.Error:
+                log.exception("Error uploading certificate: bad cert file.")
                 raise forms.ValidationError(
-                    _("This is not a valid Date and Time. "
-                      "It should be YYYY/MM/DD HH:MM.")
+                    _("File type not accepted. Please ensure you have "
+                      "uploaded a Base64 x509 certificate.")
                 )
-        return date_idp_cert_expiration
+            if date_expiration <= datetime.datetime.now(tz=date_expiration.tzinfo):
+                raise forms.ValidationError(
+                    _("This certificate has already expired!")
+                )
+        else:
+            public_key = self.idp.idp_cert_public
+            date_expiration = self.idp.date_idp_cert_expiration
+
+        _check_required_when_active(is_active, public_key)
+        return public_key, date_expiration
 
     def update_identity_provider(self, admin_user):
         self.idp.is_active = self.cleaned_data['is_active']
         self.idp.entity_id = self.cleaned_data['entity_id']
         self.idp.login_url = self.cleaned_data['login_url']
         self.idp.logout_url = self.cleaned_data['logout_url']
-        self.idp.idp_cert_public = self.cleaned_data['idp_cert_public']
-        self.idp.date_idp_cert_expiration = self.cleaned_data['date_idp_cert_expiration']
+
+        public_key, date_expiration = self.cleaned_data['idp_cert_public']
+        self.idp.idp_cert_public = public_key
+        self.idp.date_idp_cert_expiration = date_expiration
+
+        self.idp.require_encrypted_assertions = self.cleaned_data['require_encrypted_assertions']
         self.idp.last_modified_by = admin_user.username
         self.idp.save()
         return self.idp

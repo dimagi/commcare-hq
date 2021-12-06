@@ -3,10 +3,10 @@ import re
 
 from django.test import SimpleTestCase
 
-import mock
+import commcare_translations
+from unittest import mock
 from lxml.etree import tostring
 
-import commcare_translations
 from corehq.apps.app_manager.exceptions import (
     DuplicateInstanceIdError,
     SuiteValidationError,
@@ -15,6 +15,8 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     CaseSearch,
+    CaseSearchAgainLabel,
+    CaseSearchLabel,
     CaseSearchProperty,
     CustomAssertion,
     CustomInstance,
@@ -150,6 +152,48 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='m0_case_short']"
         )
 
+    def test_case_search_action(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.modules[0].search_config = CaseSearch(
+            search_label=CaseSearchLabel(
+                label={'en': 'Get them'},
+                media_image={'en': "jr://file/commcare/image/1.png"},
+                media_audio={'en': "jr://file/commcare/image/2.mp3"}
+            ),
+            search_again_label=CaseSearchAgainLabel(
+                label={'en': 'Get them'},
+                media_audio={'en': "jr://file/commcare/image/2.mp3"}
+            ),
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+        )
+        # wrap to have assign_references called
+        app = Application.wrap(app.to_json())
+
+        # test for legacy action node for older versions
+        self.assertXmlPartialEqual(
+            self.get_xml('case-search-with-action'),
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/action"
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('case-search-again-with-action'),
+            app.create_suite(),
+            "./detail[@id='m0_search_short']/action"
+        )
+
+        # test for localized action node for apps with CC version > 2.21
+        app.build_spec.version = '2.21.0'
+        self.assertXmlPartialEqual(
+            self.get_xml('case-search-with-localized-action'),
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/action"
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('case-search-again-with-localized-action'),
+            app.create_suite(),
+            "./detail[@id='m0_search_short']/action"
+        )
+
     def test_sort_cache_search(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.modules[0].search_config = CaseSearch(
@@ -164,6 +208,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 blanks='first',
             )
         )
+
+        # wrap to have assign_references called
+        app = Application.wrap(app.to_json())
+
         self.assertXmlPartialEqual(
             self.get_xml('sort-cache-search'),
             app.create_suite(),
@@ -499,30 +547,33 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with flag_enabled('DISPLAY_CONDITION_ON_TABS'):
             self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
 
-    def test_case_detail_tabs_with_nodesets_for_sorting(self, *args):
-        app = Application.wrap(self.get_json("app_case_detail_tabs_with_nodesets"))
-        app.modules[0].case_details.long.sort_nodeset_columns = True
-        xml_partial = """
-        <partial>
-          <field>
-            <header width="0">
-              <text/>
-            </header>
-            <template width="0">
-              <text>
-                <xpath function="gender"/>
-              </text>
-            </template>
-            <sort direction="ascending" order="1" type="string">
-              <text>
-                <xpath function="gender"/>
-              </text>
-            </sort>
-          </field>
-        </partial>"""
+    def test_case_detail_tabs_with_nodesets_for_sorting_search_only_field(self, *args):
+        app_json = self.get_json("app_case_detail_tabs_with_nodesets")
+        app = Application.wrap(app_json)
+
+        # update app to add in 2 new columns both with the field 'gender'
+
+        # 1. add a column to the 2nd tab that is marked as 'search only'.
+        #    This should get sorting applied to it
+        tab_spans = app.modules[0].case_details.long.get_tab_spans()
+
+        # 2. add a second column to the last tab which already has a 'gender' field
+        #    This should result in the 'gender' field being displayed as well
+        #    as being used for sorting
+        sorted_gender_col = DetailColumn.from_json(
+            app_json["modules"][0]["case_details"]["long"]["columns"][-1]
+        )
+        app.modules[0].case_details.long.columns.insert(tab_spans[1][1] - 1, sorted_gender_col)
+        plain_gender_col = DetailColumn.from_json(
+            app_json["modules"][0]["case_details"]["long"]["columns"][-1]
+        )
+        plain_gender_col.format = "plain"
+        index = len(app.modules[0].case_details.long.columns) - 1
+        app.modules[0].case_details.long.columns.insert(index, plain_gender_col)
         self.assertXmlPartialEqual(
-            xml_partial, app.create_suite(),
-            './detail[@id="m0_case_long"]/detail/field/template/text/xpath[@function="gender"]/../../..')
+            self.get_xml("suite-case-detail-tabs-with-nodesets-for-sorting-search-only"),
+            app.create_suite(),
+            './detail[@id="m0_case_long"]')
 
     def test_case_detail_instance_adding(self, *args):
         # Tests that post-processing adds instances used in calculations
@@ -1051,11 +1102,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         app = Application.new_app('domain', "Untitled Application")
 
-        report_module = app.add_module(ReportModule.new_module('Reports', None))
-        report_module.unique_id = 'report_module'
         report = get_sample_report_config()
         report._id = 'd3ff18cd83adf4550b35db8d391f6008'
-
         report_app_config = ReportAppConfig(
             report_id=report._id,
             header={'en': 'CommBugz'},
@@ -1071,6 +1119,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             },
         )
         report_app_config._report = report
+        report_module = app.add_module(ReportModule.new_module('Reports', None))
+        report_module.unique_id = 'report_module'
         report_module.report_configs = [report_app_config]
         report_module._loaded = True
         self.assertXmlPartialEqual(
@@ -1089,36 +1139,40 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         report_module.media_image = {
             'en': 'jr://file/commcare/image/module0_en.png',
         }
+        report_module.get_details.reset_cache(report_module)
+        actual_suite = app.create_suite()
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_menu_multimedia'),
-            app.create_suite(),
+            actual_suite,
             "./menu",
         )
 
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_select_detail'),
-            app.create_suite(),
+            actual_suite,
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.select']",
         )
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_summary_detail_use_xpath_description'),
-            app.create_suite(),
+            actual_suite,
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_detail'),
-            app.create_suite(),
+            actual_suite,
             "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
         )
 
         report_app_config.show_data_table = False
+        report_module.get_details.reset_cache(report_module)
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_summary_detail_hide_data_table'),
             app.create_suite(),
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )
-        report_app_config.show_data_table = True
 
+        report_app_config.show_data_table = True
+        report_module.get_details.reset_cache(report_module)
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_entry'),
             app.create_suite(),
@@ -1130,6 +1184,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
         report_app_config.use_xpath_description = False
+        report_module.get_details.reset_cache(report_module)
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_summary_detail_use_localized_description'),
             app.create_suite(),
@@ -1167,6 +1222,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 'translations': translation_format,
             }
             report_app_config._report = ReportConfiguration.wrap(report_app_config._report._doc)
+            report_module.get_details.reset_cache(report_module)
             self.assertXmlPartialEqual(
                 self.get_xml(expected_output),
                 app.create_suite(),

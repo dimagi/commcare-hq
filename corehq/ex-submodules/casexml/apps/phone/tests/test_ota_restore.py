@@ -1,24 +1,33 @@
-from django.test import TestCase
 import os
-from casexml.apps.phone.tests.utils import deprecated_generate_restore_payload
-from casexml.apps.phone.utils import get_restore_config
-from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
-from corehq.apps.receiverwrapper.util import submit_form_locally
-from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
-    delete_all_xforms
-from casexml.apps.phone.restore import CachedResponse
 from datetime import date
-from casexml.apps.phone import xml
-from casexml.apps.phone.tests import const
-from casexml.apps.phone.tests.utils import create_restore_user
+
+from django.test import TestCase
+
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+
 from casexml.apps.case import const as case_const
+from casexml.apps.case.tests.util import (
+    check_xml_line_by_line,
+    delete_all_cases,
+    delete_all_sync_logs,
+    delete_all_xforms,
+)
+from casexml.apps.phone import xml
+from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
+from casexml.apps.phone.restore import CachedResponse
+from casexml.apps.phone.tests import const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user_xml
-from corehq.apps.users.util import normalize_username
-from corehq.util.test_utils import TestFileMixin
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from casexml.apps.phone.tests.utils import (
+    create_restore_user,
+    deprecated_generate_restore_payload,
+)
+from casexml.apps.phone.utils import get_restore_config
 from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
 from corehq.apps.domain.models import Domain
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.util import normalize_username
+from corehq.util.test_utils import TestFileMixin
 
 
 def get_registration_xml(restore_user):
@@ -163,6 +172,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
                 <external_id>someexternal</external_id>
             </create>
             <update>
+                <owner_id>{user_id}</owner_id>
                 <date_opened>2010-06-29</date_opened>
             </update>
         </case>""".format(user_id=self.restore_user.user_id)
@@ -294,20 +304,20 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
         newcase = submit_form_locally(xml_data, domain=self.project.name).case
 
-        self.assertTrue(isinstance(newcase.adate, dict))
-        self.assertEqual(date(2012, 2, 1), newcase.adate["#text"])
-        self.assertEqual("i am an attribute", newcase.adate["@someattr"])
-        self.assertTrue(isinstance(newcase.dateattr, dict))
-        self.assertEqual("this shouldn't break", newcase.dateattr["#text"])
-        self.assertEqual(date(2012, 1, 1), newcase.dateattr["@somedate"])
-        self.assertTrue(isinstance(newcase.stringattr, dict))
-        self.assertEqual("neither should this", newcase.stringattr["#text"])
-        self.assertEqual("i am a string", newcase.stringattr["@somestring"])
+        self.assertTrue(isinstance(newcase.case_json['adate'], dict))
+        self.assertEqual('2012-02-01', newcase.case_json['adate']["#text"])
+        self.assertEqual("i am an attribute", newcase.case_json['adate']["@someattr"])
+        self.assertTrue(isinstance(newcase.case_json['dateattr'], dict))
+        self.assertEqual("this shouldn't break", newcase.case_json['dateattr']["#text"])
+        self.assertEqual('2012-01-01', newcase.case_json['dateattr']["@somedate"])
+        self.assertTrue(isinstance(newcase.case_json['stringattr'], dict))
+        self.assertEqual("neither should this", newcase.case_json['stringattr']["#text"])
+        self.assertEqual("i am a string", newcase.case_json['stringattr']["@somestring"])
         restore_payload = deprecated_generate_restore_payload(
             self.project, self.restore_user).decode('utf-8')
         # ghetto
-        self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
-        self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)
+        self.assertIn('<dateattr somedate="2012-01-01">', restore_payload)
+        self.assertIn('<stringattr somestring="i am a string">', restore_payload)
 
 
 class WebUserOtaRestoreTest(OtaRestoreTest):

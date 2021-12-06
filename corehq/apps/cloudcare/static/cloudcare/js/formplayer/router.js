@@ -68,8 +68,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         showDetail: function (caseId, detailTabIndex, isPersistent) {
             menusController.selectDetail(caseId, detailTabIndex, isPersistent);
         },
-        listSessions: function () {
-            sessionsController.listSessions();
+        listSessions: function (pageNumber, pageSize) {
+            sessionsController.listSessions(pageNumber, pageSize);
         },
         getSession: function (sessionId) {
             FormplayerFrontend.getChannel().request("getSession", sessionId);
@@ -94,7 +94,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             response.appId = urlObject.appId;
 
              if (response.notification) {
-                FormplayerFrontend.getChannel().request("handleNotification", response.notification);
+                FormplayerFrontend.trigger("handleNotification", response.notification);
              }
 
             // When the response gets parsed, it will automatically trigger form
@@ -148,7 +148,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             urlObject.setQueryData(undefined, false);
             urlObject.setForceManualAction(true);
         } else {
-            urlObject.addStep(index);
+            urlObject.addSelection(index);
             urlObject.setForceManualAction(false);
         }
         Util.setUrlToObject(urlObject);
@@ -210,9 +210,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.showDetail(caseId, detailTabIndex, isPersistent);
     });
 
-    FormplayerFrontend.on("sessions", function () {
-        FormplayerFrontend.navigate("/sessions");
-        API.listSessions();
+    FormplayerFrontend.on("sessions", function (pageNumber, pageSize) {
+        FormplayerFrontend.navigate("/sessions", pageNumber, pageSize);
+        API.listSessions(pageNumber, pageSize);
     });
 
     FormplayerFrontend.on("getSession", function (sessionId) {
@@ -227,11 +227,11 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
         FormplayerFrontend.trigger("clearForm");
         var urlObject = Util.currentUrlToObject();
-        urlObject.spliceSteps(index);
+        urlObject.spliceSelections(index);
         Util.setUrlToObject(urlObject);
         var options = {
             'appId': urlObject.appId,
-            'steps': urlObject.steps,
+            'selections': urlObject.selections,
             'queryData': urlObject.queryData,
         };
         hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(options);

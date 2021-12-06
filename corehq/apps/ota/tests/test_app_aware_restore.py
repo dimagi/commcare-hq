@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from datetime import datetime, timedelta
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.phone.models import SimplifiedSyncLog
 from casexml.apps.phone.tests.utils import (
@@ -24,9 +24,7 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_report_config,
     mock_datasource_config,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import Permissions, UserRole
-from corehq.util.test_utils import flag_enabled
+from corehq.apps.users.dbaccessors import delete_all_users
 
 
 class AppAwareSyncTests(TestCase):
@@ -154,35 +152,6 @@ class AppAwareSyncTests(TestCase):
                 self.assertEqual(len(reports), 1)
                 self.assertEqual(reports[0].attrib.get('id'), '123456')
                 self.domain_obj.default_mobile_ucr_sync_interval = None
-
-    @flag_enabled('ROLE_WEBAPPS_PERMISSIONS')
-    def test_report_fixtures_provider_with_cloudcare(self):
-        """
-        ReportFixturesProvider should iterate only allowed apps if sync is from cloudcare
-        """
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
-        role = UserRole(
-            domain=self.domain,
-            permissions=Permissions(
-                view_web_apps=False,
-                view_web_apps_list=[self.app1._id]
-            ),
-            name='WebApp Restricted'
-        )
-        role.save()
-        self.user._couch_user.set_role(self.domain, role.get_qualified_id())
-
-        with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
-            get_data_mock.return_value = self.rows
-            with mock_datasource_config():
-                fixtures = call_fixture_generator(
-                    report_fixture_generator,
-                    self.user,
-                    device_id="WebAppsLogin|user@project.commcarehq.org"
-                )
-        reports = self._get_fixture(fixtures, ReportFixturesProviderV1.id).findall('.//report')
-        self.assertEqual(len(reports), 1)
-        self.assertEqual(reports[0].attrib.get('id'), '123456')
 
     def test_report_fixtures_provider_with_app_that_doesnt_have_reports(self):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource

@@ -138,6 +138,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
             self.remove_user(user_id)  # no option to save
 
         assert set(self.users) == target_users
+        return users_to_add, users_to_remove
 
     def get_user_ids(self, is_active=True):
         return [user.user_id for user in self.get_users(is_active=is_active)]

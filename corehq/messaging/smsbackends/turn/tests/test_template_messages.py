@@ -36,3 +36,11 @@ class TurnWhatsAppTemplateTest(SimpleTestCase):
         self.assertEqual(parts.template_name, "template_name")
         self.assertEqual(parts.lang_code, "en-US")
         self.assertEqual(parts.params, [])
+
+        # Colons in parameters
+        parts = get_template_hsm_parts(
+            "cc_wa_template:template_name:en-US:{name of person: Snoopy},{address: 123 street}"
+        )
+        self.assertEqual(parts.template_name, "template_name")
+        self.assertEqual(parts.lang_code, "en-US")
+        self.assertEqual(parts.params, ["name of person: Snoopy", "address: 123 street"])

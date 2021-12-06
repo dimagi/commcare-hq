@@ -5,9 +5,7 @@ from corehq.apps.case_importer.tracking.permissions import (
     user_may_view_file_upload,
 )
 from corehq.apps.case_importer.tracking.task_status import TaskStatus
-from corehq.apps.users.dbaccessors.couch_users import (
-    get_display_name_for_user_id,
-)
+from corehq.apps.users.dbaccessors import get_display_name_for_user_id
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
 from dimagi.utils.parsing import json_format_datetime

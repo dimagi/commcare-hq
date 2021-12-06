@@ -1,6 +1,6 @@
 from django.test import TestCase
 from freezegun import freeze_time
-from mock import patch
+from unittest.mock import patch
 from testil import eq
 from corehq.util.soft_assert.core import SoftAssert
 
@@ -17,14 +17,14 @@ from corehq.form_processor.models import (
 )
 
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import sharded, FormProcessorTestUtils
 from corehq.util.test_utils import get_form_ready_to_save
 
 import uuid
 from datetime import datetime
 
 
-@use_sql_backend
+@sharded
 class SqlUpdateStrategyTest(TestCase):
     DOMAIN = 'update-strategy-test-' + uuid.uuid4().hex
     USER_ID = 'mr_wednesday_'

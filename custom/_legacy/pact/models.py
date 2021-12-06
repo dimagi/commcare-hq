@@ -1,9 +1,8 @@
 from django.utils.translation import ugettext as _
 import uuid
-from dateutil.parser import parser
 import json
 from casexml.apps.case.models import CommCareCase
-from couchforms.models import XFormInstance
+from corehq.apps.hqwebapp.templatetags.proptable_tags import DisplayConfig
 from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 from pact import enums
@@ -32,42 +31,6 @@ from dimagi.ext.couchdbkit import (
     SchemaListProperty,
     StringProperty,
 )
-
-dp = parser()
-
-
-class DOTSubmission(XFormInstance):
-
-    @property
-    def has_pillbox_check(self):
-        pillbox_check_str = self.form['pillbox_check'].get('check', '')
-        if len(pillbox_check_str) > 0:
-            pillbox_check_data = json.loads(pillbox_check_str)
-            anchor_date = dp.parse(pillbox_check_data.get('anchor', '0000-01-01'))
-        else:
-            anchor_date = datetime.min
-        # datetime already from couch
-        encounter_date = self.form['encounter_date']
-        return 'yes' if anchor_date.date() == encounter_date else 'no'
-
-    @property
-    def drilldown_url(self):
-        from pact.reports.dot import PactDOTReport
-        if 'case_id' in self.form['case']:
-            case_id = self.form['case'].get('case_id', None)
-        elif '@case_id' in self.form['case']:
-            case_id = self.form['case'].get('@case_id', None)
-        else:
-            case_id = None
-
-        if case_id is not None:
-            return PactDOTReport.get_url(*[PACT_DOMAIN]) + "?dot_patient=%s&submit_id=%s" % (case_id, self._id)
-        else:
-            return "#"
-        pass
-
-    class Meta(object):
-        app_label = 'pact'
 
 
 class PactPatientCase(CommCareCase):
@@ -316,22 +279,9 @@ class PactPatientCase(CommCareCase):
     @property
     def related_cases_columns(self):
         return [
-            {
-                'name': _('Status'),
-                'expr': "status",
-            },
-            {
-                'name': _('Follow-Up Date'),
-                'expr': "date_followup",
-                'parse_date': True,
-                'timeago': True,
-            },
-            {
-                'name': _('Date Modified'),
-                'expr': "modified_on",
-                'parse_date': True,
-                'timeago': True,
-            }
+            DisplayConfig(name=_('Status'), expr="status"),
+            DisplayConfig(name=_('Follow-Up Date'), expr="date_followup", process="date", timeago=True),
+            DisplayConfig(name=_('Date Modified'), expr="modified_on", process="date", timeago=True),
         ]
 
     @property
@@ -494,6 +444,3 @@ class CObservationAddendum(OldDocument):
 
     class Meta(object):
         app_label = 'pact'
-
-
-from .signals import *

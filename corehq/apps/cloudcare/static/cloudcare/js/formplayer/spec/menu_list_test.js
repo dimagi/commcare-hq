@@ -1,7 +1,8 @@
 /* global Backbone */
 /* eslint-env mocha */
 describe('Render a case list', function () {
-    var fixtures = hqImport("cloudcare/js/formplayer/spec/fixtures");
+    var fixtures = hqImport("cloudcare/js/formplayer/spec/fixtures"),
+        Util = hqImport("cloudcare/js/formplayer/utils/util");
 
     before(function () {
         hqImport("hqwebapp/js/initial_page_data").register(
@@ -10,6 +11,7 @@ describe('Render a case list', function () {
                 APP_ANALYTICS: true,
             }
         );
+        sinon.stub(Util, 'getCurrentQueryInputs').callsFake(function () { return {}; });
     });
 
     describe('#getMenuView', function () {

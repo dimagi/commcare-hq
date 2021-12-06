@@ -3,7 +3,7 @@ import itertools
 from django.test.testcases import SimpleTestCase
 from fakecouch import FakeCouchDb
 
-from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider, TooManyRetries
+from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider
 
 
 class TestArgsProvider(ArgsProvider):
@@ -40,12 +40,7 @@ class TestResumableFunctionIterator(SimpleTestCase):
             except IndexError:
                 return []
 
-        def item_getter(item_id):
-            if missing_items and item_id in missing_items:
-                return None
-            return int(item_id)
-
-        itr = ResumableFunctionIterator('test', data_provider, TestArgsProvider(), item_getter)
+        itr = ResumableFunctionIterator('test', data_provider, TestArgsProvider())
         itr.couch_db = self.couch_db
         return itr
 
@@ -58,6 +53,26 @@ class TestResumableFunctionIterator(SimpleTestCase):
         # stop/resume iteration
         self.itr = self.get_iterator()
         self.assertEqual([item for item in self.itr], self.all_items[3:])
+
+    def test_resume_iteration_after_exhaustion(self):
+        itr = iter(self.itr)
+        self.assertEqual(list(itr), self.all_items)
+        # resume iteration
+        self.batches.append([8, 9])
+        self.itr = self.get_iterator()
+        self.assertEqual(list(self.itr), [8, 9])
+
+    def test_resume_iteration_after_legacy_completion(self):
+        itr = iter(self.itr)
+        self.assertEqual(list(itr), self.all_items)
+        state = self.itr.state
+        state.complete = True
+        state.args = state.kwargs = None
+        self.itr._save_state()
+        # attempt to resume yields no new items
+        self.batches.append([8, 9])
+        self.itr = self.get_iterator()
+        self.assertEqual(list(self.itr), [])
 
     def test_resume_iteration_after_complete_iteration(self):
         self.assertEqual(list(self.itr), self.all_items)
@@ -85,48 +100,3 @@ class TestResumableFunctionIterator(SimpleTestCase):
         self.itr = self.get_iterator()
         self.assertEqual(self.itr.get_iterator_detail('progress'), {"visited": "six"})
         self.assertEqual([item for item in self.itr], self.all_items[3:])
-
-    def test_iteration_with_retry(self):
-        itr = iter(self.itr)
-        item = next(itr)
-        self.itr.retry(str(item))
-        self.assertEqual(item, 0)
-        self.assertEqual([0] + [d for d in itr],
-                         self.all_items + [0])
-
-    def test_iteration_complete_after_retry(self):
-        itr = iter(self.itr)
-        self.itr.retry(str(next(itr)))
-        list(itr)
-        self.itr = self.get_iterator()
-        self.assertEqual([item for item in self.itr], [])
-
-    def test_iteration_with_max_retry(self):
-        itr = iter(self.itr)
-        item = next(itr)
-        ids = [item]
-        self.assertEqual(item, 0)
-        self.itr.retry(str(item))
-        retries = 1
-        for item in itr:
-            ids.append(item)
-            if item == 0:
-                if retries < 3:
-                    self.itr.retry(str(item))
-                    retries += 1
-                else:
-                    break
-        self.assertEqual(item, 0)
-        with self.assertRaises(TooManyRetries):
-            self.itr.retry(str(item))
-        self.assertEqual(ids, self.all_items + [0, 0, 0])
-        self.assertEqual(list(itr), [])
-        self.assertEqual(list(self.get_iterator()), [])
-
-    def test_iteration_with_missing_retry_doc(self):
-        iterator = self.get_iterator(missing_items=["0"])
-        itr = iter(iterator)
-        item = next(itr)
-        self.assertEqual(item, 0)
-        iterator.retry(str(item))
-        self.assertEqual([0] + [d for d in itr], self.all_items)

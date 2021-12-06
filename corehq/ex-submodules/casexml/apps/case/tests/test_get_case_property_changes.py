@@ -12,7 +12,6 @@ from casexml.apps.case.util import (
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import RebuildWithReason
-from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class TestCasePropertyChanged(TestCase):
@@ -26,7 +25,6 @@ class TestCasePropertyChanged(TestCase):
         delete_all_xforms()
         delete_all_cases()
 
-    @run_with_all_backends
     def test_date_case_property_changed(self):
         updated_on = datetime(2015, 5, 3, 12, 11)
         # submit 2 updates
@@ -56,7 +54,6 @@ class TestCasePropertyChanged(TestCase):
             get_datetime_case_property_changed(case, "abc", "updated")
         )
 
-    @run_with_all_backends
     def test_multiple_cases_in_update(self):
         day_1 = datetime(2015, 5, 1, 12, 11)
         day_2 = datetime(2015, 5, 2, 12, 11)
@@ -100,7 +97,6 @@ class TestCasePropertyChanged(TestCase):
             get_datetime_case_property_changed(case, "relevant_property", "updated")
         )
 
-    @run_with_all_backends
     def test_owner_id_changed(self):
         changes, _ = get_paged_changes_to_case_property(self.case, 'owner_id')
         self.assertEqual(len(changes), 1)
@@ -122,7 +118,6 @@ class TestCasePropertyChanged(TestCase):
         self.assertEqual(changes[0].new_value, 'new_owner')
         self.assertEqual(changes[1].new_value, 'owner')
 
-    @run_with_all_backends
     def test_name_changed(self):
         self.factory.create_or_update_case(
             CaseStructure(
@@ -139,7 +134,6 @@ class TestCasePropertyChanged(TestCase):
         self.assertEqual(changes[0].new_value, 'Strider')
         self.assertEqual(changes[1].new_value, 'Aragorn')
 
-    @run_with_all_backends
     def test_blank_change(self):
         self.factory.create_or_update_case(
             CaseStructure(
@@ -156,7 +150,6 @@ class TestCasePropertyChanged(TestCase):
         self.assertEqual(changes[0].new_value, '')
         self.assertEqual(changes[1].new_value, 'Narsil')
 
-    @run_with_all_backends
     def test_case_rebuild(self):
         # Cases with rebuild actions were failing because rebuild actions have no form
         # https://manage.dimagi.com/default.asp?276216#1494409

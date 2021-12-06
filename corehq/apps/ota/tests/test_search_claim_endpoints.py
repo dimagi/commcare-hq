@@ -10,6 +10,7 @@ from flaky import flaky
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
+from corehq.util.test_utils import flag_enabled
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -26,7 +27,6 @@ from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case_search import CaseSearchReindexerFactory, domains_needing_search_index
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -62,32 +62,18 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {'term': {'domain.exact': 'swashbucklers'}},
-                        {"term": {"type.exact": "case_type"}},
+                        {'terms': {'domain.exact': ['swashbucklers']}},
+                        {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {
                             "bool": {
                                 "must_not": {
-                                    "term": {
-                                        "owner_id": "id1"
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "bool": {
-                                "must_not": {
-                                    "term": {
-                                        "owner_id": "id2"
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "bool": {
-                                "must_not": {
-                                    "term": {
-                                        "owner_id": "id3,id4"
+                                    "terms": {
+                                        "owner_id": [
+                                            "id1",
+                                            "id2",
+                                            "id3,id4"
+                                        ]
                                     }
                                 }
                             }
@@ -99,11 +85,15 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                     }
                 }
             },
+            "sort": [
+                "_score",
+                "_doc"
+            ],
             "size": CASE_SEARCH_MAX_RESULTS
         }
 
         self.checkQuery(
-            CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
+            CaseSearchCriteria(DOMAIN, ['case_type'], criteria).search_es,
             expected
         )
 
@@ -154,8 +144,8 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {'term': {'domain.exact': 'swashbucklers'}},
-                        {"term": {"type.exact": "case_type"}},
+                        {'terms': {'domain.exact': ['swashbucklers']}},
+                        {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {"match_all": {}}
                     ],
@@ -287,16 +277,21 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                     }
                 }
             },
+            "sort": [
+                "_score",
+                "_doc"
+            ],
             "size": CASE_SEARCH_MAX_RESULTS
         }
         self.checkQuery(
-            CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
+            CaseSearchCriteria(DOMAIN, ['case_type'], criteria).search_es,
             expected,
             validate_query=False
         )
 
 
 @es_test
+@flag_enabled("SYNC_SEARCH_CASE_CLAIM")
 class CaseClaimEndpointTests(TestCase):
     def setUp(self):
         self.domain = create_domain(DOMAIN)
@@ -322,12 +317,11 @@ class CaseClaimEndpointTests(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
         cache = get_redis_default_cache()
         cache.clear()
 
-    @run_with_all_backends
     def test_claim_case(self):
         """
         A claim case request should create an extension case
@@ -345,7 +339,6 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(claim.owner_id, self.user.get_id)
         self.assertEqual(claim.name, CASE_NAME)
 
-    @run_with_all_backends
     def test_duplicate_client_claim(self):
         """
         Server should not allow the same client to claim the same case more than once
@@ -361,7 +354,6 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
 
-    @run_with_all_backends
     def test_duplicate_user_claim(self):
         """
         Server should not allow the same user to claim the same case more than once
@@ -380,7 +372,6 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
 
     @flaky
-    @run_with_all_backends
     def test_claim_restore_as(self):
         """Server should assign cases to the correct user
         """
@@ -439,7 +430,6 @@ class CaseClaimEndpointTests(TestCase):
         claim_cases = CaseAccessors(DOMAIN).get_cases(claim_ids)
         self.assertIn(another_user._id, [case.owner_id for case in claim_cases])
 
-    @run_with_all_backends
     def test_search_endpoint(self):
         self.maxDiff = None
         client = Client()

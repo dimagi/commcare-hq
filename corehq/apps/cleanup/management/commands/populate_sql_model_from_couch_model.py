@@ -1,15 +1,24 @@
+import datetime
 import logging
+import os
 import sys
 import traceback
 
-from django.core.management.base import BaseCommand, CommandError
 from django.core.management import call_command
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types, get_doc_count_by_type
+from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
+from corehq.dbaccessors.couchapps.all_docs import (
+    get_all_docs_with_doc_types,
+    get_doc_count_by_type,
+    get_doc_count_by_domain_type
+)
 from corehq.util.couchdb_management import couch_config
-
-logger = logging.getLogger(__name__)
+from corehq.util.django_migrations import skip_on_fresh_install
+from corehq.util.log import with_progress_bar
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.migration import disable_sync_to_couch
 
 
 class PopulateSQLCommand(BaseCommand):
@@ -46,13 +55,26 @@ class PopulateSQLCommand(BaseCommand):
     def diff_couch_and_sql(cls, couch, sql):
         """
         This should compare each attribute of the given couch document and sql object.
-        Return a human-reaedable string describing their differences, or None if the
-        two are equivalent.
+        Return a list of human-reaedable strings describing their differences, or None if the
+        two are equivalent. The list may contain `None` or empty strings which will be filtered
+        out before display.
         """
         raise NotImplementedError()
 
     @classmethod
-    def diff_attr(cls, name, doc, obj, wrap_couch=None, wrap_sql=None):
+    def get_filtered_diffs(cls, couch, sql):
+        diffs = cls.diff_couch_and_sql(couch, sql)
+        if isinstance(diffs, list):
+            diffs = list(filter(None, diffs))
+        return diffs
+
+    @classmethod
+    def get_diff_as_string(cls, couch, sql):
+        diffs = cls.get_filtered_diffs(couch, sql)
+        return "\n".join(diffs) if diffs else None
+
+    @classmethod
+    def diff_attr(cls, name, doc, obj, wrap_couch=None, wrap_sql=None, name_prefix=None):
         """
         Helper for diff_couch_and_sql
         """
@@ -62,18 +84,26 @@ class PopulateSQLCommand(BaseCommand):
             couch = wrap_couch(couch) if couch is not None else None
         if wrap_sql:
             sql = wrap_sql(sql) if sql is not None else None
-        if couch != sql:
-            return f"{name}: couch value {couch!r} != sql value {sql!r}"
+        return cls.diff_value(name, couch, sql, name_prefix)
 
     @classmethod
-    def diff_lists(cls, docs, objects, attr_list):
+    def diff_value(cls, name, couch, sql, name_prefix=None):
+        if couch != sql:
+            name_prefix = "" if name_prefix is None else f"{name_prefix}."
+            return f"{name_prefix}{name}: couch value {couch!r} != sql value {sql!r}"
+
+    @classmethod
+    def diff_lists(cls, name, docs, objects, attr_list=None):
         diffs = []
         if len(docs) != len(objects):
-            diffs.append(f"{len(docs)} in couch != {len(attr_list)} in sql")
+            diffs.append(f"{name}: {len(docs)} in couch != {len(objects)} in sql")
         else:
             for couch_field, sql_field in list(zip(docs, objects)):
-                for attr in attr_list:
-                    diffs.append(cls.diff_attr(attr, couch_field, sql_field))
+                if attr_list:
+                    for attr in attr_list:
+                        diffs.append(cls.diff_attr(attr, couch_field, sql_field, name_prefix=name))
+                else:
+                    diffs.append(cls.diff_value(name, couch_field, sql_field))
         return diffs
 
     @classmethod
@@ -92,6 +122,7 @@ class PopulateSQLCommand(BaseCommand):
         return None
 
     @classmethod
+    @skip_on_fresh_install
     def migrate_from_migration(cls, apps, schema_editor):
         """
             Should only be called from within a django migration.
@@ -129,9 +160,9 @@ class PopulateSQLCommand(BaseCommand):
                 print(f"""
                 Run the following commands to run the migration and get up to date:
 
-                    commcare-cloud <env> deploy commcare --commcare-rev={cls.commit_adding_migration()}
+                    commcare-cloud <env> fab setup_limited_release --set code_branch={cls.commit_adding_migration()}
 
-                    commcare-cloud <env> django-manage {command_name}
+                    commcare-cloud <env> django-manage --release <release created by previous command> {command_name}
 
                     commcare-cloud <env> deploy commcare
                 """)
@@ -161,56 +192,100 @@ class PopulateSQLCommand(BaseCommand):
                 models that don't support verification.
             """,
         )
+        parser.add_argument(
+            '--domains',
+            nargs='+',
+            help="Only migrate documents in the specified domains",
+        )
+        parser.add_argument(
+            '--log-path',
+            help="File path to write logs to. If not provided a default will be used."
+        )
 
     def handle(self, **options):
+        log_path = options.get("log_path")
         verify_only = options.get("verify_only", False)
         skip_verify = options.get("skip_verify", False)
+
+        if not log_path:
+            date = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
+            command_name = self.__class__.__module__.split('.')[-1]
+            log_path = f"{command_name}_{date}.log"
+
+        if os.path.exists(log_path):
+            raise CommandError(f"Log file already exists: {log_path}")
 
         if verify_only and skip_verify:
             raise CommandError("verify_only and skip_verify are mutually exclusive")
 
-        self.doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
         self.diff_count = 0
-        self.doc_index = 0
+        doc_index = 0
 
-        logger.info("Found {} {} docs and {} {} models".format(
-            self.doc_count,
+        domains = options["domains"]
+        if domains:
+            doc_count = self._get_couch_doc_count_for_domains(domains)
+            sql_doc_count = self._get_sql_doc_count_for_domains(domains)
+            docs = self._iter_couch_docs_for_domains(domains)
+        else:
+            doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
+            sql_doc_count = self.sql_class().objects.count()
+            docs = get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()])
+
+        print(f"\n\nDetailed log output file: {log_path}")
+        print("Found {} {} docs and {} {} models".format(
+            doc_count,
             self.couch_doc_type(),
-            self.sql_class().objects.count(),
+            sql_doc_count,
             self.sql_class().__name__,
         ))
-        for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
-            self.doc_index += 1
-            if not verify_only:
-                self._migrate_doc(doc)
-            if not skip_verify:
-                self._verify_doc(doc, exit=not verify_only)
 
-        logger.info(f"Processed {self.doc_index} documents")
+        with open(log_path, 'w') as logfile:
+            for doc in with_progress_bar(docs, length=doc_count, oneline=False):
+                doc_index += 1
+                if not verify_only:
+                    self._migrate_doc(doc, logfile)
+                if not skip_verify:
+                    self._verify_doc(doc, logfile, exit=not verify_only)
+                if doc_index % 1000 == 0:
+                    print(f"Diff count: {self.diff_count}")
+
+        print(f"Processed {doc_index} documents")
         if not skip_verify:
-            logger.info(f"Found {self.diff_count} differences")
+            print(f"Found {self.diff_count} differences")
 
-    def _verify_doc(self, doc, exit=True):
+    def _verify_doc(self, doc, logfile, exit=True):
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
             obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
-            diff = self.diff_couch_and_sql(doc, obj)
+            diff = self.get_diff_as_string(doc, obj)
             if diff:
-                logger.info(f"Doc {getattr(obj, couch_id_name)} has differences:\n{diff}")
+                logfile.write(f"Doc {getattr(obj, couch_id_name)} has differences:\n{diff}\n")
                 self.diff_count += 1
                 if exit:
-                    sys.exit(1)
+                    raise CommandError(f"Doc verification failed for '{getattr(obj, couch_id_name)}'. Exiting.")
         except self.sql_class().DoesNotExist:
             pass    # ignore, the difference in total object count has already been displayed
 
-    def _migrate_doc(self, doc):
-        logger.info("Looking at {} doc #{} of {} with id {}".format(
-            self.couch_doc_type(),
-            self.doc_index,
-            self.doc_count,
-            doc["_id"]
-        ))
-        with transaction.atomic():
+    def _migrate_doc(self, doc, logfile):
+        with transaction.atomic(), disable_sync_to_couch(self.sql_class()):
             model, created = self.update_or_create_sql_object(doc)
             action = "Creating" if created else "Updated"
-            logger.info("{} model for doc with id {}".format(action, doc["_id"]))
+            logfile.write(f"{action} model for {self.couch_doc_type()} with id {doc['_id']}\n")
+
+    def _get_couch_doc_count_for_domains(self, domains):
+        return sum(
+            get_doc_count_by_domain_type(self.couch_db(), domain, self.couch_doc_type())
+            for domain in domains
+        )
+
+    def _get_sql_doc_count_for_domains(self, domains):
+        return self.sql_class().objects.filter(domain__in=domains).count()
+
+    def _iter_couch_docs_for_domains(self, domains):
+        for domain in domains:
+            print(f"Processing data for domain: {domain}")
+            doc_id_iter = iterate_doc_ids_in_domain_by_type(
+                domain, self.couch_doc_type(), database=self.couch_db()
+            )
+            for doc in iter_docs(self.couch_db(), doc_id_iter):
+                yield doc

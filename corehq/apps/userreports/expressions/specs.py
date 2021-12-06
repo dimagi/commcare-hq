@@ -31,6 +31,7 @@ from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.util.couch import get_db_by_doc_type
 
 from .utils import eval_statements
@@ -496,7 +497,10 @@ class RelatedDocExpressionSpec(JsonObject):
     value_expression = DictProperty(required=True)
 
     def configure(self, doc_id_expression, value_expression):
-        non_couch_doc_types = (LOCATION_DOC_TYPE,)
+        non_couch_doc_types = {
+            LOCATION_DOC_TYPE,
+            XFormInstanceSQL.STATE_TO_DOC_TYPE[XFormInstanceSQL.NORMAL],
+        }
         if (self.related_doc_type not in non_couch_doc_types
                 and get_db_by_doc_type(self.related_doc_type) is None):
             raise BadSpecError('Cannot determine database for document type {}!'.format(self.related_doc_type))

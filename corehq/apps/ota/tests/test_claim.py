@@ -8,9 +8,10 @@ from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.exceptions import CaseNotFound
 
 DOMAIN = 'test_domain'
 USERNAME = 'lina.stern@ras.ru'
@@ -29,13 +30,14 @@ class CaseClaimTests(TestCase):
         super(CaseClaimTests, self).setUp()
         self.domain = create_domain(DOMAIN)
         self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD, None, None)
+        self.restore_user = get_restore_user(DOMAIN, self.user, None)
         self.host_case_id = uuid4().hex
         self.host_case_name = 'Dmitri Bashkirov'
         self.host_case_type = 'person'
         self.create_case()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
         super(CaseClaimTests, self).tearDown()
 
@@ -65,34 +67,30 @@ class CaseClaimTests(TestCase):
             'relationship': 'extension',
         }])
 
-    @run_with_all_backends
     def test_claim_case(self):
         """
         claim_case should create an extension case
         """
-        claim_id = claim_case(DOMAIN, self.user.user_id, self.host_case_id,
+        claim_id = claim_case(DOMAIN, self.restore_user, self.host_case_id,
                               host_type=self.host_case_type, host_name=self.host_case_name)
         self.assert_claim(claim_id=claim_id)
 
-    @run_with_all_backends
     def test_claim_case_id_only(self):
         """
         claim_case should look up host case details if only ID is passed
         """
-        claim_id = claim_case(DOMAIN, self.user.user_id, self.host_case_id)
+        claim_id = claim_case(DOMAIN, self.restore_user, self.host_case_id)
         self.assert_claim(claim_id=claim_id)
 
-    @run_with_all_backends
     def test_first_claim_one(self):
         """
         get_first_claim should return one claim
         """
-        claim_id = claim_case(DOMAIN, self.user.user_id, self.host_case_id,
+        claim_id = claim_case(DOMAIN, self.restore_user, self.host_case_id,
                               host_type=self.host_case_type, host_name=self.host_case_name)
         claim = get_first_claim(DOMAIN, self.user.user_id, self.host_case_id)
         self.assert_claim(claim, claim_id)
 
-    @run_with_all_backends
     def test_first_claim_none(self):
         """
         get_first_claim should return None if not found
@@ -100,16 +98,24 @@ class CaseClaimTests(TestCase):
         claim = get_first_claim(DOMAIN, self.user.user_id, self.host_case_id)
         self.assertIsNone(claim)
 
-    @run_with_all_backends
     def test_closed_claim(self):
         """
         get_first_claim should return None if claim case is closed
         """
-        claim_id = claim_case(DOMAIN, self.user.user_id, self.host_case_id,
+        claim_id = claim_case(DOMAIN, self.restore_user, self.host_case_id,
                               host_type=self.host_case_type, host_name=self.host_case_name)
         self._close_case(claim_id)
         first_claim = get_first_claim(DOMAIN, self.user.user_id, self.host_case_id)
         self.assertIsNone(first_claim)
+
+    def test_claim_case_other_domain(self):
+        malicious_domain = 'malicious_domain'
+        domain_obj = create_domain(malicious_domain)
+        self.addCleanup(domain_obj.delete)
+        claim_id = claim_case(malicious_domain, self.restore_user, self.host_case_id,
+                              host_type=self.host_case_type, host_name=self.host_case_name)
+        with self.assertRaises(CaseNotFound):
+            CaseAccessors(malicious_domain).get_case(claim_id)
 
     def _close_case(self, case_id):
         case_block = CaseBlock.deprecated_init(

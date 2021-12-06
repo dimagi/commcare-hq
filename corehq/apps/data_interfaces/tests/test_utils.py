@@ -1,5 +1,8 @@
-from unittest.case import TestCase
+from datetime import datetime
 from unittest.mock import Mock, patch
+from uuid import uuid4
+
+from django.test import SimpleTestCase, TestCase
 
 from couchdbkit import ResourceNotFound
 
@@ -8,46 +11,60 @@ from corehq.apps.data_interfaces.tasks import (
     task_generate_ids_and_operate_on_payloads,
 )
 from corehq.apps.data_interfaces.utils import (
-    _validate_record,
+    _get_couch_repeat_record,
     operate_on_payloads,
 )
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.models import (
+    FormRepeater,
+    SQLRepeater,
+    RepeatRecord,
+    SQLRepeatRecord,
+)
+
+DOMAIN = 'test-domain'
 
 
-class TestUtils(TestCase):
+class TestUtils(SimpleTestCase):
 
     def test__get_ids_no_data(self):
-        response = _get_repeat_record_ids(None, None, 'test_domain')
+        response = _get_repeat_record_ids(None, None, 'test_domain', False)
         self.assertEqual(response, [])
 
-    @patch('corehq.apps.data_interfaces.tasks.get_repeat_records_by_payload_id')
-    @patch('corehq.apps.data_interfaces.tasks.iter_repeat_records_by_repeater')
-    def test__get_ids_payload_id_in_data(self, mock_iter_repeat_records_by_repeater,
-                                         mock_get_repeat_records_by_payload_id):
+    @patch('corehq.apps.data_interfaces.tasks.get_couch_repeat_record_ids_by_payload_id')
+    @patch('corehq.apps.data_interfaces.tasks.iter_repeat_record_ids_by_repeater')
+    def test__get_ids_payload_id_in_data(
+        self,
+        iter_by_repeater,
+        get_by_payload_id,
+    ):
         payload_id = Mock()
-        _get_repeat_record_ids(payload_id, None, 'test_domain')
+        _get_repeat_record_ids(payload_id, None, 'test_domain', False)
 
-        self.assertEqual(mock_get_repeat_records_by_payload_id.call_count, 1)
-        mock_get_repeat_records_by_payload_id.assert_called_with('test_domain', payload_id)
-        self.assertEqual(mock_iter_repeat_records_by_repeater.call_count, 0)
+        self.assertEqual(get_by_payload_id.call_count, 1)
+        get_by_payload_id.assert_called_with(
+            'test_domain', payload_id)
+        self.assertEqual(iter_by_repeater.call_count, 0)
 
-    @patch('corehq.apps.data_interfaces.tasks.get_repeat_records_by_payload_id')
-    @patch('corehq.apps.data_interfaces.tasks.iter_repeat_records_by_repeater')
+    @patch('corehq.apps.data_interfaces.tasks.get_couch_repeat_record_ids_by_payload_id')
+    @patch('corehq.apps.data_interfaces.tasks.iter_repeat_record_ids_by_repeater')
     def test__get_ids_payload_id_not_in_data(
         self,
-        mock_iter_repeat_records_by_repeater,
-        mock_get_repeat_records_by_payload_id,
+        iter_by_repeater,
+        get_by_payload_id,
     ):
         REPEATER_ID = 'c0ffee'
-        _get_repeat_record_ids(None, REPEATER_ID, 'test_domain')
+        _get_repeat_record_ids(None, REPEATER_ID, 'test_domain', False)
 
-        mock_get_repeat_records_by_payload_id.assert_not_called()
-        mock_iter_repeat_records_by_repeater.assert_called_with('test_domain', REPEATER_ID)
-        self.assertEqual(mock_iter_repeat_records_by_repeater.call_count, 1)
+        get_by_payload_id.assert_not_called()
+        iter_by_repeater.assert_called_with(
+            'test_domain', REPEATER_ID)
+        self.assertEqual(iter_by_repeater.call_count, 1)
 
     @patch('corehq.motech.repeaters.models.RepeatRecord')
     def test__validate_record_record_does_not_exist(self, mock_RepeatRecord):
         mock_RepeatRecord.get.side_effect = [ResourceNotFound]
-        response = _validate_record('id_1', 'test_domain')
+        response = _get_couch_repeat_record('test_domain', 'id_1')
 
         mock_RepeatRecord.get.assert_called_once()
         self.assertIsNone(response)
@@ -57,7 +74,7 @@ class TestUtils(TestCase):
         mock_payload = Mock()
         mock_payload.domain = 'domain'
         mock_RepeatRecord.get.return_value = mock_payload
-        response = _validate_record('id_1', 'test_domain')
+        response = _get_couch_repeat_record('test_domain', 'id_1')
 
         mock_RepeatRecord.get.assert_called_once()
         self.assertIsNone(response)
@@ -67,7 +84,7 @@ class TestUtils(TestCase):
         mock_payload = Mock()
         mock_payload.domain = 'test_domain'
         mock_RepeatRecord.get.return_value = mock_payload
-        response = _validate_record('id_1', 'test_domain')
+        response = _get_couch_repeat_record('test_domain', 'id_1')
 
         mock_RepeatRecord.get.assert_called_once()
         self.assertEqual(response, mock_payload)
@@ -76,235 +93,333 @@ class TestUtils(TestCase):
 class TestTasks(TestCase):
 
     def setUp(self):
-        self.mock_payload_one, self.mock_payload_two = Mock(id='id_1'), Mock(id='id_2')
-        self.mock_payload_ids = [self.mock_payload_one.id, self.mock_payload_two.id]
+        self.mock_payload_one = Mock(id='id_1')
+        self.mock_payload_two = Mock(id='id_2')
+        self.mock_payload_ids = [self.mock_payload_one.id,
+                                 self.mock_payload_two.id]
 
     @patch('corehq.apps.data_interfaces.tasks._get_repeat_record_ids')
     @patch('corehq.apps.data_interfaces.tasks.operate_on_payloads')
-    def test_generate_ids_and_operate_on_payloads_success(self, mock_operate_on_payloads, mock__get_ids):
+    def test_generate_ids_and_operate_on_payloads_success(
+        self,
+        mock_operate_on_payloads,
+        mock__get_ids,
+    ):
         payload_id = 'c0ffee'
         repeater_id = 'deadbeef'
         task_generate_ids_and_operate_on_payloads(
-            payload_id, repeater_id, 'test_domain', 'test_action')
+            payload_id, repeater_id, 'test_domain', 'test_action', False)
 
         mock__get_ids.assert_called_once()
-        mock__get_ids.assert_called_with('c0ffee', 'deadbeef', 'test_domain')
-        mock_record_ids = mock__get_ids('c0ffee', 'deadbeef', 'test_domain')
+        mock__get_ids.assert_called_with(
+            'c0ffee', 'deadbeef', 'test_domain', False)
+
+        mock_record_ids = mock__get_ids(
+            'c0ffee', 'deadbeef', 'test_domain', False)
         mock_operate_on_payloads.assert_called_once()
-        mock_operate_on_payloads.assert_called_with(mock_record_ids, 'test_domain', 'test_action',
-                                                    task=task_generate_ids_and_operate_on_payloads)
+        mock_operate_on_payloads.assert_called_with(
+            mock_record_ids, 'test_domain', 'test_action', False,
+            task=task_generate_ids_and_operate_on_payloads)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_no_task_from_excel_false_resend(self, mock__validate_record, mock_DownloadBase):
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_no_task_from_excel_false_resend(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'resend')
-            expected_response = {
-                'messages': {
-                    'errors': [],
-                    'success': [_('Successfully resend payload (id={})').format(self.mock_payload_one.id)],
-                    'success_count_msg': _("Successfully resend 1 form(s)")
-                }
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'resend', False)
+        expected_response = {
+            'messages': {
+                'errors': [],
+                'success': ['Successfully resent repeat record '
+                            f'(id={self.mock_payload_one.id})'],
+                'success_count_msg': "Successfully performed resend action on "
+                                     "1 form(s)",
             }
+        }
 
         self.assertEqual(mock_DownloadBase.set_progress.call_count, 0)
-        self._check_resend(self.mock_payload_one, self.mock_payload_two, response, expected_response)
+        self._check_resend(self.mock_payload_one, self.mock_payload_two,
+                           response, expected_response)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_no_task_from_excel_true_resend(self, mock__validate_record, mock_DownloadBase):
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_no_task_from_excel_true_resend(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'resend', from_excel=True)
-            expected_response = {
-                'errors': [],
-                'success': [_('Successfully resend payload (id={})').format(self.mock_payload_one.id)],
-            }
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'resend', False, from_excel=True)
+        expected_response = {
+            'errors': [],
+            'success': ['Successfully resent repeat record '
+                        f'(id={self.mock_payload_one.id})'],
+        }
 
         self.assertEqual(mock_DownloadBase.set_progress.call_count, 0)
-        self._check_resend(self.mock_payload_one, self.mock_payload_two, response, expected_response)
+        self._check_resend(self.mock_payload_one, self.mock_payload_two,
+                           response, expected_response)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_with_task_from_excel_false_resend(self, mock__validate_record, mock_DownloadBase):
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_with_task_from_excel_false_resend(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'resend', task=Mock())
-            expected_response = {
-                'messages': {
-                    'errors': [],
-                    'success': [_('Successfully resend payload (id={})').format(self.mock_payload_one.id)],
-                    'success_count_msg': _("Successfully resend 1 form(s)")
-                }
-            }
-
-        self.assertEqual(mock_DownloadBase.set_progress.call_count, 2)
-        self._check_resend(self.mock_payload_one, self.mock_payload_two, response, expected_response)
-
-    @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_with_task_from_excel_true_resend(self, mock__validate_record, mock_DownloadBase):
-        mock__validate_record.side_effect = [self.mock_payload_one, None]
-
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'resend', task=Mock(), from_excel=True)
-            expected_response = {
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'resend', False, task=Mock())
+        expected_response = {
+            'messages': {
                 'errors': [],
-                'success': [_('Successfully resend payload (id={})').format(self.mock_payload_one.id)],
+                'success': ['Successfully resent repeat record '
+                            f'(id={self.mock_payload_one.id})'],
+                'success_count_msg': 'Successfully performed resend action on '
+                                     '1 form(s)',
             }
+        }
 
         self.assertEqual(mock_DownloadBase.set_progress.call_count, 2)
-        self._check_resend(self.mock_payload_one, self.mock_payload_two, response, expected_response)
+        self._check_resend(self.mock_payload_one, self.mock_payload_two,
+                           response, expected_response)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_no_task_from_excel_false_cancel(self, mock__validate_record, mock_DownloadBase):
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_with_task_from_excel_true_resend(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'cancel')
-            expected_response = {
-                'messages': {
-                    'errors': [],
-                    'success': [_('Successfully cancelled payload (id={})').format(self.mock_payload_one.id)],
-                    'success_count_msg': _("Successfully cancel 1 form(s)")
-                }
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'resend', False, task=Mock(),
+                                       from_excel=True)
+        expected_response = {
+            'errors': [],
+            'success': ['Successfully resent repeat record '
+                        f'(id={self.mock_payload_one.id})'],
+        }
+
+        self.assertEqual(mock_DownloadBase.set_progress.call_count, 2)
+        self._check_resend(self.mock_payload_one, self.mock_payload_two,
+                           response, expected_response)
+
+    @patch('corehq.apps.data_interfaces.utils.DownloadBase')
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_no_task_from_excel_false_cancel(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
+        mock__validate_record.side_effect = [self.mock_payload_one, None]
+
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'cancel', False)
+        expected_response = {
+            'messages': {
+                'errors': [],
+                'success': ['Successfully cancelled repeat record '
+                            f'(id={self.mock_payload_one.id})'],
+                'success_count_msg': 'Successfully performed cancel action on '
+                                     '1 form(s)',
             }
+        }
 
         self.assertEqual(mock_DownloadBase.set_progress.call_count, 0)
-        self._check_cancel(self.mock_payload_one, self.mock_payload_two, response, expected_response)
+        self._check_cancel(self.mock_payload_one, self.mock_payload_two,
+                           response, expected_response)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_no_task_from_excel_true_cancel(self, mock__validate_record, mock_DownloadBase):
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_no_task_from_excel_true_cancel(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'cancel', from_excel=True)
-            expected_response = {
-                'errors': [],
-                'success': [_('Successfully cancelled payload (id={})').format(self.mock_payload_one.id)],
-            }
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'cancel', False, from_excel=True)
+        expected_response = {
+            'errors': [],
+            'success': ['Successfully cancelled repeat record '
+                        f'(id={self.mock_payload_one.id})'],
+        }
 
         self.assertEqual(mock_DownloadBase.set_progress.call_count, 0)
-        self._check_cancel(self.mock_payload_one, self.mock_payload_two, response, expected_response)
+        self._check_cancel(self.mock_payload_one, self.mock_payload_two,
+                           response, expected_response)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_with_task_from_excel_false_cancel(self, mock__validate_record, mock_DownloadBase):
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_with_task_from_excel_false_cancel(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'cancel', task=Mock())
-            expected_response = {
-                'messages': {
-                    'errors': [],
-                    'success': [_('Successfully cancelled payload (id={})').format(self.mock_payload_one.id)],
-                    'success_count_msg': _("Successfully cancel 1 form(s)")
-                }
-            }
-
-        self.assertEqual(mock_DownloadBase.set_progress.call_count, 2)
-        self._check_cancel(self.mock_payload_one, self.mock_payload_two, response, expected_response)
-
-    @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_with_task_from_excel_true_cancel(self, mock__validate_record, mock_DownloadBase):
-        mock__validate_record.side_effect = [self.mock_payload_one, None]
-
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'cancel', task=Mock(), from_excel=True)
-            expected_response = {
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'cancel', False, task=Mock())
+        expected_response = {
+            'messages': {
                 'errors': [],
-                'success': [_('Successfully cancelled payload (id={})').format(self.mock_payload_one.id)],
+                'success': ['Successfully cancelled repeat record '
+                            f'(id={self.mock_payload_one.id})'],
+                'success_count_msg': 'Successfully performed cancel action on '
+                                     '1 form(s)',
             }
+        }
 
         self.assertEqual(mock_DownloadBase.set_progress.call_count, 2)
-        self._check_cancel(self.mock_payload_one, self.mock_payload_two, response, expected_response)
+        self._check_cancel(self.mock_payload_one, self.mock_payload_two,
+                           response, expected_response)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_no_task_from_excel_false_requeue(self, mock__validate_record, mock_DownloadBase):
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_with_task_from_excel_true_cancel(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'requeue')
-            expected_response = {
-                'messages': {
-                    'errors': [],
-                    'success': [_('Successfully requeue payload (id={})').format(self.mock_payload_one.id)],
-                    'success_count_msg': _("Successfully requeue 1 form(s)")
-                }
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'cancel', False, task=Mock(),
+                                       from_excel=True)
+        expected_response = {
+            'errors': [],
+            'success': ['Successfully cancelled repeat record '
+                        f'(id={self.mock_payload_one.id})'],
+        }
+
+        self.assertEqual(mock_DownloadBase.set_progress.call_count, 2)
+        self._check_cancel(self.mock_payload_one, self.mock_payload_two,
+                           response, expected_response)
+
+    @patch('corehq.apps.data_interfaces.utils.DownloadBase')
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_no_task_from_excel_false_requeue(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
+        mock__validate_record.side_effect = [self.mock_payload_one, None]
+
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'requeue', False)
+        expected_response = {
+            'messages': {
+                'errors': [],
+                'success': ['Successfully requeued repeat record '
+                            f'(id={self.mock_payload_one.id})'],
+                'success_count_msg': 'Successfully performed requeue action '
+                                     'on 1 form(s)',
             }
+        }
 
         self.assertEqual(mock_DownloadBase.set_progress.call_count, 0)
-        self._check_requeue(self.mock_payload_one, self.mock_payload_two, response, expected_response)
+        self._check_requeue(self.mock_payload_one, self.mock_payload_two,
+                            response, expected_response)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_no_task_from_excel_true_requeue(self, mock__validate_record, mock_DownloadBase):
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_no_task_from_excel_true_requeue(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'requeue', from_excel=True)
-            expected_response = {
-                'errors': [],
-                'success': [_('Successfully requeue payload (id={})').format(self.mock_payload_one.id)],
-            }
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'requeue', False, from_excel=True)
+        expected_response = {
+            'errors': [],
+            'success': [f'Successfully requeued repeat record '
+                        f'(id={self.mock_payload_one.id})'],
+        }
 
         self.assertEqual(mock_DownloadBase.set_progress.call_count, 0)
-        self._check_requeue(self.mock_payload_one, self.mock_payload_two, response, expected_response)
+        self._check_requeue(self.mock_payload_one, self.mock_payload_two,
+                            response, expected_response)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_with_task_from_excel_false_requeue(self, mock__validate_record, mock_DownloadBase):
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_with_task_from_excel_false_requeue(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
         mock__validate_record.side_effect = [self.mock_payload_one, None]
 
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'requeue', task=Mock())
-            expected_response = {
-                'messages': {
-                    'errors': [],
-                    'success': [_('Successfully requeue payload (id={})').format(self.mock_payload_one.id)],
-                    'success_count_msg': _("Successfully requeue 1 form(s)")
-                }
-            }
-
-        self.assertEqual(mock_DownloadBase.set_progress.call_count, 2)
-        self._check_requeue(self.mock_payload_one, self.mock_payload_two, response, expected_response)
-
-    @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_with_task_from_excel_true_requeue(self, mock__validate_record, mock_DownloadBase):
-        mock__validate_record.side_effect = [self.mock_payload_one, None]
-
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'requeue', task=Mock(), from_excel=True)
-            expected_response = {
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'requeue', False, task=Mock())
+        expected_response = {
+            'messages': {
                 'errors': [],
-                'success': [_('Successfully requeue payload (id={})').format(self.mock_payload_one.id)],
+                'success': ['Successfully requeued repeat record '
+                            f'(id={self.mock_payload_one.id})'],
+                'success_count_msg': 'Successfully performed requeue action '
+                                     'on 1 form(s)',
             }
+        }
 
         self.assertEqual(mock_DownloadBase.set_progress.call_count, 2)
-        self._check_requeue(self.mock_payload_one, self.mock_payload_two, response, expected_response)
+        self._check_requeue(self.mock_payload_one, self.mock_payload_two,
+                            response, expected_response)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_throws_exception_resend(self, mock__validate_record, mock_DownloadBase):
-        mock__validate_record.side_effect = [self.mock_payload_one, self.mock_payload_two]
-        self.mock_payload_two.fire.side_effect = [Exception]
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_with_task_from_excel_true_requeue(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
+        mock__validate_record.side_effect = [self.mock_payload_one, None]
 
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'resend', task=Mock(), from_excel=True)
-            expected_response = {
-                'errors': [_("Could not perform action for payload (id={}): {}").format(self.mock_payload_two.id,
-                                                                                        Exception)],
-                'success': [_('Successfully requeue payload (id={})').format(self.mock_payload_one.id)],
-            }
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'requeue', False, task=Mock(),
+                                       from_excel=True)
+        expected_response = {
+            'errors': [],
+            'success': ['Successfully requeued repeat record '
+                        f'(id={self.mock_payload_one.id})'],
+        }
+
+        self.assertEqual(mock_DownloadBase.set_progress.call_count, 2)
+        self._check_requeue(self.mock_payload_one, self.mock_payload_two,
+                            response, expected_response)
+
+    @patch('corehq.apps.data_interfaces.utils.DownloadBase')
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_throws_exception_resend(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
+        mock__validate_record.side_effect = [self.mock_payload_one,
+                                             self.mock_payload_two]
+        self.mock_payload_two.fire.side_effect = [Exception('Boom!')]
+
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'resend', False, task=Mock(),
+                                       from_excel=True)
+        expected_response = {
+            'errors': ['Could not perform action for repeat record '
+                       f'(id={self.mock_payload_two.id}): Boom!'],
+            'success': ['Successfully resent repeat record '
+                        f'(id={self.mock_payload_one.id})'],
+        }
 
         self.assertEqual(mock_DownloadBase.set_progress.call_count, 3)
         self.assertEqual(self.mock_payload_one.fire.call_count, 1)
@@ -312,18 +427,25 @@ class TestTasks(TestCase):
         self.assertEqual(response, expected_response)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_throws_exception_cancel(self, mock__validate_record, mock_DownloadBase):
-        mock__validate_record.side_effect = [self.mock_payload_one, self.mock_payload_two]
-        self.mock_payload_two.cancel.side_effect = [Exception]
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_throws_exception_cancel(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
+        mock__validate_record.side_effect = [self.mock_payload_one,
+                                             self.mock_payload_two]
+        self.mock_payload_two.cancel.side_effect = [Exception('Boom!')]
 
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'cancel', task=Mock(), from_excel=True)
-            expected_response = {
-                'errors': [_("Could not perform action for payload (id={}): {}").format(self.mock_payload_two.id,
-                                                                                        Exception)],
-                'success': [_('Successfully cancelled payload (id={})').format(self.mock_payload_one.id)],
-            }
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'cancel', False, task=Mock(),
+                                       from_excel=True)
+        expected_response = {
+            'errors': ['Could not perform action for repeat record '
+                       f'(id={self.mock_payload_two.id}): Boom!'],
+            'success': ['Successfully cancelled repeat record '
+                        f'(id={self.mock_payload_one.id})'],
+        }
 
         self.assertEqual(mock_DownloadBase.set_progress.call_count, 3)
         self.assertEqual(self.mock_payload_one.cancel.call_count, 1)
@@ -333,18 +455,25 @@ class TestTasks(TestCase):
         self.assertEqual(response, expected_response)
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._validate_record')
-    def test_operate_on_payloads_throws_exception_requeue(self, mock__validate_record, mock_DownloadBase):
-        mock__validate_record.side_effect = [self.mock_payload_one, self.mock_payload_two]
-        self.mock_payload_two.requeue.side_effect = [Exception]
+    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    def test_operate_on_payloads_throws_exception_requeue(
+        self,
+        mock__validate_record,
+        mock_DownloadBase,
+    ):
+        mock__validate_record.side_effect = [self.mock_payload_one,
+                                             self.mock_payload_two]
+        self.mock_payload_two.requeue.side_effect = [Exception('Boom!')]
 
-        with patch('corehq.apps.data_interfaces.utils._') as _:
-            response = operate_on_payloads(self.mock_payload_ids, 'test_domain', 'requeue', task=Mock(), from_excel=True)
-            expected_response = {
-                'errors': [_("Could not perform action for payload (id={}): {}").format(self.mock_payload_two.id,
-                                                                                        Exception)],
-                'success': [_('Successfully requeue payload (id={})').format(self.mock_payload_one.id)],
-            }
+        response = operate_on_payloads(self.mock_payload_ids, 'test_domain',
+                                       'requeue', False, task=Mock(),
+                                       from_excel=True)
+        expected_response = {
+            'errors': ['Could not perform action for repeat record '
+                       f'(id={self.mock_payload_two.id}): Boom!'],
+            'success': ['Successfully requeued repeat record '
+                        f'(id={self.mock_payload_one.id})'],
+        }
 
         self.assertEqual(mock_DownloadBase.set_progress.call_count, 3)
         self.assertEqual(self.mock_payload_one.requeue.call_count, 1)
@@ -353,21 +482,112 @@ class TestTasks(TestCase):
         self.assertEqual(self.mock_payload_two.save.call_count, 0)
         self.assertEqual(response, expected_response)
 
-    def _check_resend(self, mock_payload_one, mock_payload_two, response, expected_response):
+    def _check_resend(self, mock_payload_one, mock_payload_two,
+                      response, expected_response):
         self.assertEqual(mock_payload_one.fire.call_count, 1)
         self.assertEqual(mock_payload_two.fire.call_count, 0)
         self.assertEqual(response, expected_response)
 
-    def _check_cancel(self, mock_payload_one, mock_payload_two, response, expected_response):
+    def _check_cancel(self, mock_payload_one, mock_payload_two,
+                      response, expected_response):
         self.assertEqual(mock_payload_one.cancel.call_count, 1)
         self.assertEqual(mock_payload_one.save.call_count, 1)
         self.assertEqual(mock_payload_two.cancel.call_count, 0)
         self.assertEqual(mock_payload_two.save.call_count, 0)
         self.assertEqual(response, expected_response)
 
-    def _check_requeue(self, mock_payload_one, mock_payload_two, response, expected_response):
+    def _check_requeue(self, mock_payload_one, mock_payload_two,
+                       response, expected_response):
         self.assertEqual(mock_payload_one.requeue.call_count, 1)
         self.assertEqual(mock_payload_one.save.call_count, 1)
         self.assertEqual(mock_payload_two.requeue.call_count, 0)
         self.assertEqual(mock_payload_two.save.call_count, 0)
         self.assertEqual(response, expected_response)
+
+
+class TestGetRepeatRecordIDs(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.instance_id = str(uuid4())
+        url = 'https://www.example.com/api/'
+        conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+        cls.repeater = FormRepeater(
+            domain=DOMAIN,
+            connection_settings_id=conn.id,
+            include_app_id_param=False,
+        )
+        cls.repeater.save()
+        cls.sql_repeater = SQLRepeater.objects.create(
+            domain=DOMAIN,
+            repeater_id=cls.repeater.get_id,
+            connection_settings=conn,
+        )
+        cls.create_repeat_records()
+
+    @classmethod
+    def tearDownClass(cls):
+        for record in cls.couch_records + cls.sql_records:
+            record.delete()
+        cls.sql_repeater.delete()
+        cls.repeater.delete()
+        super().tearDownClass()
+
+    @classmethod
+    def create_repeat_records(cls):
+        now = datetime.now()
+        cls.couch_records = []
+        cls.sql_records = []
+        for __ in range(3):
+            couch_record = RepeatRecord(
+                domain=DOMAIN,
+                repeater_id=cls.repeater._id,
+                repeater_type='FormRepeater',
+                payload_id=cls.instance_id,
+                registered_on=now,
+            )
+            couch_record.save()
+            cls.couch_records.append(couch_record)
+
+            cls.sql_records.append(SQLRepeatRecord.objects.create(
+                domain=DOMAIN,
+                couch_id=couch_record._id,
+                payload_id=cls.instance_id,
+                repeater=cls.sql_repeater,
+                registered_at=now,
+            ))
+
+    def test_no_payload_id_no_repeater_id_sql(self):
+        result = _get_repeat_record_ids(payload_id=None, repeater_id=None,
+                                        domain=DOMAIN, use_sql=True)
+        self.assertEqual(result, [])
+
+    def test_no_payload_id_no_repeater_id_couch(self):
+        result = _get_repeat_record_ids(payload_id=None, repeater_id=None,
+                                        domain=DOMAIN, use_sql=False)
+        self.assertEqual(result, [])
+
+    def test_payload_id_sql(self):
+        result = _get_repeat_record_ids(payload_id=self.instance_id,
+                                        repeater_id=None,
+                                        domain=DOMAIN, use_sql=True)
+        self.assertEqual(set(result), {r.pk for r in self.sql_records})
+
+    def test_payload_id_couch(self):
+        result = _get_repeat_record_ids(payload_id=self.instance_id,
+                                        repeater_id=None,
+                                        domain=DOMAIN, use_sql=False)
+        self.assertEqual(set(result), {r._id for r in self.couch_records})
+
+    def test_repeater_id_sql(self):
+        result = _get_repeat_record_ids(payload_id=None,
+                                        repeater_id=self.repeater._id,
+                                        domain=DOMAIN, use_sql=True)
+        self.assertEqual(set(result), {r.pk for r in self.sql_records})
+
+    def test_repeater_id_couch(self):
+        result = _get_repeat_record_ids(payload_id=None,
+                                        repeater_id=self.repeater._id,
+                                        domain=DOMAIN, use_sql=False)
+        self.assertEqual(set(result), {r._id for r in self.couch_records})

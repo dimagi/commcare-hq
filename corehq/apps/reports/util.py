@@ -2,12 +2,11 @@ import json
 import math
 import warnings
 from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime
 from importlib import import_module
 
 from django.conf import settings
 from django.http import Http404
-from django.utils import html, safestring
 from django.utils.translation import ugettext as _
 
 import pytz
@@ -22,7 +21,6 @@ from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
-from corehq.util.dates import iso_string_to_datetime
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -34,37 +32,12 @@ from .analytics.esaccessors import (
 from .models import HQUserType, TempCommCareUser
 
 
-def make_form_couch_key(domain, user_id=Ellipsis):
-    """
-        This sets up the appropriate query for couch based on common report parameters.
-
-        Note: Ellipsis is used as the default for user_id because
-        None is actually emitted as a user_id on occasion in couch
-    """
-    prefix = ["submission"]
-    key = [domain] if domain is not None else []
-    if user_id == "":
-        prefix.append('user')
-    elif user_id is not Ellipsis:
-        prefix.append('user')
-        key.append(user_id)
-    return [" ".join(prefix)] + key
-
-
 def user_list(domain):
     #referenced in filters.users.SelectMobileWorkerFilter
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
     users.sort(key=lambda user: (not user.is_active, user.username))
     return users
-
-
-def get_group(group='', **kwargs):
-    # refrenced in reports/views and create_export_filter below
-    if group:
-        if not isinstance(group, Group):
-            group = Group.get(group)
-    return group
 
 
 def get_all_users_by_domain(domain=None, group=None, user_ids=None,
@@ -217,13 +190,7 @@ def _report_user_dict(user):
                         else username)
         first = user.get('first_name', '')
         last = user.get('last_name', '')
-        full_name = ("%s %s" % (first, last)).strip()
-
-        def parts():
-            yield '%s' % html.escape(raw_username)
-            if full_name:
-                yield ' "%s"' % html.escape(full_name)
-        username_in_report = safestring.mark_safe(''.join(parts()))
+        username_in_report = _get_username_fragment(raw_username, first, last)
         info = SimplifiedUserInfo(
             user_id=user.get('_id', ''),
             username_in_report=username_in_report,
@@ -235,6 +202,17 @@ def _report_user_dict(user):
             group_ids = user['__group_ids']
             info.__group_ids = group_ids if isinstance(group_ids, list) else [group_ids]
         return info
+
+
+# TODO: This is very similar code to what exists in apps/users/util/user_display_string
+def _get_username_fragment(username, first='', last=''):
+    full_name = ("%s %s" % (first, last)).strip()
+
+    result = username
+    if full_name:
+        result = '{} "{}"'.format(result, full_name)
+
+    return result
 
 
 def get_simplified_users(user_es_query):
@@ -254,64 +232,6 @@ def format_datatables_data(text, sort_key, raw=None):
     if raw is not None:
         data['raw'] = raw
     return data
-
-
-def app_export_filter(doc, app_id):
-    if app_id:
-        return (doc['app_id'] == app_id) if 'app_id' in doc else False
-    elif app_id == '':
-        return (not doc['app_id']) if 'app_id' in doc else True
-    else:
-        return True
-
-
-def datespan_export_filter(doc, datespan):
-    if isinstance(datespan, dict):
-        datespan = DateSpan(**datespan)
-    try:
-        received_on = iso_string_to_datetime(doc['received_on']).replace(tzinfo=pytz.utc)
-    except Exception:
-        if settings.DEBUG:
-            raise
-        return False
-
-    if datespan.startdate <= received_on < (datespan.enddate + timedelta(days=1)):
-        return True
-    return False
-
-
-def case_users_filter(doc, users, groups=None):
-    for id_ in (doc.get('owner_id'), doc.get('user_id')):
-        if id_:
-            if id_ in users:
-                return True
-            if groups and id_ in groups:
-                return True
-    else:
-        return False
-
-
-def case_group_filter(doc, group):
-    if group:
-        user_ids = set(group.get_static_user_ids())
-        return doc.get('owner_id') == group._id or case_users_filter(doc, user_ids)
-    else:
-        return False
-
-
-def users_filter(doc, users):
-    try:
-        return doc['form']['meta']['userID'] in users
-    except KeyError:
-        return False
-
-
-def group_filter(doc, group):
-    if group:
-        user_ids = set(group.get_static_user_ids())
-        return users_filter(doc, user_ids)
-    else:
-        return True
 
 
 def get_possible_reports(domain_name):
@@ -393,7 +313,7 @@ def numcell(text, value=None, convert='int', raw=None):
             value = int(text) if convert == 'int' else float(text)
             if math.isnan(value):
                 text = '---'
-            elif not convert == 'int': # assume this is a percentage column
+            elif not convert == 'int':  # assume this is a percentage column
                 text = '%.f%%' % value
         except ValueError:
             value = text
@@ -474,6 +394,7 @@ class DatatablesParams(object):
     def __init__(self, count, start, desc, echo, search=None):
         self.count = count
         self.start = start
+        self.end = start + count
         self.desc = desc
         self.echo = echo
         self.search = search

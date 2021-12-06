@@ -15,6 +15,7 @@ Contributing:
 Additions to this file should be added to the ``builtin_filters`` method on
 either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 """
+from .utils import es_format_datetime
 
 
 def match_all():
@@ -67,10 +68,8 @@ def range_filter(field, gt=None, gte=None, lt=None, lte=None):
 
 
 def date_range(field, gt=None, gte=None, lt=None, lte=None):
-    """Range filter that accepts datetime objects as arguments"""
-    def format_date(date):
-        return date if isinstance(date, str) else date.isoformat()
-    params = [d if d is None else format_date(d) for d in [gt, gte, lt, lte]]
+    """Range filter that accepts date and datetime objects as arguments"""
+    params = [d if d is None else es_format_datetime(d) for d in [gt, gte, lt, lte]]
     return range_filter(field, *params)
 
 

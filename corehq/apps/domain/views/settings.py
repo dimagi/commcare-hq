@@ -322,6 +322,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "two_factor_auth": self.domain_object.two_factor_auth,
             "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
             "ga_opt_out": self.domain_object.ga_opt_out,
+            "restrict_mobile_access": self.domain_object.restrict_mobile_access,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
@@ -462,7 +463,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     def post(self, request, *args, **kwargs):
         for feature, enabled in self.features():
             self.update_feature(feature, enabled, feature.slug in request.POST)
-        feature_previews.previews_dict.clear(self.domain)
+        feature_previews.previews_enabled_for_domain.clear(self.domain)
 
         return redirect('feature_previews', domain=self.domain)
 

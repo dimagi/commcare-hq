@@ -6,7 +6,7 @@
         <% if (num == 1) { %>
             {% trans '1 Match Found' %}
         <% } else { %>
-            {% trans '<%= num %> Matches Found' %}
+            {% trans '<%- num %> Matches Found' %}
         <% } %>
     </span>
   <% } else { %>

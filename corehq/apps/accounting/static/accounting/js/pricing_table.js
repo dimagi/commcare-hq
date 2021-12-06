@@ -94,11 +94,10 @@ hqDefine('accounting/js/pricing_table', [
             self.form = $(e.currentTarget).closest("form");
 
             var invoicingContact = _.escape(self.invoicingContact);
-            var mailtoHtml = "<a href='mailto:" + invoicingContact + "'>" + invoicingContact + "</a>";
             if (self.isDowngrade() && self.subscriptionBelowMinimum) {
                 var oldPlan = utils.capitalize(self.oCurrentPlan());
                 var newPlan = utils.capitalize(self.oSelectedPlan());
-                var newStartDateHtml = "<strong>" + self.oStartDateAfterMinimumSubscription() + "</strong>";
+                var newStartDate = self.oStartDateAfterMinimumSubscription();
 
                 var message = "",
                     title = gettext("Downgrading?");
@@ -107,61 +106,61 @@ hqDefine('accounting/js/pricing_table', [
                     message = _.template(gettext(
                         "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
                         "<p>Continuing ahead will allow you to schedule your current <%- oldPlan %> " +
-                        "Edition Plan subscription to be paused on <%= dateHtml %>.</p>" +
+                        "Edition Plan subscription to be paused on <strong> <%- date %> </strong></p>" +
                         "<p>If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <%= emailHtml %>.</p>"
+                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
                     ))({
-                        dateHtml: newStartDateHtml,
+                        date: newStartDate,
                         newPlan: newPlan,
                         oldPlan: oldPlan,
-                        emailHtml: mailtoHtml,
+                        invoicingContact: invoicingContact,
                     });
                 } else if (self.oIsNextPlanPaused()) {
                     message = _.template(gettext(
                         "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
                         "<p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to be paused " +
-                        "on <%= dateHtml %>.</p>" +
+                        "on <strong> <%- date %> </strong></p>" +
                         "<p>Continuing ahead will allow you to schedule your current <%- oldPlan %> Edition " +
                         "Plan subscription to be downgraded to the <%- newPlan %> Edition Plan " +
-                        "on <%= dateHtml %>.</p>" +
+                        "on <strong> <%- date %> </strong></p>" +
                         "<p>If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <%= emailHtml %>.</p>"
+                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
                     ))({
                         oldPlan: oldPlan,
-                        dateHtml: newStartDateHtml,
+                        date: newStartDate,
                         newPlan: newPlan,
-                        emailHtml: mailtoHtml,
+                        invoicingContact: invoicingContact,
                     });
                 } else if (self.oIsNextPlanDowngrade()) {
                     message = _.template(gettext(
                         "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
                         "<p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to be downgraded " +
-                        "to the <%- nextSubscription %> Edition Plan on <%= dateHtml %>.</p>" +
+                        "to the <%- nextSubscription %> Edition Plan on <strong> <%- date %> </strong></p>" +
                         "<p>Continuing ahead will allow you to schedule your current <%- oldPlan %> Edition " +
                         "Plan subscription to be downgraded to the <%- newPlan %> Edition Plan " +
-                        "on <%= dateHtml %>.</p>" +
+                        "on <strong> <%- date %> </strong></p>" +
                         "<p>If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <%= emailHtml %>.</p>"
+                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
                     ))({
                         oldPlan: oldPlan,
                         nextSubscription: self.oNextSubscription(),
-                        dateHtml: newStartDateHtml,
+                        date: newStartDate,
                         newPlan: newPlan,
-                        emailHtml: mailtoHtml,
+                        invoicingContact: invoicingContact,
                     });
                 } else {
                     message = _.template(gettext(
                         "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
                         "<p>Continuing ahead will allow you to schedule your current <%- oldPlan %> Edition " +
                         "Plan subscription to be downgraded to the <%- newPlan %> Edition Plan " +
-                        "on <%= dateHtml %>.</p>" +
+                        "on <strong> <%- date %> </strong></p>" +
                         "If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <%= emailHtml %>."
+                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>."
                     ))({
                         oldPlan: oldPlan,
-                        dateHtml: newStartDateHtml,
+                        date: newStartDate,
                         newPlan: newPlan,
-                        emailHtml: mailtoHtml,
+                        invoicingContact: invoicingContact,
                     });
                 }
                 var $modal = $("#modal-minimum-subscription");

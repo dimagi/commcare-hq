@@ -34,7 +34,8 @@
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string",
-                            "null_value": ""
+                            "null_value": "",
+                            "ignore_above": 8191
                         },
                         "numeric": {
                             "type": "double",

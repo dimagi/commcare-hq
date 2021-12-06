@@ -10,7 +10,12 @@ from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models import Sum
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseRedirect,
+    HttpResponseForbidden,
+)
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
@@ -705,23 +710,14 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
                          'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails]))
             return json_response({'error': {'message': message}})
         amount = Decimal(request.POST.get('amount', 0))
+        general_credit = Decimal(request.POST.get('general_credit', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
-            wire_invoice_factory.create_wire_credits_invoice(self._get_items(request), amount)
+            wire_invoice_factory.create_wire_credits_invoice(amount, general_credit)
         except Exception as e:
             return json_response({'error': {'message': str(e)}})
 
         return json_response({'success': True})
-
-    @staticmethod
-    def _get_items(request):
-        if Decimal(request.POST.get('general_credit', 0)) > 0:
-            return [{
-                'type': 'General Credits',
-                'amount': Decimal(request.POST.get('general_credit', 0))
-            }]
-
-        return []
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
@@ -778,10 +774,18 @@ class WireInvoiceView(View):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        from corehq.apps.accounting.utils.subscription import get_account_or_404
         emails = request.POST.get('emails', []).split()
         balance = Decimal(request.POST.get('customPaymentAmount', 0))
-        account = get_account_or_404(request, request.domain)
+
+        from corehq.apps.accounting.utils.account import (
+            get_account_or_404,
+            request_has_permissions_for_enterprise_admin,
+        )
+        account = get_account_or_404(request.domain)
+        if (account.is_customer_billing_account
+                and not request_has_permissions_for_enterprise_admin(request, account)):
+            return HttpResponseForbidden()
+
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails, account=account)
         try:
             wire_invoice_factory.create_wire_invoice(balance)
@@ -828,8 +832,14 @@ class BillingStatementPdfView(View):
             raise Http404()
 
         if invoice.is_customer_invoice:
-            from corehq.apps.accounting.utils.subscription import get_account_or_404
-            account = get_account_or_404(request, domain)
+            from corehq.apps.accounting.utils.account import (
+                get_account_or_404,
+                request_has_permissions_for_enterprise_admin,
+            )
+            account = get_account_or_404(request.domain)
+            if not request_has_permissions_for_enterprise_admin(request, account):
+                return HttpResponseForbidden()
+
             filename = "%(pdf_id)s_%(account)s_%(filename)s" % {
                 'pdf_id': invoice_pdf._id,
                 'account': account,

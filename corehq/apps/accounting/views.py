@@ -16,7 +16,7 @@ from django.http import (
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from django.views.generic import View
@@ -1326,10 +1326,12 @@ class TriggerAutopaymentsView(BaseTriggerAccountingTestView):
             statements_url = reverse(DomainBillingStatementsView.urlname, args=[domain])
             messages.success(
                 request,
-                mark_safe(
-                    f'Successfully triggered autopayments for "{domain}",'
-                    f' please check <a href="{statements_url}">billing statements</a>'
-                    f' to confirm.'
+                format_html(
+                    'Successfully triggered autopayments for "{}",'
+                    ' please check <a href="{}">billing statements</a>'
+                    ' to confirm.',
+                    domain,
+                    statements_url
                 )
             )
             return HttpResponseRedirect(reverse(self.urlname))

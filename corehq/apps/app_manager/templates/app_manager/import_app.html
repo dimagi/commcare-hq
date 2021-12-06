@@ -9,7 +9,6 @@
 
 {% block js %}{{ block.super }}
   {% compress js %}
-    <script src="{% static 'hqwebapp/js/lib/compression.js' %}"></script>
     <script src="{% static 'app_manager/js/import_app.js' %}"></script>
   {% endcompress %}
 {% endblock %}
@@ -23,7 +22,7 @@
   <div class="appmanager-content-single-page">
     <h1>Import Application</h1>
     {% initial_page_data 'export_json' app.export_json %}
-    <form action="{% url "import_app" domain %}" id="app-import-form" method="post" data-bind="submit: save">
+    <form action="{% url "import_app" domain %}" id="app-import-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
       {% if app %}
         <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
@@ -32,20 +31,13 @@
         <div class="form-group">
           <label class="{% css_label_class %} control-label">Name</label>
           <div class="{% css_field_class %}">
-            <input class="form-control" type="text" name="name" data-bind="value: name"/>
+            <input class="form-control" type="text" name="name"/>
           </div>
         </div>
         <div class="form-group">
-          <label class="{% css_label_class %} control-label">Source</label>
+          <label for="source_file" class="{% css_label_class %} control-label">{% trans "Application Source File" %}</label>
           <div class="{% css_field_class %}">
-                        <textarea
-                          name="source"
-                          class="form-control"
-                          placeholder="Paste application definition here"
-                          data-bind="value: source"
-                          spellcheck="false"
-                          rows="5"
-                        ></textarea>
+            <input id="source_file" type="file" name="source_file" data-bind="value: file"/>
           </div>
         </div>
         <div class="form-actions">

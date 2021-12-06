@@ -111,6 +111,9 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             String(Math.random()).slice(2),
             gettext("Profile")
         );
+        self.fields.on("change", function () {
+            $(":submit").prop("disabled", false);
+        });
         self.fields.val(options.fields);
         self.$fields = self.fields.ui;
 
@@ -247,10 +250,6 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             $("#save-custom-fields").prop("disabled", false);
         }).on("input", null, null, function () {
             $("#save-custom-fields").prop("disabled", false);
-        });
-
-        $('.modal-footer button').on("click", function () {
-            $(":submit").prop("disabled", false);
         });
     });
 });

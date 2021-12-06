@@ -1,7 +1,6 @@
 {% load menu_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load tzmigration %}
 
 {% if request.couch_user %}
 <ul class="nav navbar-nav" role="menu">
@@ -37,7 +36,7 @@
                 <li class="dropdown-header nav-header">{% trans 'Manage Enterprise' %}</li>
                 <li>
                     <a href="{% url "enterprise_dashboard" domain %}">
-                        <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "Enterprise Dashboard" %}
+                        <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "Enterprise Console" %}
                     </a>
                 </li>
                 {% endif %}

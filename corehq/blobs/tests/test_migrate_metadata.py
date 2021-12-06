@@ -32,14 +32,6 @@ class TestMigrateBackend(TestCase):
         "CommCareImage": mod.hqmedia.CommCareImage,
         "CommCareVideo": mod.hqmedia.CommCareVideo,
         "CommCareMultimedia": mod.hqmedia.CommCareMultimedia,
-        "XFormInstance": mod.xform.XFormInstance,
-        "XFormInstance-Deleted": mod.xform.XFormInstance,
-        "XFormArchived": mod.xform.XFormArchived,
-        "XFormDeprecated": mod.xform.XFormDeprecated,
-        "XFormDuplicate": mod.xform.XFormDuplicate,
-        "XFormError": mod.xform.XFormError,
-        "SubmissionErrorLog": mod.xform.SubmissionErrorLog,
-        "HQSubmission": mod.xform.XFormInstance,
         "CommCareCase": mod.cases.CommCareCase,
         'CommCareCase-deleted': mod.cases.CommCareCase,
         'CommCareCase-Deleted': mod.cases.CommCareCase,
@@ -63,13 +55,14 @@ class TestMigrateBackend(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestMigrateBackend, cls).setUpClass()
-        cls.user = mod.CommCareUser(username="testuser", domain="test")
+        cls.domain = "test"
+        cls.user = mod.CommCareUser(username="testuser", domain=cls.domain)
         cls.user.save()
         assert cls.user._id, cls.user
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         super(TestMigrateBackend, cls).tearDownClass()
 
     def CaseUploadFileMeta_save(self, obj, key):

@@ -3,7 +3,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.messaging.templating import MessagingTemplateRenderer, CaseMessagingTemplateParam
 from corehq.util.test_utils import create_test_case, set_parent_case
 from django.test import TestCase
@@ -61,8 +60,8 @@ class TemplatingTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.mobile_user.delete(deleted_by=None)
-        cls.web_user.delete(deleted_by=None)
+        cls.mobile_user.delete(cls.domain, deleted_by=None)
+        cls.web_user.delete(cls.domain, deleted_by=None)
         cls.group.delete()
         cls.location.delete()
         cls.location_type.delete()
@@ -82,7 +81,6 @@ class TemplatingTestCase(TestCase):
         return create_test_case(self.domain, 'parent', 'P001', case_properties={'parent_prop1': 'abc'},
             owner_id=owner.get_id, user_id=modified_by.get_id)
 
-    @run_with_all_backends
     def test_case_template_params(self):
         with self.create_child_case() as case:
             r = MessagingTemplateRenderer()
@@ -121,7 +119,6 @@ class TemplatingTestCase(TestCase):
                 "Unknown param: (?)"
             )
 
-    @run_with_all_backends
     def test_parent_case_template_params(self):
         with self.create_child_case() as child_case, self.create_parent_case() as parent_case:
             set_parent_case(self.domain, child_case, parent_case)
@@ -151,7 +148,6 @@ class TemplatingTestCase(TestCase):
                 "No host case: (?)"
             )
 
-    @run_with_all_backends
     def test_host_case_template_params(self):
         with self.create_child_case() as extension_case, self.create_parent_case() as host_case:
             set_parent_case(self.domain, extension_case, host_case, relationship='extension')
@@ -181,7 +177,6 @@ class TemplatingTestCase(TestCase):
                 "No parent case: (?)"
             )
 
-    @run_with_all_backends
     def test_owner_template_params(self):
         r = MessagingTemplateRenderer()
 
@@ -216,7 +211,6 @@ class TemplatingTestCase(TestCase):
             self.assertEqual(r.render("Unknown: {case.owner.unknown}"), "Unknown: (?)")
             self.assertEqual(r.render("Unknown: {case.owner.unknown.unknown}"), "Unknown: (?)")
 
-    @run_with_all_backends
     def test_modified_by_template_params(self):
         r = MessagingTemplateRenderer()
 

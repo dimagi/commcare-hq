@@ -16,6 +16,9 @@ from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
 # https://www.twilio.com/docs/api/errors/reference
 INVALID_TO_PHONE_NUMBER_ERROR_CODE = 21211
 WHATSAPP_LIMITATION_ERROR_CODE = 63032
+TO_FROM_BLACKLIST_ERROR_CODE = 21610
+REGION_PERMISSION_ERROR_CODE = 21408
+MESSAGE_BODY_REQUIRED_ERROR_CODE = 21602
 
 WHATSAPP_PREFIX = "whatsapp:"
 WHATSAPP_SANDBOX_PHONE_NUMBER = "14155238886"
@@ -104,6 +107,15 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
                 notify_exception(None, f"Error with Twilio Whatsapp: {e}")
                 kwargs['skip_whatsapp'] = True
                 self.send(msg, orig_phone_number, *args, **kwargs)
+            elif e.code == TO_FROM_BLACKLIST_ERROR_CODE:
+                msg.set_gateway_error("Message From/To pair violates a gateway blacklist rule")
+                return
+            elif e.code == REGION_PERMISSION_ERROR_CODE:
+                msg.set_gateway_error("Destination region not enabled for this backend.")
+                return
+            elif e.code == MESSAGE_BODY_REQUIRED_ERROR_CODE:
+                msg.set_gateway_error("Message body is required.")
+                return
             else:
                 raise
 

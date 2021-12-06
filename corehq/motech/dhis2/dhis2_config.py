@@ -46,6 +46,7 @@ class Dhis2FormConfig(DocumentSchema):
     })
     completed_date = DictProperty(required=False)
     datavalue_maps = SchemaListProperty(FormDataValueMap)
+    event_location = DictProperty(required=False, default={})
 
     @classmethod
     def wrap(cls, data):
@@ -68,6 +69,19 @@ class FinderConfig(DocumentSchema):
     confidence_margin = DecimalProperty(default=0.5)
 
 
+class RelationshipConfig(DocumentSchema):
+    """
+    Used for mapping case indices to DHIS2 relationship types.
+
+    See casexml.apps.case.sharedmodels.CommCareCaseIndex
+    """
+    identifier = StringProperty()
+    referenced_type = StringProperty()
+    relationship = StringProperty(default='child', choices=['child', 'extension'])
+    subcase_to_supercase_dhis2_id = StringProperty(default='')
+    supercase_to_subcase_dhis2_id = StringProperty(default='')
+
+
 class Dhis2CaseConfig(DocumentSchema):
     """
     A Dhis2CaseConfig maps a case type to a tracked entity type.
@@ -76,6 +90,9 @@ class Dhis2CaseConfig(DocumentSchema):
 
     # The ID of the Tracked Entity type. e.g. the ID of "Person"
     te_type_id = StringProperty()
+
+    # CommCare case indices to export as DHIS2 relationships
+    relationships_to_export = SchemaListProperty(RelationshipConfig)
 
     # The case property to store the ID of the corresponding Tracked
     # Entity instance. If this is not set, MOTECH will search for a

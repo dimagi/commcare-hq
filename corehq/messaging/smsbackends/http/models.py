@@ -2,91 +2,17 @@ import ssl
 import sys
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
-from django.forms.fields import BooleanField, ChoiceField
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
 
 import six
-from crispy_forms import layout as crispy
 from six.moves.urllib.parse import urlencode
 from six.moves.urllib.request import urlopen
 
-from dimagi.utils.django.fields import TrimmedCharField
-
-from corehq.apps.reminders.forms import RecordListField
-from corehq.apps.sms.forms import BackendForm
 from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number, strip_plus
-from corehq.util.validation import is_url_or_host_banned
+from corehq.messaging.smsbackends.http.sms_sending import verify_sms_url
 
-
-class HttpBackendForm(BackendForm):
-    url = TrimmedCharField(
-        label=ugettext_noop("URL"),
-    )
-    message_param = TrimmedCharField(
-        label=ugettext_noop("Message Parameter"),
-    )
-    number_param = TrimmedCharField(
-        label=ugettext_noop("Phone Number Parameter"),
-    )
-    include_plus = BooleanField(
-        required=False,
-        label=ugettext_noop("Include '+' in Phone Number"),
-    )
-    method = ChoiceField(
-        label=ugettext_noop("HTTP Request Method"),
-        choices=(
-            ("GET", "GET"),
-            ("POST", "POST")
-        ),
-    )
-    additional_params = RecordListField(
-        input_name="additional_params",
-        label=ugettext_noop("Additional Parameters"),
-    )
-
-    def __init__(self, *args, **kwargs):
-        if "initial" in kwargs and "additional_params" in kwargs["initial"]:
-            additional_params_dict = kwargs["initial"]["additional_params"]
-            kwargs["initial"]["additional_params"] = [
-                {"name": key, "value": value}
-                for key, value in additional_params_dict.items()
-            ]
-        super(HttpBackendForm, self).__init__(*args, **kwargs)
-
-    def clean_url(self):
-        value = self.cleaned_data.get("url")
-        if is_url_or_host_banned(value):
-            raise ValidationError(_("Invalid URL"))
-        return value
-
-    def clean_additional_params(self):
-        value = self.cleaned_data.get("additional_params")
-        result = {}
-        for pair in value:
-            name = pair["name"].strip()
-            value = pair["value"].strip()
-            if name == "" or value == "":
-                raise ValidationError("Please enter both name and value.")
-            if name in result:
-                raise ValidationError("Parameter name entered twice: %s" % name)
-            result[name] = value
-        return result
-
-    @property
-    def gateway_specific_fields(self):
-        return crispy.Fieldset(
-            _("HTTP Settings"),
-            'url',
-            'method',
-            'message_param',
-            'number_param',
-            'include_plus',
-            'additional_params',
-        )
+from .forms import HttpBackendForm
 
 
 class SQLHttpBackend(SQLSMSBackend):
@@ -139,6 +65,8 @@ class SQLHttpBackend(SQLSMSBackend):
 
         params[config.message_param] = self._encode_http_message(msg.text)
         params[config.number_param] = phone_number
+
+        verify_sms_url(config.url, msg, backend=self)
 
         url_params = urlencode(params)
         try:

@@ -65,6 +65,8 @@ session variables.
 
 When we add a child module into the mix we need to make sure that the session variables for the child module forms match
 those of the parent in two ways, matching session variable names and adding in any missing variables.
+HQ will also update the references in expressions to match the changes in variable names.
+See ``corehq.apps.app_manager.suite_xml.sections.entries.EntriesHelper.add_parent_datums`` for implementation.
 
 Matching session variable names
 ...............................
@@ -91,6 +93,12 @@ to select the mother case again:
 
     case_id:            load mother case
     case_id_child:      load child case
+
+
+**Note:**
+If you have a case_id in both module A and module B, and you wish to access the ID of the case selected in
+parent module within an expression like the case list filter, then you should use ``parent_id``
+instead of ``case_id``
 
 Inserting missing variables
 ...........................
@@ -240,8 +248,8 @@ Legacy Child Shadow Behaviour
 
 Prior to August 2020 shadow modules whose source was a parent had inconsistent behaviour.
 
-The child-shadows were not treated in the same manner as other shadows - they inherited everything from their source, which meant they could never have their own case list filter, and were not shown in the UI. This was confusing. A side-effect of this was that display-only forms were not correctly interpreted by the phone.
+The child-shadows were not treated in the same manner as other shadows - they inherited everything from their source, which meant they could never have their own case list filter, and were not shown in the UI. This was confusing. A side-effect of this was that display-only forms were not correctly interpreted by the phone. The ordering of child shadow modules also used to be somewhat arbitrary, and so some app builders had to find workarounds to get the ordering they wanted. Now in V2, what you see is what you get.
 
-Legacy (V1) style shadow modules that have children can be updated to the new behaviour by clicking "Upgrade" on the settings page. This will create any shadow-children, as required. You can undo this action by reverting to a previous build.
+Legacy (V1) style shadow modules that have children can be updated to the new behaviour by clicking "Upgrade" on the settings page. This will create any real new shadow-children, as required. This will potentially rename the identifier for all subsequent modules (i.e. `m3` might become `m4` if a child module is added above it), which could lead to issues if you have very custom XML references to these modules anywhere. It might also change the ordering of your child shadow modules since prior to V2, ordering was inconsistent. All of these things should be easily testable once you upgrade. You can undo this action by reverting to a previous build.
 
 If the old behaviour is desired for any reason, there is a feature flag "V1 Shadow Modules" that allows you to make old-style modules.

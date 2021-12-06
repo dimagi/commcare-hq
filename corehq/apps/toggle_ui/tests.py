@@ -1,12 +1,14 @@
 import uuid
 from decimal import Decimal
+from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.toggle_ui.models import ToggleAudit
-from corehq.toggles import NAMESPACE_USER, NAMESPACE_DOMAIN
+from corehq.apps.toggle_ui.views import _clear_cache_for_toggle
+from corehq.toggles import NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_OTHER, NAMESPACE_EMAIL_DOMAIN
 from toggle.models import Toggle
 
 from corehq.apps.toggle_ui.migration_helpers import move_toggles
@@ -86,3 +88,38 @@ class TestToggleAudit(TestCase):
         self.assertEqual(1, len(randomness))
         self.assertEqual(randomness[0].username, "username1")
         self.assertAlmostEqual(randomness[0].randomness, Decimal(0.001))
+
+
+class TestClearCacheForToggle(SimpleTestCase):
+
+    def test_clear_cache_for_domain_namespace(self):
+        with patch('corehq.apps.toggle_ui.views.toggles_enabled_for_domain.clear') as domain_mock,\
+             patch('corehq.apps.toggle_ui.views.toggles_enabled_for_user.clear') as user_mock:
+            _clear_cache_for_toggle(NAMESPACE_DOMAIN, 'test-domain')
+            self.assertEqual(1, domain_mock.call_count)
+            self.assertEqual(0, user_mock.call_count)
+
+    def test_clear_cache_for_user_namespace(self):
+        with patch('corehq.apps.toggle_ui.views.toggles_enabled_for_domain.clear') as domain_mock,\
+             patch('corehq.apps.toggle_ui.views.toggles_enabled_for_user.clear') as user_mock:
+            _clear_cache_for_toggle(NAMESPACE_USER, 'testuser')
+            self.assertEqual(0, domain_mock.call_count)
+            self.assertEqual(1, user_mock.call_count)
+
+    def test_clear_cache_for_other_namespace(self):
+        with patch('corehq.apps.toggle_ui.views.toggles_enabled_for_domain.clear') as domain_mock,\
+             patch('corehq.apps.toggle_ui.views.toggles_enabled_for_user.clear') as user_mock:
+            _clear_cache_for_toggle(NAMESPACE_OTHER, 'testother')
+            self.assertEqual(0, domain_mock.call_count)
+            self.assertEqual(1, user_mock.call_count)
+
+    def test_clear_cache_for_email_namespace(self):
+        with patch('corehq.apps.toggle_ui.views.toggles_enabled_for_domain.clear') as domain_mock,\
+             patch('corehq.apps.toggle_ui.views.toggles_enabled_for_user.clear') as user_mock:
+            _clear_cache_for_toggle(NAMESPACE_EMAIL_DOMAIN, 'testemaildomain')
+            self.assertEqual(0, domain_mock.call_count)
+            self.assertEqual(0, user_mock.call_count)
+
+    def test_clear_cache_raises_exception_for_colon_in_non_domain_namespaces(self):
+        with self.assertRaises(AssertionError):
+            _clear_cache_for_toggle(NAMESPACE_USER, 'testuser:test')

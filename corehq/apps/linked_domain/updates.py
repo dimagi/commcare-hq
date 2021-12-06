@@ -1,10 +1,17 @@
 from copy import copy
+from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
 
 from django.utils.translation import ugettext as _
+from django.db import transaction
 
 from toggle.shortcuts import set_toggle
 
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
+    ClosedParentDefinition, CustomActionDefinition,
+    CustomMatchDefinition, MatchPropertyDefinition, UpdateCaseDefinition
+)
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
@@ -28,11 +35,13 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.const import (
+    MODEL_AUTO_UPDATE_RULES,
     MODEL_CASE_SEARCH,
     MODEL_FIXTURE,
     MODEL_FLAGS,
     MODEL_KEYWORD,
     MODEL_LOCATION_DATA,
+    MODEL_PREVIEWS,
     MODEL_PRODUCT_DATA,
     MODEL_USER_DATA,
     MODEL_REPORT,
@@ -41,24 +50,31 @@ from corehq.apps.linked_domain.const import (
     MODEL_DIALER_SETTINGS,
     MODEL_OTP_SETTINGS,
     MODEL_HMAC_CALLOUT_SETTINGS,
+    MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS,
 )
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
+from corehq.apps.linked_domain.local_accessors import \
+    get_enabled_previews as local_enabled_previews
+from corehq.apps.linked_domain.local_accessors import \
+    get_enabled_toggles as local_enabled_toggles
 from corehq.apps.linked_domain.local_accessors import \
     get_custom_data_models as local_custom_data_models
 from corehq.apps.linked_domain.local_accessors import \
     get_fixture as local_fixture
 from corehq.apps.linked_domain.local_accessors import \
-    get_toggles_previews as local_toggles_previews
-from corehq.apps.linked_domain.local_accessors import \
     get_user_roles as local_get_user_roles
 from corehq.apps.linked_domain.local_accessors import \
     get_data_dictionary as local_get_data_dictionary
+from corehq.apps.linked_domain.local_accessors import \
+    get_tableau_server_and_visualizations as local_get_tableau_server_and_visualizations
 from corehq.apps.linked_domain.local_accessors import \
     get_dialer_settings as local_get_dialer_settings
 from corehq.apps.linked_domain.local_accessors import \
     get_otp_settings as local_get_otp_settings
 from corehq.apps.linked_domain.local_accessors import \
     get_hmac_callout_settings as local_get_hmac_callout_settings
+from corehq.apps.linked_domain.local_accessors import \
+    get_auto_update_rules as local_get_auto_update_rules
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
@@ -72,11 +88,15 @@ from corehq.apps.linked_domain.remote_accessors import \
 from corehq.apps.linked_domain.remote_accessors import \
     get_data_dictionary as remote_get_data_dictionary
 from corehq.apps.linked_domain.remote_accessors import \
+    get_tableau_server_and_visualizations as remote_get_tableau_server_and_visualizations
+from corehq.apps.linked_domain.remote_accessors import \
     get_dialer_settings as remote_get_dialer_settings
 from corehq.apps.linked_domain.remote_accessors import \
     get_otp_settings as remote_get_otp_settings
 from corehq.apps.linked_domain.remote_accessors import \
     get_hmac_callout_settings as remote_get_hmac_callout_settings
+from corehq.apps.linked_domain.remote_accessors import \
+    get_auto_update_rules as remote_get_auto_update_rules
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.keywords import update_keyword
 from corehq.apps.locations.views import LocationFieldsView
@@ -86,15 +106,17 @@ from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
 )
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models import UserRole, Permissions
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN
 
 
 def update_model_type(domain_link, model_type, model_detail=None):
     update_fn = {
+        MODEL_AUTO_UPDATE_RULES: update_auto_update_rules,
         MODEL_FIXTURE: update_fixture,
-        MODEL_FLAGS: update_toggles_previews,
+        MODEL_FLAGS: update_toggles,
+        MODEL_PREVIEWS: update_previews,
         MODEL_ROLES: update_user_roles,
         MODEL_LOCATION_DATA: partial(update_custom_data_models, limit_types=[LocationFieldsView.field_type]),
         MODEL_PRODUCT_DATA: partial(update_custom_data_models, limit_types=[ProductFieldsView.field_type]),
@@ -106,31 +128,45 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_OTP_SETTINGS: update_otp_settings,
         MODEL_HMAC_CALLOUT_SETTINGS: update_hmac_callout_settings,
         MODEL_KEYWORD: update_keyword,
+        MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS: update_tableau_server_and_visualizations,
     }.get(model_type)
 
     kwargs = model_detail or {}
     update_fn(domain_link, **kwargs)
 
 
-def update_toggles_previews(domain_link):
+def update_toggles(domain_link):
     if domain_link.is_remote:
-        master_results = remote_toggles_previews(domain_link)
+        upstream_results = remote_toggles_previews(domain_link)
+        upstream_toggles = set(upstream_results['toggles'])
     else:
-        master_results = local_toggles_previews(domain_link.master_domain)
+        upstream_toggles = set(local_enabled_toggles(domain_link.master_domain))
 
-    master_toggles = set(master_results['toggles'])
-    master_previews = set(master_results['previews'])
-
-    local_results = local_toggles_previews(domain_link.linked_domain)
-    local_toggles = set(local_results['toggles'])
-    local_previews = set(local_results['previews'])
+    downstream_toggles = set(local_enabled_toggles(domain_link.linked_domain))
 
     def _set_toggles(collection, enabled):
         for slug in collection:
             set_toggle(slug, domain_link.linked_domain, enabled, NAMESPACE_DOMAIN)
 
-    _set_toggles(master_toggles - local_toggles, True)
-    _set_toggles(master_previews - local_previews, True)
+    # enable downstream toggles that are enabled upstream
+    _set_toggles(upstream_toggles - downstream_toggles, True)
+
+
+def update_previews(domain_link):
+    if domain_link.is_remote:
+        upstream_results = remote_toggles_previews(domain_link)
+        upstream_previews = set(upstream_results['previews'])
+    else:
+        upstream_previews = set(local_enabled_previews(domain_link.master_domain))
+
+    downstream_previews = set(local_enabled_previews(domain_link.linked_domain))
+
+    def _set_toggles(collection, enabled):
+        for slug in collection:
+            set_toggle(slug, domain_link.linked_domain, enabled, NAMESPACE_DOMAIN)
+
+    # enable downstream previews that are enabled upstream
+    _set_toggles(upstream_previews - downstream_previews, True)
 
 
 def update_custom_data_models(domain_link, limit_types=None):
@@ -215,13 +251,7 @@ def update_user_roles(domain_link):
 
     _convert_reports_permissions(domain_link, master_results)
 
-    local_roles = UserRole.view(
-        'users/roles_by_domain',
-        startkey=[domain_link.linked_domain],
-        endkey=[domain_link.linked_domain, {}],
-        include_docs=True,
-        reduce=False,
-    )
+    local_roles = UserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
     local_roles_by_name = {}
     local_roles_by_upstream_id = {}
     for role in local_roles:
@@ -232,27 +262,29 @@ def update_user_roles(domain_link):
     # Update downstream roles based on upstream roles
     for role_def in master_results:
         role = local_roles_by_upstream_id.get(role_def['_id']) or local_roles_by_name.get(role_def['name'])
-        if role:
-            role_json = role.to_json()
-        else:
-            role_json = {'domain': domain_link.linked_domain}
-        role_json['upstream_id'] = role_def['_id']
+        if not role:
+            role = UserRole(domain=domain_link.linked_domain)
+        local_roles_by_upstream_id[role_def['_id']] = role
+        role.upstream_id = role_def['_id']
 
-        upstream_role = copy(role_def)
-        upstream_role.pop('_id')
-        upstream_role.pop('upstream_id')
-        role_json.update(upstream_role)
-        local_roles_by_upstream_id[role_json['upstream_id']] = role_json
-        UserRole.wrap(role_json).save()
+        role.name = role_def["name"]
+        role.default_landing_page = role_def["default_landing_page"]
+        role.is_non_admin_editable = role_def["is_non_admin_editable"]
+        role.save()
+
+        permissions = Permissions.wrap(role_def["permissions"])
+        role.set_permissions(permissions.to_list())
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
-    for role in local_roles_by_upstream_id.values():
-        if role['assignable_by']:
-            role['assignable_by'] = [
-                local_roles_by_upstream_id[role_id]['_id']
-                for role_id in role['assignable_by']
+    for role_def in master_results:
+        local_role = local_roles_by_upstream_id[role_def['_id']]
+        assignable_by = []
+        if role_def["assignable_by"]:
+            assignable_by = [
+                local_roles_by_upstream_id[role_id].id
+                for role_id in role_def["assignable_by"]
             ]
-            UserRole.wrap(role).save()
+        local_role.set_assignable_by(assignable_by)
 
 
 def update_case_search_config(domain_link):
@@ -296,6 +328,43 @@ def update_data_dictionary(domain_link):
             case_property_obj.group = case_property_desc['group']
             case_property_obj.save()
 
+
+def update_tableau_server_and_visualizations(domain_link):
+    if domain_link.is_remote:
+        master_results = remote_get_tableau_server_and_visualizations(domain_link)
+    else:
+        master_results = local_get_tableau_server_and_visualizations(domain_link.master_domain)
+
+    server_model, created = TableauServer.objects.get_or_create(domain=domain_link.linked_domain)
+
+    server_model.domain = domain_link.linked_domain
+    server_model.server_type = master_results["server"]['server_type']
+    server_model.server_name = master_results["server"]['server_name']
+    server_model.validate_hostname = master_results["server"]['validate_hostname']
+    server_model.target_site = master_results["server"]['target_site']
+    server_model.domain_username = master_results["server"]['domain_username']
+    server_model.save()
+
+    master_results_visualizations = master_results['visualizations']
+    local_visualizations = TableauVisualization.objects.all().filter(
+        domain=domain_link.linked_domain)
+    vis_by_view_url = {}
+    vis_by_upstream_id = {}
+    for vis in local_visualizations:
+        vis_by_view_url[vis.view_url] = vis
+        if vis.upstream_id:
+            vis_by_upstream_id[vis.upstream_id] = vis
+
+    for master_vis in master_results_visualizations:
+        vis = vis_by_upstream_id.get(master_vis['id']) or vis_by_view_url.get(master_vis['view_url'])
+        if not vis:
+            vis = TableauVisualization(domain=domain_link.linked_domain, server=server_model)
+        vis_by_upstream_id[master_vis['id']] = vis
+        vis.upstream_id = master_vis['id']
+        vis.domain = domain_link.linked_domain
+        vis.server = server_model
+        vis.view_url = master_vis['view_url']
+        vis.save()
 
 def update_dialer_settings(domain_link):
     if domain_link.is_remote:
@@ -342,6 +411,101 @@ def update_hmac_callout_settings(domain_link):
     model.api_key = master_results['api_key']
     model.api_secret = master_results['api_secret']
     model.save()
+
+
+def update_auto_update_rules(domain_link):
+    if domain_link.is_remote:
+        upstream_rules = remote_get_auto_update_rules(domain_link)
+    else:
+        upstream_rules = local_get_auto_update_rules(domain_link.master_domain)
+
+    downstream_rules = AutomaticUpdateRule.by_domain(
+        domain_link.linked_domain,
+        AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+        active_only=False
+    )
+
+    for upstream_rule_def in upstream_rules:
+        # Grab local rule by upstream ID (preferred) or by name
+        try:
+            downstream_rule = downstream_rules.get(upstream_id=upstream_rule_def['rule']['id'])
+        except AutomaticUpdateRule.DoesNotExist:
+            try:
+                downstream_rule = downstream_rules.get(name=upstream_rule_def['rule']['name'])
+            except AutomaticUpdateRule.MultipleObjectsReturned:
+                # If there are multiple rules with the same name, overwrite the first.
+                downstream_rule = downstream_rules.filter(name=upstream_rule_def['rule']['name']).first()
+            except AutomaticUpdateRule.DoesNotExist:
+                downstream_rule = None
+
+        # If no corresponding local rule, make a new rule
+        if not downstream_rule:
+            downstream_rule = AutomaticUpdateRule(
+                domain=domain_link.linked_domain,
+                active=upstream_rule_def['rule']['active'],
+                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                upstream_id=upstream_rule_def['rule']['id']
+            )
+
+        # Copy all the contents from old rule to new rule
+        with transaction.atomic():
+
+            downstream_rule.name = upstream_rule_def['rule']['name']
+            downstream_rule.case_type = upstream_rule_def['rule']['case_type']
+            downstream_rule.filter_on_server_modified = upstream_rule_def['rule']['filter_on_server_modified']
+            downstream_rule.server_modified_boundary = upstream_rule_def['rule']['server_modified_boundary']
+            downstream_rule.active = upstream_rule_def['rule']['active']
+            downstream_rule.save()
+
+            downstream_rule.delete_criteria()
+            downstream_rule.delete_actions()
+
+            # Largely from data_interfaces/forms.py - save_criteria()
+            for criteria in upstream_rule_def['criteria']:
+                definition = None
+
+                if criteria['match_property_definition']:
+                    definition = MatchPropertyDefinition.objects.create(
+                        property_name=criteria['match_property_definition']['property_name'],
+                        property_value=criteria['match_property_definition']['property_value'],
+                        match_type=criteria['match_property_definition']['match_type'],
+                    )
+                elif criteria['custom_match_definition']:
+                    definition = CustomMatchDefinition.objects.create(
+                        name=criteria['custom_match_definition']['name'],
+                    )
+                elif criteria['closed_parent_definition']:
+                    definition = ClosedParentDefinition.objects.create()
+
+                new_criteria = CaseRuleCriteria(rule=downstream_rule)
+                new_criteria.definition = definition
+                new_criteria.save()
+
+            # Largely from data_interfacees/forms.py - save_actions()
+            for action in upstream_rule_def['actions']:
+                definition = None
+
+                if action['update_case_definition']:
+                    definition = UpdateCaseDefinition(close_case=action['update_case_definition']['close_case'])
+                    properties = []
+                    for propertyItem in action['update_case_definition']['properties_to_update']:
+                        properties.append(
+                            UpdateCaseDefinition.PropertyDefinition(
+                                name=propertyItem['name'],
+                                value_type=propertyItem['value_type'],
+                                value=propertyItem['value'],
+                            )
+                        )
+                    definition.set_properties_to_update(properties)
+                    definition.save()
+                elif action['custom_action_definition']:
+                    definition = CustomActionDefinition.objects.create(
+                        name=action['custom_action_definition']['name'],
+                    )
+
+                action = CaseRuleAction(rule=downstream_rule)
+                action.definition = definition
+                action.save()
 
 
 def _convert_reports_permissions(domain_link, master_results):

@@ -1,10 +1,11 @@
-import architect
-
 from collections import namedtuple
+from datetime import datetime
 
 from django.contrib.postgres.fields import ArrayField
-from datetime import datetime
 from django.db import models
+
+import architect
+from oauth2_provider.settings import APPLICATION_MODEL
 
 from corehq.util.markup import mark_up_urls
 from corehq.util.models import ForeignValue, foreign_value_init
@@ -86,3 +87,20 @@ class UserAccessLog(models.Model):
 
     def __str__(self):
         return f'{self.timestamp}: {self.user_id} - {self.action}'
+
+
+class HQOauthApplication(models.Model):
+    application = models.OneToOneField(
+        APPLICATION_MODEL,
+        on_delete=models.CASCADE,
+        related_name='hq_application',
+    )
+    pkce_required = models.BooleanField(default=True)
+
+
+def pkce_required(client_id):
+    try:
+        application = HQOauthApplication.objects.get(application__client_id=client_id)
+        return application.pkce_required
+    except HQOauthApplication.DoesNotExist:
+        return False

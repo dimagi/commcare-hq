@@ -1,3 +1,4 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django_prbac.models import Role
 
 from django.contrib.sessions.middleware import SessionMiddleware
@@ -74,3 +75,45 @@ def create_request_session(request, use_sso=False):
     request.session.save()
     if use_sso:
         request.session['samlSessionIndex'] = '_7c84c96e-8774-4e64-893c-06f91d285100'
+
+
+@unit_testing_only
+def store_full_name_in_saml_user_data(request, first_name, last_name):
+    request.session['samlUserdata'] = {
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname': [first_name],
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname': [last_name],
+    }
+
+
+@unit_testing_only
+def store_display_name_in_saml_user_data(request, display_name):
+    request.session['samlUserdata'] = {
+        'http://schemas.microsoft.com/identity/claims/displayname': [display_name],
+    }
+
+
+@unit_testing_only
+def get_public_cert_file(expiration_in_seconds=certificates.DEFAULT_EXPIRATION):
+    key_pair = certificates.create_key_pair()
+    cert = certificates.create_self_signed_cert(
+        key_pair,
+        expiration_in_seconds
+    )
+    cert_bytes = certificates.crypto.dump_certificate(
+        certificates.crypto.FILETYPE_PEM,
+        cert
+    )
+    return SimpleUploadedFile(
+        "certificate.cer",
+        cert_bytes,
+        content_type="application/x-x509-ca-cert",
+    )
+
+
+@unit_testing_only
+def get_bad_cert_file(bad_cert_data):
+    return SimpleUploadedFile(
+        "certificate.cer",
+        bad_cert_data,
+        content_type="application/x-x509-ca-cert",
+    )

@@ -1,18 +1,10 @@
 import os
 
-from copy import deepcopy
-
 import settingshelper as helper
-from settings import *
-
-# to enable v7 ES tests
-if os.environ.get('ELASTICSEARCH_7_PORT'):
-    ELASTICSEARCH_PORT = int(os.environ.get('ELASTICSEARCH_7_PORT'))
+from settings import *  # noqa: F403
 
 if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
-
-USING_CITUS = any(db.get('ROLE') == 'citus_master' for db in DATABASES.values())
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
@@ -22,18 +14,7 @@ INSTALLED_APPS = (
     'django_nose',
     'testapps.test_elasticsearch',
     'testapps.test_pillowtop',
-) + tuple(INSTALLED_APPS)
-
-if USING_CITUS:
-    if 'testapps.citus_master' not in INSTALLED_APPS:
-        INSTALLED_APPS = (
-            'testapps.citus_master',
-            'testapps.citus_worker',
-        ) + tuple(INSTALLED_APPS)
-
-    if 'testapps.citus_master.citus_router.CitusDBRouter' not in DATABASE_ROUTERS:
-        # this router must go first
-        DATABASE_ROUTERS = ['testapps.citus_master.citus_router.CitusDBRouter'] + DATABASE_ROUTERS
+) + tuple(INSTALLED_APPS)  # noqa: F405
 
 TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
@@ -80,9 +61,6 @@ CELERY_TASK_ALWAYS_EAGER = True
 _PILLOWTOPS = PILLOWTOPS
 PILLOWTOPS = {}
 
-# required by auditcare tests
-AUDIT_ADMIN_VIEWS = False
-
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
 
@@ -128,14 +106,6 @@ LOGGING = {
     'loggers': {},
 }
 
-# Default custom databases to use the same configuration as the default
-# This is so that all devs don't have to run citus locally
-if 'icds-ucr' not in DATABASES:
-    DATABASES['icds-ucr'] = deepcopy(DATABASES['default'])
-    # use a different name otherwise migrations don't get run
-    DATABASES['icds-ucr']['NAME'] = 'commcarehq_icds_ucr'
-    del DATABASES['icds-ucr']['TEST']['NAME']  # gets set by `helper.assign_test_db_names`
-
 helper.assign_test_db_names(DATABASES)
 
 # See comment under settings.SMS_QUEUE_ENABLED
@@ -150,16 +120,4 @@ METRICS_PROVIDERS = [
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
 
-# icds version = ab702b37a1  (to force a build)
-if os.path.exists("extensions/icds/custom/icds"):
-    icds_apps = [
-        "custom.icds",
-        "custom.icds_reports"
-    ]
-    for app in icds_apps:
-        if app not in INSTALLED_APPS:
-            INSTALLED_APPS = (app,) + tuple(INSTALLED_APPS)
-
-    if "custom.icds.commcare_extensions" not in COMMCARE_EXTENSIONS:
-        COMMCARE_EXTENSIONS.append("custom.icds.commcare_extensions")
-        CUSTOM_DB_ROUTING["icds_reports"] = "icds-ucr-citus"
+FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"

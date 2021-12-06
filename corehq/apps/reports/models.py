@@ -3,10 +3,9 @@ from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils import html
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from jsonfield import JSONField
 
@@ -110,7 +109,6 @@ class TempCommCareUser(CommCareUser):
             _id=uuid,
             date_joined=datetime.utcnow(),
             is_active=False,
-            metadata={},
             first_name='',
             last_name='',
             filter_flag=filter_flag
@@ -126,11 +124,11 @@ class TempCommCareUser(CommCareUser):
     @property
     def username_in_report(self):
         if self.filter_flag == HQUserType.UNKNOWN:
-            final = mark_safe('%s <strong>[unregistered]</strong>' % html.escape(self.username))
+            final = format_html('{} <strong>[unregistered]</strong>', self.username)
         elif self.filter_flag == HQUserType.DEMO_USER:
-            final = mark_safe('<strong>%s</strong>' % html.escape(self.username))
+            final = format_html('<strong>{}</strong>', self.username)
         else:
-            final = mark_safe('<strong>%s</strong> (%s)' % tuple(map(html.escape, [self.username, self.user_id])))
+            final = format_html('<strong>{}</strong> ({})', self.username, self.user_id)
         return final
 
     @property
@@ -206,3 +204,37 @@ class ReportsSidebarOrdering(models.Model):
             "will be listed under the given heading in the sidebar nav."
         )
     )
+
+
+class TableauServer(models.Model):
+    SERVER_TYPES = (
+        ('server', ugettext_lazy('Tableau Server')),
+        ('online', ugettext_lazy('Tableau Online')),
+    )
+    domain = models.CharField(max_length=64, default='')
+    server_type = models.CharField(max_length=6, choices=SERVER_TYPES, default='server')
+    server_name = models.CharField(max_length=128)
+    validate_hostname = models.CharField(max_length=128, default='', blank=True)
+    target_site = models.CharField(max_length=64, default='Default')
+    domain_username = models.CharField(max_length=64)
+
+    def __str__(self):
+        return '{server} {server_type} {site}'.format(server=self.server_name,
+                                                      server_type=self.server_type,
+                                                      site=self.target_site)
+
+
+class TableauVisualization(models.Model):
+    domain = models.CharField(max_length=64)
+    server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
+    view_url = models.CharField(max_length=256)
+    upstream_id = models.CharField(max_length=32, null=True)
+
+    @property
+    def name(self):
+        return '/'.join(self.view_url.split('?')[0].split('/')[-2:])
+
+    def __str__(self):
+        return '{domain} {server} {view}'.format(domain=self.domain,
+                                                 server=self.server,
+                                                 view=self.view_url[0:64])

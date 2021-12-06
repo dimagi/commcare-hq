@@ -15,14 +15,14 @@
     <div class="hq-graphic-report">
       <script type="text/template" id="default_detail_popup">
         <div class="default-popup">
-          <h3><%= name %></h3>
+          <h3><%- name %></h3>
           <hr>
           <table>
             <% _.each(info, function(field) { %>
-            <tr class="data data-<%= field.slug %>">
-              <td><%= field.label %></td>
+            <tr class="data data-<%- field.slug %>">
+              <td><%- field.label %></td>
               <td class="detail_data">
-                <%= field.value %>
+                <%- field.value %>
               </td>
             </tr>
             <% }); %>
@@ -31,21 +31,21 @@
       </script>
 
       <script type="text/template" id="info_popup">
-        <% if (name) { %><h4><%= name %></h4><% } %>
+        <% if (name) { %><h4><%- name %></h4><% } %>
         <% _.each(info, function(field) { %>
-        <div><%= field.label %></div>
-        <div class="detail_data"><%= field.value %></div>
+        <div><%- field.label %></div>
+        <div class="detail_data"><%- field.value %></div>
         <% }); %>
       </script>
 
       <script type="text/template" id="legend_size">
         <table class="sizelegend">
           <% _.each(entries, function(e, i) { %>
-          <tr id="sizerow-<%= i %>">
+          <tr id="sizerow-<%- i %>">
             <td class="circle-container">
               <div class="circle"></div>
             </td>
-            <td class="vallabel"><%= e.valfmt %></td>
+            <td class="vallabel"><%- e.valfmt %></td>
           </tr>
           <% }); %>
         </table>
@@ -54,7 +54,7 @@
       <script type="text/template" id="legend_enum">
         <table class="enumlegend">
           <% _.each(enums, function(e, i) { %>
-          <tr id="enumrow-<%= i %>"><td class="enum"></td><td class="vallabel"><%= e.label %></td></tr>
+          <tr id="enumrow-<%- i %>"><td class="enum"></td><td class="vallabel"><%- e.label %></td></tr>
           <% }); %>
         </table>
       </script>
@@ -66,9 +66,9 @@
             <td class="tickmarks">
               <div class="tickmarks-inner">
                 <% _.each(ticks, function(e) { %>
-                <div class="width-spacer"><%= e.label %></div>
-                <div class="ticklabel" style="top: <%= e.coord %>px;">
-                  <div class="ticklabel-inner"><%= e.label %></div>
+                <div class="width-spacer"><%- e.label %></div>
+                <div class="ticklabel" style="top: <%- e.coord %>px;">
+                  <div class="ticklabel-inner"><%- e.label %></div>
                 </div>
                 <% }); %>
               </div>

@@ -389,3 +389,12 @@
   default: "no"
   since: "2.51"
   force: true
+
+- name: "Enable asterisk on required question"
+  description: "Adds a red asterisk to denote mandatory questions in a form. This setting only works in mobile."
+  id: "cc-label-required-questions-with-asterisk"
+  values: ["yes", "no"]
+  value_names: ["Yes", "No"]
+  default: "no"
+  since: "2.49"
+  force: true

@@ -359,16 +359,6 @@ class IntegerBucketsColumn(_CaseExpressionColumn):
         return "{} between {} and {}".format(self.field, bounds[0], bounds[1])
 
 
-class AgeInMonthsBucketsColumn(IntegerBucketsColumn):
-    type = TypeProperty('age_in_months_buckets')
-
-    def _base_expression(self, bounds):
-        current_date = date.today().isoformat()
-        return "extract(year from age(date('{}'), {}))*12 + \
-            extract(month from age(date('{}'), {})) BETWEEN {} and {}".format(
-            current_date, self.field, current_date, self.field, bounds[0], bounds[1])
-
-
 class SumWhenColumn(_CaseExpressionColumn):
     type = TypeProperty("sum_when")
     else_ = IntegerProperty(default=0)
@@ -551,6 +541,9 @@ class ExpressionColumn(BaseReportColumn):
                 help_text=self.description
             )
         ])
+
+    def get_query_column_ids(self):
+        raise InvalidQueryColumn(_("Expression Columns do not support group by, sorting, or querying."))
 
 
 class ChartSpec(JsonObject):

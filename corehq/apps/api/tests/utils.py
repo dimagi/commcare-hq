@@ -103,7 +103,7 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
     @classmethod
     def tearDownClass(cls):
         cls.api_key.delete()
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
 
         for domain in Domain.get_all():
             Subscription._get_active_subscription_by_domain.clear(Subscription, domain.name)
@@ -117,9 +117,9 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
                                                           resource_name=self.resource._meta.resource_name,
                                                           pk=id))
 
-    def _api_url(self, url, username=None):
-        if 'api_key' in url:
-            return url
+    def _get_api_key_auth_headers(self, headers=None, username=None):
+        if headers and 'HTTP_AUTHORIZATION' in headers:
+            return {}
 
         username = username or self.username
         api_key = self.api_key.key
@@ -128,15 +128,11 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
             api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(web_user))
             api_key = api_key.key
 
-        api_params = urlencode({'username': username, 'api_key': api_key})
+        return {
+            'HTTP_AUTHORIZATION': f'apikey {username}:{api_key}'
+        }
 
-        if "?" in url:
-            api_url = "%s&%s" % (url, api_params)
-        else:
-            api_url = "%s?%s" % (url, api_params)
-        return api_url
-
-    def _assert_auth_get_resource(self, url, username=None, password=None, failure_code=401, headers=None):
+    def _assert_auth_get_resource(self, url, username=None, password=None, allow_session_auth=False, headers=None):
         """
         This tests that the given URL fails when accessed via sessions and returns the response
         obtained via using API auth. It's callers' responsibility to test resource specific logic
@@ -149,14 +145,14 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
         password = password or self.password
         headers = headers or {}
 
-        # session based auth should fail
-        self.client.login(username=username, password=password)
-        response = self.client.get(url, **headers)
-        self.assertEqual(response.status_code, failure_code)
+        if not allow_session_auth:
+            self.client.login(username=username, password=password)
+            response = self.client.get(url, **headers)
+            self.assertEqual(response.status_code, 401)
 
         # api_key auth should succeed, caller can check for expected code
-        api_url = self._api_url(url, username)
-        response = self.client.get(api_url, **headers)
+        headers.update(self._get_api_key_auth_headers(headers, username))
+        response = self.client.get(url, **headers)
         return response
 
     def _assert_auth_post_resource(self, url, post_data, content_type='application/json', method="POST",
@@ -175,11 +171,11 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
         self.assertEqual(response.status_code, failure_code)
 
         # api_key auth should succeed, caller should check expected response status and content
-        api_url = self._api_url(url)
+        headers = self._get_api_key_auth_headers()
         if method == "POST":
-            response = self.client.post(api_url, post_data, content_type=content_type)
+            response = self.client.post(url, post_data, content_type=content_type, **headers)
         elif method == "PUT":
-            response = self.client.put(api_url, post_data, content_type=content_type)
+            response = self.client.put(url, post_data, content_type=content_type, **headers)
         elif method == "DELETE":
-            response = self.client.delete(api_url, post_data, content_type=content_type)
+            response = self.client.delete(url, post_data, content_type=content_type, **headers)
         return response

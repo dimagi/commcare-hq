@@ -5,7 +5,7 @@ from django.test.client import Client
 from django.urls import reverse
 
 from bs4 import BeautifulSoup
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
@@ -41,7 +41,7 @@ class TestDomainViews(TestCase, DomainSubscriptionMixin):
 
     def tearDown(self):
         self.teardown_subscriptions()
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
         clear_plan_version_cache()
         super().tearDown()
@@ -70,7 +70,7 @@ class TestDomainViews(TestCase, DomainSubscriptionMixin):
             })
             response = self.client.post(
                 post_url,
-                {'connection_settings_id': connx.id},
+                {'connection_settings_id': connx.id, 'request_method': "POST"},
                 follow=True
             )
             self.assertEqual(response.status_code, 200)

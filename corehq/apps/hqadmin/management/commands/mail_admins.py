@@ -1,15 +1,12 @@
-import json
 import sys
+import warnings
 
-from django.conf import settings
 from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 
-import requests
-
 
 class Command(BaseCommand):
-    help = 'Send args as a one-shot email to the admins.'
+    help = '[DEPRECATED] Send args as a one-shot email to the admins.'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -22,6 +19,10 @@ class Command(BaseCommand):
         parser.add_argument('--environment', default='', help='The environment we are mailing about'),
 
     def handle(self, message, **options):
+        warnings.warn(
+            "mail_admins is deprecated. Use 'send_email --to-admins' instead.",
+            DeprecationWarning,
+        )
         if options['stdin']:
             message = sys.stdin.read()
         else:

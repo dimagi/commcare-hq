@@ -1,36 +1,42 @@
-from django.conf.urls import url
+from django.conf.urls import include, url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
+from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 
 from .views import (
     DefaultProjectUserSettingsView,
-    DomainPermissionsMirrorView,
-    DomainRequestView,
     EditWebUserView,
+    EnterpriseUsersView,
     InviteWebUserView,
+    UploadWebUsers,
+    WebUserUploadStatusView,
     ListRolesView,
     ListWebUsersView,
-    accept_invitation,
     add_domain_membership,
     change_password,
-    delete_invitation,
     delete_phone_number,
     delete_request,
+    check_sso_trust,
     delete_user_role,
     domain_accounts,
     make_phone_number_default,
+    paginate_enterprise_users,
     paginate_web_users,
     post_user_role,
     register_fcm_device_token,
-    reinvite_web_user,
     remove_web_user,
     test_httpdigest,
     undo_remove_web_user,
     verify_phone_number,
-    delete_domain_permission_mirror,
-    create_domain_permission_mirror,
     download_web_users,
     DownloadWebUsersStatusView,
+    WebUserUploadJobPollView,
+)
+from .views.web import (
+    accept_invitation,
+    delete_invitation,
+    DomainRequestView,
+    reinvite_web_user,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (
@@ -47,12 +53,14 @@ from .views.mobile.users import (
     DeleteCommCareUsers,
     DownloadUsersStatusView,
     EditCommCareUserView,
-    FilteredUserDownload,
+    FilteredCommCareUserDownload,
+    FilteredWebUserDownload,
     MobileWorkerListView,
     UploadCommCareUsers,
     UserUploadStatusView,
     activate_commcare_user,
-    count_users,
+    count_commcare_users,
+    count_web_users,
     deactivate_commcare_user,
     delete_commcare_user,
     demo_restore_job_poll,
@@ -64,9 +72,16 @@ from .views.mobile.users import (
     toggle_demo_mode,
     update_user_groups,
     user_download_job_poll,
-    user_upload_job_poll,
-    CommCareUserConfirmAccountView, send_confirmation_email)
+    CommCareUserConfirmAccountView,
+    send_confirmation_email,
+    CommcareUserUploadJobPollView)
 from ..hqwebapp.decorators import waf_allow
+
+
+user_management_urls = [
+    UserManagementReportDispatcher.url_pattern(),
+]
+
 
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
@@ -92,16 +107,22 @@ urlpatterns = [
     url(r'^web/request/$', DomainRequestView.as_view(), name=DomainRequestView.urlname),
     url(r'^web/delete_invitation/$', delete_invitation, name='delete_invitation'),
     url(r'^web/delete_request/$', delete_request, name='delete_request'),
+    url(r'^web/check_sso_trust/$', check_sso_trust, name='check_sso_trust'),
     url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.urlname),
     url(r'^web/json/$', paginate_web_users, name='paginate_web_users'),
     url(r'^web/download/$', download_web_users, name='download_web_users'),
     url(r'^web/download/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         DownloadWebUsersStatusView.as_view(), name='download_web_users_status'),
-    url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
-    url(r'^enterprise/delete_domain_permission_mirror/(?P<mirror>[ \w-]+)/$', delete_domain_permission_mirror,
-        name='delete_domain_permission_mirror'),
-    url(r'^enterprise/create_domain_permission_mirror/$', create_domain_permission_mirror,
-        name='create_domain_permission_mirror'),
+    url(r'^web/filter_and_download/$', FilteredWebUserDownload.as_view(),
+        name=FilteredWebUserDownload.urlname),
+    url(r'^web/count_users/$', count_web_users, name='count_web_users'),
+    url(r'^web/upload/$', waf_allow('XSS_BODY')(UploadWebUsers.as_view()), name=UploadWebUsers.urlname),
+    url(r'^web/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        WebUserUploadStatusView.as_view(), name=WebUserUploadStatusView.urlname),
+    url(r'^web/upload/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', WebUserUploadJobPollView.as_view(),
+        name=WebUserUploadJobPollView.urlname),
+    url(r'^enterprise/$', EnterpriseUsersView.as_view(), name=EnterpriseUsersView.urlname),
+    url(r'^enterprise/json/$', paginate_enterprise_users, name='paginate_enterprise_users'),
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
     url(r'^roles/save/$', post_user_role, name='post_user_role'),
@@ -141,11 +162,11 @@ urlpatterns = [
     url(r'^commcare/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', UserUploadStatusView.as_view(),
         name=UserUploadStatusView.urlname),
     url(r'^commcare/upload/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
-        user_upload_job_poll, name='user_upload_job_poll'),
+        CommcareUserUploadJobPollView.as_view(), name=CommcareUserUploadJobPollView.urlname),
     url(r'^commcare/download/$', download_commcare_users, name='download_commcare_users'),
-    url(r'^commcare/filter_and_download/$', FilteredUserDownload.as_view(),
-        name=FilteredUserDownload.urlname),
-    url(r'^commcare/count_users/$', count_users, name='count_users'),
+    url(r'^commcare/filter_and_download/$', FilteredCommCareUserDownload.as_view(),
+        name=FilteredCommCareUserDownload.urlname),
+    url(r'^commcare/count_users/$', count_commcare_users, name='count_commcare_users'),
     url(r'^commcare/download/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         DownloadUsersStatusView.as_view(),
         name=DownloadUsersStatusView.urlname),
@@ -163,4 +184,7 @@ urlpatterns = [
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),
     url(r'^groups/sms_verification/(?P<group_id>[ \w-]+)$', BulkSMSVerificationView.as_view(),
         name=BulkSMSVerificationView.urlname),
+] + [
+    url(r'^reports/', include(user_management_urls)),
+
 ]

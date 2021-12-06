@@ -1,8 +1,79 @@
 hqDefine('users/js/roles',[
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/alert_user',
-], function ($, ko, alertUser) {
+], function ($, _, ko, alertUser) {
+    let selectPermissionModel = function (id, permissionModel, text) {
+        /*
+        Function to build the view model for permissions that aren't simple booleans. The data is
+        modelled as a boolean and a list. If the boolean is 'true' the user has access to all items.
+        If the boolean is 'false' the user only has access to items selected in the list.
+
+        This view model gives the user the ability to select 'none', 'all' or 'only selected'.
+
+        Parameters:
+          id: unique permission ID
+          permissionModel: object the following keys:
+            all: observable boolean
+            specific: observable array of items which can be selected. Each item is expected
+                to have at least 'name', 'slug' and 'value' fields.
+          text: Text to display to the user. (see text defaults below)
+         */
+        text = _.defaults(text, {
+            permissionText: 'Change me',
+            accessNoneText: gettext("No Access"),
+            accessAllText: gettext("Access All"),
+            accessSelectedText: gettext("Access Selected"),
+            listHeading: gettext("Select which items the role can access:"),
+        });
+        const [NONE, ALL, SELECTED] = ["none", "all", "selected"];
+        const selectOptions = [
+            {text: text.accessNoneText, value: NONE},
+            {text: text.accessAllText, value: ALL},
+            {text: text.accessSelectedText, value: SELECTED},
+        ];
+        let self = {
+            id: id,
+            text: text.permissionText,
+            listHeading: text.listHeading,
+            options: selectOptions,
+            selection: ko.observable(),
+            all: permissionModel.all,
+            specific: permissionModel.specific,
+        };
+        self.showItems = ko.pureComputed(() =>{
+            return self.selection() === SELECTED;
+        });
+
+        // set value of selection based on initial data
+        if (self.all()) {
+            self.selection(ALL);
+        } else if (_.find(permissionModel.specific(), item => item.value())) {
+            self.selection(SELECTED)
+        } else {
+            self.selection(NONE);
+        }
+
+        self.selection.subscribe(() => {
+            // update permission data based on selection
+            if (self.selection() === ALL) {
+                self.all(true);
+                self.specific().forEach(item => item.value(false));
+                return;
+            }
+            self.all(false);
+            if (self.selection() === NONE) {
+                self.specific().forEach(item => item.value(false));
+            }
+        });
+
+        self.hasError = ko.pureComputed(() => {
+            return self.selection() === SELECTED && permissionModel.filteredSpecific().length == 0;
+        });
+        return self;
+    };
+
     var RolesViewModel = function (o) {
         'use strict';
         var self, root;
@@ -25,24 +96,24 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
-                data.webAppsPermissions = {
-                    all: data.permissions.view_web_apps,
-                    specific: ko.utils.arrayMap(root.webAppsList, function (app) {
+                data.manageRegistryPermission = {
+                    all: data.permissions.manage_data_registry,
+                    specific: ko.utils.arrayMap(root.dataRegistryChoices, function (registry) {
                         return {
-                            path: app._id,
-                            name: app.name,
-                            value: data.permissions.view_web_apps_list.indexOf(app._id) !== -1,
+                            name: registry.name,
+                            slug: registry.slug,
+                            value: data.permissions.manage_data_registry_list.indexOf(registry.slug) !== -1,
                         };
                     }),
                 };
 
-                data.manageAppReleasePermissions = {
-                    all: data.permissions.manage_releases,
-                    specific: ko.utils.arrayMap(root.appsList, function (app) {
+                data.viewRegistryContentsPermission = {
+                    all: data.permissions.view_data_registry_contents,
+                    specific: ko.utils.arrayMap(root.dataRegistryChoices, function (registry) {
                         return {
-                            path: app._id,
-                            name: app.name,
-                            value: data.permissions.manage_releases_list.indexOf(app._id) !== -1,
+                            name: registry.name,
+                            slug: registry.slug,
+                            value: data.permissions.view_data_registry_contents_list.indexOf(registry.slug) !== -1,
                         };
                     }),
                 };
@@ -59,11 +130,16 @@ hqDefine('users/js/roles',[
                 };
 
                 self = ko.mapping.fromJS(data);
-                self.reportPermissions.filteredSpecific = ko.computed(function () {
-                    return ko.utils.arrayFilter(self.reportPermissions.specific(), function (report) {
-                        return report.value();
+                let filterSpecific = (permissions) => {
+                    return ko.computed(function () {
+                        return ko.utils.arrayFilter(permissions.specific(), function (item) {
+                            return item.value();
+                        });
                     });
-                });
+                };
+                self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
+                self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
+                self.viewRegistryContentsPermission.filteredSpecific = filterSpecific(self.viewRegistryContentsPermission);
                 self.unwrap = function () {
                     return cls.unwrap(self);
                 };
@@ -171,6 +247,22 @@ hqDefine('users/js/roles',[
                     },
                     {
                         showOption: true,
+                        editPermission: self.permissions.edit_messaging,
+                        viewPermission: null,
+                        text: gettext("<strong>Messaging</strong> &mdash; configure and send conditional alerts"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-messaging-checkbox",
+                        showViewCheckbox: false,
+                        viewCheckboxLabel: "view-messaging-checkbox",
+                        screenReaderEditAndViewText: gettext("Access Messaging"),
+                        screenReaderViewOnlyText: null,
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
+                    },
+                    {
+                        showOption: true,
                         editPermission: self.permissions.access_api,
                         viewPermission: null,
                         text: gettext("<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update data. Specific APIs may require additional permissions."),
@@ -265,6 +357,43 @@ hqDefine('users/js/roles',[
                         checkboxPermission: self.reportPermissions.all,
                         checkboxText: gettext("Allow role to access all reports."),
                     }];
+                self.ucrs = [{
+                    visibilityRestraint: self.permissions.access_all_locations,
+                    text: gettext("Create and Edit Configurable Reports"),
+                    checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                    checkboxPermission: self.permissions.edit_ucrs,
+                    checkboxText: gettext("Allow role to create and edit configurable reports."),
+                }];
+
+                self.registryPermissions = [
+                    selectPermissionModel(
+                        'manage_registries',
+                        self.manageRegistryPermission,
+                        {
+                            permissionText: gettext("Manage Registries"),
+                            listHeading: gettext("Select which registries the role can manage:"),
+                        }
+                    ),
+                    selectPermissionModel(
+                        'view_registry_contents',
+                        self.viewRegistryContentsPermission,
+                        {
+                            permissionText: gettext("View Registry Data"),
+                            listHeading: gettext("Select which registry data the role can view:"),
+                        }
+                    ),
+                ];
+
+                self.validate = function () {
+                    self.registryPermissions.forEach((perm) => {
+                        if (perm.hasError()) {
+                            throw interpolate(
+                                gettext('Select at least one item from the list for "%s"'),
+                                [perm.text]
+                            );
+                        }
+                    });
+                };
 
                 return self;
             },
@@ -275,31 +404,26 @@ hqDefine('users/js/roles',[
                     data.name = data.name.trim();
                 }
 
-                data.permissions.view_report_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.reportPermissions.specific, function (report) {
-                    return report.value;
-                }), function (report) {
-                    return report.path;
-                });
-                data.permissions.view_reports = data.reportPermissions.all;
+                const unwrapItemList = function (items, item_attr = 'slug') {
+                    return ko.utils.arrayMap(ko.utils.arrayFilter(items, function (item) {
+                        return item.value;
+                    }), function (item) {
+                        return item[item_attr];
+                    });
+                };
 
-                data.permissions.view_web_apps = data.webAppsPermissions.all;
-                data.permissions.view_web_apps_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.webAppsPermissions.specific, function (app) {
-                    return app.value;
-                }), function (app) {
-                    return app.path;
-                });
-                data.permissions.manage_releases = data.manageAppReleasePermissions.all;
-                data.permissions.manage_releases_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageAppReleasePermissions.specific, function (app) {
-                    return app.value;
-                }), function (app) {
-                    return app.path;
-                });
+                data.permissions.view_reports = data.reportPermissions.all;
+                data.permissions.view_report_list = unwrapItemList(data.reportPermissions.specific, 'path');
+
+                data.permissions.manage_data_registry = data.manageRegistryPermission.all;
+                data.permissions.manage_data_registry_list = unwrapItemList(data.manageRegistryPermission.specific);
+
+                data.permissions.view_data_registry_contents = data.viewRegistryContentsPermission.all;
+                data.permissions.view_data_registry_contents_list = unwrapItemList(
+                    data.viewRegistryContentsPermission.specific);
+
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
-                data.assignable_by = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageRoleAssignments.specific, function (role) {
-                    return role.value;
-                }), function (role) {
-                    return role.path;
-                });
+                data.assignable_by = unwrapItemList(data.manageRoleAssignments.specific, 'path');
                 return data;
             },
         };
@@ -308,10 +432,9 @@ hqDefine('users/js/roles',[
         self.ExportOwnershipEnabled = o.ExportOwnershipEnabled;
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
-        self.webAppsList = o.webAppsList;
-        self.appsList = o.appsList;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
+        self.dataRegistryChoices = o.dataRegistryChoices;
         self.webAppsPrivilege = o.webAppsPrivilege;
         self.getReportObject = function (path) {
             var i;
@@ -359,7 +482,7 @@ hqDefine('users/js/roles',[
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
         };
-        self.unsetRoleBeingEdited = function () {
+        self.unsetRoleBeingEdited = function (_, event) {
             self.roleBeingEdited(undefined);
         };
         self.setRoleBeingDeleted = function (role) {
@@ -367,7 +490,7 @@ hqDefine('users/js/roles',[
                 var title = gettext("Delete Role: ") + role.name();
                 var context = {role: role.name()};
                 var modalConfirmation = _.template(gettext(
-                    "Are you sure you want to delete the role <%= role %>?"
+                    "Are you sure you want to delete the role <%- role %>?"
                 ))(context);
                 var roleCopy = UserRole.wrap(UserRole.unwrap(role));
 
@@ -395,8 +518,28 @@ hqDefine('users/js/roles',[
                 };
             },
         };
-        self.submitNewRole = function () {
-            // moved saveOptions inline
+        self.roleError = ko.observable("");
+        self.setRoleError = function (form, error) {
+            self.roleError(error);
+            setTimeout(() => {
+                $(form).find('[type="submit"]').enableButton();
+            }, 100);
+        };
+        self.clearRoleError = function () {
+            self.roleError("");
+        };
+        self.clearRoleForm = function () {
+            self.clearRoleError();
+            self.unsetRoleBeingEdited();
+        };
+        self.submitNewRole = function (form) {
+            self.clearRoleError();
+            try {
+                self.roleBeingEdited().validate();
+            } catch (e) {
+                self.setRoleError(form, e);
+                return;
+            }
             $.ajax({
                 method: 'POST',
                 url: o.saveUrl,
@@ -407,7 +550,11 @@ hqDefine('users/js/roles',[
                     self.unsetRoleBeingEdited();
                 },
                 error: function (response) {
-                    alertUser.alert_user(response.responseJSON.message, 'danger');
+                    var message = gettext("An error occurred, please try again.");
+                    if (response.responseJSON && response.responseJSON.message) {
+                        message = response.responseJSON.message;
+                    }
+                    self.setRoleError(form, message);
                 }
             });
         };

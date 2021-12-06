@@ -1,21 +1,21 @@
 import csv
 import itertools
+import os
+import urllib.parse
 import uuid
-from io import StringIO
 from collections import Counter
 from datetime import datetime, timedelta
+from io import StringIO
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core.mail import mail_admins
-from django.db.models import Q, Case, When, BooleanField
+from django.db.models import Q
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
-    HttpResponseRedirect,
     JsonResponse,
     StreamingHttpResponse,
 )
@@ -35,7 +35,6 @@ from two_factor.utils import default_device
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-from corehq.util.model_log import log_model_change
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
@@ -49,57 +48,23 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.hqadmin.forms import (
-    AuthenticateAsForm,
     DisableTwoFactorForm,
     DisableUserForm,
     SuperuserManagementForm,
 )
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
-from corehq.apps.hqmedia.tasks import build_application_zip
+from corehq.apps.hqmedia.tasks import create_files_for_ccz
 from corehq.apps.ota.views import get_restore_params, get_restore_response
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, log_user_change
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util import reverse
 from corehq.util.timer import TimingContext
 
 
 class UserAdministration(BaseAdminSectionView):
     section_name = ugettext_lazy("User Administration")
-
-
-class AuthenticateAs(UserAdministration):
-    urlname = 'authenticate_as'
-    page_title = _("Login as Other User")
-    template_name = 'hqadmin/authenticate_as.html'
-
-    @method_decorator(require_superuser)
-    def dispatch(self, *args, **kwargs):
-        return super(AuthenticateAs, self).dispatch(*args, **kwargs)
-
-    @property
-    def page_context(self):
-        return {
-            'hide_filters': True,
-            'form': AuthenticateAsForm(initial=self.request.POST),
-            'root_page_url': reverse('authenticate_as'),
-        }
-
-    def post(self, request, *args, **kwargs):
-        form = AuthenticateAsForm(self.request.POST)
-        if form.is_valid():
-            request.user = User.objects.get(username=form.full_username)
-
-            # http://stackoverflow.com/a/2787747/835696
-            # This allows us to bypass the authenticate call
-            request.user.backend = 'django.contrib.auth.backends.ModelBackend'
-            login(request, request.user)
-            return HttpResponseRedirect('/')
-        all_errors = form.errors.pop('__all__', None)
-        if all_errors:
-            messages.error(request, ','.join(all_errors))
-        if form.errors:
-            messages.error(request, form.errors)
-        return self.get(request, *args, **kwargs)
 
 
 class SuperuserManagement(UserAdministration):
@@ -129,21 +94,25 @@ class SuperuserManagement(UserAdministration):
             users = form.cleaned_data['users']
             is_superuser = 'is_superuser' in form.cleaned_data['privileges']
             is_staff = 'is_staff' in form.cleaned_data['privileges']
-
-            changed_fields = []
+            fields_changed = {}
             for user in users:
                 # save user object only if needed and just once
                 if user.is_superuser is not is_superuser:
                     user.is_superuser = is_superuser
-                    changed_fields.append('is_superuser')
+                    fields_changed['is_superuser'] = is_superuser
 
                 if can_toggle_is_staff and user.is_staff is not is_staff:
                     user.is_staff = is_staff
-                    changed_fields.append('is_staff')
+                    fields_changed['is_staff'] = is_staff
 
-                if changed_fields:
+                if fields_changed:
                     user.save()
-                    log_model_change(self.request.user, user, fields_changed=changed_fields)
+                    couch_user = CouchUser.from_django_user(user)
+                    log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
+                                    changed_by_user=self.request.couch_user,
+                                    changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
+                                    by_domain_required_for_log=False,
+                                    for_domain_required_for_log=False)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
@@ -221,7 +190,7 @@ class AdminRestoreView(TemplateView):
     def _get_restore_response(self):
         return get_restore_response(
             self.user.domain, self.user, app_id=self.app_id,
-            **get_restore_params(self.request)
+            **get_restore_params(self.request, self.user.domain)
         )
 
     @staticmethod
@@ -397,7 +366,12 @@ class DisableUserView(FormView):
 
     @property
     def redirect_url(self):
-        return '{}?q={}'.format(reverse('web_user_lookup'), self.username)
+        base_url = reverse('web_user_lookup')
+        if self.username:
+            encoded_username = urllib.parse.quote(self.username) if self.username else None
+            return '{}?q={}'.format(base_url, encoded_username)
+
+        return base_url
 
     def get(self, request, *args, **kwargs):
         if not self.user:
@@ -418,12 +392,14 @@ class DisableUserView(FormView):
         return redirect(self.redirect_url)
 
     def form_valid(self, form):
+        change_messages = {}
         if not self.user:
             return self.redirect_response(self.request)
 
         reset_password = form.cleaned_data['reset_password']
         if reset_password:
             self.user.set_password(uuid.uuid4().hex)
+            change_messages.update(UserChangeMessage.password_reset())
 
         # toggle active state
         self.user.is_active = not self.user.is_active
@@ -431,7 +407,14 @@ class DisableUserView(FormView):
 
         verb = 're-enabled' if self.user.is_active else 'disabled'
         reason = form.cleaned_data['reason']
-        log_model_change(self.request.user, self.user, f'User {verb}. Reason: "{reason}"')
+        change_messages.update(UserChangeMessage.status_update(self.user.is_active, reason))
+        couch_user = CouchUser.from_django_user(self.user)
+        log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
+                        changed_by_user=self.request.couch_user,
+                        changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,
+                        fields_changed={'is_active': self.user.is_active},
+                        by_domain_required_for_log=False,
+                        for_domain_required_for_log=False)
         mail_admins(
             "User account {}".format(verb),
             "The following user account has been {verb}: \n"
@@ -448,7 +431,7 @@ class DisableUserView(FormView):
         )
         send_HTML_email(
             "%sYour account has been %s" % (settings.EMAIL_SUBJECT_PREFIX, verb),
-            self.username,
+            self.user.get_email() if self.user else self.username,
             render_to_string('hqadmin/email/account_disabled_email.html', context={
                 'support_email': settings.SUPPORT_EMAIL,
                 'password_reset': reset_password,
@@ -459,7 +442,7 @@ class DisableUserView(FormView):
         )
 
         messages.success(self.request, _('Account successfully %(verb)s.' % {'verb': verb}))
-        return redirect('{}?q={}'.format(reverse('web_user_lookup'), self.username))
+        return redirect(self.redirect_url)
 
 
 @method_decorator(require_superuser, name='dispatch')
@@ -514,25 +497,28 @@ class DisableTwoFactorView(FormView):
         for device in devices_for_user(user):
             device.delete()
 
+        couch_user = CouchUser.from_django_user(user)
         disable_for_days = form.cleaned_data['disable_for_days']
         if disable_for_days:
-            couch_user = CouchUser.from_django_user(user)
             disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
             couch_user.two_factor_auth_disabled_until = disable_until
             couch_user.save()
 
         verification = form.cleaned_data['verification_mode']
         verified_by = form.cleaned_data['via_who'] or self.request.user.username
-        log_model_change(
-            self.request.user, user,
-            f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification}"'
-        )
+        change_messages = UserChangeMessage.two_factor_disabled_with_verification(
+            verified_by, verification, disable_for_days)
+        log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
+                        changed_by_user=self.request.couch_user,
+                        changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,
+                        by_domain_required_for_log=False,
+                        for_domain_required_for_log=False)
         mail_admins(
             "Two-Factor account reset",
             "Two-Factor auth was reset. Details: \n"
             "    Account reset: {username}\n"
             "    Reset by: {reset_by}\n"
-            "    Request Verificatoin Mode: {verification}\n"
+            "    Request Verification Mode: {verification}\n"
             "    Verified by: {verified_by}\n"
             "    Two-Factor disabled for {days} days.".format(
                 username=username,
@@ -544,7 +530,7 @@ class DisableTwoFactorView(FormView):
         )
         send_HTML_email(
             "%sTwo-Factor authentication reset" % settings.EMAIL_SUBJECT_PREFIX,
-            username,
+            couch_user.get_email(),
             render_to_string('hqadmin/email/two_factor_reset_email.html', context={
                 'until': disable_until.strftime('%Y-%m-%d %H:%M:%S UTC') if disable_for_days else None,
                 'support_email': settings.SUPPORT_EMAIL,
@@ -593,19 +579,28 @@ class AppBuildTimingsView(TemplateView):
 
     @staticmethod
     def get_timing_context(app):
+        # Intended to reproduce a live-preview app build
+        # Contents should mirror the work done in the direct_ccz view
         with app.timing_context:
             errors = app.validate_app()
             assert not errors, errors
 
+            app.set_media_versions()
+
             with app.timing_context("build_zip"):
-                build_application_zip(
+                # mirroring the content of build_application_zip
+                # but with the same `app` instance to preserve timing data
+                fpath = create_files_for_ccz(
+                    build=app,
+                    build_profile_id=None,
                     include_multimedia_files=True,
                     include_index_files=True,
-                    domain=app.domain,
-                    app_id=app.id,
                     download_id=None,
                     compress_zip=True,
                     filename='app-profile-test.ccz',
+                    download_targeted_version=False,
+                    task=None,
                 )
 
+        os.remove(fpath)
         return app.timing_context

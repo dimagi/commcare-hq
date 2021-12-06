@@ -24,8 +24,7 @@ from casexml.apps.phone.exceptions import (
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.utils import get_cached_items_with_count
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
-from corehq.util.metrics.utils import maybe_add_domain_tag
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext
 from memoized import memoized
@@ -49,8 +48,6 @@ from casexml.apps.phone.const import (
     INITIAL_SYNC_CACHE_THRESHOLD,
     INITIAL_ASYNC_TIMEOUT_THRESHOLD,
     ASYNC_RETRY_AFTER,
-    CLEAN_OWNERS,
-    LIVEQUERY,
 )
 from casexml.apps.phone.xml import get_sync_element, get_progress_element
 from corehq.blobs import CODES, get_blob_db
@@ -58,8 +55,6 @@ from corehq.blobs.exceptions import NotFound
 
 
 logger = logging.getLogger('restore')
-
-DEFAULT_CASE_SYNC = CLEAN_OWNERS
 
 
 def stream_response(payload, headers=None, status=200):
@@ -347,7 +342,7 @@ class RestoreState(object):
     """
 
     def __init__(self, project, restore_user, params, is_async=False,
-                 overwrite_cache=False, case_sync=None, auth_type=None):
+                 overwrite_cache=False, auth_type=None):
         if not project or not project.name:
             raise Exception('you are not allowed to make a RestoreState without a domain!')
 
@@ -366,22 +361,9 @@ class RestoreState(object):
         self.auth_type = auth_type
         self._last_sync_log = Ellipsis
 
-        if case_sync is None:
-            if LIVEQUERY_SYNC.enabled(self.domain):
-                case_sync = LIVEQUERY
-            else:
-                case_sync = DEFAULT_CASE_SYNC
-        if case_sync not in [LIVEQUERY, CLEAN_OWNERS]:
-            raise ValueError("unknown case sync algorithm: %s" % case_sync)
-        self._case_sync = case_sync
-        self.is_livequery = case_sync == LIVEQUERY
-
     def validate_state(self):
         check_version(self.params.version)
         if self.last_sync_log:
-            if (self._case_sync == CLEAN_OWNERS and
-                    self.last_sync_log.log_format == LOG_FORMAT_LIVEQUERY):
-                raise RestoreException("clean_owners sync after livequery sync")
             if self.params.state_hash:
                 parsed_hash = CaseStateHash.parse(self.params.state_hash)
                 computed_hash = self.last_sync_log.get_state_hash()
@@ -472,8 +454,7 @@ class RestoreState(object):
         )
         if self.params.app:
             new_synclog.app_id = self.params.app.copy_of or self.params.app_id
-        if self.is_livequery:
-            new_synclog.log_format = LOG_FORMAT_LIVEQUERY
+        new_synclog.log_format = LOG_FORMAT_LIVEQUERY
         return new_synclog
 
     @property
@@ -500,12 +481,11 @@ class RestoreConfig(object):
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     :param is_async:           Whether to get the restore response using a celery task
-    :param case_sync:       Case sync algorithm (None -> default).
     :param skip_fixtures:   Whether to include fixtures in the restore payload
     """
 
     def __init__(self, project=None, restore_user=None, params=None,
-                 cache_settings=None, is_async=False, case_sync=None,
+                 cache_settings=None, is_async=False,
                  skip_fixtures=False, auth_type=None):
         assert isinstance(restore_user, OTARestoreUser)
         self.project = project
@@ -521,7 +501,6 @@ class RestoreConfig(object):
             self.restore_user,
             self.params, is_async,
             self.cache_settings.overwrite_cache,
-            case_sync=case_sync,
             auth_type=auth_type
         )
 
@@ -772,8 +751,8 @@ class RestoreConfig(object):
         tags = {
             'status_code': status,
             'device_type': 'webapps' if is_webapps else 'other',
+            'domain': self.domain,
         }
-        maybe_add_domain_tag(self.domain, tags)
         timer_buckets = (1, 5, 20, 60, 120, 300, 600)
         for timer in timing.to_list(exclude_root=True):
             segment = None

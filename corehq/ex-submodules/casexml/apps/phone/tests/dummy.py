@@ -1,26 +1,10 @@
-from mock import MagicMock
-from datetime import date, datetime
+from datetime import datetime
 from casexml.apps.case.xml.generator import date_to_xml_string
 
 DUMMY_ID = "foo"
 DUMMY_USERNAME = "mclovin"
 DUMMY_PASSWORD = "changeme"
 DUMMY_PROJECT = "domain"
-
-
-def dummy_user():
-    return MagicMock(
-        username=DUMMY_USERNAME,
-        password=DUMMY_PASSWORD,
-        user_id=DUMMY_ID,
-        date_joined=date(2016, 12, 12),
-        user_session_data={
-            'first_name': 'mclovin',
-            'last_name': None,
-            'phone_number': '555555',
-            'something': 'arbitrary',
-        }
-    )
 
 
 def dummy_user_xml(user=None):

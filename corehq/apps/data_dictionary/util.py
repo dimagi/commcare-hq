@@ -4,12 +4,12 @@ from operator import attrgetter
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext
 
-from corehq import toggles
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
 )
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
 
@@ -127,7 +127,8 @@ def get_case_property_description_dict(domain):
 
 
 def save_case_property(name, case_type, domain=None, data_type=None,
-                       description=None, group=None, deprecated=None):
+                       description=None, group=None, deprecated=None,
+                       fhir_resource_prop_path=None, fhir_resource_type=None, remove_path=False):
     """
     Takes a case property to update and returns an error if there was one
     """
@@ -149,6 +150,9 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         prop.full_clean()
     except ValidationError as e:
         return str(e)
+
+    if fhir_resource_type and fhir_resource_prop_path:
+        update_fhir_resource_property(prop, fhir_resource_type, fhir_resource_prop_path, remove_path)
     prop.save()
 
 
@@ -169,3 +173,13 @@ def get_data_dict_props_by_case_type(domain):
 def get_data_dict_case_types(domain):
     case_types = CaseType.objects.filter(domain=domain).values_list('name', flat=True)
     return set(case_types)
+
+
+def fields_to_validate(domain, case_type_name):
+    filter_kwargs = {
+        'case_type__domain': domain,
+        'case_type__name': case_type_name,
+        'data_type__in': ['date', 'select'],
+    }
+    props = CaseProperty.objects.filter(**filter_kwargs)
+    return {prop.name: prop for prop in props}

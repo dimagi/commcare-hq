@@ -10,9 +10,10 @@ from corehq.apps.receiverwrapper.util import (
     get_version_from_build_id,
 )
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 
 
+@sharded
 class TestAppId(TestCase):
 
     @classmethod
@@ -70,8 +71,3 @@ class TestAppId(TestCase):
         self.assertEqual(build.version, 3)
         self.assertEqual(get_version_from_build_id(domain, form.build_id),
                          build.version)
-
-
-@use_sql_backend
-class TestAppIdSQL(TestAppId):
-    pass

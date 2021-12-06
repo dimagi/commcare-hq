@@ -168,26 +168,26 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
         self.labels = ko.computed(function () {
             if (self.values_are_icons()) {
                 return {
-                    placeholder: django.gettext('Calculation'),
-                    duplicated: django.gettext('Calculation is duplicated'),
-                    addButton: django.gettext('Add Image'),
-                    badXML: django.gettext('Calculation contains an invalid character.'),
+                    placeholder: gettext('Calculation'),
+                    duplicated: gettext('Calculation is duplicated'),
+                    addButton: gettext('Add Image'),
+                    badXML: gettext('Calculation contains an invalid character.'),
                 };
             }
             else if (self.keys_are_conditions()) {
                 return {
-                    placeholder: django.gettext('Calculation'),
-                    duplicated: django.gettext('Calculation is duplicated'),
-                    addButton: django.gettext('Add Key, Value Mapping'),
-                    badXML: django.gettext('Calculation contains an invalid character.'),
+                    placeholder: gettext('Calculation'),
+                    duplicated: gettext('Calculation is duplicated'),
+                    addButton: gettext('Add Key, Value Mapping'),
+                    badXML: gettext('Calculation contains an invalid character.'),
                 };
             }
             else {
                 return {
-                    placeholder: django.gettext('Key'),
-                    duplicated: django.gettext('Key is duplicated'),
-                    addButton: django.gettext('Add Key, Value Mapping'),
-                    badXML: django.gettext('Key contains an invalid character.'),
+                    placeholder: gettext('Key'),
+                    duplicated: gettext('Key is duplicated'),
+                    addButton: gettext('Add Key, Value Mapping'),
+                    badXML: gettext('Key contains an invalid character.'),
                 };
             }
         });
@@ -300,7 +300,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
             });
             $modalDiv.koApplyBindings({
                 modalTitle: ko.computed(function () {
-                    return _.template(gettext('Edit mapping for <%= property %>'))({
+                    return _.template(gettext('Edit mapping for <%- property %>'))({
                         property: m.getPropertyName(),
                     });
                 }),

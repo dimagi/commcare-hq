@@ -429,6 +429,10 @@ class Question(object):
         self.xform = xform
         self.groups = groups
 
+    @property
+    def form(self) -> "XFormBuilder":
+        return self.xform
+
 
 class QuestionGroup(object):
 

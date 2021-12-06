@@ -100,43 +100,43 @@ Language
 import json
 from collections import namedtuple
 from copy import deepcopy
-from django.conf import settings
 
 from memoized import memoized
 
 from corehq.elastic import (
     ES_DEFAULT_INSTANCE,
-    ES_META,
-    SCROLL_PAGE_SIZE_LIMIT,
     SIZE_LIMIT,
     ESError,
-    ScanResult,
     run_query,
     count_query,
     scroll_query,
 )
 
 from . import aggregations, filters, queries
+from .registry import verify_registered
 from .utils import flatten_field_dict, values_list
 
 
 class ESQuery(object):
     """
     This query builder only outputs the following query structure::
+
         {
-            "query": {
-                "bool": {
-                    "filter": {
-                        "and": [
-                            <filters>
-                        ]
-                    },
-                    "query": <query>
-                }
-            },
-            <size, sort, other params>
+          "query": {
+            "bool": {
+              "filter": {
+                "and": [
+                  <filters>
+                ]
+              },
+              "query": <query>
+            }
+          },
+          <size, sort, other params>
         }
+
     """
+    # `index` is actually a canonical name (which may be the same as the alias)
     index = None
     _exclude_source = None
     _legacy_fields = False
@@ -149,13 +149,10 @@ class ESQuery(object):
     }
 
     def __init__(self, index=None, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
-        from corehq.apps.userreports.util import is_ucr_table
-
-        self.index = index if index is not None else self.index
-        if self.index not in ES_META and not is_ucr_table(self.index):
-            msg = "%s is not a valid ES index.  Available options are: %s" % (
-                self.index, ', '.join(ES_META))
-            raise IndexError(msg)
+        if index is not None:
+            self.index = index
+        # verify index canonical name
+        verify_registered(self.index)  # raises ESRegistryError on failure
 
         self.debug_host = debug_host
         self._default_filters = deepcopy(self.default_filters)
@@ -213,10 +210,6 @@ class ESQuery(object):
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
 
-    @property
-    def is_es7(self):
-        return settings.ELASTICSEARCH_MAJOR_VERSION == 7
-
     def run(self, include_hits=False):
         """Actually run the query.  Returns an ESQuerySet object."""
         query = self._clean_before_run(include_hits)
@@ -239,16 +232,9 @@ class ESQuery(object):
         Run the query against the scroll api. Returns an iterator yielding each
         document that matches the query.
         """
-        query = deepcopy(self)
-        if query._size is None:
-            query._size = SCROLL_PAGE_SIZE_LIMIT
-        result = scroll_query(query.index, query.raw_query, es_instance_alias=self.es_instance_alias)
-        # scroll doesn't include _id in the source even if it's specified, so include it
-        include_id = getattr(query, '_source', None) and "_id" in query._source
+        result = scroll_query(self.index, self.raw_query, es_instance_alias=self.es_instance_alias)
         for r in result:
-            if include_id:
-                r['_source']['_id'] = r.get('_id', None)
-            yield ESQuerySet.normalize_result(query, r)
+            yield ESQuerySet.normalize_result(self, r)
 
     @property
     def _filters(self):

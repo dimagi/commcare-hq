@@ -35,7 +35,7 @@ from .dbaccessors import (
     iterate_repeat_records_for_ids,
 )
 from .models import (
-    RepeaterStub,
+    SQLRepeater,
     domain_can_forward,
     get_payload,
     send_request,
@@ -128,7 +128,7 @@ def check_repeaters_in_partition(partition, total_partitions):
                     break
 
                 metrics_counter("commcare.repeaters.check.attempt_forward")
-                record.attempt_forward_now()
+                record.attempt_forward_now(is_retry=True)
             else:
                 iterating_time = datetime.utcnow() - start
                 _soft_assert(
@@ -141,6 +141,15 @@ def check_repeaters_in_partition(partition, total_partitions):
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record):
+    _process_repeat_record(repeat_record)
+
+
+@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def retry_process_repeat_record(repeat_record):
+    _process_repeat_record(repeat_record)
+
+
+def _process_repeat_record(repeat_record):
 
     # A RepeatRecord should ideally never get into this state, as the
     # domain_has_privilege check is also triggered in the create_repeat_records
@@ -166,18 +175,16 @@ def process_repeat_record(repeat_record):
         return
 
     try:
-        if repeater.paused:
-            # postpone repeat record by 1 day so that these don't get picked in each cycle and
-            # thus clogging the queue with repeat records with paused repeater
-            repeat_record.postpone_by(MAX_RETRY_WAIT)
-            return
-
         if repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
                 repeat_record.doc_type += DELETED_SUFFIX
                 repeat_record.save()
+        elif repeater.paused:
+            # postpone repeat record by MAX_RETRY_WAIT so that these don't get picked in each cycle and
+            # thus clogging the queue with repeat records with paused repeater
+            repeat_record.postpone_by(MAX_RETRY_WAIT)
         elif repeat_record.state == RECORD_PENDING_STATE or repeat_record.state == RECORD_FAILURE_STATE:
-                repeat_record.fire()
+            repeat_record.fire()
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
 
@@ -191,25 +198,25 @@ repeaters_overdue = metrics_gauge_task(
 
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeater_stub(repeater_stub: RepeaterStub):
+def process_repeater(repeater: SQLRepeater):
     """
     Worker task to send SQLRepeatRecords in chronological order.
 
-    This function assumes that ``repeater_stub`` checks have already
+    This function assumes that ``repeater`` checks have already
     been performed. Call via ``models.attempt_forward_now()``.
     """
     with CriticalSection(
-        [f'process-repeater-{repeater_stub.repeater_id}'],
+        [f'process-repeater-{repeater.repeater_id}'],
         fail_hard=False, block=False, timeout=5 * 60 * 60,
     ):
-        for repeat_record in repeater_stub.repeat_records_ready[:RECORDS_AT_A_TIME]:
+        for repeat_record in repeater.repeat_records_ready[:RECORDS_AT_A_TIME]:
             try:
-                payload = get_payload(repeater_stub.repeater, repeat_record)
+                payload = get_payload(repeater.repeater, repeat_record)
             except Exception:
                 # The repeat record is cancelled if there is an error
                 # getting the payload. We can safely move to the next one.
                 continue
-            should_retry = not send_request(repeater_stub.repeater,
+            should_retry = not send_request(repeater.repeater,
                                             repeat_record, payload)
             if should_retry:
                 break

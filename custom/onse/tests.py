@@ -1,9 +1,14 @@
 import doctest
+from unittest.mock import patch
+
+from django.test import TestCase
 from datetime import date
-
 from nose.tools import assert_equal
-
 from custom.onse import tasks
+from custom.onse.tasks import _update_facility_cases_from_dhis2_data_elements
+from corehq.motech.models import ConnectionSettings
+from requests import RequestException
+from celery.exceptions import MaxRetriesExceededError
 
 
 def test_previous_quarter():
@@ -24,3 +29,13 @@ def test_previous_quarter():
 def test_doctests():
     results = doctest.testmod(tasks)
     assert results.failed == 0
+
+
+class TestUpdateFromDhis2Task(TestCase):
+
+    @patch('custom.onse.tasks.domain_exists', return_value=True)
+    @patch('custom.onse.tasks.get_dhis2_server', return_value=ConnectionSettings())
+    @patch('custom.onse.tasks.check_server_status', return_value={'ready': False, 'error': RequestException})
+    def test_retry(self, *args):
+        task = _update_facility_cases_from_dhis2_data_elements.delay(None, True)
+        assert task.result.__class__ == MaxRetriesExceededError

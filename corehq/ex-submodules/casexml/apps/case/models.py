@@ -10,26 +10,20 @@ from datetime import datetime
 import logging
 
 from django.core.cache import cache
-from django.conf import settings
-from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs.mixin import DeferredBlobMixin, CODES
 from corehq.form_processor.abstract_models import AbstractCommCareCase, DEFAULT_PARENT_IDENTIFIER
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import *  # noqa: F403
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case import const
-from dimagi.utils.modules import to_function
-from dimagi.utils import web
 from memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from couchforms.models import XFormInstance
 from corehq.form_processor.exceptions import CaseNotFound
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch import (
     CouchDocLockableMixIn,
     LooselyEqualDocumentSchema,
@@ -84,13 +78,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
     @property
     def xform(self):
-        try:
-            return XFormInstance.get(self.xform_id) if self.xform_id else None
-        except ResourceNotFound:
-            logging.exception("couldn't access form {form} inside of a referenced case.".format(
-                form=self.xform_id,
-            ))
-            return None
+        raise NotImplementedError
 
     @property
     def form(self):
@@ -231,7 +219,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         if relationship:
             indices = [index for index in indices if index.relationship == relationship]
 
-        return [CommCareCase.get(index.referenced_id) for index in indices]
+        return [CommCareCase.get(index.referenced_id) for index in indices if not index.is_deleted]
 
     @property
     def parent(self):
@@ -278,8 +266,12 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         return self.doc_type.endswith(DELETED_SUFFIX)
 
     @property
+    def live_indices(self):
+        return [i for i in self.indices if not i.is_deleted]
+
+    @property
     def has_indices(self):
-        return self.indices or self.reverse_indices
+        return self.live_indices or self.reverse_indices
 
     @property
     def deletion_id(self):
@@ -322,19 +314,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
             return super(CommCareCase, cls).get(id, **kwargs)
         except ResourceNotFound:
             raise CaseNotFound(id)
-
-    @classmethod
-    def get_wrap_class(cls, data):
-        try:
-            settings.CASE_WRAPPER
-        except AttributeError:
-            cls._case_wrapper = None
-        else:
-            CASE_WRAPPER = to_function(settings.CASE_WRAPPER, failhard=True)
-        
-        if CASE_WRAPPER:
-            return CASE_WRAPPER(data) or cls
-        return cls
 
     def get_server_modified_date(self):
         # gets (or adds) the server modified timestamp
@@ -385,8 +364,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         Gets the form docs associated with a case. If it can't find a form
         it won't be included.
         """
-        from couchforms.dbaccessors import get_forms_by_id
-        return get_forms_by_id(self.xform_ids)
+        raise NotImplementedError
 
     def get_attachment(self, attachment_name):
         return self.fetch_attachment(attachment_name)

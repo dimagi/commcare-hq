@@ -9,6 +9,7 @@ from django.utils.translation import ugettext
 
 from celery import chord
 
+from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
@@ -37,7 +38,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.tasks import send_domain_registration_email
-from corehq.apps.users.models import CouchUser, UserRole, WebUser
+from corehq.apps.users.models import CouchUser, WebUser
 from corehq.util.view_utils import absolute_reverse
 
 APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']
@@ -51,15 +52,40 @@ _soft_assert_registration_issues = soft_assert(
 )
 
 
-def activate_new_user(form, created_by, created_via, is_domain_admin=True, domain=None, ip=None):
-    username = form.cleaned_data['email']
-    password = form.cleaned_data['password']
+def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=True, domain=None, ip=None):
     full_name = form.cleaned_data['full_name']
+    new_user = activate_new_user(
+        username=form.cleaned_data['email'],
+        password=form.cleaned_data['password'],
+        created_by=created_by,
+        created_via=created_via,
+        first_name=full_name[0],
+        last_name=full_name[1],
+        is_domain_admin=is_domain_admin,
+        domain=domain,
+        ip=ip,
+        atypical_user=form.cleaned_data.get('atypical_user', False),
+    )
+    return new_user
+
+
+def activate_new_user(
+    username, password, created_by, created_via, first_name=None, last_name=None,
+    is_domain_admin=True, domain=None, ip=None, atypical_user=False
+):
     now = datetime.utcnow()
 
-    new_user = WebUser.create(domain, username, password, created_by, created_via, is_admin=is_domain_admin)
-    new_user.first_name = full_name[0]
-    new_user.last_name = full_name[1]
+    new_user = WebUser.create(
+        domain,
+        username,
+        password,
+        created_by,
+        created_via,
+        is_admin=is_domain_admin,
+        by_domain_required_for_log=bool(domain),
+    )
+    new_user.first_name = first_name
+    new_user.last_name = last_name
     new_user.email = username
     new_user.subscribed_to_commcare_users = False
     new_user.eula.signed = True
@@ -74,13 +100,13 @@ def activate_new_user(form, created_by, created_via, is_domain_admin=True, domai
     new_user.last_login = now
     new_user.date_joined = now
     new_user.last_password_set = now
-    new_user.atypical_user = form.cleaned_data.get('atypical_user', False)
+    new_user.atypical_user = atypical_user
     new_user.save()
 
     return new_user
 
 
-def request_new_domain(request, form, is_new_user=True):
+def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user, strict=True)
 
@@ -90,7 +116,6 @@ def request_new_domain(request, form, is_new_user=True):
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
-    project_name = form.cleaned_data.get('hr_name') or form.cleaned_data.get('project_name')
     name = name_to_url(project_name, "project")
     with CriticalSection(['request_domain_name_{}'.format(name)]):
         name = Domain.generate_name(name)
@@ -101,17 +126,13 @@ def request_new_domain(request, form, is_new_user=True):
             date_created=datetime.utcnow(),
             creating_user=current_user.username,
             secure_submissions=True,
-            use_sql_backend=True,
             first_domain_for_user=is_new_user
         )
 
         # Avoid projects created by dimagi.com staff members as self started
         new_domain.internal.self_started = not current_user.is_dimagi
 
-        if form.cleaned_data.get('domain_timezone'):
-            new_domain.default_timezone = form.cleaned_data['domain_timezone']
-
-        if not is_new_user:
+        if not is_new_user or is_new_sso_user:
             new_domain.is_active = True
 
         # ensure no duplicate domain documents get created on cloudant
@@ -125,7 +146,7 @@ def request_new_domain(request, form, is_new_user=True):
     if not settings.ENTERPRISE_MODE:
         _setup_subscription(new_domain.name, current_user)
 
-    UserRole.init_domain_with_presets(new_domain.name)
+    initialize_domain_with_default_roles(new_domain.name)
 
     if request.user.is_authenticated:
         if not current_user:
@@ -142,7 +163,7 @@ def request_new_domain(request, form, is_new_user=True):
             f"{new_domain.name} during registration"
         )
 
-    if is_new_user:
+    if is_new_user and not is_new_sso_user:
         dom_req.save()
         if settings.IS_SAAS_ENVIRONMENT:
             #  Load template apps to the user's new domain in parallel
@@ -165,7 +186,13 @@ def request_new_domain(request, form, is_new_user=True):
                                            dom_req.activation_guid,
                                            request.user.get_full_name(),
                                            request.user.first_name)
-    send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
+    send_new_request_update_email(
+        request.user,
+        get_ip(request),
+        new_domain.name,
+        is_new_user=is_new_user,
+        is_new_sso_user=is_new_sso_user
+    )
 
     send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
@@ -185,10 +212,13 @@ def _setup_subscription(domain_name, user):
     billing_contact.save()
 
 
-def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain", is_new_user=False, is_confirming=False):
+def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain",
+                                  is_new_user=False, is_confirming=False, is_new_sso_user=False):
     entity_texts = {"domain": ["project space", "Project"],
                    "org": ["organization", "Organization"]}[entity_type]
-    if is_confirming:
+    if is_new_sso_user:
+        message = f"A new SSO user just requested a {entity_texts[0]} called {entity_name}."
+    elif is_confirming:
         message = "A (basically) brand new user just confirmed his/her account. The %s requested was %s." % (entity_texts[0], entity_name)
     elif is_new_user:
         message = "A brand new user just requested a %s called %s." % (entity_texts[0], entity_name)

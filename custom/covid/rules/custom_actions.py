@@ -1,3 +1,9 @@
+"""
+COVID: Available Actions
+------------------------
+
+The following actions can be used in messaging in projects using the ``covid`` custom module.
+"""
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es.cases import case_type
@@ -9,13 +15,21 @@ from corehq.apps.es import filters
 def close_cases_assigned_to_checkin(checkin_case, rule):
     """
     For any associated checkin case that matches the rule criteria, the following occurs:
-        1) For all cases of type [x] find all fields where [assigned_to_primary_checkin_case_id] is set
-           to the case ID of the associated checkin case. These are the assigned cases.
-        2) For every assigned case, the following case properties are blanked out (set to ""):
-            - assigned_to_primary_checkin_case_id
-            - is_assigned_primary
-            - assigned_to_primary_name
-            - assigned_to_primary_username
+
+    1. For all cases of a given type, find all assigned cases. \
+       An assigned case is a case for which all of the following are true:
+
+       - Case type patient or contact
+       - Exists in the same domain as the user case
+       - The case property assigned_to_primary_checkin_case_id equals an associated checkin case's case_id
+
+    2. For every assigned case, the following case properties are blanked out (set to ""):
+
+       - assigned_to_primary_checkin_case_id
+       - is_assigned_primary
+       - assigned_to_primary_name
+       - assigned_to_primary_username
+
     """
     if checkin_case.type != "checkin":
         return CaseRuleActionResult()
@@ -27,11 +41,11 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
         "assigned_to_primary_username": "",
     }
     num_related_updates = 0
-    for assigned_case in _get_assigned_cases(checkin_case):
+    for assigned_case_domain, assigned_case_id in _get_assigned_cases(checkin_case):
         num_related_updates += 1
         (submission, cases) = update_case(
-            assigned_case.domain,
-            assigned_case.case_id,
+            assigned_case_domain,
+            assigned_case_id,
             case_properties=blank_properties,
             xmlns=AUTO_UPDATE_XMLNS,
             device_id=__name__ + ".close_cases_assigned_to_checkin",
@@ -54,18 +68,10 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
 
 
 def _get_assigned_cases(checkin_case):
-    """
-    An assigned case is a case for which all of the following are true
-    Case type patient or contact
-    Exists in the same domain as the user case
-    The case property assigned_to_primary_checkin_case_id equals an associated checkin case's case_id
-    """
-
-    query = (
+    return (
         CaseSearchES()
         .domain(checkin_case.domain)
         .filter(filters.OR(case_type("patient"), case_type("contact")))
         .case_property_query("assigned_to_primary_checkin_case_id", checkin_case.case_id)
+        .values_list('domain', '_id')
     )
-
-    return [CommCareCase.wrap(flatten_result(hit)) for hit in query.run().hits]

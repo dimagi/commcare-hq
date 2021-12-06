@@ -5,7 +5,7 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 
 from memoized import memoized
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_build_ids
 from corehq.apps.app_manager.models import (
@@ -26,7 +26,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
     add_build,
-    patch_default_builds,
+    patch_default_builds, get_simple_form, patch_validate_xform,
 )
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.apps import load_app_from_slug
@@ -34,10 +34,10 @@ from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.applications import link_app
-from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.userreports.tests.utils import get_sample_report_config
 
 
+@patch_validate_xform()
 class AppManagerTest(TestCase, TestXmlMixin):
     file_path = ('data',)
     min_paths = (
@@ -84,10 +84,6 @@ class AppManagerTest(TestCase, TestXmlMixin):
             )
         self.app.save()
 
-    def tearDown(self):
-        DomainLink.all_objects.all().delete()
-        super().tearDown()
-
     def test_last_modified(self):
         lm = self.app.last_modified
         self.app.save()
@@ -119,8 +115,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
         for module in self.app.get_modules():
             self.assertEqual(len(module.forms), 3)
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def testCreateJadJar(self, mock):
+    def testCreateJadJar(self):
         self.app.build_spec = BuildSpec(**self.build1)
         self.app.create_build_files()
         self.app.save(increment_version=False)
@@ -185,9 +180,8 @@ class AppManagerTest(TestCase, TestXmlMixin):
         imported_app = self._test_import_app(self.app.id)
         self.assertEqual(imported_app.family_id, self.app.id)
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     @patch('corehq.apps.app_manager.models.ReportAppConfig.report')
-    def testImportApp_from_source(self, mock, report_mock):
+    def testImportApp_from_source(self, report_mock):
         report_mock.return_value = get_sample_report_config()
         report_module = self.app.add_module(ReportModule.new_module('Reports', None))
         report_module.report_configs = [
@@ -240,8 +234,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self.assertTrue(build.fetch_attachment(path))
         self.assertEqual(build.odk_profile_created_after_build, True)
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def testBuildApp(self, mock):
+    def testBuildApp(self):
         # do it from a NOT-SAVED app;
         # regression test against case where contents gets lazy-put w/o saving
         app = Application.wrap(self._yesno_source)
@@ -262,37 +255,39 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self._check_legacy_odk_files(copy)
 
     @patch_default_builds
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def testBuildImportedApp(self, mock):
+    def testBuildImportedApp(self):
         app = import_app(self._yesno_source, self.domain)
         copy = app.make_build()
         copy.save()
         self._check_has_build_files(copy, self.min_paths)
         self._check_legacy_odk_files(copy)
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def testBuildTemplateApps(self, mock):
+    def testBuildTemplateApps(self):
         # Tests that these apps successfully build
         for slug in ['agriculture', 'health', 'wash']:
             load_app_from_slug(self.domain, 'username', slug)
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def testGetLatestBuild(self, mock):
+    def testGetLatestBuild(self):
         factory = AppFactory(build_version='2.40.0')
-        factory.new_basic_module('register', 'case', with_form=False)
-        factory.app.save()
+        m0, f0 = factory.new_basic_module('register', 'case')
+        f0.source = get_simple_form(xmlns=f0.unique_id)
+        app = factory.app
+        app.save()
 
-        build1 = factory.app.make_build()
+        build1 = app.make_build()
         build1.save()
-        self.assertIsNone(build1.get_latest_build())
+        # ensure that there was no previous version used during the build process
+        self.assertEqual(app.get_latest_build.get_cache(app), {})
+        self.assertEqual(build1.get_latest_build.get_cache(build1), {(): None})
 
-        factory.app.save()
-        build2 = factory.app.make_build()
+        app.save()
+        build2 = app.make_build()
         build2.save()
-        self.assertEqual(build2.get_latest_build().id, build1.id)
+        # ensure that there was no previous version used during the build process
+        self.assertEqual(app.get_latest_build.get_cache(app), {})
+        self.assertEqual(build2.get_latest_build.get_cache(build2)[()].id, build1.id)
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def testPruneAutoGeneratedBuilds(self, mock):
+    def testPruneAutoGeneratedBuilds(self):
         # Build #1, manually generated
         app = import_app(self._yesno_source, self.domain)
         for module in app.modules:
@@ -334,8 +329,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self.assertEqual(len(build_ids), 2)
         self.assertNotIn(build2.id, build_ids)
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def testRevertToCopy(self, mock):
+    def testRevertToCopy(self):
         old_name = 'old name'
         new_name = 'new name'
         app = Application.wrap(self._yesno_source)
@@ -358,15 +352,19 @@ class AppManagerTest(TestCase, TestXmlMixin):
 
     def testConvertToApplication(self):
         factory = AppFactory(build_version='2.40.0')
-        factory.new_basic_module('register', 'case', with_form=False)
+        m0, f0 = factory.new_basic_module('register', 'case')
+        f0.source = get_simple_form(xmlns=f0.unique_id)
         factory.app.save()
+        self.addCleanup(factory.app.delete)
         build = factory.app.make_build()
         build.is_released = True
         build.save()
+        self.addCleanup(build.delete)
 
         linked_app = LinkedApplication()
         linked_app.domain = 'other-domain'
         linked_app.save()
+        self.addCleanup(linked_app.delete)
 
         link_app(linked_app, factory.app.domain, factory.app.id)
         update_linked_app(linked_app, factory.app.id, 'system')
@@ -374,8 +372,6 @@ class AppManagerTest(TestCase, TestXmlMixin):
         unlinked_doc = linked_app.convert_to_application().to_json()
         self.assertEqual(unlinked_doc['doc_type'], 'Application')
         self.assertFalse(hasattr(unlinked_doc, 'linked_app_attrs'))
-
-        linked_app.delete()
 
     def test_jad_settings(self):
         self.app.build_spec = BuildSpec(version='2.2.0', build_number=1)

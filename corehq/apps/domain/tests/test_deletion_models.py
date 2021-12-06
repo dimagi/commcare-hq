@@ -16,6 +16,7 @@ IGNORE_APPS = {
     'django_celery_results',
     'django_digest',
     'django_prbac',
+    'enterprise',
     'form_processor',
     'hqadmin',
     'hqwebapp',
@@ -56,6 +57,8 @@ IGNORE_MODELS = {
     'util.ComplaintBounceMeta',
     'util.PermanentBounceMeta',
     'util.TransientBounceEmail',
+    'registration.AsyncSignupRequest',
+    'users.UserHistory',
 }
 
 

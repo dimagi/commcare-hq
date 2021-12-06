@@ -3,7 +3,7 @@ from django.db.models import Q
 from django.test import TestCase
 from datetime import time
 from io import BytesIO
-from mock import patch
+from unittest.mock import patch
 import re
 import tempfile
 
@@ -126,7 +126,7 @@ class TestBulkConditionalAlerts(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
         super(TestBulkConditionalAlerts, cls).tearDownClass()
 

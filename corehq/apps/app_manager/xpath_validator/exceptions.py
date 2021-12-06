@@ -1,6 +1,6 @@
 
 
-class XpathValidationError(Exception):
+class XPathValidationError(Exception):
     """
     When an error occurs in the process of xpath validation
     (NOT when an xpath is invalid)

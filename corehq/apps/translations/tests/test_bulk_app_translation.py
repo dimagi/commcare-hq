@@ -5,7 +5,7 @@ from io import BytesIO
 
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -21,6 +21,7 @@ from corehq.apps.translations.app_translations.download import (
     get_module_case_list_menu_item_rows,
     get_module_detail_rows,
     get_module_search_command_rows,
+    get_case_search_rows,
 )
 from corehq.apps.translations.app_translations.upload_app import (
     get_sheet_name_to_unique_id_map,
@@ -344,7 +345,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         ("menu1", (
             ("case_list_form_label", "list", "Register Mother", "Inscrivez-Mère"),
             ("case_list_menu_item_label", "list", "List Stethoscopes", "French List of Stethoscopes"),
-            ("search_command_label", "list", "Find a Mother", "Mère!"),
+            ("search_label", "list", "Find a Mother", "Mère!"),
             ("search_again_label", "list", "Find Another Mother", "Mère! Encore!"),
             ("name", "list", "Name", "Nom"),
             ("Tab 0", "detail", "Name", "Nom"),
@@ -396,7 +397,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ("menu1", "case_list_form_label", "list", "", "Register Mother", "", "", "", ""),
           ("menu1", "case_list_menu_item_label", "list", "",
            "List Stethoscopes", "French List of Stethoscopes", "", "", ""),
-          ("menu1", "search_command_label", "list", "", "Find a Mother", "", "", "", ""),
+          ("menu1", "search_label", "list", "", "Find a Mother", "", "", "", ""),
           ("menu1", "search_again_label", "list", "", "Find Another Mother", "", "", "", ""),
           ("menu1", "name", "list", "", "Name", "", "", "", ""),
           ("menu1", "Tab 0", "detail", "", "Name", "", "", "", ""),
@@ -770,106 +771,18 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ]
         )
 
-    @flag_enabled('ICDS')
-    def test_partial_case_list_translation_upload(self):
-        # note this isn't a "partial" upload because this app only has one case list property
+    def test_case_search_labels_on_upload(self):
         module = self.app.get_module(0)
-        self.assertEqual(
-            module.case_details.short.columns[0].header, {'en': 'Name'}
-        )
-        translation_data = []
-        # filter out the case lists translation from the upload
-        for sheet in self.multi_sheet_upload_no_change_data:
-            if sheet[0] != 'menu1':
-                translation_data.append(sheet)
-                continue
 
-            mod1_sheet = []
-            for translation in sheet[1]:
-                if translation[1] == 'list':
-                    continue
-                mod1_sheet.append(translation)
+        # default values
+        self.assertEqual(module.search_config.search_label.label, {'en': 'Search All Cases'})
+        self.assertEqual(module.search_config.search_again_label.label, {'en': 'Search Again'})
 
-            translation_data.append(['menu1', mod1_sheet])
-        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, translation_data)
-        self.assertEqual(
-            module.case_details.short.columns[0].header, {'en': 'Name'}
-        )
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
 
-    @flag_enabled('ICDS')
-    def test_partial_case_detail_translation_upload(self):
-        module = self.app.get_module(0)
-        self.assertEqual(
-            module.case_details.long.columns[0].header, {'en': 'Name', 'fra': ''}
-        )
-        self.assertEqual(
-            module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
-        )
-        translation_data = []
-        for sheet in self.multi_sheet_upload_no_change_data:
-            if sheet[0] != 'menu1':
-                translation_data.append(sheet)
-                continue
-
-            mod1_sheet = []
-            for translation in sheet[1]:
-                # translate name, and one prop, remove all other detail translations
-                if translation[1] == 'detail':
-                    if translation[0] == 'name':
-                        new_trans = list(translation)
-                        new_trans[2] = 'English Name'
-                        new_trans[3] = 'French Name'
-                        mod1_sheet.append(new_trans)
-                    if translation[0] == 'other-prop (ID Mapping Text)':
-                        mod1_sheet.append(
-                            ('other-prop (ID Mapping Text)', 'detail', 'New Value!', 'Autre Prop'))
-                    continue
-                mod1_sheet.append(translation)
-
-            translation_data.append(['menu1', mod1_sheet])
-        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, translation_data)
-        self.assertEqual(
-            module.case_details.long.columns[0].header, {'en': 'English Name', 'fra': 'French Name'}
-        )
-        self.assertEqual(
-            module.case_details.long.columns[1].header, {'en': 'New Value!', 'fra': 'Autre Prop'}
-        )
-
-    @flag_enabled('ICDS')
-    def test_partial_upload_id_mapping(self):
-        module = self.app.get_module(0)
-        self.assertEqual(
-            module.case_details.long.columns[0].header, {'en': 'Name', 'fra': ''}
-        )
-        self.assertEqual(
-            module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
-        )
-        translation_data = []
-        for sheet in self.multi_sheet_upload_no_change_data:
-            if sheet[0] != 'menu1':
-                translation_data.append(sheet)
-                continue
-
-            mod1_sheet = []
-            for translation in sheet[1]:
-                if translation[0] == 'foo (ID Mapping Value)':
-                    continue  # remove one of the id mapping values
-                if translation[0] == 'baz (ID Mapping Value)':
-                    mod1_sheet.append(('baz (ID Mapping Value)', 'detail', 'newbaz', ''))
-                    continue  # modify one of the translations
-                mod1_sheet.append(translation)
-
-            translation_data.append(['menu1', mod1_sheet])
-
-        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, translation_data)
-        self.assertEqual(
-            module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
-        )
-        self.assertEqual(
-            [(e.key, e.value) for e in module.case_details.long.columns[1].enum],
-            [('foo', {'en': 'bar'}),
-             ('baz', {'en': 'newbaz'})]
-        )
+        self.assertEqual(module.search_config.search_label.label, {'en': 'Find a Mother', 'fra': 'Mère!'})
+        self.assertEqual(module.search_config.search_again_label.label,
+                         {'en': 'Find Another Mother', 'fra': 'Mère! Encore!'})
 
 
 class BulkAppTranslationPartialsTest(BulkAppTranslationTestBase):
@@ -913,61 +826,6 @@ class BulkAppTranslationPartialsTest(BulkAppTranslationTestBase):
         factory.add_module_case_detail_column(module1, 'short', 'no', 'No')
         factory.add_module_case_detail_column(module1, 'short', 'no', 'Nope')
         self.app = factory.app
-
-    @flag_enabled('ICDS')
-    def test_partial_missing_dups(self):
-        """
-        Dropping some duplicates of a case property should throw an error
-        """
-        translations = []
-        for sheet in self.multi_sheet_upload:
-            if sheet[0] == 'menu1':
-                menu1_translations = []
-                for i, translation in enumerate(sheet[1]):
-                    # Drop one name translation
-                    if i == 5:
-                        assert translation[0:2] == ('name', 'detail')
-                        continue
-                    menu1_translations.append(translation)
-                translations.append(['menu1', menu1_translations])
-            else:
-                translations.append(sheet)
-
-        messages = [
-            'There is more than one translation for case property "name" for '
-            'menu 1, but some translations are missing. Unable to determine '
-            'which translation(s) to use. Skipping this case property.',
-
-            'App Translations Updated!',
-        ]
-        self.upload_raw_excel_translations(self.app, self.multi_sheet_headers, translations,
-                                           expected_messages=messages)
-
-    @flag_enabled('ICDS')
-    def test_partial_no_dups(self):
-        """
-        Dropping all duplicates of a case property should succeed
-        """
-        translations = []
-        for sheet in self.multi_sheet_upload:
-            if sheet[0] == 'menu1':
-                menu1_translations = []
-                for translation in sheet[1]:
-                    # Drop all name translations
-                    if translation[0:2] == ('name', 'detail'):
-                        continue
-                    menu1_translations.append(translation)
-                translations.append(['menu1', menu1_translations])
-            else:
-                translations.append(sheet)
-        self.upload_raw_excel_translations(self.app, self.multi_sheet_headers, translations)
-
-    @flag_enabled('ICDS')
-    def test_partial_all_dups(self):
-        """
-        Translating duplicates should succeed
-        """
-        self.upload_raw_excel_translations(self.app, self.multi_sheet_headers, self.multi_sheet_upload)
 
 
 class MismatchedItextReferenceTest(BulkAppTranslationTestBaseWithApp):
@@ -1208,11 +1066,19 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(get_module_case_list_menu_item_rows(self.app.langs, self.app.modules[0]),
                          [('case_list_menu_item_label', 'list', 'Steth List')])
 
-    def test_module_search_command_rows(self):
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_module_search_labels_rows(self):
         app = AppFactory.case_claim_app_factory().app
-        self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0]),
-                         [('search_command_label', 'list', 'Find a Mother'),
+        self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),
+                         [('search_label', 'list', 'Find a Mother'),
                           ('search_again_label', 'list', 'Find Another Mother')])
+
+    @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
+    def test_module_case_search_rows(self):
+        app = AppFactory.case_claim_app_factory().app
+        self.assertEqual(get_case_search_rows(app.langs, app.modules[0], self.app.domain),
+                         [('name', 'case_search_display', 'Name of Mother'),
+                          ('name', 'case_search_hint', '')])
 
     def test_module_detail_rows(self):
         self.assertListEqual(get_module_detail_rows(self.app.langs, self.app.modules[0]), [

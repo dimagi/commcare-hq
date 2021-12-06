@@ -22,6 +22,10 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema):
     relationship = StringProperty('child', choices=['child', 'extension'])
 
     @property
+    def is_deleted(self):
+        return not self.referenced_id
+
+    @property
     def referenced_case(self):
         """
         For a 'forward' index this is the case that the the index points to.
@@ -32,7 +36,10 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema):
         """
         if not hasattr(self, "_case"):
             from casexml.apps.case.models import CommCareCase
-            self._case = CommCareCase.get(self.referenced_id)
+            if self.referenced_id:
+                self._case = CommCareCase.get(self.referenced_id)
+            else:
+                self._case = None
         return self._case
 
     @classmethod
@@ -132,15 +139,11 @@ class IndexHoldingMixIn(object):
                 # case here but is moved into the pre save processing
                 pass
             if self.has_index(index_update.identifier):
-                if not index_update.referenced_id:
-                    # empty ID = delete
-                    self.indices.remove(self.get_index(index_update.identifier))
-                else:
-                    # update
-                    index = self.get_index(index_update.identifier)
-                    index.referenced_type = index_update.referenced_type
-                    index.referenced_id = index_update.referenced_id
-                    index.relationship = index_update.relationship
+                # update
+                index = self.get_index(index_update.identifier)
+                index.referenced_type = index_update.referenced_type
+                index.referenced_id = index_update.referenced_id
+                index.relationship = index_update.relationship
             else:
                 # no id, no index
                 if index_update.referenced_id:

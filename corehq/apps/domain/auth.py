@@ -146,7 +146,7 @@ def basicauth(realm=''):
         def wrapper(request, *args, **kwargs):
             uname, passwd = get_username_and_password_from_request(request)
             if uname and passwd:
-                user = authenticate(username=uname, password=passwd)
+                user = authenticate(username=uname, password=passwd, request=request)
                 if user is not None and user.is_active:
                     request.user = user
                     return view(request, *args, **kwargs)
@@ -179,7 +179,7 @@ def basic_or_api_key(realm=''):
 
 
 def formplayer_auth(view):
-    return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True)(view)
+    return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY')(view)
 
 
 def formplayer_as_user_auth(view):
@@ -215,7 +215,7 @@ def formplayer_as_user_auth(view):
 
         return view(request, *args, **kwargs)
 
-    return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True)(_inner)
+    return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY')(_inner)
 
 
 class ApiKeyFallbackBackend(object):

@@ -7,15 +7,14 @@ from io import BytesIO
 from django.http import HttpResponse
 from django.urls import reverse
 
-import mock
+from unittest import mock
 
 from casexml.apps.case.tests.util import delete_all_xforms
 
 from corehq.apps.es.fake.users_fake import UserESFake
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.views.mobile import users as user_views
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils.xform import (
     TestFormMetadata,
     get_simple_wrapped_form,
@@ -58,20 +57,16 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
         cls.extra_teardown()
         super(TestNewFormEditRestrictions, cls).tearDownClass()
 
-    @run_with_all_backends
     def test_can_edit_form_in_county(self):
         self.assertCanEdit(self.middlesex_web_user, self.cambridge_form)
 
-    @run_with_all_backends
     def test_cant_edit_out_of_county(self):
         self.assertCannotEdit(self.middlesex_web_user, self.boston_form)
 
-    @run_with_all_backends
     def test_can_edit_any_form(self):
         self.assertCanEdit(self.massachusetts_web_user, self.cambridge_form)
         self.assertCanEdit(self.massachusetts_web_user, self.boston_form)
 
-    @run_with_all_backends
     def test_project_admin_can_edit_anything(self):
         self.project_admin.get_domain_membership(self.domain).is_admin = True
         self.project_admin.save()
@@ -79,7 +74,6 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
         self.assertCanEdit(self.project_admin, self.cambridge_form)
         self.assertCanEdit(self.project_admin, self.boston_form)
 
-    @run_with_all_backends
     def test_unassigned_web_user_cant_edit_anything(self):
         self.assertCannotEdit(self.locationless_web_user, self.cambridge_form)
         self.assertCannotEdit(self.locationless_web_user, self.boston_form)
@@ -171,7 +165,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
-        cls.suffolk_user.delete(deleted_by=None)
+        cls.suffolk_user.delete(cls.domain, deleted_by=None)
         delete_all_users()
         super(TestAccessRestrictions, cls).tearDownClass()
 

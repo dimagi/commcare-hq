@@ -5,6 +5,7 @@ from logging import Filter
 import traceback
 from datetime import timedelta, datetime
 
+from celery._state import get_current_task
 from pygments import highlight
 from pygments.lexers import PythonLexer
 from pygments.formatters import HtmlFormatter
@@ -205,7 +206,23 @@ class HQRequestFilter(Filter):
             record.username = request.couch_user.username if getattr(request, 'couch_user', None) else ''
             record.hq_url = request.path
         else:
-            record.domain = record.username = record.hq_url = None
+            record.domain = record.username = record.hq_url = '-'
+        return True
+
+
+class CeleryTaskFilter(Filter):
+    """
+    Filter that adds custom context to log records for celery task ID and name.
+
+    This lets you add custom log formatters to include this information.
+    """
+    def filter(self, record):
+        task = get_current_task()
+        if task and task.request:
+            record.task_id = task.request.id
+            record.task_name = task.name
+        else:
+            record.task_id = record.task_name = '-'
         return True
 
 

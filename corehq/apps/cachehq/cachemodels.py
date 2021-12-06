@@ -17,17 +17,11 @@ class UserGenerationCache(GenerationCache):
     generation_key = '#gen#couch_user#'
     doc_types = ['CommCareUser', 'CouchUser', 'WebUser']
     views = [
-        "users_extra/phones_to_domains",
-        "users_extra/users_over_time",
-        "users_extra/emails",
         "users/by_domain",
         "users/phone_users_by_domain",
-        "users/web_users_by_domain",
         "users/by_default_phone",
-        "users/admins_by_domain",
         "users/by_username",
         "domain/old_users",
-        "users_extra/phones_to_domains",
     ]
 
 

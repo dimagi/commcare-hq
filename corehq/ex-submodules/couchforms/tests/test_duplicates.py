@@ -1,13 +1,13 @@
 import os
-from django.conf import settings
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import TestFileMixin
 
 
+@sharded
 class DuplicateFormTest(TestCase, TestFileMixin):
     ID = '7H46J37FGH3'
     file_path = ('data', 'posts')
@@ -27,8 +27,7 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         self.assertNotEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_duplicate)
         self.assertTrue(self.ID in xform.problem)
-        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            self.assertEqual(self.ID, xform.orig_id)
+        self.assertEqual(self.ID, xform.orig_id)
 
     def test_wrong_doc_type(self):
         domain = 'test-domain'
@@ -63,8 +62,3 @@ class DuplicateFormTest(TestCase, TestFileMixin):
             domain=domain,
         )
         self.assertNotEqual(result1.xform.form_id, result2.xform.form_id)
-
-
-@use_sql_backend
-class DuplicateFormTestSQL(DuplicateFormTest):
-    pass

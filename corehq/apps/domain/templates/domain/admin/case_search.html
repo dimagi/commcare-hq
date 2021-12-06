@@ -49,6 +49,11 @@
             {% blocktrans %}
               Add a list of all fuzzy search properties by case type below. These are
               properties that might be spelled inexactly by a user, e.g. "name".
+              <br><br>
+              When working with related case properties, add them to the case type that
+              you willbe searching on, not the related case type. For example, if fuzzy matching
+              on the parent's case name, add <strong>parent/name</strong> here as a property of
+              the child case type.
             {% endblocktrans %}
           </p>
 

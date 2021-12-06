@@ -3,18 +3,18 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
-from casexml.apps.phone.restore_caching import RestorePayloadPathCache
-from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.util.test_utils import unit_testing_only
 
 from dimagi.utils.dates import utcnow_sans_milliseconds
-from lxml import etree
 
-from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
+from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.xml import NS_VERSION_MAP, V1, V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
-from six.moves import range
-
+from casexml.apps.phone.restore_caching import RestorePayloadPathCache
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.tests.util.xml import assert_xml_equal
+from corehq.util.test_utils import unit_testing_only
 
 TEST_DOMAIN_NAME = 'test-domain'
 
@@ -65,6 +65,15 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
     return result.xform, result.case
 
 
+@contextmanager
+def create_case(domain, case_type, **kwargs):
+    case = CaseFactory(domain).create_case(case_type=case_type, **kwargs)
+    try:
+        yield case
+    finally:
+        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
+
+
 def _replace_ids_in_xform_xml(xml_data, case_id_override=None):
     # from our test forms, replace the UIDs so we don't get id conflicts
     uid, case_id = (uuid.uuid4().hex for i in range(2))
@@ -77,33 +86,9 @@ def _replace_ids_in_xform_xml(xml_data, case_id_override=None):
     return xml_data, uid, case_id
 
 
-def check_xml_line_by_line(test_case, expected, actual):
-    """Does what it's called, hopefully parameters are self-explanatory"""
-    # this is totally wacky, but elementtree strips needless
-    # whitespace that mindom will preserve in the original string
-    parser = etree.XMLParser(remove_blank_text=True)
-    parsed_expected = etree.tostring(etree.XML(expected, parser), pretty_print=True, encoding='utf-8').decode('utf-8')
-    parsed_actual = etree.tostring(etree.XML(actual, parser), pretty_print=True, encoding='utf-8').decode('utf-8')
-
-    if parsed_expected == parsed_actual:
-        return
-
-    try:
-        expected_lines = parsed_expected.split("\n")
-        actual_lines = parsed_actual.split("\n")
-        test_case.assertEqual(
-            len(expected_lines),
-            len(actual_lines),
-            "Parsed xml files are different lengths\n" +
-            "Expected: \n%s\nActual:\n%s" % (parsed_expected, parsed_actual))
-
-        for i in range(len(expected_lines)):
-            test_case.assertEqual(expected_lines[i], actual_lines[i])
-
-    except AssertionError:
-        import logging
-        logging.error("Failure in xml comparison\nExpected:\n%s\nActual:\n%s" % (parsed_expected, parsed_actual))
-        raise
+def check_xml_line_by_line(test_case, expected, actual, **kw):
+    """Assert that the given strings contain equivalent XML"""
+    assert_xml_equal(expected, actual, **kw)
 
 
 def get_case_xmlns(version):
@@ -182,7 +167,10 @@ def _check_payload_has_cases(testcase, payload_string, username, case_blocks, sh
 
     def check_block(case_block):
         case_block.set('xmlns', XMLNS)
-        case_block = _RestoreCaseBlock(ElementTree.fromstring(ElementTree.tostring(case_block, encoding='utf-8')), version=version)
+        case_block = _RestoreCaseBlock(
+            ElementTree.fromstring(ElementTree.tostring(case_block, encoding='utf-8')),
+            version=version,
+        )
         case_id = case_block.get_case_id()
         n = 0
 

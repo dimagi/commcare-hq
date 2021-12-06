@@ -1,7 +1,5 @@
 from django.db import migrations
 
-from corehq.apps.hqadmin.management.commands.populate_sql_hq_deploy import Command
-
 
 class Migration(migrations.Migration):
 
@@ -9,8 +7,4 @@ class Migration(migrations.Migration):
         ('hqadmin', '0012_alter_hqdeploy_diffurl'),
     ]
 
-    operations = [
-        migrations.RunPython(Command.migrate_from_migration,
-                             reverse_code=migrations.RunPython.noop,
-                             elidable=True),
-    ]
+    operations = []

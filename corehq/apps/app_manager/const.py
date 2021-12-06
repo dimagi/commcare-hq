@@ -67,7 +67,7 @@ WORKFLOW_ROOT = 'root'  # go to the module select screen
 WORKFLOW_PARENT_MODULE = 'parent_module'  # go to the parent module's screen
 WORKFLOW_MODULE = 'module'  # go to the current module's screen
 WORKFLOW_PREVIOUS = 'previous_screen'  # go to the previous screen (prior to entering the form)
-WORKFLOW_FORM = 'form'  # go straight to another form
+WORKFLOW_FORM = 'form'  # go straight to another form or menu
 ALL_WORKFLOWS = [
     WORKFLOW_DEFAULT,
     WORKFLOW_ROOT,
@@ -84,3 +84,6 @@ REGISTRATION_FORM_WORFLOWS = [
     WORKFLOW_DEFAULT,
     WORKFLOW_CASE_LIST,
 ]
+
+REGISTRY_WORKFLOW_LOAD_CASE = 'load_case'
+REGISTRY_WORKFLOW_SMART_LINK = 'smart_link'

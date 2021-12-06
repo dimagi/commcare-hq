@@ -22,7 +22,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import SafeCaseDisplay
 from corehq.apps.reports.standard.cases.filters import (
     CaseListExplorerColumns,
-    XpathCaseSearchFilter,
+    XPathCaseSearchFilter,
 )
 from corehq.elastic import iter_es_docs_from_query
 from corehq.util.metrics import metrics_histogram_timer
@@ -40,7 +40,7 @@ class CaseListExplorer(CaseListReport):
     _is_exporting = False
 
     fields = [
-        XpathCaseSearchFilter,
+        XPathCaseSearchFilter,
         CaseListExplorerColumns,
         CaseListFilter,
         CaseTypeFilter,
@@ -65,12 +65,12 @@ class CaseListExplorer(CaseListReport):
     def _build_query(self, sort=True):
         query = super(CaseListExplorer, self)._build_query()
         query = self._populate_sort(query, sort)
-        xpath = XpathCaseSearchFilter.get_value(self.request, self.domain)
+        xpath = XPathCaseSearchFilter.get_value(self.request, self.domain)
         if xpath:
             try:
                 query = query.xpath_query(self.domain, xpath)
             except CaseFilterError as e:
-                track_workflow(self.request.couch_user.username, "Case List Explorer: Query Error")
+                track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")
 
                 error = "<p>{}.</p>".format(escape(e))
                 bad_part = "<p>{} <strong>{}</strong></p>".format(
@@ -80,7 +80,7 @@ class CaseListExplorer(CaseListReport):
                 raise BadRequestError("{}{}".format(error, bad_part))
 
             if '/' in xpath:
-                track_workflow(self.request.couch_user.username, "Case List Explorer: Related case search")
+                track_workflow(self.request.couch_user.username, f"{self.name}: Related case search")
 
         return query
 
@@ -155,7 +155,7 @@ class CaseListExplorer(CaseListReport):
 
     @property
     def rows(self):
-        track_workflow(self.request.couch_user.username, "Case List Explorer: Search Performed")
+        track_workflow(self.request.couch_user.username, f"{self.name}: Search Performed")
         data = (flatten_result(row) for row in self.es_results['hits'].get('hits', []))
         return self._get_rows(data)
 
@@ -171,7 +171,7 @@ class CaseListExplorer(CaseListReport):
         )
         with timer:
             for case in data:
-                case_display = SafeCaseDisplay(self, case)
+                case_display = SafeCaseDisplay(case, self.timezone, self.individual)
                 yield [
                     case_display.get(column.prop_name)
                     for column in self.columns
@@ -180,5 +180,5 @@ class CaseListExplorer(CaseListReport):
     @property
     def export_table(self):
         self._is_exporting = True
-        track_workflow(self.request.couch_user.username, "Case List Explorer: Export button clicked")
+        track_workflow(self.request.couch_user.username, f"{self.name}: Export button clicked")
         return super(CaseListExplorer, self).export_table

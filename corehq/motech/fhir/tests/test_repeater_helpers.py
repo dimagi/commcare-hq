@@ -1,22 +1,22 @@
 import random
 import string
 from datetime import datetime
+from unittest.mock import Mock
 from uuid import uuid4
 
 from django.test import TestCase
-
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_TEXT,
 )
+from corehq.motech.value_source import CaseTriggerInfo
 
 from ..const import FHIR_DATA_TYPE_LIST_OF_STRING, FHIR_VERSION_4_0_1
 from ..models import (
@@ -25,7 +25,7 @@ from ..models import (
     get_case_trigger_info,
     get_resource_type_or_none,
 )
-from ..repeater_helpers import get_info_resource_list
+from ..repeater_helpers import get_info_resource_list, send_resources
 
 DOMAIN = ''.join([random.choice(string.ascii_lowercase) for __ in range(20)])
 
@@ -62,8 +62,8 @@ class TestGetInfoResourcesListOneCase(TestCase, DomainSubscriptionMixin):
     def setUp(self):
         now = datetime.utcnow()
         self.case_id = str(uuid4())
-        self.case = CommCareCase(
-            _id=self.case_id,
+        self.case = CommCareCaseSQL(
+            case_id=self.case_id,
             domain=DOMAIN,
             type='person',
             name='Ted',
@@ -146,8 +146,8 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
     def setUp(self):
         now = datetime.utcnow()
         self.parent_case_id = str(uuid4())
-        self.parent_case = CommCareCase(
-            _id=self.parent_case_id,
+        self.parent_case = CommCareCaseSQL(
+            case_id=self.parent_case_id,
             domain=DOMAIN,
             type='person',
             name='Ted',
@@ -157,39 +157,43 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
         )
         self.parent_case.save()
 
-        self.child_case_1 = CommCareCase(
+        self.child_case_1 = CommCareCaseSQL(
             case_id='111111111',
             domain=DOMAIN,
             type='person_name',
             name='Theodore',
-            given_names='Theodore John',
-            family_name='Kaczynski',
-            indices=[CommCareCaseIndex(
-                identifier='parent',
-                referenced_type='person',
-                referenced_id=self.parent_case_id,
-            )],
+            case_json={
+                'given_names': 'Theodore John',
+                'family_name': 'Kaczynski',
+            },
             owner_id=str(uuid4()),
             modified_on=now,
             server_modified_on=now,
         )
         self.child_case_1.save()
-        self.child_case_2 = CommCareCase(
+        add_case_index(
+            self.child_case_1,
+            identifier='parent',
+            referenced_type='person',
+            referenced_id=self.parent_case_id,
+        )
+        self.child_case_2 = CommCareCaseSQL(
             case_id='222222222',
             domain=DOMAIN,
             type='person_name',
             name='Unabomber',
-            given_names='Unabomber',
-            indices=[CommCareCaseIndex(
-                identifier='parent',
-                referenced_type='person',
-                referenced_id=self.parent_case_id,
-            )],
+            case_json={'given_names': 'Unabomber'},
             owner_id=str(uuid4()),
             modified_on=now,
             server_modified_on=now,
         )
         self.child_case_2.save()
+        add_case_index(
+            self.child_case_2,
+            identifier='parent',
+            referenced_type='person',
+            referenced_id=self.parent_case_id,
+        )
 
     def tearDown(self):
         self.child_case_1.delete()
@@ -204,15 +208,12 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
             case_trigger_infos,
             resource_types_by_case_type,
         )
-        self.assertEqual(resource, {
-            'id': self.parent_case_id,
-            'name': [
-                {'text': 'Ted'},
-                {'given': ['Theodore', 'John'], 'family': 'Kaczynski'},
-                {'given': ['Unabomber']},
-            ],
-            'resourceType': 'Patient',
-        })
+        self.assertIn({'text': 'Ted'}, resource['name'])
+        self.assertIn(
+            {'given': ['Theodore', 'John'], 'family': 'Kaczynski'},
+            resource['name'],
+        )
+        self.assertIn({'given': ['Unabomber']}, resource['name'])
 
 
 class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
@@ -248,20 +249,43 @@ class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
             domain=DOMAIN,
             case_type=cls.vitals_case_type,
             name='Observation',
-            template={
-                'code': {
-                    'coding': [{
-                        'system': 'http://loinc.org',
-                        'code': '8310-5',
-                        'display': 'Body temperature',
-                    }],
-                    'text': 'Temperature',
-                },
-                'valueQuantity': {
-                    'unit': 'degrees Celsius',
-                },
+        )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            value_source_config={
+                'jsonpath': '$.code.coding[0].system',
+                'value': 'http://loinc.org',
             }
         )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            value_source_config={
+                'jsonpath': '$.code.coding[0].code',
+                'value': '8310-5',
+            }
+        )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            value_source_config={
+                'jsonpath': '$.code.coding[0].display',
+                'value': 'Body temperature',
+            }
+        )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            value_source_config={
+                'jsonpath': '$.code.text',
+                'value': 'Temperature',
+            }
+        )
+        FHIRResourceProperty.objects.create(
+            resource_type=resource_type_for_vitals,
+            value_source_config={
+                'jsonpath': '$.valueQuantity.unit',
+                'value': 'degrees Celsius',
+            }
+        )
+
         FHIRResourceProperty.objects.create(
             resource_type=resource_type_for_vitals,
             value_source_config={
@@ -302,8 +326,8 @@ class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
         now = datetime.utcnow()
         owner_id = str(uuid4())
         self.parent_case_id = str(uuid4())
-        self.parent_case = CommCareCase(
-            _id=self.parent_case_id,
+        self.parent_case = CommCareCaseSQL(
+            case_id=self.parent_case_id,
             domain=DOMAIN,
             type='person',
             name='Beth',
@@ -314,21 +338,22 @@ class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
         self.parent_case.save()
 
         self.child_case_id = str(uuid4())
-        self.child_case = CommCareCase(
-            _id=self.child_case_id,
+        self.child_case = CommCareCaseSQL(
+            case_id=self.child_case_id,
             domain=DOMAIN,
             type='vitals',
-            temperature=36.1,
-            indices=[CommCareCaseIndex(
-                identifier='parent',
-                referenced_type='person',
-                referenced_id=self.parent_case_id,
-            )],
+            case_json={'temperature': 36.1},
             owner_id=owner_id,
             modified_on=now,
             server_modified_on=now,
         )
         self.child_case.save()
+        add_case_index(
+            self.child_case,
+            identifier='parent',
+            referenced_type='person',
+            referenced_id=self.parent_case_id,
+        )
 
     def tearDown(self):
         self.child_case.delete()
@@ -380,3 +405,81 @@ class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
             },
             'resourceType': 'Observation',
         }])
+
+
+class TestWhenToBundle(TestCase):
+
+    def setUp(self):
+        self.requests = Mock()
+
+    def test_nothing_to_send(self):
+        info_resources_list = []
+        response = send_resources(
+            self.requests,
+            info_resources_list,
+            FHIR_VERSION_4_0_1,
+            repeater_id='abc123',
+        )
+        self.assertEqual(response, True)
+
+    def test_one_to_send(self):
+        info = CaseTriggerInfo(
+            domain=DOMAIN,
+            case_id='123abc',
+            extra_fields={'external_id': '1000'},
+        )
+        resource = {'id': '123abc', 'resourceType': 'Patient'}
+        info_resources_list = [(info, resource)]
+        send_resources(
+            self.requests,
+            info_resources_list,
+            FHIR_VERSION_4_0_1,
+            repeater_id='abc123',
+        )
+
+        self.requests.put.assert_called_with(
+            'Patient/1000',
+            json=resource,
+            raise_for_status=True,
+        )
+
+    def test_many_to_send(self):
+
+        def get_obs(id_):
+            info = CaseTriggerInfo(
+                domain=DOMAIN,
+                case_id=id_,
+                extra_fields={'external_id': None},
+            )
+            resource = {
+                'id': id_,
+                'code': {'text': 'Temperature'},
+                'valueQuantity': {'value': 36.1},
+                'resourceType': 'Observation',
+            }
+            return info, resource
+
+        def post(endpoint, **kwargs):
+            return f'POSTed to endpoint {endpoint!r}'
+
+        self.requests.post = post
+
+        info_resources_list = [get_obs(x) for x in 'abc']
+        response = send_resources(
+            self.requests,
+            info_resources_list,
+            FHIR_VERSION_4_0_1,
+            repeater_id='abc123',
+        )
+
+        # Bundles are POSTed to API root
+        self.assertEqual(response, "POSTed to endpoint '/'")
+
+
+def add_case_index(child_case, **props):
+    child_case.index_set.add(CommCareCaseIndexSQL(
+        case=child_case,
+        domain=DOMAIN,
+        relationship_id=CommCareCaseIndexSQL.CHILD,
+        **props
+    ), bulk=False)

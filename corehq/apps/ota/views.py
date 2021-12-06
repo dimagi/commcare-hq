@@ -1,14 +1,19 @@
+import itertools
 import os
 from datetime import datetime
 from distutils.version import LooseVersion
+from urllib.parse import unquote
 
 from django.conf import settings
 from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
     JsonResponse,
 )
+from django.utils.translation import ngettext
 from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
@@ -16,11 +21,9 @@ from django.views.decorators.http import require_GET, require_POST
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
 from tastypie.http import HttpTooManyRequests
-from urllib.parse import unquote
 
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.restore import (
     RestoreCacheSettings,
     RestoreConfig,
@@ -37,27 +40,30 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
-from corehq.apps.case_search.filter_dsl import TooManyRelatedCasesError
-from corehq.apps.case_search.utils import CaseSearchCriteria
-from corehq.apps.domain.decorators import (
-    check_domain_migration,
-    mobile_auth,
-    mobile_auth_or_formplayer,
-)
+from corehq.apps.case_search.const import COMMCARE_PROJECT
+from corehq.apps.case_search.exceptions import CaseSearchUserError
+from corehq.apps.case_search.utils import get_case_search_results
+from corehq.apps.domain.decorators import check_domain_migration
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.case_search import flatten_result
-from corehq.apps.locations.permissions import location_safe
-from corehq.apps.ota.decorators import require_mobile_access
-from corehq.apps.ota.rate_limiter import rate_limit_restore
+from corehq.apps.locations.permissions import (
+    location_safe,
+    location_safe_bypass,
+)
+from corehq.apps.ota.decorators import mobile_auth, mobile_auth_or_formplayer
+from corehq.apps.registry.exceptions import (
+    RegistryAccessException,
+    RegistryNotFound,
+)
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
-from custom.icds_core.view_utils import check_authorization
 
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
+from .rate_limiter import rate_limit_restore
 from .utils import (
     demo_user_restore_response,
     get_restore_user,
@@ -73,7 +79,6 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @location_safe
 @handle_401_response
 @mobile_auth_or_formplayer
-@require_mobile_access
 @check_domain_migration
 def restore(request, domain, app_id=None):
     """
@@ -84,49 +89,48 @@ def restore(request, domain, app_id=None):
         return HttpTooManyRequests()
 
     response, timing_context = get_restore_response(
-        domain, request.couch_user, app_id, **get_restore_params(request))
+        domain, request.couch_user, app_id, **get_restore_params(request, domain))
     return response
 
 
-@location_safe
+@location_safe_bypass
+@csrf_exempt
 @mobile_auth
 @check_domain_migration
+@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def search(request, domain):
+    return app_aware_search(request, domain, None)
+
+
+@location_safe_bypass
+@csrf_exempt
+@mobile_auth
+@check_domain_migration
+@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+def app_aware_search(request, domain, app_id):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
+        Daterange can be specified in the format __range__YYYY-MM-DD__YYYY-MM-DD
+        Multiple values can be specified for a param, which will be searched with OR operator
+
     Returns results as a fixture with the same structure as a casedb instance.
     """
-    criteria = request.GET.dict()
+    request_dict = request.GET if request.method == 'GET' else request.POST
+    criteria = {k: v[0] if len(v) == 1 else v for k, v in request_dict.lists()}
     try:
-        case_type = criteria.pop('case_type')
-    except KeyError:
-        return HttpResponse('Search request must specify case type', status=400)
-
-    try:
-        case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
-    except TooManyRelatedCasesError:
-        return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
-    search_es = case_search_criteria.search_es
-
-    try:
-        hits = search_es.run().raw_hits
-    except Exception as e:
-        notify_exception(request, str(e), details=dict(
-            exception_type=type(e),
-        ))
-        return HttpResponse(status=500)
-
-    # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
-    cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
+        cases = get_case_search_results(domain, criteria, app_id, request.couch_user)
+    except CaseSearchUserError as e:
+        return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
-@location_safe
+@location_safe_bypass
 @csrf_exempt
 @require_POST
 @mobile_auth
 @check_domain_migration
+@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def claim(request, domain):
     """
     Allows a user to claim a case that they don't own.
@@ -144,7 +148,7 @@ def claim(request, domain):
             return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
                                 status=409)
 
-        claim_case(domain, restore_user.user_id, case_id,
+        claim_case(domain, restore_user, case_id,
                    host_type=unquote(request.POST.get('case_type', '')),
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
@@ -154,7 +158,7 @@ def claim(request, domain):
     return HttpResponse(status=200)
 
 
-def get_restore_params(request):
+def get_restore_params(request, domain):
     """
     Given a request, get the relevant restore parameters out with sensible defaults
     """
@@ -167,6 +171,12 @@ def get_restore_params(request):
     if isinstance(openrosa_version, bytes):
         openrosa_version = openrosa_version.decode('utf-8')
 
+    skip_fixtures = (
+        toggles.SKIP_FIXTURES_ON_RESTORE.enabled(
+            domain, namespace=toggles.NAMESPACE_DOMAIN
+        ) or request.GET.get('skip_fixtures') == 'true'
+    )
+
     return {
         'since': request.GET.get('since'),
         'version': request.GET.get('version', "2.0"),
@@ -177,8 +187,7 @@ def get_restore_params(request):
         'openrosa_version': openrosa_version,
         'device_id': request.GET.get('device_id'),
         'user_id': request.GET.get('user_id'),
-        'case_sync': request.GET.get('case_sync'),
-        'skip_fixtures': request.GET.get('skip_fixtures') == 'true',
+        'skip_fixtures': skip_fixtures,
         'auth_type': getattr(request, 'auth_type', None),
     }
 
@@ -188,7 +197,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          as_user=None, device_id=None, user_id=None,
-                         openrosa_version=None, case_sync=None,
+                         openrosa_version=None,
                          skip_fixtures=False, auth_type=None):
     """
     :param domain: Domain being restored from
@@ -205,7 +214,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     :param device_id: ID of device performing restore
     :param user_id: ID of user performing restore (used in case of deleted user with same username)
     :param openrosa_version:
-    :param case_sync: Override default case sync algorithm
     :param skip_fixtures: Do not include fixtures in sync payload
     :param auth_type: The type of auth that was used to authenticate the request.
         Used to determine if the request is coming from an actual user or as part of some automation.
@@ -257,10 +265,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         skip_fixtures = False
 
     app = get_app_cached(domain, app_id) if app_id else None
-    if app:
-        error_response = check_authorization(domain, couch_user, app.origin_id)
-        if error_response:
-            return error_response, None
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
@@ -279,7 +283,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             overwrite_cache=overwrite_cache
         ),
         is_async=async_restore_enabled,
-        case_sync=case_sync,
         skip_fixtures=skip_fixtures,
         auth_type=auth_type
     )
@@ -312,9 +315,6 @@ def heartbeat(request, domain, app_build_id):
 
     info["app_id"] = app_id
     if master_app_id:
-        error_response = check_authorization(domain, request.couch_user, master_app_id)
-        if error_response:
-            return error_response
         if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
             update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
 
@@ -405,3 +405,57 @@ def recovery_measures(request, domain, build_id):
     if measures:
         response["recovery_measures"] = measures
     return JsonResponse(response)
+
+
+@location_safe_bypass
+@csrf_exempt
+@mobile_auth
+@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+@toggles.DATA_REGISTRY.required_decorator()
+def registry_case(request, domain, app_id):
+    request_dict = request.GET if request.method == 'GET' else request.POST
+    case_ids = request_dict.getlist("case_id")
+    case_types = request_dict.getlist("case_type")
+    registry = request_dict.get("commcare_registry")
+
+    missing = [
+        name
+        for name, value in zip(
+            ["case_id", "case_type", "commcare_registry"],
+            [case_ids, case_types, registry]
+        )
+        if not value
+    ]
+    if missing:
+        return HttpResponseBadRequest(ngettext(
+            "'{params}' is a required parameter",
+            "'{params}' are required parameters",
+            len(missing)
+        ).format(params="', '".join(missing)))
+
+    helper = DataRegistryHelper(domain, registry_slug=registry)
+
+    app = get_app_cached(domain, app_id)
+    try:
+        cases = [
+            helper.get_case(case_id, request.couch_user, app)
+            for case_id in case_ids
+        ]
+    except RegistryNotFound:
+        return HttpResponseNotFound(f"Registry '{registry}' not found")
+    except CaseNotFound as e:
+        return HttpResponseNotFound(f"Case '{str(e)}' not found")
+    except RegistryAccessException as e:
+        return HttpResponseBadRequest(str(e))
+
+    for case in cases:
+        if case.type not in case_types:
+            return HttpResponseNotFound(f"Case '{case.case_id}' not found")
+
+    all_cases = list(itertools.chain.from_iterable(
+        helper.get_case_hierarchy(request.couch_user, case)
+        for case in cases
+    ))
+    for case in all_cases:
+        case.case_json[COMMCARE_PROJECT] = case.domain
+    return HttpResponse(CaseDBFixture(all_cases).fixture, content_type="text/xml; charset=utf-8")

@@ -3,15 +3,14 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 
-from fakecouch import FakeCouchDb
-from mock import MagicMock
+from unittest.mock import MagicMock, patch
 from simpleeval import InvalidExpression
+from testil import Config
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
 from corehq.apps.groups.models import Group
@@ -25,8 +24,8 @@ from corehq.apps.userreports.expressions.specs import (
 )
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.util.test_utils import (
     create_and_save_a_case,
     create_and_save_a_form,
@@ -775,9 +774,7 @@ class RelatedDocExpressionTest(SimpleTestCase):
 
     def setUp(self):
         # we have to set the fake database before any other calls
-        self.orig_db = CommCareCase.get_db()
-        self.database = FakeCouchDb()
-        CommCareCase.set_db(self.database)
+        self.patch_cases_database()
         self.spec = {
             "type": "related_doc",
             "related_doc_type": "CommCareCase",
@@ -812,8 +809,16 @@ class RelatedDocExpressionTest(SimpleTestCase):
             }
         })
 
-    def tearDown(self):
-        CommCareCase.set_db(self.orig_db)
+    def patch_cases_database(self):
+        def get_case(self_, case_id):
+            doc = self.database.get(case_id)
+            if doc is None:
+                raise CaseNotFound
+            return Config(to_json=lambda: doc)
+        get_case_patch = patch.object(CaseAccessors, "get_case", get_case)
+        get_case_patch.start()
+        self.addCleanup(get_case_patch.stop)
+        self.database = {}
 
     def test_simple_lookup(self):
         related_id = 'related-id'
@@ -825,7 +830,7 @@ class RelatedDocExpressionTest(SimpleTestCase):
             'domain': 'test-domain',
             'related_property': 'foo'
         }
-        self.database.mock_docs = {
+        self.database = {
             'my-id': my_doc,
             related_id: related_doc
         }
@@ -845,7 +850,7 @@ class RelatedDocExpressionTest(SimpleTestCase):
             'domain': 'wrong-domain',
             'related_property': 'foo'
         }
-        self.database.mock_docs = {
+        self.database = {
             'my-id': my_doc,
             related_id: related_doc
         }
@@ -867,7 +872,7 @@ class RelatedDocExpressionTest(SimpleTestCase):
             'domain': 'test-domain',
             'related_property': 'bar',
         }
-        self.database.mock_docs = {
+        self.database = {
             'my-id': my_doc,
             related_id: related_doc,
             related_id_2: related_doc_2
@@ -890,7 +895,7 @@ class RelatedDocExpressionTest(SimpleTestCase):
             'domain': 'wrong-domain',
             'related_property': 'bar',
         }
-        self.database.mock_docs = {
+        self.database = {
             'my-id': my_doc,
             related_id: related_doc,
             related_id_2: related_doc_2
@@ -922,21 +927,19 @@ class RelatedDocExpressionTest(SimpleTestCase):
         self.assertEqual('foo', self.expression(my_doc, context))
 
         my_doc = self.database.get('my-id')
-        self.database.mock_docs.clear()
+        self.database.clear()
         self.assertEqual('foo', self.expression(my_doc, context))
 
 
 class RelatedDocExpressionDbTest(TestCase):
     domain = 'related-doc-db-test-domain'
 
-    @run_with_all_backends
     def test_form_lookups(self):
         form = create_and_save_a_form(domain=self.domain)
         expression = self._get_expression('XFormInstance')
         doc = self._get_doc(form.form_id)
         self.assertEqual(form.form_id, expression(doc, EvaluationContext(doc, 0)))
 
-    @run_with_all_backends
     def test_case_lookups(self):
         case_id = uuid.uuid4().hex
         create_and_save_a_case(domain=self.domain, case_id=case_id, case_name='related doc test case')
@@ -944,7 +947,6 @@ class RelatedDocExpressionDbTest(TestCase):
         doc = self._get_doc(case_id)
         self.assertEqual(case_id, expression(doc, EvaluationContext(doc, 0)))
 
-    @run_with_all_backends
     def test_other_lookups(self):
         user_id = uuid.uuid4().hex
         CommCareUser.get_db().save_doc({'_id': user_id, 'domain': self.domain})
@@ -1122,7 +1124,6 @@ class TestEvaluatorTypes(SimpleTestCase):
         self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), int)
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
 class TestFormsExpressionSpec(TestCase):
 
     @classmethod
@@ -1181,11 +1182,6 @@ class TestFormsExpressionSpec(TestCase):
         self.assertEqual(forms, [])
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class TestFormsExpressionSpecSQL(TestCase):
-    pass
-
-
 class TestGetSubcasesExpression(TestCase):
 
     def setUp(self):
@@ -1206,13 +1202,11 @@ class TestGetSubcasesExpression(TestCase):
         delete_all_cases()
         super(TestGetSubcasesExpression, self).tearDown()
 
-    @run_with_all_backends
     def test_no_subcases(self):
         case = self.factory.create_case()
         subcases = self.expression(case.to_json(), self.context)
         self.assertEqual(len(subcases), 0)
 
-    @run_with_all_backends
     def test_single_child(self):
         parent_id = uuid.uuid4().hex
         child_id = uuid.uuid4().hex
@@ -1227,7 +1221,6 @@ class TestGetSubcasesExpression(TestCase):
         self.assertEqual(len(subcases), 1)
         self.assertEqual(child.case_id, subcases[0]['_id'])
 
-    @run_with_all_backends
     def test_single_extension(self):
         host_id = uuid.uuid4().hex
         extension_id = uuid.uuid4().hex
@@ -1267,17 +1260,15 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         for group in Group.by_domain(self.second_domain):
             group.delete()
         for user in CommCareUser.all():
-            user.delete(deleted_by=None)
+            user.delete(self.domain, deleted_by=None)
         super(TestGetCaseSharingGroupsExpression, self).tearDown()
 
-    @run_with_all_backends
     def test_no_groups(self):
         user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123',
                                    created_by=None, created_via=None)
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(case_sharing_groups), 0)
 
-    @run_with_all_backends
     def test_single_group(self):
         user = CommCareUser.create(domain=self.domain, username='test_single', password='123',
                                    created_by=None, created_via=None)
@@ -1288,7 +1279,6 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         self.assertEqual(len(case_sharing_groups), 1)
         self.assertEqual(group._id, case_sharing_groups[0]['_id'])
 
-    @run_with_all_backends
     def test_multiple_groups(self):
         user = CommCareUser.create(domain=self.domain, username='test_multiple', password='123',
                                    created_by=None, created_via=None)
@@ -1300,7 +1290,6 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(case_sharing_groups), 2)
 
-    @run_with_all_backends
     def test_wrong_domain(self):
         user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123',
                                    created_by=None, created_via=None)
@@ -1332,17 +1321,15 @@ class TestGetReportingGroupsExpression(TestCase):
         for group in Group.by_domain(self.second_domain):
             group.delete()
         for user in CommCareUser.all():
-            user.delete(deleted_by=None)
+            user.delete(self.domain, deleted_by=None)
         super(TestGetReportingGroupsExpression, self).tearDown()
 
-    @run_with_all_backends
     def test_no_groups(self):
         user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123',
                                    created_by=None, created_via=None)
         reporting_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(reporting_groups), 0)
 
-    @run_with_all_backends
     def test_multiple_groups(self):
         user = CommCareUser.create(domain=self.domain, username='test_multiple', password='123',
                                    created_by=None, created_via=None)
@@ -1354,7 +1341,6 @@ class TestGetReportingGroupsExpression(TestCase):
         reporting_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(reporting_groups), 2)
 
-    @run_with_all_backends
     def test_wrong_domain(self):
         user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123',
                                    created_by=None, created_via=None)
@@ -1516,7 +1502,6 @@ class SplitStringExpressionTest(SimpleTestCase):
             "delimiter": ","
         })
         self.assertListEqual(['a', 'b', 'c'], split_string_expression({"string_property": 'a,b,c'}))
-
 
 
 class TestCoalesceExpression(SimpleTestCase):

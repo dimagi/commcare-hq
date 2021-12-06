@@ -4,7 +4,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.domain.decorators import (
@@ -20,7 +19,6 @@ from corehq.apps.hqadmin.views.utils import (
     BaseAdminSectionView,
     get_hqadmin_base_context,
 )
-from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
 
@@ -34,7 +32,7 @@ def mass_email(request):
             html = form.cleaned_data['email_body_html']
             text = form.cleaned_data['email_body_text']
             real_email = form.cleaned_data['real_email']
-            send_mass_emails.delay(request.couch_user.username, real_email, subject, html, text)
+            send_mass_emails.delay(request.couch_user.get_email(), real_email, subject, html, text)
             messages.success(request, 'Task started. You will receive an email summarizing the results.')
         else:
             messages.error(request, 'Something went wrong, see below.')
@@ -108,14 +106,7 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
         try:
             return CaseAccessorSQL.get_case(case_id)
         except CaseNotFound:
-            pass
-
-        try:
-            return CaseAccessorCouch.get_case(case_id)
-        except ResourceNotFound:
-            pass
-
-        return None
+            return None
 
     def post(self, request, *args, **kwargs):
         from corehq.messaging.signals import messaging_case_changed_receiver

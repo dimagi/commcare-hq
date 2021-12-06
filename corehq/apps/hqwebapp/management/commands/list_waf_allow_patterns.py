@@ -21,7 +21,7 @@ class Command(BaseCommand):
                 else:
                     # @waf_allow(kind)
                     for urlmatch in resolver.reverse_dict.getlist(view):
-                        patterns.append(resolver.regex.pattern + urlmatch[1])
+                        patterns.append(str(resolver.pattern) + urlmatch[1])
             patterns = sorted(_remove_regex_groups(pattern) for pattern in patterns)
             for pattern in patterns:
                 print(pattern)

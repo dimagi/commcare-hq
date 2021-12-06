@@ -21,7 +21,7 @@
  *      onLoad: Typically needed with slug, in order to avoid a race condition between the cookie and the default
  *          value of perPage. Typically will call goToPage(1). Not needed when your pages wait on some other
  *          logic before loading, e.g., they aren't loaded until an ajax request brings back their content.
- *      itemsTextTemplate: Optional. A string that contains <%= firstItem %>, <%= lastItem %>, <%= maxItems %>
+ *      itemsTextTemplate: Optional. A string that contains <%- firstItem %>, <%- lastItem %>, <%- maxItems %>
  *          which shows up next to the left of the limit dropdown.
  *      resetFlag: Optional. An observable. If provided, this widget will subscribe to changes on this observable
  *          and, on change, will go back to the first page.
@@ -65,7 +65,7 @@ hqDefine('hqwebapp/js/components/pagination', [
             }
 
             self.perPageOptionsText = function (num) {
-                return _.template(gettext('<%= num %> per page'))({ num: num });
+                return _.template(gettext('<%- num %> per page'))({ num: num });
             };
 
             self.numPages = ko.computed(function () {
@@ -94,7 +94,7 @@ hqDefine('hqwebapp/js/components/pagination', [
             self.itemsText = ko.computed(function () {
                 var lastItem = Math.min(self.currentPage() * self.perPage(), self.totalItems());
                 return _.template(
-                    params.itemsTextTemplate || gettext('Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries')
+                    params.itemsTextTemplate || gettext('Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries')
                 )({
                     firstItem: ((self.currentPage() - 1) * self.perPage()) + 1,
                     lastItem: isNaN(lastItem) ? 1 : lastItem,

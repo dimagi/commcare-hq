@@ -1,9 +1,11 @@
 hqDefine("reports/js/inspect_data", [
     'jquery',
+    'underscore',
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
+    _,
     kissAnalytics,
     initialPageData
 ) {

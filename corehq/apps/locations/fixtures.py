@@ -113,8 +113,8 @@ class LocationFixtureProvider(FixtureProvider):
         if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_state):
             return []
 
-        data_fields = _get_location_data_fields(restore_user.domain)
-        return self.serializer.get_xml_nodes(self.id, restore_user, locations_queryset, data_fields)
+        return self.serializer.get_xml_nodes(restore_user.domain, self.id, restore_user.user_id,
+                                             locations_queryset)
 
 
 class HierarchicalLocationSerializer(object):
@@ -122,13 +122,14 @@ class HierarchicalLocationSerializer(object):
     def should_sync(self, restore_user, app):
         return should_sync_hierarchical_fixture(restore_user.project, app)
 
-    def get_xml_nodes(self, fixture_id, restore_user, locations_queryset, data_fields):
+    def get_xml_nodes(self, domain, fixture_id, user_id, locations_queryset):
         locations_db = LocationSet(locations_queryset)
 
-        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
+        root_node = Element('fixture', {'id': fixture_id, 'user_id': user_id})
         root_locations = locations_db.root_locations
 
         if root_locations:
+            data_fields = get_location_data_fields(domain)
             _append_children(root_node, locations_db, root_locations, data_fields)
         else:
             # There is a bug on mobile versions prior to 2.27 where
@@ -145,9 +146,9 @@ class FlatLocationSerializer(object):
     def should_sync(self, restore_user, app):
         return should_sync_flat_fixture(restore_user.project, app)
 
-    def get_xml_nodes(self, fixture_id, restore_user, locations_queryset, data_fields):
-
-        all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
+    def get_xml_nodes(self, domain, fixture_id, user_id, locations_queryset):
+        data_fields = get_location_data_fields(domain)
+        all_types = LocationType.objects.filter(domain=domain).values_list(
             'code', flat=True
         )
         location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
@@ -155,13 +156,13 @@ class FlatLocationSerializer(object):
         attrs_to_index.extend(['@id', '@type', 'name'])
 
         return [get_index_schema_node(fixture_id, attrs_to_index),
-                self._get_fixture_node(fixture_id, restore_user, locations_queryset,
+                self._get_fixture_node(fixture_id, user_id, locations_queryset,
                                        location_type_attrs, data_fields)]
 
-    def _get_fixture_node(self, fixture_id, restore_user, locations_queryset,
+    def _get_fixture_node(self, fixture_id, user_id, locations_queryset,
                           location_type_attrs, data_fields):
         root_node = Element('fixture', {'id': fixture_id,
-                                        'user_id': restore_user.user_id,
+                                        'user_id': user_id,
                                         'indexed': 'true'})
         outer_node = Element('locations')
         root_node.append(outer_node)
@@ -191,7 +192,7 @@ class FlatLocationSerializer(object):
                     ).format(
                         domain=current_location.domain,
                         location_id=current_location.location_id,
-                        user_id=restore_user.user_id,
+                        user_id=user_id,
                     )
                     _soft_assert(False, msg=message)
 
@@ -331,7 +332,7 @@ def _fill_in_location_element(xml_root, location, data_fields):
     xml_root.append(_get_metadata_node(location, data_fields))
 
 
-def _get_location_data_fields(domain):
+def get_location_data_fields(domain):
     from corehq.apps.locations.views import LocationFieldsView
     fields_definition = CustomDataFieldsDefinition.get(domain, LocationFieldsView.field_type)
     if fields_definition:

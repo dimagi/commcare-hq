@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 from django.db.models import Q
+from corehq.util.queries import queryset_to_iterator
 
 from dimagi.utils.chunked import chunked
 
@@ -50,7 +51,7 @@ class UsernameFilter(DomainFilter):
         """
         :return: A generator of filters each filtering for at most 500 users.
         """
-        from corehq.apps.users.dbaccessors.all_commcare_users import get_all_usernames_by_domain
+        from corehq.apps.users.dbaccessors import get_all_usernames_by_domain
         if self.usernames:
             usernames = self.usernames
         else:
@@ -86,7 +87,7 @@ class UserIDFilter(IDFilter):
         self.include_web_users = include_web_users
 
     def get_ids(self, domain_name):
-        from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
+        from corehq.apps.users.dbaccessors import get_all_user_ids_by_domain
         return get_all_user_ids_by_domain(domain_name, include_web_users=self.include_web_users)
 
 
@@ -104,7 +105,7 @@ class UnfilteredModelIteratorBuilder(object):
     def _base_queryset(self):
         assert self.domain and self.model_class and self.db_alias, "Unprepared IteratorBuilder"
         objects = self.model_class._default_manager
-        return objects.using(self.db_alias).order_by(self.model_class._meta.pk.name)
+        return objects.using(self.db_alias)
 
     def querysets(self):
         yield self._base_queryset()
@@ -114,7 +115,7 @@ class UnfilteredModelIteratorBuilder(object):
 
     def iterators(self):
         for queryset in self.querysets():
-            yield queryset.iterator()
+            yield queryset_to_iterator(queryset, self.model_class, ignore_ordering=True)
 
     def build(self, domain, model_class, db_alias):
         return self.__class__(self.model_label).prepare(domain, model_class, db_alias)

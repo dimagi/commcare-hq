@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.core.management import BaseCommand
 
 from corehq.apps.es import FormES
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser

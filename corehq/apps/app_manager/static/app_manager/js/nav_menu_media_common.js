@@ -7,10 +7,7 @@ hqDefine("app_manager/js/nav_menu_media_common", function () {
         uploaders[type] = new HQMediaFileUploadController(
             uploader.slug,
             uploader.media_type,
-            _.extend({}, uploader.options, {
-                sessionid: initial_page_data("sessionid"),
-                swfURL: initial_page_data("swfURL"),
-            })
+            uploader.options
         );
         uploaders[type].init();
     });

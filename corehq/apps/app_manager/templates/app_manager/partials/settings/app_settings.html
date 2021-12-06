@@ -198,10 +198,10 @@
     {% if is_linked_app %}
       <div class="tab-pane" id="linked-app">
         <div class="panel panel-appmanager panel-appmanager-form">
-          <form action="{% url "pull_master_app" domain app.id %}" method="POST">
+          <form action="{% url "pull_upstream_app" domain app.id %}" method="POST">
             {% csrf_token %}
             <legend>
-              {% trans "Update from master application" %}
+              {% trans "Update from upstream application" %}
             </legend>
             <div class="panel-body">
               <p>
@@ -218,21 +218,21 @@
                 {% endif %}
               </p>
               <div class="form-horizontal">
-                {% if multiple_masters %}
+                {% if multiple_upstreams %}
                   <div class="form-group">
                     <div class="{% css_field_class %}">
-                      <select name="master_app_id" class="form-control hqwebapp-select2"
-                              data-placeholder="{% trans_html_attr "Select a master app to pull" %}">
-                        <option value="">{% trans "Select a master app to pull" %}</option>
-                        {% for brief in master_briefs %}
+                      <select name="upstream_app_id" class="form-control hqwebapp-select2"
+                              data-placeholder="{% trans_html_attr "Select an upstream app to pull" %}">
+                        <option value="">{% trans "Select an upstream app to pull" %}</option>
+                        {% for brief in upstream_briefs %}
                           {# Poor readability because any whitespace within the option will also appear in the title attribute and therefore on hover #}
-                          <option value="{{ brief.id }}">{{ brief.name }}{% for id, version in master_versions_by_id.items %}{% if id == brief.id %} ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %}){% endif %}{% endfor %}</option>
+                          <option value="{{ brief.id }}">{{ brief.name }}{% for id, version in upstream_versions_by_id.items %}{% if id == brief.id %} ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %}){% endif %}{% endfor %}</option>
                         {% endfor %}
                       </select>
                     </div>
                   </div>
                 {% else %}
-                  <input name="master_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
+                  <input name="upstream_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
                 {% endif %}
                 <div class="form-group">
                   <div class="{% css_field_class %}">
@@ -281,40 +281,6 @@
             {% crispy copy_app_form %}
           </form>
         </div>
-      {% endif %}
-      {% if not is_linked_app %}
-        {% if linked_domains_enabled %}
-          <div id="linked-whitelist" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
-            <legend>{% trans 'Linked Project Whitelist' %}</legend>
-            <div class="tab-pane panel-body">
-              <div class="help-block">
-                {% blocktrans %}
-                  Project spaces on this list are able to update linked applications
-                  with new changes to this application. Project spaces are automatically added to
-                  this list when this application is copied as a linked application to that project
-                  space. If you would like to prevent a project from making future updates,
-                  you can remove them from the list here.
-                {% endblocktrans %}
-              </div>
-              <div data-bind="saveButton: saveButton"></div>
-              <table class="table">
-                <thead>
-                <tr class="row">
-                  <th></th>
-                  <th>{% trans "Project Space" %}</th>
-                </tr>
-                </thead>
-                <tbody data-bind="foreach: linkedDomains">
-                <tr class="row">
-                  <td class="col-sm-1"><a href="#"><i class="fa fa-remove"
-                                                      data-bind="click: $root.removeDomain"></i></a></td>
-                  <td class="col-sm-11"><span data-bind="text: $data"></span></td>
-                </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        {% endif %}
       {% endif %}
       <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
         <legend>{% trans "Delete Application" %}</legend>

@@ -16,6 +16,7 @@ from corehq.motech.auth import (
     BearerAuthManager,
     DigestAuthManager,
     OAuth1Manager,
+    OAuth2ClientGrantManager,
     OAuth2PasswordGrantManager,
     api_auth_settings_choices,
     oauth1_api_endpoints,
@@ -28,6 +29,7 @@ from corehq.motech.const import (
     BEARER_AUTH,
     DIGEST_AUTH,
     OAUTH1,
+    OAUTH2_CLIENT,
     OAUTH2_PWD,
     PASSWORD_PLACEHOLDER,
 )
@@ -77,6 +79,9 @@ class ConnectionSettings(models.Model):
     client_id = models.CharField(max_length=255, null=True, blank=True)
     client_secret = models.CharField(max_length=255, blank=True)
     skip_cert_verify = models.BooleanField(default=False)
+    token_url = models.CharField(max_length=255, blank=True, null=True)
+    refresh_url = models.CharField(max_length=255, blank=True, null=True)
+    pass_credentials_in_header = models.BooleanField(default=None, null=True)
     notify_addresses_str = models.CharField(max_length=255, default="")
     # last_token is stored encrypted because it can contain secrets
     last_token_aes = models.TextField(blank=True, default="")
@@ -179,7 +184,18 @@ class ConnectionSettings(models.Model):
                 self.plaintext_password,
                 client_id=self.client_id,
                 client_secret=self.plaintext_client_secret,
-                api_settings=self._get_oauth2_api_settings(),
+                token_url=self.token_url,
+                refresh_url=self.refresh_url,
+                pass_credentials_in_header=self.pass_credentials_in_header,
+                connection_settings=self,
+            )
+        if self.auth_type == OAUTH2_CLIENT:
+            return OAuth2ClientGrantManager(
+                self.url,
+                client_id=self.client_id,
+                client_secret=self.plaintext_client_secret,
+                token_url=self.token_url,
+                refresh_url=self.refresh_url,
                 connection_settings=self,
             )
 
@@ -192,15 +208,6 @@ class ConnectionSettings(models.Model):
             f'{self.name!r} connection.'
         ))
 
-    def _get_oauth2_api_settings(self):
-        if self.api_auth_settings in dict(oauth2_api_settings):
-            return getattr(corehq.motech.auth, self.api_auth_settings)
-        raise ValueError(_(
-            f'Unable to resolve API settings {self.api_auth_settings!r}. '
-            'Please select the applicable API auth settings for the '
-            f'{self.name!r} connection.'
-        ))
-
     @cached_property
     def used_by(self):
         """
@@ -208,14 +215,12 @@ class ConnectionSettings(models.Model):
         this instance. Used for informing users, and determining whether
         the instance can be deleted.
         """
-        from corehq.motech.dhis2.dbaccessors import get_dataset_maps
         from corehq.motech.repeaters.models import Repeater
 
         kinds = set()
         if self.incrementalexport_set.exists():
             kinds.add(_('Incremental Exports'))
-        if any(m.connection_settings_id == self.id
-               for m in get_dataset_maps(self.domain)):
+        if self.sqldatasetmap_set.exists():
             kinds.add(_('DHIS2 DataSet Maps'))
         if any(r.connection_settings_id == self.id
                 for r in Repeater.by_domain(self.domain)):

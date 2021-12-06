@@ -164,6 +164,7 @@ def get_emails_to_never_bounce():
         settings.FEEDBACK_EMAIL,
         settings.SOFT_ASSERT_EMAIL,
         settings.DAILY_DEPLOY_EMAIL,
+        settings.SAAS_OPS_EMAIL,
         settings.SAAS_REPORTING_EMAIL,
     ]
     system_emails.extend(settings.BOOKKEEPER_CONTACT_EMAILS)

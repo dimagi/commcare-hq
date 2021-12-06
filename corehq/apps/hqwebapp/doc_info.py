@@ -1,15 +1,11 @@
-from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from couchdbkit import ResourceNotFound
-
-from couchforms import models as couchforms_models
-from dimagi.ext.jsonobject import *
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.couch.undo import DELETED_SUFFIX
-
+from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.users.util import raw_username
+from corehq.form_processor.models import XFormInstanceSQL
+from dimagi.ext.jsonobject import BooleanProperty, JsonObject, StringProperty
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 
 class DomainMismatchException(Exception):
@@ -32,20 +28,15 @@ def get_doc_info_by_id(domain, id):
     if not id:
         return not_found_value
 
-    for db_name in [None] + settings.COUCH_SETTINGS_HELPER.extra_db_names:
-        try:
-            doc = get_db(db_name).get(id)
-        except ResourceNotFound:
-            pass
-        else:
-            break
-    else:
+    result = lookup_doc_id(id)
+    if not result:
         return not_found_value
 
-    if doc.get('domain') != domain and domain not in doc.get('domains', ()):
+    doc = result.doc
+    try:
+        return get_doc_info(doc, domain_hint=domain)
+    except DomainMismatchException:
         return not_found_value
-
-    return get_doc_info(doc, domain_hint=domain)
 
 
 def get_doc_info(doc, domain_hint=None, cache=None):
@@ -53,23 +44,32 @@ def get_doc_info(doc, domain_hint=None, cache=None):
     cache is just a dictionary that you can keep passing in to speed up info
     retrieval.
     """
+    domains = ()
+    if isinstance(doc, dict):
+        domains = doc.get('domains', ())
+        domain_hint = domain_hint or (domains[0] if domains else None)
+        doc_info = get_doc_info_couch(doc, domain_hint, cache=cache)
+    else:
+        doc_info = get_doc_info_sql(doc, cache=cache)
+
+    if domain_hint and not (
+        doc_info.domain == domain_hint or domain_hint in domains
+    ):
+        raise DomainMismatchException("Doc '%s' does not match the domain_hint '%s'" % (doc_info.id, domain_hint))
+
+    return doc_info
+
+
+def get_doc_info_couch(doc, domain_hint=None, cache=None):
+    """Return DocInfo objects for Couch doc dicts"""
     domain = doc.get('domain') or domain_hint
     doc_type = doc.get('doc_type')
     doc_id = doc.get('_id')
     generic_delete = doc_type.endswith(DELETED_SUFFIX)
 
     def has_doc_type(doc_type, expected_doc_type):
-        return (doc_type == expected_doc_type or
-            doc_type == ('%s%s' % (expected_doc_type, DELETED_SUFFIX)))
-
-    if (
-        domain_hint and
-        not (
-            doc.get('domain') == domain_hint or
-            domain_hint in doc.get('domains', ())
-        )
-    ):
-        raise DomainMismatchException("Doc '%s' does not match the domain_hint '%s'" % (doc_id, domain_hint))
+        return (doc_type == expected_doc_type
+            or doc_type == ('%s%s' % (expected_doc_type, DELETED_SUFFIX)))
 
     if cache and doc_id in cache:
         return cache[doc_id]
@@ -112,7 +112,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
         )
     elif has_doc_type(doc_type, 'CommCareCase'):
         doc_info = case_docinfo(domain, doc_id, doc['name'], generic_delete)
-    elif any([has_doc_type(doc_type, d) for d in couchforms_models.doc_types().keys()]):
+    elif any([has_doc_type(doc_type, d) for d in XFormInstanceSQL.DOC_TYPE_TO_STATE]):
         doc_info = form_docinfo(domain, doc_id, generic_delete)
     elif doc_type in ('CommCareUser',):
         doc_info = DocInfo(
@@ -149,7 +149,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
             display=doc['name'],
             link=reverse(
                 urlname,
-                kwargs={'domain' : doc['name']}
+                kwargs={'domain': doc['name']}
             ),
             is_deleted=generic_delete,
         )
@@ -181,6 +181,8 @@ def get_doc_info(doc, domain_hint=None, cache=None):
 
 def form_docinfo(domain, doc_id, is_deleted):
     doc_info = DocInfo(
+        id=doc_id,
+        type="XFormInstance",
         type_display=_('Form'),
         link=reverse(
             'render_form_data',
@@ -193,6 +195,8 @@ def form_docinfo(domain, doc_id, is_deleted):
 
 def case_docinfo(domain, doc_id, name, is_deleted):
     return DocInfo(
+        id=doc_id,
+        type="CommCareCase",
         display=name,
         type_display=_('Case'),
         link=get_case_url(domain, doc_id),
@@ -221,11 +225,9 @@ def get_webuser_url(domain, user_id):
     )
 
 
-def get_object_info(obj, cache=None):
+def get_doc_info_sql(obj, cache=None):
     """
-    This function is intended to behave just like get_doc_info, only
-    you call it with objects other than Couch docs (such as objects
-    that use the Django ORM).
+    Return DocInfo objects for SQL models
     """
     class_name = obj.__class__.__name__
     cache_key = '%s-%s' % (class_name, obj.pk)
@@ -234,10 +236,11 @@ def get_object_info(obj, cache=None):
 
     from corehq.apps.locations.models import SQLLocation
     from corehq.form_processor.models import CommCareCaseSQL
-    from corehq.form_processor.models import XFormInstanceSQL
     if isinstance(obj, SQLLocation):
         from corehq.apps.locations.views import EditLocationView
         doc_info = DocInfo(
+            id=obj.location_id,
+            type="Location",
             type_display=_('Location'),
             display=obj.name,
             link=reverse(
@@ -257,7 +260,7 @@ def get_object_info(obj, cache=None):
 
     doc_info.id = doc_info.id or str(obj.pk)
     doc_info.domain = obj.domain if hasattr(obj, 'domain') else None
-    doc_info.type = class_name
+    doc_info.type = doc_info.type or class_name
 
     if cache:
         cache[cache_key] = doc_info

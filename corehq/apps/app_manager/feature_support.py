@@ -176,4 +176,21 @@ class CommCareFeatureSupportMixin(object):
 
     @property
     def enable_default_value_expression(self):
-        return self._require_minimum_version('2.51')
+        return (
+            self._require_minimum_version('2.51')
+            and toggles.USH_CASE_CLAIM_UPDATES.enabled(self.domain)
+        )
+
+    @property
+    def supports_session_endpoints(self):
+        return (
+            toggles.SESSION_ENDPOINTS.enabled(self.domain)
+            and self._require_minimum_version('2.51')
+        )
+
+    @property
+    def supports_data_registry(self):
+        return (
+            toggles.DATA_REGISTRY.enabled(self.domain)
+            and self._require_minimum_version('2.53')
+        )

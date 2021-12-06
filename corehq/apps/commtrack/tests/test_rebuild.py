@@ -4,7 +4,6 @@ from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.mock import CaseFactory
 
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.commtrack.processing import rebuild_stock_state
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -14,7 +13,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import softer_assert
 
 LEDGER_BLOCKS_SIMPLE = """
@@ -68,7 +66,6 @@ class RebuildStockStateTest(TestCase):
         return submit_case_blocks(
             ledger_blocks.format(**self._stock_state_key), self.domain)[0].form_id
 
-    @run_with_all_backends
     def test_simple(self):
         self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
         self._assert_stats(2, 100, 100)
@@ -77,24 +74,6 @@ class RebuildStockStateTest(TestCase):
 
         self._assert_stats(2, 200, 200)
 
-    def test_inferred(self):
-        self._submit_ledgers(LEDGER_BLOCKS_INFERRED)
-        # this is weird behavior:
-        # it just doesn't process the second one
-        # even though knowing yesterday's certainly changes the meaning
-        # of today's transfer
-
-        # UPDATE SK 2016-03-14: this happens because the transactions are received out of order
-        # (they appear out of order in the form XML) and hence saved out of order.
-        # When the older transaction is saved it will only look back in time
-        # to create inferred transactions and not ahead.
-        self._assert_stats(2, 50, 50)
-
-        rebuild_stock_state(**self._stock_state_key)
-
-        self._assert_stats(2, 150, 150)
-
-    @run_with_all_backends
     def test_case_actions(self):
         # make sure that when a case is rebuilt (using rebuild_case)
         # stock transactions show up as well
@@ -105,7 +84,6 @@ class RebuildStockStateTest(TestCase):
         self.assertEqual(case.xform_ids[1:], [form_id])
         self.assertTrue(form_id in [action.form_id for action in case.actions])
 
-    @run_with_all_backends
     @softer_assert()
     def test_edit_submissions_simple(self):
         initial_quantity = 100

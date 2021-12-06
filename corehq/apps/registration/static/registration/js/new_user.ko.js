@@ -88,7 +88,7 @@ hqDefine('registration/js/new_user.ko', [
         self.fullName = ko.observable(defaults.full_name)
             .extend({
                 required: {
-                    message: django.gettext("Please enter your name."),
+                    message: gettext("Please enter your name."),
                     params: true,
                 },
             });
@@ -97,7 +97,7 @@ hqDefine('registration/js/new_user.ko', [
         self.email = ko.observable()
             .extend({
                 required: {
-                    message: django.gettext("Please specify an email."),
+                    message: gettext("Please specify an email."),
                     params: true,
                 },
             })
@@ -105,6 +105,11 @@ hqDefine('registration/js/new_user.ko', [
                 emailRFC2822: true,
             });
         self.deniedEmail = ko.observable('');
+        self.isSso = ko.observable(false);
+        self.ssoMessage = ko.observable();
+        self.showPasswordField = ko.computed(function () {
+            return !self.isSso();
+        });
         self.emailDelayed = ko.pureComputed(self.email)
             .extend(_rateLimit)
             .extend({
@@ -121,6 +126,10 @@ hqDefine('registration/js/new_user.ko', [
                                             kissmetrics.track.event("Denied account due to enterprise restricting signups", {email: val});
                                             self.deniedEmail(val);
                                         }
+
+                                        self.isSso(result.isSso);
+                                        self.ssoMessage(result.ssoMessage);
+
                                         callback({
                                             isValid: result.isValid,
                                             message: result.message,
@@ -139,7 +148,7 @@ hqDefine('registration/js/new_user.ko', [
             self.email(defaults.email);
         }
         self.isEmailValidating = ko.observable(false);
-        self.validatingEmailMsg = ko.observable(django.gettext("Checking email..."));
+        self.validatingEmailMsg = ko.observable(gettext("Checking email..."));
         self.emailDelayed.isValidating.subscribe(function (isValidating) {
             self.isEmailValidating(isValidating && self.email.isValid());
             module.resetEmailFeedback(isValidating);
@@ -149,7 +158,7 @@ hqDefine('registration/js/new_user.ko', [
         self.password = ko.observable(defaults.password)
             .extend({
                 required: {
-                    message: django.gettext("Please specify a password."),
+                    message: gettext("Please specify a password."),
                     params: true,
                 },
             });
@@ -169,7 +178,7 @@ hqDefine('registration/js/new_user.ko', [
         self.projectName = ko.observable(defaults.project_name)
             .extend({
                 required: {
-                    message: django.gettext("Please specify a project name."),
+                    message: gettext("Please specify a project name."),
                     params: true,
                 },
             });
@@ -186,7 +195,7 @@ hqDefine('registration/js/new_user.ko', [
         self.personaOther = ko.observable()
             .extend({
                 required: {
-                    message: django.gettext("Please specify."),
+                    message: gettext("Please specify."),
                     params: true,
                 },
             });
@@ -250,15 +259,24 @@ hqDefine('registration/js/new_user.ko', [
         };
 
         self.isStepOneValid = ko.computed(function () {
+            var isPasswordValid;
+            if (self.isSso()) {
+                isPasswordValid = true;
+            } else {
+                isPasswordValid = (
+                    self.password() !== undefined
+                    && self.password.isValid()
+                    && self.passwordDelayed.isValid()
+                );
+            }
+
             return self.fullName() !== undefined
                 && self.email() !== undefined
-                && self.password() !== undefined
                 && self.fullName.isValid()
                 && self.email.isValid()
                 && self.emailDelayed.isValid()
                 && !self.emailDelayed.isValidating()
-                && self.password.isValid()
-                && self.passwordDelayed.isValid();
+                && isPasswordValid;
         });
 
         self.disableNextStepOne = ko.computed(function () {
@@ -311,6 +329,11 @@ hqDefine('registration/js/new_user.ko', [
         self.isSubmitting = ko.observable(false);
         self.isSubmitSuccess = ko.observable(false);
 
+        // for SSO
+        self.isSsoSuccess = ko.observable(false);
+        self.ssoLoginUrl = ko.observable('');
+        self.ssoIdpName = ko.observable('');
+
         self.hasServerError = ko.observable(false);  // in the case of 500s
 
         // Fake timeouts to give the user some feeling of progress.
@@ -362,12 +385,23 @@ hqDefine('registration/js/new_user.ko', [
                             });
                         } else if (response.success) {
                             self.isSubmitting(false);
-                            self.isSubmitSuccess(true);
+                            if (self.isSso()) {
+                                self.isSsoSuccess(true);
+                                self.ssoLoginUrl(response.ssoLoginUrl);
+                                self.ssoIdpName(response.ssoIdpName);
+                            } else {
+                                self.isSubmitSuccess(true);
+                            }
                             module.submitSuccessAnalytics(_.extend({}, submitData, {
                                 email: self.email(),
                                 deniedEmail: self.deniedEmail(),
                                 appcuesAbTest: response.appcues_ab_test,
                             }));
+                            if (self.isSso()) {
+                                setTimeout(function () {
+                                    window.location = self.ssoLoginUrl();
+                                }, 3000);
+                            }
                         }
                     },
                     error: function () {

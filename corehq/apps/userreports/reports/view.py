@@ -15,6 +15,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from django.utils.html import escape
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
@@ -131,7 +132,7 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
 
 
 @contextmanager
-def tmp_report_config(report_config):
+def delete_report_config(report_config):
     yield report_config
     report_config.delete()
 
@@ -407,6 +408,21 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def headers(self):
         return DataTablesHeader(*[col.data_tables_column for col in self.data_source.inner_columns])
 
+    @classmethod
+    def sanitize_page(cls, page):
+        result = []
+        for row in page:
+            result.append({k: cls._sanitize_column(v) for (k, v) in row.items()})
+
+        return result
+
+    @classmethod
+    def _sanitize_column(cls, col):
+        if isinstance(col, str):
+            return escape(col)
+
+        return col
+
     def get_ajax(self, params):
         sort_column = params.get('iSortCol_0')
         sort_order = params.get('sSortDir_0', 'ASC')
@@ -425,6 +441,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 )
 
             page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+            page = self.sanitize_page(page)
             total_records = data_source.get_total_records()
             total_row = data_source.get_total_row() if data_source.has_total_row else None
         except UserReportsError as e:
@@ -552,30 +569,30 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         return redirect(DownloadUCRStatusView.urlname, self.domain, download.download_id, self.report_config_id)
 
     @classmethod
-    def report_preview_data(cls, domain, temp_report):
+    def sanitize_export_table(cls, table):
+        result = []
+        for row in table:
+            result.append([cls._sanitize_column(x) for x in row])
 
-        with tmp_report_config(temp_report) as report_config:
-            view = cls(request=HttpRequest())
-            view._domain = domain
-            view._lang = "en"
-            view._report_config_id = report_config._id
-            try:
-                export_table = view.export_table
-                datatables_data = json.loads(view.get_ajax({}).content)
-            except UserReportsError:
-                # User posted an invalid report configuration
-                return None
-            except DataSourceConfigurationNotFoundError:
-                # A temporary data source has probably expired
-                # TODO: It would be more helpful just to quietly recreate the data source config from GET params
-                return None
-            else:
-                return {
-                    "table": export_table[0][1],
-                    "map_config": view.spec.map_config,
-                    "chart_configs": view.spec.charts,
-                    "aaData": datatables_data['aaData'],
-                }
+        return result
+
+    @classmethod
+    def report_preview_data(cls, domain, report_config):
+        try:
+            export = ReportExport(domain, report_config.title, report_config, "en", {})
+            return {
+                "table": cls.sanitize_export_table(export.get_table_data()),
+                "map_config": report_config.map_config,
+                "chart_configs": report_config.charts,
+                "aaData": cls.sanitize_page(export.get_data()),
+            }
+        except UserReportsError:
+            # User posted an invalid report configuration
+            return None
+        except DataSourceConfigurationNotFoundError:
+            # A temporary data source has probably expired
+            # TODO: It would be more helpful just to quietly recreate the data source config from GET params
+            return None
 
 
 # Base class for classes that provide custom rendering for UCRs

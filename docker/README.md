@@ -129,18 +129,37 @@ script:
 ```
 
 ENV Vars
-~~~~~~~~
+--------
 
-* JS_SETUP=yes
+* JS_SETUP=[yes|**no**]
   * Run `yarn` installs
-* TEST=[javascript|python|python-sharded]
-  * javascript: extra setup and config for JS tests. Also only run JS tests
-  * python: default tests
-  * python-sharded: configure django for sharded setup and only run subset of tests
+* TEST=[javascript|**python**|python-sharded|python-sharded-and-javascript]
+  * `javascript`: extra setup and config for JS tests. Also only run JS tests
+  * `python`: default tests
+  * `python-elasticsearch-v5`: configure django for ES5 tests
+  * `python-sharded`: configure django for sharded setup and only run subset of
+    tests
+  * `python-sharded-and-javascript`: combines `python-sharded` and `javascript`.
+    Also sends static analysis to datadog if job is travis "cron" event.
 * NOSE_DIVIDED_WE_RUN
   * used to only run a subset of tests
   * see .travis.yml for exact options
 * REUSE_DB
-  * Same as normal REUSE_DB
- 
+  * Same as normal `REUSE_DB`
+* DOCKER_HQ_OVERLAY=[**none**|overlayfs|**aufs**]
+  * `none`: mounts commcare-hq directory in docker container read/write for
+    direct access.  This is the default when running in Travis.
+  * `overlayfs`: mounts commcare-hq directory in docker container read-only and
+    uses it as the "lowerdir" in an `overlayfs` mount to insulate the host OS
+    data from being modified by the container.
+  * `aufs`: [deprecated] same behavior as `overlayfs`, only using Docker's `aufs`
+    overlay engine instead of `overlayfs`. This is the default when not running
+    in Travis.
+* DOCKER_HQ_OVERLAYFS_CHMOD=[yes|**no**]
+  * Perform a recursive chmod on the commcare-hq overlay to ensure read access
+    for cchq user.
+* DOCKER_HQ_OVERLAYFS_METACOPY=[on|**off**]
+  * Set the `metacopy=on` mount option for the overlayfs mount (performance
+    optimization, has security implications).
+
 See .travis.yml for env variable options used on travis.
