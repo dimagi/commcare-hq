@@ -229,7 +229,8 @@ def get_first_conversion_status_for_emails(list_of_emails):
         email = data.get(
             'properties', {}
         ).get('email', {}).get('value')
-        status_summary[email] = first_conversion_status
+        if email:
+            status_summary[email] = first_conversion_status
     return status_summary
 
 
