@@ -169,6 +169,11 @@ class GroupMemoizer(object):
         group.name = name
         self.add_group(group)
 
+    def save_updated(self):
+        updated = [self.groups_by_id[_id] for _id in self.updated_groups]
+        Group.bulk_save(updated)
+        self.updated_groups.clear()
+
     def save_all(self):
         Group.bulk_save(self.groups)
 
@@ -586,10 +591,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 group_change_message = commcare_user_importer.update_user_groups(domain_info, group_names)
 
             try:
-                for group_id in domain_info.group_memoizer.updated_groups:
-                    group = domain_info.group_memoizer.groups_by_id[group_id]
-                    group.save()
-                domain_info.group_memoizer.updated_groups.clear()
+                domain_info.group_memoizer.save_updated()
 
             except BulkSaveError as e:
                 _error_message = (
