@@ -11,4 +11,5 @@ urlpatterns = [
     # odk urls
     url(r'^submission/?$', post, name="receiver_odk_post"),
     url(r'^(?P<app_id>[\w-]+)/$', post, name='receiver_post_with_app_id'),
+    url(r'^api/(?P<app_id>[\w-]+)/$', post_api, name='receiver_post_api_with_app_id'),
 ]
