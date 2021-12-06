@@ -9,7 +9,6 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
-from corehq.apps.es.cases import user
 from corehq.apps.users.decorators import get_permission_name
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
