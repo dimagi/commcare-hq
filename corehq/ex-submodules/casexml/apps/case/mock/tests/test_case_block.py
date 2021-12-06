@@ -39,6 +39,22 @@ class CaseBlockTest(SimpleTestCase):
             ).as_xml()
         self.assertEqual(six.text_type(context.exception), "Key 'case_name' specified twice")
 
+    def test_let_you_specify_system_props_for_create_via_updates(self):
+        actual = ElementTree.tostring(CaseBlock.deprecated_init(
+            case_id=self.CASE_ID,
+            create=True,
+            update={'case_name': 'Johnny'},
+            date_modified=self.NOW,
+        ).as_xml(), encoding='utf-8').decode('utf-8')
+        expected = (
+            '<case case_id="test-case-id" date_modified="2012-01-24T00:00:00.000000Z" '
+            'xmlns="http://commcarehq.org/case/transaction/v2">'
+            '<create><case_type /><case_name /><owner_id /></create>'
+            '<update><case_name>Johnny</case_name><date_opened>2021-12-06</date_opened></update>'
+            '</case>'
+        )
+        self.assertEqual(actual, expected)
+
     def test_buggy_behavior(self):
         """The following is a BUG; should fail!! Should fix and change tests"""
         expected = ElementTree.tostring(CaseBlock.deprecated_init(
