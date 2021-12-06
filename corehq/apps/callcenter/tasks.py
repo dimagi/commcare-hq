@@ -49,7 +49,7 @@ def calculate_indicators():
 
 def sync_web_user_usercases_if_applicable(user, domain):
     domain_obj = Domain.get_by_name(domain)
-    if domain_obj.usercase_enabled and USH_WEB_USER_CASE_CREATION.enabled(domain):
+    if USH_WEB_USER_CASE_CREATION.enabled(domain):
         sync_usercases_task.delay(user._id, domain)
 
 
