@@ -4,7 +4,7 @@ from casexml.apps.case.mock import CaseFactory
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
