@@ -1,6 +1,5 @@
 import argparse
 import sys
-from contextlib import contextmanager
 
 from django.core.management.base import BaseCommand
 
