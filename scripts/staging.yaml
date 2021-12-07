@@ -77,4 +77,5 @@ branches:
     - sr/case-reindex-staging # Sravan Oct 14
     - rp/gsheets+depandabot-pip # Rynhard Dec 6
     - rp/gsheets-PoC # Rynhard Dec 6
+    - dependabot/npm_and_yarn/jquery-ui-1.13.0  # Biyeun Dec 7
 submodules: { }
