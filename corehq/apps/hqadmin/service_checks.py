@@ -179,7 +179,7 @@ def check_celery():
                 elif (heartbeat_time_to_start is not None and
                       heartbeat_time_to_start > max(threshold, datetime.timedelta(minutes=5))):
                     bad_queues.append(
-                        f"{queue} is delayed for {blockage_duration} (max allowed is {threshold})"
+                        f"{queue} is delayed for {heartbeat_time_to_start} (max allowed is {threshold})"
                     )
 
     if bad_queues:
