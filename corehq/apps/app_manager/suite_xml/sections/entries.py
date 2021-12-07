@@ -128,7 +128,7 @@ class EntriesHelper(object):
         if additional_types:
             case_type_filter = " or ".join([
                 "@case_type='{case_type}'".format(case_type=case_type)
-                for case_type in set(additional_types).union({case_type})
+                for case_type in sorted(set(additional_types).union({case_type}))
             ])
         else:
             case_type_filter = "@case_type='{case_type}'".format(case_type=case_type)
