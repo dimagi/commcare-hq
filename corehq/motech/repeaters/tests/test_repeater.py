@@ -197,7 +197,6 @@ class RepeaterTest(BaseRepeaterTest):
                        return_value=MockResponse(status_code=500, reason="Borked")):
                 self.post_xml(xform_xml, self.domain)
 
-    @run_with_all_backends
     def test_skip_device_logs(self):
         devicelog_xml = XFORM_XML_TEMPLATE.format(DEVICE_LOG_XMLNS, USER_ID, '1234', '')
         self.post_xml(devicelog_xml, self.domain)
@@ -364,7 +363,6 @@ class RepeaterTest(BaseRepeaterTest):
         self.assertEqual(0, repeat_record.overall_tries)
         self.assertNotEqual(None, repeat_record.next_check)
 
-    @run_with_all_backends
     def test_check_repeat_records_ignores_future_retries_multiple_partitions(self):
         self._create_additional_repeat_records(9)
         self.assertEqual(len(self.repeat_records()), 20)
@@ -374,7 +372,6 @@ class RepeaterTest(BaseRepeaterTest):
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
 
-    @run_with_all_backends
     def test_repeat_record_status_check_multiple_partitions(self):
         self._create_additional_repeat_records(9)
         self.assertEqual(len(self.repeat_records()), 20)
@@ -409,7 +406,6 @@ class RepeaterTest(BaseRepeaterTest):
             for repeat_record in self.repeat_records():
                 self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
 
-    @run_with_all_backends
     def test_process_repeat_record_locking_multiple_partitions(self):
         self._create_additional_repeat_records(9)
         self.assertEqual(len(self.repeat_records()), 20)
