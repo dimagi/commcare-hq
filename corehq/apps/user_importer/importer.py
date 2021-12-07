@@ -611,7 +611,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             elif group_change_message:
                 log = commcare_user_importer.logger.save_only_group_changes(group_change_message)
 
-
         except ValidationError as e:
             status_row['flag'] = e.message
         except (UserUploadError, CouchUser.Inconsistent) as e:
