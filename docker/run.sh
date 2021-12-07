@@ -127,7 +127,9 @@ function run_tests {
 
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
+        echo "::group::Django test suite: $TEST"
         su cchq -c "/bin/bash ../run_tests $argv_str"
+        echo "::endgroup::"
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
         [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
         delta=$(($(date +%s) - $now))
