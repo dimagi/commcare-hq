@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-
-GROUP='0;33'    # gold
-SUCCESS='0;32'  # green
-FAIL='0;31'     # red
+# source utils for logging functions log_group_{begin,end} and log_{success,fail}
+source ./scripts/bash-utils.sh
 
 
 function main {
@@ -19,8 +17,8 @@ function main {
 function check_makemigrations {
     # check makemigrations
     local cmd=(./manage.py makemigrations)
-    log_group "${cmd[*]}"
-    trap 'echo "::endgroup::"' RETURN
+    log_group_begin "Check: ${cmd[*]}"
+    trap log_group_end RETURN
     if ! "${cmd[@]}" --noinput --check; then
         # Changes
         log_fail "Migrations are missing.  Did you run '${cmd[*]}'?"
@@ -35,8 +33,8 @@ function check_migrations_list {
     # ensure migrations lockfile is consistent with actual migrations list
     local lockfile=migrations.lock
     local cmd=(make migrations.lock)
-    log_group "${cmd[*]}"
-    trap 'echo "::endgroup::"' RETURN
+    log_group_begin "Check: ${cmd[*]}"
+    trap log_group_end RETURN
     "${cmd[@]}" >/dev/null  # don't output the diff twice
     git update-index -q --refresh
     if ! git diff --exit-code HEAD -- "$lockfile"; then
@@ -47,33 +45,6 @@ function check_migrations_list {
     fi
     # clean
     log_success "frozen migrations ok"
-}
-
-
-function log_group {
-    local group_info="$*"
-    # use GitHub workflow grouping log lines
-    # see: https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#grouping-log-lines
-    echo "::group::Check $group_info"
-    log_color "$GROUP" "Checking $group_info"
-}
-
-
-function log_success {
-    log_color "$SUCCESS" "$@"
-}
-
-
-function log_fail {
-    log_color "$FAIL" "ERROR:" "$@"
-}
-
-
-function log_color {
-    local ccode="$1"
-    shift
-    local msg="$*"
-    echo -e "\\033[${ccode}m${msg}\\033[0m"
 }
 
 

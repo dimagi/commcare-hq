@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 set -e
 
-echo "::group::make requirements"
-trap 'echo "::endgroup::"' EXIT
+# source utils for logging functions log_group_{begin,end} and log_{success,fail}
+source ./scripts/bash-utils.sh
+
+log_group_begin "Check: make requirements"
+trap log_group_end EXIT
 
 make requirements
 git --no-pager diff
 git update-index -q --refresh
-if git diff-index --quiet HEAD --; then
-    # No changes
-    echo "requirements ok"
-else
+if ! git diff-index --quiet HEAD --; then
     # Changes
-    echo -e "\033[0;31mRequirements are inconsistent.  Did you run 'make requirements'?\033[0m"
+    log_fail "Requirements are inconsistent.  Did you run 'make requirements'?"
     git checkout requirements/  # clean up
     exit 1
 fi
+# No changes
+log_success "requirements ok"

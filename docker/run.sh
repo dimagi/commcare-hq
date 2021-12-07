@@ -119,19 +119,19 @@ function run_tests {
             exit 1
         fi
 
-        echo "::group::Django test suite setup"
+        log_group_begin "Django test suite setup"
         now=$(date +%s)
         setup "$TEST"
         delta=$(($(date +%s) - $now))
-        echo "::endgroup::"
+        log_group_end
 
         send_timing_metric_to_datadog "setup" $delta
 
-        echo "::group::Django test suite: $TEST"
+        log_group_begin "Django test suite: $TEST"
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
         su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
-        echo "::endgroup::"
+        log_group_end
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
         [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
         delta=$(($(date +%s) - $now))
@@ -234,7 +234,7 @@ function runserver {
 }
 
 source /mnt/commcare-hq-ro/scripts/datadog-utils.sh  # provides send_metric_to_datadog
-source /mnt/commcare-hq-ro/scripts/bash-utils.sh  # provides logmsg, func_text and truthy
+source /mnt/commcare-hq-ro/scripts/bash-utils.sh  # provides logmsg, log_group_{begin,end}, func_text and truthy
 
 # build the run_tests script to be executed as cchq later
 func_text logmsg _run_tests  > /mnt/run_tests
