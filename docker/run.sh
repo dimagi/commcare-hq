@@ -119,15 +119,17 @@ function run_tests {
             exit 1
         fi
 
+        echo "::group::Django test suite setup"
         now=$(date +%s)
         setup "$TEST"
         delta=$(($(date +%s) - $now))
+        echo "::endgroup::"
 
         send_timing_metric_to_datadog "setup" $delta
 
+        echo "::group::Django test suite: $TEST"
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
-        echo "::group::Django test suite: $TEST"
         su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
         echo "::endgroup::"
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
