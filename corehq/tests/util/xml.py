@@ -75,9 +75,13 @@ def _check_shared(expected, actual, checker, extension):
             raise AssertionError(message)
 
 
-def extract_xml_partial(xml, xpath):
+def extract_xml_partial(xml, xpath, wrap=True):
     actual = parse_normalize(xml, to_string=False)
     nodes = actual.findall(xpath)
+    if not wrap:
+        assert len(nodes) == 1, 'result must be wrapped if more than 1 node is matched'
+        return lxml.etree.tostring(nodes[0], pretty_print=True, encoding='utf-8')
+
     root = lxml.etree.Element('partial')
     for node in nodes:
         root.append(node)
