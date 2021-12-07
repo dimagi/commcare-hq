@@ -44,5 +44,5 @@ function send_metric_to_datadog() {
                   ]}
                 ]
               }" \
-          "https://app.datadoghq.com/api/v1/series" || true
+          "https://app.datadoghq.com/api/v1/series" >/dev/null || true
 }
