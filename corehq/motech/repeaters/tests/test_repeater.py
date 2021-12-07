@@ -193,7 +193,7 @@ class RepeaterTest(BaseRepeaterTest):
                 instance_id,
                 self.case_block
             )
-            with patch('corehq.motech.repeaters.models.simple_post',
+            with patch('corehq.motech.repeaters.models.simple_request',
                        return_value=MockResponse(status_code=500, reason="Borked")):
                 self.post_xml(xform_xml, self.domain)
 
@@ -367,7 +367,7 @@ class RepeaterTest(BaseRepeaterTest):
         self._create_additional_repeat_records(9)
         self.assertEqual(len(self.repeat_records()), 20)
 
-        with patch('corehq.motech.repeaters.models.simple_post') as mock_fire, \
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire, \
              patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
@@ -380,14 +380,14 @@ class RepeaterTest(BaseRepeaterTest):
         for repeat_record in self.repeat_records():
             repeat_record.cancelled = True
             repeat_record.save()
-        with patch('corehq.motech.repeaters.models.simple_post') as mock_fire, \
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire, \
              patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
 
         # trigger force send records if not cancelled and tries not exhausted
         for repeat_record in self.repeat_records():
-            with patch('corehq.motech.repeaters.models.simple_post',
+            with patch('corehq.motech.repeaters.models.simple_request',
                        return_value=MockResponse(status_code=200, reason='')
                        ) as mock_fire:
                 repeat_record.fire(force_send=True)
@@ -399,7 +399,7 @@ class RepeaterTest(BaseRepeaterTest):
             self.assertEqual(repeat_record.overall_tries, 1)
 
         # not trigger records succeeded triggered after cancellation
-        with patch('corehq.motech.repeaters.models.simple_post') as mock_fire, \
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire, \
              patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
