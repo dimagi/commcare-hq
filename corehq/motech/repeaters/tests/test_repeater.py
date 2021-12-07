@@ -363,16 +363,16 @@ class RepeaterTest(BaseRepeaterTest):
         self.assertEqual(0, repeat_record.overall_tries)
         self.assertNotEqual(None, repeat_record.next_check)
 
-    def test_check_repeat_records_ignores_future_retries_multiple_partitions(self):
+    def test_check_repeat_records_ignores_future_retries_using_multiple_partitions(self):
         self._create_additional_repeat_records(9)
         self.assertEqual(len(self.repeat_records()), 20)
 
-        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire, \
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_retry, \
              patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
             check_repeaters()
-            self.assertEqual(mock_fire.call_count, 0)
+            self.assertEqual(mock_retry.delay.call_count, 0)
 
-    def test_repeat_record_status_check_multiple_partitions(self):
+    def test_repeat_record_status_check_using_multiple_partitions(self):
         self._create_additional_repeat_records(9)
         self.assertEqual(len(self.repeat_records()), 20)
 
@@ -406,21 +406,21 @@ class RepeaterTest(BaseRepeaterTest):
             for repeat_record in self.repeat_records():
                 self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
 
-    def test_process_repeat_record_locking_multiple_partitions(self):
+    def test_check_repeaters_successfully_retries_using_multiple_partitions(self):
         self._create_additional_repeat_records(9)
         self.assertEqual(len(self.repeat_records()), 20)
 
-        with patch('corehq.motech.repeaters.tasks.process_repeat_record') as mock_process, \
+        with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process, \
              patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 0)
 
         for record in self.repeat_records():
-            # Resetting next_check should allow them to be requeued
-            record.next_check = datetime.utcnow()
+            # set next_check to a time older than now
+            record.next_check = datetime.utcnow() - timedelta(hours=1)
             record.save()
 
-        with patch('corehq.motech.repeaters.tasks.process_repeat_record') as mock_process, \
+        with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process, \
              patch('corehq.motech.repeaters.tasks.CHECK_REPEATERS_PARTITION_COUNT', 10):
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 20)
