@@ -13,6 +13,7 @@ from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from corehq.apps.domain.models import Domain
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
+from corehq.apps.data_analytics.util import last_month_dict, last_month_datespan
 
 logger = get_task_logger(__name__)
 
@@ -20,16 +21,10 @@ logger = get_task_logger(__name__)
 @periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='2'),
                acks_late=True, ignore_result=True)
 def build_last_month_MALT():
-    def _last_month_datespan():
-        today = datetime.date.today()
-        first_of_this_month = datetime.date(day=1, month=today.month, year=today.year)
-        last_month = first_of_this_month - datetime.timedelta(days=1)
-        return DateSpan.from_month(last_month.month, last_month.year)
-
-    last_month = _last_month_datespan()
+    last_month = last_month_dict()
     domains = Domain.get_all()
     grouped_malt_tasks = update_current_MALT_for_domains.chunks(
-        zip(last_month, domains), 5000
+        zip([last_month_dict], domains), 5000
     ).group()
 
     # this blocks until all subtasks are complete which is not recommended by celery
@@ -42,21 +37,15 @@ def build_last_month_MALT():
                ignore_result=True)
 def update_current_MALT():
     today = datetime.date.today()
-    this_month = DateSpan.from_month(today.month, today.year)
+    this_month_dict = {'month': today.month, 'year': today.year}
     domains = Domain.get_all()
-    update_current_MALT_for_domains.chunks(zip(this_month, domains), 5000).apply_async()
+    update_current_MALT_for_domains.chunks(zip([this_month_dict], domains), 5000).apply_async()
 
 
 @periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='3'),
                acks_late=True, ignore_result=True)
 def build_last_month_GIR():
-    def _last_month_datespan():
-        today = datetime.date.today()
-        first_of_this_month = datetime.date(day=1, month=today.month, year=today.year)
-        last_month = first_of_this_month - datetime.timedelta(days=1)
-        return DateSpan.from_month(last_month.month, last_month.year)
-
-    last_month = _last_month_datespan()
+    last_month = last_month_datespan()
     try:
         generator = GIRTableGenerator([last_month])
         generator.build_table()
@@ -78,12 +67,14 @@ def build_last_month_GIR():
 
 
 @task(queue='background_queue')
-def update_current_MALT_for_domains(month, domains):
+def update_current_MALT_for_domains(month_dict, domains):
+    month = DateSpan.from_month(month_dict['month'], month_dict['year'])
     MALTTableGenerator([month]).build_table(domains=domains)
 
 
 @task(queue='background_queue')
-def send_MALT_complete_email(month):
+def send_MALT_complete_email(month_dict):
+    month = DateSpan.from_month(month_dict['month'], month_dict['year'])
     message = 'MALT generation for month {} is now ready. To download go to'\
               ' http://www.commcarehq.org/hq/admin/download_malt/'.format(
                   month
