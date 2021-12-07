@@ -347,8 +347,6 @@ HQ_APPS = (
     'corehq.preindex',
     'corehq.tabs',
     'custom.openclinica',
-    'fluff',
-    'fluff.fluff_filter',
     'soil',
     'toggle',
     'phonelog',
@@ -1524,7 +1522,6 @@ COUCHDB_APPS = [
     'dhis2',
     'ext',
     'facilities',
-    'fluff_filter',
     'hqcase',
     'hqmedia',
     'case_importer',
@@ -1559,9 +1556,6 @@ COUCHDB_APPS = [
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
-    # needed to make couchdbkit happy
-    ('fluff', 'fluff-bihar'),
-    ('mc', 'fluff-mc'),
     ('export', META_DB),
     ('callcenter', META_DB),
 
@@ -1849,8 +1843,6 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
         },
-    ],
-    'fluff': [
     ],
     'experimental': [
         {
