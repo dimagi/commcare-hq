@@ -77,8 +77,7 @@ hqDefine('hqwebapp/js/inactivity', [
         }
         if ($newVersionModal.length) {
             $('#refreshApp').click(function () {
-                history.pushState("", document.title, window.location.pathname + window.location.search);
-                window.location.reload();
+                document.location = document.location.origin + document.location.pathname;
             });
         }
         /**
