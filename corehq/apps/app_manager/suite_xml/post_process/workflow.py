@@ -256,6 +256,11 @@ def _get_datums_matched_to_source(target_frame_elements, source_datums):
 
 def _find_best_match(target_datum, source_datums):
     """Find the datum in the list of source datums that best matches the target datum (if any)
+
+    This uses the datums ID and case type to match. If 'additional_case_types' are in use then the matching
+    can still work since the datums will have their case type set to their module's case type. A caveat
+    here is that it is possible to link a form with multiple case types to a form that only supports
+    one of the case types. This is not disabled since the app builder could configure conditional linking.
     """
     candidate = None
     for source_datum in source_datums:
@@ -683,6 +688,9 @@ class WorkflowDatumMeta(WorkflowSessionMeta):
     def case_type(self):
         """Get the case type from the nodeset or the function if possible
         """
+        # Note that this does not support `additional_case_types`. If multiple case types are in use
+        # then the case type will be inferred from the module case type.
+        # See WorkflowHelper._add_missing_case_types
         def _extract_type(xpath):
             match = self.type_regex.search(xpath)
             return match.group(1) if match else None
@@ -736,7 +744,8 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
     @property
     def case_type(self):
         if not self._case_type:
-            # currently only supports a single case type
+            # This currently only assumes the first case type is the correct one.
+            # The suite should be set up so that the first case type is the module's case type.
             type_data = [el for el in self.query.data if el.key == 'case_type']
             if type_data:
                 self._case_type = type_data[0].ref.replace("'", "")  # TODO: what if this is dynamic
