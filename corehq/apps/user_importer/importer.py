@@ -532,6 +532,8 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             if role:
                 role_qualified_id = domain_info.roles_by_name[role]
                 commcare_user_importer.update_role(role_qualified_id)
+            else:
+                commcare_user_importer.update_role('none', clear_role=True)
             if web_user_username:
                 user.update_metadata({'login_as_user': web_user_username})
 

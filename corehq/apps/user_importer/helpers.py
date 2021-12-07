@@ -142,10 +142,12 @@ class BaseUserImporter(object):
 
         self.role_updated = False
 
-    def update_role(self, role_qualified_id):
+    def update_role(self, role_qualified_id, clear_role=False):
         user_current_role = self.user.get_role(domain=self.user_domain)
         self.role_updated = not (user_current_role
                                  and user_current_role.get_qualified_id() == role_qualified_id)
+        if user_current_role and clear_role:
+            self.role_updated = True
         if self.role_updated:
             self.user.set_role(self.user_domain, role_qualified_id)
 
