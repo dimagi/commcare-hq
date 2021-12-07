@@ -7,6 +7,9 @@ source ./scripts/bash-utils.sh
 log_group_begin "Check: make requirements"
 trap log_group_end EXIT
 
+log_fail "Developer-induced failure"
+exit 1
+
 make requirements
 git --no-pager diff
 git update-index -q --refresh
