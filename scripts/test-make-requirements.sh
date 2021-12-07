@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
+echo "::group::make requirements"
+trap 'echo "::endgroup::"' EXIT
+
 make requirements
 git --no-pager diff
 git update-index -q --refresh
