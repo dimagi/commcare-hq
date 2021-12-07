@@ -4,6 +4,7 @@ import six
 from django.test import SimpleTestCase
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
+from corehq.tests.util.xml import assert_xml_equal
 
 
 class CaseBlockTest(SimpleTestCase):
@@ -27,7 +28,7 @@ class CaseBlockTest(SimpleTestCase):
             '<update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update>'
             '</case>'
         )
-        self.assertEqual(actual, expected)
+        assert_xml_equal(actual, expected)
 
     def test_does_not_let_you_specify_a_keyword_twice(self):
         """Doesn't let you specify a keyword twice (here 'case_name')"""
@@ -50,7 +51,7 @@ class CaseBlockTest(SimpleTestCase):
             '<case case_id="test-case-id" date_modified="2012-01-24T00:00:00.000000Z" '
             'xmlns="http://commcarehq.org/case/transaction/v2">'
             '<create><case_type /><case_name /><owner_id /></create>'
-            '<update><case_name>Johnny</case_name><date_opened>2021-12-06</date_opened></update>'
+            '<update><case_name>Johnny</case_name></update>'
             '</case>'
         )
         self.assertEqual(actual, expected)
