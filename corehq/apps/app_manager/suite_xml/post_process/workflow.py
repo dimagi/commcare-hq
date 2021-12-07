@@ -754,9 +754,9 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
 
     def to_stack_datum(self):
         wanted = ("commcare_registry", "case_type", "case_id")
-        data_by_key = {el.key: el.ref for el in self.query.data}
-        data = [QueryData(key=key, ref=data_by_key[key]) for key in wanted if key in data_by_key]
-        if "case_id" not in data_by_key and self.next_datum:
+        keys = {el.key for el in self.query.data}
+        data = [QueryData(key=el.key, ref=el.ref) for el in self.query.data if el.key in wanted]
+        if "case_id" not in keys and self.next_datum:
             data.append(QueryData(key="case_id", ref=session_var(self.source_id)))
         url = self.query.url
         if self.is_case_search:
