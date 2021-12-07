@@ -3,13 +3,14 @@ import datetime
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
 from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
+from corehq.apps.domain.models import Domain
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
 
@@ -26,19 +27,10 @@ def build_last_month_MALT():
         return DateSpan.from_month(last_month.month, last_month.year)
 
     last_month = _last_month_datespan()
-    generator = MALTTableGenerator([last_month])
-    generator.build_table()
-
-    message = 'MALT generation for month {} is now ready. To download go to'\
-              ' http://www.commcarehq.org/hq/admin/download_malt/'.format(
-                  last_month
-              )
-    send_HTML_email(
-        'MALT is ready',
-        settings.DATA_EMAIL,
-        message,
-        text_content=message
-    )
+    domains = Domain.get_all()
+    update_current_MALT_for_domains.chunks(
+        zip(last_month, domains), 5000
+    ).apply_async(queue='background_queue', link=send_MALT_complete_email.s(last_month))
 
 
 @periodic_task(queue='background_queue', run_every=crontab(hour=2, minute=0, day_of_week='*'),
@@ -46,7 +38,8 @@ def build_last_month_MALT():
 def update_current_MALT():
     today = datetime.date.today()
     this_month = DateSpan.from_month(today.month, today.year)
-    MALTTableGenerator([this_month]).build_table()
+    domains = Domain.get_all()
+    update_current_MALT_for_domains.chunks(zip(this_month, domains), 5000).apply_async(queue='background_queue')
 
 
 @periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='3'),
@@ -73,6 +66,25 @@ def build_last_month_GIR():
               )
     send_HTML_email(
         'GIR data is ready',
+        settings.DATA_EMAIL,
+        message,
+        text_content=message
+    )
+
+
+@task(queue='background_queue')
+def update_current_MALT_for_domains(month, domains):
+    MALTTableGenerator([month]).build_table(domains=domains)
+
+
+@task(queue='background_queue')
+def send_MALT_complete_email(month):
+    message = 'MALT generation for month {} is now ready. To download go to'\
+              ' http://www.commcarehq.org/hq/admin/download_malt/'.format(
+                  month
+              )
+    send_HTML_email(
+        'MALT is ready',
         settings.DATA_EMAIL,
         message,
         text_content=message
