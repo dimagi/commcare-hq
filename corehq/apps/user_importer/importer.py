@@ -587,8 +587,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 user.get_django_user(use_primary_db=True).check_password(password)
 
             group_change_message = {}
-            if group_names:
-                group_change_message = commcare_user_importer.update_user_groups(domain_info, group_names)
+            group_change_message = commcare_user_importer.update_user_groups(domain_info, group_names)
 
             try:
                 domain_info.group_memoizer.save_updated()

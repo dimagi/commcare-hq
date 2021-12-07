@@ -285,6 +285,7 @@ class CommCareUserImporter(BaseUserImporter):
             return UserChangeMessage.groups_info(list(new_groups.values()))
 
 
+
     def _log_phone_number_changes(self, old_phone_numbers, new_phone_numbers):
         (items_added, items_removed) = find_differences_in_list(
             target=new_phone_numbers,
