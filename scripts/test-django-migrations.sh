@@ -73,7 +73,7 @@ function log_color {
     local ccode="$1"
     shift
     local msg="$*"
-    echo -e "\\033[${ccode}m${msg}\\033[0m" >&2
+    echo -e "\\033[${ccode}m${msg}\\033[0m"
 }
 
 
