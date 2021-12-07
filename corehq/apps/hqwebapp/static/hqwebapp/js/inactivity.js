@@ -125,6 +125,11 @@ hqDefine('hqwebapp/js/inactivity', [
         };
 
         var showPageRefreshModal = function () {
+            if ($('.webforms-nav-container').is(':visible')) {
+                $newVersionModal.find('#incompleteFormWarning').show();
+            } else {
+                $newVersionModal.find('#incompleteFormWarning').hide();
+            }
             if (!isModalOpen($modal) && !isModalOpen($warningModal)) {
                 $newVersionModal.modal('show');
             }
