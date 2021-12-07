@@ -22,14 +22,15 @@ logger = get_task_logger(__name__)
                acks_late=True, ignore_result=True)
 def build_last_month_MALT():
     last_month = last_month_dict()
-    domains = Domain.get_all()
+    domains = Domain.get_all_names()
     grouped_malt_tasks = update_current_MALT_for_domains.chunks(
-        zip([last_month_dict], domains), 5000
+        zip([last_month], domains), 5000
     ).group()
 
     # this blocks until all subtasks are complete which is not recommended by celery
     # having multiple workers mitigates the risk of a deadlock between this main task and the child tasks
-    grouped_malt_tasks().get(disable_sync_subtasks=False)
+    group_result = grouped_malt_tasks()
+    group_result.get(disable_sync_subtasks=False)
     send_MALT_complete_email(last_month)
 
 
@@ -38,7 +39,7 @@ def build_last_month_MALT():
 def update_current_MALT():
     today = datetime.date.today()
     this_month_dict = {'month': today.month, 'year': today.year}
-    domains = Domain.get_all()
+    domains = Domain.get_all_names()
     update_current_MALT_for_domains.chunks(zip([this_month_dict], domains), 5000).apply_async()
 
 
