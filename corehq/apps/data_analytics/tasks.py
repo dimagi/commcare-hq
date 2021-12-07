@@ -28,9 +28,15 @@ def build_last_month_MALT():
 
     last_month = _last_month_datespan()
     domains = Domain.get_all()
-    update_current_MALT_for_domains.chunks(
+    grouped_malt_tasks = update_current_MALT_for_domains.chunks(
         zip(last_month, domains), 5000
-    ).apply_async(queue='background_queue', link=send_MALT_complete_email.s(last_month))
+    ).group()
+
+    # https://docs.celeryproject.org/en/4.4.1/userguide/canvas.html#group-results
+    # this blocks until all subtasks are complete which is not recommended by celery
+    # having multiple workers mitigates the risk of a deadlock between this main task and the child tasks
+    if grouped_malt_tasks.succesful():
+        send_MALT_complete_email(last_month)
 
 
 @periodic_task(queue='background_queue', run_every=crontab(hour=2, minute=0, day_of_week='*'),
@@ -39,7 +45,7 @@ def update_current_MALT():
     today = datetime.date.today()
     this_month = DateSpan.from_month(today.month, today.year)
     domains = Domain.get_all()
-    update_current_MALT_for_domains.chunks(zip(this_month, domains), 5000).apply_async(queue='background_queue')
+    update_current_MALT_for_domains.chunks(zip(this_month, domains), 5000).delay()
 
 
 @periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='3'),
