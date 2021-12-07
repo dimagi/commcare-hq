@@ -1,5 +1,6 @@
 import argparse
 import sys
+from textwrap import dedent
 
 from django.core.management.base import BaseCommand
 
@@ -19,7 +20,23 @@ MAPPING_SPECIAL_VALUES = {
 
 class Command(BaseCommand):
 
-    help = "Print Elasticsearch index mappings."
+    help = dedent("""\
+        Print Elasticsearch index mappings.
+
+        Designed for:
+
+        1. Printing mappings in a standard, consistent format.
+        2. Using the verbatim output to update mapping source code.
+        3. Generating transformed mappings (e.g. for upgrading mappings to
+           modern formats) with an iterative workflow where the transform logic
+           is represented as tested, reviewable code.
+    """)
+
+    def create_parser(self, prog_name, subcommand, **kwargs):
+        parser = super().create_parser(prog_name, subcommand, **kwargs)
+        # adding `formatter_class` to kwargs causes BaseCommand to specify it twice
+        parser.formatter_class = argparse.RawDescriptionHelpFormatter
+        return parser
 
     def add_arguments(self, parser):
         parser.add_argument("-o", "--outfile", metavar="FILE",
