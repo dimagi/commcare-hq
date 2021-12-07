@@ -40,7 +40,7 @@ class CaseBlockTest(SimpleTestCase):
         self.assertEqual(six.text_type(context.exception), "Key 'case_name' specified twice")
 
     def test_let_you_specify_system_props_for_create_via_updates(self):
-        actual = ElementTree.tostring(CaseBlock.deprecated_init(
+        actual = ElementTree.tostring(CaseBlock(
             case_id=self.CASE_ID,
             create=True,
             update={'case_name': 'Johnny'},
