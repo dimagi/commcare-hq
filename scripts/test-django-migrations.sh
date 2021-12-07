@@ -34,7 +34,7 @@ function check_makemigrations {
 function check_migrations_list {
     # ensure migrations lockfile is consistent with actual migrations list
     local lockfile=migrations.lock
-    local cmd=(make migrations)
+    local cmd=(make migrations.lock)
     log_group "${cmd[*]}"
     trap 'echo "::endgroup::"' RETURN
     "${cmd[@]}" >/dev/null  # don't output the diff twice
