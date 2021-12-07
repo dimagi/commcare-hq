@@ -173,6 +173,8 @@ class WorkflowHelper(PostProcessor):
                         workflow_meta_from_session_datum(session_children[next_index], None)
                         if next_index < len(session_children) else None
                     )
+                    if next_meta and not next_meta.case_type:
+                        self._add_missing_case_types(module_id, form_id, [next_meta])
                     datums[module_id][form_id].append(workflow_meta_from_session_datum(d, next_meta))
 
         for module_id, form_datum_map in datums.items():
