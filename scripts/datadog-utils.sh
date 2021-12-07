@@ -27,7 +27,8 @@ function send_metric_to_datadog() {
     fi
 
     currenttime=$(date +%s)
-    curl  -X POST \
+    curl  -s \
+          -X POST \
           -H "Content-type: application/json" \
           -H "DD-API-KEY: ${DATADOG_API_KEY}" \
           -H "DD-APP-KEY: ${DATADOG_APP_KEY}" \

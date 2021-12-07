@@ -37,7 +37,7 @@ function logmsg {
         ccode="\\033[${color}m"
         reset='\033[0m'
     fi
-    echo "${echo_args[@]}" "[${script}] ${ccode}${levelname}${reset}: $msg" >&2
+    echo "${echo_args[@]}" "[${script}] ${ccode}${levelname}${reset}: $msg"
 }
 
 function func_text {

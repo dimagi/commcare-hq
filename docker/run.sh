@@ -128,7 +128,7 @@ function run_tests {
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
         echo "::group::Django test suite: $TEST"
-        su cchq -c "/bin/bash ../run_tests $argv_str"
+        su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
         echo "::endgroup::"
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
         [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
@@ -281,7 +281,7 @@ else
             # add world-read (and world-x for dirs and existing-x files)
             chmod -R o+rX commcare-hq
             delta=$(($(date +%s) - $now))
-            echo "(delta=${delta}sec)" >&2  # append the previous log line
+            echo "(delta=${delta}sec)"  # append the previous log line
         fi
     else
         # This (aufs) was the default (perhaps only?) Docker overlay engine when
