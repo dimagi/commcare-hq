@@ -257,8 +257,8 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, Su
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
             <command value="'m1'"/>
             <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
-              <data key="commcare_registry" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
+              <data key="commcare_registry" ref="'myregistry'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
             </query>
             <datum id="case_id_case" value="instance('commcaresession')/session/data/case_id_case"/>
