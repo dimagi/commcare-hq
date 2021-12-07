@@ -1556,7 +1556,6 @@ COUCHDB_APPS = [
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
-    # needed to make couchdbkit happy
     ('export', META_DB),
     ('callcenter', META_DB),
 
