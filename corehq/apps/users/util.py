@@ -317,7 +317,7 @@ def _last_sync_needs_update(last_sync, sync_datetime):
 def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_via=None,
                     change_messages=None, fields_changed=None, action=None,
                     by_domain_required_for_log=True, for_domain_required_for_log=True,
-                    bulk_upload_record_id=None):
+                    bulk_upload_record_id=None, group_changes_only=False):
     """
     Log changes done to a user.
     For a new user or a deleted user, log only specific fields.
@@ -344,6 +344,7 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
     action = action or UserModelAction.UPDATE
     fields_changed = fields_changed or {}
     change_messages = change_messages or {}
+    changes = {} if group_changes_only else _get_changed_details(couch_user, action, fields_changed)
 
     # domains are essential to filter changes done in and by a domain
     if by_domain_required_for_log and changed_by_user != SYSTEM_USER_ID and not by_domain:
@@ -361,7 +362,6 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
     else:
         changed_by_id = changed_by_user.get_id
         changed_by_repr = changed_by_user.raw_username
-
     return UserHistory.objects.create(
         by_domain=by_domain,
         for_domain=for_domain,
@@ -370,7 +370,7 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
         changed_by_repr=changed_by_repr,
         user_id=couch_user.get_id,
         changed_by=changed_by_id,
-        changes=_get_changed_details(couch_user, action, fields_changed),
+        changes=changes,
         changed_via=changed_via,
         change_messages=change_messages,
         action=action.value,

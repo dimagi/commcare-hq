@@ -101,6 +101,20 @@ class UserChangeLogger(object):
                 for_domain_required_for_log=self.user_domain_required_for_log,
             )
 
+    def save_only_group_changes(self, group_change_message):
+        return log_user_change(
+            by_domain=self.upload_domain,
+            for_domain=self.user_domain,
+            couch_user=self.user,
+            changed_by_user=self.changed_by_user,
+            changed_via=self.changed_via,
+            change_messages=group_change_message,
+            action=UserModelAction.CREATE,
+            bulk_upload_record_id=self.upload_record_id,
+            for_domain_required_for_log=self.user_domain_required_for_log,
+            group_changes_only=True
+        )
+
 
 class BaseUserImporter(object):
     """
