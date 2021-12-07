@@ -277,9 +277,8 @@ class CommCareUserImporter(BaseUserImporter):
         new_groups = {}
         for group_name in group_names:
             group = domain_info.group_memoizer.by_name(group_name)
-            group.add_user(self.user, save=False)
             new_groups[group.get_id] = group
-            if group.get_id not in old_group_ids:
+            if group.add_user(self.user, save=False):
                 domain_info.group_memoizer.updated_groups.add(group.get_id)
 
         if set(new_groups) != old_group_ids:
