@@ -447,8 +447,7 @@ def _handle_schedule_instance(instance, save_function):
         except Exception:
             instance.attempts += 1
             instance.last_attempt = datetime.utcnow()
-            delay = instance.attempts * 60
-            instance.next_event_due += timedelta(minutes=delay)
+            instance.next_event_due += timedelta(hours=instance.attempts)
             save_function(instance)
             raise
         instance.check_active_flag_against_schedule()
