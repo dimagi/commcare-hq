@@ -8,7 +8,6 @@ from django.views.generic import View
 
 from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
 
-from casexml.apps.case.models import CommCareCase
 from corehq.util.es.interface import ElasticsearchInterface
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
@@ -389,17 +388,9 @@ class ElasticAPIQuerySet(object):
         return len(self.results['hits']['hits'])
 
     def __iter__(self):
+        wrap = self.model or (lambda v: v)
         for jvalue in self.results['hits']['hits']:
-            if self.model:
-                # HACK: Sometimes the model is a class w/ a wrap method, sometimes just a function
-                if hasattr(self.model, 'wrap'):
-                    if self.model == CommCareCase:
-                        jvalue['_source'].pop('modified_by', None)
-                    yield self.model.wrap(jvalue['_source']) 
-                else:
-                    yield self.model(jvalue['_source'])
-            else:
-                yield jvalue['_source']
+            yield wrap(jvalue['_source'])
 
     def __getitem__(self, idx):
         if isinstance(idx, slice):
