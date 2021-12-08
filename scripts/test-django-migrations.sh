@@ -9,7 +9,6 @@ function main {
     local retcode=0
     check_makemigrations  || retcode=$(( $retcode + 1 ))
     check_migrations_list || retcode=$(( $retcode + 1 ))
-    trap - RETURN  # traps propogate up, clear the RETURN trap
     return $retcode
 }
 
@@ -18,7 +17,6 @@ function check_makemigrations {
     # check makemigrations
     local cmd=(./manage.py makemigrations)
     log_group_begin "Check: ${cmd[*]}"
-    trap log_group_end RETURN
     if ! "${cmd[@]}" --noinput --check; then
         # Changes
         log_fail "Migrations are missing.  Did you run '${cmd[*]}'?"
@@ -26,6 +24,7 @@ function check_makemigrations {
     fi
     # No changes
     log_success "makemigrations ok"
+    log_group_end  # only log group end on success (prevents group collapse on failure)
 }
 
 
@@ -34,7 +33,6 @@ function check_migrations_list {
     local lockfile=migrations.lock
     local cmd=(make migrations.lock)
     log_group_begin "Check: ${cmd[*]}"
-    trap log_group_end RETURN
     "${cmd[@]}" >/dev/null  # don't output the diff twice
     git update-index -q --refresh
     if ! git diff --exit-code HEAD -- "$lockfile"; then
@@ -45,6 +43,7 @@ function check_migrations_list {
     fi
     # clean
     log_success "frozen migrations ok"
+    log_group_end  # only log group end on success (prevents group collapse on failure)
 }
 
 

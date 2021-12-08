@@ -5,7 +5,6 @@ set -e
 source ./scripts/bash-utils.sh
 
 log_group_begin "Check: make requirements"
-trap log_group_end EXIT
 
 make requirements
 git --no-pager diff
@@ -18,3 +17,4 @@ if ! git diff-index --quiet HEAD --; then
 fi
 # No changes
 log_success "requirements ok"
+log_group_end  # only log group end on success (prevents group collapse on failure)

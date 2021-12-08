@@ -128,12 +128,10 @@ function run_tests {
         send_timing_metric_to_datadog "setup" $delta
 
         log_group_begin "Django test suite: $TEST"
-        trap log_group_end EXIT
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
         su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
-        trap - EXIT  # clear the EXIT trap (log_group_end)
-        log_group_end
+        log_group_end  # only log group end on success (notice: `set -e`)
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
         [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
         delta=$(($(date +%s) - $now))
