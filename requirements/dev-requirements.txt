@@ -23,16 +23,14 @@ backcall==0.2.0
 beautifulsoup4==4.10.0
     # via -r test-requirements.in
 billiard==3.5.0.4
-    # via
-    #   -r base-requirements.in
-    #   celery
+    # via -r base-requirements.in
 boto3==1.17.85
     # via -r base-requirements.in
 botocore==1.20.85
     # via
     #   boto3
     #   s3transfer
-https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
+celery @ https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
     # via
     #   -r base-requirements.in
     #   django-celery-results
@@ -145,7 +143,7 @@ django-formtools==2.1
     #   django-two-factor-auth
 django-logentry-admin==1.0.6
     # via -r base-requirements.in
-https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
+django-nose @ https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
     # via -r test-requirements.in
 django-oauth-toolkit==1.5.0
     # via -r base-requirements.in
@@ -252,6 +250,11 @@ idna==2.10
     #   requests
 imagesize==1.2.0
     # via sphinx
+importlib-metadata==4.8.2
+    # via
+    #   flake8
+    #   jsonschema
+    #   pep517
 intervaltree==3.1.0
     # via ddtrace
 ipython==7.16.1
@@ -287,7 +290,7 @@ jsonobject==0.9.10
     #   jsonobject-couchdbkit
 jsonobject-couchdbkit==1.0.1
     # via -r base-requirements.in
-https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
+jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
 jsonschema==3.2.0
     # via -r base-requirements.in
@@ -296,9 +299,7 @@ jwcrypto==0.8
 kafka-python==1.4.7
     # via -r base-requirements.in
 kombu==4.2.2.post1
-    # via
-    #   -r base-requirements.in
-    #   celery
+    # via -r base-requirements.in
 laboratory==0.2.0
     # via -r base-requirements.in
 lxml==4.6.3
@@ -435,7 +436,6 @@ pytz==2020.1
     # via
     #   -r base-requirements.in
     #   babel
-    #   celery
     #   django
     #   twilio
 pyyaml==5.4.1
@@ -460,7 +460,7 @@ redis==3.5.3
     #   django-redis
     #   django-redis-sessions
     #   django-websocket-redis
-reportlab==3.5.53
+reportlab==3.6.3
     # via -r base-requirements.in
 requests==2.25.1
     # via
@@ -496,7 +496,7 @@ sh==1.14.2
     # via
     #   -r base-requirements.in
     #   git-build-branch
-git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
 simplejson==3.17.2
     # via
@@ -608,6 +608,8 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==6.5.1
     # via -r base-requirements.in
+typing-extensions==4.0.1
+    # via importlib-metadata
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
@@ -643,6 +645,10 @@ xmlsec==1.3.11
     # via python3-saml
 yapf==0.31.0
     # via -r dev-requirements.in
+zipp==3.6.0
+    # via
+    #   importlib-metadata
+    #   pep517
 zope.event==4.5.0
     # via gevent
 zope.interface==5.4.0
