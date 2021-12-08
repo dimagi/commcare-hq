@@ -6,19 +6,18 @@ from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.parsing import json_format_datetime
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.api.resources import v0_3, v0_4
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import reset_es_index
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from .utils import APIResourceTest, FakeFormESView
 
