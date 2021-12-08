@@ -8,7 +8,7 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from memoized import memoized
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.enterprise.utils import get_enterprise_domains
+from corehq.apps.enterprise.utils import get_enterprise_domains, get_enterprise_controlled_domains
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
@@ -347,9 +347,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return context
 
     @classmethod
-    def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
+    def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user,
+                      allow_enterprise_controlled_domains=False):
         # The queryset returned by this method is location-safe
-        q = user_es.UserES().domain(get_enterprise_domains(domain))
+        if allow_enterprise_controlled_domains:
+            domains = get_enterprise_domains(domain) + get_enterprise_controlled_domains(domain)
+            q = user_es.UserES().domain(list(set(domains)))
+        else:
+            q = user_es.UserES().domain(get_enterprise_domains(domain))
         q = customize_user_query(request_user, domain, q)
         if (
             ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs)
