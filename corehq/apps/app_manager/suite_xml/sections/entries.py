@@ -40,6 +40,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.app_manager.suite_xml.xml_models import SessionDatum
 
 
 @attr.s(repr=False)
