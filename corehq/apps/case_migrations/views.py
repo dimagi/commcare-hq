@@ -1,9 +1,4 @@
-from django.contrib import messages
-from django.http import HttpResponseRedirect
 from django.http.response import Http404
-from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.views.generic import FormView
 
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreContent, RestoreResponse
@@ -11,48 +6,14 @@ from casexml.apps.phone.xml import (
     get_case_element,
     get_registration_element_for_case,
 )
-
 from corehq.apps.domain.auth import formplayer_auth
-from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.fixtures import (
     FlatLocationSerializer
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.toggles import WEBAPPS_CASE_MIGRATION, ADD_LIMITED_FIXTURES_TO_CASE_RESTORE
-from corehq.util import reverse
-
-from .forms import MigrationForm
-from .migration import perform_migration
-
-
-@method_decorator(domain_admin_required, name='dispatch')
-@method_decorator(WEBAPPS_CASE_MIGRATION.required_decorator(), name='dispatch')
-class BaseMigrationView(BaseDomainView):
-    section_name = "Case Migrations"
-
-    @property
-    def section_url(self):
-        return reverse(MigrationView.urlname, args=(self.domain,))
-
-
-class MigrationView(BaseMigrationView, FormView):
-    """View to kick off a migration. Requires user to provide migration XML"""
-    urlname = 'case_migration'
-    template_name = 'case_migrations/migration.html'
-    form_class = MigrationForm
-
-    def form_valid(self, form):
-        perform_migration(
-            self.domain,
-            form.cleaned_data['case_type'],
-            form.cleaned_data['migration_xml'],
-        )
-        messages.add_message(self.request, messages.SUCCESS,
-                             _('Migration submitted successfully!'))
-        return HttpResponseRedirect(self.page_url)
+from corehq.toggles import ADD_LIMITED_FIXTURES_TO_CASE_RESTORE
 
 
 def get_case_hierarchy_for_restore(case):
