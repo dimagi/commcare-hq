@@ -1569,7 +1569,7 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'module_form'
 
     form_filter = StringProperty(exclude_if_none=True)
-    requires = StringProperty(choices=["case", "referral", "none"], default="none", exclude_if_none=True)
+    requires = StringProperty(choices=["case", "referral", "none"], default="none")
     actions = SchemaProperty(FormActions)
 
     @classmethod
@@ -1849,11 +1849,11 @@ class DetailColumn(IndexedSchema):
     graph_configuration = SchemaProperty(GraphConfiguration)
     case_tile_field = StringProperty(exclude_if_none=True)
 
-    late_flag = IntegerProperty(default=30, exclude_if_none=True)
+    late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="", exclude_if_none=True)
     filter_xpath = StringProperty(default="", exclude_if_none=True)
-    time_ago_interval = FloatProperty(default=365.25, exclude_if_none=True)
-    date_format = StringProperty(default="%d/%m/%y", exclude_if_none=True)
+    time_ago_interval = FloatProperty(default=365.25)
+    date_format = StringProperty(default="%d/%m/%y")
 
     @property
     def enum_dict(self):
@@ -1992,11 +1992,11 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty(exclude_if_none=True)
 
-    instance_name = StringProperty(default='casedb', exclude_if_none=True)
+    instance_name = StringProperty(default='casedb')
 
     # If True, a small tile will display the case name after selection.
     persist_case_context = BooleanProperty()
-    persistent_case_context_xml = StringProperty(default='case_name', exclude_if_none=True)
+    persistent_case_context_xml = StringProperty(default='case_name')
 
     # Custom variables to add into the <variables /> node
     custom_variables = StringProperty(exclude_if_none=True)
@@ -2143,8 +2143,8 @@ class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
-    command_label = DictProperty(default={'en': 'Search All Cases'}, exclude_if_none=True)
-    again_label = DictProperty(default={'en': 'Search Again'}, exclude_if_none=True)
+    command_label = DictProperty(default={'en': 'Search All Cases'})
+    again_label = DictProperty(default={'en': 'Search Again'})
     search_label = SchemaProperty(CaseSearchLabel)
     search_again_label = SchemaProperty(CaseSearchAgainLabel)
     properties = SchemaListProperty(CaseSearchProperty)
@@ -2510,7 +2510,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
-    display_style = StringProperty(default='list', exclude_if_none=True)
+    display_style = StringProperty(default='list')
 
     @classmethod
     def wrap(cls, data):
