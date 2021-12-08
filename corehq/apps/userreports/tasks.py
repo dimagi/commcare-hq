@@ -130,7 +130,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=
     timeout=3 * 60 * 60, max_retries=20,
     queue=UCR_CELERY_QUEUE, ignore_result=True
 )
-def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=None):
+def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=None, domain=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
