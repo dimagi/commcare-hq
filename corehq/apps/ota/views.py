@@ -9,7 +9,6 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
-    HttpResponseForbidden,
     HttpResponseNotFound,
     JsonResponse,
 )
@@ -43,6 +42,7 @@ from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.utils import get_case_search_results
+from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import check_domain_migration
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import (
@@ -62,6 +62,7 @@ from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
 
+from .case_restore import get_case_restore_response
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .rate_limiter import rate_limit_restore
 from .utils import (
@@ -459,3 +460,14 @@ def registry_case(request, domain, app_id):
     for case in all_cases:
         case.case_json[COMMCARE_PROJECT] = case.domain
     return HttpResponse(CaseDBFixture(all_cases).fixture, content_type="text/xml; charset=utf-8")
+
+
+@formplayer_auth
+def case_restore(request, domain, case_id):
+    """Restore endpoint used for SMS forms where the 'user' is a case.
+
+    Accepts the provided case_id and returns a restore for the user containing:
+    * Registration block
+    * The passed in case and its full network of cases
+    """
+    return get_case_restore_response(domain, case_id)
