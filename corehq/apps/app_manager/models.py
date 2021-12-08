@@ -2156,7 +2156,7 @@ class CaseSearch(DocumentSchema):
     search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty(exclude_if_none=True)
-    additional_case_types = ListProperty(str, exclude_if_none=True)
+    additional_case_types = StringListProperty()
     data_registry = StringProperty(exclude_if_none=True)
     data_registry_workflow = StringProperty(exclude_if_none=True)         # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()                      # list of xpath expressions
