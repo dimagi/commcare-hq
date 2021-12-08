@@ -969,5 +969,3 @@ util
 zapier
  [X] 0001_initial
  [X] 0002_auto_20170117_1756
-fail
- [X] this will fail the migration check
