@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-01 20:19+0000\n"
+"POT-Creation-Date: 2021-12-08 21:49+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Michelle B. Sultan <msultan@dimagi.com>, 2021\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -626,11 +626,8 @@ msgid "Form Settings"
 msgstr "Configuración del Formulario"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:67
-#, fuzzy
-#| msgid "Server maintenance in progress. Please try again later."
 msgid "Could not enable user properties, please try again later."
 msgstr ""
-"Servicio de mantenimiento en curso. Por favor intente de nuevo más tarde. "
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:97
 msgid "Home Screen"
@@ -2621,12 +2618,8 @@ msgid "Attachments"
 msgstr "Adjuntos"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:55402
-#, fuzzy
-#| msgid "An error occurred emailing you report. Please try again."
 msgid "An error occurred when parsing bind node [{path}]. Please fix this."
 msgstr ""
-"Ocurrió un error al enviar por correo electrónico su reporte. Por favor "
-"intente de nuevo."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:55438
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:55501
