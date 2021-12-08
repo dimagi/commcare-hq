@@ -142,12 +142,11 @@ class BaseUserImporter(object):
 
         self.role_updated = False
 
-    def update_role(self, role_qualified_id, clear_role=False):
+    def update_role(self, role_qualified_id):
         user_current_role = self.user.get_role(domain=self.user_domain)
         self.role_updated = not (user_current_role
                                  and user_current_role.get_qualified_id() == role_qualified_id)
-        if user_current_role and clear_role:
-            self.role_updated = True
+
         if self.role_updated:
             self.user.set_role(self.user_domain, role_qualified_id)
 
@@ -285,8 +284,6 @@ class CommCareUserImporter(BaseUserImporter):
 
         if set(new_groups) != old_group_ids:
             return UserChangeMessage.groups_info(list(new_groups.values()))
-
-
 
     def _log_phone_number_changes(self, old_phone_numbers, new_phone_numbers):
         (items_added, items_removed) = find_differences_in_list(

@@ -533,7 +533,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 role_qualified_id = domain_info.roles_by_name[role]
                 commcare_user_importer.update_role(role_qualified_id)
             else:
-                commcare_user_importer.update_role('none', clear_role=True)
+                commcare_user_importer.update_role('none')
             if web_user_username:
                 user.update_metadata({'login_as_user': web_user_username})
 
@@ -588,12 +588,10 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
                 user.get_django_user(use_primary_db=True).check_password(password)
 
-            group_change_message = {}
             group_change_message = commcare_user_importer.update_user_groups(domain_info, group_names)
 
             try:
                 domain_info.group_memoizer.save_updated()
-
             except BulkSaveError as e:
                 _error_message = (
                     "Oops! We were not able to save some of your group changes. "
