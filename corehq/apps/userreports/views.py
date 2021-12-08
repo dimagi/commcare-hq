@@ -1217,7 +1217,7 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    rebuild_indicators.delay(config_id, request.user.username)
+    rebuild_indicators.delay(config_id, request.user.username, domain=domain)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))

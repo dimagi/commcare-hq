@@ -90,7 +90,7 @@ def _build_indicators(config, document_store, relevant_ids):
 
 
 @serial_task('{indicator_config_id}', default_retry_delay=60 * 10, timeout=3 * 60 * 60, max_retries=20, queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None, diffs=None, trigger_time=None):
+def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None, diffs=None, trigger_time=None, domain=None):
     config = _get_config_by_id(indicator_config_id)
     if trigger_time is not None and trigger_time < config.last_modified:
         return
