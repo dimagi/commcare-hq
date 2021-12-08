@@ -1023,7 +1023,7 @@ class FormBase(DocumentSchema):
     session_endpoint_id = StringProperty(exclude_if_none=True)  # See toggles.SESSION_ENDPOINTS
 
     # computed datums IDs that are allowed in endpoints
-    function_datum_endpoints = StringListProperty(exclude_if_none=True)
+    function_datum_endpoints = StringListProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -2159,7 +2159,7 @@ class CaseSearch(DocumentSchema):
     additional_case_types = ListProperty(str, exclude_if_none=True)
     data_registry = StringProperty(exclude_if_none=True)
     data_registry_workflow = StringProperty(exclude_if_none=True)         # one of REGISTRY_WORKFLOW_*
-    additional_registry_cases = StringListProperty(exclude_if_none=True)  # list of xpath expressions
+    additional_registry_cases = StringListProperty()                      # list of xpath expressions
 
     @property
     def case_session_var(self):
