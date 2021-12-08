@@ -63,7 +63,7 @@ branches:
     - dmr/throttle-system-forms  # Danny Sept 24
     - smh/remove-extra-spinner-icons # Steph Oct 6
     - ml/remove-pickles-phonelog # Minha Oct 7
-    - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
+    #- dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
     - ml/remove-pickles-reports # Minha Oct 21
@@ -75,7 +75,7 @@ branches:
     - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
     - jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
-    - rp/gsheets+depandabot-pip # Rynhard Dec 6
-    - rp/gsheets-PoC # Rynhard Dec 6
+    #- rp/gsheets+depandabot-pip # Rynhard Dec 6
+    #- rp/gsheets-PoC # Rynhard Dec 6
     - cs/SC-1904-invalid-datum-generation # Charl 7 Dec
 submodules: { }
