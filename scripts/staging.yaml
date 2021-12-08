@@ -71,12 +71,12 @@ branches:
     - gh/mrm/only-admins-can-link # Graham Nov 16
     #- ap/web-app-refresh # Amit Nov 29
     - es/mobile-auth # Simon Nov 23
-    - do/create-usercase-web-users # Dominic Dec 3
-    - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
-    - jm/elastic-modernize-mappings  # Joel Dec 3
+    #- do/create-usercase-web-users # Dominic Dec 3
+    #- jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
+    #- jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
     #- rp/gsheets+depandabot-pip # Rynhard Dec 6
     #- rp/gsheets-PoC # Rynhard Dec 6
-    - cs/SC-1904-invalid-datum-generation # Charl 7 Dec
-    - dependabot/npm_and_yarn/jquery-ui-1.13.0  # Biyeun Dec 8 
+    #- cs/SC-1904-invalid-datum-generation # Charl 7 Dec
+    #- dependabot/npm_and_yarn/jquery-ui-1.13.0  # Biyeun Dec 8 
 submodules: { }
