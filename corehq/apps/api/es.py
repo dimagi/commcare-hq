@@ -3,7 +3,6 @@ import datetime
 import json
 import logging
 
-from django.http import HttpResponse
 from django.utils.decorators import classonlymethod, method_decorator
 from django.views.generic import View
 
@@ -11,7 +10,6 @@ from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
 
 from casexml.apps.case.models import CommCareCase
 from corehq.util.es.interface import ElasticsearchInterface
-from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.api.models import ESCase, ESXFormInstance
@@ -67,7 +65,9 @@ class ESView(View):
     #csrfmiddlewaretoken=token
 
     #in curl, this is:
-    #curl -b "csrftoken=<csrftoken>;sessionid=<session_id>" -H "Content-Type: application/json" -XPOST http://server/a/domain/api/v0.1/xform_es/
+    #curl -b "csrftoken=<csrftoken>;sessionid=<session_id>"
+    #     -H "Content-Type: application/json"
+    #     -XPOST http://server/a/domain/api/v0.1/xform_es/
     #     -d"query=@myquery.json&csrfmiddlewaretoken=<csrftoken>"
     #or, call this programmatically to avoid CSRF issues.
 
@@ -108,7 +108,7 @@ class ESView(View):
         Django as_view cannot be used since the constructor requires information only present in the request.
         """
         raise Exception('as_view not supported for domain-specific ESView')
-        
+
     @classonlymethod
     def as_domain_specific_view(cls, **initkwargs):
         """
@@ -189,7 +189,9 @@ class ESView(View):
 
 class CaseESView(ESView):
     """
-    Expressive CaseES interface. Yes, this is redundant with pieces of the v0_1.py CaseAPI - todo to merge these applications
+    Expressive CaseES interface
+
+    Yes, this is redundant with pieces of the v0_1.py CaseAPI - todo to merge these applications
     Which this should be the final say on ES access for Casedocs
     """
     es_alias = CASE_ES_ALIAS
@@ -225,7 +227,7 @@ class FormESView(ESView):
                                                                                        None),
                                                              none_if_not_found=True)
                 if not name:
-                    name = 'unknown' # try to fix it below but this will be the default
+                    name = 'unknown'  # try to fix it below but this will be the default
                     # fall back
                     try:
                         if res['_source']['form'].get('@name', None):
@@ -289,7 +291,7 @@ class ReportFormESView(FormESView):
                                                                                        None),
                                                              none_if_not_found=True)
                 if not name:
-                    name = 'unknown' # try to fix it below but this will be the default
+                    name = 'unknown'  # try to fix it below but this will be the default
                     # fall back
                     try:
                         if res['_source']['form'].get('@name', None):
@@ -325,12 +327,12 @@ class ElasticAPIQuerySet(object):
     Serialization:
 
     - `__iter__()`
-    
+
     """
 
     # Also note https://github.com/llonchj/django-tastypie-elasticsearch/ which is
     # not very mature, plus this code below may involve Dimagic-specific assumptions
-    
+
     def __init__(self, es_client, payload=None, model=None):
         """
         Instantiate with an entire ElasticSearch payload,
@@ -347,7 +349,7 @@ class ElasticAPIQuerySet(object):
         return ElasticAPIQuerySet(es_client=es_client or self.es_client,
                           payload=payload or self.payload,
                           model=model or self.model)
-        
+
     @property
     def results(self):
         if self.__results is None:
@@ -358,7 +360,7 @@ class ElasticAPIQuerySet(object):
         return self.es_client.count_query(self.payload)
 
     def order_by(self, *fields):
-        
+
         new_payload = copy.deepcopy(self.payload)
 
         new_payload['sort'] = []
@@ -416,7 +418,7 @@ class ElasticAPIQuerySet(object):
         elif isinstance(idx, int):
             if idx >= 0:
                 # Leverage efficicent backend slicing
-                return list(self[idx:idx+1])[0]
+                return list(self[idx:idx + 1])[0]
             else:
                 # This actually could be supported with varying degrees of efficiency
                 raise NotImplementedError('Negative index not supported.')
@@ -493,6 +495,7 @@ class XFormServerModifiedParams:
                     filters.missing(self.param), filters.range_filter("received_on", **value)
                 )
             )
+
 
 query_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),

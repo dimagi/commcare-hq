@@ -8,8 +8,6 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.http import HttpResponse
 
-from couchdbkit.exceptions import ResourceNotFound
-
 from couchforms import const
 from dimagi.ext.couchdbkit import *
 
