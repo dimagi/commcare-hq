@@ -832,8 +832,8 @@ LOCAL_REPEATER_CLASSES = []
 # This will not prevent users from creating
 REPEATERS_WHITELIST = None
 
-# how many tasks to split the check_repeaters process into (0 indexed
-CHECK_REPEATERS_PARTITION_COUNT = 0
+# how many tasks to split the check_repeaters process into
+CHECK_REPEATERS_PARTITION_COUNT = 1
 
 # If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
 ENABLE_PRELOGIN_SITE = False
