@@ -280,7 +280,7 @@ class CommCareUserImporter(BaseUserImporter):
             group = domain_info.group_memoizer.by_name(group_name)
             new_groups[group.get_id] = group
             if group.add_user(self.user, save=False):
-                domain_info.group_memoizer.updated_groups.add(group.get_id)
+                domain_info.group_memoizer.group_updated(group.get_id)
 
         if set(new_groups) != old_group_ids:
             return UserChangeMessage.groups_info(list(new_groups.values()))

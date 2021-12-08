@@ -169,6 +169,9 @@ class GroupMemoizer(object):
         group.name = name
         self.add_group(group)
 
+    def group_updated(self, group_id):
+        self.updated_groups.add(group_id)
+
     def save_updated(self):
         updated = [self.groups_by_id[_id] for _id in self.updated_groups]
         Group.bulk_save(updated)
