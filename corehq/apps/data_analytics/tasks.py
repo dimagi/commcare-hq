@@ -27,10 +27,12 @@ def build_last_month_MALT():
         zip([last_month], domains), 5000
     ).group()
 
-    # this blocks until all subtasks are complete which is not recommended by celery
-    # having multiple workers mitigates the risk of a deadlock between this main task and the child tasks
-    group_result = grouped_malt_tasks()
-    group_result.get(disable_sync_subtasks=False)
+    group_result = grouped_malt_tasks.apply_async()
+    # celery 4.1 does not have support for disable_sync_subtasks in a GroupResult.get()
+    # this is a workaround until we upgrade
+    for result in group_result.results:
+        result.get(disable_sync_subtasks=False)
+
     send_MALT_complete_email(last_month)
 
 
@@ -73,7 +75,6 @@ def update_current_MALT_for_domains(month_dict, domains):
     MALTTableGenerator([month]).build_table(domains=domains)
 
 
-@task(queue='background_queue')
 def send_MALT_complete_email(month_dict):
     month = DateSpan.from_month(month_dict['month'], month_dict['year'])
     message = 'MALT generation for month {} is now ready. To download go to'\
