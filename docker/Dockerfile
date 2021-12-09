@@ -1,4 +1,4 @@
-FROM dimagi/commcarehq_base:latest
+FROM dimagi/commcarehq_py39:latest
 
 VOLUME /mnt/commcare-hq-ro /mnt/lib
 RUN ln -s /mnt/commcare-hq-ro/docker/run.sh /mnt/run.sh && \

@@ -60,6 +60,20 @@ def test_generator_create_case():
     )
 
 
+def test_generator_create_case_with_index():
+    builder = IntentCaseBuilder().create_case("123").create_index("case2", "parent_type", "child")
+
+    def _get_case(case_id):
+        assert case_id == "case2"
+        return Mock(domain=TARGET_DOMAIN, type="parent_type")
+
+    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+        _test_payload_generator(
+            intent_case=builder.get_case(), registry_mock_cases={},
+            expected_creates={"1": {"case_type": "patient", "owner_id": "123"}},
+            expected_indices={"1": {"parent": IndexAttrs("parent_type", "case2", "child")}})
+
+
 def test_generator_create_case_target_exists():
     builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").create_case("123")
 

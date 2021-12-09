@@ -142,9 +142,13 @@ def _ensure_valid_restore_as_user(domain, couch_user, as_user_obj):
         raise RestorePermissionDenied(_("{} was not in the domain {}").format(as_user_obj.username, domain))
 
     if _limit_login_as(domain, couch_user):
-        login_as_username = as_user_obj.metadata.get('login_as_user')
-        if login_as_username != couch_user.username:
-            if not _can_access_default_login_as_user(domain, couch_user) or login_as_username != 'default':
+        # Functionality should match the ES query.
+        # See corehq.apps.cloudcare.esaccessors.login_as_user_query
+        login_as_username = as_user_obj.metadata.get('login_as_user') or ''
+        candidates = login_as_username.lower().split()
+        if couch_user.username.lower() not in candidates:
+            is_default = 'default' in candidates
+            if not _can_access_default_login_as_user(domain, couch_user) or not is_default:
                 raise RestorePermissionDenied(_("{} not available as login-as user").format(as_user_obj.username))
 
 

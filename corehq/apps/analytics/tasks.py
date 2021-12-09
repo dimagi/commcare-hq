@@ -277,7 +277,10 @@ def _send_hubspot_form_request(hubspot_id, form_id, data):
         form_id=form_id
     )
     response = requests.post(url, data=data)
-    metrics_counter('commcare.hubspot.sent_form', tags={'status_code': response.status_code})
+    metrics_counter('commcare.hubspot.sent_form', tags={
+        'status_code': response.status_code,
+        'form_id': form_id,
+    })
     return response
 
 
@@ -858,5 +861,14 @@ def cleanup_blocked_hubspot_contacts():
     if not HUBSPOT_ENABLED:
         return
 
+    time_started = datetime.utcnow()
+
     remove_blocked_domain_contacts_from_hubspot()
     remove_blocked_domain_invited_users_from_hubspot()
+
+    task_time = datetime.utcnow() - time_started
+    metrics_gauge(
+        'commcare.hubspot.runtimes.cleanup_blocked_hubspot_contacts',
+        task_time.seconds,
+        multiprocess_mode=MPM_LIVESUM
+    )

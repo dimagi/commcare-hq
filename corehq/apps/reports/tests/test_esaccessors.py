@@ -894,18 +894,6 @@ class TestUserESAccessors(TestCase):
         )
         cls.user.save()
 
-        cls.source_domain_user = CommCareUser.create(
-            cls.source_domain,
-            'batman',
-            'crime fighting man',
-            None,
-            None,
-            first_name='bruce',
-            last_name='wayne',
-            is_active=True,
-        )
-        cls.source_domain_user.save()
-
     def setUp(self):
         super(TestUserESAccessors, self).setUp()
         self.es = get_es_new()
@@ -920,13 +908,13 @@ class TestUserESAccessors(TestCase):
         ensure_index_deleted(USER_INDEX)
         super(TestUserESAccessors, cls).tearDownClass()
 
-    def _send_user_to_es(self, user, is_active=True):
-        user.is_active = is_active
-        send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
+    def _send_user_to_es(self, is_active=True):
+        self.user.is_active = is_active
+        send_to_elasticsearch('users', transform_user_for_elasticsearch(self.user.to_json()))
         self.es.indices.refresh(USER_INDEX)
 
     def test_active_user_query(self):
-        self._send_user_to_es(self.user)
+        self._send_user_to_es()
         results = get_user_stubs([self.user._id], ['user_data_es'])
 
         self.assertEqual(len(results), 1)
@@ -950,7 +938,7 @@ class TestUserESAccessors(TestCase):
         })
 
     def test_inactive_user_query(self):
-        self._send_user_to_es(self.user, is_active=False)
+        self._send_user_to_es(is_active=False)
         results = get_user_stubs([self.user._id])
 
         self.assertEqual(len(results), 1)
@@ -965,14 +953,13 @@ class TestUserESAccessors(TestCase):
             'location_id': None
         })
 
-    def test_domain(self):
-        self._send_user_to_es(self.user)
-        self._send_user_to_es(self.source_domain_user)
+    def test_domain_allow_enterprise(self):
+        self._send_user_to_es()
         self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
-        self.assertEqual(['batman'], UserES().domain(self.source_domain).values_list('username', flat=True))
+        self.assertEqual([], UserES().domain(self.source_domain).values_list('username', flat=True))
         self.assertEqual(
-            set(['superman', 'batman']),
-            set(UserES().domain([self.domain, self.source_domain]).values_list('username', flat=True))
+            ['superman'],
+            UserES().domain(self.domain, allow_enterprise=True).values_list('username', flat=True)
         )
 
 

@@ -59,7 +59,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 )
             ],
             data_registry="myregistry",
-            data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE
+            data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE,
+            additional_registry_cases=["'another case ID'"],
         )
 
         self.reg_module = self.app.add_module(Module.new_module("Registration", None))
@@ -115,6 +116,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 storage-instance="registry" template="case" default_search="true">
               <data key="commcare_registry" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
+              <data key="case_id" ref="'another case ID'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
             </query>
           </session>
@@ -184,20 +186,24 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             './detail[@id="m0_case_long"]')
 
     def test_form_linking_to_registry_module_from_registration_form(self):
+        self.module.search_config.additional_case_types = ["other_case"]
         suite = self.app.create_suite()
         expected = """
         <partial>
           <create>
             <command value="'m0'"/>
             <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
-              <data key="commcare_registry" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
+              <data key="case_type" ref="'other_case'"/>
+              <data key="commcare_registry" ref="'myregistry'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_new_case_0"/>
             </query>
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_case_0"/>
             <query id="registry" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
               <data key="commcare_registry" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
+              <data key="case_type" ref="'other_case'"/>
+              <data key="case_id" ref="'another case ID'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_new_case_0"/>
             </query>
             <command value="'m0-f0'"/>
@@ -251,8 +257,8 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, Su
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
             <command value="'m1'"/>
             <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
-              <data key="commcare_registry" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
+              <data key="commcare_registry" ref="'myregistry'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
             </query>
             <datum id="case_id_case" value="instance('commcaresession')/session/data/case_id_case"/>

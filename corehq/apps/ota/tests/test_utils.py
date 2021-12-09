@@ -250,6 +250,16 @@ class RestorePermissionsTestLimitLoginAs(TestCase):
                 "login_as_user": cls.restore_user.username
             },
         )
+        cls.commcare_user_login_as_multiple_upper_case = CommCareUser.create(
+            username=format_username('cabernet', cls.domain),
+            domain=cls.domain,
+            password='***',
+            created_by=None,
+            created_via=None,
+            metadata={
+                "login_as_user": f"{format_username('ruby', cls.domain)} {cls.restore_user.username.upper()}"
+            },
+        )
         cls.commcare_user_default_login_as = CommCareUser.create(
             username=format_username('pinotage', cls.domain),
             domain=cls.domain,
@@ -257,7 +267,7 @@ class RestorePermissionsTestLimitLoginAs(TestCase):
             created_by=None,
             created_via=None,
             metadata={
-                "login_as_user": 'default'
+                "login_as_user": "someone@else deFAUlt"  # intentionally mixed case to test case sensitivity
             },
         )
 
@@ -283,6 +293,16 @@ class RestorePermissionsTestLimitLoginAs(TestCase):
                 self.domain,
                 self.restore_user,
                 self.commcare_user_login_as,
+            )
+            self.assertIsNone(message)
+            self.assertTrue(is_permitted)
+
+    def test_user_limited_login_as_permitted_case_insensitive_match_multiple_users(self):
+        with patch("corehq.apps.ota.utils._limit_login_as", return_value=True):
+            is_permitted, message = is_permitted_to_restore(
+                self.domain,
+                self.restore_user,
+                self.commcare_user_login_as_multiple_upper_case,
             )
             self.assertIsNone(message)
             self.assertTrue(is_permitted)

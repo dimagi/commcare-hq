@@ -17,6 +17,11 @@ AUTH_TYPES = (
     (OAUTH2_CLIENT, "OAuth 2.0 Client Grant"),
 )
 
+REQUEST_DELETE = "DELETE"
+REQUEST_POST = "POST"
+REQUEST_PUT = "PUT"
+REQUEST_METHODS = (REQUEST_DELETE, REQUEST_POST, REQUEST_PUT)
+
 
 @attr.s(auto_attribs=True, frozen=True, kw_only=True)
 class OAuth2ApiSettings:

@@ -377,6 +377,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     count_messages_as_read_by_anyone = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
+    sms_worker_registration_alert_emails = StringListProperty()
     sms_survey_date_format = StringProperty()
 
     granted_messaging_access = BooleanProperty(default=False)
@@ -957,7 +958,7 @@ class TransferDomainRequest(models.Model):
 
         send_html_email_async.delay(
             _('Transfer of ownership for CommCare project space.'),
-            self.to_user.email,
+            self.to_user.get_email(),
             html_content,
             text_content=text_content)
 
@@ -974,7 +975,7 @@ class TransferDomainRequest(models.Model):
 
         send_html_email_async.delay(
             _('Transfer of ownership for CommCare project space.'),
-            self.from_user.email,
+            self.from_user.get_email(),
             html_content,
             text_content=text_content)
 

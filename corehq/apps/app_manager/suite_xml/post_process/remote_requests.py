@@ -200,7 +200,7 @@ class RemoteRequestFactory(object):
         additional_types = set(self.module.search_config.additional_case_types) - {self.module.case_type}
         datums = [
             QueryData(key='case_type', ref=f"'{case_type}'")
-            for case_type in [self.module.case_type] + list(additional_types)
+            for case_type in [self.module.case_type] + sorted(additional_types)
         ]
 
         datums.extend(
@@ -291,7 +291,7 @@ class RemoteRequestFactory(object):
         # Returns XPath that will evaluate to a URL.
         # For example, return value could be
         #   concat('https://www.cchq.org/a/', $domain, '/app/v1/123/smartlink/', '?arg1=', $arg1, '&arg2=', $arg2)
-        # Which could evalute to
+        # Which could evaluate to
         #   https://www.cchq.org/a/mydomain/app/v1/123/smartlink/?arg1=abd&arg2=def
         app_id = self.app.upstream_app_id if is_linked_app(self.app) else self.app.origin_id
         url = absolute_reverse("session_endpoint", args=["---", app_id, self.module.session_endpoint_id])

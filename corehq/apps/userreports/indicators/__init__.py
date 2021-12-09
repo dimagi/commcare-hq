@@ -1,8 +1,11 @@
 from datetime import date, timedelta
 
-from fluff import TYPE_DATE, TYPE_INTEGER, TYPE_SMALL_INTEGER
-
 from corehq.apps.userreports.indicators.utils import get_values_by_product
+from corehq.apps.userreports.sql.columns import (
+    TYPE_DATE,
+    TYPE_INTEGER,
+    TYPE_SMALL_INTEGER,
+)
 from corehq.apps.userreports.util import truncate_value
 
 
