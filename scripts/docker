@@ -258,6 +258,7 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
+    [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
     echo "Pulling docker containers..."
     docker-compose pull --quiet
     docker-compose run --rm web run_tests "${TEST:-python}" "$@"
