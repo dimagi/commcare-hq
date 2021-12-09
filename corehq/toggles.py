@@ -1436,14 +1436,6 @@ VIEW_APP_CHANGES = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
 )
 
-ACTIVE_COUCH_DOMAINS = StaticToggle(
-    'active_couch_domains',
-    "Domains that are still on the Couch DB backend which we consider most "
-    "active / important to ensure that data in ES is never stale.",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-)
-
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
