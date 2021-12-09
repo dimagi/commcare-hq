@@ -187,7 +187,7 @@ class Permissions(DocumentSchema):
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
 
-    access_mobile_endpoints = BooleanProperty(default=True)
+    access_mobile_endpoints = BooleanProperty(default=False)
 
     view_file_dropzone = BooleanProperty(default=False)
     edit_file_dropzone = BooleanProperty(default=False)
