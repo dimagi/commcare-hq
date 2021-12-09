@@ -1,11 +1,11 @@
 import os
 import uuid
+from unittest import mock
 
 from django.http import HttpResponse
 from django.test import TestCase
 from django.urls import reverse
 
-import mock
 from six.moves.urllib.parse import urlencode
 
 from couchforms import openrosa_response
