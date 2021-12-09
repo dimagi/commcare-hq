@@ -126,13 +126,10 @@ class EntriesHelper(object):
 
     @staticmethod
     def _get_nodeset_xpath(instance_name, root_element, case_type, filter_xpath='', additional_types=None):
-        if additional_types:
-            case_type_filter = " or ".join([
-                "@case_type='{case_type}'".format(case_type=case_type)
-                for case_type in get_ordered_case_types(case_type, additional_types)
-            ])
-        else:
-            case_type_filter = "@case_type='{case_type}'".format(case_type=case_type)
+        case_type_filter = " or ".join([
+            "@case_type='{case_type}'".format(case_type=case_type)
+            for case_type in get_ordered_case_types(case_type, additional_types)
+        ])
         return f"instance('{instance_name}')/{root_element}/case[{case_type_filter}][@status='open']{filter_xpath}"
 
     @staticmethod
