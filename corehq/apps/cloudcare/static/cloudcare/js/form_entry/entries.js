@@ -472,27 +472,19 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             },
             write: (value) => {
                 let choices = this.choices.peek();
-                let answer = _.indexOf(choices, value) + 1;
-                self.onPreProcess.call(this, answer === 0 ? Const.NO_ANSWER : answer);
+                let answer = _.indexOf(choices, value);
+                this.answer(answer === -1 ? Const.NO_ANSWER : answer + 1);
             }
         });
 
         self.onClear = function () {
             self.rawAnswer(Const.NO_ANSWER);
         };
-        self.isValid = function () {
-            return true;
-        };
 
         self.enableReceiver(question, options);
     }
     SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
-    SingleSelectEntry.prototype.onPreProcess = function (newValue) {
-        if (this.isValid(newValue)) {
-            this.answer(newValue);
-        }
-    };
     SingleSelectEntry.prototype.receiveMessage = function (message, field) {
         // Iterate through choices and select the one that matches the message[field]
         var self = this;
