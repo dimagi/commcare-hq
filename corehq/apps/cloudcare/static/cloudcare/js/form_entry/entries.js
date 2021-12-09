@@ -397,6 +397,23 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.isMulti = true;
         self.hideLabel = options.hideLabel;
 
+        self.rawAnswer = ko.pureComputed({
+            read: () => {
+                let answer = this.answer.peek();
+                if (answer === Const.NO_ANSWER) {
+                    return [];
+                }
+
+                let choices = this.choices.peek();
+                return answer.map(index => choices[index - 1]);
+            },
+            write: (value) => {
+                let choices = this.choices.peek();
+                let answer = _.filter(value.map((val) => _.indexOf(choices, val) + 1), (v) => v > 0);
+                self.onPreProcess.call(this, answer);
+            }
+        });
+
         self.colStyleIfHideLabel = ko.computed(function () {
             return self.hideLabel ? self.getColStyle(self.choices().length) : null;
         });
@@ -424,15 +441,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.helpText = function () {
             return "";
         };
-
-        self.options = ko.computed(function () {
-            return _.map(question.choices(), function (choice, idx) {
-                return {
-                    text: choice,
-                    id: idx + 1,
-                };
-            });
-        });
 
         self.afterRender = function () {
             select2ify(self, {});
