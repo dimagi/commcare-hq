@@ -5,20 +5,19 @@ from datetime import datetime
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.api.resources import v0_3, v0_4
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import reset_es_index
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from .utils import APIResourceTest, FakeFormESView
 
@@ -26,6 +25,7 @@ from .utils import APIResourceTest, FakeFormESView
 @es_test
 class TestCommCareCaseResource(APIResourceTest):
     resource = v0_4.CommCareCaseResource
+    case_ids = []
 
     def setUp(self):
         self.es = get_es_new()
@@ -42,10 +42,14 @@ class TestCommCareCaseResource(APIResourceTest):
             if owner_id:
                 kwargs['owner_id'] = owner_id
             if case_id:
-                kwargs['_id'] = case_id
-            backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name, **kwargs)
+                kwargs['case_id'] = case_id
+            backend_case = CommCareCaseSQL(
+                domain=self.domain.name,
+                modified_on=modify_date,
+                server_modified_on=modify_date,
+                **kwargs
+            )
             backend_case.save()
-            self.addCleanup(backend_case.delete)
 
             translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
 
