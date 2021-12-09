@@ -459,6 +459,24 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.choices = question.choices;
         self.templateType = 'select';
         self.isMulti = false;
+
+        self.rawAnswer = ko.pureComputed({
+            read: () => {
+                let answer = this.answer.peek();
+                if (!answer) {
+                    return Const.NO_ANSWER;
+                }
+
+                let choices = this.choices.peek();
+                return choices[answer - 1];
+            },
+            write: (value) => {
+                let choices = this.choices.peek();
+                let answer = _.indexOf(choices, value) + 1;
+                self.onPreProcess.call(this, answer === 0 ? Const.NO_ANSWER : answer);
+            }
+        });
+
         self.onClear = function () {
             self.rawAnswer(Const.NO_ANSWER);
         };
@@ -472,11 +490,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
     SingleSelectEntry.prototype.onPreProcess = function (newValue) {
         if (this.isValid(newValue)) {
-            if (newValue === Const.NO_ANSWER) {
-                this.answer(newValue);
-            } else {
-                this.answer(+newValue);
-            }
+            this.answer(newValue);
         }
     };
     SingleSelectEntry.prototype.receiveMessage = function (message, field) {
