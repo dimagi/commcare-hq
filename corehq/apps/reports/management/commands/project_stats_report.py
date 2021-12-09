@@ -45,6 +45,33 @@ from corehq.util.markup import (
 )
 
 
+class ResourceModel(object):
+
+    stats = {
+        'total_users': None,
+        'monthly_forms_per_user': None,
+        'forms_total': None,
+        'monthly_cases_per_user': None,
+        'cases_total': None,
+        'case_transactions': None,
+        'case_transactions_total': None,
+        'case_indices': None,
+        'synclogs_monthly': None,
+    }
+
+    @classmethod
+    def set_stat(cls, name, value):
+        if name not in cls.stats.keys():
+            raise Exception(f'{name} is not recognized')
+        cls.stats[name] = value
+
+    @classmethod
+    def get_stat(cls, name):
+        if name not in cls.stats.keys():
+            raise Exception(f'{name} is not recognized')
+        return cls.stats[name]
+
+
 class Month(Func):
     function = 'EXTRACT'
     template = '%(function)s(MONTH from %(expressions)s)'
@@ -82,6 +109,7 @@ class Command(BaseCommand):
             .domain(domain).values_list("_id", flat=True)
         )
 
+        self._doc_counts()
         self._forms_per_user_per_month()
         self._cases_created_per_user_per_month()
         self._cases_updated_per_user_per_month()
@@ -89,11 +117,15 @@ class Command(BaseCommand):
         self._ledgers_per_case()
         self._attachment_sizes()
         self._ucr()
+        self._case_transactions()
+        self._case_indices()
+        self._synclogs()
+
+        self._output_stats()
 
     def _doc_counts(self):
-        self._print_value('Total cases', CaseES().domain(self.domain).count())
-        self._print_value('Open cases', CaseES().domain(self.domain).is_closed(False).count())
-        self._print_value('Total forms', FormES().domain(self.domain).count())
+        ResourceModel.set_stat('forms_total', FormES().domain(self.domain).count())
+        ResourceModel.set_stat('cases_total', CaseES().domain(self.domain).count())
 
     def _forms_per_user_per_month(self):
         performance_threshold = get_performance_threshold(self.domain)
@@ -113,6 +145,18 @@ class Command(BaseCommand):
                 std_dev=StdDev('num_of_forms')
             )
         )
+
+        total_users = 0
+        total_average_forms = 0
+        n = 0
+
+        for stat in user_stat_from_malt:
+            total_average_forms += stat['avg_forms']
+            total_users += stat['num_users']
+            n += 1
+
+        ResourceModel.set_stat('total_users', total_users)
+        ResourceModel.set_stat('monthly_forms_per_user', total_average_forms/n)
 
         def _format_rows(query_):
             return [
@@ -159,8 +203,15 @@ class Command(BaseCommand):
                 stats[key].append(count)
 
         final_stats = []
+        total_average_cases_per_user = 0
+        n = 0
         for month, case_count_list in sorted(list(stats.items()), key=lambda r: r[0]):
-            final_stats.append((month, sum(case_count_list) // len(case_count_list)))
+            average_cases_per_user = sum(case_count_list) // len(case_count_list)
+            total_average_cases_per_user += average_cases_per_user
+            n += 1
+            final_stats.append((month, average_cases_per_user))
+
+        ResourceModel.set_stat('monthly_cases_per_user', total_average_cases_per_user/n)
 
         suffix = ''
         if case_type:
@@ -344,3 +395,69 @@ class Command(BaseCommand):
             ['Datasource name', 'Row count (approximate)', 'Doc type', 'Size (bytes)'],
             rows
         )
+
+    def _case_transactions(self):
+        db_name = get_db_aliases_for_partitioned_query()[0]
+        db_cursor = connections[db_name].cursor()
+
+        with db_cursor as cursor:
+            cursor.execute("""
+                SELECT COUNT(*) as num_forms, d.count as num_updates 
+                FROM (
+                    SELECT COUNT(*) as count 
+                    FROM form_processor_casetransaction 
+                    GROUP BY form_id
+                ) AS d 
+                GROUP BY d.count;
+            """)
+            result = cursor.fetchall()
+
+            running_form_case_updates = 0
+            total_forms = 0
+            for num_forms, num_updates in result:
+                total_forms += num_forms
+                running_form_case_updates += num_forms * num_updates
+            ResourceModel.set_stat('case_transactions', running_form_case_updates / total_forms)
+
+            cursor.execute("""SELECT COUNT(*) FROM form_processor_casetransaction; """)
+            (total_transactions,) = cursor.fetchone()
+            ResourceModel.set_stat('case_transactions_total', total_transactions)
+
+    def _case_indices(self):
+        db_name = get_db_aliases_for_partitioned_query()[0]
+        db_cursor = connections[db_name].cursor()
+
+        with db_cursor as cursor:
+            cursor.execute("""SELECT COUNT(*) FROM form_processor_commcarecaseindexsql;""")
+            (total_case_indices,) = cursor.fetchone()
+
+            total_cases = ResourceModel.get_stat('cases_total')
+            ResourceModel.set_stat('case_indices', total_case_indices/total_cases)
+
+    def _synclogs(self):
+        db_name = get_db_aliases_for_partitioned_query()[0]
+        db_cursor = connections[db_name].cursor()
+
+        with db_cursor as cursor:
+            cursor.execute("""
+                SELECT COUNT(*), d.count 
+                FROM (
+                    SELECT COUNT(*) AS count 
+                    FROM phone_synclogsql 
+                    GROUP BY user_id
+                ) AS d 
+                GROUP BY d.count 
+                ORDER BY d.count;
+            """)
+            result = cursor.fetchall()
+
+            total_user_synclogs = 0
+            total_users = 0
+            for num_users, num_synclogs in result:
+                total_users += num_users
+                total_user_synclogs += num_users * num_synclogs
+
+            ResourceModel.set_stat('synclogs_monthly', total_user_synclogs / total_users)
+
+    def _output_stats(self):
+        pass
