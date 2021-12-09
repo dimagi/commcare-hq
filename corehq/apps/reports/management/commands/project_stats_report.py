@@ -50,6 +50,11 @@ class ResourceModel(object):
     stats = {
         'total_users': None,
         'monthly_forms_per_user': None,
+        'monthly_user_form_stats_expanded': None,
+        'monthly_user_case_stats_expanded': None,
+        'monthly_user_cases_updated': None,
+        'case_index_ratio': None,
+        'attachments': None,
         'forms_total': None,
         'monthly_cases_per_user': None,
         'cases_total': None,
@@ -57,6 +62,9 @@ class ResourceModel(object):
         'case_transactions_total': None,
         'case_indices': None,
         'synclogs_monthly': None,
+        'static_datasources': None,
+        'dynamic_datasources': None,
+        'datasources_info': None,
     }
 
     @classmethod
@@ -113,13 +121,15 @@ class Command(BaseCommand):
         self._forms_per_user_per_month()
         self._cases_created_per_user_per_month()
         self._cases_updated_per_user_per_month()
+
+        self._case_transactions()
+        self._case_indices()
+        self._synclogs()
+
         self._case_to_case_index_ratio()
         self._ledgers_per_case()
         self._attachment_sizes()
         self._ucr()
-        self._case_transactions()
-        self._case_indices()
-        self._synclogs()
 
         self._output_stats()
 
@@ -156,31 +166,15 @@ class Command(BaseCommand):
             n += 1
 
         ResourceModel.set_stat('total_users', total_users)
-        ResourceModel.set_stat('monthly_forms_per_user', total_average_forms/n)
+        if n > 0:
+            ResourceModel.set_stat('monthly_forms_per_user', total_average_forms/n)
 
-        def _format_rows(query_):
-            return [
-                (row['month'].isoformat(), row['num_users'], row['avg_forms'], row['std_dev'])
-                for row in query_
-            ]
+        monthly_user_stats = user_stat_from_malt\
+            .filter(user_type__in=['CommCareUser'])\
+            .filter(user_id__in=self.active_not_deleted_users)\
+            .filter(num_of_forms__gte=performance_threshold)
 
-        headers = ['Month', 'Active Users', 'Average forms per user', 'Std Dev']
-        self.stdout.write('All user stats')
-        self._print_table(
-            headers,
-            _format_rows(
-                user_stat_from_malt
-                .filter(user_type__in=['CommCareUser'])
-                .filter(user_id__in=self.active_not_deleted_users)
-                .filter(num_of_forms__gte=performance_threshold)
-            )
-        )
-
-        self.stdout.write('System user stats')
-        self._print_table(
-            headers,
-            _format_rows(user_stat_from_malt.filter(username='system'))
-        )
+        ResourceModel.set_stat('monthly_user_form_stats_expanded', monthly_user_stats)
 
     def _cases_created_per_user_per_month(self, case_type=None):
         query = (
@@ -211,13 +205,10 @@ class Command(BaseCommand):
             n += 1
             final_stats.append((month, average_cases_per_user))
 
-        ResourceModel.set_stat('monthly_cases_per_user', total_average_cases_per_user/n)
+        if n > 0:
+            ResourceModel.set_stat('monthly_cases_per_user', total_average_cases_per_user/n)
 
-        suffix = ''
-        if case_type:
-            suffix = '(case type: %s)' % case_type
-        self.stdout.write('Cases created per user (estimate)')
-        self._print_table(['Month', 'Cases created per user %s' % suffix], final_stats)
+        ResourceModel.set_stat('monthly_user_case_stats_expanded', final_stats)
 
     def _print_table(self, headers, rows):
         if self.csv:
@@ -259,8 +250,7 @@ class Command(BaseCommand):
         for month, case_count_list in sorted(list(stats.items()), key=lambda r: r[0]):
             final_stats.append((month, sum(case_count_list) // len(case_count_list)))
 
-        self.stdout.write('Cases updated per user (estimate)')
-        self._print_table(['Month', 'Cases updated per user'], final_stats)
+        ResourceModel.set_stat('monthly_user_cases_updated', final_stats)
 
     def _ledgers_per_case(self):
         db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
@@ -328,7 +318,8 @@ class Command(BaseCommand):
         index_query = CommCareCaseIndexSQL.objects.using(db_name).filter(domain=self.domain)
         case_count = estimate_row_count(case_query, db_name)
         case_index_count = estimate_row_count(index_query, db_name)
-        self._print_value('Ratio of cases to case indices: 1 : ', case_index_count / case_count)
+
+        ResourceModel.set_stat('case_index_ratio', case_index_count / case_count)
 
     def _attachment_sizes(self):
         db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
@@ -346,20 +337,15 @@ class Command(BaseCommand):
                 ORDER BY content_type, bucket
             """, [self.domain])
 
-            self.stdout.write('Form attachment sizes (bytes)')
-            self._print_table(
-                ['Content Type', 'Count', 'Bucket range', 'Bucket (1-10)'],
-                [
-                    (row.content_type, row.freq, '[%s-%s]' % (row.bucket_min, row.bucket_max), row.bucket)
-                    for row in fetchall_as_namedtuple(cursor)
-                ]
-            )
+            result = [i for i in fetchall_as_namedtuple(cursor)]
+            ResourceModel.set_stat('attachments', result)
 
     def _ucr(self):
         static_datasources = StaticDataSourceConfiguration.by_domain(self.domain)
         dynamic_datasources = DataSourceConfiguration.by_domain(self.domain)
-        self._print_value('Static UCR data sources', len(static_datasources))
-        self._print_value('Dynamic UCR data sources', len(dynamic_datasources))
+
+        ResourceModel.set_stat('static_datasources', len(static_datasources))
+        ResourceModel.set_stat('dynamic_datasources', len(dynamic_datasources))
 
         def _get_count(config):
             table_name = get_table_name(config.domain, config.table_id)
@@ -390,11 +376,7 @@ class Command(BaseCommand):
             for datasource in static_datasources + dynamic_datasources
         ], key=lambda r: r[-1] if r[-1] != 'Table not found' else 0)
 
-        self.stdout.write('UCR datasource sizes')
-        self._print_table(
-            ['Datasource name', 'Row count (approximate)', 'Doc type', 'Size (bytes)'],
-            rows
-        )
+        ResourceModel.set_stat('datasources_info', rows)
 
     def _case_transactions(self):
         db_name = get_db_aliases_for_partitioned_query()[0]
@@ -432,7 +414,8 @@ class Command(BaseCommand):
             (total_case_indices,) = cursor.fetchone()
 
             total_cases = ResourceModel.get_stat('cases_total')
-            ResourceModel.set_stat('case_indices', total_case_indices/total_cases)
+            if total_cases > 0:
+                ResourceModel.set_stat('case_indices', total_case_indices/total_cases)
 
     def _synclogs(self):
         db_name = get_db_aliases_for_partitioned_query()[0]
@@ -460,4 +443,72 @@ class Command(BaseCommand):
             ResourceModel.set_stat('synclogs_monthly', total_user_synclogs / total_users)
 
     def _output_stats(self):
-        pass
+        self._output_monthly_user_form_stats()
+        self._output_monthly_user_case_stats()
+        self._output_case_ratio_index()
+        self._output_attachment_sizes()
+        self._output_ucr()
+
+    def _output_monthly_user_form_stats(self):
+        def _format_rows(query_):
+            return [
+                (row['month'].isoformat(), row['num_users'], row['avg_forms'], row['std_dev'])
+                for row in query_
+            ]
+
+        user_stats = ResourceModel.get_stat('monthly_user_form_stats_expanded')
+
+        headers = ['Month', 'Active Users', 'Average forms per user', 'Std Dev']
+        self.stdout.write('All user stats')
+        self._print_table(
+            headers,
+            _format_rows(
+                user_stats
+            )
+        )
+
+        self.stdout.write('System user stats')
+        self._print_table(
+            headers,
+            _format_rows(user_stats.filter(username='system'))
+        )
+
+    def _output_monthly_user_case_stats(self, case_type=None):
+        case_stats = ResourceModel.get_stat('monthly_user_case_stats_expanded')
+
+        suffix = ''
+        if case_type:
+            suffix = '(case type: %s)' % case_type
+        self.stdout.write('Cases created per user (estimate)')
+        self._print_table(['Month', 'Cases created per user %s' % suffix], case_stats)
+
+        case_updates = ResourceModel.get_stat('monthly_user_cases_updated')
+        self.stdout.write('Cases updated per user (estimate)')
+        self._print_table(['Month', 'Cases updated per user'], case_updates)
+
+    def _output_case_ratio_index(self):
+        case_index_ratio = ResourceModel.get_stat('case_index_ratio')
+        self._print_value('Ratio of cases to case indices: 1 : ', case_index_ratio)
+
+    def _output_attachment_sizes(self):
+        attachments = ResourceModel.get_stat('attachments')
+
+        self.stdout.write('Form attachment sizes (bytes)')
+        self._print_table(
+            ['Content Type', 'Count', 'Bucket range', 'Bucket (1-10)'],
+            [
+                (row.content_type, row.freq, '[%s-%s]' % (row.bucket_min, row.bucket_max), row.bucket)
+                for row in attachments
+            ]
+        )
+
+    def _output_ucr(self):
+        self._print_value('Static UCR data sources', ResourceModel.get_stat('static_datasources'))
+        self._print_value('Dynamic UCR data sources', ResourceModel.get_stat('dynamic_datasources'))
+
+        rows = ResourceModel.get_stat('datasources_info')
+        self.stdout.write('UCR datasource sizes')
+        self._print_table(
+            ['Datasource name', 'Row count (approximate)', 'Doc type', 'Size (bytes)'],
+            rows
+        )
