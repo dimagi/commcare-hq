@@ -1,4 +1,4 @@
-.PHONY: requirements upgrade-requirements docs
+.PHONY: requirements upgrade-requirements docs migrations.lock
 
 requirements:
 	cd requirements && $(MAKE) requirements
@@ -8,3 +8,12 @@ upgrade-requirements:
 
 docs:
 	cd docs && $(MAKE) html; cd -
+
+migrations.lock: TMPLOCK:=migrations.new.lock
+migrations.lock:
+	./manage.py showmigrations --list > $(TMPLOCK) || (rc=$$?; rm -vf $(TMPLOCK); exit $$rc)
+	@if diff --color /dev/null /dev/null >/dev/null 2>&1; then \
+		diffcolor=--color; \
+	fi; \
+	diff $$diffcolor -su migrations.lock $(TMPLOCK) || true
+	mv $(TMPLOCK) migrations.lock
