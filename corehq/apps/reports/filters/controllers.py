@@ -125,7 +125,7 @@ class EmwfOptionsController(object):
 
     def _should_include_enterprise_controlled_domains(self):
         from corehq.apps.reports.standard.users.reports import UserHistoryReport
-        if UserHistoryReport.slug in self.request.META['HTTP_REFERER']:
+        if UserHistoryReport.slug in self.request.META.get('HTTP_REFERER', '/'):
             return True
         return False
 
