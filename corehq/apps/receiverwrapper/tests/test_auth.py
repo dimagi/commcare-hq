@@ -1,9 +1,11 @@
 import os
 import uuid
 
+from django.http import HttpResponse
 from django.test import TestCase
 from django.urls import reverse
 
+import mock
 from six.moves.urllib.parse import urlencode
 
 from couchforms import openrosa_response
@@ -12,8 +14,13 @@ import django_digest.test
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
-from corehq.apps.receiverwrapper.views import secure_post
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.receiverwrapper.views import post_api, secure_post
+from corehq.apps.users.models import (
+    CommCareUser,
+    Permissions,
+    UserRole,
+    WebUser,
+)
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import sharded
@@ -323,3 +330,53 @@ class InsecureAuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
     def tearDown(self):
         self.user.delete(self.domain, deleted_by=None)
         super(InsecureAuthTest, self).tearDown()
+
+
+def return_200(*args, **kwargs):
+    return HttpResponse("success!", status=200)
+
+
+@mock.patch('corehq.apps.receiverwrapper.views._process_form', new=return_200)
+class TestAPIEndpoint(TestCase):
+    domain = "submission-api-test"
+    username = 'samiam'
+    password = 'p@$$w0rd'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain_obj = create_domain(cls.domain)
+        cls.url = reverse(post_api, args=[cls.domain])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+
+    def _create_user(self, edit_data=False, access_api=False):
+        role = UserRole.create(
+            self.domain, 'api-user', permissions=Permissions(
+                edit_data=edit_data, access_api=access_api
+            )
+        )
+        web_user = WebUser.create(self.domain, self.username, self.password,
+                                  None, None, role_id=role.get_id)
+        self.addCleanup(lambda: web_user.delete(None, None))
+        return web_user
+
+    def test_no_auth_fails_with_401(self):
+        self.assertEqual(self.client.post(self.url).status_code, 401)
+
+    def assert_api_response(self, status):
+        self.client.login(username=self.username, password=self.password)
+        self.assertEqual(self.client.post(self.url).status_code, status)
+
+    def test_successful_response(self):
+        self._create_user(edit_data=True, access_api=True)
+        self.assert_api_response(200)
+
+    def test_edit_data_required(self):
+        self._create_user(edit_data=False, access_api=True)
+        self.assert_api_response(403)
+
+    def test_access_api_required(self):
+        self._create_user(edit_data=True, access_api=False)
+        self.assert_api_response(403)

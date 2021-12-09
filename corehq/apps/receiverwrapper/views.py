@@ -211,8 +211,17 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
 @api_auth
 @require_permission(Permissions.edit_data)
 @require_permission(Permissions.access_api)
-def post_api(request, domain, app_id=None):
-    return secure_post(request, domain, app_id)
+@require_POST
+@check_domain_migration
+@set_request_duration_reporting_threshold(60)
+def post_api(request, domain):
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=None,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
 
 
 @waf_allow('XSS_BODY')
