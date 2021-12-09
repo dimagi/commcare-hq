@@ -1785,7 +1785,7 @@ class GraphAnnotations(IndexedSchema):
 
 class GraphSeries(DocumentSchema):
     config = DictProperty()
-    locale_specific_config = DictProperty(exclude_if_none=True)
+    locale_specific_config = DictProperty()
     data_path = StringProperty(exclude_if_none=True)
     x_function = StringProperty(exclude_if_none=True)
     y_function = StringProperty(exclude_if_none=True)
@@ -1793,8 +1793,8 @@ class GraphSeries(DocumentSchema):
 
 
 class GraphConfiguration(DocumentSchema):
-    config = DictProperty(exclude_if_none=True)
-    locale_specific_config = DictProperty(exclude_if_none=True)
+    config = DictProperty()
+    locale_specific_config = DictProperty()
     annotations = SchemaListProperty(GraphAnnotations)
     graph_type = StringProperty(exclude_if_none=True)
     series = SchemaListProperty(GraphSeries)
@@ -1839,7 +1839,7 @@ class DetailColumn(IndexedSchema):
         }
 
     """
-    header = DictProperty(exclude_if_none=True)
+    header = DictProperty()
     model = StringProperty(exclude_if_none=True)
     field = StringProperty()
     useXpathExpression = BooleanProperty(default=False)
@@ -1966,13 +1966,13 @@ class CaseListLookupMixin(DocumentSchema):
     lookup_autolaunch = BooleanProperty(default=False)
     lookup_action = StringProperty(exclude_if_none=True)
     lookup_name = StringProperty(exclude_if_none=True)
-    lookup_image = JRResourceProperty(required=False, exclude_if_none=True)
+    lookup_image = JRResourceProperty(required=False)
 
     lookup_extras = SchemaListProperty()
     lookup_responses = SchemaListProperty()
 
     lookup_display_results = BooleanProperty(default=False)  # Display callout results in case list?
-    lookup_field_header = DictProperty(exclude_if_none=True)
+    lookup_field_header = DictProperty()
     lookup_field_template = StringProperty(exclude_if_none=True)
 
 
@@ -2012,7 +2012,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
-    print_template = DictProperty(exclude_if_none=True)
+    print_template = DictProperty()
 
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
@@ -2107,11 +2107,11 @@ class CaseSearchProperty(DocumentSchema):
     Case properties available to search on.
     """
     name = StringProperty()
-    label = DictProperty(exclude_if_none=True)
+    label = DictProperty()
     appearance = StringProperty(exclude_if_none=True)
     input_ = StringProperty(exclude_if_none=True)
     default_value = StringProperty(exclude_if_none=True)
-    hint = DictProperty(exclude_if_none=True)
+    hint = DictProperty()
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
 
@@ -2227,11 +2227,10 @@ class DetailPair(DocumentSchema):
 
 class CaseListForm(NavMenuItemMediaMixin):
     form_id = FormIdProperty('modules[*].case_list_form.form_id')
-    label = DictProperty(exclude_if_none=True)
+    label = DictProperty()
     post_form_workflow = StringProperty(
         default=WORKFLOW_DEFAULT,
         choices=REGISTRATION_FORM_WORFLOWS,
-        exclude_if_none=True,
     )
     relevancy_expression = StringProperty(exclude_if_none=True)
 
