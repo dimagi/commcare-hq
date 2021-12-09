@@ -209,8 +209,10 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @api_auth
+@require_permission(Permissions.edit_data)
+@require_permission(Permissions.access_api)
 def post_api(request, domain, app_id=None):
-    return post(request, domain, app_id)
+    return secure_post(request, domain, app_id)
 
 
 @waf_allow('XSS_BODY')

@@ -10,13 +10,12 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.ota.case_restore import get_case_hierarchy_for_restore
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.hmac_request import get_hmac_digest
 from corehq.util.test_utils import flag_enabled
-
-from ..views import get_case_hierarchy_for_restore
 
 
 class TestRelatedCases(TestCase, TestXmlMixin):
@@ -106,7 +105,7 @@ class TestRelatedCases(TestCase, TestXmlMixin):
 
     def _generate_restore(self, case_id, user):
         self.client.login(username=user.username, password=user.password)
-        url = reverse("migration_restore", args=[self.domain, case_id])
+        url = reverse("case_restore", args=[self.domain, case_id])
         hmac_header_value = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, url)
         return self.client.get(url, HTTP_X_MAC_DIGEST=hmac_header_value)
 

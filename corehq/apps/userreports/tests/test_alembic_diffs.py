@@ -6,9 +6,13 @@ from django.test.testcases import TestCase, SimpleTestCase
 from nose.tools import assert_list_equal
 
 from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
-from fluff.signals import (
-    get_migration_context, reformat_alembic_diffs,
-    SimpleDiff, DiffTypes, get_tables_to_rebuild
+
+from ..alembic_diffs import (
+    DiffTypes,
+    SimpleDiff,
+    get_migration_context,
+    get_tables_to_rebuild,
+    reformat_alembic_diffs,
 )
 
 

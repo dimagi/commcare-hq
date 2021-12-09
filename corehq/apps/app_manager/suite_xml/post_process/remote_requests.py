@@ -200,7 +200,7 @@ class RemoteRequestFactory(object):
         additional_types = set(self.module.search_config.additional_case_types) - {self.module.case_type}
         datums = [
             QueryData(key='case_type', ref=f"'{case_type}'")
-            for case_type in [self.module.case_type] + list(additional_types)
+            for case_type in [self.module.case_type] + sorted(additional_types)
         ]
 
         datums.extend(

@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-01 20:18+0000\n"
-"PO-Revision-Date: 2021-11-17 20:02+0000\n"
+"POT-Creation-Date: 2021-12-08 21:48+0000\n"
+"PO-Revision-Date: 2021-12-02 20:05+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
 "sw/)\n"
@@ -37,7 +37,7 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/table.html:17
 #: corehq/apps/linked_domain/filters.py:25
 #: corehq/apps/reports/filters/commtrack.py:18
-#: corehq/apps/reports/filters/users.py:498
+#: corehq/apps/reports/filters/users.py:497
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html:16
 #: corehq/apps/sms/filters.py:73 corehq/apps/smsbillables/filters.py:17
 #: corehq/apps/smsbillables/filters.py:29
@@ -51,7 +51,7 @@ msgstr ""
 #: custom/inddex/filters.py:69 custom/inddex/filters.py:82
 #: custom/inddex/filters.py:95 custom/inddex/filters.py:108
 #: custom/inddex/filters.py:140 custom/inddex/filters.py:153
-#: custom/inddex/filters.py:165 custom/m4change/filters.py:32
+#: custom/inddex/filters.py:165
 msgid "All"
 msgstr ""
 
@@ -69,7 +69,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt:7
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html:22
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html:14
-#: corehq/apps/domain/forms.py:1672 corehq/apps/enterprise/filters.py:10
+#: corehq/apps/domain/forms.py:1669 corehq/apps/enterprise/filters.py:10
 #: corehq/apps/enterprise/interface.py:51
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html:26
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html:55
@@ -194,14 +194,14 @@ msgstr ""
 
 #: corehq/apps/accounting/filters.py:325 corehq/apps/accounting/forms.py:497
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html:16
-#: corehq/apps/domain/forms.py:2011 corehq/messaging/scheduling/forms.py:3055
+#: corehq/apps/domain/forms.py:2008 corehq/messaging/scheduling/forms.py:3055
 msgid "Start Date"
 msgstr ""
 
 #: corehq/apps/accounting/filters.py:330 corehq/apps/accounting/forms.py:500
 #: corehq/apps/accounting/forms.py:854
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html:17
-#: corehq/apps/domain/forms.py:2019 corehq/apps/export/forms.py:325
+#: corehq/apps/domain/forms.py:2016 corehq/apps/export/forms.py:325
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:91
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:127
 msgid "End Date"
@@ -304,7 +304,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html:31
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt:8
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html:15
-#: corehq/apps/domain/forms.py:1993
+#: corehq/apps/domain/forms.py:1990
 msgid "Software Plan"
 msgstr ""
 
@@ -584,7 +584,7 @@ msgstr[1] ""
 msgid "Your card is no longer being used to auto-pay for {billing_account}"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:561
+#: corehq/apps/accounting/models.py:560
 #, python-brace-format
 msgid "Your card is being used to auto-pay for {billing_account}"
 msgstr ""
@@ -991,7 +991,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html:75
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html:42
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html:79
-#: corehq/apps/domain/forms.py:1491 corehq/apps/domain/forms.py:1621
+#: corehq/apps/domain/forms.py:1488 corehq/apps/domain/forms.py:1618
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html:85
 #: corehq/apps/domain/templates/domain/stripe_cards.html:63
 #: corehq/apps/export/templates/export/customize_export_new.html:317
@@ -1065,7 +1065,6 @@ msgstr ""
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html:99
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html:138
 #: corehq/motech/templates/motech/connection_settings.html:46
-#: custom/m4change/templates/m4change/selectTemplate.html:28
 msgid "Cancel"
 msgstr ""
 
@@ -1473,8 +1472,8 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt:9
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html:21
 #: corehq/apps/data_interfaces/views.py:683
-#: corehq/apps/data_interfaces/views.py:921 corehq/apps/domain/forms.py:2269
-#: corehq/apps/domain/forms.py:2394
+#: corehq/apps/data_interfaces/views.py:921 corehq/apps/domain/forms.py:2266
+#: corehq/apps/domain/forms.py:2391
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html:42
 #: corehq/apps/enterprise/enterprise.py:143
 #: corehq/apps/export/views/incremental.py:160
@@ -1541,7 +1540,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html:131
 #: corehq/apps/accounting/templates/accounting/email/invoice.html:93
 #: corehq/apps/accounting/templates/accounting/email/invoice.html:141
-#: corehq/apps/domain/forms.py:2029
+#: corehq/apps/domain/forms.py:2026
 msgid "User Credits"
 msgstr ""
 
@@ -1549,7 +1548,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html:141
 #: corehq/apps/accounting/templates/accounting/email/invoice.html:103
 #: corehq/apps/accounting/templates/accounting/email/invoice.html:151
-#: corehq/apps/domain/forms.py:2024
+#: corehq/apps/domain/forms.py:2021
 msgid "SMS Credits"
 msgstr ""
 
@@ -2580,7 +2579,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice.html:101
 #: corehq/apps/hqadmin/forms.py:194
-#: custom/m4change/templates/m4change/selectTemplate.html:31
 msgid "Reason"
 msgstr ""
 
@@ -3106,14 +3104,14 @@ msgid "Mobile Users"
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py:64 corehq/apps/commtrack/views.py:184
-#: corehq/apps/domain/forms.py:2204 corehq/apps/reminders/forms.py:43
+#: corehq/apps/domain/forms.py:2201 corehq/apps/reminders/forms.py:43
 #: corehq/apps/reports/templates/reports/messaging/survey_detail.html:12
 #: corehq/apps/sms/models.py:1615 corehq/messaging/scheduling/forms.py:1095
 msgid "SMS"
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py:70
-#: corehq/messaging/scheduling/forms.py:964 corehq/motech/const.py:69
+#: corehq/messaging/scheduling/forms.py:964 corehq/motech/const.py:74
 #: corehq/motech/dhis2/const.py:8
 msgid "Monthly"
 msgstr ""
@@ -3190,7 +3188,7 @@ msgstr ""
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html:57
 #: corehq/apps/registry/templates/registry/registry_edit.html:229
 #: corehq/apps/reminders/templates/reminders/keyword.html:20
-#: corehq/apps/reminders/views.py:280 corehq/apps/reports/filters/users.py:493
+#: corehq/apps/reminders/views.py:280 corehq/apps/reports/filters/users.py:492
 #: corehq/apps/reports/standard/users/reports.py:89
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:292
 #: corehq/apps/sms/templates/sms/add_gateway.html:24
@@ -3496,7 +3494,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/fields.py:89 corehq/apps/app_manager/fields.py:203
 #: corehq/apps/cloudcare/templates/cloudcare/config.html:43
-#: corehq/apps/domain/forms.py:2266 corehq/apps/domain/forms.py:2351
+#: corehq/apps/domain/forms.py:2263 corehq/apps/domain/forms.py:2348
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html:39
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html:30
 #: corehq/apps/hqwebapp/doc_info.py:95 corehq/apps/linked_domain/const.py:24
@@ -3539,7 +3537,7 @@ msgid "Menu"
 msgstr ""
 
 #: corehq/apps/app_manager/fields.py:208 corehq/apps/app_manager/fields.py:213
-#: corehq/apps/domain/forms.py:2303 corehq/apps/domain/forms.py:2375
+#: corehq/apps/domain/forms.py:2300 corehq/apps/domain/forms.py:2372
 #: corehq/apps/export/forms.py:130 corehq/apps/reports/filters/select.py:107
 msgid "Select Application"
 msgstr ""
@@ -3596,13 +3594,6 @@ msgstr ""
 #: corehq/apps/reports/standard/monitoring.py:972
 #: corehq/apps/reports/standard/monitoring.py:1836
 #: corehq/apps/userreports/sql/data_source.py:112
-#: custom/m4change/reports/aggregate_facility_web_hmis_report.py:40
-#: custom/m4change/reports/all_hmis_report.py:260
-#: custom/m4change/reports/anc_hmis_report.py:120
-#: custom/m4change/reports/immunization_hmis_report.py:136
-#: custom/m4change/reports/ld_hmis_report.py:190
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:197
-#: custom/m4change/reports/project_indicators_report.py:111
 msgid "Total"
 msgstr ""
 
@@ -4316,7 +4307,7 @@ msgid "Daily Log Sending Frequency"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:69
-#: corehq/messaging/scheduling/forms.py:962 corehq/motech/const.py:67
+#: corehq/messaging/scheduling/forms.py:962 corehq/motech/const.py:72
 msgid "Daily"
 msgstr ""
 
@@ -4701,8 +4692,6 @@ msgstr ""
 #: corehq/apps/reports/standard/monitoring.py:1391
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html:21
 #: corehq/apps/sms/models.py:986 corehq/motech/dhis2/const.py:75
-#: custom/m4change/constants.py:61
-#: custom/m4change/templates/m4change/selectTemplate.html:33
 msgid "None"
 msgstr ""
 
@@ -5061,7 +5050,7 @@ msgid "Weekly Log Sending Frequency"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:224
-#: corehq/messaging/scheduling/forms.py:963 corehq/motech/const.py:68
+#: corehq/messaging/scheduling/forms.py:963 corehq/motech/const.py:73
 #: corehq/motech/dhis2/const.py:7
 msgid "Weekly"
 msgstr ""
@@ -5453,7 +5442,7 @@ msgstr ""
 #: corehq/apps/builds/templates/builds/all.html:8
 #: corehq/apps/builds/templates/builds/edit_menu.html:43
 #: corehq/apps/builds/templates/builds/edit_menu.html:135
-#: corehq/apps/domain/forms.py:2268 corehq/apps/domain/forms.py:2352
+#: corehq/apps/domain/forms.py:2265 corehq/apps/domain/forms.py:2349
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html:41
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html:32
 #: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html:37
@@ -6634,7 +6623,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_profiles_select.html:6
-#: corehq/apps/domain/forms.py:2392 corehq/apps/domain/forms.py:2426
+#: corehq/apps/domain/forms.py:2389 corehq/apps/domain/forms.py:2423
 #: corehq/apps/reports/standard/deployments.py:111
 msgid "Build Profile"
 msgstr "Manejo de Casos"
@@ -6708,7 +6697,7 @@ msgstr ""
 #: corehq/apps/programs/templates/programs/manage/programs.html:91
 #: corehq/apps/reminders/templates/reminders/keyword_list.html:43
 #: corehq/apps/reminders/templates/reminders/keyword_list.html:64
-#: corehq/apps/reports/filters/users.py:501
+#: corehq/apps/reports/filters/users.py:500
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html:129
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html:134
 #: corehq/apps/reports/templates/reports/reports_home.html:78
@@ -8537,7 +8526,7 @@ msgstr ""
 #: corehq/apps/reports/daterange.py:27 corehq/apps/reports/filters/dates.py:20
 #: corehq/apps/reports/filters/dates.py:63
 #: corehq/apps/reports/templates/reports/reports_home.html:58
-#: custom/inddex/filters.py:13 custom/m4change/fields.py:8
+#: custom/inddex/filters.py:13
 msgid "Date Range"
 msgstr ""
 
@@ -9711,14 +9700,14 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html:251
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:415
-#: corehq/apps/domain/forms.py:1838
+#: corehq/apps/domain/forms.py:1835
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:53
 #: corehq/apps/export/forms.py:1152
 #: corehq/apps/export/templates/export/incremental_export.html:63
 #: corehq/apps/integration/forms.py:69 corehq/apps/integration/forms.py:154
 #: corehq/apps/integration/forms.py:235 corehq/apps/integration/forms.py:304
 #: corehq/apps/locations/templates/locations/manage/location.html:129
-#: corehq/apps/reports/filters/users.py:500
+#: corehq/apps/reports/filters/users.py:499
 #: corehq/apps/translations/templates/app_translations.html:21
 #: corehq/apps/users/models.py:3061
 #: corehq/messaging/scheduling/templates/scheduling/dashboard.html:108
@@ -9999,7 +9988,7 @@ msgstr ""
 #: corehq/apps/registry/templates/registry/registry_edit.html:139
 #: corehq/apps/registry/templates/registry/registry_edit.html:443
 #: corehq/apps/registry/templates/registry/registry_list.html:217
-#: corehq/motech/repeaters/forms.py:131
+#: corehq/motech/repeaters/forms.py:138
 msgid "Case Types"
 msgstr ""
 
@@ -11261,7 +11250,7 @@ msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:111
 #: corehq/apps/cloudcare/templates/form_entry/templates.html:409
-#: corehq/apps/domain/forms.py:2295 corehq/apps/domain/forms.py:2419
+#: corehq/apps/domain/forms.py:2292 corehq/apps/domain/forms.py:2416
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html:18
 #: corehq/apps/reports/filters/simple.py:24
 #: corehq/apps/reports/standard/cases/filters.py:27
@@ -11341,15 +11330,14 @@ msgstr ""
 #: corehq/apps/settings/views.py:538
 #: corehq/apps/userreports/reports/builder/forms.py:901
 #: corehq/apps/users/templates/users/roles_and_permissions.html:88
-#: corehq/motech/repeaters/models.py:271 corehq/tabs/tabclasses.py:440
+#: corehq/motech/repeaters/models.py:274 corehq/tabs/tabclasses.py:440
 msgid "Data"
 msgstr ""
 
 #: corehq/apps/case_search/views.py:20
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:21
 #: corehq/apps/domain/views/settings.py:349 corehq/apps/registry/models.py:255
-#: corehq/tabs/tabclasses.py:2011 custom/m4change/fields.py:30
-#: custom/m4change/fields.py:37
+#: corehq/tabs/tabclasses.py:2011
 msgid "Case Search"
 msgstr ""
 
@@ -11546,7 +11534,7 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/formplayer/query_view.html:12
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html:38
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html:117
-#: corehq/apps/domain/forms.py:2296 corehq/apps/domain/forms.py:2421
+#: corehq/apps/domain/forms.py:2293 corehq/apps/domain/forms.py:2418
 #: corehq/apps/sms/templates/sms/chat_contacts.html:20
 msgid "Clear"
 msgstr ""
@@ -11660,7 +11648,7 @@ msgid "Break"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/users.html:59
-#: corehq/apps/dashboard/views.py:226 corehq/apps/domain/forms.py:1662
+#: corehq/apps/dashboard/views.py:226 corehq/apps/domain/forms.py:1659
 #: corehq/tabs/tabclasses.py:1581
 msgid "Organization"
 msgstr ""
@@ -11674,25 +11662,19 @@ msgstr ""
 msgid "Date Registered"
 msgstr ""
 
-#: corehq/apps/cloudcare/views.py:471 corehq/tabs/tabclasses.py:1412
+#: corehq/apps/cloudcare/views.py:480 corehq/tabs/tabclasses.py:1412
 msgid "Web Apps Permissions"
 msgstr ""
 
-#: corehq/apps/cloudcare/views.py:588
+#: corehq/apps/cloudcare/views.py:597
 msgid "Linking directly into Web Apps has been disabled."
 msgstr ""
 
-#: corehq/apps/cloudcare/views.py:601
+#: corehq/apps/cloudcare/views.py:610
 msgid "Could not find application."
 msgstr ""
 
-#: corehq/apps/cloudcare/views.py:610
-msgid ""
-"This link does not exist. Your app may have changed so that the given link "
-"is no longer valid."
-msgstr ""
-
-#: corehq/apps/cloudcare/views.py:616
+#: corehq/apps/cloudcare/views.py:615
 msgid "This user cannot access this link."
 msgstr ""
 
@@ -12241,7 +12223,7 @@ msgstr ""
 
 #: corehq/apps/dashboard/views.py:217
 #: corehq/apps/locations/templates/locations/manage/location.html:73
-#: corehq/apps/reports/filters/users.py:43
+#: corehq/apps/reports/filters/users.py:42
 #: corehq/apps/reports/standard/monitoring.py:290
 #: corehq/apps/reports/templates/reports/async/aggregate_user_status.html:9
 #: corehq/apps/sms/templates/sms/phone_number_filter.html:29
@@ -12540,8 +12522,8 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py:258
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html:27
-#: corehq/apps/domain/forms.py:981 corehq/apps/domain/forms.py:1399
-#: corehq/apps/domain/forms.py:1471 corehq/apps/domain/forms.py:1600
+#: corehq/apps/domain/forms.py:981 corehq/apps/domain/forms.py:1396
+#: corehq/apps/domain/forms.py:1468 corehq/apps/domain/forms.py:1597
 #: corehq/apps/hqadmin/forms.py:159 corehq/apps/reminders/forms.py:241
 #: corehq/apps/styleguide/example_forms.py:34
 #: corehq/apps/styleguide/example_forms.py:75
@@ -12999,7 +12981,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html:42
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html:43
-#: corehq/apps/domain/forms.py:2272 corehq/apps/domain/forms.py:2397
+#: corehq/apps/domain/forms.py:2269 corehq/apps/domain/forms.py:2394
 #: corehq/apps/export/templates/export/incremental_export.html:16
 #: corehq/apps/export/templates/export/incremental_export.html:31
 #: corehq/apps/export/views/incremental.py:49
@@ -13014,7 +12996,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html:43
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html:44
-#: corehq/apps/domain/forms.py:2273 corehq/apps/domain/forms.py:2398
+#: corehq/apps/domain/forms.py:2270 corehq/apps/domain/forms.py:2395
 #: corehq/apps/export/templates/export/incremental_export.html:19
 #: corehq/apps/export/templates/export/incremental_export.html:34
 #: corehq/apps/registry/templates/registry/registry_edit.html:77
@@ -13029,7 +13011,6 @@ msgstr ""
 #: corehq/apps/registry/templates/registry/registry_edit.html:63
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html:65
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html:92
-#: custom/m4change/templates/m4change/activateStatus.html:6
 msgid "Activate"
 msgstr ""
 
@@ -13616,19 +13597,19 @@ msgstr ""
 msgid "no"
 msgstr ""
 
-#: corehq/apps/domain/decorators.py:89
+#: corehq/apps/domain/decorators.py:87
 #, python-brace-format
 msgid "The domain \"{domain}\" was not found."
 msgstr ""
 
-#: corehq/apps/domain/decorators.py:147
+#: corehq/apps/domain/decorators.py:145
 #, python-brace-format
 msgid ""
 "The project space \"{domain}\" has not yet been activated. Please report an "
 "issue if you think this is a mistake."
 msgstr ""
 
-#: corehq/apps/domain/decorators.py:571
+#: corehq/apps/domain/decorators.py:556
 msgid "maximum password attempts exceeded"
 msgstr ""
 
@@ -14013,88 +13994,88 @@ msgid ""
 "password."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1305 corehq/apps/settings/forms.py:33
+#: corehq/apps/domain/forms.py:1302 corehq/apps/settings/forms.py:33
 #: corehq/apps/users/forms.py:427
 msgid "New password"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1385
+#: corehq/apps/domain/forms.py:1382
 msgid "Show contact emails as text"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1391
+#: corehq/apps/domain/forms.py:1388
 msgid "Useful when you want to copy contact emails"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1403 corehq/apps/domain/forms.py:1480
-#: corehq/apps/domain/forms.py:1609 corehq/apps/users/forms.py:1211
+#: corehq/apps/domain/forms.py:1400 corehq/apps/domain/forms.py:1477
+#: corehq/apps/domain/forms.py:1606 corehq/apps/users/forms.py:1211
 msgid "Mailing Address"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1415
+#: corehq/apps/domain/forms.py:1412
 msgid "Update Billing Information"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1431
+#: corehq/apps/domain/forms.py:1428
 msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1495
+#: corehq/apps/domain/forms.py:1492
 #: corehq/apps/domain/templates/domain/current_subscription.html:69
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/paused_plan_notice.html:29
 #: corehq/apps/users/templates/users/mobile_workers.html:198
 msgid "Subscribe to Plan"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1626
+#: corehq/apps/domain/forms.py:1623
 #: corehq/apps/domain/templates/domain/current_subscription.html:113
 #: corehq/apps/domain/views/accounting.py:1533
 #: corehq/apps/domain/views/accounting.py:1534
 msgid "Renew Plan"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1661
+#: corehq/apps/domain/forms.py:1658
 msgid "Email To"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1664
+#: corehq/apps/domain/forms.py:1661
 msgid "Estimated annual expenditures on airtime:"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1665
+#: corehq/apps/domain/forms.py:1662
 msgid "Estimated annual expenditures on devices:"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1668
+#: corehq/apps/domain/forms.py:1665
 msgid ""
 "We grant pro-bono subscriptions to match the duration of your project, up to "
 "a maximum of 12 months at a time (at which point you need to reapply)."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1674
+#: corehq/apps/domain/forms.py:1671
 msgid ""
 "If you have already been in touch with someone from Dimagi, please list "
 "their name."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1677
+#: corehq/apps/domain/forms.py:1674
 msgid "Number of expected users"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1686 corehq/apps/domain/views/pro_bono.py:15
+#: corehq/apps/domain/forms.py:1683 corehq/apps/domain/views/pro_bono.py:15
 msgid "Pro-Bono Application"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1703
+#: corehq/apps/domain/forms.py:1700
 msgid "Submit Pro-Bono Application"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1847
+#: corehq/apps/domain/forms.py:1844
 msgid "Test or Demo Project"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1855
+#: corehq/apps/domain/forms.py:1852
 msgid ""
 "<i class=\"fa fa-info-circle\"></i> You will have access to all features for "
 "free as soon as you hit \"Update\".  Please make sure this is an internal "
@@ -14102,19 +14083,19 @@ msgid ""
 "Dimagi and are not subject to Dimagi's external terms of service."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1899
+#: corehq/apps/domain/forms.py:1896
 msgid "Extended Trial"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1902
+#: corehq/apps/domain/forms.py:1899
 msgid "Organization Name"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1907 corehq/apps/domain/forms.py:2006
+#: corehq/apps/domain/forms.py:1904 corehq/apps/domain/forms.py:2003
 msgid "Partner Contact Emails"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1929
+#: corehq/apps/domain/forms.py:1926
 msgid ""
 "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
 "hit \"Update\" and end on <span data-bind=\"text: end_date\"></span>.  On "
@@ -14122,31 +14103,31 @@ msgid ""
 "automatically paused.</p>"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1985
+#: corehq/apps/domain/forms.py:1982
 msgid "Contracted Partner"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:1997
+#: corehq/apps/domain/forms.py:1994
 msgid "Fogbugz Client Name"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2003
+#: corehq/apps/domain/forms.py:2000
 msgid ""
 "This is who will receive invoices if the Client exceeds the user or SMS "
 "limits in their plan."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2010
+#: corehq/apps/domain/forms.py:2007
 msgid "Date the project needs access to features."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2016
+#: corehq/apps/domain/forms.py:2013
 msgid ""
 "Specify the End Date based on the Start Date plus number of months of "
 "software plan in the contract with the Client."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2049
+#: corehq/apps/domain/forms.py:2046
 #, python-format
 msgid ""
 "<p><i class=\"fa fa-info-circle\"></i> This project is on a contracted "
@@ -14155,14 +14136,14 @@ msgid ""
 "request changes.</p>"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2073
+#: corehq/apps/domain/forms.py:2070
 msgid ""
 "<p><i class=\"fa fa-info-circle\"></i> Clicking \"Update\" will set up the "
 "subscription in CommCareHQ to one of our standard contracted plans.<br/> If "
 "you need to set up a non-standard plan, please email {}.</p>"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2099
+#: corehq/apps/domain/forms.py:2096
 msgid ""
 "<div class=\"alert alert-warning\"><p><strong>Are you sure you want to "
 "extend the subscription?</strong></p><p>If this project is becoming a self-"
@@ -14171,37 +14152,37 @@ msgid ""
 "extend the existing services contract.</p></div>"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2191
+#: corehq/apps/domain/forms.py:2188
 msgid "End Date cannot be a past date."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2195
+#: corehq/apps/domain/forms.py:2192
 #, python-format
 msgid ""
 "This contract is too long to be managed in this interface.  Please contact "
 "%(email)s to manage a contract greater than 5 years."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2207
+#: corehq/apps/domain/forms.py:2204
 msgid "user"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2212
+#: corehq/apps/domain/forms.py:2209
 #, python-format
 msgid ""
 "You tried to add too much %(credits_name)s credit!  Only someone on the "
 "operations team can add that much credit.  Please reach out to %(email)s."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2232
+#: corehq/apps/domain/forms.py:2229
 msgid "Select a subscription type..."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2237
+#: corehq/apps/domain/forms.py:2234
 msgid "Subscription Type"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2267
+#: corehq/apps/domain/forms.py:2264
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html:31
 #: corehq/apps/hqwebapp/doc_info.py:159 corehq/apps/hqwebapp/doc_info.py:244
 #: corehq/apps/locations/templates/locations/manage/location.html:133
@@ -14218,36 +14199,36 @@ msgstr ""
 msgid "Location"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2271 corehq/apps/domain/forms.py:2396
+#: corehq/apps/domain/forms.py:2268 corehq/apps/domain/forms.py:2393
 msgid "Select Status"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2275
+#: corehq/apps/domain/forms.py:2272
 msgid "Applicable for search only"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2297 corehq/apps/domain/forms.py:2465
+#: corehq/apps/domain/forms.py:2294 corehq/apps/domain/forms.py:2462
 msgid "Add New Restriction"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2316
+#: corehq/apps/domain/forms.py:2313
 msgid "Please select application"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2321
+#: corehq/apps/domain/forms.py:2318
 msgid "Please select location"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2326 corehq/apps/domain/forms.py:2480
+#: corehq/apps/domain/forms.py:2323 corehq/apps/domain/forms.py:2477
 msgid "Please select version"
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2436
+#: corehq/apps/domain/forms.py:2433
 #, python-brace-format
 msgid "Restriction for profile {profile} set successfully."
 msgstr ""
 
-#: corehq/apps/domain/forms.py:2440
+#: corehq/apps/domain/forms.py:2437
 #, python-brace-format
 msgid "Restriction for profile {profile} failed: {message}"
 msgstr ""
@@ -17230,7 +17211,7 @@ msgstr ""
 msgid "case type is required"
 msgstr ""
 
-#: corehq/apps/export/forms.py:210 corehq/apps/reports/filters/users.py:69
+#: corehq/apps/export/forms.py:210 corehq/apps/reports/filters/users.py:68
 msgid "All Mobile Workers"
 msgstr ""
 
@@ -17253,7 +17234,7 @@ msgstr ""
 msgid "Case Owner(s)"
 msgstr ""
 
-#: corehq/apps/export/forms.py:288 corehq/apps/reports/filters/users.py:232
+#: corehq/apps/export/forms.py:288 corehq/apps/reports/filters/users.py:231
 msgid "User(s)"
 msgstr ""
 
@@ -18017,7 +17998,7 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/incremental_export.html:25
 #: corehq/apps/reports/standard/sms.py:213
-#: corehq/apps/reports/standard/users/reports.py:252
+#: corehq/apps/reports/standard/users/reports.py:251
 #: corehq/apps/reports/templates/reports/tableau_visualization.html:53
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html:97
 #: corehq/motech/templates/motech/connection_settings.html:64
@@ -18883,7 +18864,7 @@ msgid "Copy OData Feed"
 msgstr ""
 
 #: corehq/apps/export/views/incremental.py:52 corehq/motech/dhis2/forms.py:302
-#: corehq/motech/dhis2/views.py:76 corehq/motech/repeaters/forms.py:49
+#: corehq/motech/dhis2/views.py:76 corehq/motech/repeaters/forms.py:50
 #: corehq/motech/templates/motech/connection_settings.html:8
 #: corehq/motech/views.py:121 corehq/motech/views.py:200
 msgid "Connection Settings"
@@ -19760,7 +19741,7 @@ msgid "File has been uploaded successfully and is queued for processing."
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html:7
-#: corehq/apps/reports/filters/users.py:44
+#: corehq/apps/reports/filters/users.py:43
 #: corehq/apps/reports/templates/reports/project_health/user_details.html:12
 #: corehq/apps/sms/templates/sms/phone_number_filter.html:35
 #: corehq/apps/users/templates/users/edit_commcare_user.html:25
@@ -20904,7 +20885,7 @@ msgstr ""
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html:32
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html:54
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html:78
-#: corehq/apps/reports/standard/users/reports.py:248
+#: corehq/apps/reports/standard/users/reports.py:247
 msgid "Updated"
 msgstr ""
 
@@ -22351,7 +22332,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/widgets.py:105 corehq/apps/reports/daterange.py:23
 #: corehq/apps/reports/filters/dates.py:48
 #: corehq/apps/reports/templates/reports/project_health/partials/user_list.html:11
-#: custom/m4change/fields.py:18
 msgid "Last Month"
 msgstr ""
 
@@ -23720,7 +23700,7 @@ msgid "Default monthly consumption values"
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/manage/location.html:131
-#: corehq/apps/reports/filters/users.py:499
+#: corehq/apps/reports/filters/users.py:498
 #: corehq/apps/translations/templates/app_translations.html:20
 #: corehq/apps/users/models.py:3060
 #: corehq/apps/users/templates/users/mobile_workers.html:143
@@ -24108,23 +24088,23 @@ msgstr ""
 msgid "{} was not in the domain {}"
 msgstr ""
 
-#: corehq/apps/ota/utils.py:148
+#: corehq/apps/ota/utils.py:152
 msgid "{} not available as login-as user"
 msgstr ""
 
-#: corehq/apps/ota/utils.py:165
+#: corehq/apps/ota/utils.py:169
 msgid "Restore user {} not in allowed locations"
 msgstr ""
 
-#: corehq/apps/ota/utils.py:172
+#: corehq/apps/ota/utils.py:176
 msgid "{} does not have permission to edit commcare users"
 msgstr ""
 
-#: corehq/apps/ota/views.py:243
+#: corehq/apps/ota/views.py:242
 msgid "Invalid restore as user {}"
 msgstr ""
 
-#: corehq/apps/ota/views.py:432
+#: corehq/apps/ota/views.py:431
 #, python-brace-format
 msgid "'{params}' is a required parameter"
 msgid_plural "'{params}' are required parameters"
@@ -24590,7 +24570,7 @@ msgstr ""
 msgid "Reminder to Activate your CommCare project"
 msgstr ""
 
-#: corehq/apps/registration/tasks.py:78
+#: corehq/apps/registration/tasks.py:79
 msgid "Activate your CommCare project"
 msgstr ""
 
@@ -26302,7 +26282,7 @@ msgstr ""
 msgid "This Year"
 msgstr ""
 
-#: corehq/apps/reports/daterange.py:25 custom/m4change/fields.py:22
+#: corehq/apps/reports/daterange.py:25
 msgid "Last Year"
 msgstr ""
 
@@ -26319,7 +26299,7 @@ msgstr ""
 msgid "This Quarter"
 msgstr ""
 
-#: corehq/apps/reports/daterange.py:30 custom/m4change/fields.py:19
+#: corehq/apps/reports/daterange.py:30
 msgid "Last Quarter"
 msgstr ""
 
@@ -26593,38 +26573,38 @@ msgstr ""
 msgid "Optional"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:42
+#: corehq/apps/reports/filters/users.py:41
 msgid "View by Users or Groups"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:50
+#: corehq/apps/reports/filters/users.py:49
 msgid "User Type"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:68
+#: corehq/apps/reports/filters/users.py:67
 msgid "Select Mobile Worker"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:92
+#: corehq/apps/reports/filters/users.py:91
 #, python-format
 msgid "%s & Others"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:97
+#: corehq/apps/reports/filters/users.py:96
 msgid "Select Case Owner"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:98
+#: corehq/apps/reports/filters/users.py:97
 msgid "All Case Owners"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:166
-#: corehq/apps/reports/filters/users.py:287
-#: corehq/apps/reports/filters/users.py:450
+#: corehq/apps/reports/filters/users.py:165
+#: corehq/apps/reports/filters/users.py:286
+#: corehq/apps/reports/filters/users.py:449
 msgid "[Active Mobile Workers]"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:224
+#: corehq/apps/reports/filters/users.py:223
 msgid ""
 "<a href=\"https://confluence.dimagi.com/display/commcarepublic/Search+for"
 "+Locations\"target=\"_blank\">Advanced Search:</a> Put your location name in "
@@ -26633,54 +26613,54 @@ msgid ""
 "\"Massachusetts/Suffolk/Boston\""
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:234
+#: corehq/apps/reports/filters/users.py:233
 msgid "Add users and groups to filter this report."
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:238
+#: corehq/apps/reports/filters/users.py:237
 msgid ""
 "<i class=\"fa fa-info-circle\"></i> See <a href=\"https://confluence.dimagi."
 "com/display/commcarepublic/Report+and+Export+Filters\" target=\"_blank\"> "
 "Filter Definitions</a>."
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:287
+#: corehq/apps/reports/filters/users.py:286
 msgid "[Deactivated Mobile Workers]"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:466
+#: corehq/apps/reports/filters/users.py:465
 msgid "Affected User(s)"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:471
+#: corehq/apps/reports/filters/users.py:470
 msgid "Modified by User(s)"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:474
+#: corehq/apps/reports/filters/users.py:473
 msgid "[Web Users]"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:478
+#: corehq/apps/reports/filters/users.py:477
 msgid "Modified Property"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:479
+#: corehq/apps/reports/filters/users.py:478
 msgid "Select Property"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:494
+#: corehq/apps/reports/filters/users.py:493
 msgid "Select Action"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:507
+#: corehq/apps/reports/filters/users.py:506
 msgid "User Bulk Upload"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:508
+#: corehq/apps/reports/filters/users.py:507
 msgid "Select upload"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:518
+#: corehq/apps/reports/filters/users.py:517
 #, python-brace-format
 msgid "Upload by {username} at {time}"
 msgstr ""
@@ -27674,7 +27654,7 @@ msgstr ""
 msgid "Change Message"
 msgstr ""
 
-#: corehq/apps/reports/standard/users/reports.py:250
+#: corehq/apps/reports/standard/users/reports.py:249
 msgid "Added"
 msgstr ""
 
@@ -27785,7 +27765,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/base.html:15
-#: custom/m4change/templates/m4change/selectTemplate.html:41
 msgid "Help"
 msgstr ""
 
@@ -37572,6 +37551,7 @@ msgid "Include '+' in Phone Number"
 msgstr ""
 
 #: corehq/messaging/smsbackends/http/forms.py:31
+#: corehq/motech/repeaters/forms.py:56
 msgid "HTTP Request Method"
 msgstr ""
 
@@ -38260,7 +38240,7 @@ msgid ""
 "valid column."
 msgstr ""
 
-#: corehq/motech/dhis2/forms.py:305 corehq/motech/repeaters/forms.py:52
+#: corehq/motech/dhis2/forms.py:305 corehq/motech/repeaters/forms.py:53
 #, python-brace-format
 msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
 msgstr ""
@@ -38677,11 +38657,7 @@ msgstr ""
 msgid "e.g. \"http://www.example.com/openmrs\""
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:82 custom/m4change/reports/sql_data.py:33
-#: custom/m4change/reports/sql_data.py:83
-#: custom/m4change/reports/sql_data.py:135
-#: custom/m4change/reports/sql_data.py:212
-#: custom/m4change/reports/sql_data.py:268
+#: corehq/motech/openmrs/forms.py:82
 msgid "Location ID"
 msgstr ""
 
@@ -38836,77 +38812,77 @@ msgid "Configurable Case Repeater"
 msgstr ""
 
 #: corehq/motech/repeaters/expression/views.py:27
-#: corehq/motech/repeaters/views/repeaters.py:285
+#: corehq/motech/repeaters/views/repeaters.py:286
 msgid "Edit Case Repeater"
 msgstr ""
 
-#: corehq/motech/repeaters/forms.py:34
+#: corehq/motech/repeaters/forms.py:35
 msgid "Start Forwarding"
 msgstr ""
 
-#: corehq/motech/repeaters/forms.py:107 corehq/motech/repeaters/forms.py:137
+#: corehq/motech/repeaters/forms.py:114 corehq/motech/repeaters/forms.py:144
 msgid "Users to exclude"
 msgstr ""
 
-#: corehq/motech/repeaters/forms.py:109
+#: corehq/motech/repeaters/forms.py:116
 msgid "Forms submitted by these users will not be forwarded"
 msgstr ""
 
-#: corehq/motech/repeaters/forms.py:133
+#: corehq/motech/repeaters/forms.py:140
 msgid ""
 "Only cases of this type will be forwarded. Leave empty to forward all cases"
 msgstr ""
 
-#: corehq/motech/repeaters/forms.py:139
+#: corehq/motech/repeaters/forms.py:146
 msgid ""
 "Case creations and updates submitted by these users will not be forwarded"
 msgstr ""
 
-#: corehq/motech/repeaters/forms.py:167
+#: corehq/motech/repeaters/forms.py:174
 msgid "Unknown case-type"
 msgstr ""
 
-#: corehq/motech/repeaters/forms.py:169
+#: corehq/motech/repeaters/forms.py:176
 msgid "Unknown user"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:590 corehq/tabs/tabclasses.py:1900
+#: corehq/motech/repeaters/models.py:594 corehq/tabs/tabclasses.py:1900
 msgid "Forward Forms"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:644 corehq/tabs/tabclasses.py:1904
+#: corehq/motech/repeaters/models.py:648 corehq/tabs/tabclasses.py:1904
 msgid "Forward Cases"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:683
+#: corehq/motech/repeaters/models.py:687
 msgid "Forward Cases on Creation Only"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:695
+#: corehq/motech/repeaters/models.py:699
 msgid "Forward Cases on Update Only"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:706
+#: corehq/motech/repeaters/models.py:710
 msgid "Forward Cases To Another Commcare Project"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:755
+#: corehq/motech/repeaters/models.py:759
 msgid "Update Cases in another CommCare Project via a Data Registry"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:791 corehq/tabs/tabclasses.py:1902
+#: corehq/motech/repeaters/models.py:795 corehq/tabs/tabclasses.py:1902
 msgid "Forward Form Stubs"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:811
+#: corehq/motech/repeaters/models.py:815
 msgid "Forward App Schema Changes"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:820
+#: corehq/motech/repeaters/models.py:824
 msgid "Forward Users"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:830
+#: corehq/motech/repeaters/models.py:834
 msgid "Forward Locations"
 msgstr ""
 
@@ -39095,56 +39071,56 @@ msgstr ""
 msgid "Forward Data"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py:174
+#: corehq/motech/repeaters/views/repeaters.py:175
 msgid "Forwarding set up to {}"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py:215
+#: corehq/motech/repeaters/views/repeaters.py:216
 msgid "Update Repeater"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py:228
+#: corehq/motech/repeaters/views/repeaters.py:229
 msgid "Repeater Successfully Updated"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py:259
+#: corehq/motech/repeaters/views/repeaters.py:260
 msgid "Edit Form Repeater"
 msgstr ""
 
-#: corehq/motech/requests.py:186
+#: corehq/motech/requests.py:191
 msgid "Project space: {}"
 msgstr ""
 
-#: corehq/motech/requests.py:187
+#: corehq/motech/requests.py:192
 msgid "Remote API base URL: {}"
 msgstr ""
 
-#: corehq/motech/requests.py:190
+#: corehq/motech/requests.py:195
 msgid "Payload ID: {}"
 msgstr ""
 
-#: corehq/motech/requests.py:197
+#: corehq/motech/requests.py:202
 msgid "*Why am I getting this email?*"
 msgstr ""
 
-#: corehq/motech/requests.py:198
+#: corehq/motech/requests.py:203
 msgid ""
 "This address is configured in CommCare HQ as a notification address for "
 "integration errors."
 msgstr ""
 
-#: corehq/motech/requests.py:201
+#: corehq/motech/requests.py:206
 msgid "*How do I unsubscribe?*"
 msgstr ""
 
-#: corehq/motech/requests.py:202
+#: corehq/motech/requests.py:207
 msgid ""
 "Open Connection Settings in CommCare HQ ({}) and remove your email address "
 "from the \"Addresses to send notifications\" field for remote connections. "
 "If necessary, please provide an alternate address."
 msgstr ""
 
-#: corehq/motech/requests.py:208
+#: corehq/motech/requests.py:213
 msgid "MOTECH Error"
 msgstr ""
 
@@ -40083,881 +40059,6 @@ msgstr ""
 
 #: custom/inddex/filters.py:164
 msgid "FAO/WHO GIFT Food Group Description"
-msgstr ""
-
-#: custom/m4change/constants.py:62
-#: custom/m4change/templates/m4change/selectTemplate.html:34
-msgid "Incorrect phone number"
-msgstr ""
-
-#: custom/m4change/constants.py:63
-#: custom/m4change/templates/m4change/selectTemplate.html:35
-msgid "Double entry"
-msgstr ""
-
-#: custom/m4change/constants.py:64
-#: custom/m4change/templates/m4change/selectTemplate.html:36
-msgid "Other errors"
-msgstr ""
-
-#: custom/m4change/fields.py:17
-msgid "Year to Date"
-msgstr ""
-
-#: custom/m4change/fields.py:20
-msgid "Last Two Quarters"
-msgstr ""
-
-#: custom/m4change/fields.py:21
-msgid "Last Three Quarters"
-msgstr ""
-
-#: custom/m4change/fields.py:23
-msgid "Last Two Years"
-msgstr ""
-
-#: custom/m4change/fields.py:24
-msgid "Last Three Years"
-msgstr ""
-
-#: custom/m4change/fields.py:25
-msgid "Last Four Years"
-msgstr ""
-
-#: custom/m4change/filters.py:8
-msgid "Facility HMIS Report"
-msgstr ""
-
-#: custom/m4change/filters.py:26
-msgid "Service type"
-msgstr ""
-
-#: custom/m4change/filters.py:33
-msgid "registration"
-msgstr ""
-
-#: custom/m4change/filters.py:34
-msgid "antenatal"
-msgstr ""
-
-#: custom/m4change/filters.py:35
-msgid "delivery"
-msgstr ""
-
-#: custom/m4change/filters.py:36
-msgid "immunization"
-msgstr ""
-
-#: custom/m4change/reports/__init__.py:8
-#, python-format
-msgid "Parameter '%s' is missing"
-msgstr ""
-
-#: custom/m4change/reports/aggregate_facility_web_hmis_report.py:38
-#: custom/m4change/reports/all_hmis_report.py:258
-#: custom/m4change/reports/anc_hmis_report.py:118
-#: custom/m4change/reports/immunization_hmis_report.py:134
-#: custom/m4change/reports/ld_hmis_report.py:188
-msgid "HMIS code"
-msgstr ""
-
-#: custom/m4change/reports/aggregate_facility_web_hmis_report.py:39
-#: custom/m4change/reports/all_hmis_report.py:259
-#: custom/m4change/reports/anc_hmis_report.py:119
-#: custom/m4change/reports/immunization_hmis_report.py:135
-#: custom/m4change/reports/ld_hmis_report.py:189
-msgid "Data Point"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:85
-#: custom/m4change/reports/sql_data.py:325
-msgid "Newborns with low birth weight discharged - Total"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:90
-#: custom/m4change/reports/sql_data.py:326
-msgid "Newborns with low birth weight discharged - Male"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:95
-#: custom/m4change/reports/sql_data.py:327
-msgid "Newborns with low birth weight discharged - Female"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:100
-#: custom/m4change/reports/sql_data.py:328
-msgid "Pregnant Mothers Referred out"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:105
-#: custom/m4change/reports/sql_data.py:329
-msgid "ANC Anemia test done"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:110
-#: custom/m4change/reports/sql_data.py:330
-msgid "ANC Anemia test positive"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:115
-#: custom/m4change/reports/sql_data.py:331
-msgid "ANC Proteinuria Test done"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:120
-#: custom/m4change/reports/sql_data.py:332
-msgid "ANC Proteinuria test positive"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:125
-#: custom/m4change/reports/sql_data.py:333
-msgid "HIV rapid antibody test done"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:130
-#: custom/m4change/reports/sql_data.py:334
-msgid "Deaths of women related to pregnancy"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:135
-#: custom/m4change/reports/sql_data.py:336
-msgid "Pregnant mothers tested positive for HIV"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:140
-#: custom/m4change/reports/sql_data.py:338
-msgid "Pregnant Mothers with confirmed Malaria"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:145
-msgid "ANC Women with previously known HIV status (at ANC)"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:150
-#: custom/m4change/reports/sql_data.py:342
-msgid ""
-"Pregnant women who received HIV counseling testing and received result at ANC"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:155
-#: custom/m4change/reports/sql_data.py:344
-msgid ""
-"Pregnant women who received HIV counseling testing and received result at L&D"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:160
-#: custom/m4change/reports/sql_data.py:346
-msgid "Partners of HIV positive women who tested HIV negative"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:165
-#: custom/m4change/reports/sql_data.py:348
-msgid "Partners of HIV positive women who tested positive"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:170
-msgid ""
-"HIV positive pregnant women assessed for ART eligibility by either clinical "
-"stage or CD4"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:175
-#: custom/m4change/reports/sql_data.py:350
-msgid "Assessed for clinical stage eligibility"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:180
-#: custom/m4change/reports/sql_data.py:352
-msgid "Assessed for cd4-count eligibility"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:185
-#: custom/m4change/reports/sql_data.py:354
-msgid ""
-"Pregnant HIV positive women who received ART prophylaxis for PMTCT (Triple)"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:190
-msgid ""
-"Pregnant positive women who received ARV prophylaxis (SdNvP in Labor + (AZT "
-"+ 3TC))"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:195
-#: custom/m4change/reports/sql_data.py:356
-msgid ""
-"Pregnant HIV positive woman who received ARV prophylaxis for PMTCT (AZT)"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:200
-msgid ""
-"Pregnant positive women who received ARV prophylaxis for PMTCT(SdNVP in "
-"labour only)"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:206
-msgid ""
-"Pregant positive woman who received ARV prophylaxis for PMTCT(Total) = (171 "
-"+ 172 + 173 + 174)"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:211
-msgid ""
-"Infants born to HIV infected women started on contrimoxazole prophylaxis "
-"within 2 months"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:216
-#: custom/m4change/reports/sql_data.py:362
-msgid ""
-"Infants born to HIV infected women started on cotrimoxazole prophylaxis 2 "
-"months & above"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:222
-#: custom/m4change/reports/sql_data.py:364
-msgid ""
-"Infants born to HIV infected women who received an HIV test within two "
-"months of birth - (DNA -PCR)"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:228
-#: custom/m4change/reports/sql_data.py:366
-msgid ""
-"Infants born to HIV infected women who received an HIV test after two months "
-"of birth - (DNA - PCR)"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:234
-#: custom/m4change/reports/sql_data.py:368
-msgid ""
-"Infants born to HIV infected women who received an HIV test at 18 months - "
-"(HIV Rapid test)"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:239
-#: custom/m4change/reports/sql_data.py:370
-msgid ""
-"Infant born to HIV infected women who tested negative to HIV Rapid test at "
-"18 months"
-msgstr ""
-
-#: custom/m4change/reports/all_hmis_report.py:244
-#: custom/m4change/reports/sql_data.py:372
-msgid "HIV exposed infants breast feeding and receiving ARV prophylaxis"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:67
-#: custom/m4change/reports/sql_data.py:34
-msgid "Antenatal Attendance - Total"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:70
-#: custom/m4change/reports/sql_data.py:35
-msgid "Antenatal first Visit before 20wks"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:73
-#: custom/m4change/reports/sql_data.py:36
-msgid "Antenatal first Visit after 20wks"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:76
-msgid "Antenatal first visit - total"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:79
-msgid ""
-"Pregnant women that attend antenatal clinic for 4th visit during the month"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:82
-#: custom/m4change/reports/sql_data.py:39
-msgid "ANC syphilis test done"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:85
-#: custom/m4change/reports/sql_data.py:40
-msgid "ANC syphilis test positive"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:88
-#: custom/m4change/reports/sql_data.py:41
-msgid "ANC syphilis case treated"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:91
-#: custom/m4change/reports/sql_data.py:42
-msgid "Pregnant women who receive malaria IPT1"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:94
-#: custom/m4change/reports/sql_data.py:43
-msgid "Pregnant women who receive malaria IPT2"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:97
-#: custom/m4change/reports/sql_data.py:44
-msgid "Pregnant women who receive malaria LLIN"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:100
-#: custom/m4change/reports/sql_data.py:45
-msgid "Pregnant women who receive malaria Haematinics"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:103
-msgid "Postnatal Attendance - Total"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:106
-#: custom/m4change/reports/sql_data.py:47
-msgid "Postnatal clinic visit within 1 day of delivery"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:109
-#: custom/m4change/reports/sql_data.py:48
-msgid "Postnatal clinic visit within 3 days of delivery"
-msgstr ""
-
-#: custom/m4change/reports/anc_hmis_report.py:112
-#: custom/m4change/reports/sql_data.py:49
-msgid "Postnatal clinic visit >= 7 days of delivery"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:65
-#: custom/m4change/reports/sql_data.py:213
-msgid "OPV0 - birth "
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:68
-#: custom/m4change/reports/sql_data.py:214
-msgid "Hep.B0 - birth"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:71
-#: custom/m4change/reports/sql_data.py:215
-msgid "BCG"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:74
-#: custom/m4change/reports/sql_data.py:216
-msgid "OPV1"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:77
-#: custom/m4change/reports/sql_data.py:217
-msgid "HEP.B1"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:80
-#: custom/m4change/reports/sql_data.py:218
-msgid "Penta.1"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:83
-#: custom/m4change/reports/sql_data.py:219
-msgid "DPT1 (not when using Penta)"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:86
-#: custom/m4change/reports/sql_data.py:220
-msgid "PCV1"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:89
-#: custom/m4change/reports/sql_data.py:221
-msgid "OPV2"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:92
-#: custom/m4change/reports/sql_data.py:222
-msgid "Hep.B2"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:95
-#: custom/m4change/reports/sql_data.py:223
-msgid "Penta.2"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:98
-#: custom/m4change/reports/sql_data.py:224
-msgid "DPT2 (not when using Penta)"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:101
-#: custom/m4change/reports/sql_data.py:225
-msgid "PCV2"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:104
-#: custom/m4change/reports/sql_data.py:226
-msgid "OPV3"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:107
-#: custom/m4change/reports/sql_data.py:227
-msgid "Penta.3"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:110
-#: custom/m4change/reports/sql_data.py:228
-msgid "DPT3 (not when using Penta)"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:113
-#: custom/m4change/reports/sql_data.py:229
-msgid "PCV3"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:116
-#: custom/m4change/reports/sql_data.py:230
-msgid "Measles 1"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:119
-msgid "Fully Immunized (<1 year)"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:122
-#: custom/m4change/reports/sql_data.py:232
-msgid "Yellow Fever"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:125
-#: custom/m4change/reports/sql_data.py:233
-msgid "Measles 2"
-msgstr ""
-
-#: custom/m4change/reports/immunization_hmis_report.py:128
-#: custom/m4change/reports/sql_data.py:234
-msgid "Conjugate A CSM"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:65
-#: custom/m4change/reports/sql_data.py:136
-msgid "Deliveries - Total"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:68
-#: custom/m4change/reports/sql_data.py:137
-msgid "Deliveries - SVD"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:71
-#: custom/m4change/reports/sql_data.py:138
-msgid "Deliveries - Assisted"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:74
-#: custom/m4change/reports/sql_data.py:139
-msgid "Deliveries caesarean section"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:77
-#: custom/m4change/reports/sql_data.py:140
-msgid "Deliveries - Complications"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:80
-#: custom/m4change/reports/sql_data.py:141
-msgid "Deliveries - Preterm"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:83
-#: custom/m4change/reports/sql_data.py:142
-msgid "Deliveries - HIV positive women"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:86
-#: custom/m4change/reports/sql_data.py:143
-msgid "LiveBirth - HIV positive women"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:89
-#: custom/m4change/reports/sql_data.py:144
-msgid "Deliveries - HIV positive booked women"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:92
-#: custom/m4change/reports/sql_data.py:145
-msgid "Deliveries - HIV positive unbooked women"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:95
-msgid "Deliveries - Monitored using Partograph"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:98
-msgid "Deliveries taken by skilled birth attendant"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:101
-#: custom/m4change/reports/sql_data.py:148
-msgid "TT1"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:104
-#: custom/m4change/reports/sql_data.py:149
-msgid "TT2"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:107
-#: custom/m4change/reports/sql_data.py:150
-msgid "Live Births(Male, Female, < 2.5kg, >= 2.5k g)"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:110
-#: custom/m4change/reports/sql_data.py:151
-msgid "Male, < 2.5kg"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:113
-#: custom/m4change/reports/sql_data.py:152
-msgid "Male, >= 2.5kg"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:116
-#: custom/m4change/reports/sql_data.py:153
-msgid "Female, < 2.5kg"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:119
-#: custom/m4change/reports/sql_data.py:154
-msgid "Female, >= 2.5kg"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:122
-#: custom/m4change/reports/sql_data.py:155
-msgid "Still Births total"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:125
-#: custom/m4change/reports/sql_data.py:156
-msgid "Fresh Still Births"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:128
-#: custom/m4change/reports/sql_data.py:157
-msgid "Other still Births"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:131
-#: custom/m4change/reports/sql_data.py:158
-msgid "Abortion Induced"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:134
-#: custom/m4change/reports/sql_data.py:159
-msgid "Other Abortions"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:137
-#: custom/m4change/reports/sql_data.py:160
-msgid "Total Abortions"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:140
-#: custom/m4change/reports/sql_data.py:161
-msgid "Birth Asphyxia - Total"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:143
-#: custom/m4change/reports/sql_data.py:162
-msgid "Birth Asphyxia - Male"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:146
-#: custom/m4change/reports/sql_data.py:163
-msgid "Birth Asphyxia - Female"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:149
-#: custom/m4change/reports/sql_data.py:164
-msgid "Neonatal Sepsis - Total"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:152
-#: custom/m4change/reports/sql_data.py:165
-msgid "Neonatal Sepsis - Male"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:155
-#: custom/m4change/reports/sql_data.py:166
-msgid "Neonatal Sepsis - Female"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:158
-#: custom/m4change/reports/sql_data.py:167
-msgid "Neonatal Tetanus - Total"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:161
-#: custom/m4change/reports/sql_data.py:168
-msgid "Neonatal Tetanus - Male"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:164
-#: custom/m4change/reports/sql_data.py:169
-msgid "Neonatal Tetanus - Female"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:167
-#: custom/m4change/reports/sql_data.py:170
-msgid "Neonatal Jaundice - Total"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:170
-#: custom/m4change/reports/sql_data.py:171
-msgid "Neonatal Jaundice - Male"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:173
-#: custom/m4change/reports/sql_data.py:172
-msgid "Neonatal Jaundice - Female"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:176
-#: custom/m4change/reports/sql_data.py:173
-msgid "Low birth weight babies placed in KMC - Total"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:179
-#: custom/m4change/reports/sql_data.py:174
-msgid "Low birth weight babies placed in KMC - Male"
-msgstr ""
-
-#: custom/m4change/reports/ld_hmis_report.py:182
-#: custom/m4change/reports/sql_data.py:175
-msgid "Low birth weight babies placed in KMC - Female"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:117
-msgid "All eligible beneficiaries"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:120
-msgid "All reviewed beneficiaries"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:123
-msgid "All approved beneficiaries"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:126
-msgid "All rejected beneficiaries"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:129
-msgid "Paid beneficiaries for the month"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:132
-#: custom/m4change/reports/sql_data.py:269
-msgid "Eligible beneficiaries due to registration"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:135
-#: custom/m4change/reports/sql_data.py:270
-msgid "Eligible beneficiaries due to 4th visit"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:138
-#: custom/m4change/reports/sql_data.py:271
-msgid "Eligible beneficiaries due to delivery"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:141
-#: custom/m4change/reports/sql_data.py:272
-msgid "Eligible beneficiaries due to immunization or PNC visit"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:144
-#: custom/m4change/reports/sql_data.py:274
-msgid "Reviewed beneficiaries due to registration"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:147
-#: custom/m4change/reports/sql_data.py:275
-msgid "Reviewed beneficiaries due to 4th visit"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:150
-#: custom/m4change/reports/sql_data.py:276
-msgid "Reviewed beneficiaries due to delivery"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:153
-#: custom/m4change/reports/sql_data.py:277
-msgid "Reviewed beneficiaries due to immunization or PNC visit"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:156
-#: custom/m4change/reports/sql_data.py:279
-msgid "Approved beneficiaries due to registration"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:159
-#: custom/m4change/reports/sql_data.py:280
-msgid "Approved beneficiaries due to 4th visit"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:162
-#: custom/m4change/reports/sql_data.py:281
-msgid "Approved beneficiaries due to delivery"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:165
-#: custom/m4change/reports/sql_data.py:282
-msgid "Approved beneficiaries due to immunization or PNC visit"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:168
-#: custom/m4change/reports/sql_data.py:284
-msgid "Paid beneficiaries due to registration"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:171
-#: custom/m4change/reports/sql_data.py:285
-msgid "Paid beneficiaries due to 4th visit"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:174
-#: custom/m4change/reports/sql_data.py:286
-msgid "Paid beneficiaries due to delivery"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:177
-#: custom/m4change/reports/sql_data.py:287
-msgid "Paid beneficiaries due to immunization or PNC visit"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:180
-#: custom/m4change/reports/sql_data.py:289
-msgid "Rejected beneficiaries due to incorrect phone number"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:183
-#: custom/m4change/reports/sql_data.py:290
-msgid "Rejected beneficiaries due to double entry"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:186
-#: custom/m4change/reports/sql_data.py:291
-msgid "Rejected beneficiaries due to other errors"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:189
-msgid "All beneficiaries status view"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:195
-#: custom/m4change/reports/project_indicators_report.py:109
-msgid "s/n"
-msgstr ""
-
-#: custom/m4change/reports/mcct_monthly_aggregate_report.py:196
-msgid "Summary item"
-msgstr ""
-
-#: custom/m4change/reports/project_indicators_report.py:62
-msgid ""
-"Number of pregnant women who registered for ANC (in CCT payment sites only)"
-msgstr ""
-
-#: custom/m4change/reports/project_indicators_report.py:67
-#: custom/m4change/reports/sql_data.py:86
-msgid "Number of women who had 4 ANC visits (in CCT payment sites only)"
-msgstr ""
-
-#: custom/m4change/reports/project_indicators_report.py:72
-#: custom/m4change/reports/sql_data.py:88
-msgid ""
-"Number of women who delivered at the facility (in CCT payment sites only)"
-msgstr ""
-
-#: custom/m4change/reports/project_indicators_report.py:77
-#: custom/m4change/reports/sql_data.py:90
-msgid "Number of women who attended PNC within 6 weeks of delivery"
-msgstr ""
-
-#: custom/m4change/reports/project_indicators_report.py:82
-#: custom/m4change/reports/sql_data.py:92
-msgid "Number of free sim cards given"
-msgstr ""
-
-#: custom/m4change/reports/project_indicators_report.py:87
-#: custom/m4change/reports/sql_data.py:94
-msgid "Number of MTN MNO"
-msgstr ""
-
-#: custom/m4change/reports/project_indicators_report.py:92
-#: custom/m4change/reports/sql_data.py:96
-msgid "Number of Etisalat MNO"
-msgstr ""
-
-#: custom/m4change/reports/project_indicators_report.py:97
-#: custom/m4change/reports/sql_data.py:98
-msgid "Number of GLO MNO"
-msgstr ""
-
-#: custom/m4change/reports/project_indicators_report.py:102
-#: custom/m4change/reports/sql_data.py:100
-msgid "Number of Airtel MNO"
-msgstr ""
-
-#: custom/m4change/reports/project_indicators_report.py:110
-msgid "m4change Project Indicators"
-msgstr ""
-
-#: custom/m4change/reports/sql_data.py:37
-msgid ""
-"Pregnant Women that attend antenatal clinic for 4th visit during the month"
-msgstr ""
-
-#: custom/m4change/reports/sql_data.py:46
-msgid "Postanatal Attendance - Total"
-msgstr ""
-
-#: custom/m4change/reports/sql_data.py:84
-msgid ""
-"Number of pregnant women who registered for ANC (in CCT payment sites only) "
-msgstr ""
-
-#: custom/m4change/reports/sql_data.py:231
-msgid "Fully Immunized (<1year)"
-msgstr ""
-
-#: custom/m4change/reports/sql_data.py:340
-msgid "ANC Women with previously known HIV status(at ANC)"
-msgstr ""
-
-#: custom/m4change/reports/sql_data.py:358
-msgid ""
-"Pregnant positive women who received ARV prophylaxis(SdNvP in Labor + (AZT + "
-"3TC))"
-msgstr ""
-
-#: custom/m4change/reports/sql_data.py:360
-msgid ""
-"Infants born to HIV infected women started on cotrimoxazole prophylaxis "
-"within 2 months"
-msgstr ""
-
-#: custom/m4change/templates/m4change/approveStatus.html:6
-msgid "Approve"
-msgstr ""
-
-#: custom/m4change/templates/m4change/paidStatus.html:6
-msgid "Pay"
-msgstr ""
-
-#: custom/m4change/templates/m4change/selectTemplate.html:26
-msgid "Review"
-msgstr ""
-
-#: custom/m4change/templates/m4change/selectTemplate.html:30
-msgid "Reject"
 msgstr ""
 
 #: custom/nic_compliance/password_validation.py:27

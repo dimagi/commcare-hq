@@ -1044,13 +1044,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-WEBAPPS_CASE_MIGRATION = StaticToggle(
-    'webapps_case_migration',
-    "Work-in-progress to support user-written migrations",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER]
-)
-
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
@@ -1441,14 +1434,6 @@ VIEW_APP_CHANGES = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
     help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
-)
-
-ACTIVE_COUCH_DOMAINS = StaticToggle(
-    'active_couch_domains',
-    "Domains that are still on the Couch DB backend which we consider most "
-    "active / important to ensure that data in ES is never stale.",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
 )
 
 PAGINATED_EXPORTS = StaticToggle(

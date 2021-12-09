@@ -17,7 +17,6 @@ from casexml.apps.phone.tests.utils import (
 
 from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
-    extract_xml_partial,
 )
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.custom_data_fields.models import (
