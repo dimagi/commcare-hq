@@ -11,6 +11,7 @@ from corehq.apps.app_manager.suite_xml.post_process.instances import (
 )
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowDatumMeta
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
+from corehq.apps.app_manager.suite_xml.utils import get_ordered_case_types_for_module
 from corehq.apps.app_manager.suite_xml.xml_models import (
     CalculatedPropertyXPath,
     Command,
@@ -197,10 +198,9 @@ class RemoteRequestFactory(object):
 
     @cached_property
     def _remote_request_query_datums(self):
-        additional_types = set(self.module.search_config.additional_case_types) - {self.module.case_type}
         datums = [
             QueryData(key='case_type', ref=f"'{case_type}'")
-            for case_type in [self.module.case_type] + sorted(additional_types)
+            for case_type in get_ordered_case_types_for_module(self.module)
         ]
 
         datums.extend(

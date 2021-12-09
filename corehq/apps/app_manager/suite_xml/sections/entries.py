@@ -17,6 +17,7 @@ from corehq.apps.app_manager.suite_xml.contributors import (
 from corehq.apps.app_manager.suite_xml.utils import (
     get_form_locale_id,
     get_select_chain_meta,
+    get_ordered_case_types,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import *
 from corehq.apps.app_manager.util import (
@@ -126,10 +127,9 @@ class EntriesHelper(object):
     @staticmethod
     def _get_nodeset_xpath(instance_name, root_element, case_type, filter_xpath='', additional_types=None):
         if additional_types:
-            additional_types = set(additional_types) - {case_type}
             case_type_filter = " or ".join([
                 "@case_type='{case_type}'".format(case_type=case_type)
-                for case_type in [case_type] + sorted(additional_types)
+                for case_type in get_ordered_case_types(case_type, additional_types)
             ])
         else:
             case_type_filter = "@case_type='{case_type}'".format(case_type=case_type)
@@ -553,14 +553,13 @@ class EntriesHelper(object):
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
 
-        additional_types = set(module.search_config.additional_case_types) - {datum.case_type}
         case_ids_expressions = {session_var(datum.datum.id)} | set(module.search_config.additional_registry_cases)
         data = [
             QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
         ]
         data.extend([
             QueryData(key='case_type', ref=f"'{case_type}'")
-            for case_type in [datum.case_type] + sorted(additional_types)
+            for case_type in get_ordered_case_types(datum.case_type, module.search_config.additional_case_types)
         ])
         data.extend([
             QueryData(key='case_id', ref=case_id_xpath)
