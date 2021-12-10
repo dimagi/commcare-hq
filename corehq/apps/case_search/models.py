@@ -6,21 +6,55 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import model_to_dict
 
+import attr
 from jsonfield.fields import JSONField
 
+from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.util.quickcache import quickcache
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
 CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
-CASE_SEARCH_REGISTRY_ID_KEY = 'commcare_registry'
-CASE_SEARCH_EXPAND_ID_PROPERTY_KEY = 'commcare_expand_id_property'
+CONFIG_KEY_PREFIX = "x_commcare_"
+CASE_SEARCH_REGISTRY_ID_KEY = f'{CONFIG_KEY_PREFIX}data_registry'
+CASE_SEARCH_EXPAND_ID_PROPERTY_KEY = f'{CONFIG_KEY_PREFIX}expand_id_property'
+CONFIG_KEYS = (
+    CASE_SEARCH_REGISTRY_ID_KEY,
+    CASE_SEARCH_EXPAND_ID_PROPERTY_KEY
+)
+LEGACY_CONFIG_KEYS = {
+    CASE_SEARCH_REGISTRY_ID_KEY: "commcare_registry"
+}
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     'owner_id',
     'include_closed',   # backwards compatibility for deprecated functionality to include closed cases
-)
+) + CONFIG_KEYS + tuple(LEGACY_CONFIG_KEYS.values())
+
+
+@attr.s(frozen=True)
+class CaseSearchRequestConfig:
+    data_registry = attr.ib(kw_only=True, default=None)
+    expand_id_property = attr.ib(kw_only=True, default=None)
+
+
+def extract_search_request_config(search_criteria):
+    def _get_value(key):
+        val = None
+        try:
+            val = search_criteria.pop(key)
+        except KeyError:
+            if key in LEGACY_CONFIG_KEYS:
+                val = search_criteria.pop(LEGACY_CONFIG_KEYS[key], None)
+        if isinstance(val, list):
+            raise CaseSearchUserError(f"'{key}' only accepts single values")
+        return val
+
+    return CaseSearchRequestConfig(**{
+        key.replace(CONFIG_KEY_PREFIX, ""): _get_value(key)
+        for key in CONFIG_KEYS
+    })
 
 
 class GetOrNoneManager(models.Manager):
@@ -176,7 +210,9 @@ def enable_case_search(domain):
 
 
 def disable_case_search(domain):
-    from corehq.apps.case_search.tasks import delete_case_search_cases_for_domain
+    from corehq.apps.case_search.tasks import (
+        delete_case_search_cases_for_domain,
+    )
     from corehq.pillows.case_search import domains_needing_search_index
 
     try:

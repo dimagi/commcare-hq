@@ -27,6 +27,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     QueryData,
 )
 from corehq.apps.app_manager.xpath import CaseIDXPath, XPath, session_var
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
 from corehq.util.timer import time_method
 
 
@@ -764,7 +765,7 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
         return new_meta
 
     def to_stack_datum(self):
-        wanted = ("commcare_registry", "case_type", "case_id")
+        wanted = (CASE_SEARCH_REGISTRY_ID_KEY, "case_type", "case_id")
         keys = {el.key for el in self.query.data}
         data = [QueryData(key=el.key, ref=el.ref) for el in self.query.data if el.key in wanted]
         if "case_id" not in keys and self.next_datum:

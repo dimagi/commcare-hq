@@ -979,9 +979,12 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         ]
         return normalized_actions
 
-    def get_case_property(self, property):
+    def get_case_property(self, property, dynamic_only=False):
         if property in self.case_json:
             return self.case_json[property]
+
+        if dynamic_only:
+            return
 
         allowed_fields = [
             field.name for field in self._meta.fields
