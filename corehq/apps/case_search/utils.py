@@ -79,7 +79,7 @@ def get_case_search_results(domain, criteria, app_id=None, couch_user=None):
 
     cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
     if app_id:
-        cases.extend(get_related_cases(helper, app_id, case_types, cases))
+        cases.extend(get_related_cases(helper, app_id, case_types, cases, config.expand_id_property))
     return cases
 
 
@@ -263,7 +263,7 @@ class CaseSearchCriteria:
         ]
 
 
-def get_related_cases(helper, app_id, case_types, cases):
+def get_related_cases(helper, app_id, case_types, cases, expand_id_property):
     """
     Fetch related cases that are necessary to display any related-case
     properties in the app requesting this case search.
@@ -283,12 +283,17 @@ def get_related_cases(helper, app_id, case_types, cases):
         for _type in types
     ]
 
-    results = []
+    expanded_case_results = []
+    if expand_id_property:
+        expanded_case_results.extend(get_expanded_case_results(helper, expand_id_property, cases))
+
+    results = expanded_case_results
+    top_level_cases = cases + expanded_case_results
     if paths:
-        results.extend(get_related_case_results(helper, cases, paths))
+        results.extend(get_related_case_results(helper, top_level_cases, paths))
 
     if child_case_types:
-        results.extend(get_child_case_results(helper, cases, child_case_types))
+        results.extend(get_child_case_results(helper, top_level_cases, child_case_types))
 
     initial_case_ids = {case.case_id for case in cases}
     return list({
@@ -334,9 +339,7 @@ def get_related_case_results(helper, cases, paths):
             else:
                 indices = [case.get_index(identifier) for case in current_cases]
                 related_case_ids = {i.referenced_id for i in indices if i}
-                results = helper.get_base_queryset().case_ids(related_case_ids).run().hits
-                current_cases = [helper.wrap_case(result, is_related_case=True)
-                                 for result in results]
+                current_cases = _get_case_search_cases(helper, related_case_ids)
                 results_cache[fragment] = current_cases
 
     results = []
@@ -369,4 +372,17 @@ def get_child_case_results(helper, parent_cases, case_types):
                .case_type(case_types)
                .get_child_cases(parent_case_ids, "parent")
                .run().hits)
+    return [helper.wrap_case(result, is_related_case=True) for result in results]
+
+
+def get_expanded_case_results(helper, expand_id_property, cases):
+    expanded_case_ids = {
+        case.get_case_property(expand_id_property, dynamic_only=True) for case in cases
+    }
+    expanded_case_ids -= {None, ""}
+    return _get_case_search_cases(helper, expanded_case_ids)
+
+
+def _get_case_search_cases(helper, case_ids):
+    results = helper.get_base_queryset().case_ids(case_ids).run().hits
     return [helper.wrap_case(result, is_related_case=True) for result in results]
