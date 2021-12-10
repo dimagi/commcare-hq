@@ -239,8 +239,8 @@ class Command(BaseCommand):
 
     def _print_section_title(self, title_string):
         self.stdout.write('')
-        self.stdout.write('=' * len(title_string))
-        self.stdout.write(f'{title_string}')
+        # self.stdout.write('=' * len(title_string))
+        self.stdout.write(f'{title_string.upper()}')
         self.stdout.write('=' * len(title_string))
 
     def _print_value(self, name, *values):
@@ -408,12 +408,17 @@ class Command(BaseCommand):
             cursor.execute("""
                 SELECT COUNT(*) as num_forms, d.count as num_updates 
                 FROM (
-                    SELECT COUNT(*) as count 
+                    SELECT COUNT(*) as count
                     FROM form_processor_casetransaction 
+                    WHERE case_id IN (
+                        SELECT case_id 
+                        FROM form_processor_commcarecasesql 
+                        WHERE domain = %s
+                    )
                     GROUP BY form_id
                 ) AS d 
                 GROUP BY d.count;
-            """)
+            """, [self.domain])
             result = cursor.fetchall()
 
             running_form_case_updates = 0
@@ -421,9 +426,17 @@ class Command(BaseCommand):
             for num_forms, num_updates in result:
                 total_forms += num_forms
                 running_form_case_updates += num_forms * num_updates
-            ResourceModel.set_stat('case_transactions', running_form_case_updates / total_forms)
+            ResourceModel.set_stat(ResourceModel.CASE_TRANSACTIONS_FACTOR, running_form_case_updates / total_forms)
 
-            cursor.execute("""SELECT COUNT(*) FROM form_processor_casetransaction; """)
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM form_processor_casetransaction 
+                WHERE case_id IN (
+                    SELECT case_id 
+                    FROM form_processor_commcarecasesql 
+                    WHERE domain = %s
+                );
+            """, [self.domain])
             (total_transactions,) = cursor.fetchone()
             ResourceModel.set_stat(ResourceModel.CASE_TRANSACTIONS_TOTAL, total_transactions)
 
@@ -432,7 +445,11 @@ class Command(BaseCommand):
         db_cursor = connections[db_name].cursor()
 
         with db_cursor as cursor:
-            cursor.execute("""SELECT COUNT(*) FROM form_processor_commcarecaseindexsql;""")
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM form_processor_commcarecaseindexsql 
+                WHERE domain = %s;
+            """, [self.domain])
             (total_case_indices,) = cursor.fetchone()
 
             total_cases = ResourceModel.get_stat(ResourceModel.CASES_TOTAL)
@@ -448,12 +465,13 @@ class Command(BaseCommand):
                 SELECT COUNT(*), d.count 
                 FROM (
                     SELECT COUNT(*) AS count 
-                    FROM phone_synclogsql 
+                    FROM phone_synclogsql
+                    WHERE domain = %s
                     GROUP BY user_id
                 ) AS d 
                 GROUP BY d.count 
                 ORDER BY d.count;
-            """)
+            """,  [self.domain])
             result = cursor.fetchall()
 
             total_user_synclogs = 0
@@ -568,8 +586,11 @@ class Command(BaseCommand):
 
     def _output_case_transactions(self):
         case_transactions = ResourceModel.get_stat(ResourceModel.CASE_TRANSACTIONS_FACTOR)
-        self.stdout.write(f'Cases updated per user per month: {case_transactions}')
+        self.stdout.write(f'Average cases updated per form per month: {case_transactions}')
+
+        case_transactions_total = ResourceModel.get_stat(ResourceModel.CASE_TRANSACTIONS_TOTAL)
+        self.stdout.write(f'Total case transactions: {case_transactions_total}')
 
     def _output_synclogs(self):
         synclogs_monthly = ResourceModel.get_stat(ResourceModel.SYNCLOGS_MONTHLY_FACTOR)
-        self.stdout.write(f'Synclogs monthly factor: {synclogs_monthly}')
+        self.stdout.write(f'Synclogs per user per month: {synclogs_monthly}')
