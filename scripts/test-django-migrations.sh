@@ -38,8 +38,8 @@ function check_migrations_list {
         local diffopts=()
         ./manage.py makemigrations --lock-update --lock-path="$tmpfile"
         if diff --color /dev/null /dev/null >/dev/null 2>&1; then
-		    diffopts+=( --color )
-	    fi
+            diffopts+=( --color )
+        fi
         diff "${diffopts[@]}" -su migrations.lock "$tmpfile" || true
         rm -f "$tmpfile"
         log_fail "Frozen migrations are inconsistent.  You can use the" \
