@@ -359,7 +359,7 @@ class TestAPIEndpoint(TestCase):
         )
         web_user = WebUser.create(self.domain, self.username, self.password,
                                   None, None, role_id=role.get_id)
-        self.addCleanup(lambda: web_user.delete(None, None))
+        self.addCleanup(web_user.delete, None, None)
         return web_user
 
     def test_no_auth_fails_with_401(self):
