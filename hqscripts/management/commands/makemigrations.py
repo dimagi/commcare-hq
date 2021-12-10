@@ -74,7 +74,7 @@ class Command(makemigrations.Command):
         # command's argument parser, leaving them empty because it works.
         command.run_from_argv(["", "", "--list"])
         stream.seek(0)
-        lines = [f"{line}\n" for line in preamble.split("\n")]
+        lines = preamble.splitlines(keepends=True)
         # strip the applied status off the front of migration lines
         for line in stream:
             if line[:5] in {" [ ] ", " [X] "}:
@@ -92,6 +92,4 @@ class Command(makemigrations.Command):
         with open(self.lock_path, "r") as file:
             frozen = list(file)
         current = self.get_migrations_list()
-        if frozen == current:
-            return True
-        return False
+        return frozen == current
