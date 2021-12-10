@@ -17,8 +17,10 @@ FUZZY_PROPERTIES = "fuzzy_properties"
 CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
 CASE_SEARCH_REGISTRY_ID_KEY = 'commcare_registry'
+CASE_SEARCH_EXPAND_ID_PROPERTY_KEY = 'commcare_expand_id_property'
 CONFIG_KEYS = (
     CASE_SEARCH_REGISTRY_ID_KEY,
+    CASE_SEARCH_EXPAND_ID_PROPERTY_KEY
 )
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
@@ -30,6 +32,7 @@ UNSEARCHABLE_KEYS = (
 @attr.s(frozen=True)
 class CaseSearchRequestConfig:
     commcare_registry = attr.ib(kw_only=True, default=None)
+    commcare_expand_id_property = attr.ib(kw_only=True, default=None)
 
 
 def extract_search_request_config(search_criteria):
