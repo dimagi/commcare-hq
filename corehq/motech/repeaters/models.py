@@ -356,6 +356,13 @@ class SQLCaseRepeater(SQLRepeater):
     Record that cases should be repeated to a new url
 
     """
+    FORMAT_OPTIONS = ['case_json', 'case_xml']
+
+    version = OptionValue(choices=LEGAL_VERSIONS, default=V2)
+    white_listed_case_types = OptionValue(default=list)
+    black_listed_users = OptionValue(default=list)
+    format = OptionValue(choices=FORMAT_OPTIONS)
+
     class Meta:
         proxy = True
 
