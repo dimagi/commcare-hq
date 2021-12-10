@@ -82,4 +82,5 @@ branches:
     - smh/user-report-user-filter-enterprise-domain-support # Steph Dec 8
     - sk/web-apps-preserve-selections # Simon Dec 10
     - gh/improve-queueing-repeaters # Graham Dec 10
+    - es/expanded-case-search-conf  # Ethan Dec 10
 submodules: { }
