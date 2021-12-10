@@ -935,7 +935,7 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
             type=PROPERTY_TYPE_RAW,
             id=COMMCARE_PROJECT,
             text=_('CommCare Project'),
-            source='domain',
+            source='commcare_project',
             data_types=["string"],
         )
         return properties
