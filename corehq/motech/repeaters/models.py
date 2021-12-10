@@ -778,10 +778,19 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
 
 
 class SQLFormRepeater(SQLRepeater):
+
+    FORMAT_OPTIONS = ['form_json', 'form_xml']
+
+    include_app_id_param = OptionValue(default=True)
+    white_listed_case_types = OptionValue(default=list)
+    format = OptionValue(choices=FORMAT_OPTIONS)
+
     class Meta:
         proxy = True
 
     friendly_name = _("Forward Forms")
+
+    payload_generator_classes = (FormRepeaterXMLPayloadGenerator, FormRepeaterJsonPayloadGenerator)
 
     @memoized
     def payload_doc(self, repeat_record):
