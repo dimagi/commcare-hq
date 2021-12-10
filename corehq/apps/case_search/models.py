@@ -15,6 +15,7 @@ FUZZY_PROPERTIES = "fuzzy_properties"
 CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
 CASE_SEARCH_REGISTRY_ID_KEY = 'commcare_registry'
+CASE_SEARCH_EXPAND_ID_PROPERTY_KEY = 'commcare_expand_id_property'
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     'owner_id',
