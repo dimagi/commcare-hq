@@ -5,16 +5,7 @@ from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.const import ONE_DAY
-from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
-from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
 from corehq.util.quickcache import quickcache
 
 SYSTEM_USER_TYPE = "system"
@@ -92,16 +83,7 @@ def get_user_type_deep_cache_for_unknown_users(user_id):
 
 
 def get_all_expected_es_indices():
-    yield CASE_INDEX_INFO
-    yield XFORM_INDEX_INFO
-    yield REPORT_CASE_INDEX_INFO
-    yield REPORT_XFORM_INDEX_INFO
-    yield APP_INDEX_INFO
-    yield DOMAIN_INDEX_INFO
-    yield USER_INDEX_INFO
-    yield GROUP_INDEX_INFO
-    yield SMS_INDEX_INFO
-    yield CASE_SEARCH_INDEX_INFO
+    yield from CANONICAL_NAME_INFO_MAP.values()
 
 
 def format_form_meta_for_es(form_metadata):
