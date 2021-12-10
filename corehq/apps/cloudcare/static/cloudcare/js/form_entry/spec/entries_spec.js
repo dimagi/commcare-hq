@@ -238,8 +238,8 @@ describe('Entries', function () {
         assert.sameMembers(entry.answer(), [1, 2]);
         assert.sameMembers(entry.rawAnswer(), ['a', 'b']);
 
-        entry.answer([1])
-        entry.choices(['a', 'c'])
+        entry.answer([1]);
+        entry.choices(['a', 'c']);
         this.clock.tick(1000);
         assert.equal(spy.calledOnce, true);
         assert.sameMembers(entry.rawAnswer(), ['a']);

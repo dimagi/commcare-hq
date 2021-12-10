@@ -411,7 +411,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 let choices = this.choices.peek();
                 let answer = _.filter(value.map((val) => _.indexOf(choices, val) + 1), (v) => v > 0);
                 self.onPreProcess.call(this, answer);
-            }
+            },
         });
 
         self.colStyleIfHideLabel = ko.computed(function () {
