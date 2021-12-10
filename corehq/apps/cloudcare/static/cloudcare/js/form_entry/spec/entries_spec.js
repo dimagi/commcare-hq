@@ -215,15 +215,15 @@ describe('Entries', function () {
         assert.isTrue(entry instanceof Controls.MultiSelectEntry);
         assert.equal(entry.templateType, 'select');
         assert.sameMembers(entry.answer(), [1]);
-        assert.sameMembers(entry.rawAnswer(), [1]);
+        assert.sameMembers(entry.rawAnswer(), ['a']);
 
         // Did not change answer, do not call change
-        entry.rawAnswer([1]);
+        entry.rawAnswer(['a']);
         this.clock.tick(1000);
         assert.equal(spy.callCount, 0);
         assert.sameMembers(entry.answer(), [1]);
 
-        entry.rawAnswer([2]);
+        entry.rawAnswer(['b']);
         assert.equal(spy.calledOnce, true);
         assert.sameMembers(entry.answer(), [2]);
     });
@@ -236,12 +236,13 @@ describe('Entries', function () {
         var entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.SingleSelectEntry);
         assert.equal(entry.templateType, 'select');
-        assert.equal(entry.rawAnswer(), 1);
+        assert.equal(entry.rawAnswer(), 'a');
 
-        entry.rawAnswer(2);
+        entry.rawAnswer('b');
         this.clock.tick(1000);
         assert.isTrue(spy.calledOnce);
         assert.equal(entry.answer(), 2);
+        assert.equal(entry.rawAnswer(), 'b');
     });
 
     it('Should return DateEntry', function () {
