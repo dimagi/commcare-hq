@@ -44,11 +44,11 @@ from corehq.util.markup import (
     TableRowFormatter,
 )
 
-
 class ResourceModel(object):
 
     stats = {
         'total_users': None,
+        'monthly_users_joined': None,
         'monthly_forms_per_user': None,
         'monthly_user_form_stats_expanded': None,
         'monthly_user_case_stats_expanded': None,
@@ -118,14 +118,13 @@ class Command(BaseCommand):
         )
 
         self._doc_counts()
+        self._monthly_users_joined()
         self._forms_per_user_per_month()
         self._cases_created_per_user_per_month()
         self._cases_updated_per_user_per_month()
-
         self._case_transactions()
         self._case_indices()
         self._synclogs()
-
         self._case_to_case_index_ratio()
         self._ledgers_per_case()
         self._attachment_sizes()
@@ -220,6 +219,12 @@ class Command(BaseCommand):
 
         SimpleTableWriter(self.stdout, row_formatter).write_table(headers, rows)
         self.stdout.write('')
+
+    def _print_section_title(self, title_string):
+        self.stdout.write('')
+        self.stdout.write('=' * len(title_string))
+        self.stdout.write(f'{title_string}')
+        self.stdout.write('=' * len(title_string))
 
     def _print_value(self, name, *values):
         separator = ',' if self.csv else ': '
@@ -442,12 +447,71 @@ class Command(BaseCommand):
 
             ResourceModel.set_stat('synclogs_monthly', total_user_synclogs / total_users)
 
+    def _monthly_users_joined(self):
+        users_joined_dates = UserES()\
+            .domain(self.domain)\
+            .show_inactive()\
+            .values_list('created_on', flat=True)\
+
+        users_joined_dates.sort()
+
+        users_joined_on_dates = {}
+        for user_date in users_joined_dates:
+            join_date = user_date.split('T')[0]
+
+            if users_joined_on_dates.get(join_date):
+                users_joined_on_dates[join_date] = users_joined_on_dates[join_date] + 1
+            else:
+                users_joined_on_dates[join_date] = 1
+
+        monthly_users_joined = []
+        cumulative_users_joined = 0
+        for join_date, users_joined in users_joined_on_dates.items():
+            cumulative_users_joined += users_joined
+            monthly_users_joined.append(
+                (join_date, users_joined, cumulative_users_joined)
+            )
+
+        ResourceModel.set_stat('monthly_users_joined', monthly_users_joined)
+
     def _output_stats(self):
+        self._print_section_title('Docs count')
+        self._output_docs_count()
+
+        self._print_section_title('User stats')
+        self._output_monthly_users_joined()
         self._output_monthly_user_form_stats()
         self._output_monthly_user_case_stats()
+
+        self._print_section_title('Case Indices')
         self._output_case_ratio_index()
+
+        self._print_section_title('Case Transactions')
+        self._output_case_transactions()
+
+        self._print_section_title('Sync logs')
+        self._output_synclogs()
+
+        self._print_section_title('Attachments')
         self._output_attachment_sizes()
+
+        self._print_section_title('UCR')
         self._output_ucr()
+
+    def _output_docs_count(self):
+        total_forms = ResourceModel.get_stat('forms_total')
+        self.stdout.write(f'Total forms: {total_forms}')
+
+        total_cases = ResourceModel.get_stat('cases_total')
+        self.stdout.write(f'Total cases: {total_cases}')
+
+    def _output_monthly_users_joined(self):
+        users_joined = ResourceModel.get_stat('monthly_users_joined')
+
+        self._print_table(
+            ['Date', 'Users joined', 'Total'],
+            users_joined
+        )
 
     def _output_monthly_user_form_stats(self):
         def _format_rows(query_):
@@ -457,9 +521,8 @@ class Command(BaseCommand):
             ]
 
         user_stats = ResourceModel.get_stat('monthly_user_form_stats_expanded')
-
         headers = ['Month', 'Active Users', 'Average forms per user', 'Std Dev']
-        self.stdout.write('All user stats')
+
         self._print_table(
             headers,
             _format_rows(
@@ -467,6 +530,10 @@ class Command(BaseCommand):
             )
         )
 
+        monthly_forms_per_user = ResourceModel.get_stat('monthly_forms_per_user')
+        self.stdout.write(f'Average user forms per month: {monthly_forms_per_user}')
+
+        self.stdout.write('')
         self.stdout.write('System user stats')
         self._print_table(
             headers,
@@ -486,9 +553,12 @@ class Command(BaseCommand):
         self.stdout.write('Cases updated per user (estimate)')
         self._print_table(['Month', 'Cases updated per user'], case_updates)
 
+        monthly_cases_per_user = ResourceModel.get_stat('monthly_cases_per_user')
+        self.stdout.write(f'Average user cases per month: {monthly_cases_per_user}')
+
     def _output_case_ratio_index(self):
         case_index_ratio = ResourceModel.get_stat('case_index_ratio')
-        self._print_value('Ratio of cases to case indices: 1 : ', case_index_ratio)
+        self.stdout.write(f'Ratio of cases to case indices: 1 : {case_index_ratio}')
 
     def _output_attachment_sizes(self):
         attachments = ResourceModel.get_stat('attachments')
@@ -503,12 +573,22 @@ class Command(BaseCommand):
         )
 
     def _output_ucr(self):
-        self._print_value('Static UCR data sources', ResourceModel.get_stat('static_datasources'))
-        self._print_value('Dynamic UCR data sources', ResourceModel.get_stat('dynamic_datasources'))
+        self.stdout.write(f"Static UCR data sources: {ResourceModel.get_stat('static_datasources')}")
+        self.stdout.write(f"Dynamic UCR data sources: {ResourceModel.get_stat('dynamic_datasources')}")
 
         rows = ResourceModel.get_stat('datasources_info')
+
+        self.stdout.write('')
         self.stdout.write('UCR datasource sizes')
         self._print_table(
             ['Datasource name', 'Row count (approximate)', 'Doc type', 'Size (bytes)'],
             rows
         )
+
+    def _output_case_transactions(self):
+        case_transactions = ResourceModel.get_stat('case_transactions')
+        self.stdout.write(f'Cases updated per user per month: {case_transactions}')
+
+    def _output_synclogs(self):
+        synclogs_monthly = ResourceModel.get_stat('synclogs_monthly')
+        self.stdout.write(f'Synclogs monthly factor: {synclogs_monthly}')
