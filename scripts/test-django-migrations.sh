@@ -30,15 +30,20 @@ function check_makemigrations {
 
 function check_migrations_list {
     # ensure migrations lockfile is consistent with actual migrations list
-    local lockfile=migrations.lock
-    local cmd=(make migrations.lock)
+    local cmd=(./manage.py makemigrations --lock-check)
     log_group_begin "Check: ${cmd[*]}"
-    "${cmd[@]}" >/dev/null  # don't output the diff twice
-    git update-index -q --refresh
-    if ! git diff --exit-code HEAD -- "$lockfile"; then
-        # dirty
-        log_fail "Frozen migrations are inconsistent.  Did you run '${cmd[*]}'?"
-        #git checkout "$lockfile"  # (don't) clean up
+    if ! "${cmd[@]}"; then
+        # lock file is inconsistent, show a diff because it's useful
+        local tmpfile=$(mktemp)
+        local diffopts=()
+        ./manage.py makemigrations --lock-update --lock-path="$tmpfile"
+        if diff --color /dev/null /dev/null >/dev/null 2>&1; then
+		    diffopts+=( --color )
+	    fi
+        diff "${diffopts[@]}" -su migrations.lock "$tmpfile" || true
+        rm -f "$tmpfile"
+        log_fail "Frozen migrations are inconsistent.  You can use the" \
+            "'makemigrations --lock-update' management command to refresh them."
         return 1
     fi
     # clean
