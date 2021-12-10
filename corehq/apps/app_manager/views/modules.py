@@ -244,6 +244,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'data_registry': module.search_config.data_registry,
             'data_registry_workflow': module.search_config.data_registry_workflow,
             'additional_registry_cases': module.search_config.additional_registry_cases,
+            'expand_id_property': module.search_config.expand_id_property,
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -1258,6 +1259,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 data_registry=data_registry_slug,
                 data_registry_workflow=data_registry_workflow,
                 additional_registry_cases=additional_registry_cases,
+                expand_id_property=search_properties.get('expand_id_property', ""),
             )
 
     resp = {}

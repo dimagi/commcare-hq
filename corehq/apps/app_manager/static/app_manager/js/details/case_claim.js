@@ -181,6 +181,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchLabel', 'searchFilter', 'searchDefaultRelevant',
         'searchAdditionalRelevant', 'dataRegistry', 'dataRegistryWorkflow', 'additionalRegistryCases',
+        'expandIdProperty',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
@@ -287,6 +288,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 additional_registry_cases: self.dataRegistryWorkflow() === "load_case" ?  self.additionalRegistryCases().map((query) => {
                     return query.caseIdXpath();
                 }) : [],
+                expand_id_property: self.expandIdProperty(),
             };
         };
 

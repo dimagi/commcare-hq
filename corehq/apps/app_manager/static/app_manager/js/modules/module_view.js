@@ -50,6 +50,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     dataRegistry: options.data_registry,
                     dataRegistryWorkflow: options.data_registry_workflow,
                     additionalRegistryCases: options.additional_registry_cases,
+                    expandIdProperty: options.expand_id_property,
                 });
 
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
