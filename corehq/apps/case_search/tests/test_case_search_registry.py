@@ -236,6 +236,7 @@ class TestCaseSearchRegistry(TestCase):
     def test_access_related_case_type_not_in_registry(self):
         # "creative_work" case types are in the registry, but not their parents - "creator"
         # domain 1 can access a domain 2 case even while referencing an inaccessible case type property
+        raise AttributeError("Developer-induced error")
         results = self._run_query(
             self.domain_1,
             ['creative_work'],
