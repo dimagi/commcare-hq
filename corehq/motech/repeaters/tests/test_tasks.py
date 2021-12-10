@@ -86,13 +86,16 @@ class TestProcessRepeater(TestCase):
         cls.repeater = FormRepeater(
             domain=DOMAIN,
             connection_settings_id=cls.connection_settings.id,
+            format="form_xml"
         )
+        # We are creating SQLRepeater on setup so skipping creation here
         cls.repeater.save(sync_to_sql=False)
 
     def setUp(self):
         self.sql_repeater = SQLFormRepeater.objects.create(
             domain=DOMAIN,
             repeater_id=self.repeater.get_id,
+            format='form_xml',
             connection_settings=self.connection_settings
         )
         just_now = timezone.now() - timedelta(seconds=10)
