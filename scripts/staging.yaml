@@ -81,4 +81,5 @@ branches:
     - dependabot/npm_and_yarn/jquery-ui-1.13.0  # Biyeun Dec 8 
     - smh/user-report-user-filter-enterprise-domain-support # Steph Dec 8
     - sk/web-apps-preserve-selections # Simon Dec 10
+    - gh/improve-queueing-repeaters # Graham Dec 10
 submodules: { }
