@@ -347,7 +347,6 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     def _migration_get_fields(cls):
         return [
             "domain",
-            "format",
         ]
 
 
