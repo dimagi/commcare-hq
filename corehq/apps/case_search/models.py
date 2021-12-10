@@ -16,8 +16,9 @@ CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
 CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
-CASE_SEARCH_REGISTRY_ID_KEY = 'commcare_registry'
-CASE_SEARCH_EXPAND_ID_PROPERTY_KEY = 'commcare_expand_id_property'
+CONFIG_KEY_PREFIX = "x_commcare_"
+CASE_SEARCH_REGISTRY_ID_KEY = f'{CONFIG_KEY_PREFIX}data_registry'
+CASE_SEARCH_EXPAND_ID_PROPERTY_KEY = f'{CONFIG_KEY_PREFIX}expand_id_property'
 CONFIG_KEYS = (
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_EXPAND_ID_PROPERTY_KEY
@@ -31,8 +32,8 @@ UNSEARCHABLE_KEYS = (
 
 @attr.s(frozen=True)
 class CaseSearchRequestConfig:
-    commcare_registry = attr.ib(kw_only=True, default=None)
-    commcare_expand_id_property = attr.ib(kw_only=True, default=None)
+    data_registry = attr.ib(kw_only=True, default=None)
+    expand_id_property = attr.ib(kw_only=True, default=None)
 
 
 def extract_search_request_config(search_criteria):
@@ -43,7 +44,8 @@ def extract_search_request_config(search_criteria):
         return val
 
     return CaseSearchRequestConfig(**{
-        key: _get_value(key) for key in CONFIG_KEYS
+        key.replace(CONFIG_KEY_PREFIX, ""): _get_value(key)
+        for key in CONFIG_KEYS
     })
 
 

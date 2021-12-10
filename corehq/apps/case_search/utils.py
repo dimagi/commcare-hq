@@ -51,7 +51,7 @@ def get_case_search_results(domain, criteria, app_id=None, couch_user=None):
 
     config = extract_search_request_config(criteria)
     if config.data_registry:
-        query_domains = _get_registry_visible_domains(couch_user, domain, case_types, config.commcare_registry)
+        query_domains = _get_registry_visible_domains(couch_user, domain, case_types, config.data_registry)
         helper = _RegistryQueryHelper(domain, query_domains)
     else:
         query_domains = [domain]
