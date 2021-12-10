@@ -23,11 +23,14 @@ CONFIG_KEYS = (
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_EXPAND_ID_PROPERTY_KEY
 )
+LEGACY_CONFIG_KEYS = {
+    CASE_SEARCH_REGISTRY_ID_KEY: "commcare_registry"
+}
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     'owner_id',
     'include_closed',   # backwards compatibility for deprecated functionality to include closed cases
-) + CONFIG_KEYS
+) + CONFIG_KEYS + tuple(LEGACY_CONFIG_KEYS.values())
 
 
 @attr.s(frozen=True)
@@ -38,7 +41,12 @@ class CaseSearchRequestConfig:
 
 def extract_search_request_config(search_criteria):
     def _get_value(key):
-        val = search_criteria.pop(key, None)
+        val = None
+        try:
+            val = search_criteria.pop(key)
+        except KeyError:
+            if key in LEGACY_CONFIG_KEYS:
+                val = search_criteria.pop(LEGACY_CONFIG_KEYS[key], None)
         if isinstance(val, list):
             raise CaseSearchUserError(f"'{key}' only accepts single values")
         return val

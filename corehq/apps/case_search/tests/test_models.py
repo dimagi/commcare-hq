@@ -56,3 +56,10 @@ def test_extract_criteria_config(self, data_registry, expand_id_property, expect
             "case_type": "bob"
         })
         eq(config, CaseSearchRequestConfig(data_registry=data_registry, expand_id_property=expand_id_property))
+
+
+def test_extract_criteria_config_legacy():
+    config = extract_search_request_config({
+        "commcare_registry": "reg1",
+    })
+    eq(config, CaseSearchRequestConfig(data_registry="reg1"))
