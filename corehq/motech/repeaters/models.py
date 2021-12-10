@@ -184,12 +184,6 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
     })
 
 
-REPEATER_FORMAT_OPTIONS = (
-    ('case_json', 'JSON'),
-    ('case_xml', 'XML')
-)
-
-
 class RepeaterSuperProxy(models.Model):
     # See https://stackoverflow.com/questions/241250/single-table-inheritance-in-django/60894618#60894618
     PROXY_FIELD_NAME = "repeater_type"
