@@ -399,12 +399,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         self.rawAnswer = ko.pureComputed({
             read: () => {
-                let answer = this.answer.peek();
+                let answer = this.answer();
                 if (answer === Const.NO_ANSWER) {
                     return [];
                 }
 
-                let choices = this.choices.peek();
+                let choices = this.choices();
                 return answer.map(index => choices[index - 1]);
             },
             write: (value) => {
@@ -462,12 +462,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         self.rawAnswer = ko.pureComputed({
             read: () => {
-                let answer = this.answer.peek();
+                let answer = this.answer();
                 if (!answer) {
                     return Const.NO_ANSWER;
                 }
 
-                let choices = this.choices.peek();
+                let choices = this.choices();
                 return choices[answer - 1];
             },
             write: (value) => {
