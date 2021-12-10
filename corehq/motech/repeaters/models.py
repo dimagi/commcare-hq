@@ -78,6 +78,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from jsonfield import JSONField
 from memoized import memoized
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
@@ -252,43 +253,13 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
-
-    # attributes used in CaseRepeaters and it's subclasses
-    version = models.CharField(
-        max_length=10,
-        choices=list(zip(LEGAL_VERSIONS, LEGAL_VERSIONS)),
-        default=V2,
-    )
-    white_listed_case_types = ArrayField(
-        models.CharField(max_length=255),
-        default=list
-    )
-    black_listed_users = ArrayField(
-        models.CharField(max_length=255),
-        default=list
-    )
-
-    #attributes used in FormRepeaters and it's subclases
-    include_app_id_param = models.BooleanField(default=True)
-    white_listed_case_types = ArrayField(
-        models.CharField(max_length=255),
-        default=list
-    )
-
-    # attributes used in FormRepeaters and CaseRepeaters
-    format = models.CharField(
-        max_length=16,
-        choices=REPEATER_FORMAT_OPTIONS,
-        blank=True,
-        null=True
-    )
-
-    objects = RepeaterManager()
-
+    options = JSONField(default=dict)
     connection_settings = models.ForeignKey(
         ConnectionSettings,
         on_delete=models.PROTECT
     )
+
+    objects = RepeaterManager()
 
     class Meta:
         db_table = 'repeaters_repeater'
