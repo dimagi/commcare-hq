@@ -92,6 +92,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
             {'submissions': 2, 'xmlns': 'my://crazy.xmlns/'}
         )
 
+    @flaky_slow
     def test_get_form_analytics_metadata__app(self):
         self.assertEqual(get_form_analytics_metadata(self.domain, self.app_id_2, self.xmlns_2), {
             'app': {'id': self.app_id_2, 'langs': [], 'name': None},
