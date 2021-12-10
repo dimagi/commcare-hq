@@ -18,10 +18,10 @@ CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
 CONFIG_KEY_PREFIX = "x_commcare_"
 CASE_SEARCH_REGISTRY_ID_KEY = f'{CONFIG_KEY_PREFIX}data_registry'
-CASE_SEARCH_EXPAND_ID_PROPERTY_KEY = f'{CONFIG_KEY_PREFIX}expand_id_property'
+CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY = f'{CONFIG_KEY_PREFIX}custom_related_case_property'
 CONFIG_KEYS = (
     CASE_SEARCH_REGISTRY_ID_KEY,
-    CASE_SEARCH_EXPAND_ID_PROPERTY_KEY
+    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY
 )
 LEGACY_CONFIG_KEYS = {
     CASE_SEARCH_REGISTRY_ID_KEY: "commcare_registry"
@@ -36,7 +36,7 @@ UNSEARCHABLE_KEYS = (
 @attr.s(frozen=True)
 class CaseSearchRequestConfig:
     data_registry = attr.ib(kw_only=True, default=None)
-    expand_id_property = attr.ib(kw_only=True, default=None)
+    custom_related_case_property = attr.ib(kw_only=True, default=None)
 
 
 def extract_search_request_config(search_criteria):
