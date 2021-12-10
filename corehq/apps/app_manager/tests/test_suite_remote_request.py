@@ -405,10 +405,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         expected = """
         <partial>
-          <data key="commcare_expand_id_property" ref="'potential_duplicate_id'"/>
+          <data key="x_commcare_expand_id_property" ref="'potential_duplicate_id'"/>
         </partial>
         """
-        xpath = "./remote-request[1]/session/query/data[@key='commcare_expand_id_property']"
+        xpath = "./remote-request[1]/session/query/data[@key='x_commcare_expand_id_property']"
         self.assertXmlPartialEqual(expected, suite, xpath)
 
     def test_blacklisted_owner_ids(self, *args):
