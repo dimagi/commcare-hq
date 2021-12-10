@@ -744,7 +744,7 @@ def _munge_report_data(report_data):
     report_data['default_filters'] = json.dumps(report_data['default_filters'])
 
 
-class ReportPreview(BaseDomainView):  # TODO: fix with adding registry info
+class ReportPreview(BaseDomainView):
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
@@ -758,7 +758,7 @@ class ReportPreview(BaseDomainView):  # TODO: fix with adding registry info
         bound_form = form_class(
             domain,
             '{}_{}_{}'.format(TEMP_REPORT_PREFIX, self.domain, data_source),
-            report_data['app'],  # TODO: errors since app is None for registry
+            report_data['app'],
             report_data['source_type'],
             report_data['source_id'],
             None,
