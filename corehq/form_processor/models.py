@@ -810,14 +810,18 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             lazy_serialize_case_transactions,
             lazy_serialize_case_xform_ids,
         )
+
+        def union(*dicts):
+            return {k: v for d in dicts for k, v in d.items()}
+
         serializer = CommCareCaseSQLSerializer(self)
-        return self.case_json | dict(serializer.data) | {
+        return union(self.case_json, serializer.data, {
             'indices': lazy_serialize_case_indices(self),
             'actions': lazy_serialize_case_transactions(self),
             'xform_ids': lazy_serialize_case_xform_ids(self),
             'case_attachments': lazy_serialize_case_attachments(self),
             'backend_id': 'sql',
-        }
+        })
 
     def dumps(self, pretty=False):
         indent = 4 if pretty else None
