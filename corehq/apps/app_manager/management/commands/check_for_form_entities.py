@@ -87,7 +87,7 @@ def get_all_apps(reset=False):
     db = Application.get_db()
     keys = [[Application.__name__], [f'{Application.__name__}-Deleted']]
     view_name = 'all_docs/by_doc_type'
-    raw_iter = resumable_view_iterator(db, 'doc_type', view_name, view_keys=keys, chunk_size=10)
+    raw_iter = resumable_view_iterator(db, __name__, view_name, view_keys=keys, chunk_size=10)
     if reset:
         raw_iter.discard_state()
 
