@@ -41,6 +41,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.app_manager.suite_xml.xml_models import SessionDatum
 
 
 @attr.s(repr=False)
@@ -650,19 +651,20 @@ class EntriesHelper(object):
                 requires_selection=True,
                 action=action,
             ))
-        datums.append(FormDatumMeta(
-            datum=SessionDatum(
-                id=load_case_from_fixture.fixture_tag,
-                nodeset=load_case_from_fixture.fixture_nodeset,
-                value=load_case_from_fixture.fixture_variable,
-                detail_select=self.details_helper.get_detail_id_safe(target_module, 'case_short'),
-                detail_confirm=self.details_helper.get_detail_id_safe(target_module, 'case_long'),
-                autoselect=load_case_from_fixture.auto_select_fixture,
-            ),
-            case_type=action.case_type,
-            requires_selection=True,
-            action=action,
-        ))
+        if load_case_from_fixture.fixture_tag:
+            datums.append(FormDatumMeta(
+                datum=SessionDatum(
+                    id=load_case_from_fixture.fixture_tag,
+                    nodeset=load_case_from_fixture.fixture_nodeset,
+                    value=load_case_from_fixture.fixture_variable,
+                    detail_select=self.details_helper.get_detail_id_safe(target_module, 'case_short'),
+                    detail_confirm=self.details_helper.get_detail_id_safe(target_module, 'case_long'),
+                    autoselect=load_case_from_fixture.auto_select_fixture,
+                ),
+                case_type=action.case_type,
+                requires_selection=True,
+                action=action,
+            ))
 
         if action.case_tag:
             if action.case_index.tag:
