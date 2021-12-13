@@ -154,6 +154,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
             return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
         }
 
+        var progressView = hqImport("cloudcare/js/formplayer/layout/views/progress_bar")({
+            progressMessage: gettext("Switching projects..."),
+        });
+        FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
+
         var user = FormplayerFrontend.getChannel().request('currentUser');
         if (options.forceLoginAs && !user.restoreAs) {
             // Workflow requires a mobile user, likely because we're trying to access
