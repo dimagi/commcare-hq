@@ -64,6 +64,7 @@ class ReportXformPillowTest(TestCase):
 
 
 @override_settings(ES_XFORM_FULL_INDEX_DOMAINS=[DOMAIN])
+@es_test
 class ReportXformReindexerTest(TestCase):
 
     def setUp(self):
