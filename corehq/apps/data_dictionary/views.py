@@ -227,7 +227,7 @@ def _generate_data_for_export(domain, export_fhir_data):
         prop_dict = {
             _('Case Property'): case_prop.name,
             _('Group'): case_prop.group,
-            _('Data Type'): case_prop.data_type,
+            _('Data Type'): case_prop.get_data_type_display() if case_prop.data_type else '',
             _('Description'): case_prop.description,
             _('Deprecated'): case_prop.deprecated
         }
@@ -404,6 +404,7 @@ def _process_bulk_upload(bulk_file, domain):
     import_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
     fhir_resource_type_by_case_type = {}
     expected_columns_in_prop_sheet = 5
+    data_type_map = {display_val: raw_val for raw_val, display_val in PROPERTY_TYPE_CHOICES}
 
     if import_fhir_data:
         expected_columns_in_prop_sheet = 7
@@ -452,7 +453,12 @@ def _process_bulk_upload(bulk_file, domain):
                     error = _('Not enough columns')
                 else:
                     error, fhir_resource_prop_path, fhir_resource_type, remove_path = None, None, None, None
-                    name, group, data_type, description, deprecated = [cell.value for cell in row[:5]]
+                    name, group, data_type_display, description, deprecated = [cell.value for cell in row[:5]]
+                    # Fall back to value from file if data_type_display is not found in the map.
+                    # This allows existing error path to report accurately the value that isn't found,
+                    # and also has a side-effect of allowing older files (pre change to export
+                    # display values) to import successfully.
+                    data_type = data_type_map.get(data_type_display, data_type_display)
                     seen_props[case_type].add(name)
                     if import_fhir_data:
                         fhir_resource_prop_path, remove_path = row[5:]
