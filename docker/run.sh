@@ -78,7 +78,6 @@ function python_preheat {
 
 function run_tests {
     [ -n "$GITHUB_ACTIONS" ] && echo "::endgroup::"  # "Docker setup" begins in scripts/docker
-    echo "This line will never collapse"
     TEST="$1"
     shift
     suite_pat=$(printf '%s|' "${VALID_TEST_SUITES[@]}" | sed -E 's/\|$//')
