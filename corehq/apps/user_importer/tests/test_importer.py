@@ -36,6 +36,7 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
 
+from corehq.apps.groups.models import Group
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @classmethod
@@ -1243,6 +1244,57 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user.default_phone_number, '12345678912')
         self.assertEqual(user.phone_number, '12345678912')
         self.assertEqual(user.phone_numbers, ['12345678912'])
+
+    def test_upload_with_group(self):
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None)
+        user_specs = self._get_spec(user_id=user._id)
+        group = Group(domain=self.domain.name, name="test_group")
+        group.save()
+
+        self.addCleanup(group.delete)
+
+        user_specs['group'] = ["test_group"]
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [{'id': group._id, 'name': 'test_group', 'case-sharing': False, 'reporting': True}],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+
+        self.assertEqual(user_history.change_messages['groups'],
+            UserChangeMessage.groups_info([group])['groups'])
+
+    def test_upload_with_no_group(self):
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None)
+        user_specs = self._get_spec(user_id=user._id)
+        group = Group(domain=self.domain.name, name="test_group")
+        group.save()
+        group.add_user(user._id)
+
+        self.addCleanup(group.delete)
+
+        user_specs['group'] = []
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+
+        self.assertEqual(user_history.change_messages['groups'],
+            UserChangeMessage.groups_info([])['groups'])
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
