@@ -44,13 +44,13 @@ class CaseSearchRequestConfig:
     @case_type.validator
     def _require_case_type(self, attribute, value):
         if not value:
-            raise CaseSearchUserError(_('Search request must specify {param}').format(param=attribute))
+            raise CaseSearchUserError(_('Search request must specify {param}').format(param=attribute.name))
 
     @data_registry.validator
     @expand_id_property.validator
     def _is_string(self, attribute, value):
         if value and not isinstance(value, str):
-            raise CaseSearchUserError(_("{param} must be a string").format(param=attribute))
+            raise CaseSearchUserError(_("{param} must be a string").format(param=attribute.name))
 
 
 def extract_search_request_config(request_dict):
