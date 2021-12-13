@@ -267,6 +267,9 @@ class CommCareUserImporter(BaseUserImporter):
                 self.logger.add_info(UserChangeMessage.primary_location_removed())
 
     def update_user_groups(self, domain_info, group_names):
+        """
+        Add/remove user from groups without save and return change message for changes, if any
+        """
         old_group_ids = set()
         for group in domain_info.group_memoizer.by_user_id(self.user.user_id):
             old_group_ids.add(group.get_id)
