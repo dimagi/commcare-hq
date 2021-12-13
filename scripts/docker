@@ -259,12 +259,7 @@ esac
 
 if [ "$CMD" == "test" ]; then
 
-    # print a large header (some ascii art) to take up some space
-    art='H4sICCS/t2EAA3Njcm9sbC50eHQA7VG7DoAgDNz5CsLi1rn/4MIoK3FX/3/xyisOEnDSRJo
-         ALdz1Sqv0Y2NmWeoLTFpxy/7iYRMvxJ7qTOY5OsBZkzTEQWxMynTLNC4oUQCU6vKRWPV/Ln
-         h0sbbCREwE+TpTJNlOWd0WcYml7MxU7e52jeD3oANtdbw3cx3I1UYB1gHS25jfmN8Aib01v
-         xM4qzTXEgcAAA=='
-    echo "$art" | sed 's/ //g' | base64 -d | zcat
+    echo "This is the *first* line and it is not in a group."
 
     [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
     echo "Pulling docker containers..."
