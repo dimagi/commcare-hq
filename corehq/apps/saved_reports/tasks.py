@@ -10,7 +10,9 @@ import six
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
+from dimagi.utils.web import json_request
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reports.tasks import export_all_rows_task
@@ -121,12 +123,12 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
 
     GET_data = QueryDict('', mutable=True)
     GET_data.update(MultiValueDict(request_data['GET']))
+    request_data['GET'] = GET_data
 
     mock_request.method = 'GET'
-    mock_request.GET = GET_data
+    mock_request.GET = request_data['GET']
 
     config = ReportConfig()
-
     # see ReportConfig.query_string()
     object.__setattr__(config, '_id', 'dummy')
     config.name = _("Emailed report")
@@ -142,7 +144,10 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     else:
         config.date_range = 'since'
 
-    GET = dict(six.iterlists(GET_data))
+    start_date = datetime.strptime(str(config.start_date), '%Y-%m-%d')
+    end_date = datetime.strptime(str(config.end_date), '%Y-%m-%d')
+    request_data['datespan'] = DateSpan(start_date, end_date)
+    GET = dict(six.iterlists(request_data['GET']))
     exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
     filters = {}
     for field in GET:
@@ -165,6 +170,16 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                             body, email_from=settings.DEFAULT_FROM_EMAIL,
                             smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
 
+        report_state = {
+            'request': request_data,
+            'domain': domain,
+            'context': {},
+            'request_params': json_request(GET_data)}
+
+        report = object.__new__(config.report)
+        report.__setstate__(report_state)
+        report.rendered_as = 'export'
+
     except Exception as er:
         notify_exception(
             None,
@@ -181,9 +196,9 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
 
             report = config.report
             export_all_rows_task(
-                report.request.GET.get('couch_user'),
-                report.__class__.__module__ + '.' + self.__class__.__name__,
-                report.domain,
+                user_id,
+                config.__class__.__module__ + '.' + report.__class__.__name__,
+                config.domain,
                 report.slug,
                 report.name,
                 report.export_format,
