@@ -7,7 +7,7 @@ from django.urls import reverse
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import COMMCARE_PROJECT
-from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, LEGACY_CONFIG_KEYS
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.registry.helper import DataRegistryHelper
@@ -133,6 +133,12 @@ class RegistryCaseDetailsTests(TestCase):
         self._make_request({
             CASE_SEARCH_REGISTRY_ID_KEY: "not-a-registry", "case_id": self.parent_case_id, "case_type": "parent",
         }, 404)
+
+    def test_legacy_registry_param(self):
+        self._make_request({
+            LEGACY_CONFIG_KEYS[CASE_SEARCH_REGISTRY_ID_KEY]: self.registry.slug, "case_id": self.parent_case_id,
+            "case_type": "parent",
+        }, 200)
 
     def _make_request(self, params, expected_response_code, method="get"):
         request_method = {

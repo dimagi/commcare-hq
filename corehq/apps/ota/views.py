@@ -41,7 +41,7 @@ from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.exceptions import CaseSearchUserError
-from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, LEGACY_CONFIG_KEYS
 from corehq.apps.case_search.utils import get_case_search_results
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import check_domain_migration
@@ -419,6 +419,8 @@ def registry_case(request, domain, app_id):
     case_ids = request_dict.getlist("case_id")
     case_types = request_dict.getlist("case_type")
     registry = request_dict.get(CASE_SEARCH_REGISTRY_ID_KEY)
+    if registry is None:
+        registry = request_dict.get(LEGACY_CONFIG_KEYS[CASE_SEARCH_REGISTRY_ID_KEY])
 
     missing = [
         name
