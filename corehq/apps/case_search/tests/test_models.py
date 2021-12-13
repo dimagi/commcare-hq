@@ -1,6 +1,7 @@
 from unittest.mock import call, patch
 
 from django.test import TestCase
+from django.utils.datastructures import MultiValueDict
 
 from testil import assert_raises, eq
 
@@ -44,29 +45,30 @@ class TestCaseSearch(TestCase):
 
 @generate_cases([
     ("jelly", None, None, False),
-    (["jelly"], None, None, False),
+    (["jelly", "tots"], None, None, False),
     (None, None, None, True),  # required case type
     ("jelly", "reg1", "dupe_id", False),
     # disallow lists
-    ("jelly", None, ["dupe_id"], True),
-    ("jelly", ["reg1"], None, True),
+    ("jelly", None, ["dupe_id1", "dupe_id2"], True),
+    ("jelly", ["reg1", "reg2"], None, True),
 ])
 def test_extract_criteria_config(self, case_type, data_registry, expand_id_property, expect_exception):
     with assert_raises(None if not expect_exception else CaseSearchUserError):
-        config = extract_search_request_config({
+        config = extract_search_request_config(MultiValueDict({
             CASE_SEARCH_CASE_TYPE_KEY: case_type,
             CASE_SEARCH_REGISTRY_ID_KEY: data_registry,
             CASE_SEARCH_EXPAND_ID_PROPERTY_KEY: expand_id_property,
             "other_key": "jim",
-        })
+        }))
         eq(config, CaseSearchRequestConfig(
+            criteria={"other_key": "jim"},
             case_type=case_type, data_registry=data_registry, expand_id_property=expand_id_property
         ))
 
 
 def test_extract_criteria_config_legacy():
-    config = extract_search_request_config({
+    config = extract_search_request_config(MultiValueDict({
         CASE_SEARCH_CASE_TYPE_KEY: "type",
         "commcare_registry": "reg1",
-    })
-    eq(config, CaseSearchRequestConfig(case_type="type", data_registry="reg1"))
+    }))
+    eq(config, CaseSearchRequestConfig(criteria={}, case_type="type", data_registry="reg1"))

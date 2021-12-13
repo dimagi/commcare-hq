@@ -32,6 +32,7 @@ UNSEARCHABLE_KEYS = (
 
 @attr.s(frozen=True)
 class CaseSearchRequestConfig:
+    criteria = attr.ib(kw_only=True)
     case_type = attr.ib(kw_only=True, default=None)
     data_registry = attr.ib(kw_only=True, default=None)
     expand_id_property = attr.ib(kw_only=True, default=None)
@@ -52,20 +53,20 @@ class CaseSearchRequestConfig:
             raise CaseSearchUserError(_("{param} must be a string").format(param=attribute))
 
 
-def extract_search_request_config(search_criteria):
+def extract_search_request_config(request_dict):
+    params = {k: v[0] if v and len(v) == 1 else v for k, v in request_dict.lists()}
+
     def _get_value(key):
         val = None
         try:
-            val = search_criteria.pop(key)
+            val = params.pop(key)
         except KeyError:
             if key in LEGACY_CONFIG_KEYS:
-                val = search_criteria.pop(LEGACY_CONFIG_KEYS[key], None)
+                val = params.pop(LEGACY_CONFIG_KEYS[key], None)
         return val
 
-    return CaseSearchRequestConfig(**{
-        key.replace(CONFIG_KEY_PREFIX, ""): _get_value(key)
-        for key in CONFIG_KEYS
-    })
+    kwargs_from_params = {key.replace(CONFIG_KEY_PREFIX, ""): _get_value(key) for key in CONFIG_KEYS}
+    return CaseSearchRequestConfig(criteria=params, **kwargs_from_params)
 
 
 class GetOrNoneManager(models.Manager):

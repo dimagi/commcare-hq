@@ -41,16 +41,29 @@ from corehq.apps.registry.exceptions import (
 from corehq.apps.registry.helper import DataRegistryHelper
 
 
-def get_case_search_results(domain, criteria, app_id=None, couch_user=None):
-    config = extract_search_request_config(criteria)
-    if config.data_registry:
-        query_domains = _get_registry_visible_domains(couch_user, domain, config.case_types, config.data_registry)
+def get_case_search_results_from_request(domain, app_id, couch_user, request_dict):
+    config = extract_search_request_config(request_dict)
+    return get_case_search_results(
+        domain,
+        config.case_types,
+        config.criteria,
+        app_id=app_id,
+        couch_user=couch_user,
+        registry_slug=config.data_registry,
+        expand_id_property=config.expand_id_property,
+    )
+
+
+def get_case_search_results(domain, case_types, criteria,
+                            app_id=None, couch_user=None, registry_slug=None, expand_id_property=None):
+    if registry_slug:
+        query_domains = _get_registry_visible_domains(couch_user, domain, case_types, registry_slug)
         helper = _RegistryQueryHelper(domain, query_domains)
     else:
         query_domains = [domain]
         helper = _QueryHelper(domain)
 
-    case_search_criteria = CaseSearchCriteria(domain, config.case_types, criteria, query_domains)
+    case_search_criteria = CaseSearchCriteria(domain, case_types, criteria, query_domains)
     try:
         search_es = case_search_criteria.search_es
     except TooManyRelatedCasesError:
@@ -72,7 +85,7 @@ def get_case_search_results(domain, criteria, app_id=None, couch_user=None):
 
     cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
     if app_id:
-        cases.extend(get_related_cases(helper, app_id, config.case_types, cases, config.expand_id_property))
+        cases.extend(get_related_cases(helper, app_id, case_types, cases, expand_id_property))
     return cases
 
 

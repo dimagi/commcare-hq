@@ -42,7 +42,7 @@ from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
-from corehq.apps.case_search.utils import get_case_search_results
+from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import check_domain_migration
 from corehq.apps.domain.models import Domain
@@ -118,9 +118,8 @@ def app_aware_search(request, domain, app_id):
     Returns results as a fixture with the same structure as a casedb instance.
     """
     request_dict = request.GET if request.method == 'GET' else request.POST
-    criteria = {k: v[0] if len(v) == 1 else v for k, v in request_dict.lists()}
     try:
-        cases = get_case_search_results(domain, criteria, app_id, request.couch_user)
+        cases = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
