@@ -60,6 +60,8 @@ def test_extract_criteria_config(self, case_type, data_registry, expand_id_prope
             CASE_SEARCH_EXPAND_ID_PROPERTY_KEY: expand_id_property,
             "other_key": "jim",
         }))
+
+    if not expect_exception:
         eq(config, CaseSearchRequestConfig(
             criteria={"other_key": "jim"},
             case_type=case_type, data_registry=data_registry, expand_id_property=expand_id_property
