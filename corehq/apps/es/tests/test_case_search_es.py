@@ -571,7 +571,7 @@ class TestCaseSearchLookups(TestCase):
 
     def test_get_related_case_results_expanded_results(self):
         """Test that `get_related_cases` includes related cases for cases loaded
-        via the 'expand_id_property'."""
+        via the 'custom_related_case_property'."""
 
         # Search for case type 'a'
         # - initial results a[1-4]
