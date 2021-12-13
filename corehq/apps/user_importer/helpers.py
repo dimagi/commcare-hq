@@ -112,7 +112,6 @@ class UserChangeLogger(object):
             action=UserModelAction.UPDATE,
             bulk_upload_record_id=self.upload_record_id,
             for_domain_required_for_log=self.user_domain_required_for_log,
-            group_changes_only=True
         )
 
 
