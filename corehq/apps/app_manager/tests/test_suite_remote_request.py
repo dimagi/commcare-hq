@@ -399,16 +399,16 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_default_only'), suite, "./remote-request[1]")
 
-    def test_expand_id_property(self, *args):
-        self.module.search_config.expand_id_property = "potential_duplicate_id"
+    def test_custom_related_case_property(self, *args):
+        self.module.search_config.custom_related_case_property = "potential_duplicate_id"
         suite = self.app.create_suite()
 
         expected = """
         <partial>
-          <data key="x_commcare_expand_id_property" ref="'potential_duplicate_id'"/>
+          <data key="x_commcare_custom_related_case_property" ref="'potential_duplicate_id'"/>
         </partial>
         """
-        xpath = "./remote-request[1]/session/query/data[@key='x_commcare_expand_id_property']"
+        xpath = "./remote-request[1]/session/query/data[@key='x_commcare_custom_related_case_property']"
         self.assertXmlPartialEqual(expected, suite, xpath)
 
     def test_blacklisted_owner_ids(self, *args):
