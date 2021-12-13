@@ -34,6 +34,7 @@ from corehq.apps.domain.decorators import (
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.utils import handle_401_response
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
@@ -240,6 +241,7 @@ def post(request, domain, app_id=None):
     )
 
 
+@require_mobile_access
 def _noauth_post(request, domain, app_id=None):
     """
     This is explicitly called for a submission that has secure submissions enabled, but is manually
@@ -311,6 +313,7 @@ def _noauth_post(request, domain, app_id=None):
 
 @login_or_digest_ex(allow_cc_users=True)
 @two_factor_exempt
+@require_mobile_access
 @set_request_duration_reporting_threshold(60)
 def _secure_post_digest(request, domain, app_id=None):
     """only ever called from secure post"""
@@ -326,6 +329,7 @@ def _secure_post_digest(request, domain, app_id=None):
 @handle_401_response
 @login_or_basic_ex(allow_cc_users=True)
 @two_factor_exempt
+@require_mobile_access
 @set_request_duration_reporting_threshold(60)
 def _secure_post_basic(request, domain, app_id=None):
     """only ever called from secure post"""
@@ -341,6 +345,7 @@ def _secure_post_basic(request, domain, app_id=None):
 @login_or_api_key_ex()
 @require_permission(Permissions.edit_data)
 @require_permission(Permissions.access_api)
+@require_mobile_access
 @set_request_duration_reporting_threshold(60)
 def _secure_post_api_key(request, domain, app_id=None):
     """only ever called from secure post"""
