@@ -52,7 +52,7 @@ class TestSQLCaseRepeater(TestCase):
         return super().setUp()
 
     def tearDown(self):
-        # delete_all_repeaters()
+        delete_all_repeaters()
         return super().tearDown()
 
     def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
