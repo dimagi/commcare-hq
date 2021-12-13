@@ -75,7 +75,9 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
             'Error in valid values for case type caseType1, row 4: missing case property',
             'Error in case type caseType1, row 4: Unable to save valid values longer than 255 characters',
             'Missing valid values sheet for case type caseType2',
-            'Error in valid values for case type caseType1, nonexistent property listed (mistake), row(s): 5, 6'
+            'Error in valid values for case type caseType1, nonexistent property listed (mistake), row(s): 5, 6',
+            "Error in case type caseType1, row 5: {'data_type': [\"Value 'Nonsense' is not a valid choice.\"]}"
+
         }
         message_str = str(messages[0])
         soup = BeautifulSoup(message_str)
