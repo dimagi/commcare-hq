@@ -1,13 +1,8 @@
-import copy
-import json
-import re
-
+import attr
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import model_to_dict
-
-import attr
-from jsonfield.fields import JSONField
+from django.utils.translation import ugettext as _
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.util.quickcache import quickcache
@@ -17,9 +12,11 @@ FUZZY_PROPERTIES = "fuzzy_properties"
 CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
 CONFIG_KEY_PREFIX = "x_commcare_"
+CASE_SEARCH_CASE_TYPE_KEY = "case_type"
 CASE_SEARCH_REGISTRY_ID_KEY = f'{CONFIG_KEY_PREFIX}data_registry'
 CASE_SEARCH_EXPAND_ID_PROPERTY_KEY = f'{CONFIG_KEY_PREFIX}expand_id_property'
 CONFIG_KEYS = (
+    CASE_SEARCH_CASE_TYPE_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_EXPAND_ID_PROPERTY_KEY
 )
@@ -35,8 +32,24 @@ UNSEARCHABLE_KEYS = (
 
 @attr.s(frozen=True)
 class CaseSearchRequestConfig:
+    case_type = attr.ib(kw_only=True, default=None)
     data_registry = attr.ib(kw_only=True, default=None)
     expand_id_property = attr.ib(kw_only=True, default=None)
+
+    @property
+    def case_types(self):
+        return self.case_type if isinstance(self.case_type, list) else [self.case_type]
+
+    @case_type.validator
+    def _require_case_type(self, attribute, value):
+        if not value:
+            raise CaseSearchUserError(_('Search request must specify {param}').format(param=attribute))
+
+    @data_registry.validator
+    @expand_id_property.validator
+    def _is_string(self, attribute, value):
+        if value and not isinstance(value, str):
+            raise CaseSearchUserError(_("{param} must be a string").format(param=attribute))
 
 
 def extract_search_request_config(search_criteria):
@@ -47,8 +60,6 @@ def extract_search_request_config(search_criteria):
         except KeyError:
             if key in LEGACY_CONFIG_KEYS:
                 val = search_criteria.pop(LEGACY_CONFIG_KEYS[key], None)
-        if isinstance(val, list):
-            raise CaseSearchUserError(f"'{key}' only accepts single values")
         return val
 
     return CaseSearchRequestConfig(**{
