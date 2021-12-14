@@ -85,5 +85,4 @@ branches:
     - jls/smart-link-message  # Jenny Dec 13
     - mk/use-multibar-expanded-cols # MK Dec 14
     - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
-    - rc/track-bulk-group-updates # Robert Dec 14
 submodules: { }
