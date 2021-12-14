@@ -311,7 +311,15 @@
           {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
           <div class="form-group">
               <label for="custom-related-case-property" class="{% css_label_class %} control-label">
-                  {% trans "Custom related case ID property to include" %}
+                  {% trans "Case property with additional case id to add to results" %}
+                  <span class="hq-help-template" data-title="{% trans "Custom Related Case Property" %}"
+                        data-content="{% blocktrans %}
+                               Enter in the name of a case property that contains the ID of another
+                               case you'd like included in the results instance.  This is to allow
+                               you to configure your case list display to show properties of that
+                               related case.
+                        {% endblocktrans %}">
+                  </span>
               </label>
               <div class="{% css_field_class %}">
                   <input id="custom-related-case-property"
