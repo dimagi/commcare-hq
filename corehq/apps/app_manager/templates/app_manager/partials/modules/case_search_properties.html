@@ -307,6 +307,8 @@
                   </button>
               </div>
           </div>
+          {% endif %}
+          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
           <div class="form-group">
               <label for="custom-related-case-property" class="{% css_label_class %} control-label">
                   {% trans "Custom related case ID property to include" %}
