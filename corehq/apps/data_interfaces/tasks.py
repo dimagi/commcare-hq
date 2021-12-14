@@ -177,7 +177,7 @@ def run_case_update_rules_on_save(case):
         update_case = True
         if case.xform_ids:
             last_form = FormAccessors(case.domain).get_form(case.xform_ids[-1])
-            update_case = last_form.xmlns != AUTO_UPDATE_XMLNS
+            update_case = not last_form.xmlns.startswith(AUTO_UPDATE_XMLNS)
         if update_case:
             rules = AutomaticUpdateRule.by_domain(case.domain,
                 AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case.type)

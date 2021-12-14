@@ -461,6 +461,10 @@ class AutomaticUpdateRule(models.Model):
         data['id'] = self.id
         return data
 
+    def get_xmlns(self):
+        return f'{AUTO_UPDATE_XMLNS}/{self.id}/'
+
+
 class CaseRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
     match_property_definition = models.ForeignKey('MatchPropertyDefinition', on_delete=models.CASCADE, null=True)
@@ -881,8 +885,13 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
         for case_id, properties in cases_to_update.items():
             if case_id == case.case_id:
                 continue
-            result = update_case(case.domain, case_id, case_properties=properties, close=False,
-                xmlns=AUTO_UPDATE_XMLNS)
+            result = update_case(
+                case.domain,
+                case_id,
+                case_properties=properties,
+                close=False,
+                xmlns=rule.get_xmlns(),
+            )
 
             rule.log_submission(result[0].form_id)
             num_related_updates += 1
@@ -895,8 +904,13 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
             close_case = False
 
         if close_case or properties:
-            result = update_case(case.domain, case.case_id, case_properties=properties, close=close_case,
-                xmlns=AUTO_UPDATE_XMLNS)
+            result = update_case(
+                case.domain,
+                case.case_id,
+                case_properties=properties,
+                close=close_case,
+                xmlns=rule.get_xmlns(),
+            )
 
             rule.log_submission(result[0].form_id)
 

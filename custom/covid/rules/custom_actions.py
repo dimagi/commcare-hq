@@ -7,7 +7,7 @@ The following actions can be used in messaging in projects using the ``covid`` c
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es.cases import case_type
-from corehq.apps.data_interfaces.models import CaseRuleActionResult, AUTO_UPDATE_XMLNS
+from corehq.apps.data_interfaces.models import CaseRuleActionResult
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.es import filters
 
@@ -47,7 +47,7 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
             assigned_case_domain,
             assigned_case_id,
             case_properties=blank_properties,
-            xmlns=AUTO_UPDATE_XMLNS,
+            xmlns=rule.get_xmlns(),
             device_id=__name__ + ".close_cases_assigned_to_checkin",
         )
         rule.log_submission(submission.form_id)
@@ -56,7 +56,7 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
         checkin_case.domain,
         checkin_case.case_id,
         close=True,
-        xmlns=AUTO_UPDATE_XMLNS,
+        xmlns=rule.get_xmlns(),
         device_id=__name__ + ".close_cases_assigned_to_checkin",
     )
     rule.log_submission(close_checkin_submission.form_id)

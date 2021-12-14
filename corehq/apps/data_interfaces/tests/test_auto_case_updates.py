@@ -920,8 +920,12 @@ class CaseRuleOnSaveTests(BaseCaseRuleTest):
 
             # When the last update is an auto case update, we don't run the rule on save
             with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.run_rule') as run_rule_patch:
-                hqcase.utils.update_case(self.domain, case.case_id, case_properties={'do_update': 'Y'},
-                    xmlns=AUTO_UPDATE_XMLNS)
+                hqcase.utils.update_case(
+                    self.domain,
+                    case.case_id,
+                    case_properties={'do_update': 'Y'},
+                    xmlns=rule.get_xmlns(),
+                )
                 run_rule_patch.assert_not_called()
 
     def test_do_not_run_on_save_when_flag_is_disabled(self):
@@ -1079,6 +1083,12 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
             self.assertRuleRunCount(1)
             # Three cases were checked, two were updated, one failed hard
             self.assertLastRuleRun(cases_checked=3, num_updates=2, num_errors=1)
+
+    def test_get_xmlns(self):
+        rule = _create_empty_rule(self.domain)
+        xmlns = rule.get_xmlns()
+        self.assertTrue(xmlns.startswith(AUTO_UPDATE_XMLNS))
+        self.assertTrue(xmlns.endswith(f'/{rule.id}/'))
 
 
 class TestParentCaseReferences(BaseCaseRuleTest):
