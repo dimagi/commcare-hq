@@ -500,7 +500,7 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
             timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
         )
 
-    def _per_config_metrics_timer(self, step, config)
+    def _per_config_metrics_timer(self, step, config):
         tags = {
             'action': step,
         }
