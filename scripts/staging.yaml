@@ -84,4 +84,5 @@ branches:
     - es/expanded-case-search-conf  # Ethan Dec 10
     - jls/smart-link-message  # Jenny Dec 13
     - mk/use-multibar-expanded-cols # MK Dec 14
+    - sk/exclude-related-cases # SK Dec 14
 submodules: { }
