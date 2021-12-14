@@ -41,7 +41,7 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
 
         username = normalize_username("mobile_worker_1", self.domain)
         self.mobile_worker = CommCareUser.create(self.domain, username, "123", None, None)
-        sync_usercases(self.mobile_worker)
+        sync_usercases(self.mobile_worker, self.domain)
 
         self.case_accessor = CaseAccessors(self.domain)
 
