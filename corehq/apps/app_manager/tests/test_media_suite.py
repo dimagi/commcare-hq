@@ -25,6 +25,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, parse_normalize, patch_get_xform_resource_overrides
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage, CommCareVideo
+from corehq.apps.userreports.tests.utils import get_sample_data_source
 from corehq.util.test_utils import softer_assert
 
 
@@ -198,7 +199,8 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(old_image.unique_id, new_image.unique_id)
         self.assertNotEqual(old_image.version, new_image.version)
 
-    def test_all_media_report_module(self):
+    @patch('corehq.apps.userreports.reports.data_source.get_datasource_config')
+    def test_all_media_report_module(self, get_datasource_config_mock):
         """
         Report Modules support media
         """
@@ -209,6 +211,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         report_module = app.add_module(ReportModule.new_module('Reports', None))
         report_module.unique_id = 'report_module'
         report = get_sample_report_config()
+        get_datasource_config_mock.return_value = (get_sample_data_source(), False)
         report._id = 'd3ff18cd83adf4550b35db8d391f6008'
 
         report_app_config = ReportAppConfig(report_id=report._id,

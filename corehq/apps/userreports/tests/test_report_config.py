@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase, TestCase
+from mock import patch
 
 from jsonobject.exceptions import BadValueError
 
@@ -16,6 +17,7 @@ from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
 from corehq.apps.userreports.tests.utils import (
+    get_sample_data_source,
     get_sample_report_config,
     mock_datasource_config,
 )
@@ -25,6 +27,12 @@ class ReportConfigurationTest(SimpleTestCase):
 
     def setUp(self):
         self.config = get_sample_report_config()
+        self.patcher = patch(
+            'corehq.apps.userreports.reports.data_source.get_datasource_config',
+            return_value=(get_sample_data_source(), False)
+        )
+        self.patcher.start()
+        self.addCleanup(self.patcher.stop)
 
     def test_metadata(self):
         # metadata
@@ -199,8 +207,10 @@ class ReportConfigurationDbTest(TestCase):
         with self.assertRaises(BadValueError):
             ReportConfiguration(domain='foo').save()
 
-    def test_sample_config_is_valid(self):
+    @patch('corehq.apps.userreports.reports.data_source.get_datasource_config')
+    def test_sample_config_is_valid(self, get_datasource_config_mock):
         config = get_sample_report_config()
+        get_datasource_config_mock.return_value = (get_sample_data_source(), False)
         config.validate()
 
 
