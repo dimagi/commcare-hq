@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 
 from django.conf import settings
@@ -462,9 +463,10 @@ def update_broadcast_last_sent_timestamp(broadcast_class, schedule_id):
 
 @no_result_task(queue='reminder_queue')
 def handle_alert_schedule_instance(schedule_instance_id, domain):
-    with CriticalSection(['handle-alert-schedule-instance-%s' % schedule_instance_id.hex]):
+    schedule_instance_uuid = uuid.UUID(schedule_instance_id)
+    with CriticalSection(['handle-alert-schedule-instance-%s' % schedule_instance_uuid.hex]):
         try:
-            instance = get_alert_schedule_instance(schedule_instance_id)
+            instance = get_alert_schedule_instance(schedule_instance_uuid)
         except AlertScheduleInstance.DoesNotExist:
             return
 
@@ -474,9 +476,10 @@ def handle_alert_schedule_instance(schedule_instance_id, domain):
 
 @no_result_task(queue='reminder_queue')
 def handle_timed_schedule_instance(schedule_instance_id, domain):
-    with CriticalSection(['handle-timed-schedule-instance-%s' % schedule_instance_id.hex]):
+    schedule_instance_uuid = uuid.UUID(schedule_instance_id)
+    with CriticalSection(['handle-timed-schedule-instance-%s' % schedule_instance_uuid.hex]):
         try:
-            instance = get_timed_schedule_instance(schedule_instance_id)
+            instance = get_timed_schedule_instance(schedule_instance_uuid)
         except TimedScheduleInstance.DoesNotExist:
             return
 
@@ -486,12 +489,12 @@ def handle_timed_schedule_instance(schedule_instance_id, domain):
 
 @no_result_task(queue='reminder_queue')
 def handle_case_alert_schedule_instance(case_id, schedule_instance_id, domain):
-
+    schedule_instance_uuid = uuid.UUID(schedule_instance_id)
     # Use the same lock key as the tasks which refresh case schedule instances
     from corehq.messaging.tasks import get_sync_key
     with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
         try:
-            instance = get_case_schedule_instance(CaseAlertScheduleInstance, case_id, schedule_instance_id)
+            instance = get_case_schedule_instance(CaseAlertScheduleInstance, case_id, schedule_instance_uuid)
         except CaseAlertScheduleInstance.DoesNotExist:
             return
 
@@ -500,11 +503,12 @@ def handle_case_alert_schedule_instance(case_id, schedule_instance_id, domain):
 
 @no_result_task(queue='reminder_queue')
 def handle_case_timed_schedule_instance(case_id, schedule_instance_id, domain):
+    schedule_instance_uuid = uuid.UUID(schedule_instance_id)
     # Use the same lock key as the tasks which refresh case schedule instances
     from corehq.messaging.tasks import get_sync_key
     with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
         try:
-            instance = get_case_schedule_instance(CaseTimedScheduleInstance, case_id, schedule_instance_id)
+            instance = get_case_schedule_instance(CaseTimedScheduleInstance, case_id, schedule_instance_uuid)
         except CaseTimedScheduleInstance.DoesNotExist:
             return
 
