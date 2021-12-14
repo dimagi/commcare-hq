@@ -207,18 +207,6 @@ class MobileWorkersOptionsController(EmwfOptionsController):
     def utils(self):
         return UsersUtils(self.domain)
 
-    def get_post_options(self):
-        page = int(self.request.POST.get('page', 1))
-        size = int(self.request.POST.get('page_limit', DEFAULT_PAGE_LIMIT))
-        start = size * (page - 1)
-        count, options = paginate_options(
-            self.data_sources,
-            self.search,
-            start,
-            size
-        )
-        return count, [{'id': id_, 'text': text} for id_, text in options]
-
     @property
     def data_sources(self):
         return [
