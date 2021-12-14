@@ -914,6 +914,7 @@ two_factor
  0004_auto_20160205_1827
  0005_auto_20160224_0450
  0006_phonedevice_key_default
+ 0007_auto_20201201_1019
 user_importer
  0001_initial
 userreports
