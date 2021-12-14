@@ -20,6 +20,7 @@ class Command(BaseCommand):
         noinput = kwargs.get('noinput')
         skip_edition = kwargs.get('skip_edition')
         delete_revoked_privs = kwargs.get('delete_privs')
+        check_privs_exist = kwargs.get('check_privs_exist')
 
         logger.setLevel(logging.INFO if verbose else logging.WARNING)
         dry_run_tag = "[DRY RUN] " if dry_run else ""
@@ -55,7 +56,7 @@ class Command(BaseCommand):
             logger.error('Aborting')
             return
 
-        if not all(priv in MAX_PRIVILEGES for priv in privs):
+        if check_privs_exist and not all(priv in MAX_PRIVILEGES for priv in privs):
             logger.error('Not all specified privileges are valid: {}'.format(', '.join(privs)))
             return
 
@@ -119,4 +120,10 @@ class Command(BaseCommand):
             action='store_true',
             default=False,
             help='If privilege has been revoked for all plans, delete the Role object associated with it'
+        ),
+        parser.add_argument(
+            '--check-privs-exist',
+            action='store_true',
+            default=True,
+            help='Ensure all privileges are valid before attempting to revoke.'
         )

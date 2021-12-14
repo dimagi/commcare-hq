@@ -9,6 +9,7 @@ def _revoke_linked_project_priv(apps, schema_editor):
         'cchq_prbac_revoke_privs',
         'linked_projects',
         delete_privs=True,
+        check_privs_exist=False,
         noinput=True,
     )
 
