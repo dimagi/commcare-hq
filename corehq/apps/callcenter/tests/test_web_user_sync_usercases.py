@@ -28,7 +28,7 @@ class TestWebUserSyncUsercase(TestCase):
         cls.domain_obj.delete()
         return super(TestWebUserSyncUsercase, cls).tearDownClass()
 
-    @flag_enabled('USH_WEB_USER_CASE_CREATION')
+    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
     def test_sync_usercases(self):
         sync_usercases(self.user, self.domain_name)
         usercase = self.accessor.get_case_by_domain_hq_user_id(self.user_id, USERCASE_TYPE)
