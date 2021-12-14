@@ -68,7 +68,6 @@ branches:
     - ml/remove-pickles-user-importer # Minha Oct 13
     - ml/remove-pickles-reports # Minha Oct 21
     - rp/status-embed # Rynhard Nov 9
-    - gh/mrm/only-admins-can-link # Graham Nov 16
     - ap/web-app-refresh # Amit Nov 29
     - es/mobile-auth # Simon Nov 23
     - do/create-usercase-web-users # Dominic Dec 3
