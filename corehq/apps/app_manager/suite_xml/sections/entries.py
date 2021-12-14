@@ -38,6 +38,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     session_var,
 )
+from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
@@ -504,6 +505,7 @@ class EntriesHelper(object):
             instance_name, root_element = "casedb", "casedb"
             if module_loads_registry_case(detail_module):
                 instance_name, root_element = "results", "results"
+                filter_xpath += EXCLUDE_RELATED_CASES_FILTER
 
             nodeset = EntriesHelper._get_nodeset_xpath(
                 instance_name, root_element,
