@@ -97,14 +97,17 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         self.ids_by_domain.clear(self.__class__, self.domain)
 
     def add_user(self, couch_user_id, save=True):
+        user_added = False
         if not isinstance(couch_user_id, str):
             couch_user_id = couch_user_id.user_id
         if couch_user_id not in self.users:
+            user_added = True
             self.users.append(couch_user_id)
         if couch_user_id in self.removed_users:
             self.removed_users.remove(couch_user_id)
         if save:
             self.save()
+        return user_added
 
     def remove_user(self, couch_user_id):
         '''
