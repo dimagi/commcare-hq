@@ -258,10 +258,18 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
-
-    echo "This is the *first* line and it is not in a group."
-
-    [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
+    if [ -n "$GITHUB_ACTIONS" ]; then
+        # Disabled due to: https://github.com/github/feedback/discussions/8848
+        hdr='H4sICED4uGEAA3Njcm9sbC50eHQA7VGxbsMgEN39FSd76FRYOpzyA43UxUOl1qMxlxi
+             lKY6BRv37HsS2OtSKK2VI1CIB7+C9ewdXwP1FR1ZkBTzTvrN93X+CDb4LHlqqNfWgA4
+             G38Gj8Oih4sf1u82aPDj4MHVngwTgXSKQcjmgFrfedW0m5Nb4NSjR2P0C5IdKqbnZSG
+             9cE54x9dxLxAZP4wm/K4NcDEeO8CqXQfIrqG+IlohQrMa9EfDoB5pX54BEBx3k+ZPpR
+             mVfJSSTCVN24Dar5d77yZXWqbVJyLATbzyujJZZ3o3s5mcc4lj0qF3R0UQv+POnA31p
+             hdzbXgXOdZzFtAQnsf/9uvX9fZ3h+OHcGAAA='
+        echo "$hdr" | sed 's/ //g' | base64 -d | zcat
+        # create GitHub Workflow action output group for docker setup
+        echo "::group::Docker setup"  # ends in docker/run.sh
+    fi
     echo "Pulling docker containers..."
     docker-compose pull --quiet
     docker-compose run --rm web run_tests "${TEST:-python}" "$@"
