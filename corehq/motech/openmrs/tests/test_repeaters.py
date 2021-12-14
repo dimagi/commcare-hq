@@ -7,7 +7,7 @@ import uuid
 
 from django.test import SimpleTestCase, TestCase
 
-import mock
+from unittest import mock
 from requests import RequestException
 from testil import eq
 

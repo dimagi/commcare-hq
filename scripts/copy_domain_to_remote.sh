@@ -31,6 +31,7 @@ print json.dumps({
 echo $PARAMS
 echo "...POSTing request"
 curl \
+    -s \
     -X POST \
     -H "Accept: application/json" \
     -H "Content-Type: application/json; charset=UTF-8" \

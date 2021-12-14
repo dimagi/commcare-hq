@@ -6,14 +6,14 @@ from alembic.autogenerate import compare_metadata
 from alembic.operations import Operations
 
 from dimagi.utils.couch import get_redis_client
-from fluff.signals import (
+
+from .alembic_diffs import (
     DiffTypes,
     get_migration_context,
     get_tables_to_rebuild,
     reformat_alembic_diffs,
 )
-
-from corehq.apps.userreports.models import id_is_static
+from .models import id_is_static
 
 logger = logging.getLogger(__name__)
 

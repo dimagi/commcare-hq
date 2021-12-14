@@ -57,9 +57,6 @@ class PreindexPlugin(metaclass=ABCMeta):
         )
 
     def __init__(self, app_label, file):
-        # once the fluff part of this has been merged we can get rid of this
-        # this is just to make it easy for me in the meantime
-        assert 'FluffPreindexPlugin' == self.__class__.__name__
         self.app_label = app_label
         self.dir = os.path.abspath(os.path.dirname(file))
 
@@ -92,8 +89,7 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
     """
 
     def __init__(self, app_label, file, app_db_map=None):
-        self.app_label = app_label
-        self.dir = os.path.abspath(os.path.dirname(file))
+        super().__init__(app_label, file)
         self.app_db_map = app_db_map
 
     def get_couchapps(self):
@@ -118,8 +114,7 @@ class ExtraPreindexPlugin(PreindexPlugin):
     """
 
     def __init__(self, app_label, file, db_names=None):
-        self.app_label = app_label
-        self.dir = os.path.abspath(os.path.dirname(file))
+        super().__init__(app_label, file)
         self.db_names = db_names
 
     def _get_designs(self):

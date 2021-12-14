@@ -1801,6 +1801,7 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     domain_obj.sms_case_registration_user_id,
                 "sms_mobile_worker_registration_enabled":
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
+                "sms_worker_registration_alert_emails": domain_obj.sms_worker_registration_alert_emails,
                 "registration_welcome_message":
                     self.get_welcome_message_recipient(domain_obj),
                 "language_fallback":
@@ -1855,6 +1856,7 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                  "sms_conversation_times_json"),
                 ("sms_mobile_worker_registration_enabled",
                  "sms_mobile_worker_registration_enabled"),
+                ("sms_worker_registration_alert_emails", "sms_worker_registration_alert_emails"),
             ]
             if self.previewer:
                 field_map.extend([

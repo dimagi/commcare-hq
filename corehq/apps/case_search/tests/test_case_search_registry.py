@@ -1,6 +1,6 @@
 import uuid
 
-import mock
+from unittest import mock
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs

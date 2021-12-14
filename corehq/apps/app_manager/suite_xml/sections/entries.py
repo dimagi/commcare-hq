@@ -1,4 +1,4 @@
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from itertools import zip_longest
 
 import attr
@@ -17,9 +17,13 @@ from corehq.apps.app_manager.suite_xml.contributors import (
 from corehq.apps.app_manager.suite_xml.utils import (
     get_form_locale_id,
     get_select_chain_meta,
+    get_ordered_case_types,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import *
-from corehq.apps.app_manager.util import actions_use_usercase, module_offers_registry_search
+from corehq.apps.app_manager.util import (
+    actions_use_usercase,
+    module_loads_registry_case,
+)
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
     autoset_owner_id_for_open_case,
@@ -122,13 +126,10 @@ class EntriesHelper(object):
 
     @staticmethod
     def _get_nodeset_xpath(instance_name, root_element, case_type, filter_xpath='', additional_types=None):
-        if additional_types:
-            case_type_filter = " or ".join([
-                "@case_type='{case_type}'".format(case_type=case_type)
-                for case_type in set(additional_types).union({case_type})
-            ])
-        else:
-            case_type_filter = "@case_type='{case_type}'".format(case_type=case_type)
+        case_type_filter = " or ".join([
+            "@case_type='{case_type}'".format(case_type=case_type)
+            for case_type in get_ordered_case_types(case_type, additional_types)
+        ])
         return f"instance('{instance_name}')/{root_element}/case[{case_type_filter}][@status='open']{filter_xpath}"
 
     @staticmethod
@@ -212,7 +213,7 @@ class EntriesHelper(object):
 
             EntriesHelper.add_custom_assertions(e, form)
 
-            if module_offers_registry_search(module):
+            if module_loads_registry_case(module):
                 EntriesHelper.add_registry_search_instances(e, form)
 
             if (
@@ -429,10 +430,10 @@ class EntriesHelper(object):
         for datum in datums:
             if datum.module_id and datum.case_type:
                 module = self.app.get_module_by_unique_id(datum.module_id)
-                if module_offers_registry_search(module):
+                if module_loads_registry_case(module):
                     result.append(self.get_data_registry_search_datums(module))
                     result.append(datum)
-                    result.extend(self.get_data_registry_case_datums(datum, module))
+                    result.append(self.get_data_registry_case_datums(datum, module))
                 else:
                     result.append(datum)
             else:
@@ -500,7 +501,7 @@ class EntriesHelper(object):
             filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
             instance_name, root_element = "casedb", "casedb"
-            if module_offers_registry_search(detail_module):
+            if module_loads_registry_case(detail_module):
                 instance_name, root_element = "results", "results"
 
             nodeset = EntriesHelper._get_nodeset_xpath(
@@ -538,7 +539,7 @@ class EntriesHelper(object):
         details screen. The case details is then populated with data from the results of the query.
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
-        factory = RemoteRequestFactory(module, [])
+        factory = RemoteRequestFactory(None, module, [])
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
 
@@ -549,37 +550,31 @@ class EntriesHelper(object):
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
 
-        def _registry_query(instance_name, case_type_xpath, case_id_xpath):
-            return FormDatumMeta(
-                datum=RemoteRequestQuery(
-                    url=absolute_reverse('registry_case', args=[self.app.domain, self.app.get_id]),
-                    storage_instance=instance_name,
-                    template='case',
-                    data=[
-                        QueryData(key='case_type', ref=case_type_xpath),
-                        QueryData(key='case_id', ref=case_id_xpath),
-                        QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
-                    ],
-                    default_search='true',
-                ),
-                case_type=None,
-                requires_selection=False,
-                action=None
-            )
+        case_ids_expressions = {session_var(datum.datum.id)} | set(module.search_config.additional_registry_cases)
+        data = [
+            QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
+        ]
+        data.extend([
+            QueryData(key='case_type', ref=f"'{case_type}'")
+            for case_type in get_ordered_case_types(datum.case_type, module.search_config.additional_case_types)
+        ])
+        data.extend([
+            QueryData(key='case_id', ref=case_id_xpath)
+            for case_id_xpath in sorted(case_ids_expressions)
+        ])
 
-        datums = [_registry_query(
-            instance_name=REGISTRY_INSTANCE,
-            case_type_xpath=f"'{datum.case_type}'",
-            case_id_xpath=session_var(datum.datum.id)
-        )]
-
-        for query in module.search_config.additional_registry_queries:
-            datums.append(_registry_query(
-                instance_name=query.instance_name,
-                case_type_xpath=query.case_type_xpath,
-                case_id_xpath=query.case_id_xpath
-            ))
-        return datums
+        return FormDatumMeta(
+            datum=RemoteRequestQuery(
+                url=absolute_reverse('registry_case', args=[self.app.domain, self.app.get_id]),
+                storage_instance=REGISTRY_INSTANCE,
+                template='case',
+                data=data,
+                default_search='true',
+            ),
+            case_type=None,
+            requires_selection=False,
+            action=None
+        )
 
     @staticmethod
     def get_auto_select_datums_and_assertions(action, auto_select, form):

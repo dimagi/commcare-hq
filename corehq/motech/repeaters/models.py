@@ -96,9 +96,11 @@ from corehq.motech.const import (
     BEARER_AUTH,
     DIGEST_AUTH,
     OAUTH1,
+    REQUEST_METHODS,
+    REQUEST_POST,
 )
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.requests import simple_post
+from corehq.motech.requests import simple_request
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.couch import stale_ok
@@ -258,6 +260,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     domain = StringProperty()
     connection_settings_id = IntegerProperty(required=False, default=None)
+    request_method = StringProperty(choices=REQUEST_METHODS, default=REQUEST_POST)
     # TODO: Delete the following properties once all Repeaters have been
     #       migrated to ConnectionSettings. (2020-05-16)
     url = StringProperty()
@@ -504,13 +507,14 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     def send_request(self, repeat_record, payload):
         url = self.get_url(repeat_record)
-        return simple_post(
+        return simple_request(
             self.domain, url, payload,
             headers=self.get_headers(repeat_record),
             auth_manager=self.connection_settings.get_auth_manager(),
             verify=self.verify,
             notify_addresses=self.connection_settings.notify_addresses,
             payload_id=repeat_record.payload_id,
+            method=self.request_method,
         )
 
     def fire_for_record(self, repeat_record):
@@ -586,6 +590,7 @@ class FormRepeater(Repeater):
 
     include_app_id_param = BooleanProperty(default=True)
     white_listed_form_xmlns = StringListProperty(default=[])  # empty value means all form xmlns are accepted
+    user_blocklist = StringListProperty(default=[])
     friendly_name = _("Forward Forms")
 
     @memoized
@@ -602,7 +607,8 @@ class FormRepeater(Repeater):
     def allowed_to_forward(self, payload):
         return (
             payload.xmlns != DEVICE_LOG_XMLNS and
-            (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns)
+            (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns
+            and payload.user_id not in self.user_blocklist)
         )
 
     def get_url(self, repeat_record):

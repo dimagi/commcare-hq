@@ -112,6 +112,20 @@ function usage() {
     exit
 }
 
+case "$(uname -m)" in
+    x86_64)
+        arch_suffix='x86'
+        ;;
+    arm64)
+        arch_suffix='arm64'
+        ;;
+    *)
+        arch_suffix='x86'
+        echo "WARNING: unrecognized system architecture ($(uname -m)), falling back to ${arch_suffix}" >&2
+        ;;
+esac
+export COMPOSE_ARCH="hq-compose-arch-${arch_suffix}.yml"
+
 CMD="$1"
 shift
 if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
@@ -122,7 +136,7 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
             CMD=help
         fi
     fi
-    export COMPOSE_FILE=docker/hq-compose.yml
+    export COMPOSE_FILE="docker/hq-compose.yml"
     export COMPOSE_PROJECT_NAME=hqtest
     if [ -n "$TRAVIS_BUILD_DIR" ]; then
         export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
@@ -192,6 +206,8 @@ export DATADOG_API_KEY="$DATADOG_API_KEY"
 export DATADOG_APP_KEY="$DATADOG_APP_KEY"
 export DOCKERFILE="${DOCKERFILE:-Dockerfile}"
 export DOCKER_HQ_OVERLAYFS_METACOPY="${DOCKER_HQ_OVERLAYFS_METACOPY:-off}"
+export GITHUB_ACTIONS="$GITHUB_ACTIONS"
+export GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME"
 export JS_SETUP="${JS_SETUP:-no}"
 export JS_TEST_EXTENSIONS="$JS_TEST_EXTENSIONS"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
@@ -209,8 +225,8 @@ export TRAVIS_PULL_REQUEST_BRANCH="$TRAVIS_PULL_REQUEST_BRANCH"
 export TRAVIS_PULL_REQUEST_SHA="$TRAVIS_PULL_REQUEST_SHA"
 export TRAVIS_REPO_SLUG="$TRAVIS_REPO_SLUG"
 
-if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
-    # don't mount /mnt/commcare-hq-ro volume read-only on travis
+if [ "$CI" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
+    # don't mount /mnt/commcare-hq-ro volume read-only on CI
     # overwrite of localsettings.py, etc. doesn't matter here
     export RO=""
     export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-none}"
@@ -242,7 +258,9 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
-    docker-compose pull
+    [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
+    echo "Pulling docker containers..."
+    docker-compose pull --quiet
     docker-compose run --rm web run_tests "${TEST:-python}" "$@"
 elif [ "$CMD" == "shell" ]; then
     docker-compose run --rm web ./manage.py $CMD "$@"

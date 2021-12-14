@@ -155,8 +155,11 @@ def _get_toggle_rows(toggle):
     items_by_ns[NAMESPACE_DOMAIN].update(toggle.always_enabled)
     items_by_ns[NAMESPACE_DOMAIN].difference_update(toggle.always_disabled)
 
+    # map 'None' to the user namespace
+    namespaces = [NAMESPACE_USER if ns is None else ns for ns in toggle.namespaces]
+
     def _ns_count(ns):
-        return len(items_by_ns[ns]) if ns in toggle.namespaces else 0
+        return len(items_by_ns[ns]) if ns in namespaces else 0
 
     toggle_data.update({
         "user_count": _ns_count(NAMESPACE_USER),
@@ -192,7 +195,7 @@ def _get_domain_info(domain):
     service_type, plan = get_subscription_info(domain)
     return {
         "domain_is_active": domain_obj.is_active,
-        "domain_is_test": {"true": "true", "false": "false", "none": "unknown"}[domain_obj.is_test],
+        "domain_is_test": {"true": "True", "false": "False", "none": "unknown"}[domain_obj.is_test],
         "domain_is_snapshot": domain_obj.is_snapshot,
         "domain_has_dimagi_user": has_dimagi_user(domain),
         "domain_last_form_submission": last_form_submission(domain),
@@ -205,7 +208,7 @@ def _get_domain_info(domain):
 def _get_user_info(username):
     user = CouchUser.get_by_username(username)
     if not user:
-        return {}
+        return {"error": "User not found"}
 
     return {
         "user_is_dimagi": "@dimagi.com" in username,

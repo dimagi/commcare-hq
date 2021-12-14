@@ -309,6 +309,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'MatchPropertyDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'UpdateCaseDefinition', 'caseruleaction__rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseDuplicate', 'action__caseruleaction__rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseDeduplicationActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CreateScheduleInstanceActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleAction', 'rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleCriteria', 'rule__domain'),
@@ -348,7 +350,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('ota', 'DeviceLogRequest', 'domain'),
-    ModelDeletion('phone', 'OwnershipCleanlinessFlag', 'domain'),
     ModelDeletion('phone', 'SyncLogSQL', 'domain'),
     CustomDeletion('ota', _delete_demo_user_restores, ['DemoUserRestore']),
     ModelDeletion('phonelog', 'ForceCloseEntry', 'domain'),
@@ -356,11 +357,10 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('registration', 'RegistrationRequest', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
     ModelDeletion('registry', 'DataRegistry', 'domain', [
-        'RegistryInvitation', 'RegistryGrant', 'RegistryPermission', 'RegistryAuditLog'
+        'RegistryInvitation', 'RegistryGrant', 'RegistryAuditLog'
     ]),
     ModelDeletion('registry', 'RegistryGrant', 'from_domain'),
     ModelDeletion('registry', 'RegistryInvitation', 'domain'),
-    ModelDeletion('registry', 'RegistryPermission', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('reports', 'TableauServer', 'domain'),
     ModelDeletion('reports', 'TableauVisualization', 'domain'),

@@ -39,7 +39,7 @@ def get_reindex_commands(hq_index_name):
     pillow_command_map = {
         DOMAIN_HQ_INDEX_NAME: ['domain'],
         CASE_HQ_INDEX_NAME: ['case', 'sql-case'],
-        XFORM_HQ_INDEX_NAME: ['form', 'sql-form'],
+        XFORM_HQ_INDEX_NAME: ['sql-form'],
         # groupstousers indexing must happen after all users are indexed
         USER_HQ_INDEX_NAME: [
             'user',

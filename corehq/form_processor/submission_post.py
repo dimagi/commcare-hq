@@ -428,7 +428,6 @@ class SubmissionPost(object):
         instance = xforms[0]
         case_db.clear_changed()
         try:
-            case_stock_result.case_result.commit_dirtiness_flags()
             case_stock_result.stock_result.finalize()
 
             SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)

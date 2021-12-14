@@ -3,7 +3,7 @@ import uuid
 from django.test import TestCase
 from django.utils.translation import ugettext
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary

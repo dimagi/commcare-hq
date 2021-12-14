@@ -5,7 +5,7 @@ from collections import Counter
 from datetime import datetime
 from io import StringIO
 
-import mock
+from unittest import mock
 from django.contrib.admin.utils import NestedObjects
 from django.db import transaction, IntegrityError
 from django.db.models.signals import post_delete, post_save

@@ -5,19 +5,17 @@ from collections import defaultdict
 
 from django.contrib import messages
 from django.http import (
-    Http404,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils.http import urlencode as django_urlencode
 from django.utils.translation import ugettext as _
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 import urllib3
-from couchdbkit.exceptions import ResourceConflict
 from django_prbac.utils import has_privilege
 
 from dimagi.utils.logging import notify_exception
@@ -77,6 +75,7 @@ from corehq.apps.app_manager.util import (
     is_linked_app,
     is_remote_app,
 )
+from corehq.apps.app_manager.util import enable_usercase as enable_usercase_util
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
     clear_xmlns_app_id_cache,
@@ -164,6 +163,13 @@ def default_new_app(request, domain):
     clear_app_cache(request, domain)
     app.save()
     return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
+
+
+@require_POST
+@require_can_edit_apps
+def enable_usercase(request, domain):
+    enable_usercase_util(domain)
+    return JsonResponse({"success": 1})
 
 
 def get_app_view_context(request, app):
@@ -1038,7 +1044,7 @@ def pull_upstream_app(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
     if async_update:
         update_linked_app_and_notify_task.delay(domain, app_id, upstream_app_id,
-                                                request.couch_user.get_id, request.couch_user.email)
+                                                request.couch_user.get_id, request.couch_user.get_email())
         messages.success(request,
                          _('Your request has been submitted. We will notify you via email once completed.'))
     else:

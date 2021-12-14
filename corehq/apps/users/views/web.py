@@ -32,9 +32,11 @@ from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.registration.forms import WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user_via_reg_form
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.users.forms import DomainRequestForm
 from corehq.apps.users.models import CouchUser, DomainRequest, Invitation
+from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_INVITATION
 
 
@@ -112,6 +114,14 @@ class UserInvitationView(object):
             if request.method == "POST":
                 couch_user = CouchUser.from_django_user(request.user, strict=True)
                 invitation.accept_invitation_and_join_domain(couch_user)
+                log_user_change(
+                    by_domain=invitation.domain,
+                    for_domain=invitation.domain,
+                    couch_user=couch_user,
+                    changed_by_user=CouchUser.get_by_user_id(invitation.invited_by),
+                    changed_via=USER_CHANGE_VIA_INVITATION,
+                    change_messages=UserChangeMessage.domain_addition(invitation.domain)
+                )
                 track_workflow(request.couch_user.get_email(),
                                "Current user accepted a project invitation",
                                {"Current user accepted a project invitation": "yes"})

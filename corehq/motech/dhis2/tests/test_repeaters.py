@@ -8,7 +8,7 @@ from unittest import skip
 
 from django.test import SimpleTestCase, TestCase
 
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 from nose.tools import assert_equal, assert_true
 
 from corehq.motech.dhis2.const import DHIS2_MAX_VERSION

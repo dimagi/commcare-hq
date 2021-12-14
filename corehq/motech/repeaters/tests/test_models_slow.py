@@ -81,8 +81,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     def test_success_on_200(self):
         resp = ResponseMock(status_code=200, reason='OK')
-        with patch('corehq.motech.repeaters.models.simple_post') as simple_post:
-            simple_post.return_value = resp
+        with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
+            simple_request.return_value = resp
 
             payload = self.repeater.get_payload(self.repeat_record)
             send_request(self.repeater, self.repeat_record, payload)
@@ -94,8 +94,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     def test_no_backoff_on_409(self):
         resp = ResponseMock(status_code=409, reason='Conflict')
-        with patch('corehq.motech.repeaters.models.simple_post') as simple_post:
-            simple_post.return_value = resp
+        with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
+            simple_request.return_value = resp
 
             payload = self.repeater.get_payload(self.repeat_record)
             send_request(self.repeater, self.repeat_record, payload)
@@ -108,8 +108,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     def test_no_backoff_on_500(self):
         resp = ResponseMock(status_code=500, reason='Internal Server Error')
-        with patch('corehq.motech.repeaters.models.simple_post') as simple_post:
-            simple_post.return_value = resp
+        with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
+            simple_request.return_value = resp
 
             payload = self.repeater.get_payload(self.repeat_record)
             send_request(self.repeater, self.repeat_record, payload)
@@ -121,8 +121,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     def test_backoff_on_503(self):
         resp = ResponseMock(status_code=503, reason='Service Unavailable')
-        with patch('corehq.motech.repeaters.models.simple_post') as simple_post:
-            simple_post.return_value = resp
+        with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
+            simple_request.return_value = resp
 
             payload = self.repeater.get_payload(self.repeat_record)
             send_request(self.repeater, self.repeat_record, payload)
@@ -133,8 +133,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             self.assertIsNotNone(sql_repeater.next_attempt_at)
 
     def test_backoff_on_connection_error(self):
-        with patch('corehq.motech.repeaters.models.simple_post') as simple_post:
-            simple_post.side_effect = ConnectionError()
+        with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
+            simple_request.side_effect = ConnectionError()
 
             payload = self.repeater.get_payload(self.repeat_record)
             send_request(self.repeater, self.repeat_record, payload)
