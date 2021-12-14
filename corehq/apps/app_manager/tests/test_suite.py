@@ -46,6 +46,7 @@ from corehq.apps.app_manager.xpath import session_var
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.tests.utils import get_sample_data_source
 from corehq.util.test_utils import flag_enabled
 
 
@@ -1097,12 +1098,15 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                                    app.create_suite(),
                                    './entry[1]/session')
 
-    def test_report_module(self, *args):
+    @mock.patch('corehq.apps.userreports.reports.data_source.get_datasource_config')
+    def test_report_module(self, get_datasource_config_mock, *args):
         from corehq.apps.userreports.tests.utils import get_sample_report_config
 
         app = Application.new_app('domain', "Untitled Application")
 
         report = get_sample_report_config()
+        get_datasource_config_mock.return_value = (get_sample_data_source(), False)
+
         report._id = 'd3ff18cd83adf4550b35db8d391f6008'
         report_app_config = ReportAppConfig(
             report_id=report._id,
