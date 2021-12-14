@@ -169,9 +169,6 @@ class Command(BaseCommand):
         Role(slug=privileges.DEFAULT_EXPORT_SETTINGS,
              name='Default Export Settings',
              description='Allows ability to set default values for newly created exports.'),
-        Role(slug=privileges.LINKED_PROJECTS,
-             name='Linked Projects',
-             description='Allows admin users to push and/or pull content between linked projects.'),
         Role(slug=privileges.RELEASE_MANAGEMENT,
              name='Release Management',
              description='Allows access to features that help manage releases between projects, like the linked '
