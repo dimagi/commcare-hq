@@ -240,6 +240,7 @@ data_dictionary
  0005_casetype_fully_generated
  0006_caseproperty_group
  0007_property_type_choices
+ 0008_casepropertyallowedvalue
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -913,7 +914,6 @@ two_factor
  0004_auto_20160205_1827
  0005_auto_20160224_0450
  0006_phonedevice_key_default
- 0007_auto_20201201_1019
 user_importer
  0001_initial
 userreports
