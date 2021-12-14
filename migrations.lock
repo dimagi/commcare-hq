@@ -77,6 +77,7 @@ accounting
  0055_linked_projects
  0056_add_release_management
  0057_add_sms_report_toggle
+ 0058_delete_linked_projects_role
 admin
  0001_initial
  0002_logentry_remove_auto_add
