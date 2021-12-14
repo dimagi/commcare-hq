@@ -127,7 +127,7 @@ describe('Integration', function () {
         assert.equal(stringQ.pendingAnswer(), 'ben');
 
         // Fire off a change in the multi question
-        multiQ.entry.rawAnswer(["1"]);
+        multiQ.entry.rawAnswer(["Yes"]);
         this.clock.tick(Const.KO_ENTRY_TIMEOUT);
         assert.sameMembers(multiQ.pendingAnswer(), [1]);
 
