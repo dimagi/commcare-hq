@@ -52,7 +52,9 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
             for config in all:
                 self.assertEqual('Custom Title', config.title)
 
-    def test_production_config(self):
+    @patch('corehq.apps.callcenter.data_source.get_call_center_domains')
+    def test_production_config(self, mock_get_call_center_domains):
+        mock_get_call_center_domains.return_value = []
         for report_config in StaticReportConfiguration.all():
             report_config.validate()
 
