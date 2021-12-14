@@ -33,7 +33,7 @@ class Command(BaseCommand):
     def _delete_mobile_access_permissions_on_domain(domain):
         affected_roles = UserRole.objects.filter(
             domain=domain, rolepermission__permission_fk__value='access_mobile_endpoints')
-        atleast_one_role_deleted = 0 < len(affected_roles)
+        atleast_one_permission_deleted = 0 < len(affected_roles)
         for role in affected_roles:
             logger.info("Deleting RolePermission object with permission=access_mobile_endpoints"
             f" and related role {role.name} from domain \"{domain}\"...")
@@ -43,7 +43,7 @@ class Command(BaseCommand):
             permission_fk__value='access_mobile_endpoints'
         ).delete()
         logger.info('Roles successfully deleted.')
-        return atleast_one_role_deleted
+        return atleast_one_permission_deleted
 
     @staticmethod
     def _get_domains_with_mobile_permission():
