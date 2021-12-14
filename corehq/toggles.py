@@ -850,8 +850,8 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
 )
 
 USH_WEB_USER_CASE_CREATION = StaticToggle(
-    'web_user_case_creation',
-    "USH: Enable the creation of user cases for web users.",
+    'web_usercase_creation',
+    "USH: Enable the creation of usercases for web users.",
     TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Usercase+Creation',
     namespaces=[NAMESPACE_DOMAIN],
