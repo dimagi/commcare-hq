@@ -29,8 +29,9 @@ class Command(BaseCommand):
         parser.add_argument('--limit', default=0, type=int, help='terminate after LIMIT forms')
         parser.add_argument('--reset', action='store_true', help='trigger a fresh run')
         parser.add_argument('--path', default='output.log', help='the path to write log output')
+        parser.add_argument('--batchsize', default=10, type=int, help='number of apps to pull simultaneously')
 
-    def handle(self, all, limit, reset, path, *args, **kwargs):
+    def handle(self, all, limit, reset, path, batchsize, *args, **kwargs):
         write_mode = 'w' if reset else 'a'  # Only overwrite on fresh runs
 
         # NOTE: Outputting to a file, rather than stdout for some messages due to the progress bar.
@@ -46,13 +47,13 @@ class Command(BaseCommand):
                 self.broadcast('Searching for entities in CURRENT forms')
 
             self.start_time = datetime.now()
-            self.process_forms(all, limit, reset)
+            self.process_forms(all, limit, reset, batchsize)
             self.report_results()
 
-    def process_forms(self, all, limit, reset):
+    def process_forms(self, all, limit, reset, batchsize):
         get_apps = get_all_apps if all else get_current_apps
 
-        for app in get_apps(reset):
+        for app in get_apps(reset, batchsize):
             for form in get_forms(app):
                 if form_contains_entities(form):
                     handle_entity_form(form, app, self.log_file)
@@ -79,7 +80,7 @@ class Command(BaseCommand):
         print(msg, file=self.log_file)
 
 
-def get_all_apps(reset=False):
+def get_all_apps(reset=False, batchsize=10):
     '''
     This looks at all apps, including previous versions.
     Note that this won't look at linked or remote apps
@@ -87,7 +88,7 @@ def get_all_apps(reset=False):
     db = Application.get_db()
     keys = [[Application.__name__], [f'{Application.__name__}-Deleted']]
     view_name = 'all_docs/by_doc_type'
-    raw_iter = resumable_view_iterator(db, __name__, view_name, view_keys=keys, chunk_size=10)
+    raw_iter = resumable_view_iterator(db, __name__, view_name, view_keys=keys, chunk_size=batchsize)
     if reset:
         raw_iter.discard_state()
 
@@ -129,7 +130,7 @@ def get_remaining_app_count(db, view_name, keys, modified_start_key):
     return count
 
 
-def get_current_apps(reset=False):
+def get_current_apps(reset=False, batchsize=10):
     '''
     Only examine the most recent version of any application. This does look at linked and remote apps.
     Note that this doesn't support resumable execution, as the effort was out of scope,
@@ -137,18 +138,18 @@ def get_current_apps(reset=False):
     '''
     query = GlobalAppConfig.objects.values_list('app_id', flat=True).order_by('id')
     count = query.count()
-    iter = get_current_apps_iter(query)
+    iter = get_current_apps_iter(query, batchsize)
 
     return with_progress_bar(iter, count)
 
 
-def get_current_apps_iter(query):
+def get_current_apps_iter(query, batchsize):
     db = Application.get_db()
     paginator = Paginator(query, 100)
     for page_num in paginator.page_range:
         page = paginator.page(page_num)
         app_ids = list(page.object_list)
-        for app_doc in iter_docs(db, app_ids, chunksize=10):
+        for app_doc in iter_docs(db, app_ids, chunksize=batchsize):
             yield Application.wrap(app_doc)
 
 
