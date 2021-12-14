@@ -98,6 +98,7 @@ pro_v1 = standard_v1 + [
     privileges.TEMPLATED_INTENTS,
     privileges.CASE_SHARING_GROUPS,
     privileges.CHILD_CASES,
+    privileges.LITE_RELEASE_MANAGEMENT,
 ]
 
 
