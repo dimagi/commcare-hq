@@ -42,4 +42,4 @@ class Command(BaseCommand):
         id_to_name = {e['_id']:e['name'] for e in odata_feeds}
         for export_id, name in id_to_name.items():
             date_accessed = summary.get(export_id, 'more than 1 year ago')
-            self.stdout.write(f'{export_id}\t{date_accessed}\t{export_id}')
+            self.stdout.write(f'{name}\t{date_accessed}\t{export_id}')
