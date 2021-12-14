@@ -71,13 +71,17 @@ class Command(BaseCommand):
                 )
                 return
             for priv in privs:
-                if not dry_run:
+                try:
                     role_to_delete = Role.objects.get(slug=priv)
-                    role_to_delete.delete()
-                logger.info(
-                    f"{dry_run_tag}Deleted role for privilege {priv} from database. To ensure the role is not "
-                    f"recreated, remove remaining references in the codebase."
-                )
+                    if not dry_run:
+                        role_to_delete.delete()
+                except Role.DoesNotExist:
+                    logger.warning(f"{dry_run_tag}Role for privilege {priv} does not exist. Nothing to delete.")
+                else:
+                    logger.info(
+                        f"{dry_run_tag}Deleted role for privilege {priv} from database. To ensure the role is not "
+                        f"recreated, remove remaining references in the codebase."
+                    )
 
     def add_arguments(self, parser):
         parser.add_argument(
