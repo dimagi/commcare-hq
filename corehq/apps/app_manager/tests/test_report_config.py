@@ -50,6 +50,7 @@ from corehq.apps.userreports.reports.specs import (
     MultibarChartSpec,
 )
 from corehq.apps.userreports.tests.utils import (
+    get_sample_data_source,
     get_sample_report_config,
     mock_datasource_config,
 )
@@ -244,7 +245,11 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         survey_form.xmlns = "http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AE"
 
         with mock_report_configurations(cls.report_configs_by_id):
-            cls.suite = cls.app.create_suite()
+            with mock.patch(
+                'corehq.apps.userreports.reports.data_source.get_datasource_config',
+                return_value=(get_sample_data_source(), False)
+            ):
+                cls.suite = cls.app.create_suite()
         cls.data = [
             {'color_94ec39e6': 'red', 'count': 2, 'computed_owner_name_40cc88a0': 'cory', 'fav_fruit_abc123': 'c'},
             {'color_94ec39e6': 'black', 'count': 1, 'computed_owner_name_40cc88a0': 'ctsims', 'fav_fruit_abc123': 'b'},
@@ -581,7 +586,9 @@ class TestReportConfigInstances(TestCase, TestXmlMixin):
     def _make_report_app_config(self, report_slug):
         report = get_sample_report_config()
         report.domain = self.domain
-        report.save()
+        with mock.patch('corehq.apps.userreports.reports.data_source.get_datasource_config',
+                        return_value=(get_sample_data_source(), False)):
+            report.save()
         self.addCleanup(report.delete)
         report_app_config = ReportAppConfig(
             report_id=report._id,
