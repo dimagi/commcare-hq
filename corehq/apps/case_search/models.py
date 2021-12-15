@@ -11,10 +11,13 @@ CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
 CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
-CONFIG_KEY_PREFIX = "x_commcare_"
 CASE_SEARCH_CASE_TYPE_KEY = "case_type"
-CASE_SEARCH_REGISTRY_ID_KEY = f'{CONFIG_KEY_PREFIX}data_registry'
-CASE_SEARCH_EXPAND_ID_PROPERTY_KEY = f'{CONFIG_KEY_PREFIX}expand_id_property'
+
+# These use the `x_commcare_` prefix to distinguish them from 'filter' keys
+# This is a purely aesthetic distinction and not functional
+CASE_SEARCH_REGISTRY_ID_KEY = 'x_commcare_data_registry'
+CASE_SEARCH_EXPAND_ID_PROPERTY_KEY = 'x_commcare_expand_id_property'
+
 CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_CASE_TYPE_KEY: "case_types",
     CASE_SEARCH_REGISTRY_ID_KEY: "data_registry",
