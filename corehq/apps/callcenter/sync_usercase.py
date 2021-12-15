@@ -176,12 +176,12 @@ def _get_changed_fields(case, fields):
     return changed_fields
 
 
-def get_sync_lock_key(user_id):
-    return ["sync_user_case_for_%s" % user_id]
+def get_sync_lock_key(user_id, domain):
+    return [f"sync_user_case_for_{user_id}_{domain}"]
 
 
-def sync_call_center_user_case(user):
-    with CriticalSection(get_sync_lock_key(user._id)):
+def sync_call_center_user_case(user, domain):
+    with CriticalSection(get_sync_lock_key(user._id, domain)):
         _UserCaseHelper.commit(list(_iter_call_center_case_helpers(user)))
 
 
@@ -230,7 +230,7 @@ def _call_center_location_owner(user, ancestor_level):
 
 
 def sync_usercase(user, domain):
-    with CriticalSection(get_sync_lock_key(user._id)):
+    with CriticalSection(get_sync_lock_key(user._id, domain)):
         domain_obj = Domain.get_by_name(domain)
         _UserCaseHelper.commit(list(_iter_sync_usercase_helpers(user, domain_obj)))
 
@@ -256,7 +256,7 @@ def sync_usercases(user, domain):
     first time.
     """
     domain_obj = Domain.get_by_name(domain)
-    with CriticalSection(get_sync_lock_key(user._id)):
+    with CriticalSection(get_sync_lock_key(user._id, domain)):
         helpers = list(chain(
             _iter_sync_usercase_helpers(user, domain_obj),
             _iter_call_center_case_helpers(user),
