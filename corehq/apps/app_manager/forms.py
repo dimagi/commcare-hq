@@ -14,14 +14,12 @@ from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.linked_domain.models import DomainLink
-from corehq import toggles
 
 from .dbaccessors import get_all_built_app_ids_and_versions
 from .models import LATEST_APK_VALUE, LATEST_APP_VALUE
 from .util import get_commcare_builds
-from ..accounting.utils import domain_has_privilege
 from ..hqwebapp.widgets import BootstrapCheckboxInput
-from ...privileges import RELEASE_MANAGEMENT
+from ..linked_domain.util import can_domain_access_release_management
 
 
 class CopyApplicationForm(forms.Form):
@@ -60,9 +58,7 @@ class CopyApplicationForm(forms.Form):
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
-        if (toggles.LINKED_DOMAINS.enabled(self.from_domain)
-            or domain_has_privilege(self.from_domain, RELEASE_MANAGEMENT)) \
-                and not is_linked_app(app):
+        if can_domain_access_release_management(self.from_domain, check_toggle=True) and not is_linked_app(app):
             fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()
@@ -89,7 +85,7 @@ class CopyApplicationForm(forms.Form):
     def clean(self):
         domain = self.cleaned_data.get('domain')
         if self.cleaned_data.get('linked'):
-            if not domain_has_privilege(domain, RELEASE_MANAGEMENT) and not toggles.LINKED_DOMAINS.enabled(domain):
+            if not can_domain_access_release_management(domain, check_toggle=True):
                 raise forms.ValidationError("The target project space does not have this feature enabled.")
             link = DomainLink.objects.filter(linked_domain=domain)
             if link and link[0].master_domain != self.from_domain:
