@@ -15,11 +15,11 @@ CONFIG_KEY_PREFIX = "x_commcare_"
 CASE_SEARCH_CASE_TYPE_KEY = "case_type"
 CASE_SEARCH_REGISTRY_ID_KEY = f'{CONFIG_KEY_PREFIX}data_registry'
 CASE_SEARCH_EXPAND_ID_PROPERTY_KEY = f'{CONFIG_KEY_PREFIX}expand_id_property'
-CONFIG_KEYS = (
-    CASE_SEARCH_CASE_TYPE_KEY,
-    CASE_SEARCH_REGISTRY_ID_KEY,
-    CASE_SEARCH_EXPAND_ID_PROPERTY_KEY
-)
+CONFIG_KEYS_MAPPING = {
+    CASE_SEARCH_CASE_TYPE_KEY: "case_types",
+    CASE_SEARCH_REGISTRY_ID_KEY: "data_registry",
+    CASE_SEARCH_EXPAND_ID_PROPERTY_KEY: "expand_id_property"
+}
 LEGACY_CONFIG_KEYS = {
     CASE_SEARCH_REGISTRY_ID_KEY: "commcare_registry"
 }
@@ -27,22 +27,27 @@ UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     'owner_id',
     'include_closed',   # backwards compatibility for deprecated functionality to include closed cases
-) + CONFIG_KEYS + tuple(LEGACY_CONFIG_KEYS.values())
+) + tuple(CONFIG_KEYS_MAPPING.values()) + tuple(LEGACY_CONFIG_KEYS.values())
+
+
+def _flatten_singleton_list(value):
+    return value[0] if value and len(value) == 1 else value
+
+
+def _flatten_multi_value_dict_values(value):
+    return {k: _flatten_singleton_list(v) for k, v in value.items()}
 
 
 @attr.s(frozen=True)
 class CaseSearchRequestConfig:
-    criteria = attr.ib(kw_only=True)
-    case_type = attr.ib(kw_only=True, default=None)
-    data_registry = attr.ib(kw_only=True, default=None)
-    expand_id_property = attr.ib(kw_only=True, default=None)
+    criteria = attr.ib(kw_only=True, converter=_flatten_multi_value_dict_values)
+    case_types = attr.ib(kw_only=True, default=None)
+    data_registry = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
+    expand_id_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
 
-    @property
-    def case_types(self):
-        return self.case_type if isinstance(self.case_type, list) else [self.case_type]
-
-    @case_type.validator
+    @case_types.validator
     def _require_case_type(self, attribute, value):
+        # custom validator to allow custom exception and message
         if not value:
             raise CaseSearchUserError(_('Search request must specify {param}').format(param=attribute.name))
 
@@ -54,7 +59,7 @@ class CaseSearchRequestConfig:
 
 
 def extract_search_request_config(request_dict):
-    params = {k: v[0] if v and len(v) == 1 else v for k, v in request_dict.lists()}
+    params = dict(request_dict.lists())
 
     def _get_value(key):
         val = None
@@ -65,7 +70,10 @@ def extract_search_request_config(request_dict):
                 val = params.pop(LEGACY_CONFIG_KEYS[key], None)
         return val
 
-    kwargs_from_params = {key.replace(CONFIG_KEY_PREFIX, ""): _get_value(key) for key in CONFIG_KEYS}
+    kwargs_from_params = {
+        config_name: _get_value(param_name)
+        for param_name, config_name in CONFIG_KEYS_MAPPING.items()
+    }
     return CaseSearchRequestConfig(criteria=params, **kwargs_from_params)
 
 

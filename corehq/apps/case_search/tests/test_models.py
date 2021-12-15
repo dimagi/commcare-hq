@@ -63,9 +63,10 @@ def test_extract_criteria_config(self, case_type, data_registry, expand_id_prope
         config = extract_search_request_config(request_dict)
 
     if not expect_exception:
+        expected_case_types = case_type if isinstance(case_type, list) else [case_type]
         eq(config, CaseSearchRequestConfig(
             criteria={"other_key": "jim"},
-            case_type=case_type, data_registry=data_registry, expand_id_property=expand_id_property
+            case_types=expected_case_types, data_registry=data_registry, expand_id_property=expand_id_property
         ))
 
 
@@ -74,7 +75,7 @@ def test_extract_criteria_config_legacy():
         CASE_SEARCH_CASE_TYPE_KEY: "type",
         "commcare_registry": "reg1",
     }))
-    eq(config, CaseSearchRequestConfig(criteria={}, case_type="type", data_registry="reg1"))
+    eq(config, CaseSearchRequestConfig(criteria={}, case_types=["type"], data_registry="reg1"))
 
 
 def _make_request_dict(params):
