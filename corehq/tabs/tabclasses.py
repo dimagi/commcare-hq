@@ -49,7 +49,7 @@ from corehq.apps.integration.views import (
     GaenOtpServerSettingsView,
     HmacCalloutSettingsView,
 )
-from corehq.apps.linked_domain.util import can_user_access_release_management
+from corehq.apps.linked_domain.util import can_user_access_release_management, can_domain_access_release_management
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -99,7 +99,7 @@ from corehq.messaging.scheduling.views import (
 from corehq.motech.dhis2.views import DataSetMapListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, RELEASE_MANAGEMENT
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
     dropdown_dict,
@@ -2017,10 +2017,10 @@ def _get_feature_flag_items(domain, couch_user):
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
         })
 
-    # show ERM version of linked projects if domain has privilege
+    # DEPRECATED: only show this is the domain does not have release_management access
     can_access_linked_domains = (
         user_is_admin and toggles.LINKED_DOMAINS.enabled(domain)
-        and not domain_has_privilege(domain, RELEASE_MANAGEMENT)
+        and not can_domain_access_release_management(domain)
     )
     if can_access_linked_domains:
         feature_flag_items.append({
