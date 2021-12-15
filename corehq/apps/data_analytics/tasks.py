@@ -24,7 +24,7 @@ def build_last_month_MALT():
     last_month = last_month_dict()
     domains = Domain.get_all_names()
     grouped_malt_tasks = update_current_MALT_for_domains.chunks(
-        zip([last_month], domains), 5000
+        zip([last_month], domains), 1000
     ).group()
 
     group_result = grouped_malt_tasks.apply_async()
