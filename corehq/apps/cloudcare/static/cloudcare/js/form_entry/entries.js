@@ -476,7 +476,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 let answer = _.indexOf(choices, value);
                 // answer is based on a 1 indexed index of the choices
                 this.answer(answer === -1 ? Const.NO_ANSWER : answer + 1);
-            }
+            },
         });
 
         self.onClear = function () {
