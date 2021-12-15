@@ -555,7 +555,7 @@ class CaseUpdateConfig:
         if not self.index_remove_case_id:
             return indices
 
-        if self.index_remove_identifier not in indices:
+        if not target_case or self.index_remove_identifier not in indices:
             indices.update(self.get_remove_case_index(target_case))
 
         return indices
