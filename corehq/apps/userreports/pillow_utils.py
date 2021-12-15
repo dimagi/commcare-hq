@@ -81,4 +81,4 @@ def rebuild_table(adapter, diffs=None):
         return
 
     rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id,
-                             diffs=diff_dicts)
+                             diffs=diff_dicts, domain=config.domain)

@@ -70,6 +70,7 @@ node_modules/
 /sharedfiles/
 docker/data
 *.lock
+!migrations.lock
 !yarn.lock
 fab/config.py
 extensions/

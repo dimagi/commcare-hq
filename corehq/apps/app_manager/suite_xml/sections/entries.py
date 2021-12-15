@@ -17,6 +17,7 @@ from corehq.apps.app_manager.suite_xml.contributors import (
 from corehq.apps.app_manager.suite_xml.utils import (
     get_form_locale_id,
     get_select_chain_meta,
+    get_ordered_case_types,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import *
 from corehq.apps.app_manager.util import (
@@ -37,6 +38,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     session_var,
 )
+from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
@@ -125,13 +127,10 @@ class EntriesHelper(object):
 
     @staticmethod
     def _get_nodeset_xpath(instance_name, root_element, case_type, filter_xpath='', additional_types=None):
-        if additional_types:
-            case_type_filter = " or ".join([
-                "@case_type='{case_type}'".format(case_type=case_type)
-                for case_type in set(additional_types).union({case_type})
-            ])
-        else:
-            case_type_filter = "@case_type='{case_type}'".format(case_type=case_type)
+        case_type_filter = " or ".join([
+            "@case_type='{case_type}'".format(case_type=case_type)
+            for case_type in get_ordered_case_types(case_type, additional_types)
+        ])
         return f"instance('{instance_name}')/{root_element}/case[{case_type_filter}][@status='open']{filter_xpath}"
 
     @staticmethod
@@ -505,6 +504,7 @@ class EntriesHelper(object):
             instance_name, root_element = "casedb", "casedb"
             if module_loads_registry_case(detail_module):
                 instance_name, root_element = "results", "results"
+                filter_xpath += EXCLUDE_RELATED_CASES_FILTER
 
             nodeset = EntriesHelper._get_nodeset_xpath(
                 instance_name, root_element,
@@ -552,14 +552,13 @@ class EntriesHelper(object):
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
 
-        case_types = set(module.search_config.additional_case_types) | {datum.case_type}
         case_ids_expressions = {session_var(datum.datum.id)} | set(module.search_config.additional_registry_cases)
         data = [
             QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
         ]
         data.extend([
             QueryData(key='case_type', ref=f"'{case_type}'")
-            for case_type in sorted(case_types)
+            for case_type in get_ordered_case_types(datum.case_type, module.search_config.additional_case_types)
         ])
         data.extend([
             QueryData(key='case_id', ref=case_id_xpath)

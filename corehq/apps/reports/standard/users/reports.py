@@ -8,7 +8,7 @@ from django.utils.translation import ugettext_lazy
 
 from memoized import memoized
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -128,7 +128,6 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             self.domain,
             slugs,
             self.request.couch_user,
-            include_enterprise_users=toggles.DOMAIN_PERMISSIONS_MIRROR.enabled(self.domain),
         )
 
     def _build_query(self, user_ids, changed_by_user_ids, user_property, actions, user_upload_record_id):

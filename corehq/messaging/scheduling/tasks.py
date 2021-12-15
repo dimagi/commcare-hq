@@ -455,7 +455,7 @@ def update_broadcast_last_sent_timestamp(broadcast_class, schedule_id):
 
 
 @no_result_task(serializer='pickle', queue='reminder_queue')
-def handle_alert_schedule_instance(schedule_instance_id):
+def handle_alert_schedule_instance(schedule_instance_id, domain):
     with CriticalSection(['handle-alert-schedule-instance-%s' % schedule_instance_id.hex]):
         try:
             instance = get_alert_schedule_instance(schedule_instance_id)
@@ -467,7 +467,7 @@ def handle_alert_schedule_instance(schedule_instance_id):
 
 
 @no_result_task(serializer='pickle', queue='reminder_queue')
-def handle_timed_schedule_instance(schedule_instance_id):
+def handle_timed_schedule_instance(schedule_instance_id, domain):
     with CriticalSection(['handle-timed-schedule-instance-%s' % schedule_instance_id.hex]):
         try:
             instance = get_timed_schedule_instance(schedule_instance_id)
@@ -479,7 +479,7 @@ def handle_timed_schedule_instance(schedule_instance_id):
 
 
 @no_result_task(serializer='pickle', queue='reminder_queue')
-def handle_case_alert_schedule_instance(case_id, schedule_instance_id):
+def handle_case_alert_schedule_instance(case_id, schedule_instance_id, domain):
     # Use the same lock key as the tasks which refresh case schedule instances
     from corehq.messaging.tasks import get_sync_key
     with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
@@ -492,7 +492,7 @@ def handle_case_alert_schedule_instance(case_id, schedule_instance_id):
 
 
 @no_result_task(serializer='pickle', queue='reminder_queue')
-def handle_case_timed_schedule_instance(case_id, schedule_instance_id):
+def handle_case_timed_schedule_instance(case_id, schedule_instance_id, domain):
     # Use the same lock key as the tasks which refresh case schedule instances
     from corehq.messaging.tasks import get_sync_key
     with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):

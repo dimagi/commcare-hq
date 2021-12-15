@@ -1,8 +1,18 @@
 {% extends "hqwebapp/base_section.html" %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% requirejs_main "data_dictionary/js/data_dictionary" %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'data_dictionary/less/data_dictionary.less' %}" />
+  {% endcompress %}
+{% endblock %}
 
 {% block page_navigation %}
   <h2 class="text-hq-nav-header">{% trans "Data Dictionary" %}</h2>
@@ -101,7 +111,7 @@
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
   <div data-bind="saveButton: saveButton, visible: $root.activeCaseType()"></div>
   <div class="row">
-    <div class="col-md-10">
+    <div class="col-md-12">
       <h3 data-bind="text: $root.activeCaseType()"></h3>
       {% if fhir_integration_enabled %}
         <div class="form-inline" data-bind="visible: fhirResourceTypes().length">
@@ -144,6 +154,7 @@
         {% if fhir_integration_enabled %}
           <th>{% trans "FHIR Resource Property Path" %}</th>
         {% endif %}
+        <th>{% include "data_dictionary/partials/valid_values_th_content.html" %}</th>
         <th></th>
         </thead>
         <tbody data-bind="sortable: casePropertyList">
@@ -152,6 +163,7 @@
           <td><i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: $root.toggleGroup"></i></td>
           <td data-bind="text: name ? name : 'No Group'"></td>
           <td>{% trans "Case Property Group" %}</td>
+          <td></td>
           <td></td>
           <td></td>
           {% if fhir_integration_enabled %}
@@ -174,11 +186,6 @@
                                 optionsValue: 'value',
                                 value: dataType,
                             "></select>
-            {% if request|toggle_enabled:'CASE_IMPORT_DATA_DICTIONARY_VALIDATION' %}
-              <p class="help-block" data-bind="visible: dataType() === 'date'">
-                {% trans "YYYY-MM-DD" %}
-              </p>
-            {% endif %}
           </td>
           <td>
                             <textarea class="form-control vertical-resize" data-bind="
@@ -188,25 +195,31 @@
                             "></textarea>
           </td>
           {% if fhir_integration_enabled %}
-          <td>
+          <td class="fhir-path">
             <input class="form-control" data-bind="value: $data.fhirResourcePropPath, disable: removeFHIRResourcePropertyPath"></input>
+            <!-- ko if: fhirResourcePropPath() && !removeFHIRResourcePropertyPath() -->
+            <button title="{% trans_html_attr 'Remove Path' %}" data-bind="click: removePath" class="fa fa-close"></button>
+            <!-- /ko -->
+            <!-- ko if: removeFHIRResourcePropertyPath() -->
+            <button title="{% trans_html_attr 'Restore Path' %}" data-bind="click: restorePath" class="fa fa-undo"></button>
+            <!-- /ko -->
           </td>
           {% endif %}
           <td>
+            <div data-bind="visible: canHaveAllowedValues()">
+              <div data-bind="jqueryElement: $allowedValues"></div>
+            </div>
+            <div data-bind="visible: dataType() === 'date'" class="help-block">
+              {% trans "YYYY-MM-DD" %}
+            </div>
+          </td>
+          <td>
             <!-- ko if: !deprecated() -->
-            <button data-bind="click: deprecateProperty" class="btn btn-danger btn-sm">{% trans "Deprecate Property" %}</button>
+            <button title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="fa fa-archive"></button>
             <!-- /ko -->
             <!-- ko if: deprecated() -->
-            <button data-bind="click: restoreProperty" class="btn btn-default btn-sm">{% trans "Restore Property" %}</button>
+            <button title="{% trans_html_attr 'Restore Property' %}" data-bind="click: restoreProperty" class="fa fa-undo"></button>
             <!-- /ko -->
-            {% if fhir_integration_enabled %}
-            <!-- ko if: fhirResourcePropPath() && !removeFHIRResourcePropertyPath() -->
-            <button data-bind="click: removePath" class="btn btn-danger btn-sm">{% trans "Remove Path" %}</button>
-            <!-- /ko -->
-            <!-- ko if: removeFHIRResourcePropertyPath() -->
-            <button data-bind="click: restorePath" class="btn btn-default btn-sm">{% trans "Restore Path" %}</button>
-            <!-- /ko -->
-            {% endif %}
           </td>
         </tr>
         <!-- /ko -->

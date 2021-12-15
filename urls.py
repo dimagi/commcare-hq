@@ -74,7 +74,6 @@ domain_specific = [
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
     url(r'^up_nrhm/', include('custom.up_nrhm.urls')),
-    url(r'^', include('custom.m4change.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
