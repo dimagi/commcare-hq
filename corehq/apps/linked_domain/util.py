@@ -9,7 +9,7 @@ from corehq.apps.app_manager.exceptions import MultimediaMissingError
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.remote_accessors import fetch_remote_media
-from corehq.privileges import RELEASE_MANAGEMENT
+from corehq.privileges import RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT
 from corehq.util.timezones.conversions import ServerTime
 
 
@@ -19,12 +19,13 @@ def can_user_access_release_management(user, domain, check_toggle=False):
     NOTE: can remove check_toggle once the linked domains toggle is deleted
     Checks if the current domain has any of the following enabled:
     - privileges.RELEASE_MANAGEMENT
+    - privileges.LITE_RELEASE_MANAGEMENT
     - toggles.LINKED_DOMAINS
     If yes, and the user meets the criteria needed, returns True
     """
     if not user or not domain:
         return False
-    if domain_has_privilege(domain, RELEASE_MANAGEMENT):
+    if domain_has_privilege(domain, RELEASE_MANAGEMENT) or domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT):
         return user.is_domain_admin(domain)
     elif check_toggle:
         return toggles.LINKED_DOMAINS.enabled(domain)
@@ -35,10 +36,16 @@ def can_domain_access_release_management(domain, check_toggle=False):
     """
     :param check_toggle: set to True if the deprecated linked domains toggle should be checked
     NOTE: can remove check_toggle once the linked domains toggle is deleted
+    Checks if the current domain has any of the following enabled:
+    - privileges.RELEASE_MANAGEMENT
+    - privileges.LITE_RELEASE_MANAGEMENT
+    - toggles.LINKED_DOMAINS
+    If yes, and the user meets the criteria needed, returns True
     """
     if not domain:
         return False
-    is_privilege_granted = domain_has_privilege(domain, RELEASE_MANAGEMENT)
+    is_privilege_granted = (domain_has_privilege(domain, RELEASE_MANAGEMENT)
+                            or domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT))
     is_toggle_enabled = check_toggle and toggles.LINKED_DOMAINS.enabled(domain)
     return is_privilege_granted or is_toggle_enabled
 
