@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_lazy
 from django.views.generic import View
 
 import pytz
+from memoized import memoized
 
 from couchexport.models import Format
 from dimagi.utils.web import get_url_base, json_response
@@ -52,7 +53,6 @@ from corehq.blobs.exceptions import NotFound
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
-from memoized import memoized
 
 
 def get_timezone(domain, couch_user):
