@@ -423,7 +423,7 @@
           <label>
               <input data-bind="
                           checked: $parent.rawAnswer,
-                          checkedValue: $index() + 1,
+                          checkedValue: $data,
                           attr: {
                               id: 'group-' + $parent.entryId + '-choice-' + $index(),
                               type: $parent.isMulti ? 'checkbox' : 'radio',
@@ -471,7 +471,7 @@
         visible: helpText(),
     "></span>
   <select multiple class="form-control" data-bind="
-        foreach: options,
+        options: choices,
         selectedOptions: rawAnswer,
         attr: {
             id: entryId,
@@ -479,7 +479,6 @@
         },
         valueAllowUnset: true,
         ">
-    <option data-bind="value: id, text: text"></option>
   </select>
   <span class="help-block type" aria-hidden="true" data-bind="
         text: helpText(),
