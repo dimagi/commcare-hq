@@ -2158,7 +2158,7 @@ class CaseSearch(DocumentSchema):
     data_registry = StringProperty()
     data_registry_workflow = StringProperty()           # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()  # list of xpath expressions
-    expand_id_property = StringProperty()  # case property referencing another case's ID
+    custom_related_case_property = StringProperty()  # case property referencing another case's ID
 
     @property
     def case_session_var(self):

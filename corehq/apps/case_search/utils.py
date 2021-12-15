@@ -79,7 +79,7 @@ def get_case_search_results(domain, criteria, app_id=None, couch_user=None):
 
     cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
     if app_id:
-        cases.extend(get_related_cases(helper, app_id, case_types, cases, config.expand_id_property))
+        cases.extend(get_related_cases(helper, app_id, case_types, cases, config.custom_related_case_property))
     return cases
 
 
@@ -263,7 +263,7 @@ class CaseSearchCriteria:
         ]
 
 
-def get_related_cases(helper, app_id, case_types, cases, expand_id_property):
+def get_related_cases(helper, app_id, case_types, cases, custom_related_case_property):
     """
     Fetch related cases that are necessary to display any related-case
     properties in the app requesting this case search.
@@ -284,8 +284,8 @@ def get_related_cases(helper, app_id, case_types, cases, expand_id_property):
     ]
 
     expanded_case_results = []
-    if expand_id_property:
-        expanded_case_results.extend(get_expanded_case_results(helper, expand_id_property, cases))
+    if custom_related_case_property:
+        expanded_case_results.extend(get_expanded_case_results(helper, custom_related_case_property, cases))
 
     results = expanded_case_results
     top_level_cases = cases + expanded_case_results
@@ -375,9 +375,9 @@ def get_child_case_results(helper, parent_cases, case_types):
     return [helper.wrap_case(result, is_related_case=True) for result in results]
 
 
-def get_expanded_case_results(helper, expand_id_property, cases):
+def get_expanded_case_results(helper, custom_related_case_property, cases):
     expanded_case_ids = {
-        case.get_case_property(expand_id_property, dynamic_only=True) for case in cases
+        case.get_case_property(custom_related_case_property, dynamic_only=True) for case in cases
     }
     expanded_case_ids -= {None, ""}
     return _get_case_search_cases(helper, expanded_case_ids)

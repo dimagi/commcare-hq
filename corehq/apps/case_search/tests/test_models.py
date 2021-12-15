@@ -6,7 +6,7 @@ from testil import assert_raises, eq
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import (
-    CASE_SEARCH_EXPAND_ID_PROPERTY_KEY,
+    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
     CaseSearchRequestConfig,
     disable_case_search,
@@ -47,15 +47,15 @@ class TestCaseSearch(TestCase):
     (None, ["dupe_id"], True),  # disallow list
     (["reg1"], None, True),  # disallow list
 ])
-def test_extract_criteria_config(self, data_registry, expand_id_property, expect_exception):
+def test_extract_criteria_config(self, data_registry, custom_related_case_property, expect_exception):
     with assert_raises(None if not expect_exception else CaseSearchUserError):
         config = extract_search_request_config({
             CASE_SEARCH_REGISTRY_ID_KEY: data_registry,
-            CASE_SEARCH_EXPAND_ID_PROPERTY_KEY: expand_id_property,
+            CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: custom_related_case_property,
             "other_key": "jim",
             "case_type": "bob"
         })
-        eq(config, CaseSearchRequestConfig(data_registry=data_registry, expand_id_property=expand_id_property))
+        eq(config, CaseSearchRequestConfig(data_registry=data_registry, custom_related_case_property=custom_related_case_property))
 
 
 def test_extract_criteria_config_legacy():
