@@ -349,7 +349,10 @@ def _test_payload_generator(intent_case, registry_mock_cases=None,
 
 class DataRegistryUpdateForm:
     def __init__(self, form, intent_case):
-        self.intent_case = intent_case
+        self.intent_cases = {
+            case.case_json['target_case_id']: case
+            for case in [intent_case] + intent_case.get_subcases()
+        }
         self.formxml = ElementTree.fromstring(form)
         self.cases = {
             case.get('case_id'): CaseBlock.from_xml(case)
@@ -365,7 +368,7 @@ class DataRegistryUpdateForm:
         """
         for case_id, updates in expected_updates.items():
             case = self.cases[case_id]
-            case.date_modified = self.intent_case.modified_on
+            case.date_modified = self.intent_cases[case_id].modified_on
             eq(case.update, updates)
 
     def assert_case_index(self, expected_indices):
@@ -388,7 +391,7 @@ class DataRegistryUpdateForm:
         for case_id, create in expected_creates.items():
             case = self.cases[case_id]
             eq(case.create, True)
-            eq(case.date_opened, self.intent_case.opened_on)
+            eq(case.date_opened, self.intent_cases[case_id].opened_on)
             for key, val in create.items():
                 eq(getattr(case, key), val)
 
