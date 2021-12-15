@@ -353,6 +353,9 @@ hqDefine("linked_domain/js/domain_links", [
         self.parent = data.parent;
         self.availableDomains = ko.observableArray(data.availableDomains.sort());
         self.domainToAdd = ko.observable();
+        self.didSelectDomain = ko.computed(function() {
+            return self.domainToAdd() !== null && self.domainToAdd() !== undefined;;
+        });
 
         self.addDownstreamDomain = function (viewModel) {
             _private.RMI("create_domain_link", {
