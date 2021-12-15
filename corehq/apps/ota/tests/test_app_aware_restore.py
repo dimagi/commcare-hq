@@ -46,7 +46,8 @@ class AppAwareSyncTests(TestCase):
         cls.app1 = Application.new_app(cls.domain, 'Test App 1')
         cls.report_config1 = get_sample_report_config()
         cls.report_config1.domain = cls.domain
-        cls.report_config1.save()
+        with mock_datasource_config():
+            cls.report_config1.save()
         report_app_config = {
             'report_id': cls.report_config1.get_id,
             'uuid': '123456'
@@ -58,7 +59,8 @@ class AppAwareSyncTests(TestCase):
         cls.app2 = Application.new_app(cls.domain, 'Test App 2')
         cls.report_config2 = get_sample_report_config()
         cls.report_config2.domain = cls.domain
-        cls.report_config2.save()
+        with mock_datasource_config():
+            cls.report_config2.save()
         report_app_config = {
             'report_id': cls.report_config2.get_id,
             'uuid': 'abcdef'
