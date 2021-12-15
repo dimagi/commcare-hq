@@ -15,7 +15,7 @@ def require_access_to_linked_domains(view_func):
 
         def call_view():
             return view_func(request, domain, *args, **kwargs)
-        if can_user_access_release_management(user, domain):
+        if can_user_access_release_management(user, domain, check_toggle=True):
             return call_view()
         else:
             return HttpResponseForbidden()

@@ -13,8 +13,10 @@ from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.timezones.conversions import ServerTime
 
 
-def can_user_access_release_management(user, domain):
+def can_user_access_release_management(user, domain, check_toggle=False):
     """
+    :param check_toggle: set to True if the deprecated linked domains toggle should be checked
+    NOTE: can remove check_toggle once the linked domains toggle is deleted
     Checks if the current domain has any of the following enabled:
     - privileges.RELEASE_MANAGEMENT
     - toggles.LINKED_DOMAINS
@@ -24,12 +26,9 @@ def can_user_access_release_management(user, domain):
         return False
     if domain_has_privilege(domain, RELEASE_MANAGEMENT):
         return user.is_domain_admin(domain)
-    else:
+    elif check_toggle:
         return toggles.LINKED_DOMAINS.enabled(domain)
-
-
-def can_access_release_management_feature(user, domain):
-    return domain_has_privilege(domain, RELEASE_MANAGEMENT) and user.is_domain_admin(domain)
+    return False
 
 
 def _clean_json(doc):
