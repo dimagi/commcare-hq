@@ -18,7 +18,7 @@ from corehq.apps.data_analytics.util import last_month_dict, last_month_datespan
 logger = get_task_logger(__name__)
 
 
-@periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='2'),
+@periodic_task(queue='malt_generation_queue', run_every=crontab(hour=1, minute=0, day_of_month='2'),
                acks_late=True, ignore_result=True)
 def build_last_month_MALT():
     last_month = last_month_dict()
@@ -36,7 +36,7 @@ def build_last_month_MALT():
     send_MALT_complete_email(last_month)
 
 
-@periodic_task(queue='background_queue', run_every=crontab(hour=2, minute=0, day_of_week='*'),
+@periodic_task(queue='malt_generation_queue', run_every=crontab(hour=2, minute=0, day_of_week='*'),
                ignore_result=True)
 def update_current_MALT():
     today = datetime.date.today()
@@ -69,7 +69,7 @@ def build_last_month_GIR():
     )
 
 
-@task(queue='background_queue')
+@task(queue='malt_generation_queue')
 def update_current_MALT_for_domains(month_dict, domains):
     month = DateSpan.from_month(month_dict['month'], month_dict['year'])
     MALTTableGenerator([month]).build_table(domains=domains)
