@@ -1768,9 +1768,10 @@ class ProjectSettingsTab(UITab):
         if feature_flag_items and has_project_access:
             items.append((_('Pre-release Features'), feature_flag_items))
 
-        release_management_items = _get_release_management_items(self.couch_user, self.domain)
+        release_management_title, release_management_items = _get_release_management_items(self.couch_user,
+                                                                                           self.domain)
         if release_management_items:
-            items.append((_('Enterprise Release Management'), release_management_items))
+            items.append((release_management_title, release_management_items))
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
@@ -2049,18 +2050,27 @@ def _get_feature_flag_items(domain, couch_user):
 
 
 def _get_release_management_items(user, domain):
-    release_management_items = []
-    if can_user_access_release_management(user, domain):
-        release_management_items.append({
+    items = []
+    title = None
+    if not can_user_access_release_management(user, domain):
+        return title, items
+
+    if domain_has_privilege(domain, privileges.RELEASE_MANAGEMENT):
+        title = _('Enterprise Release Management')
+    elif domain_has_privilege(domain, privileges.LITE_RELEASE_MANAGEMENT):
+        title = _('Multi-Environment Release Management')
+
+    if title:
+        items.append({
             'title': _('Linked Project Spaces'),
             'url': reverse('domain_links', args=[domain])
         })
-        release_management_items.append({
+        items.append({
             'title': _('Linked Project Space History'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
 
-    return release_management_items
+    return title, items
 
 
 class MySettingsTab(UITab):
