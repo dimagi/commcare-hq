@@ -54,12 +54,13 @@ class TestCaseSearch(TestCase):
 ])
 def test_extract_criteria_config(self, case_type, data_registry, expand_id_property, expect_exception):
     with assert_raises(None if not expect_exception else CaseSearchUserError):
-        config = extract_search_request_config(MultiValueDict({
+        request_dict = _make_request_dict({
             CASE_SEARCH_CASE_TYPE_KEY: case_type,
             CASE_SEARCH_REGISTRY_ID_KEY: data_registry,
             CASE_SEARCH_EXPAND_ID_PROPERTY_KEY: expand_id_property,
             "other_key": "jim",
-        }))
+        })
+        config = extract_search_request_config(request_dict)
 
     if not expect_exception:
         eq(config, CaseSearchRequestConfig(
@@ -69,8 +70,22 @@ def test_extract_criteria_config(self, case_type, data_registry, expand_id_prope
 
 
 def test_extract_criteria_config_legacy():
-    config = extract_search_request_config(MultiValueDict({
+    config = extract_search_request_config(_make_request_dict({
         CASE_SEARCH_CASE_TYPE_KEY: "type",
         "commcare_registry": "reg1",
     }))
     eq(config, CaseSearchRequestConfig(criteria={}, case_type="type", data_registry="reg1"))
+
+
+def _make_request_dict(params):
+    """All values must be a list to match what we get from Django during a request.
+    """
+    request_dict = MultiValueDict()
+    for key, value in params.items():
+        if value is None:
+            continue
+        if isinstance(value, list):
+            request_dict.setlist(key, value)
+        else:
+            request_dict[key] = value
+    return request_dict
