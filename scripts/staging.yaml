@@ -65,7 +65,7 @@ branches:
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
-    - ml/remove-pickles-reports # Minha Oct 21
+    # - ml/remove-pickles-reports # Minha Oct 21
     - rp/status-embed # Rynhard Nov 9
     - ap/web-app-refresh # Amit Nov 29
     - es/mobile-auth # Simon Nov 23
@@ -83,5 +83,5 @@ branches:
     - es/expanded-case-search-conf  # Ethan Dec 10
     - mk/use-multibar-expanded-cols # MK Dec 14
     - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
-    - sk/registry-case-update-index-create # Simon Dec 15
+    - mjr/log_report_inputs
 submodules: { }
