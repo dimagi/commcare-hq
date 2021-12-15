@@ -409,6 +409,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             },
             write: (value) => {
                 let choices = this.choices.peek();
+                // answer is based on a 1 indexed index of the choices
                 let answer = _.filter(value.map((val) => _.indexOf(choices, val) + 1), (v) => v > 0);
                 self.onPreProcess.call(this, answer);
             },
@@ -473,6 +474,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             write: (value) => {
                 let choices = this.choices.peek();
                 let answer = _.indexOf(choices, value);
+                // answer is based on a 1 indexed index of the choices
                 this.answer(answer === -1 ? Const.NO_ANSWER : answer + 1);
             }
         });
