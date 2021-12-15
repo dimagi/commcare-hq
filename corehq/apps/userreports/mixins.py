@@ -75,6 +75,27 @@ class ConfigurableReportDataSourceMixin(object):
             for inner_col in col.get_column_config(self.config, self.lang).columns
         ]
 
+    def inner_columns_for_display(self, column_id):
+        """
+        This returns a list of dicts of column id and corresponding display for all columns
+        that would appear in the data pulled from the data source for the requested column
+        """
+        result = []
+        column_config = self._column_configs[column_id]
+        inner_cols = column_config.get_column_config(self.config, self.lang).columns
+        if len(inner_cols) > 1:
+            for index, inner_col in enumerate(inner_cols):
+                result.append({
+                    'column_id': column_id + '-' + str(index),
+                    'display': inner_col.header
+                })
+        else:
+            result.append({
+                'column_id': column_id,
+                'display': column_config.get_header(self.lang)
+            })
+        return result
+
     @property
     def columns(self):
         fields = {c.slug for c in self._db_columns}

@@ -126,10 +126,10 @@ class UCRMultiDBTest(TestCase):
     def test_report_data_source(self):
         # bootstrap report data sources against indicator data sources
         report_config_template = get_sample_report_config()
+        report_config_template.config_id = self.ds_1._id
         report_config_1 = ReportConfiguration.wrap(report_config_template.to_json())
-        report_config_1.config_id = self.ds_1._id
+        report_config_template.config_id = self.ds_2._id
         report_config_2 = ReportConfiguration.wrap(report_config_template.to_json())
-        report_config_2.config_id = self.ds_2._id
 
         # save a few docs to ds 1
         sample_doc, _ = get_sample_doc_and_indicators()

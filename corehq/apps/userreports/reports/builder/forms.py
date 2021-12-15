@@ -1773,7 +1773,9 @@ class ConfigureTableReportForm(ConfigureListReportForm):
                 return [{
                     "type": "multibar",
                     "x_axis_column": agged_columns[0]['column_id'] if agged_columns else '',
-                    # TODO: Possibly use more columns?
+                    # Populate only the top level columns here.
+                    # During chart render all possible columns for the chart are fetched based on records in DB
+                    # checkout ReportConfiguration.charts
                     "y_axis_columns": [
                         {"column_id": c["column_id"], "display": c["display"]} for c in non_agged_columns
                     ],
