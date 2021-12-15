@@ -74,6 +74,30 @@ def test_generator_create_case_with_index():
             expected_indices={"1": {"parent": IndexAttrs("parent_type", "case2", "child")}})
 
 
+def test_generator_create_case_with_index_to_another_case_being_created():
+    create_parent = IntentCaseBuilder()\
+        .target_case(case_id="1", case_type="patient")\
+        .create_case(owner_id="123")
+
+    create_child = (
+        IntentCaseBuilder()
+        .target_case(case_id="sub1", case_type="child")
+        .create_case(owner_id="123")
+        .create_index(case_id="1", case_type="patient")
+        .get_case()
+    )
+    create_parent.set_subcases([create_child])
+
+    _test_payload_generator(
+        intent_case=create_parent.get_case(),
+        registry_mock_cases={},
+        expected_creates={
+            "1": {"case_type": "patient", "owner_id": "123"},
+            "sub1": {"case_type": "child", "owner_id": "123"}
+        },
+        expected_indices={"sub1": {"parent": IndexAttrs("patient", "1", "child")}})
+
+
 def test_generator_create_case_target_exists():
     builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").create_case("123")
 
