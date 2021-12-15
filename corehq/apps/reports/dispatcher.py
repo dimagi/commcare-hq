@@ -350,7 +350,7 @@ class ReleaseManagementReportDispatcher(ReportDispatcher):
     map_name = 'RELEASE_MANAGEMENT_REPORTS'
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        from corehq.apps.linked_domain.util import can_access_linked_domains
+        from corehq.apps.linked_domain.util import can_user_access_release_management
         # will eventually only be accessible via the release_management privilege, but shared with linked domains
         # feature flag for now
-        return can_access_linked_domains(request.couch_user, domain)
+        return can_user_access_release_management(request.couch_user, domain)
