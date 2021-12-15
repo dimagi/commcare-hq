@@ -31,6 +31,18 @@ def can_user_access_release_management(user, domain, check_toggle=False):
     return False
 
 
+def can_domain_access_release_management(domain, check_toggle=False):
+    """
+    :param check_toggle: set to True if the deprecated linked domains toggle should be checked
+    NOTE: can remove check_toggle once the linked domains toggle is deleted
+    """
+    if not domain:
+        return False
+    is_privilege_granted = domain_has_privilege(domain, RELEASE_MANAGEMENT)
+    is_toggle_enabled = check_toggle and toggles.LINKED_DOMAINS.enabled(domain)
+    return is_privilege_granted or is_toggle_enabled
+
+
 def _clean_json(doc):
     if not isinstance(doc, dict):
         return doc
