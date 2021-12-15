@@ -1,5 +1,6 @@
+from unittest.mock import patch
+
 from django.test import SimpleTestCase, TestCase
-from mock import patch
 
 from jsonobject.exceptions import BadValueError
 
