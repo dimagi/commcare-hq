@@ -10,7 +10,7 @@ from corehq.apps.linked_domain.util import (
     user_has_admin_access_in_all_domains,
     can_domain_access_release_management,
 )
-from corehq.privileges import RELEASE_MANAGEMENT
+from corehq.privileges import RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT
 from corehq.util.quickcache import quickcache
 
 
@@ -66,8 +66,10 @@ def get_available_domains_to_link(upstream_domain_name, user, billing_account=No
     """
     if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
         return get_available_domains_to_link_for_account(upstream_domain_name, user, billing_account)
+    elif domain_has_privilege(upstream_domain_name, LITE_RELEASE_MANAGEMENT):
+        return get_available_domains_to_link_for_user(upstream_domain_name, user, True)
     elif toggles.LINKED_DOMAINS.enabled(upstream_domain_name):
-        return get_available_domains_to_link_for_user(upstream_domain_name, user)
+        return get_available_domains_to_link_for_user(upstream_domain_name, user, False)
 
     return []
 
@@ -81,13 +83,13 @@ def get_available_domains_to_link_for_account(upstream_domain_name, user, accoun
                  if is_domain_available_to_link(upstream_domain_name, domain, user)})
 
 
-def get_available_domains_to_link_for_user(upstream_domain_name, user):
+def get_available_domains_to_link_for_user(upstream_domain_name, user, should_enforce_admin):
     """
-    Finds available domains to link based on domains that the provided user is active in
+    Finds available domains to link based on domains that the provided user is active or an admin in
     """
     domains = [d.name for d in Domain.active_for_user(user)]
     return list({domain for domain in domains if is_domain_available_to_link(
-        upstream_domain_name, domain, user, should_enforce_admin=False)})
+        upstream_domain_name, domain, user, should_enforce_admin=should_enforce_admin)})
 
 
 def get_available_upstream_domains(downstream_domain, user, billing_account=None):
@@ -102,8 +104,10 @@ def get_available_upstream_domains(downstream_domain, user, billing_account=None
     """
     if domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT):
         return get_available_upstream_domains_for_account(downstream_domain, user, billing_account)
+    elif domain_has_privilege(downstream_domain, LITE_RELEASE_MANAGEMENT):
+        return get_available_upstream_domains_for_user(downstream_domain, user, True)
     elif toggles.LINKED_DOMAINS.enabled(downstream_domain):
-        return get_available_upstream_domains_for_user(downstream_domain, user)
+        return get_available_upstream_domains_for_user(downstream_domain, user, False)
 
     return []
 
@@ -113,10 +117,12 @@ def get_available_upstream_domains_for_account(downstream_domain, user, account)
     return list({d for d in domains if is_available_upstream_domain(d, downstream_domain, user)})
 
 
-def get_available_upstream_domains_for_user(domain_name, user):
+def get_available_upstream_domains_for_user(domain_name, user, should_enforce_admin):
     domains = [d.name for d in Domain.active_for_user(user)]
-    return list({domain for domain in domains
-                 if is_available_upstream_domain(domain, domain_name, user, should_enforce_admin=False)})
+    return list({
+        domain for domain in domains
+        if is_available_upstream_domain(domain, domain_name, user, should_enforce_admin=should_enforce_admin)
+    })
 
 
 def get_accessible_downstream_domains(upstream_domain_name, user):
