@@ -773,7 +773,28 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def charts(self):
-        return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
+        configured_charts = deepcopy(self.configured_charts)
+        for chart in configured_charts:
+            if chart['type'] == 'multibar':
+                y_axis_columns = []
+                for y_axis_column in chart['y_axis_columns']:
+                    if isinstance(y_axis_column, dict):
+                        column_id = y_axis_column['column_id']
+                    else:
+                        column_id = y_axis_column
+                    y_axis_columns.extend(self.cached_inner_columns_for_display(column_id))
+                chart['y_axis_columns'] = y_axis_columns
+        return [ChartFactory.from_spec(g._obj) for g in configured_charts]
+
+    @memoized
+    def cached_inner_columns_for_display(self, column_id):
+        return self.cached_data_source.inner_columns_for_display(column_id)
+
+    @property
+    @memoized
+    def cached_data_source(self):
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        return ConfigurableReportDataSource.from_spec(self).data_source
 
     @property
     @memoized
