@@ -348,10 +348,10 @@ def _test_payload_generator(intent_case, registry_mock_cases=None,
 
 
 class DataRegistryUpdateForm:
-    def __init__(self, form, intent_case):
+    def __init__(self, form, primary_intent_case):
         self.intent_cases = {
             case.case_json['target_case_id']: case
-            for case in [intent_case] + intent_case.get_subcases()
+            for case in [primary_intent_case] + primary_intent_case.get_subcases()
         }
         self.formxml = ElementTree.fromstring(form)
         self.cases = {
