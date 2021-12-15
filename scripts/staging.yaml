@@ -83,5 +83,6 @@ branches:
     - es/expanded-case-search-conf  # Ethan Dec 10
     - mk/use-multibar-expanded-cols # MK Dec 14
     - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
-    - mjr/log_report_inputs
+    - mjr/log_report_inputs # Matt Dec 15
+    - mjr/duplicate-celery-messages # Matt Dec 15
 submodules: { }
