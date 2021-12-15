@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-08 21:49+0000\n"
+"POT-Creation-Date: 2021-12-15 20:15+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Michelle B. Sultan <msultan@dimagi.com>, 2021\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -465,7 +465,7 @@ msgstr ""
 "ocasiones, por favor reporte un problema."
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:32
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:707
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:713
 msgid "Case Type required"
 msgstr ""
 
@@ -474,12 +474,12 @@ msgid "Case Tag required"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:37
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:711
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:717
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:41
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:715
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:721
 msgid "Case Tag already in use"
 msgstr ""
 
@@ -495,42 +495,42 @@ msgstr ""
 msgid " (from fixture)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:270
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:276
 msgid "Autoselect mode required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:272
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:278
 msgid "Property required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:275
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:281
 msgid "Case required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:277
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:283
 msgid "Lookup table tag required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:281
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:287
 msgid "Expected case type required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:380
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:615
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:386
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:621
 msgid "Subcase parent reference is missing"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:382
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:617
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:388
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:623
 msgid "Parent reference ID required for subcases: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:389
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:624
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:395
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:630
 msgid "Subcase must be in same repeat context as parent \""
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:524
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:530
 msgid "Select parent"
 msgstr ""
 
@@ -869,7 +869,7 @@ msgid "Module"
 msgstr "Módulo"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:113
-#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js:8
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js:9
 msgid "Form"
 msgstr "Formulario"
 
@@ -1057,7 +1057,7 @@ msgstr "Cambiar el Tipo de Pregunta a"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:707
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:306
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:42
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:49
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -1104,12 +1104,12 @@ msgid "XML mismatch"
 msgstr "No coincide con el XML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:14448
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:29
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:18
 msgid "key"
 msgstr "clave"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:14452
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:30
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:19
 msgid "value"
 msgstr "valor"
 
@@ -1974,7 +1974,7 @@ msgstr "Mostrar Texto"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:48837
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:48841
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:54288
-#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js:9
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js:10
 msgid "Data Source"
 msgstr "Fuente de Datos"
 
@@ -2420,7 +2420,7 @@ msgid "A reference to an integer question in this form."
 msgstr "Una referencia a una pregunta de un entero en este formulario."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:53913
-#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js:7
+#: corehq/apps/userreports/static/userreports/js/data_source_select_model.js:8
 msgid "Case"
 msgstr "Caso"
 
@@ -2977,7 +2977,7 @@ msgstr ""
 "El ejecutor del formulario encontró un error. Por favor reporte un problema "
 "si continúa apareciendo este mensaje."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/layout/views/progress_bar.js:24
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/layout/views/progress_bar.js:36
 msgid "Completed: "
 msgstr "Completado:"
 
@@ -3007,6 +3007,10 @@ msgstr ""
 "No es posible conectarse al servicio de visualización de ejecución de "
 "formulario. Por favor reporte un problema si este mensaje continúa "
 "apareciendo."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:158
+msgid "Switching project spaces..."
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js:419
 msgid "Page <%-num%>"
@@ -3115,18 +3119,44 @@ msgstr ""
 "datos. Por favor, intente otra vez más tarde."
 
 #: corehq/apps/custom_data_fields/static/custom_data_fields/js/custom_data_fields.js:112
-msgid "Profile"
-msgstr ""
+#, fuzzy
+#| msgid "Edit Role: "
+msgid "Edit Profile"
+msgstr "Editar Rol:"
 
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:19
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:25
 msgid "No Name"
 msgstr "No hay Nombre"
 
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:98
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:68
+msgid ""
+"When importing data, CommCare will not save a row if its cells don't match "
+"these valid values."
+msgstr ""
+
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:70
+msgid ""
+"Help colleagues upload correct data into case properties by listing the "
+"valid values here."
+msgstr ""
+
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:76
+#, fuzzy
+#| msgid "value"
+msgid "valid value"
+msgstr "valor"
+
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:76
+#, fuzzy
+#| msgid "Question"
+msgid "description"
+msgstr "Pregunta"
+
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:124
 msgid "You have unsaved changes to your data dictionary."
 msgstr "Usted tiene cambios sin guardar en su diccionario de datos."
 
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:181
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:213
 msgid ""
 "You have unsaved changes to this case type. Are you sure you would like to "
 "continue?"
@@ -3403,7 +3433,9 @@ msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
 #: corehq/apps/groups/static/groups/js/group_members.js:18
-msgid "Group Information"
+#, fuzzy
+#| msgid "Group Information"
+msgid "Edit Group Information"
 msgstr "Información de Grupo"
 
 #: corehq/apps/groups/static/groups/js/group_members.js:51
@@ -3467,7 +3499,7 @@ msgid "There was a problem, please refresh and try again"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:185
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:46
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:49
 msgid "Done"
 msgstr "Listo"
 
@@ -3542,21 +3574,26 @@ msgstr ""
 "Ocurrió un problema al comunicarnos con el servidor. Por favor inténtelo más "
 "tarde."
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:29
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:94
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:95
+msgid "blank"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:32
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:283
 msgid "Edit"
 msgstr "Editar"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:37
-msgid "Edit Mapping for "
-msgstr "Editar Mapeo para"
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:45
+#, fuzzy
+#| msgid "Add Image"
+msgid "Add Item"
+msgstr "Agregar Imagen"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:42
-msgid "Add Key &rarr; Value Mapping"
-msgstr "Agregar Clave &rarr; Mapeo de Valor"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:87
-msgid "Click <strong>Edit</strong> below to add mappings"
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:90
+#, fuzzy
+#| msgid "Click <strong>Edit</strong> below to add mappings"
+msgid "Click <strong>Edit</strong> to Add Values"
 msgstr "Haga clic en<strong>Editar</strong> abajo para agregar mapeos"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:172
@@ -3854,13 +3891,13 @@ msgid "Linked Project Spaces"
 msgstr ""
 
 #: corehq/apps/reminders/static/reminders/js/keywords_list.js:16
-#: corehq/apps/userreports/static/userreports/js/configure_report.js:38
+#: corehq/apps/userreports/static/userreports/js/configure_report.js:39
 #: corehq/apps/userreports/static/userreports/js/edit_report_config.js:12
 msgid "Projects to copy to"
 msgstr ""
 
 #: corehq/apps/reminders/static/reminders/js/keywords_list.js:17
-#: corehq/apps/userreports/static/userreports/js/configure_report.js:39
+#: corehq/apps/userreports/static/userreports/js/configure_report.js:40
 #: corehq/apps/userreports/static/userreports/js/edit_report_config.js:13
 msgid "Search projects"
 msgstr ""
@@ -4192,13 +4229,13 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:375
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:390
-#: corehq/apps/userreports/static/userreports/js/report_config.js:304
-#: corehq/apps/userreports/static/userreports/js/report_config.js:332
+#: corehq/apps/userreports/static/userreports/js/report_config.js:305
+#: corehq/apps/userreports/static/userreports/js/report_config.js:333
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr "Elija la propiedad que quisiera agregar como filtro para este reporte."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:376
-#: corehq/apps/userreports/static/userreports/js/report_config.js:305
+#: corehq/apps/userreports/static/userreports/js/report_config.js:306
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
@@ -4208,7 +4245,7 @@ msgstr ""
 "entender para sus usuarios. "
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:377
-#: corehq/apps/userreports/static/userreports/js/report_config.js:306
+#: corehq/apps/userreports/static/userreports/js/report_config.js:307
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
@@ -4219,7 +4256,7 @@ msgstr ""
 "Seleccione esto si la propiedad es un texto u opción múltiple."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:391
-#: corehq/apps/userreports/static/userreports/js/report_config.js:333
+#: corehq/apps/userreports/static/userreports/js/report_config.js:334
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
@@ -4231,7 +4268,7 @@ msgstr ""
 "único valor."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:392
-#: corehq/apps/userreports/static/userreports/js/report_config.js:334
+#: corehq/apps/userreports/static/userreports/js/report_config.js:335
 msgid "What value or date range must the property be equal to?"
 msgstr "¿Qué valor o rango de fecha debe la propiedad igualar?"
 
@@ -4258,7 +4295,7 @@ msgstr ""
 msgid "deactivated"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/configure_report.js:37
+#: corehq/apps/userreports/static/userreports/js/configure_report.js:38
 #: corehq/apps/userreports/static/userreports/js/edit_report_config.js:11
 msgid "Linked projects"
 msgstr ""
@@ -4757,3 +4794,9 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js:125
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
+
+#~ msgid "Edit Mapping for "
+#~ msgstr "Editar Mapeo para"
+
+#~ msgid "Add Key &rarr; Value Mapping"
+#~ msgstr "Agregar Clave &rarr; Mapeo de Valor"
