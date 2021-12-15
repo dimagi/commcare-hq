@@ -128,7 +128,6 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             self.domain,
             slugs,
             self.request.couch_user,
-            allow_enterprise_controlled_domains=True
         )
 
     def _build_query(self, user_ids, changed_by_user_ids, user_property, actions, user_upload_record_id):

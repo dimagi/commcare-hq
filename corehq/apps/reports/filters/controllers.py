@@ -1,6 +1,5 @@
 from memoized import memoized
 
-from corehq.apps.enterprise.utils import get_enterprise_controlled_domains
 from corehq.apps.es import GroupES, UserES, groups
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
@@ -123,19 +122,10 @@ class EmwfOptionsController(object):
         users = customize_user_query(self.request.couch_user, self.domain, users)
         return [self.utils.user_tuple(u) for u in users.run().hits]
 
-    def _should_include_enterprise_controlled_domains(self):
-        from corehq.apps.reports.standard.users.reports import UserHistoryReport
-        if f"/{UserHistoryReport.slug}/" in self.request.META.get('HTTP_REFERER', '/'):
-            return True
-        return False
-
     def active_user_es_query(self, query):
         search_fields = ["first_name", "last_name", "base_username"]
-        domains = self.domain
-        if self._should_include_enterprise_controlled_domains():
-            domains = get_enterprise_controlled_domains(self.domain)
         return (UserES()
-                .domain(domains)
+                .domain(self.domain)
                 .search_string_query(query, default_fields=search_fields))
 
     def all_user_es_query(self, query):
