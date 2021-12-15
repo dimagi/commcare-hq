@@ -3,7 +3,7 @@ from functools import wraps
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 
 from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
-from corehq.apps.linked_domain.util import can_access_linked_domains
+from corehq.apps.linked_domain.util import can_user_access_release_management
 
 REMOTE_REQUESTER_HEADER = 'HTTP_HQ_REMOTE_REQUESTER'
 
@@ -15,7 +15,7 @@ def require_access_to_linked_domains(view_func):
 
         def call_view():
             return view_func(request, domain, *args, **kwargs)
-        if can_access_linked_domains(user, domain):
+        if can_user_access_release_management(user, domain):
             return call_view()
         else:
             return HttpResponseForbidden()

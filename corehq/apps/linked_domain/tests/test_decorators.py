@@ -2,23 +2,23 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from corehq.apps.linked_domain.util import can_access_linked_domains
+from corehq.apps.linked_domain.util import can_user_access_release_management
 from corehq.util.test_utils import flag_enabled
 
 
-class TestCanAccessLinkedDomains(SimpleTestCase):
+class TestCanUserAccessReleaseManagement(SimpleTestCase):
 
     def test_returns_false_if_no_user(self):
-        result = can_access_linked_domains(None, 'test')
+        result = can_user_access_release_management(None, 'test')
         self.assertFalse(result)
 
     @patch('corehq.apps.users.models.CouchUser')
     def test_returns_false_if_no_domain(self, mock_user):
-        result = can_access_linked_domains(mock_user, None)
+        result = can_user_access_release_management(mock_user, None)
         self.assertFalse(result)
 
     def test_returns_false_if_no_user_and_no_domain(self):
-        result = can_access_linked_domains(None, None)
+        result = can_user_access_release_management(None, None)
         self.assertFalse(result)
 
     @patch('corehq.apps.users.models.CouchUser')
@@ -27,7 +27,7 @@ class TestCanAccessLinkedDomains(SimpleTestCase):
 
         with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege:
             mock_domain_has_privilege.return_value = True
-            result = can_access_linked_domains(mock_user, 'test')
+            result = can_user_access_release_management(mock_user, 'test')
 
         self.assertFalse(result)
 
@@ -37,7 +37,7 @@ class TestCanAccessLinkedDomains(SimpleTestCase):
 
         with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege:
             mock_domain_has_privilege.return_value = True
-            result = can_access_linked_domains(mock_user, 'test')
+            result = can_user_access_release_management(mock_user, 'test')
 
         self.assertTrue(result)
 
@@ -46,6 +46,6 @@ class TestCanAccessLinkedDomains(SimpleTestCase):
     def test_returns_true_if_domain_has_linked_domain_toggle_enabled(self, mock_user):
         with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege:
             mock_domain_has_privilege.return_value = False
-            result = can_access_linked_domains(mock_user, 'test')
+            result = can_user_access_release_management(mock_user, 'test')
 
         self.assertTrue(result)

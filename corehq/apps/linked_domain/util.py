@@ -13,7 +13,13 @@ from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.timezones.conversions import ServerTime
 
 
-def can_access_linked_domains(user, domain):
+def can_user_access_release_management(user, domain):
+    """
+    Checks if the current domain has any of the following enabled:
+    - privileges.RELEASE_MANAGEMENT
+    - toggles.LINKED_DOMAINS
+    If yes, and the user meets the criteria needed, returns True
+    """
     if not user or not domain:
         return False
     if domain_has_privilege(domain, RELEASE_MANAGEMENT):
