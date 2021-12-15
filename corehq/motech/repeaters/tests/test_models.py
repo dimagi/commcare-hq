@@ -58,6 +58,7 @@ class TestSQLCaseRepeater(TestCase):
     def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
         self.assertEqual(sql_repeater.domain, couch_repeater.domain)
         self.assertEqual(sql_repeater.repeater_id, couch_repeater._id)
+        self.assertEqual(sql_repeater.format, couch_repeater.format)
         self.assertEqual(sql_repeater.is_paused, couch_repeater.paused)
         self.assertEqual(sql_repeater.white_listed_case_types, couch_repeater.white_listed_case_types)
         self.assertEqual(sql_repeater.black_listed_users, couch_repeater.black_listed_users)
