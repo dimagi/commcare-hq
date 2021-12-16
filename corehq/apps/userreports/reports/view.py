@@ -76,7 +76,7 @@ from corehq.apps.userreports.util import (
     get_referring_apps,
     get_ucr_class_name,
     has_report_builder_access,
-    has_report_builder_trial, wrap_report_config_by_type, get_report_config_or_not_found,
+    has_report_builder_trial,
 )
 from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
 from corehq.util.couch import (
@@ -196,7 +196,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         if self.is_static:
             return StaticReportConfiguration.by_id(self.report_config_id, domain=self.domain)
         else:
-            return get_report_config_or_not_found(self.domain, self.report_config_id)
+            return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
 
     def get_spec_or_404(self):
         try:
@@ -680,7 +680,7 @@ class DownloadUCRStatusView(BaseDomainView):
         if self.is_static:
             return StaticReportConfiguration.by_id(self.report_config_id, domain=self.domain)
         else:
-            return get_report_config_or_not_found(self.domain, self.report_config_id)
+            return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
 
     @property
     def is_static(self):

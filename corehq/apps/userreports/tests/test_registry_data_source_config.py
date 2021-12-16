@@ -71,7 +71,7 @@ class RegistryDataSourceConfigurationTest(SimpleTestCase):
         expected_columns = [
             'doc_id',
             'inserted_at',
-            'commcare_project',
+            'domain',
             'date',
             'owner',
             'count',
@@ -92,7 +92,7 @@ class RegistryDataSourceConfigurationTest(SimpleTestCase):
         datetime_mock.utcnow.return_value = fake_time_now
         # indicators
         sample_doc, expected_indicators = get_sample_doc_and_indicators(fake_time_now)
-        expected_indicators["commcare_project"] = sample_doc["domain"]
+        expected_indicators["domain"] = sample_doc["domain"]
         [results] = self.config.get_all_values(sample_doc)
         for result in results:
             self.assertEqual(expected_indicators[result.column.id], result.value)

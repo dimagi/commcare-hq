@@ -774,7 +774,7 @@ class AsyncIndicatorTest(TestCase):
             self.assertEqual(errors.count(), 0)
             self.assertEqual(indicators.count(), 0)
 
-    @mock.patch('corehq.apps.userreports.tasks.get_ucr_datasource_config_by_id')
+    @mock.patch('corehq.apps.userreports.tasks._get_config_by_id')
     def test_async_save_fails(self, config):
         # process_changes will generate an exception when trying to use this config
         config.return_value = None

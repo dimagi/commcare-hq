@@ -25,7 +25,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     LocationChoiceProvider,
     MultiFieldDataSourceColumnChoiceProvider,
     OwnerChoiceProvider,
-    UserChoiceProvider, DomainChoiceProvider, COMMCARE_PROJECT,
+    UserChoiceProvider,
 )
 from corehq.apps.userreports.reports.filters.specs import (
     ChoiceListFilterSpec,
@@ -206,8 +206,7 @@ class FilterChoiceProviderFactory(object):
         DATA_SOURCE_COLUMN: DataSourceColumnChoiceProvider,
         LOCATION: LocationChoiceProvider,
         USER: UserChoiceProvider,
-        OWNER: OwnerChoiceProvider,
-        COMMCARE_PROJECT: DomainChoiceProvider
+        OWNER: OwnerChoiceProvider
     }
 
     @classmethod
