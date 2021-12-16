@@ -49,7 +49,7 @@ def update_calculated_properties():
     ).fields(["name", "_id"]).run().hits
 
     for chunk in chunked(domains_to_update, 5000):
-        update_calculated_properties_for_domains.delay(list(chunk))
+        update_calculated_properties_for_domains.delay(chunk)
 
 
 @task(queue='background_queue')
