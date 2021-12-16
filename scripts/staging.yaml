@@ -64,7 +64,7 @@ branches:
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
-    # - ml/remove-pickles-reports # Minha Oct 21
+    - ml/remove-pickles-reports # Minha Oct 21
     - rp/status-embed # Rynhard Nov 9
     - ap/web-app-refresh # Amit Nov 29
     - es/mobile-auth # Simon Nov 23
