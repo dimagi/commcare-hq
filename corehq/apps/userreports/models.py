@@ -20,6 +20,7 @@ from django_bulk_update.helper import bulk_update as bulk_update_helper
 from memoized import memoized
 
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_report_paths
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -754,13 +755,51 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
 
     @property
     @memoized
+    def report_columns_by_column_id(self):
+        return {c.column_id: c for c in self.report_columns}
+
+    @property
+    @memoized
     def ui_filters(self):
         return [ReportFilterFactory.from_spec(f, self) for f in self.filters]
 
     @property
     @memoized
     def charts(self):
-        return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
+        configured_charts = deepcopy(self.configured_charts)
+        for chart in configured_charts:
+            if chart['type'] == 'multibar':
+                y_axis_columns = []
+                for y_axis_column in chart['y_axis_columns']:
+                    if isinstance(y_axis_column, dict):
+                        column_id = y_axis_column['column_id']
+                    else:
+                        column_id = y_axis_column
+                    column_config = self.report_columns_by_column_id[column_id]
+                    if column_config.type == 'expanded':
+                        expanded_columns = self.get_expanded_columns(column_config)
+                        for column in expanded_columns:
+                            y_axis_columns.append({
+                                'column_id': column.slug,
+                                'display': column.header
+                            })
+                    else:
+                        y_axis_columns.append(y_axis_column)
+                chart['y_axis_columns'] = y_axis_columns
+        return [ChartFactory.from_spec(g._obj) for g in configured_charts]
+
+    def get_expanded_columns(self, column_config):
+        return get_expanded_column_config(
+            self.cached_data_source.config,
+            column_config,
+            self.cached_data_source.lang
+        ).columns
+
+    @property
+    @memoized
+    def cached_data_source(self):
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        return ConfigurableReportDataSource.from_spec(self).data_source
 
     @property
     @memoized
