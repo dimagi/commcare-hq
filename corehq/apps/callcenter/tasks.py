@@ -59,7 +59,7 @@ def bulk_sync_usercases_if_applicable(domain, user_ids):
     domain_obj = Domain.get_by_name(domain)
     if domain_obj.call_center_config.enabled or domain_obj.usercase_enabled:
         for user_id in user_ids:
-            sync_usercases_task.delay(user_id)
+            sync_usercases_task.delay(user_id, domain_obj.name)
 
 
 def sync_usercases_if_applicable(user, spawn_task):
