@@ -42,7 +42,13 @@ def test_raises_on_invalid_choice():
 
 
 def test_instance_of_optionvalue():
-    eq(isinstance(FoodOptions.dish, OptionValue), True)
+    assert isinstance(FoodOptions.dish, OptionValue), repr(FoodOptions.dish)
+
+
+def test_option_with_callable_default():
+    order = FoodOptions()
+    order.condiments.append("ketchup")
+    eq(order.options, {'condiments': ["ketchup"]})
 
 
 @attr.s
@@ -50,3 +56,4 @@ class FoodOptions:
     options = attr.ib(factory=dict)
     dish = OptionValue()
     food_option = OptionValue(default="veg", choices=["veg", "non-veg"])
+    condiments = OptionValue(default=list)
