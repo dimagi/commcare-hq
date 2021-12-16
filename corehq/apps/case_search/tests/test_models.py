@@ -7,7 +7,7 @@ from testil import assert_raises, eq
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import (
-    CASE_SEARCH_EXPAND_ID_PROPERTY_KEY,
+    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
     CaseSearchRequestConfig,
     disable_case_search,
@@ -52,12 +52,12 @@ class TestCaseSearch(TestCase):
     ("jelly", None, ["dupe_id1", "dupe_id2"], True),
     ("jelly", ["reg1", "reg2"], None, True),
 ])
-def test_extract_criteria_config(self, case_type, data_registry, expand_id_property, expect_exception):
+def test_extract_criteria_config(self, case_type, data_registry, custom_related_case_property, expect_exception):
     with assert_raises(None if not expect_exception else CaseSearchUserError):
         request_dict = _make_request_dict({
             CASE_SEARCH_CASE_TYPE_KEY: case_type,
             CASE_SEARCH_REGISTRY_ID_KEY: data_registry,
-            CASE_SEARCH_EXPAND_ID_PROPERTY_KEY: expand_id_property,
+            CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: custom_related_case_property,
             "other_key": "jim",
         })
         config = extract_search_request_config(request_dict)
@@ -66,7 +66,7 @@ def test_extract_criteria_config(self, case_type, data_registry, expand_id_prope
         expected_case_types = case_type if isinstance(case_type, list) else [case_type]
         eq(config, CaseSearchRequestConfig(
             criteria={"other_key": "jim"},
-            case_types=expected_case_types, data_registry=data_registry, expand_id_property=expand_id_property
+            case_types=expected_case_types, data_registry=data_registry, custom_related_case_property=custom_related_case_property
         ))
 
 

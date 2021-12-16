@@ -849,6 +849,16 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     """
 )
 
+USH_USERCASES_FOR_WEB_USERS = StaticToggle(
+    'usercases_for_web_users',
+    "USH: Enable the creation of usercases for web users.",
+    TAG_CUSTOM,
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Usercase+Creation',
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Toggle to enable the creation of usercases for web users."""
+)
+
 WEBAPPS_STICKY_SEARCH = StaticToggle(
     "webapps_sticky_search",
     "USH: Sticky search: In web apps, save user's most recent inputs on case search & claim screen.",

@@ -62,7 +62,7 @@ class CallCenterLocationOwnerTest(TestCase):
     def test_no_location_sync(self):
         self.user.unset_location()
         self.user.save()
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain.name)
         self.assertCallCenterCaseOwner("")
 
     def test_location_sync(self):

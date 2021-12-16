@@ -111,7 +111,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 </itemset>
               </prompt>
             </query>
-            <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open']"
+            <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                 value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/"
                 storage-instance="registry" template="case" default_search="true">

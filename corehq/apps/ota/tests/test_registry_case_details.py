@@ -124,6 +124,17 @@ class RegistryCaseDetailsTests(TestCase):
         expected_cases = {case.case_id: case for case in self.cases}
         self.assertEqual(set(actual_cases), set(expected_cases))
 
+    def test_get_case_details_post_request_legacy_param(self):
+        response_content = self._make_request({
+            "commcare_registry": self.registry.slug,
+            "case_id": self.parent_case_id,
+            "case_type": "parent",
+        }, 200, method="post")
+        actual_cases = self._get_cases_in_response(response_content)
+        expected_cases = {case.case_id: case for case in self.cases}
+        self.assertEqual(set(actual_cases), set(expected_cases))
+
+
     def test_get_case_details_missing_case(self):
         self._make_request({
             CASE_SEARCH_REGISTRY_ID_KEY: self.registry.slug, "case_id": "missing", "case_type": "parent",

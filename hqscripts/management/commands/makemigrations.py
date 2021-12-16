@@ -18,6 +18,18 @@ class Command(makemigrations.Command):
         #
         # ./manage.py makemigrations --lock-update
         #
+        # The commcare-hq automated tests require that the contents of this file
+        # match the current Django migrations list. If that check fails on a
+        # GitHub PR, the PR will not be eligible for merging. You can check if
+        # the current state of this file will pass automated tests by executing:
+        #
+        # ./manage.py makemigrations --lock-check
+        #
+        # Although integrated into the Django `makemigrations` utility, this
+        # file is not part of the Django ecosystem. It is a migration safety
+        # feature added by commcare-hq.
+        # See: ./hqscripts/management/commands/makemigrations.py
+        #
     """)
 
     def add_arguments(self, parser):

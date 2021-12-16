@@ -418,6 +418,9 @@ def registry_case(request, domain, app_id):
     case_ids = request_dict.getlist("case_id")
     case_types = request_dict.getlist("case_type")
     registry = request_dict.get(CASE_SEARCH_REGISTRY_ID_KEY)
+    if not registry:
+        # legacy name
+        registry = request_dict.get("commcare_registry")
 
     missing = [
         name

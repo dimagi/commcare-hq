@@ -16,12 +16,12 @@ CASE_SEARCH_CASE_TYPE_KEY = "case_type"
 # These use the `x_commcare_` prefix to distinguish them from 'filter' keys
 # This is a purely aesthetic distinction and not functional
 CASE_SEARCH_REGISTRY_ID_KEY = 'x_commcare_data_registry'
-CASE_SEARCH_EXPAND_ID_PROPERTY_KEY = 'x_commcare_expand_id_property'
+CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY = 'x_commcare_custom_related_case_property'
 
 CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_CASE_TYPE_KEY: "case_types",
     CASE_SEARCH_REGISTRY_ID_KEY: "data_registry",
-    CASE_SEARCH_EXPAND_ID_PROPERTY_KEY: "expand_id_property"
+    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: "custom_related_case_property"
 }
 LEGACY_CONFIG_KEYS = {
     CASE_SEARCH_REGISTRY_ID_KEY: "commcare_registry"
@@ -46,7 +46,7 @@ class CaseSearchRequestConfig:
     criteria = attr.ib(kw_only=True, converter=_flatten_multi_value_dict_values)
     case_types = attr.ib(kw_only=True, default=None)
     data_registry = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
-    expand_id_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
+    custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
 
     @case_types.validator
     def _require_case_type(self, attribute, value):
@@ -55,7 +55,7 @@ class CaseSearchRequestConfig:
             raise CaseSearchUserError(_('Search request must specify {param}').format(param=attribute.name))
 
     @data_registry.validator
-    @expand_id_property.validator
+    @custom_related_case_property.validator
     def _is_string(self, attribute, value):
         if value and not isinstance(value, str):
             raise CaseSearchUserError(_("{param} must be a string").format(param=attribute.name))
