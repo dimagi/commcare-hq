@@ -58,7 +58,6 @@ branches:
     - ce/bulk-case-search # Cal July 6
     #- sr/memoized-toggle # Sravan July 26
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
     - dmr/throttle-system-forms  # Danny Sept 24
     - smh/remove-extra-spinner-icons # Steph Oct 6
     - ml/remove-pickles-phonelog # Minha Oct 7
@@ -77,10 +76,8 @@ branches:
     - rp/gsheets-PoC # Rynhard Dec 6
     - cs/SC-1904-invalid-datum-generation # Charl 7 Dec
     - dependabot/npm_and_yarn/jquery-ui-1.13.0  # Biyeun Dec 8 
-    - smh/user-report-user-filter-enterprise-domain-support # Steph Dec 8
     - sk/web-apps-preserve-selections # Simon Dec 10
     - gh/improve-queueing-repeaters # Graham Dec 10
-    - es/expanded-case-search-conf  # Ethan Dec 10
     - mk/use-multibar-expanded-cols # MK Dec 14
     - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
     - mjr/log_report_inputs # Matt Dec 15
