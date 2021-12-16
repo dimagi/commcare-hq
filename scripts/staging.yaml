@@ -78,7 +78,7 @@ branches:
     - dependabot/npm_and_yarn/jquery-ui-1.13.0  # Biyeun Dec 8 
     - sk/web-apps-preserve-selections # Simon Dec 10
     - gh/improve-queueing-repeaters # Graham Dec 10
-    - mk/use-multibar-expanded-cols # MK Dec 14
+    - mk/support-multibar-reports # MK Dec 14
     - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
     - mjr/log_report_inputs # Matt Dec 15
     - mjr/duplicate-celery-messages # Matt Dec 15
