@@ -10,6 +10,7 @@ from text_unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
+from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.util import expose_blob_download
@@ -47,11 +48,12 @@ def update_calculated_properties():
         get_domains_to_update_es_filter()
     ).fields(["name", "_id"]).run().hits
 
-    update_calculated_properties_in_chunks.chunks(domains_to_update, 5000).apply_async(queue='background_queue')
+    for chunk in chunked(domains_to_update, 5000):
+        update_calculated_properties_for_domains.delay(list(chunk))
 
 
 @task(queue='background_queue')
-def update_calculated_properties_in_chunks(domains):
+def update_calculated_properties_for_domains(domains):
     """
     :param domains: list of {'name': <name>, '_id': <id>} entries
     """
