@@ -751,7 +751,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def _send_emails(self, title, report_text, emails, excel_files):
         from corehq.apps.reports.views import render_full_report_notification
 
-        email_is_too_large = True
+        email_is_too_large = False
 
         for email in emails:
             body = render_full_report_notification(None, report_text, email, self).content

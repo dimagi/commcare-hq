@@ -236,7 +236,7 @@ class GenericReportView(object):
             request.couch_user = couch_user
         except Exception as e:
             logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
-                          (self.name, e))
+                        (self.name, e))
         self.request = request
         self._caching = True
         self.request_params = state.get('request_params')
@@ -983,7 +983,6 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
-
         def _unformat_row(row):
             def _unformat_val(val):
                 if isinstance(val, dict):
