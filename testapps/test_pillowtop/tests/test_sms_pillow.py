@@ -13,7 +13,7 @@ from corehq.util.elastic import ensure_index_deleted, reset_es_index
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 
 @patch('corehq.apps.sms.change_publishers.do_publish')

@@ -21,9 +21,9 @@ In the codebase there are now two models for form and case data.
 +------------------------+----------------------+
 | CommCareCaseIndex      | CommCareCaseIndexSQL |
 +------------------------+----------------------+
-| XFormInstance          | XFormInstanceSQL     |
+|                        | XFormInstanceSQL     |
 +------------------------+----------------------+
-| XFormOperation         | XFormOperationSQL    |
+|                        | XFormOperationSQL    |
 +------------------------+----------------------+
 
 Some of these models define a common interface that allows you to perform the same operations

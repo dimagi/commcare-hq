@@ -15,7 +15,7 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.exceptions import (
     CaseXPathValidationError,
-    LocationXpathValidationError,
+    LocationXPathValidationError,
     ScheduleError,
 )
 
@@ -183,7 +183,7 @@ class XPath(str):
 
     @staticmethod
     def not_(a):
-        return XPath.expr("not {}", [a])
+        return XPath.expr("not({})", [a])
 
     @staticmethod
     def date(a):
@@ -287,7 +287,7 @@ class LocationXpath(XPath):
         types = self._ordered_types(hierarchy)
         for type in [my_type, ref_type]:
             if type not in types:
-                raise LocationXpathValidationError(
+                raise LocationXPathValidationError(
                     _('Type {type} must be in list of domain types: {list}').format(
                         type=type,
                         list=', '.join(types)
@@ -295,7 +295,7 @@ class LocationXpath(XPath):
                 )
 
         if types.index(ref_type) > types.index(my_type):
-            raise LocationXpathValidationError(
+            raise LocationXPathValidationError(
                 _('Reference type {ref} cannot be a child of primary type {main}.'.format(
                     ref=ref_type,
                     main=my_type,
@@ -308,7 +308,7 @@ class LocationXpath(XPath):
             ref_type, property = ref.split('/')
             return my_type, ref_type, property
         except ValueError:
-            raise LocationXpathValidationError(_(
+            raise LocationXPathValidationError(_(
                 'Property not correctly formatted. '
                 'Must be formatted like: loacation:mytype:referencetype/property. '
                 'For example: location:outlet:state/name'

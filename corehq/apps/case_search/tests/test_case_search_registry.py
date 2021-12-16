@@ -1,6 +1,6 @@
 import uuid
 
-import mock
+from unittest import mock
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
@@ -10,6 +10,7 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.models import (
     CASE_SEARCH_REGISTRY_ID_KEY,
     CaseSearchConfig,
@@ -146,11 +147,7 @@ class TestCaseSearchRegistry(TestCase):
         super().tearDownClass()
 
     def _run_query(self, domain, case_types, criteria, registry_slug):
-        results = get_case_search_results(domain, {
-            'case_type': case_types,
-            CASE_SEARCH_REGISTRY_ID_KEY: registry_slug,
-            **criteria
-        })
+        results = get_case_search_results(domain, case_types, criteria, registry_slug=registry_slug)
         return [(case.name, case.domain) for case in results]
 
     def test_query_all_domains_in_registry(self):
@@ -235,7 +232,6 @@ class TestCaseSearchRegistry(TestCase):
     def test_access_related_case_type_not_in_registry(self):
         # "creative_work" case types are in the registry, but not their parents - "creator"
         # domain 1 can access a domain 2 case even while referencing an inaccessible case type property
-        # TODO is this the correct behavior?  Same question for xpath queries
         results = self._run_query(
             self.domain_1,
             ['creative_work'],
@@ -246,10 +242,35 @@ class TestCaseSearchRegistry(TestCase):
             ("Jane Eyre", self.domain_2),
         ], results)
 
+    def test_search_commcare_project(self):
+        results = self._run_query(
+            self.domain_1,
+            ["person"],
+            {"name": "Jane", COMMCARE_PROJECT: [self.domain_2, self.domain_3]},
+            self.registry_slug,
+        )
+        self.assertItemsEqual([
+            ("Jane", self.domain_2),
+            ("Jane", self.domain_3),
+        ], results)
+
+    def test_commcare_project_field_doesnt_expand_access(self):
+        # Domain 3 has access only to its own cases and can't get results from
+        # domain 1, even by specifying it manually
+        results = self._run_query(
+            self.domain_3,
+            ['person'],
+            {"name": "Jane", COMMCARE_PROJECT: self.domain_1},
+            self.registry_slug,
+        )
+        self.assertItemsEqual([], results)
+
     def test_includes_project_property(self):
         results = get_case_search_results(
             self.domain_1,
-            {"case_type": ["person"], "name": "Jane", CASE_SEARCH_REGISTRY_ID_KEY: self.registry_slug},
+            ["person"],
+            {"name": "Jane"},
+            registry_slug=self.registry_slug
         )
         self.assertItemsEqual([
             ("Jane", self.domain_1, self.domain_1),
@@ -265,12 +286,10 @@ class TestCaseSearchRegistry(TestCase):
         with patch_get_app_cached:
             results = get_case_search_results(
                 self.domain_1,
-                {
-                    "case_type": ["creative_work"],
-                    "name": "Jane Eyre",  # from domain 2
-                    CASE_SEARCH_REGISTRY_ID_KEY: self.registry_slug
-                },
-                "mock_app_id",
+                ["creative_work"],
+                {"name": "Jane Eyre"},  # from domain 2
+                app_id="mock_app_id",
+                registry_slug=self.registry_slug
             )
         self.assertItemsEqual([
             ("Charlotte Brontë", "creator", self.domain_2),

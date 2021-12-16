@@ -73,15 +73,18 @@ def check_non_dimagi_superusers():
 
 
 @task(serializer='pickle', queue="email_queue")
-def send_mass_emails(username, real_email, subject, html, text):
+def send_mass_emails(email_for_requesting_user, real_email, subject, html, text):
+
     if real_email:
         recipients = [{
             'username': h['username'],
+            'email': h['email'] or h['username'],
             'first_name': h['first_name'] or 'CommCare User',
         } for h in UserES().web_users().run().hits]
     else:
         recipients = [{
-            'username': username,
+            'username': email_for_requesting_user,
+            'email': email_for_requesting_user,
             'first_name': 'CommCare User',
         }]
 
@@ -103,7 +106,7 @@ def send_mass_emails(username, real_email, subject, html, text):
         })
 
         try:
-            send_HTML_email(subject, recipient['username'], html_content, text_content=text_content)
+            send_HTML_email(subject, recipient['email'], html_content, text_content=text_content)
             successes.append((recipient['username'], None))
         except Exception as e:
             failures.append((recipient['username'], e))
@@ -118,7 +121,7 @@ def send_mass_emails(username, real_email, subject, html, text):
     )
 
     send_html_email_async(
-        "Mass email summary", username, message,
+        "Mass email summary", email_for_requesting_user, message,
         text_content=message, file_attachments=[
             _mass_email_attachment('successes', successes),
             _mass_email_attachment('failures', failures)]
@@ -162,13 +165,6 @@ def _mass_email_attachment(name, rows):
         'file_obj': csv_file,
     }
     return attachment
-
-
-@periodic_task_when_true(settings.IS_SAAS_ENVIRONMENT, run_every=crontab(minute="0", hour="*/4"),
-                         queue='background_queue')
-def cleanup_stale_es_on_couch_domains_task():
-    from corehq.apps.hqadmin.couch_domain_utils import cleanup_stale_es_on_couch_domains
-    cleanup_stale_es_on_couch_domains()
 
 
 @periodic_task(queue='background_queue', run_every=crontab(minute="*/5"))
@@ -277,12 +273,12 @@ def _reconcile_es_data(data_type, metric, blob_parent_id, start=None, end=None, 
         with open(file_path, 'rb') as f:
             blob_db = get_blob_db()
             key = f'{blob_parent_id}_{today.isoformat()}'
-            thirty_days = 60 * 24 * 30
+            six_years = 60 * 24 * 365 * 6
             blob_db.put(
                 f,
                 type_code=CODES.tempfile,
                 domain='<unknown>',
                 parent_id=blob_parent_id,
                 key=key,
-                timeout=thirty_days
+                timeout=six_years
             )

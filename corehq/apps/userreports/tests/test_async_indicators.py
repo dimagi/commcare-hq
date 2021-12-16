@@ -2,7 +2,7 @@ import uuid
 
 from django.test import SimpleTestCase, TestCase
 
-import mock
+from unittest import mock
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.app_manager.helpers import clean_table_name

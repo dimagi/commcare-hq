@@ -71,7 +71,7 @@ def update_messaging_for_case(domain, case_id, case):
     if case is None or case.is_deleted:
         clear_messaging_for_case(domain, case_id)
     elif settings.USE_PHONE_ENTRIES:
-        sms_tasks._sync_case_phone_number(case)
+        sms_tasks.sync_case_phone_number(case)
 
 
 def clear_messaging_for_case(domain, case_id):
@@ -89,7 +89,8 @@ def run_auto_update_rules_for_case(case):
 def _get_cached_rule(domain, rule_id):
     rules = AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
     rules = [rule for rule in rules if rule.pk == rule_id]
-    return rules[0] if len(rules) == 1 else None
+    if len(rules) == 1:
+        return rules[0]
 
 
 def _sync_case_for_messaging_rule(domain, case_id, rule_id):

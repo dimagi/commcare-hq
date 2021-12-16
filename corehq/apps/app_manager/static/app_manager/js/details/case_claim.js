@@ -169,25 +169,19 @@ hqDefine("app_manager/js/details/case_claim", function () {
         return self;
     };
 
-    var additionalQueryModel = function (options, saveButton) {
-        options = _.defaults(options, {
-            instance_name: '',
-            case_type_xpath: '',
-            case_id_xpath: '',
-        });
+    var additionalRegistryCaseModel = function (xpath, saveButton) {
         var self = {};
         self.uniqueId = generateSemiRandomId();
-        self.instanceName = ko.observable(options.instance_name);
-        self.caseTypeXpath = ko.observable(options.case_type_xpath);
-        self.caseIdXpath = ko.observable(options.case_id_xpath);
-        subscribeToSave(self, ['instanceName', 'caseTypeXpath', 'caseIdXpath'], saveButton);
+        self.caseIdXpath = ko.observable(xpath || '');
+        subscribeToSave(self, ['caseIdXpath'], saveButton);
         return self;
     };
 
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchLabel', 'searchFilter', 'searchDefaultRelevant',
-        'searchAdditionalRelevant', 'dataRegistry', 'additionalRegistryQueries',
+        'searchAdditionalRelevant', 'dataRegistry', 'dataRegistryWorkflow', 'additionalRegistryCases',
+        'customRelatedCaseProperty',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
@@ -195,16 +189,28 @@ hqDefine("app_manager/js/details/case_claim", function () {
         options.searchLabel = options.searchLabel[lang] || "";
         options.searchAgainLabel = options.searchAgainLabel[lang] || "";
         var mapping = {
-            'additionalRegistryQueries': {
+            'additionalRegistryCases': {
                 create: function(options) {
-                    return additionalQueryModel(options.data, saveButton);
+                    return additionalRegistryCaseModel(options.data, saveButton);
                 },
             },
         };
         var self = ko.mapping.fromJS(options, mapping);
 
+        self.restrictWorkflowForDataRegistry = ko.pureComputed(() => {
+            return self.dataRegistry() && self.dataRegistryWorkflow() === 'load_case';
+        });
+
         self.workflow = ko.computed({
             read: function () {
+                if (self.restrictWorkflowForDataRegistry()) {
+                    if (self.autoLaunch()) {
+                        if (self.defaultSearch()) {
+                            return "es_only";
+                        }
+                    }
+                    return "auto_launch";
+                }
                 if (self.autoLaunch()) {
                     if (self.defaultSearch()) {
                         return "es_only";
@@ -243,11 +249,11 @@ hqDefine("app_manager/js/details/case_claim", function () {
         });
 
         self.addRegistryQuery = function () {
-            self.additionalRegistryQueries.push(additionalQueryModel({}, saveButton));
+            self.additionalRegistryCases.push(additionalRegistryCaseModel('', saveButton));
         };
 
-        self.removeRegistryQuery = function (query) {
-            self.additionalRegistryQueries.remove(query);
+        self.removeRegistryQuery = function (model) {
+            self.additionalRegistryCases.remove(model);
         };
 
         self.serialize = function () {
@@ -258,6 +264,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 search_additional_relevant: self.searchAdditionalRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 data_registry: self.dataRegistry(),
+                data_registry_workflow: self.dataRegistryWorkflow(),
                 search_label: self.searchLabel(),
                 search_label_image:
                     $("#case_search-search_label_media_media_image input[type=hidden][name='case_search-search_label_media_media_image']").val() || null,
@@ -278,13 +285,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_use_default_audio_for_all']").val() || null,
                 search_filter: self.searchFilter(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
-                additional_registry_queries: self.additionalRegistryQueries().map((query) => {
-                    return {
-                        instance_name: query.instanceName(),
-                        case_type_xpath: query.caseTypeXpath(),
-                        case_id_xpath: query.caseTypeXpath(),
-                    };
-                }),
+                additional_registry_cases: self.dataRegistryWorkflow() === "load_case" ?  self.additionalRegistryCases().map((query) => {
+                    return query.caseIdXpath();
+                }) : [],
+                custom_related_case_property: self.customRelatedCaseProperty(),
             };
         };
 

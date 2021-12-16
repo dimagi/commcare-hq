@@ -2,7 +2,19 @@ class DomainLinkError(Exception):
     pass
 
 
+class DomainLinkAlreadyExists(Exception):
+    pass
+
+
+class DomainLinkNotAllowed(Exception):
+    pass
+
+
 class MultipleDownstreamAppsError(Exception):
+    pass
+
+
+class MultipleDownstreamKeywordsError(Exception):
     pass
 
 

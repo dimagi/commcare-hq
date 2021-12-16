@@ -1,26 +1,83 @@
-import copy
-import json
-import re
-
+import attr
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import model_to_dict
+from django.utils.translation import ugettext as _
 
-from jsonfield.fields import JSONField
-
+from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.util.quickcache import quickcache
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
-SEARCH_QUERY_CUSTOM_VALUE = 'commcare_custom_value'
 CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
-CASE_SEARCH_REGISTRY_ID_KEY = 'commcare_registry'
+CASE_SEARCH_CASE_TYPE_KEY = "case_type"
+
+# These use the `x_commcare_` prefix to distinguish them from 'filter' keys
+# This is a purely aesthetic distinction and not functional
+CASE_SEARCH_REGISTRY_ID_KEY = 'x_commcare_data_registry'
+CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY = 'x_commcare_custom_related_case_property'
+
+CONFIG_KEYS_MAPPING = {
+    CASE_SEARCH_CASE_TYPE_KEY: "case_types",
+    CASE_SEARCH_REGISTRY_ID_KEY: "data_registry",
+    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: "custom_related_case_property"
+}
+LEGACY_CONFIG_KEYS = {
+    CASE_SEARCH_REGISTRY_ID_KEY: "commcare_registry"
+}
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     'owner_id',
     'include_closed',   # backwards compatibility for deprecated functionality to include closed cases
-)
+) + tuple(CONFIG_KEYS_MAPPING.values()) + tuple(LEGACY_CONFIG_KEYS.values())
+
+
+def _flatten_singleton_list(value):
+    return value[0] if value and len(value) == 1 else value
+
+
+def _flatten_multi_value_dict_values(value):
+    return {k: _flatten_singleton_list(v) for k, v in value.items()}
+
+
+@attr.s(frozen=True)
+class CaseSearchRequestConfig:
+    criteria = attr.ib(kw_only=True, converter=_flatten_multi_value_dict_values)
+    case_types = attr.ib(kw_only=True, default=None)
+    data_registry = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
+    custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
+
+    @case_types.validator
+    def _require_case_type(self, attribute, value):
+        # custom validator to allow custom exception and message
+        if not value:
+            raise CaseSearchUserError(_('Search request must specify {param}').format(param=attribute.name))
+
+    @data_registry.validator
+    @custom_related_case_property.validator
+    def _is_string(self, attribute, value):
+        if value and not isinstance(value, str):
+            raise CaseSearchUserError(_("{param} must be a string").format(param=attribute.name))
+
+
+def extract_search_request_config(request_dict):
+    params = dict(request_dict.lists())
+
+    def _get_value(key):
+        val = None
+        try:
+            val = params.pop(key)
+        except KeyError:
+            if key in LEGACY_CONFIG_KEYS:
+                val = params.pop(LEGACY_CONFIG_KEYS[key], None)
+        return val
+
+    kwargs_from_params = {
+        config_name: _get_value(param_name)
+        for param_name, config_name in CONFIG_KEYS_MAPPING.items()
+    }
+    return CaseSearchRequestConfig(criteria=params, **kwargs_from_params)
 
 
 class GetOrNoneManager(models.Manager):
@@ -176,7 +233,9 @@ def enable_case_search(domain):
 
 
 def disable_case_search(domain):
-    from corehq.apps.case_search.tasks import delete_case_search_cases_for_domain
+    from corehq.apps.case_search.tasks import (
+        delete_case_search_cases_for_domain,
+    )
     from corehq.pillows.case_search import domains_needing_search_index
 
     try:

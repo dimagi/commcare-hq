@@ -48,11 +48,10 @@ class PactDrilldownReportMixin(object):
         return False
 
 
-from pact.reports import patient, chw_list
+from pact.reports import patient  # noqa: E402
 
 CUSTOM_REPORTS = (
     ("PACT Reports", (
         patient.PactPatientInfoReport,
-        chw_list.PactCHWDashboard,
     )),
 )

@@ -1,6 +1,7 @@
 import json
 from collections import defaultdict
 from datetime import datetime
+from django.conf import settings
 
 import langcodes
 import six.moves.urllib.error
@@ -544,6 +545,7 @@ class ListWebUsersView(BaseRoleAccessView):
     page_title = ugettext_lazy("Web Users")
     urlname = 'web_users'
 
+
     @property
     @memoized
     def role_labels(self):
@@ -580,6 +582,7 @@ class ListWebUsersView(BaseRoleAccessView):
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'bulk_download_url': bulk_download_url,
+            'from_address': settings.DEFAULT_FROM_EMAIL
         }
 
 
@@ -678,6 +681,7 @@ class ListRolesView(BaseRoleAccessView):
             'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
+
 
 @always_allow_project_access
 @require_can_edit_or_view_web_users

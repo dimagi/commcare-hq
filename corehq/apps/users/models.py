@@ -12,6 +12,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField, JSONField
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -181,6 +182,7 @@ class Permissions(DocumentSchema):
     download_reports = BooleanProperty(default=True)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
+    edit_ucrs = BooleanProperty(default=False)
 
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
@@ -2431,6 +2433,13 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
 
+    def save(self, fire_signals=True, **params):
+        super().save(fire_signals=fire_signals, **params)
+        if fire_signals:
+            from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
+            for domain in self.get_domains():
+                sync_web_user_usercases_if_applicable(self, domain)
+
     def add_to_assigned_locations(self, domain, location):
         membership = self.get_domain_membership(domain)
 
@@ -3062,7 +3071,9 @@ class UserHistory(models.Model):
     by_domain = models.CharField(max_length=255, null=True)
     for_domain = models.CharField(max_length=255, null=True)
     user_type = models.CharField(max_length=255)  # CommCareUser / WebUser
+    user_repr = models.CharField(max_length=255, null=True)
     user_id = models.CharField(max_length=128)
+    changed_by_repr = models.CharField(max_length=255, null=True)
     changed_by = models.CharField(max_length=128)
     # ToDo: remove post migration/reset of existing records
     message = models.TextField(blank=True, null=True)
@@ -3084,7 +3095,7 @@ class UserHistory(models.Model):
     changed_via = models.CharField(max_length=255, blank=True)
     # same as the deprecated details.changes
     # a dict of CouchUser attributes that changed and their new values
-    changes = JSONField(default=dict)
+    changes = JSONField(default=dict, encoder=DjangoJSONEncoder)
 
     class Meta:
         indexes = [

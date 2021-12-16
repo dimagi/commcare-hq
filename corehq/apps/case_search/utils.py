@@ -21,11 +21,10 @@ from corehq.apps.case_search.filter_dsl import (
 )
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
-    CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
-    SEARCH_QUERY_CUSTOM_VALUE,
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
+    extract_search_request_config,
 )
 from corehq.apps.es import case_search, filters, queries
 from corehq.apps.es.case_search import (
@@ -42,15 +41,21 @@ from corehq.apps.registry.exceptions import (
 from corehq.apps.registry.helper import DataRegistryHelper
 
 
-def get_case_search_results(domain, criteria, app_id=None, couch_user=None):
-    try:
-        # could be a list or a single string
-        case_type = criteria.pop('case_type')
-        case_types = case_type if isinstance(case_type, list) else [case_type]
-    except KeyError:
-        raise CaseSearchUserError(_('Search request must specify case type'))
+def get_case_search_results_from_request(domain, app_id, couch_user, request_dict):
+    config = extract_search_request_config(request_dict)
+    return get_case_search_results(
+        domain,
+        config.case_types,
+        config.criteria,
+        app_id=app_id,
+        couch_user=couch_user,
+        registry_slug=config.data_registry,
+        custom_related_case_property=config.custom_related_case_property,
+    )
 
-    registry_slug = criteria.pop(CASE_SEARCH_REGISTRY_ID_KEY, None)
+
+def get_case_search_results(domain, case_types, criteria,
+                            app_id=None, couch_user=None, registry_slug=None, custom_related_case_property=None):
     if registry_slug:
         query_domains = _get_registry_visible_domains(couch_user, domain, case_types, registry_slug)
         helper = _RegistryQueryHelper(domain, query_domains)
@@ -80,7 +85,7 @@ def get_case_search_results(domain, criteria, app_id=None, couch_user=None):
 
     cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
     if app_id:
-        cases.extend(get_related_cases(helper, app_id, case_types, cases))
+        cases.extend(get_related_cases(helper, app_id, case_types, cases, custom_related_case_property))
     return cases
 
 
@@ -155,12 +160,7 @@ class CaseSearchCriteria:
     def search_es(self):
         search_es = self._get_initial_search_es()
         for key, value in self.criteria.items():
-            filter_, is_query = self._get_filter(key, value)
-            if filter_:
-                if is_query:
-                    search_es = search_es.add_query(filter_, queries.MUST)
-                else:
-                    search_es = search_es.filter(filter_)
+            search_es = self._apply_filter(search_es, key, value)
         return search_es
 
     def _get_initial_search_es(self):
@@ -171,19 +171,21 @@ class CaseSearchCriteria:
                 .size(CASE_SEARCH_MAX_RESULTS)
                 .set_sorting_block(['_score', '_doc']))
 
-    def _get_filter(self, key, value):
+    def _apply_filter(self, search_es, key, value):
         if key == CASE_SEARCH_XPATH_QUERY_KEY:
             if value:
-                return build_filter_from_xpath(self.query_domains, value), False
+                return search_es.filter(build_filter_from_xpath(self.query_domains, value))
         elif key == 'owner_id':
             if value:
-                return case_search.owner(value), False
+                return search_es.filter(case_search.owner(value))
         elif key == CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY:
             if value:
-                return case_search.blacklist_owner_id(value.split(' ')), False
-        elif key not in UNSEARCHABLE_KEYS and not key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
-            return self._get_case_property_query(key, value), True
-        return None, None
+                return search_es.filter(case_search.blacklist_owner_id(value.split(' ')))
+        elif key == COMMCARE_PROJECT:
+            return search_es.filter(filters.domain(value))
+        elif key not in UNSEARCHABLE_KEYS:
+            return search_es.add_query(self._get_case_property_query(key, value), queries.MUST)
+        return search_es
 
     def _validate_multiple_parameter_values(self, key, val):
         if not isinstance(val, list):
@@ -267,7 +269,7 @@ class CaseSearchCriteria:
         ]
 
 
-def get_related_cases(helper, app_id, case_types, cases):
+def get_related_cases(helper, app_id, case_types, cases, custom_related_case_property):
     """
     Fetch related cases that are necessary to display any related-case
     properties in the app requesting this case search.
@@ -287,12 +289,17 @@ def get_related_cases(helper, app_id, case_types, cases):
         for _type in types
     ]
 
-    results = []
+    expanded_case_results = []
+    if custom_related_case_property:
+        expanded_case_results.extend(get_expanded_case_results(helper, custom_related_case_property, cases))
+
+    results = expanded_case_results
+    top_level_cases = cases + expanded_case_results
     if paths:
-        results.extend(get_related_case_results(helper, cases, paths))
+        results.extend(get_related_case_results(helper, top_level_cases, paths))
 
     if child_case_types:
-        results.extend(get_child_case_results(helper, cases, child_case_types))
+        results.extend(get_child_case_results(helper, top_level_cases, child_case_types))
 
     initial_case_ids = {case.case_id for case in cases}
     return list({
@@ -338,9 +345,7 @@ def get_related_case_results(helper, cases, paths):
             else:
                 indices = [case.get_index(identifier) for case in current_cases]
                 related_case_ids = {i.referenced_id for i in indices if i}
-                results = helper.get_base_queryset().case_ids(related_case_ids).run().hits
-                current_cases = [helper.wrap_case(result, is_related_case=True)
-                                 for result in results]
+                current_cases = _get_case_search_cases(helper, related_case_ids)
                 results_cache[fragment] = current_cases
 
     results = []
@@ -373,4 +378,17 @@ def get_child_case_results(helper, parent_cases, case_types):
                .case_type(case_types)
                .get_child_cases(parent_case_ids, "parent")
                .run().hits)
+    return [helper.wrap_case(result, is_related_case=True) for result in results]
+
+
+def get_expanded_case_results(helper, custom_related_case_property, cases):
+    expanded_case_ids = {
+        case.get_case_property(custom_related_case_property, dynamic_only=True) for case in cases
+    }
+    expanded_case_ids -= {None, ""}
+    return _get_case_search_cases(helper, expanded_case_ids)
+
+
+def _get_case_search_cases(helper, case_ids):
+    results = helper.get_base_queryset().case_ids(case_ids).run().hits
     return [helper.wrap_case(result, is_related_case=True) for result in results]

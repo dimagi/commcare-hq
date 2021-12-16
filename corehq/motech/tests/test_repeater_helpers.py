@@ -1,5 +1,5 @@
 from django.test.testcases import TestCase
-from mock import patch
+from unittest.mock import patch
 from corehq.form_processor.models import CommCareCaseSQL
 from datetime import datetime
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors

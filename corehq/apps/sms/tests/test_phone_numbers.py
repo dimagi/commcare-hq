@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
@@ -373,7 +373,7 @@ class SQLPhoneNumberTestCase(TestCase):
 
     def test_case_owner(self):
         with create_test_case(self.domain, 'participant', 'test') as case:
-            number = PhoneNumber(owner_doc_type='CommCareCase', owner_id=case.case_id)
+            number = PhoneNumber(domain=self.domain, owner_doc_type='CommCareCase', owner_id=case.case_id)
             owner = number.owner
             self.assertTrue(is_commcarecase(owner))
             self.assertEqual(owner.case_id, case.case_id)

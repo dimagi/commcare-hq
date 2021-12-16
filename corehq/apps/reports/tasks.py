@@ -35,7 +35,7 @@ from .analytics.esaccessors import (
     scroll_case_names,
 )
 
-logging = get_task_logger(__name__)
+logger = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
 
 _calc_props_soft_assert = soft_assert(to='{}@{}'.format('dmore', 'dimagi.com'), exponential_backoff=False)
@@ -43,39 +43,30 @@ _calc_props_soft_assert = soft_assert(to='{}@{}'.format('dmore', 'dimagi.com'), 
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
-    try:
-        _update_calculated_properties()
-    except Exception:
-        _calc_props_soft_assert(
-            False,
-            "Calculated properties report task was unsuccessful",
-            msg="Sentry will have relevant exception in case of failure",
-        )
-        notify_exception(
-            None,
-            message="update_calculated_properties task has errored",
-        )
-    else:
-        _calc_props_soft_assert(False, "Calculated properties report task was successful")
-
-
-def _update_calculated_properties():
-    results = DomainES().filter(
+    domains_to_update = DomainES().filter(
         get_domains_to_update_es_filter()
     ).fields(["name", "_id"]).run().hits
 
+    update_calculated_properties_in_chunks.chunks(domains_to_update, 5000).apply_async(queue='background_queue')
+
+
+@task(queue='background_queue')
+def update_calculated_properties_in_chunks(domains):
+    """
+    :param domains: list of {'name': <name>, '_id': <id>} entries
+    """
+    # relying on caching for efficiency
     all_stats = all_domain_stats()
 
     active_users_by_domain = {}
-    for r in results:
-        dom = r["name"]
-        domain_obj = Domain.get_by_name(dom)
+    for domain in domains:
+        domain_obj = Domain.get_by_name(domain['name'])
         if not domain_obj:
-            send_to_elasticsearch("domains", r, delete=True)
+            send_to_elasticsearch("domains", domain, delete=True)
             continue
         try:
-            props = calced_props(domain_obj, r["_id"], all_stats)
-            active_users_by_domain[dom] = props['cp_n_active_cc_users']
+            props = calced_props(domain_obj, domain['_id'], all_stats)
+            active_users_by_domain[domain['name']] = props['cp_n_active_cc_users']
             if props['cp_first_form'] is None:
                 del props['cp_first_form']
             if props['cp_last_form'] is None:
@@ -84,7 +75,9 @@ def _update_calculated_properties():
                 del props['cp_300th_form']
             send_to_elasticsearch("domains", props, es_merge_update=True)
         except Exception as e:
-            notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
+            notify_exception(
+                None, message='Domain {} failed on stats calculations with {}'.format(domain['name'], e)
+            )
 
     datadog_report_user_stats('commcare.active_mobile_workers.count', active_users_by_domain)
 
@@ -179,10 +172,12 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
         report.domain = report.request.couch_user.get_domains()[0]
 
     hash_id = _store_excel_in_blobdb(report_class, file, report.domain, report.slug)
+    logger.info(f'Stored report {report.name} with parameters: {report_state["request_params"]} in hash {hash_id}')
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
         _send_email(report, hash_id, recipient=recipient, subject=subject)
+        logger.info(f'Sent {report.name} with hash {hash_id} to {recipient}')
 
 
 def _send_email(report, hash_id, recipient, subject=None):
@@ -417,14 +412,8 @@ def _extract_form_attachment_info(form, properties):
         'username': form.get_data('form/meta/username')
     }
 
-    # TODO make form.attachments always return objects that conform to a
-    # uniform interface. XFormInstance attachment values are dicts, and
-    # XFormInstanceSQL attachment values are BlobMeta objects.
     for attachment_name, attachment in form.attachments.items():
-        if hasattr(attachment, 'content_type'):
-            content_type = attachment.content_type
-        else:
-            content_type = attachment['content_type']
+        content_type = attachment.content_type
         if content_type == 'text/xml':
             continue
 
@@ -435,17 +424,8 @@ def _extract_form_attachment_info(form, properties):
 
         if not properties or question_id in properties:
             extension = str(os.path.splitext(attachment_name)[1])
-            if hasattr(attachment, 'content_length'):
-                # BlobMeta
-                size = attachment.content_length
-            elif 'content_length' in attachment:
-                # dict from BlobMeta.to_json()
-                size = attachment['content_length']
-            else:
-                # couch attachment dict
-                size = attachment['length']
             form_info['attachments'].append({
-                'size': size,
+                'size': attachment.content_length,
                 'name': attachment_name,
                 'question_id': question_id,
                 'extension': extension,

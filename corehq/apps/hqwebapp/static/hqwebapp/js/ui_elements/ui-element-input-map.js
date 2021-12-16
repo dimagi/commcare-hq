@@ -1,23 +1,30 @@
 hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
     'jquery',
     'hqwebapp/js/main',
+    'DOMPurify/dist/purify.min',
 ], function (
     $,
-    hqMain
+    hqMain,
+    DOMPurify
 ) {
     'use strict';
     var module = {};
 
-    var InputMap = function (show_del_button) {
+    var InputMap = function (showDelButton, placeholders) {
         var that = this;
         hqMain.eventize(this);
+        if (!placeholders) {
+            placeholders = {};
+            placeholders.key = gettext('key');
+            placeholders.value = gettext('value');
+        }
         this.ui = $('<div class="form-group hq-input-map" />');
         this.value = {
             key: "",
             val: "",
         };
         this.edit = true;
-        this.show_delete = show_del_button;
+        this.show_delete = showDelButton;
         this.on('change', function () {
             this.val(this.ui.find(".enum-key").val(), this.ui.find(".enum-value").val());
         });
@@ -26,20 +33,20 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
         });
 
         this.$edit_view = $('<div class="form-inline" style="margin-left:5px;" />');
-        var key_input = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + django.gettext('key') + '" />'),
-            val_input = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="' + django.gettext('value') + '" />');
-        key_input.change(function () {
+        var keyInput = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + placeholders.key + '" />'),
+            valInput = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="' + placeholders.value  + '" />');
+        keyInput.change(function () {
             that.fire('change');
         });
-        val_input.change(function () {
+        valInput.change(function () {
             that.fire('change');
         });
-        this.$edit_view.append(key_input);
+        this.$edit_view.append(keyInput);
         this.$edit_view.append(' <i class="fa fa-arrow-right"></i> ');
-        this.$edit_view.append(val_input);
+        this.$edit_view.append(valInput);
         if (this.show_delete) {
             var $deleteButton = $('<a href="#" data-enum-action="remove" class="btn btn-danger" />');
-            $deleteButton.append('<i class="fa fa-remove"></i> ' + django.gettext('Delete'));
+            $deleteButton.append('<i class="fa fa-remove"></i> ' + gettext('Delete'));
             $deleteButton.click(function () {
                 that.fire('remove');
                 return false;
@@ -52,20 +59,20 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
         this.setEdit(this.edit);
     };
     InputMap.prototype = {
-        val: function (map_key, map_val, translated_map_val) {
-            if (map_key === undefined) {
+        val: function (mapKey, mapVal, translatedMapVal) {
+            if (mapKey === undefined) {
                 return this.value;
             } else {
                 this.value = {
-                    key: map_key,
-                    val: map_val,
+                    key: mapKey,
+                    val: mapVal,
                 };
-                this.$edit_view.find(".enum-key").val(map_key);
-                this.$edit_view.find(".enum-value").val(map_val);
-                if (map_val === "" && translated_map_val !== undefined && translated_map_val !== "") {
-                    this.$edit_view.find(".enum-value").attr("placeholder", translated_map_val.value);
+                this.$edit_view.find(".enum-key").val(mapKey);
+                this.$edit_view.find(".enum-value").val(mapVal);
+                if (mapVal === "" && translatedMapVal !== undefined && translatedMapVal !== "") {
+                    this.$edit_view.find(".enum-value").attr("placeholder", translatedMapVal.value);
                     var $langcodeButton = module.langcode_tag_btn($('<a href="#" class="btn btn-info btn-xs lang-text" />'),
-                        translated_map_val.lang);
+                        translatedMapVal.lang);
                     $langcodeButton.button.attr("style", "position: absolute; top: 6px; right: 6px;");
                     this.$edit_view.find(".enum-value").css("position", "relative").after($langcodeButton.button);
                     this.on('change', function () {
@@ -76,13 +83,17 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
                     });
 
                 }
-                if (map_key) {
-                    this.$noedit_view.html('<strong>' + $('<div>').text(map_key).html() + '</strong> &rarr; ' + (
-                        map_val ? $('<div>').text(map_val).html() : '<i class="fa fa-remove"></i>'
-                    ));
-                } else {
-                    this.$noedit_view.text("");
+                mapKey = DOMPurify.sanitize(mapKey);
+                mapVal = DOMPurify.sanitize(mapVal);
+                if (mapKey && !mapKey.trim()) {
+                    mapKey = `"<span style="white-space: pre;">${mapKey}</span>"`;
                 }
+                if (mapVal && !mapVal.trim()) {
+                    mapVal = `"<span style="white-space: pre;">${mapVal}</span>"`;
+                }
+                let leftSide = mapKey ? `<strong>${mapKey}</strong>` : `<i>${gettext('blank')}</i>`;
+                let rightSide = mapVal ? mapVal : `<i>${gettext('blank')}</i>`;
+                this.$noedit_view.html(`${leftSide} &rarr; ${rightSide}`);
                 return this;
             }
         },
@@ -99,8 +110,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
         },
     };
 
-    module.new = function (show_del_button) {
-        return new InputMap(show_del_button);
+    module.new = function (showDelButton, placeholders) {
+        return new InputMap(showDelButton, placeholders);
     };
 
     return module;

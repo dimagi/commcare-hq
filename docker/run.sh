@@ -77,6 +77,8 @@ function python_preheat {
 }
 
 function run_tests {
+    # Disabled due to: https://github.com/github/feedback/discussions/8848
+    # [ -n "$GITHUB_ACTIONS" ] && echo "::endgroup::"  # "Docker setup" begins in scripts/docker
     TEST="$1"
     shift
     suite_pat=$(printf '%s|' "${VALID_TEST_SUITES[@]}" | sed -E 's/\|$//')
@@ -105,6 +107,10 @@ function run_tests {
             for dirpath in $(find /mnt -mindepth 1 -maxdepth 1 -type d -not -name 'commcare-hq*'); do
                 logdo ls -la "$dirpath"
             done
+            logdo python -m site
+            logdo pip freeze
+            logdo npm config list
+            logdo yarn --version
             logdo cat -n ../run_tests
         }
         echo -e "$(func_text overlay_debug)\\noverlay_debug" | su cchq -c "/bin/bash -" || true
@@ -115,15 +121,19 @@ function run_tests {
             exit 1
         fi
 
+        log_group_begin "Django test suite setup"
         now=$(date +%s)
         setup "$TEST"
         delta=$(($(date +%s) - $now))
+        log_group_end
 
         send_timing_metric_to_datadog "setup" $delta
 
+        log_group_begin "Django test suite: $TEST"
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
-        su cchq -c "/bin/bash ../run_tests $argv_str"
+        su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
+        log_group_end  # only log group end on success (notice: `set -e`)
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
         [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
         delta=$(($(date +%s) - $now))
@@ -168,11 +178,14 @@ function _run_tests {
 
     function _test_python {
         ./manage.py create_kafka_topics
-        if [ -n "$TRAVIS_EVENT_TYPE" ]; then
-            logmsg INFO "coverage run --parallel-mode manage.py test ${py_test_args[*]}"
+        if [ -n "$CI" ]; then
+            logmsg INFO "coverage run manage.py test ${py_test_args[*]}"
             # `coverage` generates a file that's then sent to codecov
-            coverage run --parallel-mode manage.py test "${py_test_args[@]}"
-            bash <(curl -s https://codecov.io/bash)
+            coverage run manage.py test "${py_test_args[@]}"
+            coverage xml
+            if [ -n "$TRAVIS" ]; then
+                bash <(curl -s https://codecov.io/bash)
+            fi
         else
             logmsg INFO "./manage.py test ${py_test_args[*]}"
             ./manage.py test "${py_test_args[@]}"
@@ -223,7 +236,7 @@ function runserver {
 }
 
 source /mnt/commcare-hq-ro/scripts/datadog-utils.sh  # provides send_metric_to_datadog
-source /mnt/commcare-hq-ro/scripts/bash-utils.sh  # provides logmsg, func_text and truthy
+source /mnt/commcare-hq-ro/scripts/bash-utils.sh  # provides logmsg, log_group_{begin,end}, func_text and truthy
 
 # build the run_tests script to be executed as cchq later
 func_text logmsg _run_tests  > /mnt/run_tests
@@ -272,7 +285,7 @@ else
             # add world-read (and world-x for dirs and existing-x files)
             chmod -R o+rX commcare-hq
             delta=$(($(date +%s) - $now))
-            echo "(delta=${delta}sec)" >&2  # append the previous log line
+            echo "(delta=${delta}sec)"  # append the previous log line
         fi
     else
         # This (aufs) was the default (perhaps only?) Docker overlay engine when

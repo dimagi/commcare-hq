@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
-
+from corehq.apps.users.decorators import get_permission_name
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
@@ -159,10 +159,22 @@ class ProjectReportsTab(UITab):
             'icon': 'icon-tasks fa fa-tasks',
             'show_in_dropdown': True,
         }]
-        if toggles.USER_CONFIGURABLE_REPORTS.enabled(self.couch_user.username):
-            # Only show for **users** with the flag. This flag is also available for domains
-            # but should not be granted by domain, as the feature is too advanced to turn
-            # on for all of a domain's users.
+        from corehq.apps.users.models import Permissions
+        is_ucr_toggle_enabled = (
+            toggles.USER_CONFIGURABLE_REPORTS.enabled(
+                self.domain, namespace=toggles.NAMESPACE_DOMAIN
+            )
+            or toggles.USER_CONFIGURABLE_REPORTS.enabled(
+                self.couch_user.username, namespace=toggles.NAMESPACE_USER
+            )
+        )
+        has_ucr_permissions = self.couch_user.has_permission(
+            self.domain,
+            get_permission_name(Permissions.edit_ucrs)
+        )
+
+        if is_ucr_toggle_enabled and has_ucr_permissions:
+
             from corehq.apps.userreports.views import UserConfigReportsHomeView
             tools.append({
                 'title': _(UserConfigReportsHomeView.section_name),
@@ -538,6 +550,11 @@ class ProjectDataTab(UITab):
                 is_eligible_for_ecd_preview(self._request))
 
     @property
+    @memoized
+    def can_deduplicate_cases(self):
+        return toggles.CASE_DEDUPE.enabled_for_request(self._request)
+
+    @property
     def _is_viewable(self):
         return self.domain and (
             self.can_edit_commcare_data
@@ -824,7 +841,17 @@ class ProjectDataTab(UITab):
                     edit_section[0][1].append(automatic_update_rule_list_view)
                 else:
                     edit_section = [(ugettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
+
+            if self.can_deduplicate_cases:
+                from corehq.apps.data_interfaces.views import DeduplicationRuleListView
+                deduplication_list_view = {
+                    'title': _(DeduplicationRuleListView.page_title),
+                    'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
+                }
+                edit_section[0][1].append(deduplication_list_view)
+
             items.extend(edit_section)
+
 
         explore_data_views = []
         if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
@@ -2082,10 +2109,7 @@ class MySettingsTab(UITab):
             },
         ])
 
-        if (
-            self.couch_user and self.couch_user.is_dimagi or
-            toggles.MOBILE_PRIVILEGES_FLAG.enabled(self.couch_user.username)
-        ):
+        if EnableMobilePrivilegesView.is_user_authorized(self.couch_user):
             menu_items.append({
                 'title': _(EnableMobilePrivilegesView.page_title),
                 'url': reverse(EnableMobilePrivilegesView.urlname),

@@ -1,4 +1,4 @@
-.PHONY: requirements upgrade-requirements docs
+.PHONY: requirements upgrade-requirements docs migrations.lock
 
 requirements:
 	cd requirements && $(MAKE) requirements

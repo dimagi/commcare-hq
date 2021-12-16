@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 import attr
-from mock import ANY, call, patch
+from unittest.mock import call, patch
 
 from corehq.util.metrics.tests.utils import capture_metrics
 from ..lockmeter import MeteredLock
@@ -20,14 +20,14 @@ class TestMeteredLock(TestCase):
         with capture_metrics() as metrics:
             lock.acquire()
             self.assertTrue(fake.locked)
-        self.assertEqual(1, len(metrics.list("commcare.lock.acquire_time", lock_name='test')), metrics)
+        self.assertEqual(1, len(metrics.list("commcare.lock.acquire_time")), metrics)
 
     def test_not_acquired(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
         with capture_metrics() as metrics:
             self.assertFalse(lock.acquire(blocking=False))
-        self.assertEqual(1, len(metrics.list("commcare.lock.acquire_time", lock_name='test')), metrics)
+        self.assertEqual(1, len(metrics.list("commcare.lock.acquire_time")), metrics)
 
     def test_release(self):
         fake = FakeLock()
@@ -36,7 +36,7 @@ class TestMeteredLock(TestCase):
         with capture_metrics() as metrics:
             lock.release()
             self.assertFalse(fake.locked)
-        self.assertEqual(1, len(metrics.list("commcare.lock.locked_time", lock_name='test')), metrics)
+        self.assertEqual(1, len(metrics.list("commcare.lock.locked_time")), metrics)
 
     def test_release_not_locked(self):
         fake = FakeLock()
@@ -53,8 +53,8 @@ class TestMeteredLock(TestCase):
             with lock:
                 self.assertTrue(fake.locked)
             self.assertFalse(fake.locked)
-        self.assertEqual(1, len(metrics.list("commcare.lock.acquire_time", lock_name='test')), metrics)
-        self.assertEqual(1, len(metrics.list("commcare.lock.locked_time", lock_name='test')), metrics)
+        self.assertEqual(1, len(metrics.list("commcare.lock.acquire_time")), metrics)
+        self.assertEqual(1, len(metrics.list("commcare.lock.locked_time")), metrics)
 
     def test_release_failed(self):
         lock = MeteredLock(FakeLock(), "test")

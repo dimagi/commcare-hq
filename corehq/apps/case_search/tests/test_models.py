@@ -1,11 +1,21 @@
+from unittest.mock import call, patch
+
 from django.test import TestCase
+from django.utils.datastructures import MultiValueDict
 
-from mock import call, patch
+from testil import assert_raises, eq
 
+from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import (
+    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
+    CASE_SEARCH_REGISTRY_ID_KEY,
+    CaseSearchRequestConfig,
     disable_case_search,
     enable_case_search,
+    extract_search_request_config,
+    CASE_SEARCH_CASE_TYPE_KEY,
 )
+from corehq.util.test_utils import generate_cases
 
 
 class TestCaseSearch(TestCase):
@@ -31,3 +41,52 @@ class TestCaseSearch(TestCase):
 
         disable_case_search(self.domain)
         self.assertEqual(fake_deleter.call_args, call(self.domain))
+
+
+@generate_cases([
+    ("jelly", None, None, False),
+    (["jelly", "tots"], None, None, False),
+    (None, None, None, True),  # required case type
+    ("jelly", "reg1", "dupe_id", False),
+    # disallow lists
+    ("jelly", None, ["dupe_id1", "dupe_id2"], True),
+    ("jelly", ["reg1", "reg2"], None, True),
+])
+def test_extract_criteria_config(self, case_type, data_registry, custom_related_case_property, expect_exception):
+    with assert_raises(None if not expect_exception else CaseSearchUserError):
+        request_dict = _make_request_dict({
+            CASE_SEARCH_CASE_TYPE_KEY: case_type,
+            CASE_SEARCH_REGISTRY_ID_KEY: data_registry,
+            CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: custom_related_case_property,
+            "other_key": "jim",
+        })
+        config = extract_search_request_config(request_dict)
+
+    if not expect_exception:
+        expected_case_types = case_type if isinstance(case_type, list) else [case_type]
+        eq(config, CaseSearchRequestConfig(
+            criteria={"other_key": "jim"},
+            case_types=expected_case_types, data_registry=data_registry, custom_related_case_property=custom_related_case_property
+        ))
+
+
+def test_extract_criteria_config_legacy():
+    config = extract_search_request_config(_make_request_dict({
+        CASE_SEARCH_CASE_TYPE_KEY: "type",
+        "commcare_registry": "reg1",
+    }))
+    eq(config, CaseSearchRequestConfig(criteria={}, case_types=["type"], data_registry="reg1"))
+
+
+def _make_request_dict(params):
+    """All values must be a list to match what we get from Django during a request.
+    """
+    request_dict = MultiValueDict()
+    for key, value in params.items():
+        if value is None:
+            continue
+        if isinstance(value, list):
+            request_dict.setlist(key, value)
+        else:
+            request_dict[key] = value
+    return request_dict

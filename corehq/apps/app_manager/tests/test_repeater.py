@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from django.test.client import Client
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
@@ -76,7 +76,7 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         self.app_structure_repeater.save()
         self.addCleanup(self.app_structure_repeater.delete)
 
-        with patch('corehq.motech.repeaters.models.simple_post') as mock_fire:
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire:
             self.application = Application(domain=self.domain)
             self.application.save()
             self.addCleanup(self.application.delete)

@@ -121,7 +121,7 @@ from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
 )
-from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
@@ -138,7 +138,7 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     save_xform,
     update_form_unique_ids,
-    update_report_module_ids,
+    update_report_module_ids, module_loads_registry_case,
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
@@ -1021,6 +1021,7 @@ class FormBase(DocumentSchema):
     is_release_notes_form = BooleanProperty(default=False)
     enable_release_notes = BooleanProperty(default=False)
     session_endpoint_id = StringProperty()  # See toggles.SESSION_ENDPOINTS
+    function_datum_endpoints = StringListProperty()  # computed datums IDs that are allowed in endpoints
 
     @classmethod
     def wrap(cls, data):
@@ -1166,7 +1167,7 @@ class FormBase(DocumentSchema):
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
-        xform.add_missing_instances(app)
+        xform.add_missing_instances(self, app)
 
     @memoized
     def render_xform(self, build_profile_id=None):
@@ -2011,6 +2012,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     print_template = DictProperty()
 
+    def get_instance_name(self, module):
+        value_is_the_default = self.instance_name == 'casedb'
+        if value_is_the_default and module_loads_registry_case(module):
+            return RESULTS_INSTANCE
+        return self.instance_name
+
     def get_tab_spans(self):
         '''
         Return the starting and ending indices into self.columns deliminating
@@ -2130,12 +2137,6 @@ class CaseSearchAgainLabel(BaseCaseSearchLabel):
     label = DictProperty(default={'en': 'Search Again'})
 
 
-class AdditionalRegistryQuery(DocumentSchema):
-    instance_name = StringProperty()
-    case_type_xpath = StringProperty()
-    case_id_xpath = StringProperty()
-
-
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
@@ -2155,7 +2156,9 @@ class CaseSearch(DocumentSchema):
     blacklisted_owner_ids_expression = StringProperty()
     additional_case_types = ListProperty(str)
     data_registry = StringProperty()
-    additional_registry_queries = SchemaListProperty(AdditionalRegistryQuery)
+    data_registry_workflow = StringProperty()           # one of REGISTRY_WORKFLOW_*
+    additional_registry_cases = StringListProperty()  # list of xpath expressions
+    custom_related_case_property = StringProperty()  # case property referencing another case's ID
 
     @property
     def case_session_var(self):
@@ -2484,8 +2487,7 @@ class ModuleDetailsMixin(object):
             ('ref_long', self.ref_details.long, False),
         ]
         custom_detail = self.case_details.short.custom_xml
-        registry_search = self.search_config.data_registry
-        if module_offers_search(self) and not custom_detail and not registry_search:
+        if module_offers_search(self) and not custom_detail:
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
@@ -5083,9 +5085,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     @memoized
     def enable_update_prompts(self):
         return (
-            # custom for ICDS until ICDS users are > 2.38
-            (self.supports_update_prompts or toggles.ICDS.enabled(self.domain)) and
-            toggles.PHONE_HEARTBEAT.enabled(self.domain)
+            self.supports_update_prompts and toggles.PHONE_HEARTBEAT.enabled(self.domain)
         )
 
     @memoized
@@ -5815,6 +5815,9 @@ def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
             messages.warning(request, _("Copying the application succeeded, but the application will have errors "
                                         "because your application contains a Mobile Report Module that references "
                                         "a UCR configured in this project space. Multimedia may be absent."))
+    except ResourceNotFound:
+        messages.warning(request, _("Copying the application succeeded, but the application is missing "
+                                    "multimedia file(s)."))
 
     if not app.is_remote_app():
         enable_usercase_if_necessary(app)

@@ -1,45 +1,48 @@
+import functools
 import json
 import mimetypes
 import os
 import uuid
-import functools
-from collections import (
-    namedtuple,
-    OrderedDict
-)
+from collections import OrderedDict, namedtuple
 from contextlib import contextmanager
 from datetime import datetime
+from io import BytesIO
+
+from django.db import models
 
 import attr
-from io import BytesIO
-from django.db import models
 from jsonfield.fields import JSONField
-from jsonobject import JsonObject
-from jsonobject import StringProperty
+from jsonobject import JsonObject, StringProperty
 from jsonobject.properties import BooleanProperty
-from PIL import Image
 from lxml import etree
+from memoized import memoized
+from PIL import Image
 
-from corehq.apps.sms.mixin import MessagingCaseContactMixin
-from corehq.blobs import CODES, get_blob_db
-from corehq.blobs.atomic import AtomicBlobs
-from corehq.blobs.exceptions import NotFound, BadName
-from corehq.blobs.models import BlobMeta
-from corehq.blobs.util import get_content_md5
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
-from corehq.form_processor.exceptions import UnknownActionType, MissingFormXml
-from corehq.form_processor.track_related import TrackRelatedChanges
-from corehq.sql_db.models import PartitionedModel
-from corehq.util.json import CommCareJSONEncoder
-from corehq.util.models import TruncatingCharField
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.ext import jsonobject
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from memoized import memoized
-from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, IsImageMixin
+
+from corehq.apps.sms.mixin import MessagingCaseContactMixin
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.atomic import AtomicBlobs
+from corehq.blobs.exceptions import BadName, NotFound
+from corehq.blobs.models import BlobMeta
+from corehq.blobs.util import get_content_md5
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.exceptions import MissingFormXml, UnknownActionType
+from corehq.form_processor.track_related import TrackRelatedChanges
+from corehq.sql_db.models import PartitionedModel
+from corehq.util.json import CommCareJSONEncoder
+from corehq.util.models import TruncatingCharField
+
+from .abstract_models import (
+    AbstractCommCareCase,
+    AbstractXFormInstance,
+    IsImageMixin,
+)
 from .exceptions import AttachmentNotFound
 
 STANDARD_CHARFIELD_LENGTH = 255
@@ -344,6 +347,16 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         (SUBMISSION_ERROR_LOG, 'submission_error'),
         (DELETED, 'deleted'),
     )
+    DOC_TYPE_TO_STATE = {
+        "XFormInstance": NORMAL,
+        "XFormError": ERROR,
+        "XFormDuplicate": DUPLICATE,
+        "XFormDeprecated": DEPRECATED,
+        "XFormArchived": ARCHIVED,
+        "SubmissionErrorLog": SUBMISSION_ERROR_LOG
+    }
+    ALL_DOC_TYPES = {'XFormInstance-Deleted'} | DOC_TYPE_TO_STATE.keys()
+    STATE_TO_DOC_TYPE = {v: k for k, v in DOC_TYPE_TO_STATE.items()}
 
     form_id = models.CharField(max_length=255, unique=True, db_index=True, default=None)
 
@@ -466,10 +479,9 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     @property
     def doc_type(self):
         """Comparability with couch forms"""
-        from corehq.form_processor.backends.sql.dbaccessors import state_to_doc_type
         if self.is_deleted:
             return 'XFormInstance' + DELETED_SUFFIX
-        return state_to_doc_type.get(self.state, 'XFormInstance')
+        return self.STATE_TO_DOC_TYPE.get(self.state, 'XFormInstance')
 
     @property
     @memoized
@@ -792,20 +804,24 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def to_json(self):
         from .serializers import (
-            CommCareCaseSQLSerializer, lazy_serialize_case_indices, lazy_serialize_case_transactions,
-            lazy_serialize_case_xform_ids, lazy_serialize_case_attachments
+            CommCareCaseSQLSerializer,
+            lazy_serialize_case_attachments,
+            lazy_serialize_case_indices,
+            lazy_serialize_case_transactions,
+            lazy_serialize_case_xform_ids,
         )
+
+        def union(*dicts):
+            return {k: v for d in dicts for k, v in d.items()}
+
         serializer = CommCareCaseSQLSerializer(self)
-        ret = dict(serializer.data)
-        ret['indices'] = lazy_serialize_case_indices(self)
-        ret['actions'] = lazy_serialize_case_transactions(self)
-        ret['xform_ids'] = lazy_serialize_case_xform_ids(self)
-        ret['case_attachments'] = lazy_serialize_case_attachments(self)
-        for key in self.case_json:
-            if key not in ret:
-                ret[key] = self.case_json[key]
-        ret['backend_id'] = 'sql'
-        return ret
+        return union(self.case_json, serializer.data, {
+            'indices': lazy_serialize_case_indices(self),
+            'actions': lazy_serialize_case_transactions(self),
+            'xform_ids': lazy_serialize_case_xform_ids(self),
+            'case_attachments': lazy_serialize_case_attachments(self),
+            'backend_id': 'sql',
+        })
 
     def dumps(self, pretty=False):
         indent = 4 if pretty else None
@@ -970,9 +986,12 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         ]
         return normalized_actions
 
-    def get_case_property(self, property):
+    def get_case_property(self, property, dynamic_only=False):
         if property in self.case_json:
             return self.case_json[property]
+
+        if dynamic_only:
+            return
 
         allowed_fields = [
             field.name for field in self._meta.fields

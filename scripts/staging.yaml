@@ -53,34 +53,33 @@ branches:
     # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-    #- fr/user-data-jit            # Farid September 2
-    - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
-    - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
-    - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - ce/bulk-case-search # Cal July 6
-    - rp/enterprize-sms-report # Rynhard July 12
     #- sr/memoized-toggle # Sravan July 26
-    - bmb/sso-login-v2  # Biyeun July 26
-    - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
-    - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
-    - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - ml/add-bulk-action-scheduled-reports # Minha Aug 30
-    - gh/remove-pickles-from-accounting # Graham Sep 3
-    - smh/cross-domain-ucr-ui-updates # Steph Sept 14
-    - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
-    - rp/improve-deleted-odata-feed-error-message # Rynhard Sept 15
-    - fr/dedupe  # Farid Sept 17
-    - fr/dedupe-ui-1  # Farid October 3
-    #- jm/remove-es-scan  # Joel Sep 17 [QA]
-    - ap/add-permission-to-edit-ucrs # Amit Sept 21
-    - jls/smart-linking-in-web-apps # Jenny Sept 22
     - dmr/throttle-system-forms  # Danny Sept 24
-    - gh/erm/link-reports-and-keywords-on-push-take2 # Graham Sept 28
-    - gh/remove-pickles/sms # Graham Sept 28
-    - ml/remove-pickles-case-importer #Minha Sept 30
-    - es/webuser-activity  # Ethan Sept 30
-    - sk/registry-case-management  # Simon Oct 4\
+    - smh/remove-extra-spinner-icons # Steph Oct 6
+    - ml/remove-pickles-phonelog # Minha Oct 7
+    - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
+    - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
+    - ml/remove-pickles-user-importer # Minha Oct 13
+    # - ml/remove-pickles-reports # Minha Oct 21
+    - rp/status-embed # Rynhard Nov 9
+    - ap/web-app-refresh # Amit Nov 29
+    - es/mobile-auth # Simon Nov 23
+    - do/create-usercase-web-users # Dominic Dec 3
+    - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
+    - jm/elastic-modernize-mappings  # Joel Dec 3
+    - sr/case-reindex-staging # Sravan Oct 14
+    - rp/gsheets+depandabot-pip # Rynhard Dec 6
+    - rp/gsheets-PoC # Rynhard Dec 6
+    - cs/SC-1904-invalid-datum-generation # Charl 7 Dec
+    - dependabot/npm_and_yarn/jquery-ui-1.13.0  # Biyeun Dec 8 
+    - sk/web-apps-preserve-selections # Simon Dec 10
+    - gh/improve-queueing-repeaters # Graham Dec 10
+    - mk/support-multibar-reports # MK Dec 14
+    - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
+    - mjr/log_report_inputs # Matt Dec 15
+    - mjr/duplicate-celery-messages # Matt Dec 15
 submodules: { }

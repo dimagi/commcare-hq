@@ -76,3 +76,12 @@ def record_feed_access_in_datadog(request, config_id, duration, response):
             'size': len(response.content)
         }
     )
+
+
+def format_odata_error(code, message):
+    error_message = {"error": {
+        "code": code,
+        "message": message,
+    }}
+
+    return error_message

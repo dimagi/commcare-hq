@@ -1,3 +1,10 @@
+"""DO NOT ADD NEW THINGS TO THIS MODULE
+
+New test utilities should be added to a module in the
+`corehq.tests.util` package. Things in this module may be moved there as
+it makes sense to do so. See the docstring on that package for important
+guidelines.
+"""
 import functools
 import json
 import logging
@@ -10,7 +17,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from io import StringIO, open
 from textwrap import indent, wrap
-from time import time
+from time import sleep, time
 from unittest import SkipTest, TestCase
 
 from django.conf import settings
@@ -19,7 +26,7 @@ from django.db.backends import utils
 from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 
-import mock
+from unittest import mock
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
@@ -426,6 +433,7 @@ def timelimit(limit):
         limit = timedelta(seconds=limit)
         return lambda func: timelimit((func, limit))
     func, limit = limit
+
     @wraps(func)
     def time_limit(*args, **kw):
         from corehq.tests.noseplugins.timing import add_time_limit
@@ -830,3 +838,18 @@ def disable_quickcache(test_case=None):
         return self.fn(*args, **kw)
     patch = mock.patch("quickcache.quickcache_helper.QuickCacheHelper.__call__", call)
     return patch if test_case is None else patch(test_case)
+
+
+def flaky_slow(test=None, max_runs=5, min_passes=1, rerun_filter=lambda *a: True):
+    """A flaky test decorator that waits between reruns
+
+    Use for tests that depend on eventual database consistency.
+    """
+    from flaky import flaky
+
+    def rerun(*args):
+        sleep(0.5)
+        return rerun_filter(*args)
+
+    deco = flaky(max_runs=max_runs, min_passes=min_passes, rerun_filter=rerun)
+    return deco if test is None else deco(test)

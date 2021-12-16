@@ -7,7 +7,7 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
-import mock
+from unittest import mock
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow
@@ -196,7 +196,7 @@ class TestStaleDataInESSQL(TestCase):
     def _stale_data_in_es(self, *args, **kwargs):
         f = StringIO()
         expect_exception = kwargs.pop('expect_exception', None)
-        with mock.patch('sys.stdout', f):
+        with mock.patch('sys.stdout', f), mock.patch('sys.stderr', StringIO()):
             if expect_exception:
                 with self.assertRaises(expect_exception):
                     call_command('stale_data_in_es', *args, stdout=f, **kwargs)

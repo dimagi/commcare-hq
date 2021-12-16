@@ -1,8 +1,6 @@
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 
-from casexml.apps.case.models import CommCareCase
-
 from corehq.apps.api.es import CaseESView, ElasticAPIQuerySet, es_query_from_get_params
 from corehq.apps.api.models import ESCase
 from corehq.apps.api.resources import (
@@ -58,12 +56,8 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']
-        domain = kwargs['domain']
         try:
-            case = CaseAccessors(domain).get_case(case_id)
-            if case.domain != domain:
-                raise CaseNotFound
-            return case
+            return CaseAccessors(kwargs['domain']).get_case(case_id)
         except CaseNotFound:
             raise object_does_not_exist("CommCareCase", case_id)
 
@@ -81,7 +75,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        object_class = CommCareCase
+        object_class = ESCase
         resource_name = 'case'
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
