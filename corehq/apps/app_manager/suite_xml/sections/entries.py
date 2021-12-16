@@ -812,6 +812,11 @@ class EntriesHelper(object):
                     action=action
                 ))
 
+        for datum in form.arbitrary_datums:
+            datums.append(FormDatumMeta(
+                SessionDatum(id=datum['datum_id'], function=datum['datum_function']), None, False, None)
+            )
+
         if module.get_app().commtrack_enabled:
             try:
                 last_action = list(form.actions.get_load_update_actions())[-1]

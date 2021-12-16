@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import (
     LoadCaseFromFixture,
     LoadUpdateAction,
     Module,
+    ArbitraryDatum
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -183,6 +184,29 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('load_case_from_fixture_arbitrary_datum'), suite,
                                    './entry[2]/session')
         self.assertXmlPartialEqual(self.get_xml('load_case_from_fixture_instance'), suite, './entry[2]/instance')
+
+    def test_advanced_suite_arbitrary_datum(self, *args):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).get_form(0).arbitrary_datums = [
+            ArbitraryDatum(datum_id='extra_id1', datum_function='extra_function1()'),
+            ArbitraryDatum(datum_id='extra_id2', datum_function='extra_function2()')
+        ]
+        suite = app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <session>
+                    <datum detail-confirm="m1_case_long" detail-select="m1_case_short" id="case_id_case_clinic"
+                           nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']"
+                           value="./@case_id"/>
+                    <datum id="extra_id1" function="extra_function1()" />
+                    <datum id="extra_id2" function="extra_function2()" />
+                </session>
+            </partial>
+            """,
+            suite,
+            './entry[2]/session'
+        )
 
     @flag_enabled('MOBILE_UCR')
     def test_advanced_suite_load_case_from_fixture_with_report_fixture(self, *args):

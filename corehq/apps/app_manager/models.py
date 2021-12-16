@@ -619,6 +619,11 @@ class AdvancedOpenCaseAction(AdvancedAction):
         return super(AdvancedOpenCaseAction, cls).wrap(data)
 
 
+class ArbitraryDatum(DocumentSchema):
+    datum_id = StringProperty(default=None)
+    datum_function = StringProperty(default=None)
+
+
 class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
 
@@ -2626,6 +2631,7 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
+    arbitrary_datums = SchemaListProperty(ArbitraryDatum)
     schedule = SchemaProperty(FormSchedule, default=None)
 
     @classmethod
