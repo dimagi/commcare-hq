@@ -173,6 +173,9 @@ class Command(BaseCommand):
              name='Release Management',
              description='Allows access to features that help manage releases between projects, like the linked '
                          'projects feature.'),
+        Role(slug=privileges.LITE_RELEASE_MANAGEMENT,
+             name='Lite Release Management',
+             description='A limited version of Release Management'),
     ]
 
     BOOTSTRAP_PLANS = [
