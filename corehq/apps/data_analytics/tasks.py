@@ -1,5 +1,6 @@
 import datetime
 
+from celery import group
 from django.conf import settings
 
 from celery.schedules import crontab
@@ -24,11 +25,11 @@ logger = get_task_logger(__name__)
 def build_last_month_MALT():
     last_month = last_month_dict()
     domains = Domain.get_all_names()
-    grouped_malt_tasks = update_current_MALT_for_domains.chunks(
-        zip([last_month], domains), 1000
-    ).group()
+    tasks = []
+    for chunk in chunked(domains, 1000):
+        tasks.append(update_current_MALT_for_domains.s(last_month, list(chunk)))
 
-    group_result = grouped_malt_tasks.apply_async()
+    group_result = group(tasks).apply_async()
     # celery 4.1 does not have support for disable_sync_subtasks in a GroupResult.get()
     # this is a workaround until we upgrade
     for result in group_result.results:
