@@ -191,9 +191,24 @@ class GenericReportView(object):
             fields="\n   Report Fields: \n     -%s" % "\n     -".join(self.fields) if self.fields else ""
         )
 
+    def __getstate__(self):
+        """
+            Returns report parameters to rebuild report in Celery.
+        """
+        request = request_as_dict(self.request)
+
+        return dict(
+            request=request,
+            request_params=self.request_params,
+            domain=self.domain,
+            context={}
+        )
+
+    _caching = False
+
     def __setstate__(self, state):
         """
-            Temporarily restoring
+            Restoring a report from __getstate__ returned report parameters.
         """
         logging = get_task_logger(__name__)  # logging lis likely to happen within celery.
         self.domain = state.get('domain')
@@ -388,15 +403,6 @@ class GenericReportView(object):
                 ]
             ]
         ]
-
-    @property
-    def export_table_parts(self):
-        """
-            Intention: Override
-            Returns the JSON compatible parts needed to create export_table in export_all_rows_task
-        """
-
-        return []
 
     @property
     def filter_set(self):
@@ -664,15 +670,7 @@ class GenericReportView(object):
         """
         self.is_rendered_as_export = True
         if self.exportable_all:
-            export_all_rows_task.delay(
-                self.request.couch_user._id,
-                self.__class__.__module__ + '.' + self.__class__.__name__,
-                self.domain,
-                self.slug,
-                self.name,
-                self.export_format,
-                self.export_table_parts
-            )
+            export_all_rows_task.delay(self.__class__, self.__getstate__())
             return HttpResponse()
         else:
             # We only want to cache the responses which serve files directly
@@ -985,43 +983,25 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
+
+        def _unformat_row(row):
+            def _unformat_val(val):
+                if isinstance(val, dict):
+                    return val.get('raw', val.get('sort_key', val))
+                return self._strip_tags(val)
+
+            return [_unformat_val(val) for val in row]
+
         table = headers.as_export_table
         self.exporting_as_excel = True
-        rows = (self._unformat_row(self, row) for row in self.export_rows)
+        rows = (_unformat_row(row) for row in self.export_rows)
         table = chain(table, rows)
         if self.total_row:
-            table = chain(table, [self._unformat_row(self, self.total_row)])
+            table = chain(table, [_unformat_row(self.total_row)])
         if self.statistics_rows:
-            table = chain(table, [self._unformat_row(self, row) for row in self.statistics_rows])
+            table = chain(table, [_unformat_row(row) for row in self.statistics_rows])
 
         return [[self.export_sheet_name, table]]
-
-    @property
-    def export_table_parts(self):
-        """
-        JSON compatible version of export_table only used for export_all_rows_task calls.
-        export_table will be established in the task with the parts returned from this method.
-        """
-        headers = self.headers
-        self.exporting_as_excel = True
-        rows = (self._unformat_row(self, row) for row in self.export_rows)
-        total_row, statistics_rows = [], []
-        if self.total_row:
-            total_row = [self._unformat_row(self, self.total_row)]
-        elif self.statistics_rows:
-            statistics_rows = [self._unformat_row(self, row) for row in self.statistics_rows]
-
-        return [str(self.export_sheet_name), headers.as_export_table, list(rows),
-                list(total_row), list(statistics_rows)]
-
-    @staticmethod
-    def _unformat_row(self, row):
-        def _unformat_val(val):
-            if isinstance(val, dict):
-                return val.get('raw', val.get('sort_key', val))
-            return self._strip_tags(val)
-
-        return [_unformat_val(val) for val in row]
 
     @property
     def export_rows(self):

@@ -170,16 +170,6 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                             body, email_from=settings.DEFAULT_FROM_EMAIL,
                             smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
 
-        report_state = {
-            'request': request_data,
-            'domain': domain,
-            'context': {},
-            'request_params': json_request(GET_data)}
-
-        report = object.__new__(config.report)
-        report.__setstate__(report_state)
-        report.rendered_as = 'export'
-
     except Exception as er:
         notify_exception(
             None,
@@ -193,17 +183,12 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
         if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
             # If the email doesn't work because it is too large to fit in the HTML body,
             # send it as an excel attachment.
-
-            report = config.report
-            export_all_rows_task(
-                user_id,
-                config.__class__.__module__ + '.' + report.__class__.__name__,
-                config.domain,
-                report.slug,
-                report.name,
-                report.export_format,
-                report.export_table_parts,
-                recipient_list=recipient_emails
-            )
+            report_state = {
+                'request': request_data,
+                'domain': domain,
+                'context': {},
+                'request_params': json_request(GET_data)
+            }
+            export_all_rows_task(config.report, report_state, recipient_list=recipient_emails)
         else:
             self.retry(exc=er)

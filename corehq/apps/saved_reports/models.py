@@ -751,7 +751,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def _send_emails(self, title, report_text, emails, excel_files):
         from corehq.apps.reports.views import render_full_report_notification
 
-        email_is_too_large = False
+        email_is_too_large = True
 
         for email in emails:
             body = render_full_report_notification(None, report_text, email, self).content
@@ -831,17 +831,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             report.__setstate__(full_request)
             report.rendered_as = 'export'
 
-            export_all_rows_task(
-                report.request.couch_user._id,
-                report.__class__.__module__ + '.' + report.__class__.__name__,
-                report.domain,
-                report.slug,
-                report.name,
-                report.export_format,
-                report.export_table_parts,
-                emails,
-                title
-            )
+            export_all_rows_task(report_config.report, full_request, emails, title)
 
     def remove_recipient(self, email):
         try:

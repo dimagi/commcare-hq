@@ -1,9 +1,7 @@
-import io
 import os
 import uuid
 import zipfile
 from datetime import datetime, timedelta
-from itertools import chain
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -11,7 +9,6 @@ from celery.utils.log import get_task_logger
 from text_unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
-from couchexport.export import export_from_tables
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
@@ -22,7 +19,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, DomainES, FormES, filters
 from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE
 from corehq.apps.reports.util import send_report_download_email
-from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
 from corehq.elastic import send_to_elasticsearch
@@ -168,35 +164,31 @@ def apps_update_calculated_properties():
 
 
 @task(ignore_result=True)
-def export_all_rows_task(user_id, report_class, domain, slug, name,
-                         export_format, export_table_parts, recipient_list=None, subject=None):
-    file = io.BytesIO()
-    table = chain(export_table_parts[1], export_table_parts[2])
-    if export_table_parts[3]:
-        table = chain(table, export_table_parts[3])
-    if export_table_parts[4]:
-        table = chain(table, export_table_parts[4])
-    export_table = [[export_table_parts[0], table]]
-    export_from_tables(export_table, file, export_format)
-    couch_user = CouchUser.get_by_user_id(user_id)
+def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject=None):
+    report = object.__new__(ReportClass)
+    report.__setstate__(report_state)
+    report.rendered_as = 'export'
 
-    if domain is None:
+    setattr(report.request, 'REQUEST', {})
+    file = report.excel_response
+    report_class = report.__class__.__module__ + '.' + report.__class__.__name__
+
+    if report.domain is None:
         # Some HQ-wide reports (e.g. accounting/smsbillables) will not have a domain associated with them
         # This uses the user's first domain to store the file in the blobdb
-        domain = couch_user.get_domains()[0]
+        report.domain = report.request.couch_user.get_domains()[0]
 
-    hash_id = _store_excel_in_blobdb(report_class, file, domain, slug)
+    hash_id = _store_excel_in_blobdb(report_class, file, report.domain, report.slug)
     if not recipient_list:
-        recipient_list = [couch_user.get_email()]
+        recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
-        _send_email(couch_user, domain, hash_id, export_format, name, recipient=recipient, subject=subject)
+        _send_email(report, hash_id, recipient=recipient, subject=subject)
 
 
-def _send_email(user, domain, hash_id, export_format, name, recipient, subject=None):
-    link = absolute_reverse("export_report", args=[domain, str(hash_id),
-                                                   export_format])
-
-    send_report_download_email(name, recipient, link, subject)
+def _send_email(report, hash_id, recipient, subject=None):
+    link = absolute_reverse("export_report", args=[report.domain, str(hash_id),
+                                                   report.export_format])
+    send_report_download_email(report.name, recipient, link, subject)
 
 
 def _store_excel_in_blobdb(report_class, file, domain, report_slug):

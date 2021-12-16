@@ -53,7 +53,7 @@ class TestEmailReport(TestCase):
 
         self.assertEqual(
             mock_send_email.delay.call_args[self.ARG_INDEX][self.RECIPIENT_INDEX],
-            ['user1@test.com', 'test_user@dimagi.com']
+            ['test_user@dimagi.com', 'user1@test.com']
         )
 
     def test_invalid_form_returns_bad_request(self):
