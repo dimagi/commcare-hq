@@ -15,6 +15,7 @@ from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
 from corehq.util.metrics.load_counters import ucr_load_counter
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 UCR_TABLE_PREFIX = 'ucr_'
 LEGACY_UCR_TABLE_PREFIX = 'config_report_'
@@ -307,10 +308,11 @@ def _wrap_data_source_by_doc_type(doc):
         DataSourceConfiguration,
         RegistryDataSourceConfiguration,
     )
+    doc_type = doc["doc_type"].replace(DELETED_SUFFIX, '')
     return {
         "DataSourceConfiguration": DataSourceConfiguration,
         "RegistryDataSourceConfiguration": RegistryDataSourceConfiguration,
-    }[doc["doc_type"]].wrap(doc)
+    }[doc_type].wrap(doc)
 
 
 def wrap_report_config_by_type(config):
