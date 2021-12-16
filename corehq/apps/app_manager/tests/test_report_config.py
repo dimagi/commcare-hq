@@ -94,6 +94,13 @@ def MAKE_REPORT_CONFIG(domain, report_id, columns=None):
             display="color",
             field="color_94ec39e6"
         ).to_json(),
+        FieldColumn(
+            type='field',
+            aggregation="sum",
+            column_id="count",
+            display="count",
+            field="count"
+        ).to_json(),
     ]
     return ReportConfiguration(
         _id=report_id,
@@ -186,6 +193,13 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                     display="color",
                     field="color_94ec39e6",
                     visible=False,
+                ).to_json(),
+                FieldColumn(
+                    type='field',
+                    aggregation="sum",
+                    column_id="count",
+                    display="count",
+                    field="count"
                 ).to_json(),
             ]
         )
@@ -354,6 +368,18 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 </text>
               </template>
             </field>
+            <field>
+              <header>
+                <text>
+                  <locale id="cchq.reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.headers.count"/>
+                </text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="column[@id='count']"/>
+                </text>
+              </template>
+            </field>
           </detail>
         </partial>
         """, self.suite, "detail/detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.data']")
@@ -451,6 +477,18 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               <template>
                 <text>
                   <xpath function="column[@id='color_94ec39e6']"/>
+                </text>
+              </template>
+            </field>
+            <field>
+              <header>
+                <text>
+                  <locale id="cchq.reports.45152061d8dc4d2a8d987a0568abe1ae.headers.count"/>
+                </text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="column[@id='count']"/>
                 </text>
               </template>
             </field>
