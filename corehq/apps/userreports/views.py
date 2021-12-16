@@ -1398,6 +1398,7 @@ def process_url_params(params, columns):
 @require_permission(Permissions.view_reports)
 @swallow_programming_errors
 def export_data_source(request, domain, config_id):
+    """See README.rst for docs"""
     config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = get_indicator_adapter(config, load_source='export_data_source')
     url = reverse('export_configurable_data_source', args=[domain, config._id])
