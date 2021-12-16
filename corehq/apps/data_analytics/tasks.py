@@ -6,6 +6,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
@@ -42,7 +43,8 @@ def update_current_MALT():
     today = datetime.date.today()
     this_month_dict = {'month': today.month, 'year': today.year}
     domains = Domain.get_all_names()
-    update_current_MALT_for_domains.chunks(zip([this_month_dict], domains), 5000).apply_async()
+    for chunk in chunked(domains, 1000):
+        update_current_MALT_for_domains.delay(this_month_dict, list(chunk))
 
 
 @periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='3'),
