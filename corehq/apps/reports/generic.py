@@ -669,8 +669,12 @@ class GenericReportView(object):
         Returns the tabular export of the data, if available.
         """
         self.is_rendered_as_export = True
+        report_state = self.__getstate__()
+        report_state['request_params']['startdate'] = str(report_state['request']['datespan'].startdate)
+        report_state['request_params']['enddate'] = str(report_state['request']['datespan'].enddate)
+        del report_state['request']['datespan']
         if self.exportable_all:
-            export_all_rows_task.delay(self.__class__, self.__getstate__())
+            export_all_rows_task.delay(self.__class__.slug, report_state)
             return HttpResponse()
         else:
             # We only want to cache the responses which serve files directly

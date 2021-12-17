@@ -10,6 +10,7 @@ from text_unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.util import expose_blob_download
@@ -157,8 +158,55 @@ def apps_update_calculated_properties():
 
 
 @task(ignore_result=True)
-def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject=None):
-    report = object.__new__(ReportClass)
+def export_all_rows_task(report_class, report_state, recipient_list=None, subject=None):
+    #will move imports to the top
+    import json
+    from corehq.apps.reports.standard.monitoring import (
+        WorkerActivityReport,
+        DailyFormStatsReport,
+        CaseActivityReport,
+    )
+    from corehq.apps.reports.standard.deployments import ApplicationStatusReport
+    from phonelog.reports import DeviceLogDetailsReport
+    from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer, CaseListReport
+    from corehq.apps.reports.standard.cases.duplicate_cases import DuplicateCasesExplorer
+    from corehq.apps.reports.commtrack.maps import StockStatusMapReport
+    from corehq.apps.reports.commtrack.standard import SimplifiedInventoryReport, InventoryReport
+    from corehq.apps.smsbillables.interface import SMSBillablesInterface, SMSGatewayFeeCriteriaInterface
+    from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
+
+    #for testing
+    temp_dict = {
+        ApplicationStatusReport.slug: ApplicationStatusReport,
+        CaseActivityReport.slug: CaseActivityReport,
+        DailyFormStatsReport.slug: DailyFormStatsReport,
+        DeviceLogDetailsReport.slug: DeviceLogDetailsReport,
+        SMSBillablesInterface.slug: SMSBillablesInterface,
+        SMSGatewayFeeCriteriaInterface.slug: SMSGatewayFeeCriteriaInterface,
+        WorkerActivityReport.slug: WorkerActivityReport,
+
+        EnterpriseSMSBillablesReport.slug: EnterpriseSMSBillablesReport,  # untested (SMSDetailedReport)
+        CaseListExplorer.slug: CaseListExplorer,  # untested, idk if this is it
+        CaseListReport.slug: CaseListReport,  # idk if this is called in ever, it might just be a base
+        DuplicateCasesExplorer.slug: DuplicateCasesExplorer,  # untested, idk if this is it
+        StockStatusMapReport.slug: StockStatusMapReport,  # untested, idk if this is it (Stock Status by product)
+        SimplifiedInventoryReport.slug: SimplifiedInventoryReport,  # untested, idk if called (Inventory by loc)
+        InventoryReport.slug: InventoryReport,  # untested, idk if this is called in ever (Aggregate inventory)
+    }
+
+    #Reforming datespan object
+    if 'startdate' and 'enddate' in report_state['request_params']:
+        start_date = datetime.strptime(str(report_state['request_params']['startdate']), '%Y-%m-%d %H:%M:%S')
+        end_date = datetime.strptime(str(report_state['request_params']['enddate']), '%Y-%m-%d %H:%M:%S')
+        report_state['request']['datespan'] = DateSpan(start_date, end_date)
+
+    #for testing - will remove
+    if report_class in temp_dict:
+        get_class = temp_dict[report_class]
+    else:
+        get_class = report_class
+
+    report = object.__new__(get_class)
     report.__setstate__(report_state)
     report.rendered_as = 'export'
 

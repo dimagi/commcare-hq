@@ -32,7 +32,6 @@ from sqlalchemy.util import immutabledict
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request
@@ -753,7 +752,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def _send_emails(self, title, report_text, emails, excel_files):
         from corehq.apps.reports.views import render_full_report_notification
 
-        email_is_too_large = False
+        email_is_too_large = True  # CHANGE THIS BACK TO FALSE AFTER TESTING
 
         for email in emails:
             body = render_full_report_notification(None, report_text, email, self).content
@@ -801,11 +800,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def _export_report(self, emails, title):
         from corehq.apps.reports.standard.deployments import ApplicationStatusReport
+        from corehq.apps.reports.standard.monitoring import CaseActivityReport
 
         for report_config in self.configs:
             mock_request = HttpRequest()
             mock_request.couch_user = self.owner
-            mock_request.user = self.owner.get_django_user()
             mock_request.domain = self.domain
             mock_request.couch_user.current_domain = self.domain
             mock_request.couch_user.language = self.language
@@ -816,24 +815,20 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
             request_data = vars(mock_request)
             request_data['couch_user'] = mock_request.couch_user.userID
-            if report_config.report_slug != ApplicationStatusReport.slug:
-                # ApplicationStatusReport doesn't have date filter
+            request_params = json_request(request_data['GET'])
+            if report_config.report_slug != ApplicationStatusReport.slug\
+                    and report_config.report_slug != CaseActivityReport.slug:
+                # ApplicationStatusReport and CaseActivityReport don't have date filter
                 date_range = report_config.get_date_range()
-                start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
-                end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
-                datespan = DateSpan(start_date, end_date)
-                request_data['datespan'] = datespan
+                request_params['startdate'] = str(datetime.strptime(date_range['startdate'], '%Y-%m-%d'))
+                request_params['enddate'] = str(datetime.strptime(date_range['enddate'], '%Y-%m-%d'))
 
             full_request = {'request': request_data,
                             'domain': request_data['domain'],
                             'context': {},
-                            'request_params': json_request(request_data['GET'])}
+                            'request_params': request_params}
 
-            report = object.__new__(report_config.report)
-            report.__setstate__(full_request)
-            report.rendered_as = 'export'
-
-            export_all_rows_task(report_config.report, full_request, emails, title)
+            export_all_rows_task(report_config.report.slug, full_request, emails, title)
 
     def remove_recipient(self, email):
         try:
