@@ -201,7 +201,7 @@ def extract_case_blocks(doc, include_path=False):
     else:
         form = doc.form_data
 
-    return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(form)]
+    return list(_extract_case_blocks(form, [] if include_path else None))
 
 
 def _extract_case_blocks(data, path=None, form_id=Ellipsis):
@@ -214,14 +214,11 @@ def _extract_case_blocks(data, path=None, form_id=Ellipsis):
     if form_id is Ellipsis:
         form_id = extract_meta_instance_id(data)
 
-    path = path or []
     if isinstance(data, list):
         for item in data:
-            for case_block in _extract_case_blocks(item, path=path, form_id=form_id):
-                yield case_block
+            yield from _extract_case_blocks(item, path, form_id=form_id)
     elif isinstance(data, dict) and not is_device_report(data):
         for key, value in data.items():
-            new_path = path + [key]
             if const.CASE_TAG == key:
                 # it's a case block! Stop recursion and add to this value
                 if isinstance(value, list):
@@ -234,10 +231,13 @@ def _extract_case_blocks(data, path=None, form_id=Ellipsis):
                         validate_phone_datetime(
                             case_block.get('@date_modified'), none_ok=True, form_id=form_id
                         )
-                        yield CaseBlockWithPath(caseblock=case_block, path=path)
+                        if path is None:
+                            yield case_block
+                        else:
+                            yield CaseBlockWithPath(caseblock=case_block, path=path)
             else:
-                for case_block in _extract_case_blocks(value, path=new_path, form_id=form_id):
-                    yield case_block
+                new_path = None if path is None else path + [key]
+                yield from _extract_case_blocks(value, new_path, form_id=form_id)
 
 
 def get_case_updates(xform):
