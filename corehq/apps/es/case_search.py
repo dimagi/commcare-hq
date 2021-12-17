@@ -17,11 +17,13 @@ from django.utils.dateparse import parse_date
 from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
+    INDEXED_ON,
     INDICES_PATH,
     IS_RELATED_CASE,
     REFERENCED_ID,
     RELEVANCE_SCORE,
     SPECIAL_CASE_PROPERTIES,
+    SPECIAL_CASE_PROPERTIES_MAP,
     SYSTEM_PROPERTIES,
     VALUE,
 )
@@ -283,7 +285,7 @@ def external_id(external_id):
 
 
 def indexed_on(gt=None, gte=None, lt=None, lte=None):
-    return filters.date_range('@indexed_on', gt, gte, lt, lte)
+    return filters.date_range(INDEXED_ON, gt, gte, lt, lte)
 
 
 def flatten_result(hit, include_score=False, is_related_case=False):
@@ -312,3 +314,49 @@ def flatten_result(hit, include_score=False, is_related_case=False):
     for key in SYSTEM_PROPERTIES:
         result.pop(key, None)
     return result
+
+
+def case_search_to_case_json(hit, include_score=False, is_related_case=False):
+    """Convert case search index hit to case json format
+
+    Nearly the opposite of
+    `corehq.pillows.case_search.transform_case_for_elasticsearch`.
+
+    The case id in this result has the key "case_id" where
+    `transform_case_for_elasticsearch` uses "_id".
+
+    Some keys are excluded: "doc_type", "@indexed_on"
+
+    The "case_properties" list of key/value pairs is converted
+    to a dict with the key "case_json", which mirrors the structure of
+    `CommCareCaseSQL.case_json`. 'Secial' case properties are excluded
+    from "case_json", even if they were present in the original case's
+    dynamic properties. Dynamic properties that are not 'special' but
+    would otherwise collide with a reserved case name are kept in
+    "case_json". Examples: "closed", "doc_type", "domain".
+
+    The contents of `hit` are mutated by this function.
+
+    :returns: A dict that can be used to create a case with
+    `CommCareCaseSQL(**result)`.
+    """
+    try:
+        result = hit['_source']
+    except KeyError:
+        result = hit
+    for key in EXCLUDE_PROPERTIES:
+        result.pop(key, None)
+    result["case_id"] = result.pop("_id")
+    result["case_json"] = {
+        prop["key"]: prop[VALUE]
+        for prop in result.pop(CASE_PROPERTIES_PATH, [])
+        if prop["key"] not in SPECIAL_CASE_PROPERTIES_MAP
+    }
+    if include_score:
+        result["case_json"].setdefault(RELEVANCE_SCORE, hit['_score'])
+    if is_related_case:
+        result["case_json"].setdefault(IS_RELATED_CASE, "true")
+    return result
+
+
+EXCLUDE_PROPERTIES = ["doc_type", INDEXED_ON]

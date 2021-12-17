@@ -16,7 +16,7 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
     Module,
 )
-from corehq.apps.case_search.const import RELEVANCE_SCORE
+from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
@@ -35,10 +35,12 @@ from corehq.apps.es.case_search import (
     case_property_missing,
     case_property_range_query,
     case_property_text_query,
+    case_search_to_case_json,
     flatten_result,
 )
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT, get_es_new
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import (
@@ -262,6 +264,69 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                 'size': SIZE_LIMIT}
 
         self.checkQuery(query, expected, validate_query=False)
+
+
+class TestCaseSearchHitConversions(SimpleTestCase):
+    maxDiff = None
+
+    def test_case_search_to_case_json(self):
+        value = case_search_to_case_json(self.make_hit())
+        self.assertEqual(value, self.make_case_dict())
+
+        case = CommCareCaseSQL(**value)
+        self.assertEqual(case.case_id, '2a3341db-0ca4-444b-a44c-3bde3a16954e')
+        self.assertEqual(case.case_json, self.make_case_dict()["case_json"])
+
+    def test_case_search_to_case_json_include_score(self):
+        actual = case_search_to_case_json(self.make_hit(), include_score=True)
+        self.assertEqual(actual["case_json"][RELEVANCE_SCORE], "1.095")
+
+    def test_case_search_to_case_json_is_related_case(self):
+        actual = case_search_to_case_json(self.make_hit(), is_related_case=True)
+        self.assertEqual(actual["case_json"][IS_RELATED_CASE], 'true')
+
+    @staticmethod
+    def make_hit():
+        return {
+            "_score": "1.095",
+            "_source": {
+                '_id': '2a3341db-0ca4-444b-a44c-3bde3a16954e',
+                'name': 'blah',
+                'closed': 'true',
+                'doc_type': 'CommCareCase',
+                'domain': 'healsec',
+                'modified_on': '2016-05-31 00:00:00',
+                '@indexed_on': '2020-04-18T12:34:56Z',
+                'case_properties': [
+                    {'key': '@case_id', 'value': 'should be removed'},
+                    {'key': 'name', 'value': 'should be removed'},
+                    {'key': 'case_name', 'value': 'should be removed'},
+                    {'key': 'last_modified', 'value': 'should be removed'},
+                    {'key': 'closed', 'value': 'nope'},
+                    {'key': 'doc_type', 'value': 'frankle'},
+                    {'key': 'domain', 'value': 'batter'},
+                    {'key': 'foo', 'value': 'bar'},
+                    {'key': 'baz', 'value': 'buzz'},
+                ],
+            },
+        }
+
+    @staticmethod
+    def make_case_dict():
+        return {
+            'case_id': '2a3341db-0ca4-444b-a44c-3bde3a16954e',
+            'name': 'blah',
+            'closed': 'true',
+            'domain': 'healsec',
+            'modified_on': '2016-05-31 00:00:00',
+            'case_json': {
+                'closed': 'nope',
+                'doc_type': 'frankle',
+                'domain': 'batter',
+                'foo': 'bar',
+                'baz': 'buzz',
+            },
+        }
 
 
 @es_test

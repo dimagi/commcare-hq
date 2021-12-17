@@ -734,6 +734,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     case_json = JSONField(default=dict)
 
+    def __init__(self, *args, **kwargs):
+        if "indices" in kwargs:
+            self._set_indices(kwargs.pop("indices"))
+        super().__init__(*args, **kwargs)
+
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
@@ -849,6 +854,20 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             return getattr(self, cached_indices)
 
         return CaseAccessorSQL.get_indices(self.domain, self.case_id) if self.is_saved() else []
+
+    def _set_indices(self, value):
+        """Set previously-saved indices
+
+        Private setter used by the class constructor to populate indices
+        from a source such as ElasticSearch. This setter does not update
+        tracked models, and therefore is not intended for use with cases
+        whose state is being mutated.
+
+        :param value: A list of dicts that will be used to construct
+        `CommCareCaseIndexSQL` objects.
+        """
+        cache = self._saved_indices.get_cache(self)
+        cache[()] = [CommCareCaseIndexSQL(**x) for x in value]
 
     @property
     def indices(self):

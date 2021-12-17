@@ -4,7 +4,6 @@ from collections import defaultdict
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.dbaccessors import get_app_cached
@@ -32,13 +31,14 @@ from corehq.apps.es.case_search import (
     case_property_missing,
     case_property_query,
     case_property_range_query,
-    flatten_result,
+    case_search_to_case_json,
 )
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.form_processor.models import CommCareCaseSQL
 
 
 def get_case_search_results(domain, criteria, app_id=None, couch_user=None):
