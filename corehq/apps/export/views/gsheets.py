@@ -13,9 +13,11 @@ from corehq.blobs.util import _utcnow
 
 from corehq.util.couch import get_document_or_404
 
+from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
+from google.auth.exceptions import RefreshError
 
 from corehq.apps.export.models.new import CaseExportInstance
 
@@ -72,6 +74,13 @@ def redirect_oauth_view(request, domain):
         auth_tuple = flow.authorization_url(prompt='consent')
         return HttpResponseRedirect(auth_tuple[INDEX_URL])
     else:
+        credentials = load_credentials(token.token)
+        try:
+            credentials.refresh(Request())
+        except RefreshError:
+            flow = Flow.from_client_config(config, scopes, redirect_uri=redirect_uri)
+            auth_tuple = flow.authorization_url(prompt='consent')
+            return HttpResponseRedirect(auth_tuple[INDEX_URL])
         return HttpResponseRedirect(reverse('google_sheet_view_redirect', args=[domain]))
 
 
@@ -103,15 +112,21 @@ def call_back_view(request, domain):
         stringified_token = stringify_credentials(credentials)
         print(len(stringified_token))
 
-        GoogleApiToken.objects.create(
-            user=request.user,
-            token=stringified_token
-        )
+        token = GoogleApiToken.objects.get(user=request.user)
+
+        if token is None:
+            GoogleApiToken.objects.create(
+                user=request.user,
+                token=stringified_token
+            )
+        else:
+            token.token = stringified_token
+            token.save()
 
     except InvalidLoginException:
         print("Hello There")
 
-    return HttpResponseRedirect(reverse('list_form_exports', args=[domain]))
+    return HttpResponseRedirect(reverse('google_sheet_view_redirect', args=[domain]))
 
 
 def google_sheet_view(request, domain):
@@ -143,18 +158,19 @@ def google_sheet_view(request, domain):
             data.append(headers)
         data.append(list(row_values.values()))
 
-    cell_range_insert = 'A1'
-    value_range_body = {
-        'majorDimension': 'ROWS',
-        'values': data
-    }
+    chunks = [data[x: x + 20000] for x in range(0, len(data), 20000)]
     upload_time_start = _utcnow()
-    service.spreadsheets().values().update(
-        spreadsheetId=spreadsheet_id,
-        valueInputOption='USER_ENTERED',
-        body=value_range_body,
-        range=cell_range_insert
-    ).execute()
+    for chunk in chunks:
+        value_range_body = {
+            'majorDimension': 'ROWS',
+            'values': chunk
+        }
+        service.spreadsheets().values().append(
+            spreadsheetId=spreadsheet_id,
+            valueInputOption='USER_ENTERED',
+            body=value_range_body,
+            range='A1'
+        ).execute()
 
     view_runtime = (_utcnow() - view_time_start).total_seconds()
     upload_runtime = (_utcnow() - upload_time_start).total_seconds()
