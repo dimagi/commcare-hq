@@ -829,6 +829,10 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                             'context': {},
                             'request_params': json_request(request_data['GET'])}
 
+            report = object.__new__(report_config.report)
+            report.__setstate__(full_request)
+            report.rendered_as = 'export'
+
             export_all_rows_task(report_config.report, full_request, emails, title)
 
     def remove_recipient(self, email):

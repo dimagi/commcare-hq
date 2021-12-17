@@ -193,7 +193,7 @@ class GenericReportView(object):
 
     def __getstate__(self):
         """
-            For pickling the report when passing it to Celery.
+            Returns report parameters to rebuild report in Celery.
         """
         request = request_as_dict(self.request)
 
@@ -208,9 +208,9 @@ class GenericReportView(object):
 
     def __setstate__(self, state):
         """
-            For unpickling a pickled report.
+            Restoring a report from __getstate__ returned report parameters.
         """
-        logging = get_task_logger(__name__) # logging lis likely to happen within celery.
+        logging = get_task_logger(__name__)  # logging lis likely to happen within celery.
         self.domain = state.get('domain')
         self.context = state.get('context', {})
 
@@ -236,7 +236,7 @@ class GenericReportView(object):
             request.couch_user = couch_user
         except Exception as e:
             logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
-                            (self.name, e))
+                        (self.name, e))
         self.request = request
         self._caching = True
         self.request_params = state.get('request_params')

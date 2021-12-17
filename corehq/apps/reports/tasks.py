@@ -158,7 +158,7 @@ def apps_update_calculated_properties():
         send_to_elasticsearch('apps', doc, es_merge_update=True)
 
 
-@task(serializer='pickle', ignore_result=True)
+@task(ignore_result=True)
 def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
@@ -178,14 +178,13 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
-        _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject=subject)
+        _send_email(report, hash_id, recipient=recipient, subject=subject)
         logger.info(f'Sent {report.name} with hash {hash_id} to {recipient}')
 
 
-def _send_email(user, report, hash_id, recipient, subject=None):
+def _send_email(report, hash_id, recipient, subject=None):
     link = absolute_reverse("export_report", args=[report.domain, str(hash_id),
                                                    report.export_format])
-
     send_report_download_email(report.name, recipient, link, subject)
 
 
@@ -208,7 +207,7 @@ def _store_excel_in_blobdb(report_class, file, domain, report_slug):
     return key
 
 
-@task(serializer='pickle')
+@task
 def build_form_multimedia_zipfile(
         domain,
         export_id,
@@ -219,28 +218,10 @@ def build_form_multimedia_zipfile(
     from corehq.apps.export.models import FormExportInstance
     from corehq.apps.export.export import get_export_query
     export = FormExportInstance.get(export_id)
-    es_query = get_export_query(export, es_filters)
+    es_query = get_export_query(export, es_filters, are_filters_es_formatted=True)
     form_ids = get_form_ids_with_multimedia(es_query)
     _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id,
                                       build_form_multimedia_zipfile)
-
-
-# ToDo: Remove post build_form_multimedia_zipfile rollout
-@task(serializer='pickle')
-def build_form_multimedia_zip(
-        domain,
-        export_id,
-        datespan,
-        user_types,
-        download_id,
-        owner_id,
-):
-    from corehq.apps.export.models import FormExportInstance
-    export = FormExportInstance.get(export_id)
-    form_ids = get_form_ids_having_multimedia(
-        domain, export.app_id, export.xmlns, datespan, user_types
-    )
-    _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id, build_form_multimedia_zip)
 
 
 def _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id, task_name):
@@ -316,7 +297,7 @@ def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
                         attachment['name']),
                         zipfile.ZIP_STORED
                     )
-                DownloadBase.set_progress(build_form_multimedia_zip, form_number, num_forms)
+                DownloadBase.set_progress(build_form_multimedia_zipfile, form_number, num_forms)
 
 
 def _save_and_expose_zip(f, zip_name, domain, download_id, owner_id):
