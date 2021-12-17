@@ -254,13 +254,20 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
     def test_blacklisted_owner_ids(self):
         query = self.es.domain('swashbucklers').blacklist_owner_id('123').owner('234')
-        expected = {'query': {'bool': {'filter': [{'term': {'domain.exact': 'swashbucklers'}},
-                            {'bool': {'must_not': {'term': {'owner_id': '123'}}}},
-                            {'term': {'owner_id': '234'}},
-                            {'match_all': {}}],
-                'must': {'match_all': {}}}},
-                'size': SIZE_LIMIT}
-
+        expected = {
+            'query': {
+                'bool': {
+                    'filter': [
+                        {'term': {'domain.exact': 'swashbucklers'}},
+                        {'bool': {'must_not': {'term': {'owner_id': '123'}}}},
+                        {'term': {'owner_id': '234'}},
+                        {'match_all': {}}
+                    ],
+                    'must': {'match_all': {}},
+                },
+            },
+            'size': SIZE_LIMIT,
+        }
         self.checkQuery(query, expected, validate_query=False)
 
 
@@ -467,7 +474,11 @@ class TestCaseSearchLookups(TestCase):
                 {'_id': 'c3', 'dob': date(2020, 3, 3)},
                 {'_id': 'c4', 'dob': date(2020, 3, 4)},
             ],
-            CaseSearchCriteria(self.domain, [self.case_type], {'dob': '__range__2020-03-02__2020-03-03'}).search_es,
+            CaseSearchCriteria(
+                self.domain,
+                [self.case_type],
+                {'dob': '__range__2020-03-02__2020-03-03'},
+            ).search_es,
             None,
             ['c2', 'c3']
         )
@@ -621,7 +632,11 @@ class TestCaseSearchLookups(TestCase):
             {'_id': 'c3', 'case_type': 'show', 'description': 'Boston'},
         ]
         config = self._create_case_search_config()
-        fuzzy_properties = FuzzyProperties.objects.create(domain=self.domain, case_type='song', properties=['description'])
+        fuzzy_properties = FuzzyProperties.objects.create(
+            domain=self.domain,
+            case_type='song',
+            properties=['description'],
+        )
         config.fuzzy_properties.add(fuzzy_properties)
         self.addCleanup(fuzzy_properties.delete)
         self._assert_query_runs_correctly(
