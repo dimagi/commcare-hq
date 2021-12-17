@@ -2,18 +2,15 @@ from collections import namedtuple
 from itertools import groupby
 
 import itertools
-from django.db.models import Q
-from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.case.signals import cases_received
 from casexml.apps.case.util import validate_phone_datetime, prune_previous_log
 from corehq import toggles
-from corehq.apps.domain.models import Domain
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from casexml.apps.case.exceptions import InvalidCaseIndex, IllegalCaseId
-from django.conf import settings
 
 from casexml.apps.case import const
 from casexml.apps.case.xml.parser import case_id_from_block, case_update_from_block

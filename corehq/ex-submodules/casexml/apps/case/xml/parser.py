@@ -2,7 +2,6 @@
 This isn't really a parser, but it's the code that generates case-like
 objects from things from xforms.
 """
-import os
 import datetime
 
 from casexml.apps.case import const
@@ -39,7 +38,7 @@ def get_version(case_block):
 class CaseGenerationException(Exception):
     """
     When anything illegal/unexpected happens while working with case parsing
-    """ 
+    """
     pass
 
 
@@ -56,7 +55,7 @@ class CaseActionBase(object):
     action_type_slug = None
 
     def __init__(self, block, type=None, name=None, external_id=None,
-                 user_id=None, owner_id=None, opened_on=None, 
+                 user_id=None, owner_id=None, opened_on=None,
                  dynamic_properties=None, indices=None, attachments=None):
         self.raw_block = block
         self.type = type
@@ -68,7 +67,7 @@ class CaseActionBase(object):
         self.dynamic_properties = dynamic_properties or {}
         self.indices = indices or []
         self.attachments = attachments or {}
-    
+
     def get_known_properties(self):
         return dict((p, getattr(self, p)) for p in KNOWN_PROPERTIES.keys()
                     if getattr(self, p) is not None)
@@ -80,11 +79,11 @@ class CaseActionBase(object):
     def _from_block_and_mapping(cls, block, mapping):
         def _normalize(val):
             if isinstance(val, list):
-                # if we get multiple updates, they look like a list. 
+                # if we get multiple updates, they look like a list.
                 # normalize these by taking the last item
                 return val[-1]
             return val
-        
+
         kwargs = {}
         dynamic_properties = {}
         # if not a dict, it's probably an empty close block
@@ -94,10 +93,10 @@ class CaseActionBase(object):
                     kwargs[mapping[k]] = v
                 else:
                     dynamic_properties[k] = _normalize(v)
-        
+
         return cls(block, dynamic_properties=dynamic_properties,
                    **kwargs)
-        
+
     @classmethod
     def from_v1(cls, block):
         mapping = {const.CASE_TAG_TYPE_ID: "type",
@@ -107,7 +106,7 @@ class CaseActionBase(object):
                    const.CASE_TAG_OWNER_ID: "owner_id",
                    const.CASE_TAG_DATE_OPENED: "opened_on"}
         return cls._from_block_and_mapping(block, mapping)
-                   
+
     @classmethod
     def from_v2(cls, block):
         # the only difference is the place where "type" is stored
@@ -132,7 +131,7 @@ class CaseNoopAction(CaseActionBase):
 
 class CaseCreateAction(CaseActionBase):
     action_type_slug = const.CASE_ACTION_CREATE
-        
+
 
 class CaseUpdateAction(CaseActionBase):
     action_type_slug = const.CASE_ACTION_UPDATE
@@ -241,19 +240,19 @@ class CaseIndexAction(CaseActionBase):
     Action describing updates to the case indices
     """
     action_type_slug = const.CASE_ACTION_INDEX
-    
+
     def __init__(self, block, indices):
         super(CaseIndexAction, self).__init__(block, indices=indices)
 
     def get_known_properties(self):
         # override this since the index action only cares about a list of indices
         return {}
-    
+
     @classmethod
     def from_v1(cls, block):
         # indices are not supported in v1
         return cls(block, [])
-                   
+
     @classmethod
     def from_v2(cls, block):
         indices = []
@@ -266,20 +265,20 @@ class CaseIndexAction(CaseActionBase):
             indices.append(CaseIndex(id, data["@case_type"], data.get("#text", ""),
                                      data.get("@relationship", 'child')))
         return cls(block, indices)
-    
+
 
 class CaseUpdate(object):
     """
     A temporary model that parses the data from the form consistently.
     The actual Case objects use this to update themselves.
     """
-    
+
     def __init__(self, id, version, block, user_id="", modified_on_str=""):
         self.id = id
         self.version = version
         self.user_id = user_id
         self.modified_on_str = modified_on_str
-        
+
         # deal with the various blocks
         self.raw_block = block
         self.create_block = block.get(const.CASE_ACTION_CREATE, {})
@@ -291,7 +290,7 @@ class CaseUpdate(object):
 
         # referrals? really? really???
         self.referral_block = block.get(const.REFERRAL_TAG, {})
-        
+
         # actions
         self.actions = []
         if self.creates_case():
@@ -316,19 +315,19 @@ class CaseUpdate(object):
 
     def creates_case(self):
         # creates have to have actual data in them so this is fine
-        return bool(self.create_block)    
-    
+        return bool(self.create_block)
+
     def updates_case(self):
         # updates have to have actual data in them so this is fine
-        return bool(self.update_block)    
-    
+        return bool(self.update_block)
+
     def closes_case(self):
         # closes might not have data and so we store this separately
-        return self._closes_case    
-    
+        return self._closes_case
+
     def has_indices(self):
         return bool(self.index_block)
-    
+
     def has_referrals(self):
         return bool(self.referral_block)
 
@@ -356,16 +355,16 @@ class CaseUpdate(object):
         if filtered:
             assert(len(filtered) == 1)
             return filtered[0]
-            
+
     def get_create_action(self):
         return self._filtered_action(lambda a: isinstance(a, CaseCreateAction))
-        
+
     def get_update_action(self):
         return self._filtered_action(lambda a: isinstance(a, CaseUpdateAction))
-    
+
     def get_close_action(self):
         return self._filtered_action(lambda a: isinstance(a, CaseCloseAction))
-    
+
     def get_index_action(self):
         return self._filtered_action(lambda a: isinstance(a, CaseIndexAction))
 
@@ -375,7 +374,7 @@ class CaseUpdate(object):
     @classmethod
     def from_v1(cls, case_block):
         """
-        Gets a case update from a version 1 case. 
+        Gets a case update from a version 1 case.
         Spec: https://bitbucket.org/javarosa/javarosa/wiki/casexml
         """
         case_id = cls.v1_case_id_from(case_block)
@@ -385,7 +384,7 @@ class CaseUpdate(object):
     @classmethod
     def from_v2(cls, case_block):
         """
-        Gets a case update from a version 2 case. 
+        Gets a case update from a version 2 case.
         Spec: https://github.com/dimagi/commcare/wiki/casexml20
         """
         return cls(id=cls.v2_case_id_from(case_block),
