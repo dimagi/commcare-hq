@@ -48,6 +48,10 @@ def case_update_from_block(case_block):
     return VERSION_FUNCTION_MAP[case_version](case_block)
 
 
+def case_id_from_block(case_block):
+    return CASE_ID_FUNCTION_MAP[get_version(case_block)](case_block)
+
+
 class CaseActionBase(object):
     action_type_slug = None
 
@@ -374,48 +378,57 @@ class CaseUpdate(object):
         Gets a case update from a version 1 case. 
         Spec: https://bitbucket.org/javarosa/javarosa/wiki/casexml
         """
-        if const.CASE_TAG_ID not in case_block:
-            raise CaseGenerationException(
-                "No case_id element found in v1 case block, "
-                "this is a required property."
-            )
-        
+        case_id = cls.v1_case_id_from(case_block)
         modified_on = case_block.get(const.CASE_TAG_MODIFIED, "")
-        return cls(id=case_block[const.CASE_TAG_ID],
-                   version=V1,
-                   block=case_block,
-                   modified_on_str=modified_on)
-    
+        return cls(id=case_id, version=V1, block=case_block, modified_on_str=modified_on)
+
     @classmethod
     def from_v2(cls, case_block):
         """
         Gets a case update from a version 2 case. 
         Spec: https://github.com/dimagi/commcare/wiki/casexml20
         """
-        
-        def _to_attr(val):
-            return "@%s" % val
-    
-        case_id_attr = _to_attr(const.CASE_TAG_ID) 
-        if case_id_attr not in case_block:
+        return cls(id=cls.v2_case_id_from(case_block),
+                   version=V2,
+                   block=case_block,
+                   user_id=case_block.get(_USER_ID_ATTR, ""),
+                   modified_on_str=case_block.get(_MODIFIED_ATTR, ""))
+
+    @classmethod
+    def v1_case_id_from(cls, case_block):
+        try:
+            return case_block[const.CASE_TAG_ID]
+        except KeyError:
+            raise CaseGenerationException(
+                "No case_id element found in v1 case block, "
+                "this is a required property."
+            )
+
+    @classmethod
+    def v2_case_id_from(cls, case_block):
+        try:
+            return case_block[_CASE_ID_ATTR]
+        except KeyError:
             raise CaseGenerationException(
                 "No case_id attribute found in v2 case block, "
                 "this is a required property."
             )
-        
-        user_id = case_block.get(_to_attr(const.CASE_TAG_USER_ID), "")
-        modified_on = case_block.get(_to_attr(const.CASE_TAG_MODIFIED), "")
-        return cls(id=case_block[case_id_attr],
-                   version=V2,
-                   block=case_block,
-                   user_id=user_id,
-                   modified_on_str=modified_on)
+
+
+_CASE_ID_ATTR = "@" + const.CASE_TAG_ID
+_USER_ID_ATTR = "@" + const.CASE_TAG_USER_ID
+_MODIFIED_ATTR = "@" + const.CASE_TAG_MODIFIED
 
 
 # this section is what maps various things to their v1/v2 parsers
 VERSION_FUNCTION_MAP = {
     V1: CaseUpdate.from_v1,
     V2: CaseUpdate.from_v2
+}
+
+CASE_ID_FUNCTION_MAP = {
+    V1: CaseUpdate.v1_case_id_from,
+    V2: CaseUpdate.v2_case_id_from
 }
 
 NOOP_ACTION_FUNCTION_MAP = {

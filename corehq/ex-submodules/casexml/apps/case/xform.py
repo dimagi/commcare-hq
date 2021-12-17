@@ -16,7 +16,7 @@ from casexml.apps.case.exceptions import InvalidCaseIndex, IllegalCaseId
 from django.conf import settings
 
 from casexml.apps.case import const
-from casexml.apps.case.xml.parser import case_update_from_block
+from casexml.apps.case.xml.parser import case_id_from_block, case_update_from_block
 from custom.covid.casesync import get_ush_extension_cases_to_close
 from dimagi.utils.logging import notify_exception
 
@@ -274,7 +274,7 @@ def _update_order_index(update):
 
 def get_case_ids_from_form(xform):
     from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
-    case_ids = set(cu.id for cu in get_case_updates(xform))
+    case_ids = set(case_id_from_block(b) for b in extract_case_blocks(xform))
     if xform:
         case_ids.update(get_case_ids_from_stock_transactions(xform))
     return case_ids
