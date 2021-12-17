@@ -101,9 +101,8 @@ class _QueryHelper:
         return CaseSearchES().domain(self.domain)
 
     def wrap_case(self, es_hit, include_score=False, is_related_case=False):
-        flat = flatten_result(es_hit, include_score=include_score, is_related_case=is_related_case)
-        # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
-        return CommCareCase.wrap(flat)
+        data = case_search_to_case_json(es_hit, include_score=include_score, is_related_case=is_related_case)
+        return CommCareCaseSQL(**data)
 
 
 class _RegistryQueryHelper:
@@ -115,9 +114,9 @@ class _RegistryQueryHelper:
         return CaseSearchES().domain(self.query_domains)
 
     def wrap_case(self, es_hit, include_score=False, is_related_case=False):
-        flat = flatten_result(es_hit, include_score=include_score, is_related_case=is_related_case)
-        flat = {**flat, **{COMMCARE_PROJECT: flat['domain']}}
-        return CommCareCase.wrap(flat)
+        data = case_search_to_case_json(es_hit, include_score=include_score, is_related_case=is_related_case)
+        data["case_json"][COMMCARE_PROJECT] = data['domain']
+        return CommCareCaseSQL(**data)
 
 
 class CaseSearchCriteria:

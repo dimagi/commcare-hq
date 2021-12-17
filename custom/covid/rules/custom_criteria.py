@@ -4,9 +4,9 @@ COVID: Available Criteria
 
 The following criteria can be used in messaging in projects using the ``covid`` custom module.
 """
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
-from casexml.apps.case.models import CommCareCase
+from corehq.apps.es.case_search import CaseSearchES, case_search_to_case_json
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.form_processor.models import CommCareCaseSQL
 
 
 def associated_usercase_closed(case, now):
@@ -39,4 +39,4 @@ def get_usercase_from_checkin(checkin_case):
     if not results:
         return None
 
-    return CommCareCase.wrap(flatten_result(results[0]))
+    return CommCareCaseSQL(**case_search_to_case_json(results[0]))

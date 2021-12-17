@@ -636,7 +636,7 @@ class TestCaseSearchLookups(TestCase):
 
     def _assert_related_case_ids(self, cases, paths, ids):
         results = get_related_case_results(_QueryHelper(self.domain), cases, paths)
-        result_ids = Counter([result['_id'] for result in results])
+        result_ids = Counter([result.case_id for result in results])
         self.assertEqual(ids, set(result_ids))
         if result_ids:
             self.assertEqual(1, max(result_ids.values()), result_ids)  # no duplicates

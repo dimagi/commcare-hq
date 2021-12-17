@@ -1,4 +1,4 @@
-from collections import namedtuple
+import attr
 
 # Case properties nested documents
 CASE_PROPERTIES_PATH = 'case_properties'
@@ -28,28 +28,47 @@ SYSTEM_PROPERTIES = [
     INDEXED_ON,
 ]
 
+
+@attr.s
+class SpecialCaseProperty:
+
+    def _doc_key(self):
+        return self.doc_key
+
+    def _getter(self):
+        doc_key, default = self.doc_key, self.default
+        return lambda doc: doc.get(doc_key, default)
+
+    key = attr.ib()
+    doc_key = attr.ib()
+    sort_property = attr.ib(default=attr.Factory(_doc_key, takes_self=True))
+    case_property = attr.ib(default=attr.Factory(_doc_key, takes_self=True))
+    default = attr.ib(default=None)
+    value_getter = attr.ib(default=attr.Factory(_getter, takes_self=True))
+
+
 # Properties that are inconsistent between case models stored in HQ and casedb
 # expressions. We store these as case properties in the case search index so
 # they are easily searchable, then remove them when pulling the case source
 # from ES
-SpecialCaseProperty = namedtuple('SpecialCaseProperty', 'key value_getter sort_property')
-SPECIAL_CASE_PROPERTIES_MAP = {
-    '@case_id': SpecialCaseProperty('@case_id', lambda doc: doc.get('_id'), '_id'),
-    '@case_type': SpecialCaseProperty('@case_type', lambda doc: doc.get('type'), 'type.exact'),
+SPECIAL_CASE_PROPERTIES_MAP = {prop.key: prop for prop in [
+    SpecialCaseProperty('@case_id', '_id', case_property="case_id"),
+    SpecialCaseProperty('@case_type', 'type', 'type.exact'),
 
-    '@owner_id': SpecialCaseProperty('@owner_id', lambda doc: doc.get('owner_id'), 'owner_id'),
+    SpecialCaseProperty('@owner_id', 'owner_id'),
 
-    '@status': SpecialCaseProperty('@status', lambda doc: 'closed' if doc.get('closed') else 'open', 'closed'),
+    SpecialCaseProperty('@status', 'closed',
+        value_getter=lambda doc: 'closed' if doc.get('closed') else 'open'),
 
-    'name': SpecialCaseProperty('name', lambda doc: doc.get('name'), 'name.exact'),
-    'case_name': SpecialCaseProperty('case_name', lambda doc: doc.get('name'), 'name.exact'),
+    SpecialCaseProperty('name', 'name', 'name.exact'),
+    SpecialCaseProperty('case_name', 'name', 'name.exact'),
 
-    'external_id': SpecialCaseProperty('external_id', lambda doc: doc.get('external_id', ''), 'external_id'),
+    SpecialCaseProperty('external_id', 'external_id', default=''),
 
-    'date_opened': SpecialCaseProperty('date_opened', lambda doc: doc.get('opened_on'), 'opened_on'),
-    'closed_on': SpecialCaseProperty('closed_on', lambda doc: doc.get('closed_on'), 'closed_on'),
-    'last_modified': SpecialCaseProperty('last_modified', lambda doc: doc.get('modified_on'), 'modified_on'),
-}
+    SpecialCaseProperty('date_opened', 'opened_on'),
+    SpecialCaseProperty('closed_on', 'closed_on'),
+    SpecialCaseProperty('last_modified', 'modified_on'),
+]}
 SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys())
 
 
