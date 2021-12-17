@@ -40,6 +40,7 @@ dump.rdb
 .transifexrc
 python_env
 python_env-3.6
+python_env-3.9
 services
 KEEP_UNTIL__*
 formplayer.properties
