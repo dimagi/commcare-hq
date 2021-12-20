@@ -41,7 +41,8 @@ class TestDhisConfigValidation(SimpleTestCase):
         repeater = Dhis2Repeater()
         repeater.dhis2_config = Dhis2Config.wrap(config)
         with self.assertRaises(BadValueError) as e:
-            repeater.save()
+            # SQLRepeater not yet configured
+            repeater.save(sync_to_sql=False)
         self.assertEqual(
             str(e.exception),
             "Property xmlns is required."
@@ -56,7 +57,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         repeater = Dhis2Repeater()
         repeater.dhis2_config = Dhis2Config.wrap(config)
         with self.assertRaises(BadValueError) as e:
-            repeater.save()
+            repeater.save(sync_to_sql=False)
         self.assertEqual(
             str(e.exception),
             'Property program_id is required.'
@@ -83,7 +84,7 @@ class TestDhisConfigValidation(SimpleTestCase):
 
         repeater = Dhis2Repeater()
         repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
-        repeater.save()
+        repeater.save(sync_to_sql=False)
 
     def test_config_empty_datavalue_map(self):
         config = {
@@ -110,7 +111,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         repeater = Dhis2Repeater()
         repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
         with self.assertRaises(BadValueError) as e:
-            repeater.save()
+            repeater.save(sync_to_sql=False)
         self.assertEqual(
             str(e.exception),
             "Property data_element_id is required."
@@ -146,7 +147,7 @@ class TestDhisConfigValidation(SimpleTestCase):
 
         repeater = Dhis2Repeater()
         repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
-        repeater.save()
+        repeater.save(sync_to_sql=False)
 
     def test_org_unit_id_migration(self):
         config = {
@@ -174,7 +175,7 @@ class TestDhisConfigValidation(SimpleTestCase):
 
         repeater = Dhis2Repeater()
         repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
-        repeater.save()
+        repeater.save(sync_to_sql=False)
         org_unit_value_source = dict(repeater.dhis2_config.form_configs[0].org_unit_id)
         self.assertDictEqual(org_unit_value_source, {'value': 'dhis2_location_id'})
 
