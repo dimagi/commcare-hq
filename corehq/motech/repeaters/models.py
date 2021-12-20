@@ -394,7 +394,6 @@ class SQLCaseRepeater(SQLRepeater):
             "format",
             "white_listed_case_types",
             "black_listed_users",
-            "repeater_type",
         ]
 
     @classmethod
@@ -775,7 +774,7 @@ class SQLFormRepeater(SQLRepeater):
     FORMAT_OPTIONS = ['form_json', 'form_xml']
 
     include_app_id_param = OptionValue(default=True)
-    white_listed_case_types = OptionValue(default=list)
+    white_listed_form_xmlns = OptionValue(default=list)
     format = OptionValue(choices=FORMAT_OPTIONS)
 
     class Meta:
@@ -830,6 +829,14 @@ class SQLFormRepeater(SQLRepeater):
     @classmethod
     def _migration_get_couch_model_class(cls):
         return FormRepeater
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "include_app_id_param",
+            "white_listed_form_xmlns"
+        ]
 
 
 class FormRepeater(Repeater):
@@ -891,6 +898,7 @@ class FormRepeater(Repeater):
             "domain",
             'is_paused',
             "connection_settings",
+            "repeater_type",
             "include_app_id_param",
             "white_listed_form_xmlns"
         ]
@@ -946,7 +954,6 @@ class CaseRepeater(Repeater):
         return headers
 
     def save(self, *args, **kwargs):
-        self.repeater_type = self.__class__.__name__
         return super().save(*args, **kwargs)
 
     @classmethod
