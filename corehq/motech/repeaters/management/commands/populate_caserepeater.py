@@ -1,3 +1,5 @@
+from memoized import memoized
+
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import (
     PopulateSQLCommand,
 )
@@ -71,6 +73,7 @@ class Command(PopulateSQLCommand):
             })
         return model, created
 
+    @memoized
     def _get_all_couch_docs_for_model(self):
         return [
             repeater for repeater in get_all_repeater_docs()
