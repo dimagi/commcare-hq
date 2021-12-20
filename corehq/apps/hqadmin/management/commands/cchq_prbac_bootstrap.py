@@ -169,13 +169,13 @@ class Command(BaseCommand):
         Role(slug=privileges.DEFAULT_EXPORT_SETTINGS,
              name='Default Export Settings',
              description='Allows ability to set default values for newly created exports.'),
-        Role(slug=privileges.LINKED_PROJECTS,
-             name='Linked Projects',
-             description='Allows admin users to push and/or pull content between linked projects.'),
         Role(slug=privileges.RELEASE_MANAGEMENT,
              name='Release Management',
              description='Allows access to features that help manage releases between projects, like the linked '
                          'projects feature.'),
+        Role(slug=privileges.LITE_RELEASE_MANAGEMENT,
+             name='Lite Release Management',
+             description='A limited version of Release Management'),
     ]
 
     BOOTSTRAP_PLANS = [

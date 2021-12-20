@@ -2145,8 +2145,9 @@ Export
 
 A UCR data source can be exported, to back an excel dashboard, for
 instance. The URL for exporting data takes the form
-https://www.commcarehq.org/a/[domain]/configurable_reports/data_sources/export/[data
-source id]/ The export supports a "$format" parameter which can be any
+`https://www.commcarehq.org/a/[domain]/configurable_reports/data_sources/export/[data source id]/`
+
+The export supports a "$format" parameter which can be any
 of the following options: html, csv, xlsx, xls. The default format is
 csv.
 

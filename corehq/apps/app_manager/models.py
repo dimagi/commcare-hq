@@ -2158,8 +2158,11 @@ class CaseSearch(DocumentSchema):
     blacklisted_owner_ids_expression = StringProperty(exclude_if_none=True)
     additional_case_types = StringListProperty()
     data_registry = StringProperty(exclude_if_none=True)
-    data_registry_workflow = StringProperty(exclude_if_none=True)         # one of REGISTRY_WORKFLOW_*
-    additional_registry_cases = StringListProperty()                      # list of xpath expressions
+    data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
+    additional_registry_cases = StringListProperty()               # list of xpath expressions
+
+    # case property referencing another case's ID
+    custom_related_case_property = StringProperty(exclude_if_none=True)
 
     @property
     def case_session_var(self):

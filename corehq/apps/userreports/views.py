@@ -1217,7 +1217,7 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    rebuild_indicators.delay(config_id, request.user.username)
+    rebuild_indicators.delay(config_id, request.user.username, domain=domain)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1267,7 +1267,9 @@ def build_data_source_in_place(request, domain, config_id):
             config.display_name
         )
     )
-    rebuild_indicators_in_place.delay(config_id, request.user.username, source='edit_data_source_build_in_place')
+    rebuild_indicators_in_place.delay(config_id, request.user.username,
+                                      source='edit_data_source_build_in_place',
+                                      domain=config.domain)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1375,6 +1377,7 @@ def process_url_params(params, columns):
 @require_permission(Permissions.view_reports)
 @swallow_programming_errors
 def export_data_source(request, domain, config_id):
+    """See README.rst for docs"""
     config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = get_indicator_adapter(config, load_source='export_data_source')
     url = reverse('export_configurable_data_source', args=[domain, config._id])

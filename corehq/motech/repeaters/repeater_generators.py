@@ -488,7 +488,7 @@ class CaseUpdateConfig:
         if value and value not in ("child", "extension"):
             raise DataRegistryCaseUpdateError("Index relationships must be either 'child' or 'extension'")
 
-    def get_case_block(self, registry_helper, repeat_record, couch_user):
+    def get_case_block(self, registry_helper, repeat_record, couch_user, configs_by_case_id):
         kwargs = {}
         if self.create_case:
             if not self.owner_id:
@@ -501,7 +501,7 @@ class CaseUpdateConfig:
 
         target_case = self._get_target_case(couch_user, registry_helper, repeat_record)
         updates = self.get_case_updates(couch_user, registry_helper, repeat_record)
-        indices = self.get_case_indices(target_case)
+        indices = self.get_case_indices(self.domain, target_case, configs_by_case_id)
         return CaseBlock(
             case_id=self.case_id,
             owner_id=self.owner_id,
@@ -550,36 +550,45 @@ class CaseUpdateConfig:
             for prop in update_props
         }
 
-    def get_case_indices(self, target_case):
-        indices = self.get_create_case_index(target_case)
+    def get_case_indices(self, target_domain, target_case, configs_by_case_id):
+        indices = self.get_create_case_index(target_domain, configs_by_case_id)
         if not self.index_remove_case_id:
             return indices
 
-        if self.index_remove_identifier not in indices:
+        if target_case and self.index_remove_identifier not in indices:
             indices.update(self.get_remove_case_index(target_case))
 
         return indices
 
-    def get_create_case_index(self, target_case):
+    def get_create_case_index(self, target_domain, configs_by_case_id):
         if not (self.index_create_case_id and self.index_create_case_type):
             return {}
+
+        index_spec = {
+            self.index_create_identifier: (
+                self.index_create_case_type, self.index_create_case_id, self.index_create_relationship
+            )
+        }
+        # check if we are indexing a case that is also being created
+        config = configs_by_case_id.get(self.index_create_case_id)
+        if config and config.create_case:
+            if self.index_create_case_type != config.case_type:
+                raise DataRegistryCaseUpdateError("Index case type does not match")
+            else:
+                return index_spec
 
         try:
             index_case = CaseAccessors(self.domain).get_case(self.index_create_case_id)
         except CaseNotFound:
             raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
-        if index_case.domain != target_case.domain:
+        if index_case.domain != target_domain:
             raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
         if index_case.type != self.index_create_case_type:
             raise DataRegistryCaseUpdateError("Index case type does not match")
 
-        return {
-            self.index_create_identifier: (
-                self.index_create_case_type, self.index_create_case_id, self.index_create_relationship
-            )
-        }
+        return index_spec
 
     def get_remove_case_index(self, target_case):
         identifier = "parent" if self.index_remove_relationship == "child" else "host"
@@ -664,8 +673,11 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         main_config = configs[0]
         registry_slug = main_config.registry_slug
         helper = DataRegistryHelper(main_config.intent_case.domain, registry_slug=registry_slug)
+        configs_by_case_id = {
+            config.case_id: config for config in configs
+        }
         return [
-            config.get_case_block(helper, repeat_record, couch_user)
+            config.get_case_block(helper, repeat_record, couch_user, configs_by_case_id)
             for config in configs
         ]
 

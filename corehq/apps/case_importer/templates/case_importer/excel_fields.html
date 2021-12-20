@@ -1,8 +1,18 @@
 {% extends "hqwebapp/base_section.html" %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% requirejs_main "case_importer/js/main" %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'case_importer/less/case_importer.less' %}" />
+  {% endcompress %}
+{% endblock %}
 
 {% block page_content %}
   {% include 'case_importer/partials/help_message.html' %}
@@ -21,14 +31,24 @@
     <input type="hidden" name="create_new_cases" value="{{create_new_cases}}" />
 
     <fieldset>
-      <legend>{% trans "Match Excel Columns to Case Properties" %}</legend>
+      <legend>
+        {% trans "Match Excel Columns to Case Properties" %}
+        <button type="button" class="btn btn-default pull-right" id="autofill" title="{% trans_html_attr 'Reset file-to-case-property matching to default' %}">
+          {% trans "Reset to default matching" %}
+        </button>
+      </legend>
       <table class="table table-condensed" id="fieldlist">
         <thead>
         <th class="span1"></th>
         <th>{% trans "Excel Field" %}</th>
         <th></th>
-        <th>{% trans "Case Property" %}<button type="button" class="btn btn-default btn-xs pull-right" id="autofill">{% trans "Set to default" %}</button></th>
-        <th></th>
+        <th>{% trans "Case Property" %}</th>
+        <th{% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %} class="col-md-1"{% endif %}>
+          {% trans "Create new property" %}
+        </th>
+        {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+          <th>{% include "data_dictionary/partials/valid_values_th_content.html" %}</th>
+        {% endif %}
         </thead>
         <tbody id="excel-field-rows" class="ko-template">
         {% include "case_importer/partials/excel_field_rows.html" %}

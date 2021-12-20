@@ -11,6 +11,7 @@ from corehq.apps.app_manager.suite_xml.post_process.instances import (
 )
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowDatumMeta
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
+from corehq.apps.app_manager.suite_xml.utils import get_ordered_case_types_for_module
 from corehq.apps.app_manager.suite_xml.xml_models import (
     CalculatedPropertyXPath,
     Command,
@@ -49,6 +50,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.case_search.const import COMMCARE_PROJECT, EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
 )
 from corehq.util.timer import time_method
@@ -197,10 +199,9 @@ class RemoteRequestFactory(object):
 
     @cached_property
     def _remote_request_query_datums(self):
-        additional_types = set(self.module.search_config.additional_case_types) - {self.module.case_type}
         datums = [
             QueryData(key='case_type', ref=f"'{case_type}'")
-            for case_type in [self.module.case_type] + list(additional_types)
+            for case_type in get_ordered_case_types_for_module(self.module)
         ]
 
         datums.extend(
@@ -219,6 +220,13 @@ class RemoteRequestFactory(object):
                 QueryData(
                     key=CASE_SEARCH_REGISTRY_ID_KEY,
                     ref=f"'{self.module.search_config.data_registry}'",
+                )
+            )
+        if self.module.search_config.custom_related_case_property:
+            datums.append(
+                QueryData(
+                    key=CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
+                    ref=f"'{self.module.search_config.custom_related_case_property}'",
                 )
             )
         return datums
