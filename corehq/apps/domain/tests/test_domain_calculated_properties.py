@@ -30,7 +30,7 @@ class BaseCalculatedPropertiesTest(TestCase):
             'instance': get_es_new(),
         } for index_info in [CASE_INDEX_INFO, SMS_INDEX_INFO, XFORM_INDEX_INFO, USER_INDEX_INFO]]
 
-        cls.domain = Domain(name='test')
+        cls.domain = Domain(name='test-b9289e19d819')
         cls.domain.save()
 
     @classmethod
