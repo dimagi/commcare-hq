@@ -149,7 +149,13 @@ def j2me_forms_in_last_bool(domain, days):
     return j2me_forms_in_last(domain, days) > 0
 
 
-def _sms_helper(domain, direction=None, days=None):
+def get_sms_count(domain, direction=None, days=None):
+    """
+    :param domain: domain name
+    :param direction: can specify INCOMING or OUTGOING, or None to retrieve both
+    :param days: only return count of sms docs from the past N days
+    :return: number of sms docs fetched based on query parameters specified
+    """
     assert direction in (INCOMING, OUTGOING, None), repr(direction)
     query = SMSES().domain(domain).size(0)
 
@@ -166,11 +172,11 @@ def _sms_helper(domain, direction=None, days=None):
 
 
 def sms(domain, direction):
-    return _sms_helper(domain, direction=direction)
+    return get_sms_count(domain, direction=direction)
 
 
 def sms_in_last(domain, days=None):
-    return _sms_helper(domain, days=days)
+    return get_sms_count(domain, days=days)
 
 
 def sms_in_last_bool(domain, days=None):
@@ -178,11 +184,11 @@ def sms_in_last_bool(domain, days=None):
 
 
 def sms_in_in_last(domain, days=None):
-    return _sms_helper(domain, direction=INCOMING, days=days)
+    return get_sms_count(domain, direction=INCOMING, days=days)
 
 
 def sms_out_in_last(domain, days=None):
-    return _sms_helper(domain, direction=OUTGOING, days=days)
+    return get_sms_count(domain, direction=OUTGOING, days=days)
 
 
 def active(domain, *args):

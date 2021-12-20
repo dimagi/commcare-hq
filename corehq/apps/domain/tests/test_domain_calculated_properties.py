@@ -85,7 +85,7 @@ class DomainCalculatedPropertiesTest(BaseCalculatedPropertiesTest):
         self.assertFalse(props['cp_has_app'])
 
 
-class SmsHelperTest(BaseCalculatedPropertiesTest):
+class GetSMSCountTest(BaseCalculatedPropertiesTest):
 
     def test_sms_count(self):
         sms_doc = self.create_sms_in_es(self.domain.name, INCOMING)
