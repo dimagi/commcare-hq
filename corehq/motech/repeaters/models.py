@@ -63,6 +63,7 @@ class.
 "Data Forwarding Records".
 
 """
+import sys
 import traceback
 import warnings
 from collections import OrderedDict
@@ -188,6 +189,42 @@ REPEATER_FORMAT_OPTIONS = (
 )
 
 
+class RepeaterSuperProxy(models.Model):
+    # See https://stackoverflow.com/questions/241250/single-table-inheritance-in-django/60894618#60894618
+    PROXY_FIELD_NAME = "repeater_type"
+
+    repeater_type = models.CharField(max_length=64, db_index=True)
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        self.repeater_type = self.get_repeater_type()
+        return super().save(*args, **kwargs)
+
+    def __new__(cls, *args, **kwargs):
+        repeater_class = cls
+        try:
+            # get proxy name, either from kwargs or from args
+            proxy_class_name = kwargs.get(cls.PROXY_FIELD_NAME)
+            if proxy_class_name is None:
+                proxy_name_field_index = cls._meta.fields.index(
+                    cls._meta.get_field(cls.PROXY_FIELD_NAME))
+                proxy_class_name = args[proxy_name_field_index]
+            # Since we are storing original repeater names so we need to append SQL
+            # This should be removed when SQL is dropped from model names
+            proxy_sql_class_name = f"SQL{proxy_class_name}"
+            # get proxy class, by name, from current module
+            repeater_class = getattr(sys.modules[__name__], proxy_sql_class_name)
+        finally:
+            return super().__new__(repeater_class)
+
+
+class RepeaterProxyManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(repeater_type=self.model.get_repeater_type(self.model))
+
+
 class RepeaterManager(models.Manager):
 
     def all_ready(self):
@@ -258,8 +295,12 @@ class SQLRepeater(models.Model):
             self.next_attempt_at = None
             self.save()
 
+    def get_repeater_type(self):
+        name = self.__class__.__name__
+        return name[3:] if name.startswith('SQL') else name
 
-class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater):
+
+class SQLCaseRepeater(RepeaterSuperProxy, SyncSQLToCouchMixin, SQLRepeater):
     """
     Record that cases should be repeated to a new url
 
@@ -330,11 +371,27 @@ class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater):
             "format",
             "white_listed_case_types",
             "black_listed_users",
+            "repeater_type",
         ]
 
     @classmethod
     def _migration_get_couch_model_class(cls):
         return CaseRepeater
+
+
+class SQLCreateCaseRepeater(SQLCaseRepeater):
+    class Meta:
+        proxy = True
+
+    objects = RepeaterProxyManager()
+
+    def allowed_to_forward(self, payload):
+        # assume if there's exactly 1 xform_id that modified the case it's being created
+        return super().allowed_to_forward(payload) and len(payload.xform_ids) == 1
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return CreateCaseRepeater
 
 
 class Repeater(QuickCachedDocumentMixin, Document):
@@ -769,6 +826,10 @@ class CaseRepeater(SyncCouchToSQLMixin, Repeater):
         })
         return headers
 
+    def save(self, *args, **kwargs):
+        self.repeater_type = self.__class__.__name__
+        return super().save(*args, **kwargs)
+
     @classmethod
     def _migration_get_fields(cls):
         return [
@@ -779,6 +840,7 @@ class CaseRepeater(SyncCouchToSQLMixin, Repeater):
             "format",
             "white_listed_case_types",
             "black_listed_users",
+            "repeater_type",
         ]
 
     @classmethod
@@ -796,6 +858,10 @@ class CreateCaseRepeater(CaseRepeater):
     def allowed_to_forward(self, payload):
         # assume if there's exactly 1 xform_id that modified the case it's being created
         return super(CreateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) == 1
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLCreateCaseRepeater
 
 
 class UpdateCaseRepeater(CaseRepeater):
