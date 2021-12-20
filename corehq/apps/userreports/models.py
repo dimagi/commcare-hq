@@ -769,24 +769,27 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
         configured_charts = deepcopy(self.configured_charts)
         for chart in configured_charts:
             if chart['type'] == 'multibar':
-                y_axis_columns = []
-                for y_axis_column in chart['y_axis_columns']:
-                    if isinstance(y_axis_column, dict):
-                        column_id = y_axis_column['column_id']
-                    else:
-                        column_id = y_axis_column
-                    column_config = self.report_columns_by_column_id[column_id]
-                    if column_config.type == 'expanded':
-                        expanded_columns = self.get_expanded_columns(column_config)
-                        for column in expanded_columns:
-                            y_axis_columns.append({
-                                'column_id': column.slug,
-                                'display': column.header
-                            })
-                    else:
-                        y_axis_columns.append(y_axis_column)
-                chart['y_axis_columns'] = y_axis_columns
+                chart['y_axis_columns'] = self._get_expanded_y_axis_cols_for_multibar(chart['y_axis_columns'])
         return [ChartFactory.from_spec(g._obj) for g in configured_charts]
+
+    def _get_expanded_y_axis_cols_for_multibar(self, original_y_axis_columns):
+        y_axis_columns = []
+        for y_axis_column in original_y_axis_columns:
+            if isinstance(y_axis_column, dict):
+                column_id = y_axis_column['column_id']
+            else:
+                column_id = y_axis_column
+            column_config = self.report_columns_by_column_id[column_id]
+            if column_config.type == 'expanded':
+                expanded_columns = self.get_expanded_columns(column_config)
+                for column in expanded_columns:
+                    y_axis_columns.append({
+                        'column_id': column.slug,
+                        'display': column.header
+                    })
+            else:
+                y_axis_columns.append(y_axis_column)
+        return y_axis_columns
 
     def get_expanded_columns(self, column_config):
         return get_expanded_column_config(
