@@ -131,7 +131,7 @@ def get_sms_class():
     return QueuedSMS if settings.SMS_QUEUE_ENABLED else SMS
 
 
-def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent=None):
+def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent=None, jls=False): # jls this should return true
     """
     Sends an outbound SMS. Returns false if it fails.
     """
@@ -165,13 +165,15 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
                 if logged_subevent:
                     logged_subevent.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND,
                         additional_error_text=str(e))
+                if jls:
+                    raise("BadSMSConfigException: " + str(e))
                 return False
 
             msg.backend_id = backend.couch_id
 
     add_msg_tags(msg, metadata)
 
-    return queue_outgoing_sms(msg)
+    return queue_outgoing_sms(msg, jls=jls)
 
 def send_sms_to_verified_number(verified_number, text, metadata=None,
         logged_subevent=None, events=[]):
@@ -258,7 +260,7 @@ def enqueue_directly(msg):
         pass
 
 
-def queue_outgoing_sms(msg):
+def queue_outgoing_sms(msg, jls=False):    # jls: this should return true, and SMS_QUEUE_ENABLED is False in tests
     if settings.SMS_QUEUE_ENABLED:
         try:
             msg.processed = False
@@ -273,14 +275,14 @@ def queue_outgoing_sms(msg):
         return True
     else:
         msg.processed = True
-        msg_sent = send_message_via_backend(msg)
+        msg_sent = send_message_via_backend(msg, jls=jls)
         msg.publish_change()
         if msg_sent:
             create_billable_for_sms(msg)
         return msg_sent
 
 
-def send_message_via_backend(msg, backend=None, orig_phone_number=None):
+def send_message_via_backend(msg, backend=None, orig_phone_number=None, jls=False):    # jls: should return true
     """send sms using a specific backend
 
     msg - outbound message object
@@ -313,6 +315,8 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
                 pass
             else:
                 msg.set_system_error(SMS.ERROR_PHONE_NUMBER_OPTED_OUT)
+                if jls:
+                    raise Exception(f"phone_obj for {msg.phone_number} has opted out")
                 return False
 
         if not backend:
@@ -348,6 +352,8 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         if should_log_exception:
             log_sms_exception(msg)
 
+        if jls:
+            raise e
         return False
 
 

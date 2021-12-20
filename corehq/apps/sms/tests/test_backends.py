@@ -759,7 +759,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
             'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
             autospec=True
         ) as mock_send:
-            self.assertTrue(send_sms(self.domain, None, '15551234567', 'Test for BACKEND2'))
+            self.assertTrue(send_sms(self.domain, None, '15551234567', 'Test for BACKEND2', jls=True))    # jls
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args[0][0].pk, self.backend2.pk)
 
