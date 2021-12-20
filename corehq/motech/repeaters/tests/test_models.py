@@ -27,6 +27,7 @@ from ..models import (
     CaseRepeater,
     FormRepeater,
     SQLCaseRepeater,
+    SQLFormRepeater,
     SQLRepeater,
     are_repeat_records_migrated,
     format_response,
@@ -57,6 +58,7 @@ class TestSQLCaseRepeater(TestCase):
     def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
         self.assertEqual(sql_repeater.domain, couch_repeater.domain)
         self.assertEqual(sql_repeater.repeater_id, couch_repeater._id)
+        self.assertEqual(sql_repeater.format, couch_repeater.format)
         self.assertEqual(sql_repeater.is_paused, couch_repeater.paused)
         self.assertEqual(sql_repeater.white_listed_case_types, couch_repeater.white_listed_case_types)
         self.assertEqual(sql_repeater.black_listed_users, couch_repeater.black_listed_users)
@@ -113,21 +115,16 @@ class RepeaterTestCase(TestCase):
         self.repeater = FormRepeater(
             domain=DOMAIN,
             url=url,
-            connections_settings_id=conn.id
         )
-        self.repeater.save()
-        self.sql_repeater = SQLRepeater.objects.create(
+        self.repeater.save(sync_to_sql=False)
+        self.sql_repeater = SQLFormRepeater(
             domain=DOMAIN,
             repeater_id=self.repeater.get_id,
             connection_settings=conn,
         )
+        self.sql_repeater.save(sync_to_couch=False)
 
     def tearDown(self):
-        if self.repeater.connection_settings_id:
-            ConnectionSettings.objects.filter(
-                pk=self.repeater.connection_settings_id
-            ).delete()
-        self.sql_repeater.delete()
         self.repeater.delete()
         super().tearDown()
 

@@ -3,7 +3,7 @@ from django.test import TestCase
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.dbaccessors import delete_all_repeaters, get_all_repeater_docs
 
-from ..models import SQLCaseRepeater, SQLCreateCaseRepeater
+from ..models import Repeater, SQLCaseRepeater, SQLCreateCaseRepeater
 
 DOMAIN = 'test-domain'
 
@@ -50,7 +50,7 @@ class TestSQLCreateCaseRepeater(TestCase):
         )
         self.case_repeater_obj.repeat_records.create(
             domain=DOMAIN,
-            payload_id='lilith',
+            payload_id='darth',
             registered_at='1980-01-01',
         )
 
@@ -70,6 +70,6 @@ class TestSQLCreateCaseRepeater(TestCase):
             {self.createcase_repeater_obj.repeater_id, self.case_repeater_obj.repeater_id}
         )
         self.assertEqual(
-            {r['repeater_type'] for r in repeaters},
+            {Repeater.wrap(r).repeater_type for r in repeaters},
             {self.createcase_repeater_obj.repeater_type, self.case_repeater_obj.repeater_type}
         )

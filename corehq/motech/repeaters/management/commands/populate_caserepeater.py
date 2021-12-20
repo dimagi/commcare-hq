@@ -59,13 +59,15 @@ class Command(PopulateSQLCommand):
         model, created = self.sql_class().objects.update_or_create(
             repeater_id=doc.get('_id'),
             defaults={
-                "version": doc.get("version"),
                 "domain": doc.get("domain"),
                 "connection_settings": ConnectionSettings.objects.get(id=doc.get("connection_settings_id")),
-                "format": doc.get("format"),
                 "is_paused": doc.get("paused"),
-                "white_listed_case_types": doc.get("white_listed_case_types"),
-                "black_listed_users": doc.get("black_listed_users")
+                "options": {
+                    "format": doc.get("format"),
+                    "version": doc.get("version"),
+                    "white_listed_case_types": doc.get("white_listed_case_types"),
+                    "black_listed_users": doc.get("black_listed_users")
+                }
             })
         return model, created
 
