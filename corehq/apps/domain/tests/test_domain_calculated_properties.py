@@ -9,7 +9,7 @@ from corehq.apps.sms.models import INCOMING, OUTGOING
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.domain.calculations import all_domain_stats, calced_props, sms
+from corehq.apps.domain.calculations import all_domain_stats, calced_props, sms, get_sms_count
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es_new, refresh_elasticsearch_index
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -93,3 +93,9 @@ class GetSMSCountTest(BaseCalculatedPropertiesTest):
         self.assertEqual(SMSES().count(), 1)
         self.assertEqual(sms(self.domain.name, INCOMING), 1)
         self.assertEqual(sms(self.domain.name, OUTGOING), 0)
+
+    def test_days_as_str_is_valid(self):
+        sms_doc = self.create_sms_in_es(self.domain.name, INCOMING)
+        self.addCleanup(self.delete_sms_in_es, sms_doc)
+        count = get_sms_count(self.domain.name, days='30')
+        self.assertEqual(count, 1)
