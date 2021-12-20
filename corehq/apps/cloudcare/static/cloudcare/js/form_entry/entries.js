@@ -37,6 +37,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     }
     Entry.prototype.onAnswerChange = function () {};
 
+    // Allows multiple input entries on the same row for Combined Multiple Choice and Combined
+    // Checkbox questions in a Question List Group.
+    Entry.prototype.getColStyle = function (numChoices) {
+        var colWidth = parseInt(12 / (numChoices + 1)) || 1;
+        return 'col-xs-' + colWidth;
+    };
+
     // This should set the answer value if the answer is valid. If the raw answer is valid, this
     // function performs any sort of processing that needs to be done before setting the answer.
     Entry.prototype.onPreProcess = function (newValue) {
@@ -388,6 +395,29 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.templateType = 'select';
         self.choices = question.choices;
         self.isMulti = true;
+        self.hideLabel = options.hideLabel;
+
+        self.rawAnswer = ko.pureComputed({
+            read: () => {
+                let answer = this.answer();
+                if (answer === Const.NO_ANSWER) {
+                    return [];
+                }
+
+                let choices = this.choices();
+                return answer.map(index => choices[index - 1]);
+            },
+            write: (value) => {
+                let choices = this.choices.peek();
+                // answer is based on a 1 indexed index of the choices
+                let answer = _.filter(value.map((val) => _.indexOf(choices, val) + 1), (v) => v > 0);
+                self.onPreProcess.call(this, answer);
+            },
+        });
+
+        self.colStyleIfHideLabel = ko.computed(function () {
+            return self.hideLabel ? self.getColStyle(self.choices().length) : null;
+        });
 
         self.onClear = function () {
             self.rawAnswer([]);
@@ -413,15 +443,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             return "";
         };
 
-        self.options = ko.computed(function () {
-            return _.map(question.choices(), function (choice, idx) {
-                return {
-                    text: choice,
-                    id: idx + 1,
-                };
-            });
-        });
-
         self.afterRender = function () {
             select2ify(self, {});
         };
@@ -439,26 +460,33 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.choices = question.choices;
         self.templateType = 'select';
         self.isMulti = false;
+
+        self.rawAnswer = ko.pureComputed({
+            read: () => {
+                let answer = this.answer();
+                if (!answer) {
+                    return Const.NO_ANSWER;
+                }
+
+                let choices = this.choices();
+                return choices[answer - 1];
+            },
+            write: (value) => {
+                let choices = this.choices.peek();
+                let answer = _.indexOf(choices, value);
+                // answer is based on a 1 indexed index of the choices
+                this.answer(answer === -1 ? Const.NO_ANSWER : answer + 1);
+            },
+        });
+
         self.onClear = function () {
             self.rawAnswer(Const.NO_ANSWER);
-        };
-        self.isValid = function () {
-            return true;
         };
 
         self.enableReceiver(question, options);
     }
     SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
-    SingleSelectEntry.prototype.onPreProcess = function (newValue) {
-        if (this.isValid(newValue)) {
-            if (newValue === Const.NO_ANSWER) {
-                this.answer(newValue);
-            } else {
-                this.answer(+newValue);
-            }
-        }
-    };
     SingleSelectEntry.prototype.receiveMessage = function (message, field) {
         // Iterate through choices and select the one that matches the message[field]
         var self = this;
@@ -476,7 +504,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     };
 
     /**
-     * Represents the label part of a Combined Multiple Choice question in a Question List
+     * This is used for the labels and inputs in a Combined Multiple Choice question in a Question
+     * List Group. It is also used for labels in a Combined Checkbox question.
      */
     function ChoiceLabelEntry(question, options) {
         var self = this;
@@ -484,12 +513,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.choices = question.choices;
         self.templateType = 'choice-label';
 
-        self.hideLabel = ko.observable(options.hideLabel);
+        self.hideLabel = options.hideLabel;
 
         self.colStyle = ko.computed(function () {
-            // Account for number of choices plus column for clear button
-            var colWidth = parseInt(12 / (self.choices().length + 1)) || 1;
-            return 'col-xs-' + colWidth;
+            return self.getColStyle(self.choices().length);
         });
 
         self.onClear = function () {
@@ -1059,8 +1086,21 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 break;
             case Const.MULTI_SELECT:
                 isMinimal = style === Const.MINIMAL;
+                if (style) {
+                    isLabel = style === Const.LABEL;
+                    hideLabel = style === Const.LIST_NOLABEL;
+                }
+
                 if (isMinimal) {
                     entry = new MultiDropdownEntry(question, {});
+                } else if (isLabel) {
+                    entry = new ChoiceLabelEntry(question, {
+                        hideLabel: false,
+                    });
+                } else if (hideLabel) {
+                    entry = new MultiSelectEntry(question, {
+                        hideLabel: true,
+                    });
                 } else {
                     entry = new MultiSelectEntry(question, {});
                 }

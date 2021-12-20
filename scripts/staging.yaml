@@ -53,31 +53,31 @@ branches:
     # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-    - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
     - sr/cs-multiselect  # Sravan May 31
     - ce/bulk-case-search # Cal July 6
     #- sr/memoized-toggle # Sravan July 26
-    - bmb/sso-login-v2  # Biyeun July 26
-    - jls/caktus-data-dictionary-release-2 # Jenny Sept 21
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
     - dmr/throttle-system-forms  # Danny Sept 24
     - smh/remove-extra-spinner-icons # Steph Oct 6
     - ml/remove-pickles-phonelog # Minha Oct 7
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - ml/remove-pickles-user-importer # Minha Oct 13
-#    - ml/remove-pickles-reports # Minha Oct 21
-    - jls/enable-usercase-button # Jenny Oct 27
-    - bmb/update-datatables-dt  # Biyeun Nov 2
-    - rc/store-usernames-in-log # Robert Nov 4
-    - gh/use-email-for-all-comms # Graham Nov 8 (passive QA testing: check back on Dec 6)
+    # - ml/remove-pickles-reports # Minha Oct 21
     - rp/status-embed # Rynhard Nov 9
-    - sr/session-endpoints+jls/smart-linking-in-web-apps # Sravan Nov 10
-    - jls/smart-linking-in-web-apps # Jenny Sept 22
-    - sr/session-endpoints  # Sravan Nov 9
-    - ad/tab-structure-for-check-boxes # Addison Nov 11
-    - revert-30687-revert-30182-jm/remove-es-scan  # Joel Nov 12
-    - gh/mrm/only-admins-can-link # Graham Nov 16
+    - ap/web-app-refresh # Amit Nov 29
+    - es/mobile-auth # Simon Nov 23
+    - do/create-usercase-web-users # Dominic Dec 3
+    - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
+    - jm/elastic-modernize-mappings  # Joel Dec 3
+    - sr/case-reindex-staging # Sravan Oct 14
+    - rp/gsheets+depandabot-pip # Rynhard Dec 6
+    - rp/gsheets-PoC # Rynhard Dec 6
+    - cs/SC-1904-invalid-datum-generation # Charl 7 Dec
+    - dependabot/npm_and_yarn/jquery-ui-1.13.0  # Biyeun Dec 8 
+    - gh/improve-queueing-repeaters # Graham Dec 10
+    - mk/support-multibar-reports # MK Dec 14
+    - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
+    - sk/enterprise-domain-user-filter # Simon Dec 17
 submodules: { }

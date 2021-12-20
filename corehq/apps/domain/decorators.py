@@ -3,7 +3,6 @@ from functools import wraps
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import permission_required
 from django.http import (
     Http404,
     HttpRequest,
@@ -21,16 +20,8 @@ from django.views import View
 from django_otp import match_token
 from django_prbac.utils import has_privilege
 from oauth2_provider.oauth2_backends import get_oauthlib_core
-
 from tastypie.http import HttpUnauthorized
 
-from corehq.apps.sso.utils.request_helpers import (
-    is_request_blocked_from_viewing_domain_due_to_sso,
-    is_request_using_sso,
-)
-from corehq.apps.sso.utils.view_helpers import (
-    render_untrusted_identity_provider_for_domain_view,
-)
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import json_response
 
@@ -41,16 +32,23 @@ from corehq.apps.domain.auth import (
     DIGEST,
     FORMPLAYER,
     OAUTH2,
+    HQApiKeyAuthentication,
     basic_or_api_key,
     basicauth,
     determine_authtype_from_request,
     formplayer_as_user_auth,
     get_username_and_password_from_request,
-    HQApiKeyAuthentication,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.apps.sso.utils.request_helpers import (
+    is_request_blocked_from_viewing_domain_due_to_sso,
+    is_request_using_sso,
+)
+from corehq.apps.sso.utils.view_helpers import (
+    render_untrusted_identity_provider_for_domain_view,
+)
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     DATA_MIGRATION,
@@ -353,7 +351,7 @@ def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain
     )
 
 
-def _get_multi_auth_decorator(default, allow_formplayer=False):
+def get_multi_auth_decorator(default, allow_formplayer=False):
     """
     :param allow_formplayer: If True this will allow one additional auth mechanism which is used
          by Formplayer:
@@ -393,22 +391,9 @@ def two_factor_exempt(view_func):
     return wraps(view_func, assigned=available_attrs(view_func))(wrapped_view)
 
 
-# This decorator should be used for any endpoints used by CommCare mobile
-# It supports basic, session, and apikey auth, but not digest
-# Endpoints with this decorator will not enforce two factor authentication
-def mobile_auth(view_func):
-    return _get_multi_auth_decorator(default=BASIC)(two_factor_exempt(view_func))
-
-
-# This decorator is used only for anonymous web apps and SMS forms
-# Endpoints with this decorator will not enforce two factor authentication
-def mobile_auth_or_formplayer(view_func):
-    return _get_multi_auth_decorator(default=BASIC, allow_formplayer=True)(two_factor_exempt(view_func))
-
-
 # Use this decorator to allow any auth type -
 # basic, digest, session, or apikey
-api_auth = _get_multi_auth_decorator(default=DIGEST)
+api_auth = get_multi_auth_decorator(default=DIGEST)
 
 # Use these decorators on views to allow sesson-auth or an extra authorization method
 login_or_digest = login_or_digest_ex()

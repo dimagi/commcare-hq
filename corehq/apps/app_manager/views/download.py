@@ -123,7 +123,8 @@ def download_app_strings(request, domain, app_id, lang):
     """
     profile = _get_build_profile_id(request)
     return HttpResponse(
-        request.app.create_app_strings(lang, build_profile_id=profile)
+        request.app.create_app_strings(lang, build_profile_id=profile),
+        content_type='text/plain; charset=utf-8'
     )
 
 

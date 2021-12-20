@@ -115,7 +115,8 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
         repeat_records = self.repeat_records(self.domain).all()
         self.assertEqual(len(repeat_records), 1)
         payload = repeat_records[0].get_payload()
-        form = DataRegistryUpdateForm(payload, cases[0])
+        host_case = cases[1]
+        form = DataRegistryUpdateForm(payload, host_case)
         form.assert_case_updates({
             self.target_case_id_1: {"new_prop": "new_val_case1"},
             self.target_case_id_2: {"new_prop": "new_val_case2"}

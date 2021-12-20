@@ -321,7 +321,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
             self.save()
         return self.server_modified_on
         
-    def get_case_property(self, property):
+    def get_case_property(self, property, dynamic_only=False):
         try:
             return getattr(self, property)
         except Exception:

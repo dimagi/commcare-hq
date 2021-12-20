@@ -141,6 +141,8 @@ def case_property_query(case_property_name, value, fuzzy=False):
     """
     Search for all cases where case property with name `case_property_name`` has text value `value`
     """
+    if value is None:
+        raise TypeError("You cannot pass 'None' as a case property value")
     if value == '':
         return case_property_missing(case_property_name)
     if fuzzy:

@@ -81,9 +81,9 @@ APP_USER_PROFILES = 'app_user_profiles'
 
 DEFAULT_EXPORT_SETTINGS = 'default_export_settings'
 
-LINKED_PROJECTS = 'linked_projects'
-
 RELEASE_MANAGEMENT = 'release_management'
+
+LITE_RELEASE_MANAGEMENT = 'lite_release_management'
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
@@ -129,8 +129,8 @@ MAX_PRIVILEGES = [
     APP_USER_PROFILES,
     GEOCODER,
     DEFAULT_EXPORT_SETTINGS,
-    LINKED_PROJECTS,
     RELEASE_MANAGEMENT,
+    LITE_RELEASE_MANAGEMENT,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -187,6 +187,6 @@ class Titles(object):
             APP_USER_PROFILES: _("App User Profiles"),
             GEOCODER: _("Geocoder"),
             DEFAULT_EXPORT_SETTINGS: _("Default Export Settings"),
-            LINKED_PROJECTS: _("Linked Projects"),
-            RELEASE_MANAGEMENT: _("Release Management"),
+            RELEASE_MANAGEMENT: _("Enterprise Release Management"),
+            LITE_RELEASE_MANAGEMENT: _("Multi-Environment Release Management"),
         }.get(privilege, privilege)

@@ -276,7 +276,7 @@ HQ_APPS = (
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
     'corehq.sql_proxy_standby_accessors',
-    'corehq.pillows',
+    'corehq.pillows.app_config.PillowsAppConfig',
     'couchforms',
     'couchexport',
     'dimagi.utils',
@@ -347,8 +347,6 @@ HQ_APPS = (
     'corehq.preindex',
     'corehq.tabs',
     'custom.openclinica',
-    'fluff',
-    'fluff.fluff_filter',
     'soil',
     'toggle',
     'phonelog',
@@ -821,6 +819,7 @@ REPEATER_CLASSES = [
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
     'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
     'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
+    'corehq.motech.repeaters.expression.repeaters.CaseExpressionRepeater',
 ]
 
 # Override this in localsettings to add new repeater types
@@ -1233,7 +1232,7 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(asctime)s %(levelname)s %(message)s'
+            'format': '%(asctime)s %(levelname)s [%(name)s] %(message)s'
         },
         'pillowtop': {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
@@ -1390,7 +1389,7 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file'],
+            'handlers': ['file'],
             'level': 'INFO',
             'propagate': True
         },
@@ -1451,7 +1450,7 @@ LOGGING = {
         },
         'commcare_auth': {
             'handlers': ['file'],
-            'level': 'ERROR',
+            'level': 'INFO',
             'propagate': False,
         }
     }
@@ -1523,7 +1522,6 @@ COUCHDB_APPS = [
     'dhis2',
     'ext',
     'facilities',
-    'fluff_filter',
     'hqcase',
     'hqmedia',
     'case_importer',
@@ -1558,10 +1556,6 @@ COUCHDB_APPS = [
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
-    # needed to make couchdbkit happy
-    ('fluff', 'fluff-bihar'),
-    ('mc', 'fluff-mc'),
-    ('m4change', 'm4change'),  # todo: remove once code that uses is removed
     ('export', META_DB),
     ('callcenter', META_DB),
 
@@ -1850,9 +1844,6 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
         },
     ],
-    'fluff': [
-        'custom.m4change.models.M4ChangeFormFluffPillow',
-    ],
     'experimental': [
         {
             'name': 'CaseSearchToElasticsearchPillow',
@@ -1960,7 +1951,7 @@ DOMAIN_MODULE_MAP = {
     'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',
 
-    #vectorlink domains
+    # vectorlink domains
     'abtmali': 'custom.abt',
     'airs': 'custom.abt',
     'airs-testing': 'custom.abt',
@@ -1973,6 +1964,7 @@ DOMAIN_MODULE_MAP = {
     'airstanzania': 'custom.abt',
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
+    'kenya-vca': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',

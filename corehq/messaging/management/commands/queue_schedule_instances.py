@@ -75,7 +75,7 @@ class Command(BaseCommand):
                 # that we only retry non-processed schedule instances once an hour.
                 enqueue_lock = self.get_enqueue_lock(cls, schedule_instance_id, next_event_due)
                 if enqueue_lock.acquire(blocking=False):
-                    self.get_task(cls).delay(schedule_instance_id)
+                    self.get_task(cls).delay(schedule_instance_id, domain)
 
         for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
             for domain, case_id, schedule_instance_id, next_event_due in get_active_case_schedule_instance_ids(
@@ -86,7 +86,7 @@ class Command(BaseCommand):
                 # See comment above about why we use a non-blocking lock here.
                 enqueue_lock = self.get_enqueue_lock(cls, schedule_instance_id, next_event_due)
                 if enqueue_lock.acquire(blocking=False):
-                    self.get_task(cls).delay(case_id, schedule_instance_id)
+                    self.get_task(cls).delay(case_id, schedule_instance_id, domain)
 
     def handle(self, **options):
         while True:

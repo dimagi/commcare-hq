@@ -13,6 +13,7 @@ Javascript code should be functional in all current major browsers, following th
    - [Third Party Libraries](./libraries.md): usage and conventions of framework-level dependencies (jQuery, knockout, etc.)
    - [Installing external packages with yarn](./external-packages.md)
 - [Server Integration Patterns](./integration-patterns.md) (toggles, i18n, etc.)
+- [Security](./security.md)
 - [Production Static Files](./static-files.md) (collectstatic, compression, map files, CDN)
 - [Testing](./testing.md)
 - [Linting](./linting.md)

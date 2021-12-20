@@ -147,11 +147,7 @@ class TestCaseSearchRegistry(TestCase):
         super().tearDownClass()
 
     def _run_query(self, domain, case_types, criteria, registry_slug):
-        results = get_case_search_results(domain, {
-            'case_type': case_types,
-            CASE_SEARCH_REGISTRY_ID_KEY: registry_slug,
-            **criteria
-        })
+        results = get_case_search_results(domain, case_types, criteria, registry_slug=registry_slug)
         return [(case.name, case.domain) for case in results]
 
     def test_query_all_domains_in_registry(self):
@@ -269,11 +265,12 @@ class TestCaseSearchRegistry(TestCase):
         )
         self.assertItemsEqual([], results)
 
-
     def test_includes_project_property(self):
         results = get_case_search_results(
             self.domain_1,
-            {"case_type": ["person"], "name": "Jane", CASE_SEARCH_REGISTRY_ID_KEY: self.registry_slug},
+            ["person"],
+            {"name": "Jane"},
+            registry_slug=self.registry_slug
         )
         self.assertItemsEqual([
             ("Jane", self.domain_1, self.domain_1),
@@ -289,12 +286,10 @@ class TestCaseSearchRegistry(TestCase):
         with patch_get_app_cached:
             results = get_case_search_results(
                 self.domain_1,
-                {
-                    "case_type": ["creative_work"],
-                    "name": "Jane Eyre",  # from domain 2
-                    CASE_SEARCH_REGISTRY_ID_KEY: self.registry_slug
-                },
-                "mock_app_id",
+                ["creative_work"],
+                {"name": "Jane Eyre"},  # from domain 2
+                app_id="mock_app_id",
+                registry_slug=self.registry_slug
             )
         self.assertItemsEqual([
             ("Charlotte Brontë", "creator", self.domain_2),

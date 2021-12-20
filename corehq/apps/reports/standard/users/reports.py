@@ -19,7 +19,7 @@ from corehq.apps.reports.filters.users import (
 )
 from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
-from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
+from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin, PaginatedReportMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
 from corehq.apps.users.audit.change_messages import (
     ASSIGNED_LOCATIONS_FIELD,
@@ -32,12 +32,11 @@ from corehq.apps.users.audit.change_messages import (
     get_messages,
 )
 from corehq.apps.users.models import UserHistory
-from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 
 
-class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
+class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport, PaginatedReportMixin):
     slug = 'user_history'
     name = ugettext_lazy("User History")
     section_name = ugettext_lazy("User Management")
@@ -55,8 +54,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     description = ugettext_lazy("History of user updates")
     ajax_pagination = True
-
-    sortable = False
+    default_sort = {'changed_at': 'desc'}
 
     @classmethod
     def get_primary_properties(cls, domain):
@@ -86,13 +84,13 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
     @property
     def headers(self):
         h = [
-            DataTablesColumn(_("Affected User")),
-            DataTablesColumn(_("Modified by User")),
-            DataTablesColumn(_("Action")),
-            DataTablesColumn(_("Via")),
-            DataTablesColumn(_("Changes")),
-            DataTablesColumn(_("Change Message")),
-            DataTablesColumn(_("Timestamp")),
+            DataTablesColumn(_("Affected User"), sortable=False),
+            DataTablesColumn(_("Modified by User"), sortable=False),
+            DataTablesColumn(_("Action"), prop_name='action'),
+            DataTablesColumn(_("Via"), prop_name='changed_via'),
+            DataTablesColumn(_("Changes"), sortable=False),
+            DataTablesColumn(_("Change Message"), sortable=False),
+            DataTablesColumn(_("Timestamp"), prop_name='changed_at'),
         ]
 
         return DataTablesHeader(*h)
@@ -172,11 +170,16 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     @property
     def rows(self):
-        records = self._get_queryset().order_by('-changed_at')[
+        records = self._get_queryset().order_by(self.ordering)[
             self.pagination.start:self.pagination.start + self.pagination.count
         ]
         for record in records:
             yield self._user_history_row(record, self.domain, self.timezone)
+
+    @property
+    def ordering(self):
+        by, direction = list(self.get_sorting_block()[0].items())[0]
+        return '-' + by if direction == 'desc' else by
 
     @memoized
     def _get_location_name(self, location_id):
@@ -191,8 +194,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     def _user_history_row(self, record, domain, timezone):
         return [
-            cached_user_id_to_username(record.user_id),
-            cached_user_id_to_username(record.changed_by),
+            record.user_repr,
+            record.changed_by_repr,
             _get_action_display(record.action),
             record.changed_via,
             self._user_history_details_cell(record.changes, domain),

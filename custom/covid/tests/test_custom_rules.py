@@ -41,17 +41,7 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
 
         username = normalize_username("mobile_worker_1", self.domain)
         self.mobile_worker = CommCareUser.create(self.domain, username, "123", None, None)
-        sync_usercases(self.mobile_worker)
-
-        self.checkin_case = CaseFactory(self.domain).create_case(
-            case_type="checkin",
-            owner_id=self.mobile_worker.get_id,
-            update={"username": self.mobile_worker.raw_username},
-        )
-        send_to_elasticsearch(
-            "case_search", transform_case_for_elasticsearch(self.checkin_case.to_json())
-        )
-        self.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+        sync_usercases(self.mobile_worker, self.domain)
 
         self.case_accessor = CaseAccessors(self.domain)
 
@@ -61,8 +51,20 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
         ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
         super().tearDown()
 
-    def test_associated_usercase_closed(self):
+    def make_checkin_case(self, properties=None):
+        properties = properties if properties is not None else {"username": self.mobile_worker.raw_username}
+        checkin_case = CaseFactory(self.domain).create_case(
+            case_type="checkin",
+            owner_id=self.mobile_worker.get_id,
+            update=properties,
+        )
+        send_to_elasticsearch(
+            "case_search", transform_case_for_elasticsearch(checkin_case.to_json())
+        )
+        self.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+        return checkin_case
 
+    def close_all_usercases(self):
         usercase_ids = self.case_accessor.get_case_ids_in_domain(type=USERCASE_TYPE)
         for usercase_id in usercase_ids:
             CaseFactory(self.domain).close_case(usercase_id)
@@ -72,14 +74,23 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
             )
         self.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
 
-        self.assertTrue(associated_usercase_closed(self.checkin_case, None))
+    def test_associated_usercase_closed(self):
+        checkin_case = self.make_checkin_case()
+        self.close_all_usercases()
+        self.assertTrue(associated_usercase_closed(checkin_case, None))
+
+    def test_checkin_case_no_username_skipped(self):
+        checkin_case = self.make_checkin_case(properties={})
+        self.close_all_usercases()
+        self.assertFalse(associated_usercase_closed(checkin_case, None))
 
     def test_custom_action(self):
+        checkin_case = self.make_checkin_case()
         rule = create_empty_rule(
             self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type="checkin",
         )
         case_properties = {
-            "assigned_to_primary_checkin_case_id": self.checkin_case.case_id,
+            "assigned_to_primary_checkin_case_id": checkin_case.case_id,
             "is_assigned_primary": "foo",
             "assigned_to_primary_name": "bar",
             "assigned_to_primary_username": "baz",
@@ -95,15 +106,15 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
         other_case = CaseFactory(self.domain).create_case(
             case_type="other",
             owner_id=self.mobile_worker.get_id,
-            update={"assigned_to_primary_checkin_case_id": self.checkin_case.case_id},
+            update={"assigned_to_primary_checkin_case_id": checkin_case.case_id},
         )
         for case in [patient_case, other_patient_case, other_case]:
             send_to_elasticsearch("case_search", transform_case_for_elasticsearch(case.to_json()))
         self.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
 
-        close_cases_assigned_to_checkin(self.checkin_case, rule)
+        close_cases_assigned_to_checkin(checkin_case, rule)
 
-        self.assertTrue(self.case_accessor.get_case(self.checkin_case.case_id).closed)
+        self.assertTrue(self.case_accessor.get_case(checkin_case.case_id).closed)
 
         patient_case = self.case_accessor.get_case(patient_case.case_id)
         self.assertFalse(patient_case.closed)
@@ -114,7 +125,7 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
         self.assertFalse(other_case.closed)
         self.assertEqual(
             other_case.get_case_property("assigned_to_primary_checkin_case_id"),
-            self.checkin_case.case_id,
+            checkin_case.case_id,
         )
 
         other_patient_case = self.case_accessor.get_case(other_patient_case.case_id)

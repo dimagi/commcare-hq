@@ -849,6 +849,16 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     """
 )
 
+USH_USERCASES_FOR_WEB_USERS = StaticToggle(
+    'usercases_for_web_users',
+    "USH: Enable the creation of usercases for web users.",
+    TAG_CUSTOM,
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Usercase+Creation',
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Toggle to enable the creation of usercases for web users."""
+)
+
 WEBAPPS_STICKY_SEARCH = StaticToggle(
     "webapps_sticky_search",
     "USH: Sticky search: In web apps, save user's most recent inputs on case search & claim screen.",
@@ -1042,13 +1052,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/GS/CommCare+Android+Developer+Options+--+Internal#'
               'CommCareAndroidDeveloperOptions--Internal-SettingtheValueofaDeveloperOptionfromHQ',
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-WEBAPPS_CASE_MIGRATION = StaticToggle(
-    'webapps_case_migration',
-    "Work-in-progress to support user-written migrations",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
@@ -1441,14 +1444,6 @@ VIEW_APP_CHANGES = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
     help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
-)
-
-ACTIVE_COUCH_DOMAINS = StaticToggle(
-    'active_couch_domains',
-    "Domains that are still on the Couch DB backend which we consider most "
-    "active / important to ensure that data in ES is never stale.",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
 )
 
 PAGINATED_EXPORTS = StaticToggle(
@@ -1870,7 +1865,7 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
 
 RESTRICT_MOBILE_ACCESS = StaticToggle(
     'restrict_mobile_endpoints',
-    'USH: Require explicit permissions to access mobile app endpoints',
+    'USH: Displays a security setting option to require explicit permissions to access mobile app endpoints',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints",
@@ -2127,6 +2122,12 @@ COWIN_INTEGRATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+EXPRESSION_REPEATER = StaticToggle(
+    'expression_repeater',
+    'Integrate with generic APIs using UCR expressions',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
 
 TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
