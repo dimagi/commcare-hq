@@ -30,12 +30,14 @@ class BaseCalculatedPropertiesTest(TestCase):
             'instance': get_es_new(),
         } for index_info in [CASE_INDEX_INFO, SMS_INDEX_INFO, XFORM_INDEX_INFO, USER_INDEX_INFO]]
 
-        cls.domain = Domain(name='test-b9289e19d819')
+        cls.domain = Domain(name='test')
         cls.domain.save()
 
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
+        for es in cls.es:
+            ensure_index_deleted(es['info'].index)
         super(BaseCalculatedPropertiesTest, cls).tearDownClass()
 
     def setUp(self):
@@ -64,22 +66,16 @@ class BaseCalculatedPropertiesTest(TestCase):
 
 class DomainCalculatedPropertiesTest(BaseCalculatedPropertiesTest):
 
-    @classmethod
-    def setUpClass(cls):
-        super(DomainCalculatedPropertiesTest, cls).setUpClass()
-        cls.incoming_sms = cls.create_sms_in_es(cls.domain.name, INCOMING)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.delete_sms_in_es(cls.incoming_sms)
-        super(DomainCalculatedPropertiesTest, cls).tearDownClass()
-
     def test_calculated_properties_are_serializable(self):
+        sms_doc = self.create_sms_in_es(self.domain.name, INCOMING)
+        self.addCleanup(self.delete_sms_in_es, sms_doc)
         all_stats = all_domain_stats()
         props = calced_props(self.domain, self.domain._id, all_stats)
         json.dumps(props)
 
     def test_domain_does_not_have_apps(self):
+        sms_doc = self.create_sms_in_es(self.domain.name, INCOMING)
+        self.addCleanup(self.delete_sms_in_es, sms_doc)
         all_stats = all_domain_stats()
         props = calced_props(self.domain, self.domain._id, all_stats)
         self.assertFalse(props['cp_has_app'])
