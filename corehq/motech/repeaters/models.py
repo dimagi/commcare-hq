@@ -198,18 +198,22 @@ class RepeaterSuperProxy(models.Model):
 
     def __new__(cls, *args, **kwargs):
         repeater_class = cls
-        # get proxy name, either from kwargs or from args
-        proxy_class_name = kwargs.get(cls.PROXY_FIELD_NAME)
-        if proxy_class_name is None:
-            proxy_name_field_index = cls._meta.fields.index(
-                cls._meta.get_field(cls.PROXY_FIELD_NAME))
-            proxy_class_name = args[proxy_name_field_index]
-        # Since we are storing original repeater names so we need to append SQL
-        # This should be removed when SQL is dropped from model names
-        proxy_sql_class_name = f"SQL{proxy_class_name}"
-        # get proxy class, by name, from current module
-        repeater_class = getattr(sys.modules[__name__], proxy_sql_class_name)
-        return super().__new__(repeater_class)
+        try:
+            # get proxy name, either from kwargs or from args
+            proxy_class_name = kwargs.get(cls.PROXY_FIELD_NAME)
+            if proxy_class_name is None:
+                proxy_name_field_index = cls._meta.fields.index(
+                    cls._meta.get_field(cls.PROXY_FIELD_NAME))
+                proxy_class_name = args[proxy_name_field_index]
+            # Since we are storing original repeater names so we need to append SQL
+            # This should be removed when SQL is dropped from model names
+            proxy_sql_class_name = f"SQL{proxy_class_name}"
+            # get proxy class, by name, from current module
+            repeater_class = getattr(sys.modules[__name__], proxy_sql_class_name)
+        except IndexError:
+            pass
+        finally:
+            return super().__new__(repeater_class)
 
 
 class RepeaterProxyManager(models.Manager):
