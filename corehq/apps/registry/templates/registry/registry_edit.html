@@ -391,7 +391,7 @@
           <div data-bind="visible: availableInviteDomains().length">
             <select multiple class="form-control" data-bind="
               selectedOptions: inviteDomains,
-              multiselectProperties: {
+              multiselect: {
                 selectableHeaderTitle: '{% trans_html_attr "Available Project Spaces" %}',
                 selectedHeaderTitle: '{% trans_html_attr "Selected" %}',
                 searchItemTitle: '{% trans_html_attr "Search" %}',
@@ -492,7 +492,7 @@
           <div data-bind="visible: availableGrantDomains().length">
             <select multiple class="form-control" data-bind="
                 selectedOptions: grantDomains,
-                multiselectProperties: {
+                multiselect: {
                   selectableHeaderTitle: '{% trans_html_attr "Available Project Spaces" %}',
                   selectedHeaderTitle: '{% trans_html_attr "Selected" %}',
                   searchItemTitle: '{% trans_html_attr "Search" %}',

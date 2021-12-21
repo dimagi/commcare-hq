@@ -19,7 +19,7 @@
         <div class="col-sm-9 col-md-10 controls">
           <select multiple class="form-control"
                   data-bind="selectedOptions: modelsToPush,
-                             multiselectProperties: {
+                             multiselect: {
                                  selectableHeaderTitle: '{% trans_html_attr "All content" %}',
                                  selectedHeaderTitle: '{% trans_html_attr "Content to push" %}',
                                  searchItemTitle: '{% trans_html_attr "Search content" %}',
@@ -38,7 +38,7 @@
         </label>
         <div class="col-sm-9 col-md-10 controls">
           <select multiple class="form-control"
-                  data-bind="selectedOptions: domainsToPush, multiselectProperties: multiselectProperties">
+                  data-bind="selectedOptions: domainsToPush, multiselect: domainMultiselect">
           </select>
         </div>
       </div>

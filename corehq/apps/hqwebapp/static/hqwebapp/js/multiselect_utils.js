@@ -145,7 +145,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
      * The only dynamic part of this binding are the options
      * For a list of configurable properties, see http://loudev.com/ under Options
      */
-    ko.bindingHandlers.multiselectProperties = {
+    ko.bindingHandlers.multiselect = {
         init: function (element, valueAccessor) {
             var properties = valueAccessor();
             multiselect_utils.createFullMultiselectWidget(

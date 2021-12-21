@@ -249,7 +249,7 @@ hqDefine("linked_domain/js/domain_links", [
             }, []);
         });
 
-        self.multiselectProperties = {
+        self.domainMultiselect = {
             selectableHeaderTitle: gettext("All project spaces"),
             selectedHeaderTitle: gettext("Project spaces to push to"),
             searchItemTitle: gettext("Search project spaces"),
