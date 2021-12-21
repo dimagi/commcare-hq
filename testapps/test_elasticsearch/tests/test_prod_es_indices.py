@@ -1,9 +1,11 @@
 from django.conf import settings
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from corehq.apps.es.tests.utils import es_test
 from corehq.pillows.utils import get_all_expected_es_indices
 
 
+@es_test
 class ProdIndexManagementTest(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
@@ -37,6 +39,9 @@ class ProdIndexManagementTest(SimpleTestCase):
             # for now don't test this property, just ensure it exist
             self.assertTrue(info['mapping'])
             del info['mapping']
+            # TODO: test mappings.  Seems related, but different from
+            # `corehq/pillows/mappings/tests`. The tests here in this module
+            # should probably move over there some day.
 
         def alias(info):
             return info['alias']
