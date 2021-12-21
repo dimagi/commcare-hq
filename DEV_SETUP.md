@@ -52,11 +52,11 @@ Save those backups to somewhere you'll be able to access from the new environmen
     "Rosetta 2 is an emulator designed to bridge the transition between Intel and Apple processors. In short, it translates apps built for Intel so they will run on Apple Silicon." [Link](https://www.computerworld.com/article/3597949/everything-you-need-to-know-about-rosetta-2-on-apple-silicon-macs.html).
     While reading through this document, be careful to watch out for specific reccomendations regarding your architecture.
     
-- [Python 3.6](https://www.python.org/downloads/) and `python-dev`. In Ubuntu
+- [Python 3.9](https://www.python.org/downloads/) and `python-dev`. In Ubuntu
   you will also need to install the modules for pip and venv explicitly.
 
     ```sh
-    sudo apt install python3.6-dev python3-pip python3-venv
+    sudo apt install python3.9-dev python3-pip python3-venv
     ```
     
     - If you have a Mac with an M1 chip, you can try installing Python 3.8.12 instead using the Rosetta-enabled homebrew (make sure you have enabled the ibrew command using the MacOS notes below):
@@ -198,7 +198,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
     sudo pip install virtualenvwrapper --ignore-installed six
     ```
 
-- For downloading Python 3.6 consider:
+- For downloading Python 3.9 consider:
 
   - Using [pyenv](https://github.com/pyenv/pyenv-installer)
   - Using Homebrew with this [brew formula](https://gist.github.com/SamuelMarks/0ceaaf6d3de12b6408e3e67aae80ae3b)
@@ -551,7 +551,7 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
 
 - If you get errors saying "Segmentation fault (core dumped)", with a warning like
   "RuntimeWarning: greenlet.greenlet size changed, may indicate binary incompatibility.
-  Expected 144 from C header, got 152 from PyObject" check that your Python version is correct (3.6).
+  Expected 144 from C header, got 152 from PyObject" check that your Python version is correct (3.9).
   Alternatively, you can try upgrading `gevent` (`pip install --upgrade gevent`) to fix this error
   on Python 3.8, but you may run into other issues!
 

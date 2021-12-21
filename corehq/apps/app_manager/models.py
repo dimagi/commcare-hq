@@ -1014,14 +1014,16 @@ class FormBase(DocumentSchema):
     )
     auto_gps_capture = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
-    schedule_form_id = StringProperty()
+    schedule_form_id = StringProperty(exclude_if_none=True)
     custom_assertions = SchemaListProperty(CustomAssertion)
     custom_instances = SchemaListProperty(CustomInstance)
     case_references_data = SchemaProperty(CaseReferences)
     is_release_notes_form = BooleanProperty(default=False)
     enable_release_notes = BooleanProperty(default=False)
-    session_endpoint_id = StringProperty()  # See toggles.SESSION_ENDPOINTS
-    function_datum_endpoints = StringListProperty()  # computed datums IDs that are allowed in endpoints
+    session_endpoint_id = StringProperty(exclude_if_none=True)  # See toggles.SESSION_ENDPOINTS
+
+    # computed datums IDs that are allowed in endpoints
+    function_datum_endpoints = StringListProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1566,7 +1568,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
 class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'module_form'
 
-    form_filter = StringProperty()
+    form_filter = StringProperty(exclude_if_none=True)
     requires = StringProperty(choices=["case", "referral", "none"], default="none")
     actions = SchemaProperty(FormActions)
 
@@ -1784,17 +1786,17 @@ class GraphAnnotations(IndexedSchema):
 class GraphSeries(DocumentSchema):
     config = DictProperty()
     locale_specific_config = DictProperty()
-    data_path = StringProperty()
-    x_function = StringProperty()
-    y_function = StringProperty()
-    radius_function = StringProperty()
+    data_path = StringProperty(exclude_if_none=True)
+    x_function = StringProperty(exclude_if_none=True)
+    y_function = StringProperty(exclude_if_none=True)
+    radius_function = StringProperty(exclude_if_none=True)
 
 
 class GraphConfiguration(DocumentSchema):
     config = DictProperty()
     locale_specific_config = DictProperty()
     annotations = SchemaListProperty(GraphAnnotations)
-    graph_type = StringProperty()
+    graph_type = StringProperty(exclude_if_none=True)
     series = SchemaListProperty(GraphSeries)
 
 
@@ -1814,11 +1816,11 @@ class DetailTab(IndexedSchema):
     #   nodeset: An absolute xpath expression to iterate over
     #   nodeset_case_type: Iterate over all child cases of this type
     has_nodeset = BooleanProperty(default=False)
-    nodeset = StringProperty()
-    nodeset_case_type = StringProperty()
+    nodeset = StringProperty(exclude_if_none=True)
+    nodeset_case_type = StringProperty(exclude_if_none=True)
 
     # Display condition for the tab
-    relevant = StringProperty()
+    relevant = StringProperty(exclude_if_none=True)
 
 
 class DetailColumn(IndexedSchema):
@@ -1838,18 +1840,18 @@ class DetailColumn(IndexedSchema):
 
     """
     header = DictProperty()
-    model = StringProperty()
+    model = StringProperty(exclude_if_none=True)
     field = StringProperty()
     useXpathExpression = BooleanProperty(default=False)
-    format = StringProperty()
+    format = StringProperty(exclude_if_none=True)
 
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
-    case_tile_field = StringProperty()
+    case_tile_field = StringProperty(exclude_if_none=True)
 
     late_flag = IntegerProperty(default=30)
-    advanced = StringProperty(default="")
-    filter_xpath = StringProperty(default="")
+    advanced = StringProperty(default="", exclude_if_none=True)
+    filter_xpath = StringProperty(default="", exclude_if_none=True)
     time_ago_interval = FloatProperty(default=365.25)
     date_format = StringProperty(default="%d/%m/%y")
 
@@ -1962,8 +1964,8 @@ class CaseListLookupMixin(DocumentSchema):
     """
     lookup_enabled = BooleanProperty(default=False)
     lookup_autolaunch = BooleanProperty(default=False)
-    lookup_action = StringProperty()
-    lookup_name = StringProperty()
+    lookup_action = StringProperty(exclude_if_none=True)
+    lookup_name = StringProperty(exclude_if_none=True)
     lookup_image = JRResourceProperty(required=False)
 
     lookup_extras = SchemaListProperty()
@@ -1971,7 +1973,7 @@ class CaseListLookupMixin(DocumentSchema):
 
     lookup_display_results = BooleanProperty(default=False)  # Display callout results in case list?
     lookup_field_header = DictProperty()
-    lookup_field_template = StringProperty()
+    lookup_field_template = StringProperty(exclude_if_none=True)
 
 
 class Detail(IndexedSchema, CaseListLookupMixin):
@@ -1988,7 +1990,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     get_tabs = IndexedSchema.Getter('tabs')
 
     sort_elements = SchemaListProperty(SortElement)
-    filter = StringProperty()
+    filter = StringProperty(exclude_if_none=True)
 
     instance_name = StringProperty(default='casedb')
 
@@ -1997,16 +1999,16 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     persistent_case_context_xml = StringProperty(default='case_name')
 
     # Custom variables to add into the <variables /> node
-    custom_variables = StringProperty()
+    custom_variables = StringProperty(exclude_if_none=True)
 
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
     # If given, use this string for the case tile markup instead of the default temaplte
-    custom_xml = StringProperty()
+    custom_xml = StringProperty(exclude_if_none=True)
 
     persist_tile_on_forms = BooleanProperty()
     # use case tile context persisted over forms from another module
-    persistent_case_tile_from_module = StringProperty()
+    persistent_case_tile_from_module = StringProperty(exclude_if_none=True)
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
@@ -2090,14 +2092,14 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
 
 class Itemset(DocumentSchema):
-    instance_id = StringProperty()
-    instance_uri = StringProperty()
+    instance_id = StringProperty(exclude_if_none=True)
+    instance_uri = StringProperty(exclude_if_none=True)
 
-    nodeset = StringProperty()
+    nodeset = StringProperty(exclude_if_none=True)
 
-    label = StringProperty()
-    value = StringProperty()
-    sort = StringProperty()
+    label = StringProperty(exclude_if_none=True)
+    value = StringProperty(exclude_if_none=True)
+    sort = StringProperty(exclude_if_none=True)
 
 
 class CaseSearchProperty(DocumentSchema):
@@ -2106,22 +2108,22 @@ class CaseSearchProperty(DocumentSchema):
     """
     name = StringProperty()
     label = DictProperty()
-    appearance = StringProperty()
-    input_ = StringProperty()
-    default_value = StringProperty()
+    appearance = StringProperty(exclude_if_none=True)
+    input_ = StringProperty(exclude_if_none=True)
+    default_value = StringProperty(exclude_if_none=True)
     hint = DictProperty()
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
 
     # applicable when appearance is a receiver
-    receiver_expression = StringProperty()
+    receiver_expression = StringProperty(exclude_if_none=True)
     itemset = SchemaProperty(Itemset)
 
 
 class DefaultCaseSearchProperty(DocumentSchema):
     """Case Properties with fixed value to search on"""
     property = StringProperty()
-    default_value = StringProperty()
+    default_value = StringProperty(exclude_if_none=True)
 
 
 class BaseCaseSearchLabel(NavMenuItemMediaMixin):
@@ -2149,16 +2151,18 @@ class CaseSearch(DocumentSchema):
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
     default_relevant = BooleanProperty(default=True)
-    additional_relevant = StringProperty()
-    search_filter = StringProperty()
-    search_button_display_condition = StringProperty()
+    additional_relevant = StringProperty(exclude_if_none=True)
+    search_filter = StringProperty(exclude_if_none=True)
+    search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
-    blacklisted_owner_ids_expression = StringProperty()
-    additional_case_types = ListProperty(str)
-    data_registry = StringProperty()
-    data_registry_workflow = StringProperty()           # one of REGISTRY_WORKFLOW_*
-    additional_registry_cases = StringListProperty()  # list of xpath expressions
-    custom_related_case_property = StringProperty()  # case property referencing another case's ID
+    blacklisted_owner_ids_expression = StringProperty(exclude_if_none=True)
+    additional_case_types = StringListProperty()
+    data_registry = StringProperty(exclude_if_none=True)
+    data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
+    additional_registry_cases = StringListProperty()               # list of xpath expressions
+
+    # case property referencing another case's ID
+    custom_related_case_property = StringProperty(exclude_if_none=True)
 
     @property
     def case_session_var(self):
@@ -2205,11 +2209,11 @@ class FixtureSelect(DocumentSchema):
     xpath:              xpath expression to use as the case filter
     """
     active = BooleanProperty(default=False)
-    fixture_type = StringProperty()
-    display_column = StringProperty()
+    fixture_type = StringProperty(exclude_if_none=True)
+    display_column = StringProperty(exclude_if_none=True)
     localize = BooleanProperty(default=False)
-    variable_column = StringProperty()
-    xpath = StringProperty(default='')
+    variable_column = StringProperty(exclude_if_none=True)
+    xpath = StringProperty(default='', exclude_if_none=True)
 
 
 class DetailPair(DocumentSchema):
@@ -2231,7 +2235,7 @@ class CaseListForm(NavMenuItemMediaMixin):
         default=WORKFLOW_DEFAULT,
         choices=REGISTRATION_FORM_WORFLOWS,
     )
-    relevancy_expression = StringProperty()
+    relevancy_expression = StringProperty(exclude_if_none=True)
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
@@ -2245,14 +2249,14 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     unique_id = StringProperty()
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
-    module_filter = StringProperty()
+    module_filter = StringProperty(exclude_if_none=True)
     put_in_root = BooleanProperty(default=False)
-    root_module_id = StringProperty()
+    root_module_id = StringProperty(exclude_if_none=True)
     fixture_select = SchemaProperty(FixtureSelect)
     report_context_tile = BooleanProperty(default=False)
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
-    session_endpoint_id = StringProperty()  # See toggles.SESSION_ENDPOINTS
+    session_endpoint_id = StringProperty(exclude_if_none=True)  # See toggles.SESSION_ENDPOINTS
 
     def __init__(self, *args, **kwargs):
         super(ModuleBase, self).__init__(*args, **kwargs)
