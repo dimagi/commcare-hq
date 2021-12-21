@@ -57,6 +57,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                         url: self.save_url,
                         data: {
                             actions: actions,
+                            arbitrary_datums: ko.toJSON(self.caseConfigViewModel.arbitrary_datums),
                         },
                         dataType: 'json',
                         success: function (data) {
@@ -304,6 +305,30 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 });
                 return action;
             }));
+
+            self.arbitraryDatum = function (datum_id, datum_function) {
+                this.datum_id = ko.observable(datum_id);
+                this.datum_function = ko.observable(datum_function);
+            };
+
+            self.arbitrary_datums = ko.observableArray(_(params.arbitrary_datums).map(function (a) {
+                return new self.arbitraryDatum(a.datum_id, a.datum_function);
+            }));
+
+            ko.computed(function() {
+                return ko.toJSON(self.arbitrary_datums);
+            }).subscribe(function() {
+                self.caseConfig.saveButton.fire('change');
+            });
+
+            self.addDatum = function() {
+                self.arbitrary_datums.push(new self.arbitraryDatum('', ''));
+            };
+
+            self.removeDatum = function(datum) {
+                self.arbitrary_datums.remove(datum);
+            };
+
 
             self.open_cases = ko.observableArray(_(params.actions.open_cases).map(function (a) {
                 var required_properties = [{
