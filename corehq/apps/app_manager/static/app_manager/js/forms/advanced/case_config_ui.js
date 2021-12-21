@@ -315,17 +315,17 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 return new self.arbitraryDatum(a.datum_id, a.datum_function);
             }));
 
-            ko.computed(function() {
+            ko.computed(function () {
                 return ko.toJSON(self.arbitrary_datums);
-            }).subscribe(function() {
+            }).subscribe(function () {
                 self.caseConfig.saveButton.fire('change');
             });
 
-            self.addDatum = function() {
+            self.addDatum = function () {
                 self.arbitrary_datums.push(new self.arbitraryDatum('', ''));
             };
 
-            self.removeDatum = function(datum) {
+            self.removeDatum = function (datum) {
                 self.arbitrary_datums.remove(datum);
             };
 
