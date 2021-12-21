@@ -548,5 +548,52 @@
         </div>
       </div>
     </div>
+    <div class="spacer" data-bind="visible: arbitrary_datums().length">
+    </div>
+    <div class="panel panel-appmanager">
+      <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink" >
+          {% trans "Arbitrary Datums" %}
+        </h4>
+      </div>
+      <div class="panel-body">
+        <div id="arbitrary-datums" class="panel-group">
+          <table data-bind="visible: arbitrary_datums().length" class="col-sm-12 table table-savecaseprops">
+            <thead>
+              <tr>
+                <th class="col-sm-2"></th>
+                <th class="col-sm-5">
+                  {% trans "Datum ID" %}
+                </th>
+                <th class="col-sm-5">
+                  {% trans "Datum Function" %}
+                </th>
+              </tr>
+            </thead>
+            <tbody data-bind="foreach: arbitrary_datums">
+              <tr>
+                <td class="col-sm-1 text-center">
+                  <button class="btn btn-danger" data-bind="click: $parent.removeDatum">
+                    <i class="fa fa-remove"></i>
+                  </button>
+                </td>
+                <td class="col-sm-5 text-center">
+                  <input type="text" class="form-control textbox" data-bind="textInput: datum_id" />
+                </td>
+                <td class="col-sm-5 text-center">
+                  <input type="text" class="form-control textbox" data-bind="textInput: datum_function" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <br><br>
+        </div>
+        <div class="col-xs-12 col-sm-6">
+          <button class="btn btn-primary" data-bind="click: addDatum">
+            {% trans "Add Datum" %}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
