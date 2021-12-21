@@ -2,6 +2,7 @@
 
 
 import os
+from dev_settings import *
 
 DATABASES = {
     'default': {

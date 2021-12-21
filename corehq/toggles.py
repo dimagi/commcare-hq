@@ -2161,3 +2161,10 @@ DO_NOT_REPUBLISH_DOCS = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+GOOGLE_SHEET_INTEGRATION = StaticToggle(
+    'google_sheet_integration',
+    'Hides google sheet integration views while testing',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+)
