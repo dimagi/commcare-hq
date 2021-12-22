@@ -1,5 +1,6 @@
 import signal
 from datetime import datetime
+from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.core.paginator import Paginator
@@ -160,7 +161,12 @@ def get_forms(app):
 
 def form_contains_entities(form):
     try:
-        parse_xml(form.source)
+        source = form.source
+    except ResourceNotFound:
+        return False  # unable to resolve the form
+
+    try:
+        parse_xml(source)
     except DangerousXmlException:
         return True
     except XFormException:
