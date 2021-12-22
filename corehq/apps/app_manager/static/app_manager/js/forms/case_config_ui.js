@@ -486,10 +486,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 self.caseType = ko.computed(function () {
                     return self.case_transaction.case_type();
                 });
-                self.updatedDescription = ko.observable('');
+                self.updatedDescription = ko.observable();
                 self.description = ko.computed({
                     read: function () {
-                        if (self.updatedDescription()) {
+                        if (self.updatedDescription() !== undefined) {
                             return self.updatedDescription();
                         }
                         var config = self.case_transaction.caseConfig;
