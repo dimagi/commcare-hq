@@ -584,8 +584,8 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
     @classmethod
     def setUpClass(cls):
         super(OutgoingFrameworkTestCase, cls).setUpClass()
-        cls.domain = "test-domain"
-        cls.domain2 = "test-domain2"
+        cls.domain = "outgoing-framework-test"
+        cls.domain2 = "outgoing-framework-test-2"
 
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()

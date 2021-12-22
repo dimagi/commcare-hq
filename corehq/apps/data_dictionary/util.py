@@ -162,7 +162,7 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     )
     if data_type:
         prop.data_type = data_type
-    if description:
+    if description is not None:
         prop.description = description
     if group:
         prop.group = group
