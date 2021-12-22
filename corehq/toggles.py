@@ -2157,7 +2157,7 @@ DATA_REGISTRY = StaticToggle(
   
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
     'case_import_data_dictionary_validaton',
-    'Validate data per data dictionary definitions during case import',
+    'USH: Validate data per data dictionary definitions during case import',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Validate+data+per+data+dictionary+definitions+during+case+import",
