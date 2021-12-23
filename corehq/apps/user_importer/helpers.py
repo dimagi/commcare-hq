@@ -88,7 +88,7 @@ class UserChangeLogger(object):
         if self.is_new_user or self._save:
             action = UserModelAction.CREATE if self.is_new_user else UserModelAction.UPDATE
             fields_changed = None if self.is_new_user else self.fields_changed
-            return log_user_change(
+            log_user_change(
                 by_domain=self.upload_domain,
                 for_domain=self.user_domain,
                 couch_user=self.user,
@@ -100,19 +100,6 @@ class UserChangeLogger(object):
                 bulk_upload_record_id=self.upload_record_id,
                 for_domain_required_for_log=self.user_domain_required_for_log,
             )
-
-    def save_only_group_changes(self, group_change_message):
-        return log_user_change(
-            by_domain=self.upload_domain,
-            for_domain=self.user_domain,
-            couch_user=self.user,
-            changed_by_user=self.changed_by_user,
-            changed_via=self.changed_via,
-            change_messages=group_change_message,
-            action=UserModelAction.UPDATE,
-            bulk_upload_record_id=self.upload_record_id,
-            for_domain_required_for_log=self.user_domain_required_for_log,
-        )
 
 
 class BaseUserImporter(object):
@@ -145,7 +132,6 @@ class BaseUserImporter(object):
         user_current_role = self.user.get_role(domain=self.user_domain)
         self.role_updated = not (user_current_role
                                  and user_current_role.get_qualified_id() == role_qualified_id)
-
         if self.role_updated:
             self.user.set_role(self.user_domain, role_qualified_id)
 
@@ -156,7 +142,7 @@ class BaseUserImporter(object):
             self.logger.add_info(UserChangeMessage.role_change(new_role))
 
         self._include_user_data_changes()
-        return self.logger.save()
+        self.logger.save()
 
     def _include_user_data_changes(self):
         # ToDo: consider putting just the diff
@@ -265,27 +251,6 @@ class CommCareUserImporter(BaseUserImporter):
                 )
             else:
                 self.logger.add_info(UserChangeMessage.primary_location_removed())
-
-    def update_user_groups(self, domain_info, group_names):
-        """
-        Add/remove user from groups without save and return change message for changes, if any
-        """
-        old_group_ids = set()
-        for group in domain_info.group_memoizer.by_user_id(self.user.user_id):
-            old_group_ids.add(group.get_id)
-            if group.name not in group_names:
-                group.remove_user(self.user)
-                domain_info.group_memoizer.updated_groups.add(group.get_id)
-
-        new_groups = {}
-        for group_name in group_names:
-            group = domain_info.group_memoizer.by_name(group_name)
-            new_groups[group.get_id] = group
-            if group.add_user(self.user, save=False):
-                domain_info.group_memoizer.group_updated(group.get_id)
-
-        if set(new_groups) != old_group_ids:
-            return UserChangeMessage.groups_info(list(new_groups.values()))
 
     def _log_phone_number_changes(self, old_phone_numbers, new_phone_numbers):
         (items_added, items_removed) = find_differences_in_list(

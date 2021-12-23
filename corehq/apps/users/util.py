@@ -361,6 +361,7 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
     else:
         changed_by_id = changed_by_user.get_id
         changed_by_repr = changed_by_user.raw_username
+
     return UserHistory.objects.create(
         by_domain=by_domain,
         for_domain=for_domain,
