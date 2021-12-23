@@ -1,5 +1,6 @@
 from memoized import memoized
 
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import GroupES, UserES, groups
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
@@ -210,18 +211,6 @@ class MobileWorkersOptionsController(EmwfOptionsController):
     def utils(self):
         return UsersUtils(self.domain)
 
-    def get_post_options(self):
-        page = int(self.request.POST.get('page', 1))
-        size = int(self.request.POST.get('page_limit', DEFAULT_PAGE_LIMIT))
-        start = size * (page - 1)
-        count, options = paginate_options(
-            self.data_sources,
-            self.search,
-            start,
-            size
-        )
-        return count, [{'id': id_, 'text': text} for id_, text in options]
-
     @property
     def data_sources(self):
         return [
@@ -292,3 +281,36 @@ class LocationGroupOptionsController(EmwfOptionsController):
             (self.get_groups_size, self.get_groups),
             (self.get_locations_size, self.get_locations),
         ]
+
+
+class EnterpriseUserOptionsController(EmwfOptionsController):
+    """Controller designed to return all users across all enterprise domains when the request
+    is made from the enterprise domain and the request is not location restricted.
+
+    If either of those conditions are false then only users from the current domain are returned
+    """
+    def __init__(self, request, domain, search):
+        super().__init__(request, domain, search, False)
+        # this will include all domains in the enterprise only if the current domain
+        # is the 'source'
+        self.enterprise_domains = list(set(EnterprisePermissions.get_domains(domain)) | {domain})
+
+    @property
+    @memoized
+    def utils(self):
+        return UsersUtils(self.domain)
+
+    @property
+    def data_sources(self):
+        return [
+            (self.get_all_users_size, self.get_all_users),
+        ]
+
+    def active_user_es_query(self, query):
+        if not self.request.can_access_all_locations:
+            return super().active_user_es_query(query)
+        else:
+            search_fields = ["first_name", "last_name", "base_username"]
+            return (UserES()
+                    .domains(self.enterprise_domains)
+                    .search_string_query(query, default_fields=search_fields))
