@@ -12,7 +12,8 @@ hqDefine("linked_domain/js/domain_links", [
     initialPageData,
     _,
     ko,
-    alertUser
+    alertUser,
+    multiselect_utils
 ) {
     var _private = {};
     _private.RMI = function () {};
@@ -247,6 +248,42 @@ hqDefine("linked_domain/js/domain_links", [
         self.pushInProgress = ko.observable(false);
         self.enablePushButton = ko.computed(function () {
             return self.domainsToPush().length && self.modelsToPush().length && !self.pushInProgress();
+        });
+
+        self.domainsToPushSubscription = self.domainsToPush.subscribe(function (newValue) {
+            // receives updates every time a domain is selected/unselected from the multiselect
+            if (newValue.length > 1) {
+                // no need to rebuild multiselect
+                return;
+            }
+
+            if (newValue.length > 0) {
+                var selectedDomainLink = self.parent.domainLinksByNames()[newValue[0]];
+                var pushedNonEnterpriseLink = !selectedDomainLink.hasFullAccess;
+                for (var option of $('#domain-multiselect')[0].options) {
+                    if (!newValue.includes(option.value)) {
+                        if (pushedNonEnterpriseLink) {
+                            option.disabled = true;
+                        } else {
+                            // disable if link does not have full access
+                            var tempLink = self.parent.domainLinksByNames()[option.value];
+                            option.disabled = !tempLink.hasFullAccess;
+                        }
+                    }
+                }
+            } else {
+                for (var option of $('#domain-multiselect')[0].options) {
+                    option.disabled = false;
+                }
+            }
+
+            // need to rebuild the multiselect on each update
+            $('#domain-multiselect').multiSelect('destroy');
+            multiselect_utils.createFullMultiselectWidget($('#domain-multiselect'), {
+                selectableHeaderTitle: self.domainMultiselect.selectableHeaderTitle,
+                selectedHeaderTitle: self.domainMultiselect.selectedHeaderTitle,
+                searchItemTitle: self.domainMultiselect.searchItemTitle,
+            });
         });
 
         self.localDownstreamDomains = ko.computed(function () {
