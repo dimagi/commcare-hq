@@ -207,7 +207,8 @@ def update_case_property_description(request, domain):
 def _export_data_dictionary(domain):
     export_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
     case_type_headers = [_('Case Type'), _('FHIR Resource Type'), _('Remove Resource Type(Y)')]
-    case_prop_headers = [_('Case Property'), _('Group'), _('Data Type'), _('Description'), _('Deprecated')]
+    case_prop_headers = [_('Case Property'), _('Required'), _('Group'), _('Data Type'), _('Description'),
+                         _('Deprecated')]
     allowed_value_headers = [_('Case Property'), _('Valid Value'), _('Valid Value Description')]
 
     case_type_data, case_prop_data = _generate_data_for_export(domain, export_fhir_data)
@@ -228,6 +229,7 @@ def _generate_data_for_export(domain, export_fhir_data):
     def generate_prop_dict(case_prop, fhir_resource_prop):
         prop_dict = {
             _('Case Property'): case_prop.name,
+            _('Required'): case_prop.required,
             _('Group'): case_prop.group,
             _('Data Type'): case_prop.get_data_type_display() if case_prop.data_type else '',
             _('Description'): case_prop.description,
@@ -405,11 +407,11 @@ def _process_bulk_upload(bulk_file, domain):
     errors = []
     import_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
     fhir_resource_type_by_case_type = {}
-    expected_columns_in_prop_sheet = 5
+    expected_columns_in_prop_sheet = 6
     data_type_map = {display_val: raw_val for raw_val, display_val in PROPERTY_TYPE_CHOICES}
 
     if import_fhir_data:
-        expected_columns_in_prop_sheet = 7
+        expected_columns_in_prop_sheet = 8
 
     worksheets = []
     allowed_value_info = {}
@@ -455,7 +457,8 @@ def _process_bulk_upload(bulk_file, domain):
                     error = _('Not enough columns')
                 else:
                     error, fhir_resource_prop_path, fhir_resource_type, remove_path = None, None, None, None
-                    name, group, data_type_display, description, deprecated = [cell.value for cell in row[:5]]
+                    name, required, group, data_type_display, description, deprecated = [cell.value
+                                                                                         for cell in row[:6]]
                     # Fall back to value from file if data_type_display is not found in the map.
                     # This allows existing error path to report accurately the value that isn't found,
                     # and also has a side-effect of allowing older files (pre change to export
@@ -476,7 +479,7 @@ def _process_bulk_upload(bulk_file, domain):
                             missing_valid_values.add(case_type)
                         error = save_case_property(name, case_type, domain, data_type, description, group,
                                                    deprecated, fhir_resource_prop_path, fhir_resource_type,
-                                                   remove_path, allowed_values)
+                                                   remove_path, allowed_values, required)
                 if error:
                     errors.append(_('Error in case type {}, row {}: {}').format(case_type, i, error))
 
