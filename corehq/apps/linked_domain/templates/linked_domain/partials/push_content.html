@@ -17,7 +17,7 @@
           {% trans "Content" %}
         </label>
         <div class="col-sm-9 col-md-10 controls">
-          <select multiple class="form-control"
+          <select multiple class="form-control" id="model-multiselect"
                   data-bind="selectedOptions: modelsToPush,
                              multiselect: {
                                  properties: {
@@ -39,7 +39,7 @@
           {% trans "Project Spaces" %}
         </label>
         <div class="col-sm-9 col-md-10 controls">
-          <select multiple class="form-control"
+          <select multiple class="form-control" id="domain-multiselect"
                   data-bind="selectedOptions: domainsToPush, multiselect: domainMultiselect">
           </select>
         </div>
