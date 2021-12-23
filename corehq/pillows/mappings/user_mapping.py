@@ -5,232 +5,478 @@ from pillowtop.es_utils import ElasticsearchIndexInfo, USER_HQ_INDEX_NAME
 
 
 USER_INDEX = prefix_for_tests("hqusers_2017-09-07")
-USER_MAPPING = {'_all': {'analyzer': 'standard'},
- '_meta': {'created': None},
- 'date_detection': False,
- 'date_formats': DATE_FORMATS_ARR,
- 'dynamic': False,
- 'properties': {'CURRENT_VERSION': {'type': 'string'},
-                'base_doc': {'type': 'string'},
-                'created_on': {'format': DATE_FORMATS_STRING,
-                               'type': 'date'},
-                'date_joined': {'format': DATE_FORMATS_STRING,
-                                'type': 'date'},
-                'doc_type': {'index': 'not_analyzed', 'type': 'string'},
-                'domain': {'fields': {'domain': {'index': 'analyzed',
-                                                 'type': 'string'},
-                                      'exact': {'index': 'not_analyzed',
-                                                'type': 'string'}},
-                           'type': 'multi_field'},
-                'user_location_id': {'index': 'not_analyzed', 'type': 'string'},
-                'location_id': {'index': 'not_analyzed', 'type': 'string'},
-                'assigned_location_ids': {"type": "string"},
-                'phone_numbers': {"type": "string"},
-                'domain_membership': {'dynamic': False,
-                                      'properties': {'doc_type': {'index': 'not_analyzed',
-                                                                  'type': 'string'},
-                                                     'domain': {'fields': {'domain': {'index': 'analyzed',
-                                                                                      'type': 'string'},
-                                                                           'exact': {'index': 'not_analyzed',
-                                                                                     'type': 'string'}},
-                                                                'type': 'multi_field'},
-                                                     'is_admin': {'type': 'boolean'},
-                                                     'override_global_tz': {'type': 'boolean'},
-                                                     'role_id': {'type': 'string'},
-                                                     'timezone': {'type': 'string'},
-                                                     'location_id': {'index': 'not_analyzed',
-                                                                     'type': 'string'}},
-                                      'type': 'object'},
-                'domain_memberships': {'dynamic': False,
-                                      'properties': {'doc_type': {'index': 'not_analyzed',
-                                                                  'type': 'string'},
-                                                     'domain': {'fields': {'domain': {'index': 'analyzed',
-                                                                                      'type': 'string'},
-                                                                           'exact': {'index': 'not_analyzed',
-                                                                                     'type': 'string'}},
-                                                                'type': 'multi_field'},
-                                                     'is_admin': {'type': 'boolean'},
-                                                     'override_global_tz': {'type': 'boolean'},
-                                                     'role_id': {'type': 'string'},
-                                                     'timezone': {'type': 'string'},
-                                                     'location_id': {'index': 'not_analyzed',
-                                                                     'type': 'string'}},
-                                      'type': 'object'},
-                'analytics_enabled': {'type': 'boolean'},
-                'eulas': {'dynamic': False,
-                          'properties': {'date': {'format': DATE_FORMATS_STRING,
-                                                  'type': 'date'},
-                                         'doc_type': {'index': 'not_analyzed',
-                                                      'type': 'string'},
-                                         'signed': {'type': 'boolean'},
-                                         'type': {'type': 'string'},
-                                         'user_id': {'type': 'string'},
-                                         'user_ip': {'type': 'string'},
-                                         'version': {'type': 'string'}},
-                          'type': 'object'},
-                'first_name': {'type': 'string'},
-                'is_active': {'type': 'boolean'},
-                'is_staff': {'type': 'boolean'},
-                'is_demo_user': {'type': 'boolean'},
-                'is_superuser': {'type': 'boolean'},
-                'language': {'type': 'string'},
-                'last_login': {'format': DATE_FORMATS_STRING,
-                               'type': 'date'},
-                'last_name': {'type': 'string'},
-                'password': {'type': 'string'},
-                'registering_device_id': {'type': 'string'},
-                'reporting_metadata': {'dynamic': False,
-                                       'properties': {
-                                           'last_submissions': {
-                                               'dynamic': False,
-                                               'properties': {
-                                                   'submission_date': {'format': DATE_FORMATS_STRING,
-                                                                       'type': 'date'},
-                                                   'app_id': {'type': 'string'},
-                                                   'build_id': {'type': 'string'},
-                                                   'device_id': {'type': 'string'},
-                                                   'build_version': {'type': 'integer'},
-                                                   'commcare_version': {'type': 'string'},
-                                               },
-                                               'type': 'nested'
-                                           },
-                                           'last_submission_for_user': {
-                                               'dynamic': False,
-                                               'properties': {
-                                                   'submission_date': {'format': DATE_FORMATS_STRING,
-                                                                       'type': 'date'},
-                                                   'app_id': {'type': 'string'},
-                                                   'build_id': {'type': 'string'},
-                                                   'device_id': {'type': 'string'},
-                                                   'build_version': {'type': 'integer'},
-                                                   'commcare_version': {'type': 'string'},
-                                               },
-                                               'type': 'object'
-                                           },
-                                           'last_syncs': {
-                                               'dynamic': False,
-                                               'properties': {
-                                                   'sync_date': {'format': DATE_FORMATS_STRING,
-                                                                 'type': 'date'},
-                                                   'app_id': {'type': 'string'},
-                                                   'build_version': {'type': 'integer'},
-                                               },
-                                               'type': 'nested'
-                                           },
-                                           'last_sync_for_user': {
-                                               'dynamic': False,
-                                               'properties': {
-                                                   'sync_date': {'format': DATE_FORMATS_STRING,
-                                                                 'type': 'date'},
-                                                   'app_id': {'type': 'string'},
-                                                   'build_version': {'type': 'integer'},
-                                               },
-                                               'type': 'object'
-                                           },
-                                           'last_builds': {
-                                               'dynamic': False,
-                                               'properties': {
-                                                   'build_version_date': {'format': DATE_FORMATS_STRING,
-                                                                          'type': 'date'},
-                                                   'app_id': {'type': 'string'},
-                                                   'build_version': {'type': 'integer'},
-                                               },
-                                               'type': 'nested'
-                                           },
-                                           'last_build_for_user': {
-                                               'dynamic': False,
-                                               'properties': {
-                                                   'build_version_date': {'format': DATE_FORMATS_STRING,
-                                                                          'type': 'date'},
-                                                   'app_id': {'type': 'string'},
-                                                   'build_version': {'type': 'integer'},
-                                               },
-                                               'type': 'object'
-                                           },
-                                       },
-                                       'type': 'object'},
-                'devices': {
-                    'dynamic': False,
-                    'type': 'nested',
-                    'properties': {
-                        'device_id': {'type': 'string', 'index': 'not_analyzed'},
-                        'last_used': {'type': 'date', 'format': DATE_FORMATS_STRING},
-                        'commcare_version': {'type': 'string'},
-                        'app_meta': {
-                            'dynamic': False,
-                            'type': 'nested',
-                            'properties': {
-                                'app_id': {'type': 'string', 'index': 'not_analyzed'},
-                                'build_id': {'type': 'string', 'index': 'not_analyzed'},
-                                'build_version': {'type': 'integer'},
-                                'last_request': {'type': 'date', 'format': DATE_FORMATS_STRING},
-                                'last_submission': {'type': 'date', 'format': DATE_FORMATS_STRING},
-                                'last_sync': {'type': 'date', 'format': DATE_FORMATS_STRING},
-                                'last_heartbeat': {'type': 'date', 'format': DATE_FORMATS_STRING},
-                                'num_unsent_forms': {'type': 'integer'},
-                                'num_quarantined_forms': {'type': 'integer'},
-                            }
+USER_MAPPING = {
+    "_all": {
+        "analyzer": "standard"
+    },
+    "_meta": {
+        "created": None
+    },
+    "date_detection": False,
+    "date_formats": DATE_FORMATS_ARR,
+    "dynamic": False,
+    "properties": {
+        "CURRENT_VERSION": {
+            "type": "string"
+        },
+        "__group_ids": {
+            "type": "string"
+        },
+        "__group_names": {
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "string"
+        },
+        "analytics_enabled": {
+            "type": "boolean"
+        },
+        "assigned_location_ids": {
+            "type": "string"
+        },
+        "base_doc": {
+            "type": "string"
+        },
+        "base_username": {
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "string"
+        },
+        "created_on": {
+            "format": DATE_FORMATS_STRING,
+            "type": "date"
+        },
+        "date_joined": {
+            "format": DATE_FORMATS_STRING,
+            "type": "date"
+        },
+        "devices": {
+            "dynamic": False,
+            "type": "nested",
+            "properties": {
+                "app_meta": {
+                    "dynamic": False,
+                    "type": "nested",
+                    "properties": {
+                        "app_id": {
+                            "index": "not_analyzed",
+                            "type": "string"
                         },
-                    }
-                },
-                'last_device': {
-                    'dynamic': False,
-                    'type': 'object',
-                    'properties': {
-                        'device_id': {'type': 'string', 'index': 'not_analyzed'},
-                        'last_used': {'type': 'date', 'format': DATE_FORMATS_STRING},
-                        'commcare_version': {'type': 'string'},
-                        'app_meta': {
-                            'dynamic': False,
-                            'type': 'object',
-                            'properties': {
-                                'app_id': {'type': 'string', 'index': 'not_analyzed'},
-                                'build_id': {'type': 'string', 'index': 'not_analyzed'},
-                                'build_version': {'type': 'integer'},
-                                'last_request': {'type': 'date', 'format': DATE_FORMATS_STRING},
-                                'last_submission': {'type': 'date', 'format': DATE_FORMATS_STRING},
-                                'last_sync': {'type': 'date', 'format': DATE_FORMATS_STRING},
-                                'last_heartbeat': {'type': 'date', 'format': DATE_FORMATS_STRING},
-                                'num_unsent_forms': {'type': 'integer'},
-                                'num_quarantined_forms': {'type': 'integer'},
-                            }
+                        "build_id": {
+                            "index": "not_analyzed",
+                            "type": "string"
                         },
-                    }
-                },
-                'status': {'type': 'string'},
-                'user_data': {'type': 'object', 'enabled': False},
-                'user_data_es': {
-                    'type': 'nested',
-                    'dynamic': False,
-                    'properties': {
-                        'key': {
-                            'type': 'string',
-                            'index': 'not_analyzed',
+                        "build_version": {
+                            "type": "integer"
                         },
-                        'value': {
-                            'type': 'string',
-                            'index': 'analyzed',
+                        "last_heartbeat": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "last_request": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "last_submission": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "last_sync": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "num_quarantined_forms": {
+                            "type": "integer"
+                        },
+                        "num_unsent_forms": {
+                            "type": "integer"
                         }
                     }
                 },
-                'base_username': {'fields': {'base_username': {'index': 'analyzed',
-                                                               'type': 'string'},
-                                             'exact': {'index': 'not_analyzed',
-                                                       'type': 'string'}},
-                                 'type': 'multi_field'},
-                'username': {'fields': {'exact': {'include_in_all': False,
-                                                  'index': 'not_analyzed',
-                                                  'type': 'string'},
-                                        'username': {'analyzer': 'standard',
-                                                     'index': 'analyzed',
-                                                     'type': 'string'}},
-                             'type': 'multi_field'},
-                '__group_ids': {'type': 'string'},
-                '__group_names': {'fields': {'__group_names': { 'index': 'analyzed',
-                                                                'type': 'string'},
-                                             'exact': {'index': 'not_analyzed',
-                                                                'type': 'string'}},
-                                  'type': 'multi_field'}}}
+                "commcare_version": {
+                    "type": "string"
+                },
+                "device_id": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "last_used": {
+                    "format": DATE_FORMATS_STRING,
+                    "type": "date"
+                }
+            }
+        },
+        "doc_type": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "domain": {
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "string"
+        },
+        "domain_membership": {
+            "dynamic": False,
+            "type": "object",
+            "properties": {
+                "doc_type": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "domain": {
+                    "fields": {
+                        "exact": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
+                    },
+                    "type": "string"
+                },
+                "is_admin": {
+                    "type": "boolean"
+                },
+                "location_id": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "override_global_tz": {
+                    "type": "boolean"
+                },
+                "role_id": {
+                    "type": "string"
+                },
+                "timezone": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain_memberships": {
+            "dynamic": False,
+            "type": "object",
+            "properties": {
+                "doc_type": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "domain": {
+                    "fields": {
+                        "exact": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
+                    },
+                    "type": "string"
+                },
+                "is_admin": {
+                    "type": "boolean"
+                },
+                "location_id": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "override_global_tz": {
+                    "type": "boolean"
+                },
+                "role_id": {
+                    "type": "string"
+                },
+                "timezone": {
+                    "type": "string"
+                }
+            }
+        },
+        "eulas": {
+            "dynamic": False,
+            "type": "object",
+            "properties": {
+                "date": {
+                    "format": DATE_FORMATS_STRING,
+                    "type": "date"
+                },
+                "doc_type": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "signed": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "user_ip": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "first_name": {
+            "type": "string"
+        },
+        "is_active": {
+            "type": "boolean"
+        },
+        "is_demo_user": {
+            "type": "boolean"
+        },
+        "is_staff": {
+            "type": "boolean"
+        },
+        "is_superuser": {
+            "type": "boolean"
+        },
+        "language": {
+            "type": "string"
+        },
+        "last_device": {
+            "dynamic": False,
+            "type": "object",
+            "properties": {
+                "app_meta": {
+                    "dynamic": False,
+                    "type": "object",
+                    "properties": {
+                        "app_id": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "build_id": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "build_version": {
+                            "type": "integer"
+                        },
+                        "last_heartbeat": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "last_request": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "last_submission": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "last_sync": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "num_quarantined_forms": {
+                            "type": "integer"
+                        },
+                        "num_unsent_forms": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "commcare_version": {
+                    "type": "string"
+                },
+                "device_id": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "last_used": {
+                    "format": DATE_FORMATS_STRING,
+                    "type": "date"
+                }
+            }
+        },
+        "last_login": {
+            "format": DATE_FORMATS_STRING,
+            "type": "date"
+        },
+        "last_name": {
+            "type": "string"
+        },
+        "location_id": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "password": {
+            "type": "string"
+        },
+        "phone_numbers": {
+            "type": "string"
+        },
+        "registering_device_id": {
+            "type": "string"
+        },
+        "reporting_metadata": {
+            "dynamic": False,
+            "type": "object",
+            "properties": {
+                "last_build_for_user": {
+                    "dynamic": False,
+                    "type": "object",
+                    "properties": {
+                        "app_id": {
+                            "type": "string"
+                        },
+                        "build_version": {
+                            "type": "integer"
+                        },
+                        "build_version_date": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        }
+                    }
+                },
+                "last_builds": {
+                    "dynamic": False,
+                    "type": "nested",
+                    "properties": {
+                        "app_id": {
+                            "type": "string"
+                        },
+                        "build_version": {
+                            "type": "integer"
+                        },
+                        "build_version_date": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        }
+                    }
+                },
+                "last_submission_for_user": {
+                    "dynamic": False,
+                    "type": "object",
+                    "properties": {
+                        "app_id": {
+                            "type": "string"
+                        },
+                        "build_id": {
+                            "type": "string"
+                        },
+                        "build_version": {
+                            "type": "integer"
+                        },
+                        "commcare_version": {
+                            "type": "string"
+                        },
+                        "device_id": {
+                            "type": "string"
+                        },
+                        "submission_date": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        }
+                    }
+                },
+                "last_submissions": {
+                    "dynamic": False,
+                    "type": "nested",
+                    "properties": {
+                        "app_id": {
+                            "type": "string"
+                        },
+                        "build_id": {
+                            "type": "string"
+                        },
+                        "build_version": {
+                            "type": "integer"
+                        },
+                        "commcare_version": {
+                            "type": "string"
+                        },
+                        "device_id": {
+                            "type": "string"
+                        },
+                        "submission_date": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        }
+                    }
+                },
+                "last_sync_for_user": {
+                    "dynamic": False,
+                    "type": "object",
+                    "properties": {
+                        "app_id": {
+                            "type": "string"
+                        },
+                        "build_version": {
+                            "type": "integer"
+                        },
+                        "sync_date": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        }
+                    }
+                },
+                "last_syncs": {
+                    "dynamic": False,
+                    "type": "nested",
+                    "properties": {
+                        "app_id": {
+                            "type": "string"
+                        },
+                        "build_version": {
+                            "type": "integer"
+                        },
+                        "sync_date": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        }
+                    }
+                }
+            }
+        },
+        "status": {
+            "type": "string"
+        },
+        "user_data": {
+            "enabled": False,
+            "type": "object"
+        },
+        "user_data_es": {
+            "dynamic": False,
+            "type": "nested",
+            "properties": {
+                "key": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "value": {
+                    "index": "analyzed",
+                    "type": "string"
+                }
+            }
+        },
+        "user_location_id": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "username": {
+            "analyzer": "standard",
+            "fields": {
+                "exact": {
+                    "include_in_all": False,
+                    "index": "not_analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "string"
+        }
+    }
+}
 
 USER_ES_ALIAS = prefix_for_tests('hqusers')
 
