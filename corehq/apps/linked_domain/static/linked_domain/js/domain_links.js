@@ -87,7 +87,7 @@ hqDefine("linked_domain/js/domain_links", [
 
         // General data
         self.domain = data.domain;
-        self.domain_links = ko.observableArray(_.map(data.linked_domains, DomainLink));
+        self.domainLinks = ko.observableArray(_.map(data.linked_domains, DomainLink));
         self.showRemoteReports = function () {
             if (data.linkable_ucr) {
                 return data.linkable_ucr.length > 0;
@@ -96,7 +96,7 @@ hqDefine("linked_domain/js/domain_links", [
         };
 
         self.isUpstreamDomain = ko.computed(function () {
-            return self.domain_links().length > 0;
+            return self.domainLinks().length > 0;
         });
         // doesn't need to be observable because it is impossible to update the existing page to change this property
         self.isDownstreamDomain = data.is_downstream_domain;
@@ -145,7 +145,7 @@ hqDefine("linked_domain/js/domain_links", [
             return !self.query() || domainLink.downstreamDomain().toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
         };
         self.filter = function () {
-            self.filteredDomainLinks(_.filter(self.domain_links(), self.matchesQuery));
+            self.filteredDomainLinks(_.filter(self.domainLinks(), self.matchesQuery));
             self.goToPage(1);
         };
 
@@ -153,7 +153,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.paginatedDomainLinks = ko.observableArray([]);
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.computed(function () {
-            return self.query() ? self.filteredDomainLinks().length : self.domain_links().length;
+            return self.query() ? self.filteredDomainLinks().length : self.domainLinks().length;
         });
         self.currentPage = 1;
 
@@ -161,7 +161,7 @@ hqDefine("linked_domain/js/domain_links", [
             self.currentPage = page;
             self.paginatedDomainLinks.removeAll();
             var skip = (self.currentPage - 1) * self.itemsPerPage();
-            var visibleDomains = self.query() ? self.filteredDomainLinks() : self.domain_links();
+            var visibleDomains = self.query() ? self.filteredDomainLinks() : self.domainLinks();
             self.paginatedDomainLinks(visibleDomains.slice(skip, skip + self.itemsPerPage()));
         };
 
@@ -197,7 +197,7 @@ hqDefine("linked_domain/js/domain_links", [
             _private.RMI("delete_domain_link", {
                 "linked_domain": link.downstreamDomain(),
             }).done(function () {
-                self.domain_links.remove(link);
+                self.domainLinks.remove(link);
                 var availableDomains = self.addDownstreamDomainViewModel.availableDomains();
                 availableDomains.push(link.downstreamDomain());
                 self.addDownstreamDomainViewModel.availableDomains(availableDomains.sort());
@@ -241,7 +241,7 @@ hqDefine("linked_domain/js/domain_links", [
         });
 
         self.localDownstreamDomains = ko.computed(function () {
-            return self.parent.domain_links().reduce(function (result, link) {
+            return self.parent.domainLinks().reduce(function (result, link) {
                 if (!link.isRemote) {
                     return result.concat(link.downstreamDomain());
                 }
@@ -367,7 +367,7 @@ hqDefine("linked_domain/js/domain_links", [
                     self.availableDomains(_.filter(self.availableDomains(), function (item) {
                         return item !== viewModel.domainToAdd();
                     }));
-                    self.parent.domain_links.unshift(DomainLink(response.domain_link));
+                    self.parent.domainLinks.unshift(DomainLink(response.domain_link));
                     self.parent.goToPage(1);
                 } else {
                     var errorMessage = _.template(
