@@ -31,16 +31,16 @@ class Command(CaseUpdateCommand):
         total_cases_updated = 0
         count_already_blank = 0
         for case in accessor.iter_cases(case_ids):
-            if(case.get_case_property('owner_id') != '-'):
+            if case.get_case_property('owner_id') != '-':
                 case_blocks.append(self.case_block(case))
             else:
                 count_already_blank += 1
-            if(len(case_blocks) >= BATCH_SIZE):
+            if len(case_blocks) >= BATCH_SIZE:
                 submit_case_blocks(case_blocks, domain, device_id=DEVICE_ID, user_id=user_id)
                 case_blocks = []
                 total_cases_updated += BATCH_SIZE
 
-        if(case_blocks):
+        if case_blocks:
             submit_case_blocks(case_blocks, domain, device_id=DEVICE_ID, user_id=user_id)
             total_cases_updated += len(case_blocks)
 
