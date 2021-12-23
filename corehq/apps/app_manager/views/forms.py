@@ -54,6 +54,7 @@ from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
     AppEditingError,
+    ArbitraryDatum,
     CaseReferences,
     CustomAssertion,
     CustomIcon,
@@ -193,6 +194,7 @@ def undo_delete_form(request, domain, record_id):
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
+    # Handle edit for actions and arbitrary_datums
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
     json_loads = json.loads(request.POST.get('actions'))
@@ -205,6 +207,11 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
         add_properties_to_data_dictionary(domain, action.case_type, list(action.case_properties.keys()))
     if advanced_actions_use_usercase(actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
+
+    datums_json = json.loads(request.POST.get('arbitrary_datums'))
+    datums = [ArbitraryDatum.wrap(item) for item in datums_json]
+    form.arbitrary_datums = datums
+
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
@@ -816,6 +823,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
             'commtrack_programs': all_programs + commtrack_programs(),
             'module_id': module.unique_id,
             'save_url': reverse("edit_advanced_form_actions", args=[app.domain, app.id, form.unique_id]),
+            'arbitrary_datums': form.arbitrary_datums,
         })
         if form.form_type == "shadow_form":
             case_config_options.update({
