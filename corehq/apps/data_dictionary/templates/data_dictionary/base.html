@@ -149,6 +149,7 @@
         <thead>
         <th></th>
         <th>{% trans "Case Property" %}</th>
+        <th>{% trans "Required" %}</th>
         <th>{% trans "Data Type" %}</th>
         <th>{% trans "Description" %}</th>
         {% if fhir_integration_enabled %}
@@ -162,6 +163,7 @@
         <tr class="active">
           <td><i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: $root.toggleGroup"></i></td>
           <td data-bind="text: name ? name : 'No Group'"></td>
+          <td>{% trans "Mandatory" %}</td>
           <td>{% trans "Case Property Group" %}</td>
           <td></td>
           <td></td>
@@ -177,6 +179,9 @@
             <i class="fa fa-arrows-v"></i>
           </td>
           <td data-bind="text: name"></td>
+          <td>
+            <input type="checkbox" data-bind="checked: required"/>
+          </td>
           <td>
             <select class="form-control"
                     data-bind="

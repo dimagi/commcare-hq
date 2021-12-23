@@ -111,6 +111,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                 "group": prop.group,
                 "deprecated": prop.deprecated,
                 "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
+                "required": prop.required,
             })
         props.append(p)
     return JsonResponse({'case_types': props})
@@ -155,6 +156,7 @@ def update_case_property(request, domain):
             group = property.get('group')
             deprecated = property.get('deprecated')
             allowed_values = property.get('allowed_values')
+            required = property.get('required')
             if update_fhir_resources:
                 fhir_resource_prop_path = property.get('fhir_resource_prop_path')
                 remove_path = property.get('removeFHIRResourcePropertyPath', False)
@@ -162,7 +164,7 @@ def update_case_property(request, domain):
                 fhir_resource_prop_path, remove_path = None, None
             error = save_case_property(name, case_type, domain, data_type, description, group, deprecated,
                                        fhir_resource_prop_path, fhir_resource_type_obj, remove_path,
-                                       allowed_values)
+                                       allowed_values, required)
             if error:
                 errors.append(error)
 

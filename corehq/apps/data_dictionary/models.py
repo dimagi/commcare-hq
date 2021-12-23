@@ -69,6 +69,7 @@ class CaseProperty(models.Model):
         blank=True
     )
     group = models.TextField(default='', blank=True)
+    required = models.BooleanField(default=False)
 
     class Meta(object):
         unique_together = ('case_type', 'name')
