@@ -249,10 +249,18 @@ hqDefine("linked_domain/js/domain_links", [
         self.enablePushButton = ko.computed(function () {
             return self.domainsToPush().length && self.modelsToPush().length && !self.pushInProgress();
         });
+        self.shouldShowSelectedERMDomain = ko.observable(false);
+        self.shouldShowSelectedMRMDomain = ko.observable(false);
 
         self.domainsToPushSubscription = self.domainsToPush.subscribe(function (newValue) {
             // receives updates every time a domain is selected/unselected from the multiselect
             if (newValue.length > 1) {
+                for (var option of $('#domain-multiselect')[0].options) {
+                    var tempLink = self.parent.domainLinksByNames()[option.value];
+                    if (option.selected && tempLink.hasFullAccess) {
+                        self.shouldShowSelectedERMDomain(true);
+                    }
+                }
                 // no need to rebuild multiselect
                 return;
             }
@@ -264,16 +272,22 @@ hqDefine("linked_domain/js/domain_links", [
                     if (!newValue.includes(option.value)) {
                         if (pushedNonEnterpriseLink) {
                             option.disabled = true;
+                            self.shouldShowSelectedMRMDomain(true);
                         } else {
                             // disable if link does not have full access
                             var tempLink = self.parent.domainLinksByNames()[option.value];
-                            option.disabled = !tempLink.hasFullAccess;
+                            if (!tempLink.hasFullAccess) {
+                                option.disabled = !tempLink.hasFullAccess;
+                                self.shouldShowSelectedERMDomain(true);
+                            }
                         }
                     }
                 }
             } else {
                 for (var option of $('#domain-multiselect')[0].options) {
                     option.disabled = false;
+                    self.shouldShowSelectedERMDomain(false);
+                    self.shouldShowSelectedMRMDomain(false);
                 }
             }
 
