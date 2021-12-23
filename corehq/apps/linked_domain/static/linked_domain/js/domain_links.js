@@ -88,6 +88,14 @@ hqDefine("linked_domain/js/domain_links", [
         // General data
         self.domain = data.domain;
         self.domainLinks = ko.observableArray(_.map(data.linked_domains, DomainLink));
+        self.domainLinksByNames = ko.computed(function () {
+            tmp = {};
+            for (link of self.domainLinks()) {
+                tmp[link.downstreamDomain()] = link;
+            }
+            return tmp;
+        });
+
         self.showRemoteReports = function () {
             if (data.linkable_ucr) {
                 return data.linkable_ucr.length > 0;
