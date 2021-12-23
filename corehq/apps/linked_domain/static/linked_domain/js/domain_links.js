@@ -226,6 +226,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.lastUpdate = link.last_update;
         self.upstreamUrl = link.upstream_url;
         self.downstreamUrl = link.downstream_url;
+        self.hasFullAccess = link.has_full_access;
         return self;
     };
 
