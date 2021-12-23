@@ -86,5 +86,15 @@
   </td>
   {% endif %}
 
+  {% if request|toggle_enabled:"CASE_IMPORT_VALIDATION" %}
+  <td>
+    <div class="checkbox">
+      <label>
+        <input type="checkbox" name="mandatory_field[]" style="margin-left: auto;" data-bind="value: excelField"/>
+      </label>
+    </div>
+  </td>
+  {% endif %}
+
 </tr>
 <!--/ko-->

@@ -43,6 +43,11 @@ class InvalidCustomFieldNameException(ImporterError):
     pass
 
 
+class MissingMandatoryFieldException(ImporterError):
+    """Raised when a value for a mandatory excel field is missing"""
+    pass
+
+
 class CaseRowErrorList(Exception):
     def __init__(self, errors=None):
         self.error_list = errors if errors else []
@@ -169,3 +174,7 @@ class CaseNameTooLong(CaseRowError):
 class ExternalIdTooLong(CaseRowError):
     title = ugettext_noop('External ID Too Long')
     message = ugettext_lazy(f"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters")
+
+
+class MissingMandatoryField(CaseRowError):
+    title = ugettext_noop('Missing Field')

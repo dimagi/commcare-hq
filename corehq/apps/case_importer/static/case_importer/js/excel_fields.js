@@ -28,6 +28,7 @@ hqDefine('case_importer/js/excel_fields', [
                 selectedCaseField: ko.observable(null),
                 customCaseField: ko.observable(excelField),
                 isCustom: ko.observable(false),
+                mandatory: ko.observable(false),
             };
             row.selectedCaseFieldOrBlank = ko.computed({
                 read: function () {
@@ -83,6 +84,7 @@ hqDefine('case_importer/js/excel_fields', [
                     row.isCustom(true);
                     row.selectedCaseField(null);
                 }
+                row.mandatory(false);
             };
             row.reset();
             row.caseFieldSuggestions = ko.computed(function () {

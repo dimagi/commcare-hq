@@ -13,7 +13,7 @@ from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import TaskProgressManager
 
-from corehq.apps.case_importer.exceptions import CaseRowError
+from corehq.apps.case_importer.exceptions import CaseRowError, MissingMandatoryFieldException
 from corehq.apps.data_dictionary.util import fields_to_validate
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -117,6 +117,8 @@ class _Importer(object):
 
     def import_row(self, row_num, raw_row):
         search_id = self._parse_search_id(raw_row)
+        if self.config.mandatory_fields:
+            self._ensure_mandatory_fields(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
@@ -148,6 +150,11 @@ class _Importer(object):
             raise exceptions.CaseGeneration()
 
         self.add_caseblock(RowAndCase(row_num, caseblock))
+
+    def _ensure_mandatory_fields(self, raw_row):
+        for mandatory_field in self.config.mandatory_fields:
+            if mandatory_field not in raw_row:
+                raise MissingMandatoryFieldException()
 
     @cached_property
     def user(self):
