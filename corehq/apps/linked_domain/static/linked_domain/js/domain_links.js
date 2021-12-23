@@ -277,13 +277,7 @@ hqDefine("linked_domain/js/domain_links", [
                 }
             }
 
-            // need to rebuild the multiselect on each update
-            $('#domain-multiselect').multiSelect('destroy');
-            multiselect_utils.createFullMultiselectWidget($('#domain-multiselect'), {
-                selectableHeaderTitle: self.domainMultiselect.selectableHeaderTitle,
-                selectedHeaderTitle: self.domainMultiselect.selectedHeaderTitle,
-                searchItemTitle: self.domainMultiselect.searchItemTitle,
-            });
+            multiselect_utils.rebuildMultiselect('domain-multiselect', self.domainMultiselect.properties);
         });
 
         self.localDownstreamDomains = ko.computed(function () {
@@ -300,6 +294,19 @@ hqDefine("linked_domain/js/domain_links", [
                 selectableHeaderTitle: gettext("All project spaces"),
                 selectedHeaderTitle: gettext("Project spaces to push to"),
                 searchItemTitle: gettext("Search project spaces"),
+                willSelectAllListener: function () {
+                    var requiresRebuild = false;
+                    for (var option of $('#domain-multiselect')[0].options) {
+                        var tempLink = self.parent.domainLinksByNames()[option.value];
+                        if (!option.selected && !option.disabled && !tempLink.hasFullAccess) {
+                            option.disabled = true;
+                            requiresRebuild = true;
+                        }
+                    }
+                    if (requiresRebuild) {
+                        multiselect_utils.rebuildMultiselect('domain-multiselect', self.domainMultiselect.properties);
+                    }
+                }
             },
             options: self.localDownstreamDomains,
         };

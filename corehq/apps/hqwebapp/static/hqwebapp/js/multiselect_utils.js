@@ -54,10 +54,11 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     };
 
     multiselect_utils.createFullMultiselectWidget = function (elementOrId, properties) {
-        assertProperties.assert(properties, [], ['selectableHeaderTitle', 'selectedHeaderTitle', 'searchItemTitle']);
+        assertProperties.assert(properties, [], ['selectableHeaderTitle', 'selectedHeaderTitle', 'searchItemTitle', 'willSelectAllListener']);
         var selectableHeaderTitle = properties.selectableHeaderTitle || gettext("Items");
         var selectedHeaderTitle = properties.selectedHeaderTitle || gettext("Selected items");
         var searchItemTitle = properties.searchItemTitle || gettext("Search items");
+        var willSelectAllListener = properties.willSelectAllListener;
 
         var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId),
             baseId = _.isString(elementOrId) ? elementOrId : "multiselect-" + String(Math.random()).substring(2),
@@ -132,7 +133,17 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             },
         });
 
+        multiselect_utils.rebuildMultiselect = function (elementId, multiselectProperties) {
+            var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId);
+            // multiSelect('refresh') breaks existing click handlers, so the alternative is to destroy and rebuild
+            $element.multiSelect('destroy');
+            multiselect_utils.createFullMultiselectWidget(elementId, multiselectProperties);
+        };
+
         $('#' + selectAllId).click(function () {
+            if (willSelectAllListener) {
+                willSelectAllListener();
+            }
             $element.multiSelect('select_all');
             return false;
         });
@@ -166,9 +177,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                 ko.unwrap(model.options());
             }
 
-            // multiSelect('refresh') breaks existing click handlers, so the alternative is to destroy and rebuild
-            $(element).multiSelect('destroy');
-            multiselect_utils.createFullMultiselectWidget(element, model.properties);
+            multiselect_utils.rebuildMultiselect(element, model.properties);
         },
     };
 
