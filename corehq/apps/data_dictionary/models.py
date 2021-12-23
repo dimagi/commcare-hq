@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext as _
 
@@ -98,6 +99,10 @@ class CaseProperty(models.Model):
         from .util import get_data_dict_props_by_case_type
         get_data_dict_props_by_case_type.clear(self.case_type.domain)
         return super(CaseProperty, self).save(*args, **kwargs)
+
+    def clean(self):
+        if self.required and self.deprecated:
+            raise ValidationError(_("A required property can't be deprecated"))
 
     def check_validity(self, value):
         if value and self.data_type == 'date':
