@@ -351,4 +351,4 @@ class ReleaseManagementReportDispatcher(ReportDispatcher):
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         from corehq.apps.linked_domain.util import can_user_access_release_management
-        return can_user_access_release_management(request.couch_user, domain, check_toggle=True)
+        return can_user_access_release_management(request.couch_user, domain, include_toggle=True)
