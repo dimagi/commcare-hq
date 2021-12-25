@@ -13,9 +13,10 @@ from corehq.privileges import RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT
 from corehq.util.timezones.conversions import ServerTime
 
 
-def can_user_access_release_management(user, domain, check_toggle=False):
+def can_user_access_release_management(user, domain, include_lite_version=True, include_toggle=False):
     """
-    :param check_toggle: set to True if the deprecated linked domains toggle should be checked
+    :param include_lite_version: set to True if the LITE_RELEASE_MANAGEMENT privilege should be checked
+    :param include_toggle: set to True if the deprecated linked domains toggle should be checked
     NOTE: can remove check_toggle once the linked domains toggle is deleted
     Checks if the current domain has any of the following enabled:
     - privileges.RELEASE_MANAGEMENT
@@ -25,16 +26,20 @@ def can_user_access_release_management(user, domain, check_toggle=False):
     """
     if not user or not domain:
         return False
-    if domain_has_privilege(domain, RELEASE_MANAGEMENT) or domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT):
-        return user.is_domain_admin(domain)
-    elif check_toggle:
-        return toggles.LINKED_DOMAINS.enabled(domain)
-    return False
+
+    has_access = domain_has_privilege(domain, RELEASE_MANAGEMENT) and user.is_domain_admin(domain)
+    if include_lite_version:
+        has_access |= domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT) and user.is_domain_admin(domain)
+    if include_toggle:
+        has_access |= toggles.LINKED_DOMAINS.enabled(domain)
+
+    return has_access
 
 
-def can_domain_access_release_management(domain, check_toggle=False):
+def can_domain_access_release_management(domain, include_lite_version=True, include_toggle=False):
     """
-    :param check_toggle: set to True if the deprecated linked domains toggle should be checked
+    :param include_lite_version: set to True if the LITE_RELEASE_MANAGEMENT privilege should be checked
+    :param include_toggle: set to True if the deprecated linked domains toggle should be checked
     NOTE: can remove check_toggle once the linked domains toggle is deleted
     Checks if the current domain has any of the following enabled:
     - privileges.RELEASE_MANAGEMENT
@@ -44,10 +49,14 @@ def can_domain_access_release_management(domain, check_toggle=False):
     """
     if not domain:
         return False
-    is_privilege_granted = (domain_has_privilege(domain, RELEASE_MANAGEMENT)
-                            or domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT))
-    is_toggle_enabled = check_toggle and toggles.LINKED_DOMAINS.enabled(domain)
-    return is_privilege_granted or is_toggle_enabled
+
+    has_access = domain_has_privilege(domain, RELEASE_MANAGEMENT)
+    if include_lite_version:
+        has_access |= domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT)
+    if include_toggle:
+        has_access |= toggles.LINKED_DOMAINS.enabled(domain)
+
+    return has_access
 
 
 def _clean_json(doc):
