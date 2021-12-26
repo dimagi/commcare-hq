@@ -4,6 +4,7 @@ import os
 import re
 from collections import namedtuple
 from copy import copy, deepcopy
+from corehq import toggles
 from datetime import datetime
 from uuid import UUID
 
@@ -766,11 +767,14 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def charts(self):
-        configured_charts = deepcopy(self.configured_charts)
-        for chart in configured_charts:
-            if chart['type'] == 'multibar':
-                chart['y_axis_columns'] = self._get_expanded_y_axis_cols_for_multibar(chart['y_axis_columns'])
-        return [ChartFactory.from_spec(g._obj) for g in configured_charts]
+        if toggles.SHOW_COUNT_PER_CHOICE_IN_MULTIBAR_GRAPH_FOR_REPORTS.enabled(self.domain):
+            configured_charts = deepcopy(self.configured_charts)
+            for chart in configured_charts:
+                if chart['type'] == 'multibar':
+                    chart['y_axis_columns'] = self._get_expanded_y_axis_cols_for_multibar(chart['y_axis_columns'])
+            return [ChartFactory.from_spec(g._obj) for g in configured_charts]
+        else:
+            return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
 
     def _get_expanded_y_axis_cols_for_multibar(self, original_y_axis_columns):
         y_axis_columns = []

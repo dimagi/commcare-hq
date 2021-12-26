@@ -2169,3 +2169,11 @@ DO_NOT_REPUBLISH_DOCS = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+
+SHOW_COUNT_PER_CHOICE_IN_MULTIBAR_GRAPH_FOR_REPORTS = StaticToggle(
+    'count_per_choice_in_multibar_graph_for_reports',
+    'Enables count per choice column to show up in multibar graph for reports',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
