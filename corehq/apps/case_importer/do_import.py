@@ -254,7 +254,9 @@ class _Importer(object):
             if update_field_name in RESERVED_FIELDS:
                 if update_field_name == 'parent_ref':
                     raise exceptions.InvalidCustomFieldNameException(
-                        _('Field name "{}" is deprecated. Please use "parent_identifier" instead.'))
+                        _('Field name "{}" is deprecated. Please use "parent_identifier" instead.').format(
+                            update_field_name
+                        ))
                 else:
                     raise exceptions.InvalidCustomFieldNameException(
                         _('Field name "{}" is reserved').format(update_field_name))
