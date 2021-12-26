@@ -285,6 +285,7 @@ class _Importer(object):
         return fields_to_update
 
     def _create_field_map(self):
+        # returns each excel column mapped to a dict with field_name as corresponding case property name
         config = self.config
         excel_fields = config.excel_fields
         case_fields = config.case_fields
