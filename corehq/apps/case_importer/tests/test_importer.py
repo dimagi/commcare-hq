@@ -66,12 +66,12 @@ class ImporterTest(TestCase):
         super(ImporterTest, self).tearDown()
 
     def _config(self, col_names, search_column=None, case_type=None,
-                search_field='case_id', create_new_cases=True):
+                search_field='case_id', create_new_cases=True, case_fields=None):
         return ImporterConfig(
             couch_user_id=self.couch_user._id,
             case_type=case_type or self.default_case_type,
             excel_fields=col_names,
-            case_fields=[''] * len(col_names),
+            case_fields=case_fields if case_fields else [''] * len(col_names),
             custom_fields=col_names,
             search_column=search_column or col_names[0],
             search_field=search_field,
@@ -489,8 +489,9 @@ class ImporterTest(TestCase):
         cases = {c.name: c for c in cur_cases}
         self.assertEqual(cases['name-0'].get_case_property('domain'), self.domain)
 
-    def import_mock_file(self, rows):
-        config = self._config(rows[0])
+    def import_mock_file(self, rows, config=None):
+        if not config:
+            config = self._config(rows[0])
         xls_file = make_worksheet_wrapper(*rows)
         return do_import(xls_file, config, self.domain)
 
@@ -600,6 +601,49 @@ class ImporterTest(TestCase):
 
         # Without the flag enabled, all the rows should be imported.
         res = self.import_mock_file(file_rows)
+        self.assertEqual(3, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(0, res['failed_count'])
+        self.assertFalse(res['errors'])
+
+    def test_required_fields(self):
+        setup_data_dictionary(self.domain, self.default_case_type,
+                              [('mc', 'select'), ('d1', 'date'), ('phone', 'number')],
+                              {'mc': ['True', 'False']},
+                              required=['d1', 'phone'])
+        file_rows = [
+            ['case_id', 'd1', 'mc', 'number'],
+            ['', '2022-04-01', 'True', '11'],
+            ['', '', 'False', '12'],  # missing d1
+            ['', '2022-04-01', 'False', ''],  # missing number
+            ['', '', '', ''],  # empty row
+        ]
+        config = self._config(file_rows[0],
+                              case_fields=['', '', 'manual_check', 'phone'])
+
+        with flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION'):
+            res = self.import_mock_file(file_rows, config)
+        self.assertEqual(1, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(3, res['failed_count'])
+        self.assertDictEqual(
+            res['errors']['Missing required case property'],
+            {
+                'Case property "d1" is required, Hence field "d1" is required': {
+                    'error': 'Missing required case property',
+                    'description': 'All required case properties must be be present in the upload',
+                    'rows': [3, 5]
+                },
+                'Case property "phone" is required, Hence field "number" is required': {
+                    'error': 'Missing required case property',
+                    'description': 'All required case properties must be be present in the upload',
+                    'rows': [4]
+                }
+            }
+        )
+
+        # Without the flag enabled, all the rows should be imported.
+        res = self.import_mock_file(file_rows, config)
         self.assertEqual(3, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertEqual(0, res['failed_count'])
