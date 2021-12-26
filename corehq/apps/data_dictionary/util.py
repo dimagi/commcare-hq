@@ -231,3 +231,12 @@ def fields_to_validate(domain, case_type_name):
     }
     props = CaseProperty.objects.filter(**filter_kwargs)
     return {prop.name: prop for prop in props}
+
+
+def required_case_props(domain, case_type_name):
+    case_type_filter_kwargs = {
+        'case_type__domain': domain,
+        'case_type__name': case_type_name,
+    }
+    return CaseProperty.objects.filter(**case_type_filter_kwargs).filter(required=True).values_list('name',
+                                                                                                    flat=True)

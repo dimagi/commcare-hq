@@ -14,7 +14,10 @@ from dimagi.utils.logging import notify_exception
 from soil.progress import TaskProgressManager
 
 from corehq.apps.case_importer.exceptions import CaseRowError
-from corehq.apps.data_dictionary.util import fields_to_validate
+from corehq.apps.data_dictionary.util import (
+    fields_to_validate,
+    required_case_props,
+)
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
@@ -87,11 +90,23 @@ class _Importer(object):
         self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
         self.multi_domain = multi_domain
+        self.field_map = self._create_field_map()
         if CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(self.domain):
             self.fields_to_validate = fields_to_validate(domain, config.case_type)
+            self.required_fields = self._populate_required_fields()
         else:
             self.fields_to_validate = {}
-        self.field_map = self._create_field_map()
+            self.required_fields = {}
+
+    def _populate_required_fields(self):
+        # mapping of required excel fields to their corresponding required case property names
+        required_fields = {}
+        required_props = required_case_props(self.domain, self.config.case_type)
+        for excel_field in self.field_map:
+            case_prop_name = self.field_map[excel_field].get('field_name')
+            if case_prop_name and case_prop_name in required_props:
+                required_fields[excel_field] = case_prop_name
+        return required_fields
 
     def do_import(self, spreadsheet):
         with TaskProgressManager(self.task, src="case_importer") as progress_manager:
@@ -117,6 +132,7 @@ class _Importer(object):
 
     def import_row(self, row_num, raw_row):
         search_id = self._parse_search_id(raw_row)
+        self._validate_required_fields(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
@@ -148,6 +164,15 @@ class _Importer(object):
             raise exceptions.CaseGeneration()
 
         self.add_caseblock(RowAndCase(row_num, caseblock))
+
+    def _validate_required_fields(self, raw_row):
+        for required_field in self.required_fields:
+            if required_field not in raw_row or not raw_row.get(required_field).strip():
+                raise exceptions.MissingRequiredValue(
+                    _('Case property "{}" is required, Hence field "{}" is required').format(
+                        self.required_fields[required_field], required_field
+                    )
+                )
 
     @cached_property
     def user(self):
