@@ -638,6 +638,38 @@ class ImporterTest(TestCase):
         self.assertEqual(0, res['failed_count'])
         self.assertFalse(res['errors'])
 
+    def test_number_validity_checking(self):
+        setup_data_dictionary(self.domain, self.default_case_type,
+                              [('age', 'number'), ('d1', 'date')])
+        file_rows = [
+            ['case_id', 'age', 'd1'],
+            ['', '10', '2022-04-01'],  # valid
+            ['', '', '2022-04-01'],  # missing so not validated
+            ['', 'ten', '2022-04-01'],  # invalid number
+        ]
+        with flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION'):
+            res = self.import_mock_file(file_rows)
+        self.assertEqual(2, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(1, res['failed_count'])
+        self.assertDictEqual(
+            res['errors']['Invalid Number'],
+            {
+                'age': {
+                    'error': 'Invalid Number',
+                    'description': '',
+                    'rows': [4]
+                }
+            }
+        )
+
+        # Without the flag enabled, all the rows should be imported.
+        res = self.import_mock_file(file_rows)
+        self.assertEqual(3, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(0, res['failed_count'])
+        self.assertFalse(res['errors'])
+
     def test_columns_and_rows_align(self):
         with get_commcare_user(self.domain) as case_owner:
             res = self.import_mock_file([

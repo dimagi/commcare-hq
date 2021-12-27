@@ -106,6 +106,9 @@ class CaseProperty(models.Model):
                 datetime.strptime(value, ISO_DATE_FORMAT)
             except ValueError:
                 raise exceptions.InvalidDate(sample=value)
+        elif value and self.data_type == 'number':
+            if not value.isnumeric():
+                raise exceptions.InvalidNumber()
         elif value and self.data_type == 'phone_number':
             try:
                 phonenumber_obj = phonenumbers_parse(value)

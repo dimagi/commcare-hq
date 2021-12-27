@@ -98,6 +98,10 @@ class InvalidDate(CaseRowError):
     )
 
 
+class InvalidNumber(CaseRowError):
+    title = ugettext_noop('Invalid Number')
+
+
 class InvalidPhoneNumber(CaseRowError):
     title = ugettext_noop('Invalid Phone Number')
     message = ugettext_lazy(

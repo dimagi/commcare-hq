@@ -225,7 +225,7 @@ def fields_to_validate(domain, case_type_name):
     filter_kwargs = {
         'case_type__domain': domain,
         'case_type__name': case_type_name,
-        'data_type__in': ['date', 'select', 'phone_number'],
+        'data_type__in': ['date', 'select', 'phone_number', 'number'],
     }
     props = CaseProperty.objects.filter(**filter_kwargs)
     return {prop.name: prop for prop in props}
