@@ -3,11 +3,13 @@ from datetime import datetime
 from django.db import models
 from django.utils.translation import ugettext as _
 
+from phonenumbers.phonenumberutil import NumberParseException, is_valid_number
+from phonenumbers.phonenumberutil import parse as phonenumbers_parse
+
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.case_importer import exceptions
-
 
 PROPERTY_TYPE_CHOICES = (
     ('date', _('Date')),
@@ -104,6 +106,13 @@ class CaseProperty(models.Model):
                 datetime.strptime(value, ISO_DATE_FORMAT)
             except ValueError:
                 raise exceptions.InvalidDate(sample=value)
+        elif value and self.data_type == 'phone_number':
+            try:
+                phonenumber_obj = phonenumbers_parse(value)
+                if not is_valid_number(phonenumber_obj):
+                    raise exceptions.InvalidPhoneNumber()
+            except NumberParseException:
+                raise exceptions.InvalidPhoneNumber()
         elif value and self.data_type == 'select' and self.allowed_values.exists():
             if not self.allowed_values.filter(allowed_value=value).exists():
                 raise exceptions.InvalidSelectValue(sample=value, message=self.valid_values_message)

@@ -98,6 +98,13 @@ class InvalidDate(CaseRowError):
     )
 
 
+class InvalidPhoneNumber(CaseRowError):
+    title = ugettext_noop('Invalid Phone Number')
+    message = ugettext_lazy(
+        'Valid phone numbers to be entered with correct region code'
+    )
+
+
 class InvalidSelectValue(CaseRowError):
     title = ugettext_noop('Unexpected multiple choice value')
     message = ugettext_lazy(

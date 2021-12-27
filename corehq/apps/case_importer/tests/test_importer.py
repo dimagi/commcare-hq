@@ -605,6 +605,39 @@ class ImporterTest(TestCase):
         self.assertEqual(0, res['failed_count'])
         self.assertFalse(res['errors'])
 
+    def test_phone_number_validity_checking(self):
+        setup_data_dictionary(self.domain, self.default_case_type,
+                              [('phone', 'phone_number'), ('d1', 'date')])
+        file_rows = [
+            ['case_id', 'phone', 'd1'],
+            ['', '+91 9999999999', '2022-04-01'],  # valid
+            ['', '', '2022-04-01'],  # missing so not validated
+            ['', '9999999999', '2022-04-01'],  # missing region code
+            ['', '+91 999999999', '2022-04-01'],  # invalid number
+        ]
+        with flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION'):
+            res = self.import_mock_file(file_rows)
+        self.assertEqual(2, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(2, res['failed_count'])
+        self.assertDictEqual(
+            res['errors']['Invalid Phone Number'],
+            {
+                'phone': {
+                    'error': 'Invalid Phone Number',
+                    'description': 'Valid phone numbers to be entered with correct region code',
+                    'rows': [4, 5]
+                }
+            }
+        )
+
+        # Without the flag enabled, all the rows should be imported.
+        res = self.import_mock_file(file_rows)
+        self.assertEqual(4, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(0, res['failed_count'])
+        self.assertFalse(res['errors'])
+
     def test_columns_and_rows_align(self):
         with get_commcare_user(self.domain) as case_owner:
             res = self.import_mock_file([
