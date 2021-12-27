@@ -1574,13 +1574,6 @@ COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     description='Reports for comparison must be listed in settings.UCR_COMPARISONS.'
 )
 
-MOBILE_LOGIN_LOCKOUT = StaticToggle(
-    'mobile_user_login_lockout',
-    "On too many wrong password attempts, lock out mobile users",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
     'Allow linking project spaces (successor to linked apps)',
