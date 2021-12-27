@@ -17,7 +17,7 @@ def can_user_access_release_management(user, domain, include_lite_version=True, 
     """
     :param include_lite_version: set to True if the LITE_RELEASE_MANAGEMENT privilege should be checked
     :param include_toggle: set to True if the deprecated linked domains toggle should be checked
-    NOTE: can remove check_toggle once the linked domains toggle is deleted
+    NOTE: can remove include_toggle once the linked domains toggle is deleted
     Checks if the current domain has any of the following enabled:
     - privileges.RELEASE_MANAGEMENT
     - privileges.LITE_RELEASE_MANAGEMENT
@@ -40,12 +40,11 @@ def can_domain_access_release_management(domain, include_lite_version=True, incl
     """
     :param include_lite_version: set to True if the LITE_RELEASE_MANAGEMENT privilege should be checked
     :param include_toggle: set to True if the deprecated linked domains toggle should be checked
-    NOTE: can remove check_toggle once the linked domains toggle is deleted
+    NOTE: can remove include_toggle once the linked domains toggle is deleted
     Checks if the current domain has any of the following enabled:
     - privileges.RELEASE_MANAGEMENT
     - privileges.LITE_RELEASE_MANAGEMENT
     - toggles.LINKED_DOMAINS
-    If yes, and the user meets the criteria needed, returns True
     """
     if not domain:
         return False
