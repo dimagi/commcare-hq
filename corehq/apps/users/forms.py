@@ -857,12 +857,11 @@ class MultipleSelectionForm(forms.Form):
             // Multiselect widget
             $(function () {
                 var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-                multiselect_utils.createFullMultiselectWidget(
-                    'id_of_multiselect_field',
-                    gettext("Available Things"),
-                    gettext("Things Selected"),
-                    gettext("Search Things...")
-                );
+                multiselect_utils.createFullMultiselectWidget('id_of_multiselect_field', {
+                    selectableHeaderTitle: gettext("Available Things"),
+                    selectedHeaderTitle: gettext("Things Selected"),
+                    searchItemTitle: gettext("Search Things..."),
+                });
             });
         });
     """

@@ -74,11 +74,10 @@ hqDefine("domain/js/internal_settings", [
             numberOfMonths: 2,
         });
 
-        multiselectUtils.createFullMultiselectWidget(
-            'id_countries',
-            gettext("Available Countries"),
-            gettext("Active Countries"),
-            gettext("Search Countries...")
-        );
+        multiselectUtils.createFullMultiselectWidget('id_countries', {
+            selectableHeaderTitle: gettext("Available Countries"),
+            selectedHeaderTitle: gettext("Active Countries"),
+            searchItemTitle: gettext("Search Countries..."),
+        });
     });
 });

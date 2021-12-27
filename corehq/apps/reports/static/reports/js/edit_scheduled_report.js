@@ -130,12 +130,11 @@ hqDefine("reports/js/edit_scheduled_report", [
         );
     }
     else {
-        multiselectUtils.createFullMultiselectWidget(
-            'id_config_ids',
-            gettext("Available Reports"),
-            gettext("Included Reports"),
-            gettext("Search Reports...")
-        );
+        multiselectUtils.createFullMultiselectWidget('id_config_ids', {
+            selectableHeaderTitle: gettext("Available Reports"),
+            selectedHeaderTitle: gettext("Included Reports"),
+            searchItemTitle: gettext("Search Reports..."),
+        });
     }
     updateUcrElements($("#id_config_ids").val());
 

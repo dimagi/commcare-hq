@@ -51,12 +51,11 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         });
     };
 
-    multiselect_utils.createFullMultiselectWidget = function (
-        elementOrId,
-        selectableHeaderTitle,
-        selectedHeaderTitle,
-        searchItemTitle,
-    ) {
+    multiselect_utils.createFullMultiselectWidget = function (elementOrId, properties) {
+        var selectableHeaderTitle = properties.selectableHeaderTitle || gettext("Items");
+        var selectedHeaderTitle = properties.selectedHeaderTitle || gettext("Selected items");
+        var searchItemTitle = properties.searchItemTitle || gettext("Search items");
+
         var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId),
             baseId = _.isString(elementOrId) ? elementOrId : "multiselect-" + String(Math.random()).substring(2),
             selectAllId = baseId + '-select-all',
@@ -148,12 +147,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     ko.bindingHandlers.multiselect = {
         init: function (element, valueAccessor) {
             var properties = valueAccessor();
-            multiselect_utils.createFullMultiselectWidget(
-                element,
-                properties.selectableHeaderTitle || gettext("Items"),
-                properties.selectedHeaderTitle || gettext("Selected items"),
-                properties.searchItemTitle || gettext("Search items"),
-            );
+            multiselect_utils.createFullMultiselectWidget(element, properties);
             if (properties.options) {
                 // add the `options` binding to the element, valueAccessor() should return an observable
                 ko.applyBindingsToNode(element, {options: properties.options});
@@ -168,12 +162,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
 
             // multiSelect('refresh') breaks existing click handlers, so the alternative is to destroy and rebuild
             $(element).multiSelect('destroy');
-            multiselect_utils.createFullMultiselectWidget(
-                element,
-                properties.selectableHeaderTitle || gettext("Items"),
-                properties.selectedHeaderTitle || gettext("Selected items"),
-                properties.searchItemTitle || gettext("Search items")
-            );
+            multiselect_utils.createFullMultiselectWidget(element, properties);
         },
     };
 
