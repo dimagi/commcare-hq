@@ -57,7 +57,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                         url: self.save_url,
                         data: {
                             actions: actions,
-                            arbitrary_datums: ko.toJSON(self.caseConfigViewModel.arbitrary_datums),
+                            arbitrary_datums: ko.mapping.toJSON(self.caseConfigViewModel.arbitrary_datums),
                         },
                         dataType: 'json',
                         success: function (data) {
@@ -306,23 +306,15 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 return action;
             }));
 
-            self.arbitraryDatum = function (datum_id, datum_function) {
-                this.datum_id = ko.observable(datum_id);
-                this.datum_function = ko.observable(datum_function);
-            };
 
-            self.arbitrary_datums = ko.observableArray(_(params.arbitrary_datums).map(function (a) {
-                return new self.arbitraryDatum(a.datum_id, a.datum_function);
-            }));
+            self.arbitrary_datums = ko.mapping.fromJS(params.arbitrary_datums);
 
-            ko.computed(function () {
-                return ko.toJSON(self.arbitrary_datums);
-            }).subscribe(function () {
+            self.arbitrary_datums.subscribe(function () {
                 self.caseConfig.saveButton.fire('change');
             });
 
             self.addDatum = function () {
-                self.arbitrary_datums.push(new self.arbitraryDatum('', ''));
+                self.arbitrary_datums.push(ko.mapping.fromJSON('{"datum_id": "", "datum_function": ""}'));
             };
 
             self.removeDatum = function (datum) {
