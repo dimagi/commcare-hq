@@ -82,6 +82,7 @@ class Command(BaseCommand):
             .domain(domain).values_list("_id", flat=True)
         )
 
+        self._doc_counts()
         self._forms_per_user_per_month()
         self._cases_created_per_user_per_month()
         self._cases_updated_per_user_per_month()
