@@ -10,7 +10,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--reset', action='store_true', default=False,
-                            help="Wipe and rebuild the index")
+                            help="Wipe and rebuild the index, including fixture data")
         parser.add_argument('--load-domain', help="Load a domain's cases into this index")
         parser.add_argument('--query', action='store_true', default=False,
                             help="Run the queries defined in ")
