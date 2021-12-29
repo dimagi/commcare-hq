@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import uuid4
 
-from .const import TEST_DOMAIN_NAME
+from .const import PATIENT_CASE_TYPE, TEST_DOMAIN_NAME
 
 
 @dataclass(frozen=True)
@@ -29,7 +29,7 @@ class Patient:
             'case_json': properties,
             'case_id': case_id,
             'domain': TEST_DOMAIN_NAME,
-            'type': 'patient',
+            'type': PATIENT_CASE_TYPE,
             'name': self.name,
             'owner_id': user_id,
             'opened_on': now,
@@ -56,6 +56,7 @@ class Patient:
 
 CASES_FIXTURE = [
     Patient("P. Sherman", "42 Wallaby Way"),
+    Patient("P. Sherman", "Wallaby Way 42"),
     Patient("Peter Sherman", "42 Wallaby Way, Sydney AU"),
     Patient("Paul Sherman", "#42 Wallaby Way, Sydney AU"),
 ]
