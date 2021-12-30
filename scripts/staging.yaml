@@ -82,4 +82,5 @@ branches:
     - sk/enterprise-domain-user-filter # Simon Dec 17
     - sr/datums  # sravan Dec 21
     - mjr/fix_entity_script  # Matt Dec 22
+    - invited-users-not-admins # Jenny Dec 30
 submodules: { }
