@@ -153,7 +153,8 @@ class UserInvitationView(object):
                         form,
                         created_by=invited_by_user,
                         created_via=USER_CHANGE_VIA_INVITATION,
-                        domain=invitation.domain
+                        domain=invitation.domain,
+                        is_domain_admin=False,
                     )
                     user.save()
                     messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
