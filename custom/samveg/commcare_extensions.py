@@ -1,6 +1,8 @@
 from corehq.apps.case_importer.extension_points import custom_case_upload_file_checks
+from custom.samveg.case_importer.validators import MandatoryColumnsValidator
 
 validators = [
+    MandatoryColumnsValidator,
 ]
 
 

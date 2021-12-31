@@ -1,0 +1,2 @@
+MANDATORY_COLUMNS = [
+]
