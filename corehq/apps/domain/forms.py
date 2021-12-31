@@ -37,7 +37,7 @@ from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
-from crispy_forms.layout import Submit
+from crispy_forms.layout import Layout, Submit
 from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from memoized import memoized
@@ -645,37 +645,36 @@ class PrivacySecurityForm(forms.Form):
         user_name = kwargs.pop('user_name')
         domain = kwargs.pop('domain')
         super(PrivacySecurityForm, self).__init__(*args, **kwargs)
-        self.helper = hqcrispy.HQFormHelper(self)
-        self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
-        self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
-        self.helper[2] = twbscrispy.PrependedText('secure_sessions', '')
-        self.helper[3] = crispy.Field('secure_sessions_timeout')
-        self.helper[4] = twbscrispy.PrependedText('allow_domain_requests', '')
-        self.helper[5] = twbscrispy.PrependedText('hipaa_compliant', '')
-        self.helper[6] = twbscrispy.PrependedText('two_factor_auth', '')
-        self.helper[7] = twbscrispy.PrependedText('strong_mobile_passwords', '')
-        self.helper[8] = twbscrispy.PrependedText('ga_opt_out', '')
-        self.helper[9] = twbscrispy.PrependedText('restrict_mobile_access', '')
 
+        excluded_fields = []
         if not RESTRICT_MOBILE_ACCESS.enabled(domain):
-            self.helper.layout.pop(9)
+            excluded_fields.append('restrict_mobile_access')
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
-            self.helper.layout.pop(8)
-            self.helper.layout.pop(7)
-            self.helper.layout.pop(6)
+            excluded_fields.append('ga_opt_out')
+            excluded_fields.append('strong_mobile_passwords')
+            excluded_fields.append('two_factor_auth')
+            excluded_fields.append('secure_sessions')
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
-            self.helper.layout.pop(5)
+            excluded_fields.append('hipaa_compliant')
         if not SECURE_SESSION_TIMEOUT.enabled(domain):
-            self.helper.layout.pop(3)
-        if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
-            self.helper.layout.pop(2)
-        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
-        self.helper.layout.append(
+            excluded_fields.append('secure_sessions_timeout')
+
+        # PrependedText ensures the label is to the left of the checkbox, and the help text beneath.
+        # Feels like there should be a better way to apply these styles, as we aren't pre-pending anything
+        fields = [twbscrispy.PrependedText(field_name, '')
+            for field_name in self.fields.keys() if field_name not in excluded_fields]
+
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.layout = Layout(
+            crispy.Fieldset(
+                _('Edit Privacy Settings'),
+                *fields
+            ),
             hqcrispy.FormActions(
                 StrictButton(
-                    _("Update Privacy Settings"),
-                    type="submit",
-                    css_class='btn-primary',
+                    _('Update Privacy Settings'),
+                    type='submit',
+                    css_class='btn-primary'
                 )
             )
         )
