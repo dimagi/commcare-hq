@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
-from unittest.mock import patch
 
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
@@ -18,8 +17,6 @@ from corehq.form_processor.utils import (
     get_simple_wrapped_form,
 )
 from corehq.util.test_utils import softer_assert
-
-from corehq.apps.users.models import MAX_LOGIN_ATTEMPTS
 
 
 class UserModelTest(TestCase):
@@ -48,8 +45,9 @@ class UserModelTest(TestCase):
         self.domain_obj.delete()
         super(UserModelTest, self).tearDown()
 
-    def create_commcare_user(self, username):
-        return CommCareUser.create(
+    def create_user(self, username, is_web_user=True):
+        UserClass = WebUser if is_web_user else CommCareUser
+        return UserClass.create(
             domain=self.domain,
             username=username,
             password='***',
@@ -174,12 +172,36 @@ class UserModelTest(TestCase):
         definition.delete()
         web_user.delete(self.domain, deleted_by=None)
 
-    def test_commcare_user_should_be_locked_out(self):
-        # Make sure the we know the user should be locked, if not for the toggle
-        commcare_user = self.create_commcare_user('test_user')
-        commcare_user.login_attempts = MAX_LOGIN_ATTEMPTS
+    def test_commcare_user_lockout_limits(self):
+        commcare_user = self.create_user('test_user', is_web_user=False)
 
-        self.assertTrue(commcare_user.should_be_locked_out())
+        with self.subTest('User is locked out'):
+            commcare_user.login_attempts = 500
+            self.assertTrue(commcare_user.is_locked_out())
+
+        with self.subTest('User is not locked out'):
+            commcare_user.login_attempts = 499
+            self.assertFalse(commcare_user.is_locked_out())
+
+    def test_web_user_lockout_limits(self):
+        web_user = self.create_user('test_user', is_web_user=True)
+
+        with self.subTest('User is locked out'):
+            web_user.login_attempts = 5
+            self.assertTrue(web_user.is_locked_out())
+
+        with self.subTest('User is not locked out'):
+            web_user.login_attempts = 4
+            self.assertFalse(web_user.is_locked_out())
+
+    def test_commcare_user_with_no_lockouts_is_not_locked_out(self):
+        commcare_user = self.create_user('test_user', is_web_user=False)
+
+        self.domain_obj.disable_mobile_login_lockout = True
+        self.domain_obj.save()
+
+        commcare_user.login_attempts = 100
+        self.assertFalse(commcare_user.is_locked_out())
 
 
 class UserDeviceTest(SimpleTestCase):

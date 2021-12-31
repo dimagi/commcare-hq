@@ -99,7 +99,8 @@ from .models_role import (  # noqa
     UserRole,
 )
 
-MAX_LOGIN_ATTEMPTS = 5
+MAX_WEB_USER_LOGIN_ATTEMPTS = 5
+MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
 
 
 def _add_to_list(list, obj, default):
@@ -999,7 +1000,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return self.supports_lockout() and self.should_be_locked_out()
 
     def should_be_locked_out(self):
-        return self.login_attempts >= MAX_LOGIN_ATTEMPTS
+        max_attempts = MAX_WEB_USER_LOGIN_ATTEMPTS if self.is_web_user() else MAX_COMMCARE_USER_LOGIN_ATTEMPTS
+        return self.login_attempts >= max_attempts
+
+    def supports_lockout(self):
+        return True
 
     @property
     def raw_username(self):
@@ -1040,9 +1045,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def is_web_user(self):
         return self._get_user_type() == 'web'
-
-    def supports_lockout(self):
-        return self.is_web_user()
 
     def _get_user_type(self):
         if self.doc_type == 'WebUser':
@@ -1788,6 +1790,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def is_web_user(self):
         return False
+
+    def supports_lockout(self):
+        return not self.project.disable_mobile_login_lockout
 
     def to_ota_restore_user(self, request_user=None):
         return OTARestoreCommCareUser(

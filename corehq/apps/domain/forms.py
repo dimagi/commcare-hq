@@ -640,6 +640,12 @@ class PrivacySecurityForm(forms.Form):
             "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'> "
             "Read more about restricting mobile endpoint access here.</a>")),
     )
+    disable_mobile_login_lockout = BooleanField(
+        label=ugettext_lazy("Disable Mobile Worker Lockout"),
+        required=False,
+        help_text=ugettext_lazy("Mobile Workers will never be locked out of their account, regardless"
+            "of the number of failed attempts")
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
@@ -700,6 +706,8 @@ class PrivacySecurityForm(forms.Form):
         domain_obj.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
         if RESTRICT_MOBILE_ACCESS.enabled(domain_obj.name):
             domain_obj.restrict_mobile_access = self.cleaned_data.get('restrict_mobile_access', False)
+
+        domain_obj.disable_mobile_login_lockout = self.cleaned_data.get('disable_mobile_login_lockout', False)
 
         domain_obj.save()
 

@@ -19,7 +19,8 @@ class PrivacySecurityFormTests(SimpleTestCase):
         self.assertEqual(visible_field_names, [
             'restrict_superusers',
             'secure_submissions',
-            'allow_domain_requests'
+            'allow_domain_requests',
+            'disable_mobile_login_lockout'
         ])
 
     @patch.object(forms.RESTRICT_MOBILE_ACCESS, 'enabled', return_value=True)
