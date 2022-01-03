@@ -2,12 +2,14 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     "jquery",
     "knockout",
     "underscore",
+    "hqwebapp/js/assert_properties",
     "multiselect/js/jquery.multi-select",
     "quicksearch/dist/jquery.quicksearch.min",
 ], function (
     $,
     ko,
-    _
+    _,
+    assertProperties
 ) {
     var multiselect_utils = {};
 
@@ -52,6 +54,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     };
 
     multiselect_utils.createFullMultiselectWidget = function (elementOrId, properties) {
+        assertProperties.assert(properties, [], ['selectableHeaderTitle', 'selectedHeaderTitle', 'searchItemTitle', 'options']);
         var selectableHeaderTitle = properties.selectableHeaderTitle || gettext("Items");
         var selectedHeaderTitle = properties.selectedHeaderTitle || gettext("Selected items");
         var searchItemTitle = properties.searchItemTitle || gettext("Search items");
@@ -129,6 +132,12 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             },
         });
 
+        if (properties.options) {
+            // add the `options` binding to the element, valueAccessor() should return an observable
+            // NOTE: apply bindings after the multiselect has been setup
+            ko.applyBindingsToNode($element[0], {options: properties.options});
+        }
+
         $('#' + selectAllId).click(function () {
             $element.multiSelect('select_all');
             return false;
@@ -148,10 +157,6 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         init: function (element, valueAccessor) {
             var properties = valueAccessor();
             multiselect_utils.createFullMultiselectWidget(element, properties);
-            if (properties.options) {
-                // add the `options` binding to the element, valueAccessor() should return an observable
-                ko.applyBindingsToNode(element, {options: properties.options});
-            }
         },
         update: function (element, valueAccessor) {
             var properties = valueAccessor();
