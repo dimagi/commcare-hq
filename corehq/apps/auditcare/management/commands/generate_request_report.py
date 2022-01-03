@@ -93,7 +93,7 @@ class Command(BaseCommand):
             writer.writerow(['Date', 'User', 'Domain', 'IP Address', 'Request Path'])
             for user in users:
                 write_log_events(writer, user, domain, start_date=options['start'], end_date=options['end'])
-            if not username:
+            if username:
                 # no `removed_users` or `super_users` when `username` is provided
                 return
 
