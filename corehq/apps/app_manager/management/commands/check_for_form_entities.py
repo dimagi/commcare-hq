@@ -1,9 +1,11 @@
 import signal
 from datetime import datetime
+from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.core.paginator import Paginator
 from django.urls import reverse
+from jsonobject.exceptions import BadValueError, WrappingAttributeError
 from corehq.apps.app_manager.models import Application, GlobalAppConfig
 from corehq.apps.app_manager.xform import parse_xml
 from corehq.apps.app_manager.exceptions import DangerousXmlException, XFormException
@@ -51,7 +53,7 @@ class Command(BaseCommand):
             self.report_results()
 
     def process_forms(self, all, limit, reset, batchsize):
-        get_apps = get_all_apps if all else get_current_apps
+        get_apps = self.get_all_apps if all else get_current_apps
 
         for app in get_apps(reset, batchsize):
             for form in get_forms(app):
@@ -69,7 +71,7 @@ class Command(BaseCommand):
 
     def setup_interrupt_handler(self):
         def interrupt_handler(signum, frame):
-            self.report_results(self.log_file)
+            self.report_results()
             exit(1)
 
         signal.signal(signal.SIGINT, interrupt_handler)
@@ -79,25 +81,38 @@ class Command(BaseCommand):
         print(msg)
         print(msg, file=self.log_file)
 
+    def get_all_apps(self, reset=False, batchsize=10):
+        '''
+        This looks at all apps, including previous versions.
+        Note that this won't look at linked or remote apps
+        '''
+        db = Application.get_db()
+        keys = [[Application.__name__], [f'{Application.__name__}-Deleted']]
+        view_name = 'all_docs/by_doc_type'
+        raw_iter = resumable_view_iterator(db, __name__, view_name, view_keys=keys, chunk_size=batchsize,
+            full_row=True)
+        if reset:
+            raw_iter.discard_state()
 
-def get_all_apps(reset=False, batchsize=10):
-    '''
-    This looks at all apps, including previous versions.
-    Note that this won't look at linked or remote apps
-    '''
-    db = Application.get_db()
-    keys = [[Application.__name__], [f'{Application.__name__}-Deleted']]
-    view_name = 'all_docs/by_doc_type'
-    raw_iter = resumable_view_iterator(db, __name__, view_name, view_keys=keys, chunk_size=batchsize)
-    if reset:
-        raw_iter.discard_state()
+        modified_start_key, keys = get_keys_to_search(keys, raw_iter)
 
-    modified_start_key, keys = get_keys_to_search(keys, raw_iter)
+        count = get_remaining_app_count(db, view_name, keys, modified_start_key)
 
-    count = get_remaining_app_count(db, view_name, keys, modified_start_key)
+        app_iter = (wrapped_app for wrapped_app in (self.wrap_app(x) for x in raw_iter) if wrapped_app)
+        return with_progress_bar(app_iter, count)
 
-    app_iter = (Application.wrap(x) for x in raw_iter)
-    return with_progress_bar(app_iter, count)
+    def wrap_app(self, fetched_row):
+        id = fetched_row['id']
+        raw_app = fetched_row['doc']
+        if not raw_app:
+            print(f'no associated app found for: {id}', file=self.log_file)
+            return None
+
+        try:
+            return Application.wrap(raw_app)
+        except (BadValueError, WrappingAttributeError, ValueError, AssertionError):
+            print(f'could not wrap app: {raw_app["_id"]}', file=self.log_file)
+            return None
 
 
 def get_keys_to_search(keys, iterator):
@@ -160,7 +175,12 @@ def get_forms(app):
 
 def form_contains_entities(form):
     try:
-        parse_xml(form.source)
+        source = form.source
+    except ResourceNotFound:
+        return False  # unable to resolve the form
+
+    try:
+        parse_xml(source)
     except DangerousXmlException:
         return True
     except XFormException:
