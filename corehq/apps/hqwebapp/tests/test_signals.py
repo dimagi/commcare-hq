@@ -18,17 +18,22 @@ class FakeUser(CouchUser):
 
 
 class TestFailedLoginSignal(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.today = date.today()
+
     def test_failed_login_increments_failure_count(self):
-        user = FakeUser(attempt_date=date.today(), login_attempts=1)
+        user = FakeUser(attempt_date=self.today, login_attempts=1)
         credentials = {'username': 'test-user'}
 
         with patch.object(signals.CouchUser, 'get_by_username', return_value=user):
             add_failed_attempt(None, credentials)
 
         self.assertEqual(user.login_attempts, 2)
+        self.assertEqual(user.attempt_date, self.today)
 
     def test_resets_login_failures_daily(self):
-        yesterday = date.today() - timedelta(days=1)
+        yesterday = self.today - timedelta(days=1)
         user = FakeUser(attempt_date=yesterday, login_attempts=4)
         credentials = {'username': 'test-user'}
 
@@ -36,12 +41,14 @@ class TestFailedLoginSignal(TestCase):
             add_failed_attempt(None, credentials)
 
         self.assertEqual(user.login_attempts, 1)
+        self.assertEqual(user.attempt_date, self.today)
 
     def test_failed_logins_increment_count_beyond_max(self):
-        user = FakeUser(attempt_date=date.today(), login_attempts=5000)
+        user = FakeUser(attempt_date=self.today, login_attempts=5000)
         credentials = {'username': 'test-user'}
 
         with patch.object(signals.CouchUser, 'get_by_username', return_value=user):
             add_failed_attempt(None, credentials)
 
         self.assertEqual(user.login_attempts, 5001)
+        self.assertEqual(user.attempt_date, self.today)
