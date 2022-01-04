@@ -52,7 +52,7 @@ _soft_assert_registration_issues = soft_assert(
 )
 
 
-def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=True, domain=None, ip=None):
+def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=False, domain=None, ip=None):
     full_name = form.cleaned_data['full_name']
     new_user = activate_new_user(
         username=form.cleaned_data['email'],
@@ -71,7 +71,7 @@ def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admi
 
 def activate_new_user(
     username, password, created_by, created_via, first_name=None, last_name=None,
-    is_domain_admin=True, domain=None, ip=None, atypical_user=False
+    is_domain_admin=False, domain=None, ip=None, atypical_user=False
 ):
     now = datetime.utcnow()
 
