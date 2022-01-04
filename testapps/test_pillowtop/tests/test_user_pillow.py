@@ -89,6 +89,7 @@ class UserPillowTest(UserPillowTestBase):
         self.assertEqual(username, user_doc['username'])
 
 
+@es_test
 class UnknownUserPillowTest(UserPillowTestBase):
 
     def test_unknown_user_pillow(self):
