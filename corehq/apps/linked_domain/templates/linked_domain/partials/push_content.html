@@ -20,9 +20,11 @@
           <select multiple class="form-control"
                   data-bind="selectedOptions: modelsToPush,
                              multiselect: {
-                                 selectableHeaderTitle: '{% trans_html_attr "All content" %}',
-                                 selectedHeaderTitle: '{% trans_html_attr "Content to push" %}',
-                                 searchItemTitle: '{% trans_html_attr "Search content" %}',
+                                 properties: {
+                                    selectableHeaderTitle: '{% trans_html_attr "All content" %}',
+                                    selectedHeaderTitle: '{% trans_html_attr "Content to push" %}',
+                                    searchItemTitle: '{% trans_html_attr "Search content" %}',
+                                 }
                             }">
             {% for model in view_data.view_models_to_push %}
               <option value="{% html_attr model %}" {% if not model.is_linkable %} disabled {% endif %}>

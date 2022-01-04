@@ -2,12 +2,14 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     "jquery",
     "knockout",
     "underscore",
+    "hqwebapp/js/assert_properties",
     "multiselect/js/jquery.multi-select",
     "quicksearch/dist/jquery.quicksearch.min",
 ], function (
     $,
     ko,
-    _
+    _,
+    assertProperties
 ) {
     var multiselect_utils = {};
 
@@ -51,12 +53,12 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         });
     };
 
-    multiselect_utils.createFullMultiselectWidget = function (
-        elementOrId,
-        selectableHeaderTitle,
-        selectedHeaderTitle,
-        searchItemTitle,
-    ) {
+    multiselect_utils.createFullMultiselectWidget = function (elementOrId, properties) {
+        assertProperties.assert(properties, [], ['selectableHeaderTitle', 'selectedHeaderTitle', 'searchItemTitle']);
+        var selectableHeaderTitle = properties.selectableHeaderTitle || gettext("Items");
+        var selectedHeaderTitle = properties.selectedHeaderTitle || gettext("Selected items");
+        var searchItemTitle = properties.searchItemTitle || gettext("Search items");
+
         var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId),
             baseId = _.isString(elementOrId) ? elementOrId : "multiselect-" + String(Math.random()).substring(2),
             selectAllId = baseId + '-select-all',
@@ -141,39 +143,32 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     };
 
     /*
-     * A custom binding for setting multiselect properties in knockout content.
+     * A custom binding for setting multiselect properties and additional knockout bindings
      * The only dynamic part of this binding are the options
-     * For a list of configurable properties, see http://loudev.com/ under Options
+     * For a list of configurable multiselect properties, see http://loudev.com/ under Options
      */
     ko.bindingHandlers.multiselect = {
         init: function (element, valueAccessor) {
-            var properties = valueAccessor();
-            multiselect_utils.createFullMultiselectWidget(
-                element,
-                properties.selectableHeaderTitle || gettext("Items"),
-                properties.selectedHeaderTitle || gettext("Selected items"),
-                properties.searchItemTitle || gettext("Search items"),
-            );
-            if (properties.options) {
+            var model = valueAccessor();
+            assertProperties.assert(model, [], ['properties', 'options', 'selectableHeaderTitle', 'selectedHeaderTitle', 'searchItemTitle']);
+            multiselect_utils.createFullMultiselectWidget(element, model.properties);
+
+            if (model.options) {
                 // add the `options` binding to the element, valueAccessor() should return an observable
-                ko.applyBindingsToNode(element, {options: properties.options});
+                // NOTE: apply bindings after the multiselect has been setup
+                ko.applyBindingsToNode(element, {options: model.options});
             }
         },
         update: function (element, valueAccessor) {
-            var properties = valueAccessor();
-            if (properties.options) {
+            var model = valueAccessor();
+            if (model.options) {
                 // have to access the observable to get the `update` method to fire on changes to options
-                ko.unwrap(properties.options());
+                ko.unwrap(model.options());
             }
 
             // multiSelect('refresh') breaks existing click handlers, so the alternative is to destroy and rebuild
             $(element).multiSelect('destroy');
-            multiselect_utils.createFullMultiselectWidget(
-                element,
-                properties.selectableHeaderTitle || gettext("Items"),
-                properties.selectedHeaderTitle || gettext("Selected items"),
-                properties.searchItemTitle || gettext("Search items")
-            );
+            multiselect_utils.createFullMultiselectWidget(element, model.properties);
         },
     };
 
