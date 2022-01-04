@@ -1042,7 +1042,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return self._get_user_type() == 'web'
 
     def supports_lockout(self):
-        return self.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(self.domain)
+        return self.is_web_user()
 
     def _get_user_type(self):
         if self.doc_type == 'WebUser':

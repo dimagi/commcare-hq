@@ -174,23 +174,10 @@ class UserModelTest(TestCase):
         definition.delete()
         web_user.delete(self.domain, deleted_by=None)
 
-    @patch('corehq.apps.users.models.toggles.MOBILE_LOGIN_LOCKOUT.enabled')
-    def test_commcare_user_is_locked_only_with_toggle(self, mock_lockout_enabled_for_domain):
-        # Web Users should always be locked out when they go beyond
-        # the the max login attempts,
-        # but Commcare Users need an additional domain toggle
-        commcare_user = self.create_commcare_user('test_user')
-        commcare_user.login_attempts = MAX_LOGIN_ATTEMPTS
-        mock_lockout_enabled_for_domain.return_value = False
-
-        self.assertFalse(commcare_user.is_locked_out())
-
-    @patch('corehq.apps.users.models.toggles.MOBILE_LOGIN_LOCKOUT.enabled')
-    def test_commcare_user_should_be_locked_out(self, mock_lockout_enabled_for_domain):
+    def test_commcare_user_should_be_locked_out(self):
         # Make sure the we know the user should be locked, if not for the toggle
         commcare_user = self.create_commcare_user('test_user')
         commcare_user.login_attempts = MAX_LOGIN_ATTEMPTS
-        mock_lockout_enabled_for_domain.return_value = False
 
         self.assertTrue(commcare_user.should_be_locked_out())
 
