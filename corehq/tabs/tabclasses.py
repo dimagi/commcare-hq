@@ -811,6 +811,15 @@ class ProjectDataTab(UITab):
                     'subpages': subpages
                 })
 
+            if(toggles.GOOGLE_SHEET_INTEGRATION.enabled(self.couch_user.username)):
+                export_data_views.append({
+                    'title': _("Live Google Sheet Integration"),
+                    'url': reverse("google_sheet_oauth_redirect", args=(self.domain,)),
+                    'icon': 'fa fa-google',
+                    'show_in_dropdown': False,
+                    'subpages': subpages
+                })
+
         if can_download_data_files(self.domain, self.couch_user):
             from corehq.apps.export.views.utils import DataFileDownloadList
 

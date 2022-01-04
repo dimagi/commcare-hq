@@ -2078,3 +2078,6 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 # Disable Datadog trace startup logs by default
 # https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
+
+#Google Sheet Integration testing variable
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
