@@ -212,8 +212,7 @@ class RepeaterSuperProxy(models.Model):
             repeater_class = getattr(sys.modules[__name__], proxy_sql_class_name)
         except IndexError:
             pass
-        finally:
-            return super().__new__(repeater_class)
+        return super().__new__(repeater_class)
 
 
 class RepeaterProxyManager(models.Manager):
