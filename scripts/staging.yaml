@@ -79,4 +79,5 @@ branches:
     - sk/enterprise-domain-user-filter # Simon Dec 17
     - sr/datums  # sravan Dec 21
     - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Jan 3
+    - revert-30907-revert-30897-gh/refactor-multiselect # Graham Jan 4
 submodules: { }
