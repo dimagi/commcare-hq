@@ -203,7 +203,9 @@ class AllCommCareUsersTest(TestCase):
         )
 
         # Location restricted user has default access to only users assigned that location
-        assigned_location_ids = self.location_restricted_web_user.get_domain_membership(self.ccdomain.name).assigned_location_ids
+        assigned_location_ids = self.location_restricted_web_user\
+            .get_domain_membership(self.ccdomain.name)\
+            .assigned_location_ids
         filters = {'web_user_assigned_location_ids': list(assigned_location_ids)}
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 2)
 
@@ -253,7 +255,13 @@ class AllCommCareUsersTest(TestCase):
         self.assertItemsEqual(actual_usernames, expected_usernames)
 
     def test_get_all_usernames_by_domain(self):
-        all_cc_users = [self.ccuser_1, self.ccuser_2, self.ccuser_inactive, self.web_user, self.location_restricted_web_user]
+        all_cc_users = [
+            self.ccuser_1,
+            self.ccuser_2,
+            self.ccuser_inactive,
+            self.web_user,
+            self.location_restricted_web_user
+        ]
         expected_usernames = [user.username for user in all_cc_users]
         actual_usernames = get_all_usernames_by_domain(self.ccdomain.name)
         self.assertItemsEqual(actual_usernames, expected_usernames)
@@ -294,7 +302,15 @@ class AllCommCareUsersTest(TestCase):
     def test_get_all_ids(self):
         all_ids = get_all_user_ids()
         self.assertEqual(6, len(all_ids))
-        for id in [self.ccuser_1._id, self.ccuser_2._id, self.web_user._id, self.ccuser_other_domain._id, self.location_restricted_web_user._id]:
+        user_ids = [
+            self.ccuser_1._id,
+            self.ccuser_2._id,
+            self.web_user._id,
+            self.ccuser_other_domain._id,
+            self.location_restricted_web_user._id
+        ]
+
+        for id in user_ids:
             self.assertTrue(id in all_ids)
 
     def test_get_id_by_username(self):
