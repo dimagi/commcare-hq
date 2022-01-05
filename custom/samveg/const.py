@@ -3,3 +3,5 @@ MANDATORY_COLUMNS = [
     ['Rch_id', 'admission_id'],
     ['owner_name']
 ]
+
+SAMVEG_DOMAINS = ["samveg"]
