@@ -48,24 +48,30 @@ hqDefine('app_manager/js/case_config_utils', function () {
             }
             return options;
         },
-        refreshQuestions: function (questions_observable, url, formUniqueId, event) {
-            var $el = $(event.currentTarget);
-            $el.find('i').addClass('fa-spin');
-            $.get({
-                url: url,
-                data: {
-                    form_unique_id: formUniqueId,
-                },
-                success: function (data) {
-                    questions_observable(data);
-                    $el.find('i').removeClass('fa-spin');
-                },
-                error: function () {
-                    $el.find('i').removeClass('fa-spin');
-                    hqImport("hqwebapp/js/alert_user").alert_user(gettext("Something went wrong refreshing "
-                               + "your form properties. Please refresh the page and try again", "danger"));
-                },
-            });
+        initRefreshQuestions: function (questions_observable) {
+            var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+                formUniqueId = initialPageData.get("form_unique_id");
+            if (formUniqueId) {
+                var currentAppUrl = initialPageData.reverse("current_app_version"),
+                    oldVersion = initialPageData.get("app_subset").version;
+                $(document).on("ajaxComplete", function (e, xhr, options) {
+                    if (options.url === currentAppUrl) {
+                        var newVersion = xhr.responseJSON.currentVersion;
+                        if (newVersion > oldVersion) {
+                            oldVersion = newVersion;
+                            $.get({
+                                url: initialPageData.reverse('get_form_questions'),
+                                data: {
+                                    form_unique_id: formUniqueId,
+                                },
+                                success: function (data) {
+                                    questions_observable(data);
+                                },
+                            });
+                        }
+                    }
+                });
+            }
         },
         filteredSuggestedProperties: function (suggestedProperties, properties) {
             var used_properties = _.map(properties, function (x) {
