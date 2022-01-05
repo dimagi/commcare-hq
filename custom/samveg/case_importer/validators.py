@@ -9,13 +9,18 @@ class MandatoryColumnsValidator:
     def validate(cls, spreadsheet):
         errors = []
         columns = spreadsheet.get_header_columns()
-        missing_columns = set()
         for mandatory_columns in MANDATORY_COLUMNS:
-            missing_columns.update(set(mandatory_columns) - set(columns))
-        if missing_columns:
-            errors.append(_('Missing columns {column_names}').format(
-                column_names=", ".join(missing_columns))
-            )
+            if isinstance(mandatory_columns, list):
+                if len(set(mandatory_columns) - set(columns)) == len(mandatory_columns):
+                    errors.append(_('Need either {column_names}').format(
+                        column_names=", ".join(mandatory_columns))
+                    )
+            else:
+                mandatory_column = mandatory_columns
+                if mandatory_column not in columns:
+                    errors.append(_('Missing column {column_name}').format(
+                        column_name=mandatory_column)
+                    )
         return errors
 
 
