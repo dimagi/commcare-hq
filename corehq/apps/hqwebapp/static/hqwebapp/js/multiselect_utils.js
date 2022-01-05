@@ -150,7 +150,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     ko.bindingHandlers.multiselect = {
         init: function (element, valueAccessor) {
             var model = valueAccessor();
-            assertProperties.assert(model, [], ['properties', 'options', 'selectableHeaderTitle', 'selectedHeaderTitle', 'searchItemTitle']);
+            assertProperties.assert(model, [], ['properties', 'options']);
             multiselect_utils.createFullMultiselectWidget(element, model.properties);
 
             if (model.options) {
