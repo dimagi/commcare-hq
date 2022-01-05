@@ -343,9 +343,17 @@ class FormAction(DocumentSchema):
                 yield name, path
 
 
-class UpdateCaseAction(FormAction):
+class SmartCaseUpdate(DocumentSchema):
+    question_path = StringProperty()
+    update_mode = StringProperty(
+        choices=["always", "edit"],
+        default="always"
+    )
 
-    update = DictProperty()
+
+class UpdateCaseAction(FormAction):
+    # TODO: migrate from dict(property_name: question_path) to dict(property_name: SmartCaseUpdate)
+    update = SchemaDictProperty(SmartCaseUpdate)
 
 
 class PreloadAction(FormAction):
@@ -443,7 +451,9 @@ class CaseIndex(DocumentSchema):
 class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
-    case_properties = DictProperty()
+    # TODO: migrate this from dict(property_name: question_path) to dict(property_name: SmartCaseUpdate)
+    case_properties = SchemaDictProperty(SmartCaseUpdate)
+
     # case_indices = NotImplemented
 
     close_condition = SchemaProperty(FormActionCondition)
