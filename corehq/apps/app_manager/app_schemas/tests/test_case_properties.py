@@ -15,7 +15,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     FormSchedule,
     Module,
-    ScheduleVisit,
+    ScheduleVisit, SmartCaseUpdate,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -39,8 +39,8 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
             factory.form_opens_case(m1f1)
             m1f2 = factory.new_form(m1)
             factory.form_requires_case(m1f2, case_type='house', update={
-                'foo': '/data/question1',
-                'bar': '/data/question2',
+                'foo': SmartCaseUpdate(question_path='/data/question1'),
+                'bar': SmartCaseUpdate(question_path='/data/question2'),
             })
             self.assertCaseProperties(factory.app, 'house', ['foo', 'bar'])
 
@@ -55,11 +55,11 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
             mock_sharing.return_value = [factory1.app, factory2.app]
             a1m1, a1m1f1 = factory1.new_basic_module('open_patient', 'patient')
             factory1.form_requires_case(a1m1f1, update={
-                'app1': 'yes',
+                'app1': SmartCaseUpdate(question_path='yes'),
             })
             a2m1, a2m1f1 = factory2.new_basic_module('open_patient', 'patient')
             factory1.form_requires_case(a2m1f1, update={
-                'app2': 'yes',
+                'app2': SmartCaseUpdate(question_path='yes'),
             })
             self.assertCaseProperties(factory1.app, 'patient', ['app1', 'app2'])
 
@@ -70,18 +70,18 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
         patient_module, patient_form_1 = factory.new_basic_module('patient_module', 'patient')
         referral_module, referral_form_1 = factory.new_basic_module('referral_module', 'referral')
         factory.form_requires_case(houshold_form_1, 'household', update={
-            'household_name': 'HH',
+            'household_name': SmartCaseUpdate(question_path='HH'),
         })
         factory.form_opens_case(houshold_form_1, 'patient', is_subcase=True)
         factory.form_requires_case(patient_form_1, update={
-            'patient_id': 1,
+            'patient_id': 1,   # TODO: fails since not a string, should the question_path allow for non-strings?
             'parent/household_id': 1,
         })
         factory.form_opens_case(patient_form_1, 'referral', is_subcase=True)
         factory.form_requires_case(referral_form_1, update={
-            'parent/patient_name': "Ralph",
-            'parent/parent/household_color': 'green',
-            'referral_id': 1,
+            'parent/patient_name': SmartCaseUpdate(question_path="Ralph"),
+            'parent/parent/household_color': SmartCaseUpdate(question_path='green'),
+            'referral_id': SmartCaseUpdate(question_path=1),
         })
         self.assertCaseProperties(factory.app, 'household', [
             'household_color',
@@ -111,12 +111,12 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
         m2, m2f1 = factory.new_advanced_module('scheduler_module', 'house')
         m2f2 = factory.new_form(m2)
         factory.form_requires_case(m2f1, case_type='house', update={
-            'foo': '/data/question1',
-            'bar': '/data/question2',
+            'foo': SmartCaseUpdate(question_path='/data/question1'),
+            'bar': SmartCaseUpdate(question_path='/data/question2'),
         })
         factory.form_requires_case(m2f2, case_type='house', update={
-            'bleep': '/data/question1',
-            'bloop': '/data/question2',
+            'bleep': SmartCaseUpdate(question_path='/data/question1'),
+            'bloop': SmartCaseUpdate(question_path='/data/question2'),
         })
 
         self._add_scheduler_to_module(m2)

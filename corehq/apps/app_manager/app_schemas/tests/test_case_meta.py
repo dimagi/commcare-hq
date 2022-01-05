@@ -17,7 +17,7 @@ from corehq.apps.app_manager.models import (
     Module,
     OpenCaseAction,
     OpenSubCaseAction,
-    ParentSelect,
+    ParentSelect, SmartCaseUpdate,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
@@ -116,8 +116,8 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
 
         m0f1.actions.update_case.condition.type = 'always'
         m0f1.actions.update_case.update = {
-            "p1": "/data/question1",
-            "p2": "/data/question2"
+            "p1": SmartCaseUpdate(question_path="/data/question1"),
+            "p2": SmartCaseUpdate(question_path="/data/question2")
         }
         app.version = 2
         self._assert_properties(app.get_case_metadata(), {'name', 'p1', 'p2'})
