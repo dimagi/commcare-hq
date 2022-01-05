@@ -37,6 +37,7 @@ from corehq.util.timer import TimingContext
 
 from . import exceptions
 from .const import LookupErrors
+from .extension_points import custom_case_upload_operations
 from .util import EXTERNAL_ID, RESERVED_FIELDS, lookup_case
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
@@ -118,6 +119,9 @@ class _Importer(object):
     def import_row(self, row_num, raw_row):
         search_id = self._parse_search_id(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
+        fields_to_update, errors = custom_case_upload_operations(self.domain, row_num, raw_row, fields_to_update)
+        if errors:
+            raise exceptions.CaseRowErrorList(errors)
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
             return
