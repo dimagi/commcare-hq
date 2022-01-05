@@ -11,7 +11,7 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
     OpenSubCaseAction,
     FormActionCondition,
-    CaseListForm,
+    CaseListForm, SmartCaseUpdate,
 )
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from custom.openclinica.const import (
@@ -149,7 +149,7 @@ class Study(StudyObject):
                 condition=FormActionCondition(type='always')
             )
             reg_form.actions.update_case = UpdateCaseAction(
-                update=self.case_update,
+                update=SmartCaseUpdate(question_path=self.case_update),
                 condition=FormActionCondition(type='always')
             )
 
@@ -332,10 +332,10 @@ class StudyForm(StudyObject):
 
         def get_update_case_action():
             update = {
-                'start_date': '/data/start_date',
-                'start_time': '/data/start_time',
-                'end_date': '/data/end_date',
-                'end_time': '/data/end_time',
+                'start_date': SmartCaseUpdate(question_path='/data/start_date'),
+                'start_time': SmartCaseUpdate(question_path='/data/start_time'),
+                'end_date': SmartCaseUpdate(question_path='/data/end_date'),
+                'end_time': SmartCaseUpdate(question_path='/data/end_time'),
             }
             for item_group in self.iter_item_groups():
                 for item in item_group.iter_items():

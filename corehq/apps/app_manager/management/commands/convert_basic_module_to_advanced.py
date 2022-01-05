@@ -68,7 +68,7 @@ class Command(BaseCommand):
 
             actions = form.active_actions()
             open = actions.get('open_case', None)
-            update = actions.get('update_case', None)
+            update = actions.get('update_case', None)  # TODO: confirm correct format
             close = actions.get('close_case', None)
             preload = actions.get('case_preload', None)
             subcases = actions.get('subcases', None)
@@ -116,7 +116,7 @@ class Command(BaseCommand):
                         case_tag='open_{0}_{1}'.format(subcase.case_type, i + 1),
                         name_path=subcase.case_name,
                         open_condition=subcase.condition,
-                        case_properties=subcase.case_properties,
+                        case_properties=subcase.case_properties,  # TODO: confirm proper format
                         repeat_context=subcase.repeat_context,
                         case_indices=[CaseIndex(
                             tag=base_action.case_tag if base_action else '',

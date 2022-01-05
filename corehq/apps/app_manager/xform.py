@@ -503,6 +503,9 @@ class XFormCaseBlock(object):
         update_mapping = {}
         attachments = {}
         for key, value in updates.items():
+            from corehq.apps.app_manager.models import SmartCaseUpdate
+            if type(value) is SmartCaseUpdate:
+                value = value.question_path
             if key == 'name':
                 key = 'case_name'
             if self.is_attachment(value):
@@ -976,6 +979,9 @@ class XForm(WrappedNode):
         return None
 
     def resolve_path(self, path, path_context=""):
+        from corehq.apps.app_manager.models import SmartCaseUpdate
+        if type(path) is SmartCaseUpdate:  # TODO: this returns the right thing, but still need to update add_stuff_to_xform
+            path = path.question_path
         if path == "":
             return path_context
         elif path is None:

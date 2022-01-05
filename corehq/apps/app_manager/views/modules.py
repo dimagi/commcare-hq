@@ -72,7 +72,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
     get_all_mobile_filter_configs,
-    get_auto_filter_configurations,
+    get_auto_filter_configurations, SmartCaseUpdate,
 )
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
@@ -1454,11 +1454,11 @@ def _init_biometrics_enroll_module(app, lang):
     )
     enroll.actions.update_case = UpdateCaseAction(
         update={
-            'simprintsId': '/data/simprintsId',
-            'rightIndex': '/data/rightIndex',
-            'rightThumb': '/data/rightThumb',
-            'leftIndex': '/data/leftIndex',
-            'leftThumb': '/data/leftThumb',
+            'simprintsId': SmartCaseUpdate(question_path='/data/simprintsId'),
+            'rightIndex': SmartCaseUpdate(question_path='/data/rightIndex'),
+            'rightThumb': SmartCaseUpdate(question_path='/data/rightThumb'),
+            'leftIndex': SmartCaseUpdate(question_path='/data/leftIndex'),
+            'leftThumb': SmartCaseUpdate(question_path='/data/leftThumb'),
         },
         condition=FormActionCondition(type='always'),
     )
