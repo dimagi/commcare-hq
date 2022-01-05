@@ -135,12 +135,33 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
             };
 
-            self.refreshQuestions = function (url, formUniqueId, event) {
-                return caseConfigUtils.refreshQuestions(self.questions, url, formUniqueId, event);
-            };
             self.getAnswers = function (condition) {
                 return caseConfigUtils.getAnswers(self.questions(), condition);
             };
+
+            var formUniqueId = initial_page_data("form_unique_id");
+            if (formUniqueId) {
+                var reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
+                    currentAppUrl = reverse("current_app_version"),
+                    oldVersion = initial_page_data("app_subset").version;
+                $(document).on("ajaxComplete", function (e, xhr, options) {
+                    if (options.url === currentAppUrl) {
+                        var newVersion = xhr.responseJSON.currentVersion;
+                        if (newVersion > oldVersion) {
+                            oldVersion = newVersion;
+                            $.get({
+                                url: reverse('get_form_questions'),
+                                data: {
+                                    form_unique_id: formUniqueId,
+                                },
+                                success: function (data) {
+                                    self.questions(data);
+                                },
+                            });
+                        }
+                    }
+                });
+            }
 
             self.change = function () {
                 self.saveButton.fire('change');

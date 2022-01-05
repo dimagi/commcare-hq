@@ -48,25 +48,6 @@ hqDefine('app_manager/js/case_config_utils', function () {
             }
             return options;
         },
-        refreshQuestions: function (questions_observable, url, formUniqueId, event) {
-            var $el = $(event.currentTarget);
-            $el.find('i').addClass('fa-spin');
-            $.get({
-                url: url,
-                data: {
-                    form_unique_id: formUniqueId,
-                },
-                success: function (data) {
-                    questions_observable(data);
-                    $el.find('i').removeClass('fa-spin');
-                },
-                error: function () {
-                    $el.find('i').removeClass('fa-spin');
-                    hqImport("hqwebapp/js/alert_user").alert_user(gettext("Something went wrong refreshing "
-                               + "your form properties. Please refresh the page and try again", "danger"));
-                },
-            });
-        },
         filteredSuggestedProperties: function (suggestedProperties, properties) {
             var used_properties = _.map(properties, function (x) {
                 return x.key();
