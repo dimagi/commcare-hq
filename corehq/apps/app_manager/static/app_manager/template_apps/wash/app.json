@@ -203,17 +203,61 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "last_reading_date": "/data/last_reading_date",
-                "consumption": "/data/consumption",
-                "number_of_household_members": "/data/number_of_household_members",
-                "point_of_reference": "/data/point_of_reference",
-                "client_status": "/data/client_status",
-                "last_reading": "/data/last_reading",
-                "full_address": "/data/full_address",
-                "current_reading": "/data/current_reading",
-                "consumer_level": "/data/consumer_level",
-                "client_id": "/data/client_id",
-                "preferred_day_of_payment": "/data/preferred_day_of_payment"
+                "last_reading_date": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/last_reading_date",
+                  "update_mode": "always"
+                },
+                "consumption": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/consumption",
+                  "update_mode": "always"
+                },
+                "number_of_household_members": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/number_of_household_members",
+                  "update_mode": "always"
+                },
+                "point_of_reference": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/point_of_reference",
+                  "update_mode": "always"
+                },
+                "client_status": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/client_status",
+                  "update_mode": "always"
+                },
+                "last_reading": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/last_reading",
+                  "update_mode": "always"
+                },
+                "full_address": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/full_address",
+                  "update_mode": "always"
+                },
+                "current_reading": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/current_reading",
+                  "update_mode": "always"
+                },
+                "consumer_level": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/consumer_level",
+                  "update_mode": "always"
+                },
+                "client_id": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/client_id",
+                  "update_mode": "always"
+                },
+                "preferred_day_of_payment": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/preferred_day_of_payment",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -678,12 +722,36 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "last_reading_date": "/data/last_reading_date",
-                "consumption": "/data/consumption",
-                "average_dailly_consumption": "/data/average_dailly_consumption",
-                "last_reading": "/data/last_reading",
-                "current_reading": "/data/current_reading",
-                "leakage": "/data/leakadge_group/leakage"
+                "last_reading_date": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/last_reading_date",
+                  "update_mode": "always"
+                },
+                "consumption": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/consumption",
+                  "update_mode": "always"
+                },
+                "average_dailly_consumption": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/average_dailly_consumption",
+                  "update_mode": "always"
+                },
+                "last_reading": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/last_reading",
+                  "update_mode": "always"
+                },
+                "current_reading": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/current_reading",
+                  "update_mode": "always"
+                },
+                "leakage": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/leakadge_group/leakage",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -905,8 +973,16 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "hygiene_score": "/data/hygiene_water_sanitation/hygiene_score",
-                "hygiene_possible": "/data/hygiene_water_sanitation/hygiene_possible"
+                "hygiene_score": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/hygiene_water_sanitation/hygiene_score",
+                  "update_mode": "always"
+                },
+                "hygiene_possible": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/hygiene_water_sanitation/hygiene_possible",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -1501,10 +1577,26 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "cut_water": "/data/cut_water_group/cut_water",
-                "client_status": "/data/client_status",
-                "reason_for_referral": "/data/reason_for_referral",
-                "motive_to_cut_water_supply": "/data/cut_water_group/motive_to_cut_water_supply"
+                "cut_water": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/cut_water_group/cut_water",
+                  "update_mode": "always"
+                },
+                "client_status": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/client_status",
+                  "update_mode": "always"
+                },
+                "reason_for_referral": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/reason_for_referral",
+                  "update_mode": "always"
+                },
+                "motive_to_cut_water_supply": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/cut_water_group/motive_to_cut_water_supply",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -2091,13 +2183,41 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "cut_water": "/data/cut_water_referrals_group/cut_water_referral_value",
-                "turbidity_referral": "/data/water_quality_referrals_group/turbidity_referral_value",
-                "ph_referral": "/data/water_quality_referrals_group/ph_referral_value",
-                "restore_water": "/data/restore_water_referrals_group/restore_supply_referral_value",
-                "leakage": "/data/leakage_referrals_group/leakage_referral_value",
-                "clorine_referral": "/data/water_quality_referrals_group/clorine_referral_value",
-                "hygene_referral": "/data/hygiene_referrals_group/hygiene_referral_value"
+                "cut_water": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/cut_water_referrals_group/cut_water_referral_value",
+                  "update_mode": "always"
+                },
+                "turbidity_referral": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/water_quality_referrals_group/turbidity_referral_value",
+                  "update_mode": "always"
+                },
+                "ph_referral": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/water_quality_referrals_group/ph_referral_value",
+                  "update_mode": "always"
+                },
+                "restore_water": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/restore_water_referrals_group/restore_supply_referral_value",
+                  "update_mode": "always"
+                },
+                "leakage": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/leakage_referrals_group/leakage_referral_value",
+                  "update_mode": "always"
+                },
+                "clorine_referral": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/water_quality_referrals_group/clorine_referral_value",
+                  "update_mode": "always"
+                },
+                "hygene_referral": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/hygiene_referrals_group/hygiene_referral_value",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -2757,8 +2877,16 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "contract_termination_date": "/data/contract_termination_date",
-                "reason_for_terminating_the_contract": "/data/reason_for_terminating_the_contract"
+                "contract_termination_date": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/contract_termination_date",
+                  "update_mode": "always"
+                },
+                "reason_for_terminating_the_contract": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "/data/reason_for_terminating_the_contract",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
