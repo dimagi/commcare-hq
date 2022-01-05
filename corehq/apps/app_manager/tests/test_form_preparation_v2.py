@@ -19,7 +19,7 @@ from corehq.apps.app_manager.models import (
     OpenCaseAction,
     OpenSubCaseAction,
     PreloadAction,
-    UpdateCaseAction,
+    UpdateCaseAction, SmartCaseUpdate,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import XForm
@@ -52,15 +52,16 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
 
     def test_update_case(self):
         self.form.requires = 'case'
-        self.form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        self.form.actions.update_case = UpdateCaseAction(
+            update={'question1': SmartCaseUpdate(question_path='/data/question1')})
         self.form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_case'), self.form.render_xform())
 
     def test_update_parent_case(self):
         self.form.requires = 'case'
         self.form.actions.update_case = UpdateCaseAction(update={
-            'question1': '/data/question1',
-            'parent/question1': '/data/question1',
+            'question1': SmartCaseUpdate(question_path='/data/question1'),
+            'parent/question1': SmartCaseUpdate(question_path='/data/question1'),
         })
         self.form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_parent_case'), self.form.render_xform())
@@ -68,13 +69,15 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
     def test_open_update_case(self):
         self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
         self.form.actions.open_case.condition.type = 'always'
-        self.form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        self.form.actions.update_case = UpdateCaseAction(
+            update={'question1': SmartCaseUpdate(question_path='/data/question1')})
         self.form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('open_update_case'), self.form.render_xform())
 
     def test_update_preload_case(self):
         self.form.requires = 'case'
-        self.form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        self.form.actions.update_case = UpdateCaseAction(
+            update={'question1': SmartCaseUpdate(question_path='/data/question1')})
         self.form.actions.update_case.condition.type = 'always'
         self.form.actions.case_preload = PreloadAction(preload={'/data/question1': 'question1'})
         self.form.actions.case_preload.condition.type = 'always'
@@ -83,7 +86,8 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
     def test_update_attachment(self):
         self.form.requires = 'case'
         self.form.source = self.get_xml('attachment').decode('utf-8')
-        self.form.actions.update_case = UpdateCaseAction(update={'photo': '/data/thepicture'})
+        self.form.actions.update_case = UpdateCaseAction(
+            update={'photo': SmartCaseUpdate(question_path='/data/thepicture')})
         self.form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
 
@@ -254,7 +258,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=self.module.case_type,
             case_tag='load_1',
-            case_properties={'question1': '/data/question1'}
+            case_properties={'question1': SmartCaseUpdate(question_path='/data/question1')}
         ))
         self.assertXmlEqual(self.get_xml('update_case'), self.form.render_xform())
 
@@ -263,7 +267,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
             case_type=self.module.case_type,
             case_tag='open_1',
             name_path="/data/question1",
-            case_properties={'question1': '/data/question1'}
+            case_properties={'question1': SmartCaseUpdate(question_path='/data/question1')}
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
         self.assertXmlEqual(self.get_xml('open_update_case'), self.form.render_xform())
@@ -282,7 +286,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=self.module.case_type,
             case_tag='load_1',
-            case_properties={'question1': '/data/question1'},
+            case_properties={'question1': SmartCaseUpdate(question_path='/data/question1')},
             preload={'/data/question1': 'question1'}
         ))
         self.assertXmlEqual(self.get_xml('update_preload_case'), self.form.render_xform())
@@ -299,13 +303,13 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=self.module.case_type,
             case_tag='load_1',
-            case_properties={'question1': '/data/question1'},
+            case_properties={'question1': SmartCaseUpdate(question_path='/data/question1')},
             preload={'/data/question1': 'question1'}
         ))
         self.form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=self.module.case_type,
             case_tag='load_2',
-            case_properties={'question2': '/data/question2'},
+            case_properties={'question2': SmartCaseUpdate(question_path='/data/question2')},
             preload={'/data/question2': 'question2'}
         ))
         self.assertXmlEqual(self.get_xml('update_preload_case_multiple'), self.form.render_xform())
@@ -314,7 +318,8 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=self.module.case_type,
             case_tag='load_1',
-            case_properties={'question1': '/data/question1', 'parent/question1': '/data/question1'}
+            case_properties={'question1': SmartCaseUpdate(question_path='/data/question1'),
+                             'parent/question1': SmartCaseUpdate(question_path='/data/question1')}
         ))
         self.assertXmlEqual(self.get_xml('update_parent_case'), self.form.render_xform())
 
@@ -323,7 +328,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=self.module.case_type,
             case_tag='load_1',
-            case_properties={'photo': '/data/thepicture'}
+            case_properties={'photo': SmartCaseUpdate(question_path='/data/thepicture')}
         ))
         self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
 
@@ -349,7 +354,7 @@ class FormPreparationChildModules(SimpleTestCase, TestXmlMixin):
         form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=module.case_type,
             case_tag='load_1',
-            case_properties={'question1': '/data/question1'}
+            case_properties={'question1': SmartCaseUpdate(question_path='/data/question1')}
         ))
 
         root_module = self.app.add_module(Module.new_module('root module', None))
@@ -358,7 +363,8 @@ class FormPreparationChildModules(SimpleTestCase, TestXmlMixin):
 
         root_module_form = root_module.new_form('root module form', None)
         root_module_form.requires = 'case'
-        root_module_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        root_module_form.actions.update_case = UpdateCaseAction(
+            update={'question1': SmartCaseUpdate(question_path='/data/question1')})
         root_module_form.actions.update_case.condition.type = 'always'
 
         # make module a child module of root_module
@@ -378,7 +384,8 @@ class FormPreparationChildModules(SimpleTestCase, TestXmlMixin):
                                self.get_xml('original_form', override_path=('data',)).decode('utf-8'))
 
         form.requires = 'case'
-        form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        form.actions.update_case = UpdateCaseAction(
+            update={'question1': SmartCaseUpdate(question_path='/data/question1')})
         form.actions.update_case.condition.type = 'always'
 
         root_module = self.app.add_module(Module.new_module('root module', None))
@@ -387,7 +394,8 @@ class FormPreparationChildModules(SimpleTestCase, TestXmlMixin):
 
         root_module_form = root_module.new_form('root module form', None)
         root_module_form.requires = 'case'
-        root_module_form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        root_module_form.actions.update_case = UpdateCaseAction(
+            update={'question1': SmartCaseUpdate(question_path='/data/question1')})
         root_module_form.actions.update_case.condition.type = 'always'
 
         # make module a child module of root_module
@@ -630,13 +638,15 @@ class FormPreparationV2TestDataRegistry(SimpleTestCase, TestXmlMixin):
         """Opening cases still works with registry search"""
         self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
         self.form.actions.open_case.condition.type = 'always'
-        self.form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        self.form.actions.update_case = UpdateCaseAction(
+            update={'question1': SmartCaseUpdate(question_path='/data/question1')})
         self.form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('open_update_case'), self.form.render_xform())
 
     def test_update_case(self):
         """Case updates are not permitted"""
         self.form.requires = 'case'
-        self.form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        self.form.actions.update_case = UpdateCaseAction(
+            update={'question1': SmartCaseUpdate(question_path='/data/question1')})
         self.form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('no_actions'), self.form.render_xform())

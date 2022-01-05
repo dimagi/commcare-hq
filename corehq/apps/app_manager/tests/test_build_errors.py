@@ -5,7 +5,7 @@ from django.test import SimpleTestCase
 
 from unittest.mock import patch
 
-from corehq.apps.app_manager.models import Application, CaseList, Module
+from corehq.apps.app_manager.models import Application, CaseList, Module, SmartCaseUpdate
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 
 
@@ -30,7 +30,8 @@ class BuildErrorsTest(SimpleTestCase):
         errors = app.validate_app()
         update_path_error = {
             'type': 'path error',
-            'path': '/data/parent_age',
+            'path': SmartCaseUpdate(doc_type='SmartCaseUpdate', question_path='/data/parent_age',
+                                    update_mode='always'),
             'form_type': 'module_form',
             'module': {'name': {'en': "Parent"}, 'id': 0},
             'form': {'id': 0, 'name': {'en': "Register"}},
