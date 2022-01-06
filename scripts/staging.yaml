@@ -78,6 +78,5 @@ branches:
     - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
     - sk/enterprise-domain-user-filter # Simon Dec 17
     - sr/datums  # sravan Dec 21
-    - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Jan 3
     - jls/auto-refresh-questions # Jenny Jan 5
 submodules: { }
