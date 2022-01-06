@@ -79,4 +79,5 @@ branches:
     - sk/enterprise-domain-user-filter # Simon Dec 17
     - sr/datums  # sravan Dec 21
     - jls/auto-refresh-questions # Jenny Jan 5
+    - mk/case-import-custom-validations # MK Jan 6
 submodules: { }
