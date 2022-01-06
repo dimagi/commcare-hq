@@ -88,6 +88,7 @@ hqDefine("linked_domain/js/domain_links", [
 
         // General data
         self.domain = data.domain;
+        self.hasFullAccess = data.has_full_access;
         self.domainLinks = ko.observableArray(_.map(data.linked_domains, DomainLink));
         self.domainLinksByNames = ko.computed(function () {
             tmp = {};
@@ -308,6 +309,7 @@ hqDefine("linked_domain/js/domain_links", [
                 selectableHeaderTitle: gettext("All project spaces"),
                 selectedHeaderTitle: gettext("Project spaces to push to"),
                 searchItemTitle: gettext("Search project spaces"),
+                disableModifyAllActions: !self.parent.hasFullAccess,
                 willSelectAllListener: function () {
                     var requiresRebuild = false;
                     for (var option of $('#domain-multiselect')[0].options) {

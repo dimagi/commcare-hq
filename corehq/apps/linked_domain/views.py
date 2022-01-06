@@ -332,6 +332,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'view_models_to_push': sorted(view_models_to_push, key=lambda m: m['name']),
                 'linked_domains': sorted(linked_domains, key=lambda d: d['downstream_domain']),
                 'linkable_ucr': remote_linkable_ucr,
+                'has_full_access': can_domain_access_release_management(self.domain, include_lite_version=False),
             },
         }
 
