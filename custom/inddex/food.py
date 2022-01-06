@@ -291,9 +291,9 @@ class FoodRow:
     @property
     def age_range(self):
         if not self.age_months_calculated:
-            return None
+            return "unknown"
         if not self.age_years_calculated:
-            return None
+            return "unknown"
         for age_range in AGE_RANGES:
             if age_range.lower_bound <= getattr(self, age_range.column) < age_range.upper_bound:
                 return age_range.name
