@@ -135,9 +135,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
             };
 
-            self.refreshQuestions = function (url, formUniqueId, event) {
-                return caseConfigUtils.refreshQuestions(self.questions, url, formUniqueId, event);
-            };
             self.getAnswers = function (condition) {
                 return caseConfigUtils.getAnswers(self.questions(), condition);
             };
@@ -199,6 +196,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                         self.forceRefreshTextchangeBinding($usercaseMgmt);
                     }
 
+                    caseConfigUtils.initRefreshQuestions(self.questions);
                 });
 
             };
