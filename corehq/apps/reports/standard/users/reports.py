@@ -16,6 +16,7 @@ from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 from corehq.apps.reports.filters.users import (
     ChangeActionFilter,
     ChangedByUserFilter,
+    EnterpriseUserFilter,
 )
 from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
@@ -124,7 +125,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         return es_query.values_list('_id', flat=True)
 
     def _get_users_es_query(self, slugs):
-        return EMWF.user_es_query(
+        return EnterpriseUserFilter.user_es_query(
             self.domain,
             slugs,
             self.request.couch_user,
