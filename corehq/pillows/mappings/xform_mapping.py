@@ -8,118 +8,205 @@ from pillowtop.es_utils import ElasticsearchIndexInfo, XFORM_HQ_INDEX_NAME
 XFORM_INDEX = prefix_for_tests(settings.ES_XFORM_INDEX_NAME)
 
 XFORM_MAPPING = {
+    "_meta": {
+        "created": "2013-08-13"
+    },
     "date_detection": False,
     "date_formats": DATE_FORMATS_ARR,  # for parsing the explicitly defined dates
-    'dynamic': False,
-    "_meta": {
-        "created": '2013-08-13',
-    },
+    "dynamic": False,
     "properties": {
-        'doc_type': {'type': 'string'},
-        'inserted_at': {"type": "date", "format": DATE_FORMATS_STRING},
-        'user_type': {'type': 'string', "index": "not_analyzed", "null_value": NULL_VALUE},
+        "#export_tag": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "@uiVersion": {
+            "type": "string"
+        },
+        "@version": {
+            "type": "string"
+        },
+        "__retrieved_case_ids": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "_attachments": {
+            "dynamic": False,
+            "type": "object"
+        },
+        "app_id": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "backend_id": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "build_id": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "doc_type": {
+            "type": "string"
+        },
         "domain": {
-            "type": "multi_field",
             "fields": {
-                "domain": {"type": "string", "index": "analyzed"},
-                "exact": {"type": "string", "index": "not_analyzed"}
-                # exact is full text string match - hyphens get parsed in standard
-                # analyzer
-                # in queries you can access by domain.exact
-            }
+                "exact": {
+                    # exact is full text string match - hyphens get parsed in standard
+                    # analyzer
+                    # in queries you can access by domain.exact
+                    "index": "not_analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "string"
         },
-        "xmlns": {
-            "type": "multi_field",
-            "fields": {
-                "xmlns": {"type": "string", "index": "analyzed"},
-                "exact": {"type": "string", "index": "not_analyzed"}
-            }
+        "external_blobs": {
+            "dynamic": False,
+            "type": "object"
         },
-        '@uiVersion': {"type": "string"},
-        '@version': {"type": "string"},
-        "path": {"type": "string", "index": "not_analyzed"},
-        "submit_ip": {"type": "ip"},
-        "app_id": {"type": "string", "index": "not_analyzed"},
-        "build_id": {"type": "string", "index": "not_analyzed"},
-        "received_on": {
-            "type": "date",
-            "format": DATE_FORMATS_STRING
-        },
-        "server_modified_on": {
-            "type": "date",
-            "format": DATE_FORMATS_STRING
-        },
-        'initial_processing_complete': {"type": "boolean"},
-        'partial_submission': {"type": "boolean"},
-        "#export_tag": {"type": "string", "index": "not_analyzed"},
-        'external_blobs': {
-            'dynamic': False,
-            'type': 'object'
-        },
-        '_attachments': {
-            'dynamic': False,
-            'type': 'object'
-        },
-        '__retrieved_case_ids': {'index': 'not_analyzed', 'type': 'string'},
-        'backend_id': {'type': 'string', 'index': 'not_analyzed'},
-        'form': {
-            'dynamic': False,
-            'properties': {
-                '@name': {"type": "string", "index": "not_analyzed"},
-                "#type": {"type": "string", "index": "not_analyzed"},
-                'case': {
-                    'dynamic': False,
-                    'properties': {
-                        'date_modified': {
-                            "type": "date",
-                            "format": DATE_FORMATS_STRING
+        "form": {
+            "dynamic": False,
+            "properties": {
+                "#type": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "@name": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "case": {
+                    "dynamic": False,
+                    "properties": {
+                        # Note, the case_id method here assumes single case
+                        # properties within a form.
+                        # In order to support multi case properties, a dynamic
+                        # template needs to be added along with fundamentally
+                        # altering case queries
+                        "@case_id": {
+                            "index": "not_analyzed",
+                            "type": "string"
                         },
-                        '@date_modified': {
-                            "type": "date",
-                            "format": DATE_FORMATS_STRING
+                        "@date_modified": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
                         },
-                        #note, the case_id method here assumes single case properties within a form
-                        #in order to support multi case properties, a dynamic template needs to be added along with fundamentally altering case queries
-
-                        "@case_id": {"type": "string", "index": "not_analyzed"},
-                        "@user_id": {"type": "string", "index": "not_analyzed"},
-                        "@xmlns": {"type": "string", "index": "not_analyzed"},
-
-
-                        "case_id": {"type": "string", "index": "not_analyzed"},
-                        "user_id": {"type": "string", "index": "not_analyzed"},
-                        "xmlns": {"type": "string", "index": "not_analyzed"},
+                        "@user_id": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "@xmlns": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "case_id": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "date_modified": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "user_id": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "xmlns": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
                     }
                 },
-                'meta': {
-                    'dynamic': False,
-                    'properties': {
-                        "timeStart": {
-                            "type": "date",
-                            "format": DATE_FORMATS_STRING
+                "meta": {
+                    "dynamic": False,
+                    "properties": {
+                        "appVersion": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "app_build_version": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "commcare_version": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "deviceID": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "geo_point": {
+                            "geohash": True,
+                            "geohash_precision": "10m",
+                            "geohash_prefix": True,
+                            "lat_lon": True,
+                            "type": "geo_point"
+                        },
+                        "instanceID": {
+                            "index": "not_analyzed",
+                            "type": "string"
                         },
                         "timeEnd": {
-                            "type": "date",
-                            "format": DATE_FORMATS_STRING
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
                         },
-                        "userID": {"type": "string", "index": "not_analyzed", "null_value": NULL_VALUE},
-                        "deviceID": {"type": "string", "index": "not_analyzed"},
-                        "instanceID": {"type": "string", "index": "not_analyzed"},
-                        "username": {"type": "string", "index": "not_analyzed"},
-                        "appVersion": {"type": "string", "index": "not_analyzed"},
-                        "commcare_version": {"type": "string", "index": "not_analyzed"},
-                        "app_build_version": {"type": "string", "index": "not_analyzed"},
-                        "geo_point": {
-                            "type": "geo_point",
-                            "lat_lon": True,
-                            "geohash": True,
-                            "geohash_prefix": True,
-                            "geohash_precision": '10m'
+                        "timeStart": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
                         },
+                        "userID": {
+                            "index": "not_analyzed",
+                            "null_value": NULL_VALUE,
+                            "type": "string"
+                        },
+                        "username": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
                     }
-                },
-            },
+                }
+            }
         },
+        "initial_processing_complete": {
+            "type": "boolean"
+        },
+        "inserted_at": {
+            "format": DATE_FORMATS_STRING,
+            "type": "date"
+        },
+        "partial_submission": {
+            "type": "boolean"
+        },
+        "path": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "received_on": {
+            "format": DATE_FORMATS_STRING,
+            "type": "date"
+        },
+        "server_modified_on": {
+            "format": DATE_FORMATS_STRING,
+            "type": "date"
+        },
+        "submit_ip": {
+            "type": "ip"
+        },
+        "user_type": {
+            "index": "not_analyzed",
+            "null_value": NULL_VALUE,
+            "type": "string"
+        },
+        "xmlns": {
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "string"
+        }
     }
 }
 
