@@ -96,6 +96,8 @@ class _Importer(object):
 
     def do_import(self, spreadsheet):
         with TaskProgressManager(self.task, src="case_importer") as progress_manager:
+            # mutable context to be used by extensions to keep during import
+            import_context = {}
             for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
                 progress_manager.set_progress(row_num - 1, spreadsheet.max_row)
                 if row_num == 1:
@@ -107,7 +109,7 @@ class _Importer(object):
                     if self.multi_domain:
                         if self.domain != row.get('domain'):
                             continue
-                    self.import_row(row_num, row)
+                    self.import_row(row_num, row, import_context)
                 except exceptions.CaseRowErrorList as errors:
                     self.results.add_errors(row_num, errors)
                 except exceptions.CaseRowError as error:
@@ -116,10 +118,11 @@ class _Importer(object):
             self.commit_caseblocks()
             return self.results.to_json()
 
-    def import_row(self, row_num, raw_row):
+    def import_row(self, row_num, raw_row, import_context):
         search_id = self._parse_search_id(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
-        fields_to_update, errors = custom_case_upload_operations(self.domain, row_num, raw_row, fields_to_update)
+        fields_to_update, errors = custom_case_upload_operations(self.domain, row_num, raw_row, fields_to_update,
+                                                                 import_context)
         if errors:
             raise exceptions.CaseRowErrorList(errors)
         if not any(fields_to_update.values()):

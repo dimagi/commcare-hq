@@ -1,5 +1,8 @@
 RCH_BENEFICIARY_IDENTIFIER = 'Rch_id'
 SNCU_BENEFICIARY_IDENTIFIER = 'admission_id'
+OWNER_NAME = 'owner_name'
+
+ROW_LIMIT_PER_OWNER_PER_CALL_TYPE = 40
 
 MANDATORY_COLUMNS = [
     'name',
@@ -7,7 +10,7 @@ MANDATORY_COLUMNS = [
     'DIST_NAME',
     'Health_Block',
     'visit_type',
-    'owner_name'
+    OWNER_NAME
 ]
 
 RCH_MANDATORY_COLUMNS = [

@@ -16,7 +16,7 @@ def custom_case_upload_file_checks(domain, case_upload) -> List[str]:
 
 
 @extension_point(result_format=ResultFormat.FIRST)
-def custom_case_upload_operations(domain, row_num, raw_row, fields_to_update):
+def custom_case_upload_operations(domain, row_num, raw_row, fields_to_update, import_context):
     """
     Perform additional operations on row and return updates to be done.
     Raise an error with custom class inherited from CaseRowError to skip the row
