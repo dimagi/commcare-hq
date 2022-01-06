@@ -22,4 +22,4 @@ SNCU_MANDATORY_COLUMNS = [
     'newborn_weight'
 ]
 
-SAMVEG_DOMAINS = ["samveg"]
+SAMVEG_DOMAINS = ["samveg", "samveg-quick"]
