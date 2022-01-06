@@ -52,7 +52,34 @@ class MandatoryValueValidator(BaseValidator):
                     column_names=', '.join(missing_values))
                 )
             )
+        errors.extend(cls._validate_call_columns(raw_row))
         return fields_to_update, errors
+
+    @classmethod
+    def _validate_call_columns(cls, raw_row):
+        # out of 6 call columns call1-6, there should be value for at least one
+        # and it should be the latest one
+        # Example:
+        # Invalid:
+        # []
+        # ['2021-12-01', '', '2022-01-01']
+        # Valid:
+        # ['2021-12-01']
+        # ['2021-12-01', '2022-01-01']
+        errors = []
+        latest_call_with_value = 0
+        call_values = []
+        for i in range(1, 7):
+            call_value = raw_row.get(f"Call{i}")
+            if call_value:
+                latest_call_with_value = i
+                call_values.append(call_value)
+        if call_values:
+            if len(call_values) != latest_call_with_value:
+                errors.append(CaseRowError(_('Call values not as expected')))
+        else:
+            errors.append(CaseRowError(_('Call values missing')))
+        return errors
 
 
 def get_mandatory_columns(columns):
