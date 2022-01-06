@@ -19,8 +19,7 @@ def samveg_case_upload_checks(domain, case_upload):
     errors = []
     with case_upload.get_spreadsheet() as spreadsheet:
         for validator in validators:
-            if hasattr(validator, 'validate'):
-                errors.extend(getattr(validator, 'validate')(spreadsheet))
+            errors.extend(getattr(validator, 'run')(spreadsheet))
     return errors
 
 

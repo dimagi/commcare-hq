@@ -12,10 +12,10 @@ class TestMandatoryColumnsValidator(SimpleTestCase, TestFileMixin):
 
     def test_validate(self):
         with get_spreadsheet(self.get_path('case_upload', 'xlsx')) as spreadsheet:
-            errors = MandatoryColumnsValidator.validate(spreadsheet)
+            errors = MandatoryColumnsValidator.run(spreadsheet)
         self.assertEqual(
             errors,
-            ['Missing columns Rch_id, owner_name, admission_id']
+            ['Missing columns Health_Block, MobileNo, owner_name, DIST_NAME, visit_type']
         )
 
 
