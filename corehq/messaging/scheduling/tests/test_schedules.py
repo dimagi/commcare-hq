@@ -1,38 +1,42 @@
+from datetime import date, datetime, time
+
+from django.test import TestCase
+from unittest.mock import patch
+
 from casexml.apps.case.tests.util import create_case
+from dimagi.utils.parsing import json_format_date
+
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import sharded
-from corehq.apps.hqcase.utils import update_case
-from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
-    save_alert_schedule_instance,
-    save_timed_schedule_instance,
-    delete_timed_schedule_instance,
-    get_alert_schedule_instances_for_schedule,
-    get_timed_schedule_instances_for_schedule,
-    delete_alert_schedule_instances_for_schedule,
-    delete_timed_schedule_instances_for_schedule,
-)
-from corehq.messaging.scheduling.scheduling_partitioned.models import (
-    AlertScheduleInstance,
-    TimedScheduleInstance,
-    CaseTimedScheduleInstance,
-)
 from corehq.messaging.scheduling.models import (
-    AlertSchedule,
     AlertEvent,
-    TimedSchedule,
-    TimedEvent,
+    AlertSchedule,
     CasePropertyTimedEvent,
     RandomTimedEvent,
     SMSContent,
+    TimedEvent,
+    TimedSchedule,
+)
+from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+    delete_alert_schedule_instances_for_schedule,
+    delete_timed_schedule_instance,
+    delete_timed_schedule_instances_for_schedule,
+    get_alert_schedule_instances_for_schedule,
+    get_timed_schedule_instances_for_schedule,
+    save_alert_schedule_instance,
+    save_timed_schedule_instance,
+)
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    AlertScheduleInstance,
+    CaseTimedScheduleInstance,
+    TimedScheduleInstance,
 )
 from corehq.messaging.scheduling.tasks import (
     refresh_alert_schedule_instances,
     refresh_timed_schedule_instances,
 )
-from datetime import datetime, date, time
-from django.test import TestCase
-from unittest.mock import patch
 
 
 class BaseScheduleTest(TestCase):
@@ -104,8 +108,9 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), True, date(2017, 3, 16),
@@ -115,8 +120,9 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
         # Deactivate
         self.schedule.active = False
         self.schedule.save()
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), False, date(2017, 3, 16),
@@ -129,8 +135,9 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), False, date(2017, 3, 16),
@@ -141,8 +148,9 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
         self.schedule.active = True
         self.schedule.save()
         utcnow_patch.return_value = datetime(2017, 3, 16, 7, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), True, date(2017, 3, 16),
@@ -155,8 +163,9 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), False, date(2017, 3, 16),
@@ -167,8 +176,9 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
         self.schedule.active = True
         self.schedule.save()
         utcnow_patch.return_value = datetime(2017, 3, 16, 17, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 2, datetime(2017, 3, 17, 16, 0), True, date(2017, 3, 16),
@@ -181,8 +191,9 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), False, date(2017, 3, 16),
@@ -199,7 +210,7 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
         utcnow_patch.return_value = datetime(2017, 4, 1, 17, 0)
         for i in range(2):
             refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-                date(2017, 3, 16))
+                                             json_format_date(date(2017, 3, 16)))
             self.assertNumInstancesForSchedule(1)
             [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
             self.assertTimedScheduleInstance(instance, 0, 3, datetime(2017, 3, 18, 16, 0), False,
@@ -455,8 +466,9 @@ class DailyScheduleTest(BaseScheduleTest):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), True, date(2017, 3, 16),
@@ -486,8 +498,9 @@ class DailyScheduleTest(BaseScheduleTest):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), True, date(2017, 3, 16),
@@ -495,8 +508,9 @@ class DailyScheduleTest(BaseScheduleTest):
         self.assertEqual(send_patch.call_count, 0)
 
         # Set start date one day back
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 15))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 15))
+        )
         old_id = instance.schedule_instance_id
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
@@ -506,8 +520,9 @@ class DailyScheduleTest(BaseScheduleTest):
         self.assertEqual(send_patch.call_count, 0)
 
         # Set start date one more day back
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 14))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 14))
+        )
         old_id = instance.schedule_instance_id
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
@@ -521,16 +536,19 @@ class DailyScheduleTest(BaseScheduleTest):
 
         # Schedule the instance for user1
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), True, date(2017, 3, 16),
             self.user1)
 
         # Add user2
-        refresh_timed_schedule_instances(self.schedule.schedule_id,
-            (('CommCareUser', self.user1.get_id), ('CommCareUser', self.user2.get_id)), date(2017, 3, 16))
+        recipients = (('CommCareUser', self.user1.get_id), ('CommCareUser', self.user2.get_id))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, recipients, json_format_date(date(2017, 3, 16))
+        )
 
         self.assertNumInstancesForSchedule(2)
         [instance1, instance2] = get_timed_schedule_instances_for_schedule(self.schedule)
@@ -547,8 +565,9 @@ class DailyScheduleTest(BaseScheduleTest):
             date(2017, 3, 16), self.user2)
 
         # Remove user1
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user2.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user2.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), True, date(2017, 3, 16),
@@ -589,8 +608,9 @@ class CustomDailyScheduleTest(BaseScheduleTest):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), True, date(2017, 3, 16),
@@ -663,8 +683,9 @@ class RandomTimedEventTest(BaseScheduleTest):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertRandomTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0),
@@ -719,8 +740,9 @@ class RandomTimedEventSpanningTwoDaysTest(BaseScheduleTest):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 16))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 16))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertRandomTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 17, 3, 0),
@@ -772,8 +794,9 @@ class StartDayOfWeekTest(BaseScheduleTest):
         # Schedule the instance using an explicit start date (a Thursday).
         # Based on the schedule we should start sending on the next Monday
         utcnow_patch.return_value = datetime(2017, 8, 2, 7, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 8, 3))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 8, 3))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 8, 7, 16, 0), True, date(2017, 8, 3),
@@ -812,8 +835,9 @@ class StartDayOfWeekTest(BaseScheduleTest):
         # Schedule the instance using an explicit start date in the past.
         # Since the date is so far back, the schedule is automatically deactivated.
         utcnow_patch.return_value = datetime(2017, 8, 9, 7, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 7, 1))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 7, 1))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 3, datetime(2017, 7, 5, 16, 0), False, date(2017, 7, 1),
@@ -883,8 +907,9 @@ class StartDayOfWeekWithStartOffsetTest(BaseScheduleTest):
         # Schedule the instance using an explicit start date (a Sunday)
         # Based on the schedule (with start offset 3) we should start sending on the next Monday
         utcnow_patch.return_value = datetime(2017, 8, 2, 7, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 8, 6))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 8, 6))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 8, 14, 16, 0), True, date(2017, 8, 6),
@@ -960,8 +985,9 @@ class MonthlyScheduleTest(TestCase):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2017, 4, 1, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 4, 1))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 4, 1))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 4, 1, 16, 0), True, date(2017, 4, 1))
@@ -1004,16 +1030,18 @@ class MonthlyScheduleTest(TestCase):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2017, 4, 15, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 4, 15))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 4, 15))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 1, 1, datetime(2017, 4, 15, 16, 0), True, date(2017, 4, 15))
         self.assertEqual(send_patch.call_count, 0)
 
         # Set start date in previous month
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 3, 14))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 3, 14))
+        )
         old_id = instance.schedule_instance_id
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
@@ -1022,8 +1050,9 @@ class MonthlyScheduleTest(TestCase):
         self.assertEqual(send_patch.call_count, 0)
 
         # Set start date two months back
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 2, 1))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 2, 1))
+        )
         old_id = instance.schedule_instance_id
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
@@ -1082,8 +1111,9 @@ class EndOfMonthScheduleTest(TestCase):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2017, 4, 1, 6, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2017, 4, 1))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2017, 4, 1))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 4, 30, 16, 0), True, date(2017, 4, 1))
@@ -1137,8 +1167,9 @@ class DailyRepeatEveryTest(BaseScheduleTest):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2018, 3, 1, 0, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2018, 3, 1))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2018, 3, 1))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2018, 3, 1, 17, 0), True, date(2018, 3, 1),
@@ -1206,8 +1237,9 @@ class WeeklyRepeatEveryTest(BaseScheduleTest):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2018, 3, 5, 0, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2018, 3, 5))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2018, 3, 5))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2018, 3, 5, 17, 0), True, date(2018, 3, 5),
@@ -1301,8 +1333,9 @@ class MonthlyRepeatEveryTest(BaseScheduleTest):
 
         # Schedule the instance
         utcnow_patch.return_value = datetime(2018, 1, 1, 0, 0)
-        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
-            date(2018, 1, 1))
+        refresh_timed_schedule_instances(
+            self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),), json_format_date(date(2018, 1, 1))
+        )
         self.assertNumInstancesForSchedule(1)
         [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
         self.assertTimedScheduleInstance(instance, 0, 1, datetime(2018, 1, 1, 17, 0), True, date(2018, 1, 1),
