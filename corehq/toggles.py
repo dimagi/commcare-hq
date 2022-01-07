@@ -18,7 +18,6 @@ from memoized import memoized
 
 from corehq.extensions import extension_point, ResultFormat
 from toggle.models import Toggle
-from toggle.shortcuts import set_toggle, toggle_enabled
 
 from corehq.util.quickcache import quickcache
 
@@ -177,6 +176,7 @@ class StaticToggle(object):
         if (user_enabled_after is not None and was_user_created_after(item, user_enabled_after)):
             return True
 
+        from corehq.apps.toggle_ui.shortcuts import toggle_enabled
         namespaces = self.namespaces if namespace is Ellipsis else [namespace]
         return any([toggle_enabled(self.slug, item, namespace=n) for n in namespaces])
 
@@ -199,6 +199,7 @@ class StaticToggle(object):
                )
 
     def set(self, item, enabled, namespace=None):
+        from corehq.apps.toggle_ui.shortcuts import set_toggle
         if namespace == NAMESPACE_USER:
             namespace = None  # because:
             #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
