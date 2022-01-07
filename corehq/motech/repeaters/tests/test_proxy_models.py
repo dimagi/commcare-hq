@@ -1,40 +1,57 @@
 from django.test import TestCase
 
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters, get_all_repeater_docs
+from corehq.motech.repeaters.dbaccessors import (
+    delete_all_repeaters,
+    get_all_repeater_docs,
+)
 
-from ..models import Repeater, SQLCaseRepeater, SQLCreateCaseRepeater
+from ..models import (
+    Repeater,
+    SQLAppStructureRepeater,
+    SQLCaseRepeater,
+    SQLCreateCaseRepeater,
+    SQLDataRegistryCaseUpdateRepeater,
+    SQLLocationRepeater,
+    SQLReferCaseRepeater,
+    SQLShortFormRepeater,
+    SQLUserRepeater,
+)
+
 
 DOMAIN = 'test-domain'
 
 
-class TestSQLCreateCaseRepeater(TestCase):
+class RepeaterProxyTests(TestCase):
     def setUp(self):
         self.url = "http://example.com"
         self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=self.url, url=self.url)
-        self.createcase_repeater_obj = SQLCreateCaseRepeater(
-            domain=DOMAIN,
-            connection_settings=self.conn,
-            white_listed_case_types=['white_case', 'black_case'],
-            black_listed_users=['user1'],
-            is_paused=False,
-            format='case_json',
-        )
-        self.case_repeater_obj = SQLCaseRepeater(
-            domain=DOMAIN,
-            connection_settings=self.conn,
-            white_listed_case_types=['white_case', 'black_case'],
-            black_listed_users=['user1'],
-            is_paused=False,
-            format='case_json',
-        )
-        self.case_repeater_obj.save()
-        self.createcase_repeater_obj.save()
-        return super().setUp()
+        self.repeater_data = {
+            "domain": DOMAIN,
+            "connection_settings": self.conn,
+            "white_listed_case_types": ['white_case', 'black_case'],
+            "black_listed_users": ['user1'],
+            "is_paused": False,
+            "format": 'case_json',
+        }
+        super().setUp()
 
     def tearDown(self):
         delete_all_repeaters()
         return super().tearDown()
+
+
+class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
+    def setUp(self):
+        super().setUp()
+        self.createcase_repeater_obj = SQLCreateCaseRepeater(**self.repeater_data)
+        self.case_repeater_obj = SQLCaseRepeater(**self.repeater_data)
+        self.refercase_repeater_obj = SQLReferCaseRepeater(**self.repeater_data)
+        self.dataregistry_repeater_obj = SQLDataRegistryCaseUpdateRepeater(**self.repeater_data)
+        self.case_repeater_obj.save()
+        self.createcase_repeater_obj.save()
+        self.refercase_repeater_obj.save()
+        self.dataregistry_repeater_obj.save()
 
     def test_model_instance_is_correct(self):
         self.assertEqual(self.createcase_repeater_obj.repeater_type, "CreateCaseRepeater")
@@ -64,7 +81,31 @@ class TestSQLCreateCaseRepeater(TestCase):
 
     def test_repeaters_are_synced_to_couch(self):
         repeaters = get_all_repeater_docs()
-        self.assertEqual(len(repeaters), 2)
+        self.assertEqual(len(repeaters), 4)
+        self.assertEqual(
+            {
+                r['_id'] for r in repeaters
+            },
+            {
+                self.createcase_repeater_obj.repeater_id,
+                self.case_repeater_obj.repeater_id,
+                self.refercase_repeater_obj.repeater_id,
+                self.dataregistry_repeater_obj.repeater_id
+            }
+        )
+        self.assertEqual(
+            {
+                Repeater.wrap(r).repeater_type for r in repeaters
+            },
+            {
+                self.createcase_repeater_obj.repeater_type,
+                self.case_repeater_obj.repeater_type,
+                self.refercase_repeater_obj.repeater_type,
+                self.dataregistry_repeater_obj.repeater_type
+            }
+        )
+
+
         self.assertEqual(
             {r['_id'] for r in repeaters},
             {self.createcase_repeater_obj.repeater_id, self.case_repeater_obj.repeater_id}
