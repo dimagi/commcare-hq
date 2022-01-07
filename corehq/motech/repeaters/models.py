@@ -413,6 +413,101 @@ class SQLCreateCaseRepeater(SQLCaseRepeater):
         return CreateCaseRepeater
 
 
+class SQLUpdateCaseRepeater(SQLCaseRepeater):
+    """
+    Just like CaseRepeater but only create records if the case is being updated.
+    Used by the Zapier integration.
+    """
+    class Meta:
+        proxy = True
+
+    friendly_name = _("Forward Cases on Update Only")
+
+    def allowed_to_forward(self, payload):
+        return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return UpdateCaseRepeater
+
+
+class SQLReferCaseRepeater(SQLCreateCaseRepeater):
+    """
+    A repeater that triggers off case creation but sends a form creating cases in
+    another commcare project
+    """
+    class Meta:
+        proxy = True
+
+    friendly_name = _("Forward Cases To Another Commcare Project")
+
+    payload_generator_classes = (ReferCasePayloadGenerator,)
+
+    def form_class_name(self):
+        # Note this class does not exist but this property is only used to construct the URL
+        return 'ReferCaseRepeater'
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        """Returns whether this repeater can be used by a particular domain
+        """
+        return toggles.REFER_CASE_REPEATER.enabled(domain)
+
+    def get_url(self, repeat_record):
+        new_domain = self.payload_doc(repeat_record).get_case_property('new_domain')
+        return self.connection_settings.url.format(domain=new_domain)
+
+    def send_request(self, repeat_record, payload):
+        """Add custom response handling to allow more nuanced handling of form errors"""
+        return get_repeater_response_from_submission_response(
+            super().send_request(repeat_record, payload)
+        )
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return ReferCaseRepeater
+
+
+class SQLDataRegistryCaseUpdateRepeater(SQLCreateCaseRepeater):
+    """
+    A repeater that triggers off case creation but sends a form to update cases in
+    another commcare project space.
+    """
+    class Meta:
+        proxy = True
+
+    friendly_name = _("Update Cases in another CommCare Project via a Data Registry")
+    payload_generator_classes = (DataRegistryCaseUpdatePayloadGenerator,)
+
+    def form_class_name(self):
+        return 'DataRegistryCaseUpdateRepeater'
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return toggles.DATA_REGISTRY_CASE_UPDATE_REPEATER.enabled(domain)
+
+    def get_url(self, repeat_record):
+        new_domain = self.payload_doc(repeat_record).get_case_property('target_domain')
+        return self.connection_settings.url.format(domain=new_domain)
+
+    def send_request(self, repeat_record, payload):
+        return get_repeater_response_from_submission_response(
+            super().send_request(repeat_record, payload)
+        )
+
+    def allowed_to_forward(self, payload):
+        if not super().allowed_to_forward(payload):
+            return False
+
+        # Exclude extension cases where the host is also a case type that this repeater
+        # would act on since they get forwarded along with their host
+        host_index = payload.get_index(CASE_INDEX_IDENTIFIER_HOST)
+        return not host_index or host_index.referenced_type not in self.white_listed_case_types
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return DataRegistryCaseUpdateRepeater
+
 class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and
