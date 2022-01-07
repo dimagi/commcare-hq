@@ -1193,6 +1193,10 @@ class UpdateCaseRepeater(CaseRepeater):
     def allowed_to_forward(self, payload):
         return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLUpdateCaseRepeater
+
 
 class ReferCaseRepeater(CreateCaseRepeater):
     """
@@ -1222,6 +1226,10 @@ class ReferCaseRepeater(CreateCaseRepeater):
         return get_repeater_response_from_submission_response(
             super().send_request(repeat_record, payload)
         )
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLReferCaseRepeater
 
 
 def get_repeater_response_from_submission_response(response):
@@ -1279,6 +1287,10 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         host_index = payload.get_index(CASE_INDEX_IDENTIFIER_HOST)
         return not host_index or host_index.referenced_type not in self.white_listed_case_types
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLDataRegistryCaseUpdateRepeater
+
 
 class ShortFormRepeater(Repeater):
     """
@@ -1305,6 +1317,10 @@ class ShortFormRepeater(Repeater):
         })
         return headers
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLShortFormRepeater
+
 
 class AppStructureRepeater(Repeater):
     friendly_name = _("Forward App Schema Changes")
@@ -1313,6 +1329,10 @@ class AppStructureRepeater(Repeater):
 
     def payload_doc(self, repeat_record):
         return None
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLAppStructureRepeater
 
 
 class UserRepeater(Repeater):
@@ -1324,6 +1344,10 @@ class UserRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return CommCareUser.get(repeat_record.payload_id)
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLUserRepeater
+
 
 class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
@@ -1333,6 +1357,10 @@ class LocationRepeater(Repeater):
     @memoized
     def payload_doc(self, repeat_record):
         return SQLLocation.objects.get(location_id=repeat_record.payload_id)
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLLocationRepeater
 
 
 def get_all_repeater_types():
