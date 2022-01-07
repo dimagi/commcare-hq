@@ -8,6 +8,11 @@
 </script>
 
 <div id="usercase-config-ko">
+  <div class="clearfix">
+    {% if allow_usercase %}
+      <div data-bind="saveButton: saveUsercaseButton"></div>
+    {% endif %}
+  </div>
   <p class="lead">
     {% blocktrans %}
       <strong>User Properties</strong> allow you to store data about the user and use that data in forms.
