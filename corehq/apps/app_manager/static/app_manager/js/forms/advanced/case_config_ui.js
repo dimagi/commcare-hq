@@ -160,10 +160,6 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat);
             };
 
-            self.refreshQuestions = function (url, formUniqueId, event) {
-                return caseConfigUtils.refreshQuestions(self.questions, url, formUniqueId, event);
-            };
-
             self.getAnswers = function (condition) {
                 return caseConfigUtils.getAnswers(self.questions(), condition);
             };
@@ -222,6 +218,8 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     $('.hq-help-template').each(function () {
                         hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
                     });
+
+                    caseConfigUtils.initRefreshQuestions(self.questions);
                 });
             };
             return self;
