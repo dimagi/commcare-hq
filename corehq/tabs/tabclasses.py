@@ -2018,7 +2018,7 @@ def _get_feature_flag_items(domain, couch_user):
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
         })
 
-    # DEPRECATED: only show this is the domain does not have release_management access
+    # DEPRECATED: only show this if the domain does not have release_management access
     can_access_linked_domains = (
         user_is_admin and toggles.LINKED_DOMAINS.enabled(domain)
         and not can_domain_access_release_management(domain)
