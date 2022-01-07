@@ -22,6 +22,9 @@ class Toggle(Document):
     enabled_users = ListProperty()
     last_modified = DateTimeProperty()
 
+    class Meta(object):
+        app_label = 'toggle'
+
     def save(self, **params):
         if ('_id' not in self._doc):
             self._doc['_id'] = generate_toggle_id(self.slug)
