@@ -6,6 +6,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection, get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -21,6 +22,7 @@ from corehq.util.soft_assert import soft_assert
 
 from .const import (
     CHECK_REPEATERS_INTERVAL,
+    CHECK_REPEATERS_PARTITION_COUNT,
     CHECK_REPEATERS_KEY,
     MAX_RETRY_WAIT,
     RECORD_FAILURE_STATE,
@@ -29,7 +31,8 @@ from .const import (
 )
 from .dbaccessors import (
     get_overdue_repeat_record_count,
-    iterate_repeat_records,
+    iterate_repeat_record_ids,
+    iterate_repeat_records_for_ids,
 )
 from .models import (
     SQLRepeater,
@@ -77,18 +80,39 @@ def delete_old_request_logs():
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def check_repeaters():
+    # this creates a task for all partitions
+    # the Nth child task determines if a lock is available for the Nth partition
+    for current_partition in range(CHECK_REPEATERS_PARTITION_COUNT):
+        check_repeaters_in_partition.delay(current_partition, CHECK_REPEATERS_PARTITION_COUNT)
+
+
+def _iterate_record_ids_for_partition(start, partition, total_partitions):
+    for record_id in iterate_repeat_record_ids(start, chunk_size=10000):
+        if hash(record_id) % total_partitions == partition:
+            yield record_id
+
+
+def _iterate_repeat_records_for_partition(start, partition, total_partitions):
+    # chunk the fetching of documents from couch
+    for chunked_ids in chunked(_iterate_record_ids_for_partition(start, partition, total_partitions), 1000):
+        yield from iterate_repeat_records_for_ids(chunked_ids)
+
+
+@task(queue=settings.CELERY_PERIODIC_QUEUE)
+def check_repeaters_in_partition(partition, total_partitions):
     start = datetime.utcnow()
     twentythree_hours_sec = 23 * 60 * 60
     twentythree_hours_later = start + timedelta(hours=23)
 
     # Long timeout to allow all waiting repeat records to be iterated
+    lock_key = f"{CHECK_REPEATERS_KEY}_{partition}_in_{total_partitions}"
     check_repeater_lock = get_redis_lock(
-        CHECK_REPEATERS_KEY,
+        lock_key,
         timeout=twentythree_hours_sec,
-        name=CHECK_REPEATERS_KEY,
+        name=lock_key,
     )
     if not check_repeater_lock.acquire(blocking=False):
-        metrics_counter("commcare.repeaters.check.locked_out")
+        metrics_counter("commcare.repeaters.check.locked_out", tags={'partition': partition})
         return
 
     try:
@@ -96,12 +120,13 @@ def check_repeaters():
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for record in iterate_repeat_records(start, chunk_size=5000):
+            for record in _iterate_repeat_records_for_partition(start, partition, total_partitions):
                 if not _soft_assert(
                     datetime.utcnow() < twentythree_hours_later,
                     "I've been iterating repeat records for 23 hours. I quit!"
                 ):
                     break
+
                 metrics_counter("commcare.repeaters.check.attempt_forward")
                 record.attempt_forward_now(is_retry=True)
             else:
