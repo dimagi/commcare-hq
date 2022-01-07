@@ -508,6 +508,107 @@ class SQLDataRegistryCaseUpdateRepeater(SQLCreateCaseRepeater):
     def _migration_get_couch_model_class(cls):
         return DataRegistryCaseUpdateRepeater
 
+
+class SQLShortFormRepeater(SQLRepeater):
+    """
+    Record that form id & case ids should be repeated to a new url
+
+    """
+    FORMAT_OPTIONS = ['short_form_json']
+
+    format = OptionValue(choices=FORMAT_OPTIONS)
+
+    class Meta:
+        proxy = True
+
+    version = OptionValue(choices=LEGAL_VERSIONS, default=V2)
+    friendly_name = _("Forward Form Stubs")
+
+    payload_generator_classes = (ShortFormRepeaterJsonPayloadGenerator,)
+
+    @memoized
+    def payload_doc(self, repeat_record):
+        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+
+    def allowed_to_forward(self, payload):
+        return payload.xmlns != DEVICE_LOG_XMLNS
+
+    def get_headers(self, repeat_record):
+        headers = super(ShortFormRepeater, self).get_headers(repeat_record)
+        headers.update({
+            "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
+        })
+        return headers
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return ShortFormRepeater
+
+
+class SQLAppStructureRepeater(SQLRepeater):
+    FORMAT_OPTIONS = ['app_structure_xml']
+
+    format = OptionValue(choices=FORMAT_OPTIONS)
+
+    class Meta:
+        proxy = True
+
+    friendly_name = _("Forward App Schema Changes")
+
+    payload_generator_classes = (AppStructureGenerator,)
+
+    def payload_doc(self, repeat_record):
+        return None
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return AppStructureRepeater
+
+
+class SQLUserRepeater(SQLRepeater):
+
+    FORMAT_OPTIONS = ['']
+
+    format = OptionValue(choices=FORMAT_OPTIONS)
+
+    class Meta:
+        proxy = True
+
+    friendly_name = _("Forward Users")
+
+    payload_generator_classes = (UserPayloadGenerator,)
+
+    @memoized
+    def payload_doc(self, repeat_record):
+        return CommCareUser.get(repeat_record.payload_id)
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return UserRepeater
+
+
+class SQLLocationRepeater(SQLRepeater):
+
+    FORMAT_OPTIONS = ['']
+
+    format = OptionValue(choices=FORMAT_OPTIONS)
+
+    class Meta:
+        proxy = True
+
+    friendly_name = _("Forward Locations")
+
+    payload_generator_classes = (LocationPayloadGenerator,)
+
+    @memoized
+    def payload_doc(self, repeat_record):
+        return SQLLocation.objects.get(location_id=repeat_record.payload_id)
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return LocationRepeater
+
+
 class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and
