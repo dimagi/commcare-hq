@@ -17,7 +17,6 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.extensions import extension_point, ResultFormat
-from toggle.models import Toggle
 
 from corehq.util.quickcache import quickcache
 
@@ -235,6 +234,7 @@ class StaticToggle(object):
         return decorator
 
     def get_enabled_domains(self):
+        from corehq.apps.toggle_ui.models import Toggle
         try:
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
@@ -247,6 +247,7 @@ class StaticToggle(object):
         return list(domains)
 
     def get_enabled_users(self):
+        from corehq.apps.toggle_ui.models import Toggle
         try:
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
@@ -391,6 +392,7 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
     @quickcache(vary_on=['self.slug'])
     def randomness(self):
         # a bit hacky: leverage couch's dynamic properties to just tack this onto the couch toggle doc
+        from corehq.apps.toggle_ui.models import Toggle
         try:
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:

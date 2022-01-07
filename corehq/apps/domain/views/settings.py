@@ -20,9 +20,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
-from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import json_response
-from toggle.models import Toggle
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -52,6 +50,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
+from corehq.apps.toggle_ui.models import Toggle
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm

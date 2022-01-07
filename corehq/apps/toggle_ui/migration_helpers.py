@@ -1,6 +1,6 @@
 from couchdbkit import ResourceNotFound
 
-from toggle.models import Toggle
+from corehq.apps.toggle_ui.models import Toggle
 from corehq.apps.toggle_ui.shortcuts import parse_toggle
 
 

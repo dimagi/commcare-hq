@@ -100,7 +100,7 @@ class ToggleDumper(DataDumper):
 
 def _get_toggles_to_migrate(domain):
     from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
-    from toggle.models import Toggle
+    from corehq.apps.toggle_ui.models import Toggle
     from corehq.apps.toggle_ui.shortcuts import namespaced_item
 
     domain_item = namespaced_item(domain, NAMESPACE_DOMAIN)
