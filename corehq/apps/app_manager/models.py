@@ -333,8 +333,8 @@ class FormAction(DocumentSchema):
         if 'external_id' in action_properties and action.external_id:
             yield 'external_id', action.external_id
         if 'update' in action_properties:
-            for name, path in action.update.items():
-                yield name, path
+            for name, smart_case_update in action.update.items():
+                yield name, smart_case_update.question_path
         if 'case_properties' in action_properties:
             for name, path in action.case_properties.items():
                 yield name, path
@@ -461,8 +461,8 @@ class AdvancedAction(IndexedSchema):
     __eq__ = DocumentSchema.__eq__
 
     def get_paths(self):
-        for path in self.case_properties.values():
-            yield path
+        for smart_case_update in self.case_properties.values():
+            yield smart_case_update.question_path
 
         if self.close_condition.type == 'if':
             yield self.close_condition.question
