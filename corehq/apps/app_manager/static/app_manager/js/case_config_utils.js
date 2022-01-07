@@ -49,7 +49,7 @@ hqDefine('app_manager/js/case_config_utils', function () {
             return options;
         },
         // This function depends on initial page data, so it should be called within a document ready handler
-        initRefreshQuestions: function (questions_observable) {
+        initRefreshQuestions: function (questionsObservable) {
             var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
                 formUniqueId = initialPageData.get("form_unique_id");
             if (formUniqueId) {
@@ -66,7 +66,7 @@ hqDefine('app_manager/js/case_config_utils', function () {
                                     form_unique_id: formUniqueId,
                                 },
                                 success: function (data) {
-                                    questions_observable(data);
+                                    questionsObservable(data);
                                 },
                             });
                         }
