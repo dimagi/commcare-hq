@@ -72,7 +72,6 @@ branches:
     - jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
     - cs/SC-1904-invalid-datum-generation # Charl 7 Dec
-    - dependabot/npm_and_yarn/jquery-ui-1.13.0  # Biyeun Dec 8 
     - gh/improve-queueing-repeaters # Graham Dec 10
     - mk/support-multibar-reports # MK Dec 14
     - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
@@ -81,4 +80,5 @@ branches:
     - jls/auto-refresh-questions # Jenny Jan 5
     - mk/case-import-custom-validations # MK Jan 6
     - mjr/remove_export_label_markup # Matt Jan 6
+    - dependabot/pip/requirements/reportlab-3.6.5  # Biyeun Jan 7
 submodules: { }
