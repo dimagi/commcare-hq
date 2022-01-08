@@ -26,6 +26,7 @@ class MandatoryColumnsValidator(BaseValidator):
     @classmethod
     def _validate_mandatory_columns(cls, spreadsheet):
         columns = spreadsheet.get_header_columns()
+        error_messages = []
         try:
             mandatory_columns = get_mandatory_columns(columns)
         except UnexpectedFileError:
@@ -33,9 +34,10 @@ class MandatoryColumnsValidator(BaseValidator):
 
         missing_columns = set(mandatory_columns) - set(columns)
         if missing_columns:
-            return [_('Missing columns {column_names}').format(
+            error_messages.append(_('Missing columns {column_names}').format(
                 column_names=", ".join(missing_columns)
-            )]
+            ))
+        return error_messages
 
 
 class MandatoryValueValidator(BaseValidator):
