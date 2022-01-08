@@ -25,3 +25,4 @@ def custom_case_import_operations(domain, row_num, raw_row, fields_to_update):
     Returns:
         Final fields to update, error messages
     """
+    return fields_to_update, []
