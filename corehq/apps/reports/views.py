@@ -75,7 +75,6 @@ from corehq.apps.cloudcare.touchforms_api import (
 )
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
-    login_or_digest,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.views.base import BaseDomainView
