@@ -20,9 +20,11 @@ from dimagi.utils.django.cached_object import (
 )
 
 from corehq.apps.domain.decorators import api_auth
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.views import (
     can_view_attachments,
-    BaseFormAttachmentView,
+    get_form_attachment_response,
+    require_form_view_permission,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -132,10 +134,11 @@ class CaseAttachmentAPI(View):
                                      content_type=mime_type)
 
 
-class FormAttachmentAPI(BaseFormAttachmentView):
-    @method_decorator(api_auth)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+@require_form_view_permission
+@location_safe
+@api_auth
+def view_form_attachment(request, domain, instance_id, attachment_id):
+    return get_form_attachment_response(request, domain, instance_id, attachment_id)
 
 
 def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):

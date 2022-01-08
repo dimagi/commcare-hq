@@ -1848,36 +1848,30 @@ class FormDataView(BaseProjectReportSectionView):
         return page_context
 
 
+@require_form_view_permission
 @location_safe
-class BaseFormAttachmentView(View):
-    @method_decorator(require_form_view_permission)
-    def get(self, request, domain, instance_id=None, attachment_id=None):
-        if not instance_id or not attachment_id:
-            raise Http404
-
-        # this raises a PermissionDenied error if necessary
-        safely_get_form(request, domain, instance_id)
-
-        try:
-            content = FormAccessors(domain).get_attachment_content(instance_id, attachment_id)
-        except AttachmentNotFound:
-            raise Http404
-
-        return StreamingHttpResponse(
-            streaming_content=FileWrapper(content.content_stream),
-            content_type=content.content_type
-        )
+@login_and_domain_required
+def view_form_attachment(request, domain, instance_id, attachment_id):
+    # Open form attachment in browser
+    return get_form_attachment_response(request, domain, instance_id, attachment_id)
 
 
-class FormAttachmentView(BaseFormAttachmentView):
-    """
-        Open form attachment in browser
-    """
-    urlname = "form_attachment_view"
+def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+    if not instance_id or not attachment_id:
+        raise Http404
 
-    @method_decorator(login_and_domain_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+    # this raises a PermissionDenied error if necessary
+    safely_get_form(request, domain, instance_id)
+
+    try:
+        content = FormAccessors(domain).get_attachment_content(instance_id, attachment_id)
+    except AttachmentNotFound:
+        raise Http404
+
+    return StreamingHttpResponse(
+        streaming_content=FileWrapper(content.content_stream),
+        content_type=content.content_type
+    )
 
 
 @location_safe

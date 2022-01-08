@@ -11,7 +11,7 @@ from corehq.apps.api.domain_metadata import (
 )
 from corehq.apps.api.object_fetch_api import (
     CaseAttachmentAPI,
-    FormAttachmentAPI,
+    view_form_attachment,
 )
 from corehq.apps.api.odata.views import (
     ODataCaseMetadataView,
@@ -124,7 +124,7 @@ def api_url_patterns():
     yield url(r'v0\.6/case(?:/(?P<case_id>[\w-]+))?/?$', case_api, name='case_api')
     yield from versioned_apis(API_LIST)
     yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
-    yield url(r'^form/attachment/(?P<instance_id>[\w\-:]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(),
+    yield url(r'^form/attachment/(?P<instance_id>[\w\-:]+)/(?P<attachment_id>.*)$', view_form_attachment,
               name="api_form_attachment")
 
 
