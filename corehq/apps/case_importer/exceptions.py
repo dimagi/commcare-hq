@@ -179,4 +179,3 @@ class ExternalIdTooLong(CaseRowError):
 class CustomCaseRowError(CaseRowError):
     """Raised for errors returned by extensions for a row case upload"""
     title = ugettext_noop('Invalid Row')
-    message = ugettext_lazy('This row in invalid')
