@@ -59,9 +59,9 @@ class MandatoryValueValidator(BaseValidator):
             if not raw_row.get(mandatory_column):
                 missing_values.add(mandatory_column)
         if missing_values:
-            error_messages.append(_('Missing values for {column_names}').format(
+            error_messages.append(_('Mandatory columns {column_names}').format(
                 row_number=row_num,
-                column_names=', '.join(missing_values)
+                column_names=', '.join(mandatory_columns)
             ))
         return error_messages
 

@@ -50,27 +50,21 @@ class TestMandatoryValueValidator(SimpleTestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
-    def _assert_missing_values_for_sheet(self, spreadsheet_name, expected_missing_values_for_rows):
+    def _assert_missing_values_for_sheet(self, spreadsheet_name, mandatory_values):
         with get_spreadsheet(self.get_path(spreadsheet_name, 'xlsx')) as spreadsheet:
             for row_num, raw_row in enumerate(spreadsheet.iter_row_dicts()):
                 if row_num == 0:
                     continue  # skip first row (header row)
                 fields_to_update, error_messages = MandatoryValueValidator.run(row_num, raw_row, raw_row)
-                missing_values = set(error_messages[0].split('Missing values for ')[1].split(', '))
                 self.assertEqual(
-                    missing_values,
-                    expected_missing_values_for_rows[row_num - 1]
+                    error_messages[0],
+                    f"Mandatory columns {', '.join(mandatory_values)}"
                 )
 
     def test_validate_mandatory_values(self):
-        expected_missing_values_for_rows = [
-            {'Rch_id', 'Health_Block', 'visit_type', 'owner_name'},
-            {'MobileNo', 'Health_Block', 'visit_type'}
-        ]
-        self._assert_missing_values_for_sheet('missing_values_rch_case_upload', expected_missing_values_for_rows)
+        mandatory_values = ['name', 'MobileNo', 'DIST_NAME', 'Health_Block', 'visit_type', 'owner_name', 'Rch_id']
+        self._assert_missing_values_for_sheet('missing_values_rch_case_upload', mandatory_values)
 
-        expected_missing_values_for_rows = [
-            {'admission_id', 'Health_Block', 'visit_type', 'owner_name'},
-            {'MobileNo', 'Health_Block', 'visit_type', 'newborn_weight'}
-        ]
-        self._assert_missing_values_for_sheet('missing_values_sncu_case_upload', expected_missing_values_for_rows)
+        mandatory_values = ['name', 'MobileNo', 'DIST_NAME', 'Health_Block', 'visit_type',
+                            'owner_name', 'admission_id', 'newborn_weight']
+        self._assert_missing_values_for_sheet('missing_values_sncu_case_upload', mandatory_values)
