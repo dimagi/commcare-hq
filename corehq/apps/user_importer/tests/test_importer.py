@@ -109,8 +109,8 @@ class TestCreateOrUpdateGroups(TestCase):
                 },
             ]
         )
-        self.assertTrue(
-            'Your spreadsheet has multiple groups called "group1" and only the first was processed' in
+        self.assertIn(
+            'Your spreadsheet has multiple groups called "group1" and only the first was processed',
             log['errors']
         )
 
@@ -124,8 +124,9 @@ class TestCreateOrUpdateGroups(TestCase):
                 },
             ]
         )
-        self.assertTrue(
-            'Your spreadsheet has a group with no name or id and it has been ignored' in log['errors']
+        self.assertIn(
+            'Your spreadsheet has a group with no name or id and it has been ignored',
+            log['errors']
         )
 
     def test_missing_group(self):
@@ -137,8 +138,9 @@ class TestCreateOrUpdateGroups(TestCase):
                 },
             ]
         )
-        self.assertTrue(
-            'There are no groups on CommCare HQ with id "1"' in log['errors']
+        self.assertIn(
+            'There are no groups on CommCare HQ with id "1"',
+            log['errors']
         )
 
     def test_group_rename(self):
