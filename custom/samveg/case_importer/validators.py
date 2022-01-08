@@ -20,11 +20,11 @@ class MandatoryColumnsValidator(BaseValidator):
     @classmethod
     def run(cls, spreadsheet):
         errors = []
-        errors.extend(cls._validate_missing_columns(spreadsheet))
+        errors.extend(cls._validate_mandatory_columns(spreadsheet))
         return errors
 
     @classmethod
-    def _validate_missing_columns(cls, spreadsheet):
+    def _validate_mandatory_columns(cls, spreadsheet):
         columns = spreadsheet.get_header_columns()
         try:
             mandatory_columns = get_mandatory_columns(columns)

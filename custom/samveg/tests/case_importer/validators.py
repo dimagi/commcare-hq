@@ -23,7 +23,7 @@ class TestMandatoryColumnsValidator(SimpleTestCase, TestFileMixin):
             ['Unexpected sheet uploaded']
         )
 
-    def test_validate_missing_columns(self):
+    def test_validate_mandatory_columns(self):
         with get_spreadsheet(self.get_path('missing_columns_rch_case_upload', 'xlsx')) as spreadsheet:
             errors = MandatoryColumnsValidator.run(spreadsheet)
         # extract missing columns from message
