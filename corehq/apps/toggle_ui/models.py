@@ -33,7 +33,7 @@ class Toggle(Document):
         self.bust_cache()
 
     @classmethod
-    @quickcache(['cls.__name__', 'docid'], timeout=60 * 60 * 24)
+    #@quickcache(['cls.__name__', 'docid'], timeout=60 * 60 * 24)
     def cached_get(cls, docid):
         try:
             return cls.get(docid)
