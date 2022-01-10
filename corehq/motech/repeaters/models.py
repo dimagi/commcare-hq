@@ -424,7 +424,7 @@ class SQLUpdateCaseRepeater(SQLCaseRepeater):
     friendly_name = _("Forward Cases on Update Only")
 
     def allowed_to_forward(self, payload):
-        return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
+        return super().allowed_to_forward(payload) and len(payload.xform_ids) > 1
 
     @classmethod
     def _migration_get_couch_model_class(cls):
@@ -534,7 +534,7 @@ class SQLShortFormRepeater(SQLRepeater):
         return payload.xmlns != DEVICE_LOG_XMLNS
 
     def get_headers(self, repeat_record):
-        headers = super(ShortFormRepeater, self).get_headers(repeat_record)
+        headers = super().get_headers(repeat_record)
         headers.update({
             "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
         })
