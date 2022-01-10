@@ -873,8 +873,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         :param value: A list of dicts that will be used to construct
         `CommCareCaseIndexSQL` objects.
         """
-        cache = self._saved_indices.get_cache(self)
-        cache[()] = [CommCareCaseIndexSQL(**x) for x in value]
+        self.cached_indices = [CommCareCaseIndexSQL(**x) for x in value]
 
     @property
     def indices(self):
