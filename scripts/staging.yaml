@@ -82,4 +82,5 @@ branches:
     - dependabot/pip/requirements/reportlab-3.6.5  # Biyeun Jan 7
     #- jls/combine-toggle-dirs # Jenny Jan 10
     - jls/combine-toggle-dirs-debug # Jenny Jan 10
+    - ml/switch-to-recaptcha # Minha Jan 10
 submodules: { }
