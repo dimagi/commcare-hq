@@ -88,9 +88,8 @@ django==2.2.24
     #   django-otp
     #   django-phonenumber-field
     #   django-prbac
-    #   django-ranged-response
-    #   django-redis
     #   django-recaptcha
+    #   django-redis
     #   django-statici18n
     #   django-two-factor-auth
     #   django-user-agents
@@ -140,13 +139,11 @@ django-phonenumber-field==5.2.0
     #   django-two-factor-auth
 django-prbac==1.0.1
     # via -r base-requirements.in
-django-ranged-response==0.2.0
-    # via django-recaptcha
+django-recaptcha==2.0.6
+    # via -r base-requirements.in
 django-redis==4.12.1
     # via -r base-requirements.in
 django-redis-sessions==0.6.1
-    # via -r base-requirements.in
-django-recaptcha==2.0.6
     # via -r base-requirements.in
 django-statici18n==1.9.0
     # via -r base-requirements.in
@@ -287,7 +284,6 @@ pickle5==0.0.11
 pillow==8.3.2
     # via
     #   -r base-requirements.in
-    #   django-recaptcha
     #   reportlab
 ply==3.11
     # via
@@ -413,7 +409,6 @@ six==1.15.0
     #   django-braces
     #   django-compressor
     #   django-oauth-toolkit
-    #   django-recaptcha
     #   django-statici18n
     #   django-transfer
     #   django-websocket-redis
