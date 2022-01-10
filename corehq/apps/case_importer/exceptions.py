@@ -43,6 +43,11 @@ class InvalidCustomFieldNameException(ImporterError):
     pass
 
 
+class CustomUploadFileException(ImporterError):
+    """Raised for errors from custom file checks returned by extensions"""
+    pass
+
+
 class CaseRowErrorList(Exception):
     def __init__(self, errors=None):
         self.error_list = errors if errors else []
