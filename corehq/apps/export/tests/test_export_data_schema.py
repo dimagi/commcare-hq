@@ -13,7 +13,7 @@ from corehq.apps.app_manager.models import (
     Form,
     Module,
     OpenSubCaseAction,
-    XForm,
+    XForm, SmartCaseUpdate,
 )
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -896,8 +896,8 @@ class TestCaseDelayedSchema(TestCase, TestXmlMixin):
         factory = AppFactory(domain=cls.domain)
         module1, form1 = factory.new_basic_module('update_case', cls.case_type)
         factory.form_requires_case(form1, cls.case_type, update={
-            'age': '/data/age',
-            'height': '/data/height',
+            'age': SmartCaseUpdate(question_path='/data/age'),
+            'height': SmartCaseUpdate(question_path='/data/height'),
         })
         cls.current_app = factory.app
         cls.current_app._id = '1234'
@@ -905,9 +905,9 @@ class TestCaseDelayedSchema(TestCase, TestXmlMixin):
         factory = AppFactory(domain=cls.domain)
         module1, form1 = factory.new_basic_module('update_case', cls.case_type)
         factory.form_requires_case(form1, cls.case_type, update={
-            'age': '/data/age',
-            'height': '/data/height',
-            'weight': '/data/weight',
+            'age': SmartCaseUpdate(question_path='/data/age'),
+            'height': SmartCaseUpdate(question_path='/data/height'),
+            'weight': SmartCaseUpdate(question_path='/data/weight'),
         })
         cls.build = factory.app
         cls.build.copy_of = cls.current_app._id
@@ -1024,7 +1024,8 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         second_build.copy_of = app.get_id
         second_build.version = 6
         second_build.has_submissions = True
-        second_build.get_module(0).get_form(0).actions.update_case.update['name'] = '/data/question2'
+        second_build.get_module(0).get_form(0).actions.update_case.update['name'] = SmartCaseUpdate(
+            question_path='/data/question2')
         with drop_connected_signals(app_post_save):
             second_build.save()
         self.addCleanup(second_build.delete)
