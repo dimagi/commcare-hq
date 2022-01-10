@@ -30,8 +30,7 @@ class BuildErrorsTest(SimpleTestCase):
         errors = app.validate_app()
         update_path_error = {
             'type': 'path error',
-            'path': SmartCaseUpdate(doc_type='SmartCaseUpdate', question_path='/data/parent_age',
-                                    update_mode='always'),
+            'path': '/data/parent_age',
             'form_type': 'module_form',
             'module': {'name': {'en': "Parent"}, 'id': 0},
             'form': {'id': 0, 'name': {'en': "Register"}},

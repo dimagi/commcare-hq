@@ -74,14 +74,14 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
         })
         factory.form_opens_case(houshold_form_1, 'patient', is_subcase=True)
         factory.form_requires_case(patient_form_1, update={
-            'patient_id': 1,   # TODO: fails since not a string, should the question_path allow for non-strings?
-            'parent/household_id': 1,
+            'patient_id': SmartCaseUpdate(question_path='1'),
+            'parent/household_id': SmartCaseUpdate(question_path='1'),
         })
         factory.form_opens_case(patient_form_1, 'referral', is_subcase=True)
         factory.form_requires_case(referral_form_1, update={
             'parent/patient_name': SmartCaseUpdate(question_path="Ralph"),
             'parent/parent/household_color': SmartCaseUpdate(question_path='green'),
-            'referral_id': SmartCaseUpdate(question_path=1),
+            'referral_id': SmartCaseUpdate(question_path='1'),
         })
         self.assertCaseProperties(factory.app, 'household', [
             'household_color',

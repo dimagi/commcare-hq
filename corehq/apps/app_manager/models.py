@@ -334,7 +334,7 @@ class FormAction(DocumentSchema):
             yield 'external_id', action.external_id
         if 'update' in action_properties:
             for name, path in action.update.items():
-                yield name, path
+                yield name, path.question_path
         if 'case_properties' in action_properties:
             for name, path in action.case_properties.items():
                 yield name, path
