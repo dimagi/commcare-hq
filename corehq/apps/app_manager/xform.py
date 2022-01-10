@@ -979,23 +979,37 @@ class XForm(WrappedNode):
         return None
 
     def resolve_path(self, path, path_context=""):
-        from corehq.apps.app_manager.models import SmartCaseUpdate
-        if type(path) is SmartCaseUpdate:  # TODO: this returns the right thing, but still need to update add_stuff_to_xform
-            path = path.question_path
-        if path == "":
-            return path_context
-        elif path is None:
+        '''
+            input: path with type SmartCaseUpdate
+            output: typen str
+        '''
+        try:
+            path_str = path.question_path
+        except AttributeError:
+            path_str = path
+        try:
+            path_context_str = path_context.question_path
+        except AttributeError:
+            path_context_str = path_context
+        if path_str == "":
+            return path_context_str
+        elif path_str is None:
             raise CaseError("Every case must have a name")
-        elif path[0] == "/":
-            return path
+        elif path_str[0] == "/":
+            return path_str
         elif not path_context:
-            return "/%s/%s" % (self.data_node.tag_name, path)
+            return "/%s/%s" % (self.data_node.tag_name, path_str)
         else:
-            return "%s/%s" % (path_context, path)
+            return "%s/%s" % (path_context_str, path_str)
 
     def hashtag_path(self, path):
-        for hashtag, replaces in hashtag_replacements:
-            path = re.sub(replaces, hashtag, path)
+        from corehq.apps.app_manager.models import SmartCaseUpdate
+        if isinstance(path, SmartCaseUpdate):
+            for hashtag, replaces in hashtag_replacements:
+                path = re.sub(replaces, hashtag, path.question_path)
+        else:
+            for hashtag, replaces in hashtag_replacements:
+                path = re.sub(replaces, hashtag, path)
         return path
 
     @requires_itext(list)
@@ -1039,6 +1053,7 @@ class XForm(WrappedNode):
         :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
         :param include_fixtures: add fixture data for questions that we can infer it from
         """
+        from corehq.apps.app_manager.models import SmartCaseUpdate
         from corehq.apps.app_manager.util import first_elem, extract_instance_id_from_nodeset_ref
 
         def _get_select_question_option(item):
@@ -1073,6 +1088,11 @@ class XForm(WrappedNode):
             node = cnode.node
             path = cnode.path
 
+            try:
+                path = path.question_path
+            except AttributeError:
+                pass
+
             is_group = not cnode.is_leaf
             if is_group and not include_groups:
                 continue
@@ -1083,7 +1103,6 @@ class XForm(WrappedNode):
             if (exclude_select_with_itemsets and cnode.data_type in ['Select', 'MSelect']
                     and cnode.node.find('{f}itemset').exists()):
                 continue
-
             question = {
                 "label": self._get_label_text(node, langs),
                 "label_ref": self._get_label_ref(node),
@@ -1153,6 +1172,8 @@ class XForm(WrappedNode):
 
         save_to_case_nodes = {}
         for path, data_node in leaf_data_nodes.items():
+            if isinstance(path, SmartCaseUpdate):
+                path = path.question_path
             if path not in excluded_paths:
                 bind = self.get_bind(path)
 
@@ -1534,6 +1555,9 @@ class XForm(WrappedNode):
         if d.get('relevant') == 'true()':
             del d['relevant']
         d['nodeset'] = self.resolve_path(d['nodeset'])
+        from corehq.apps.app_manager.models import SmartCaseUpdate
+        if 'calculate' in d and isinstance(d['calculate'], SmartCaseUpdate):
+            d['calculate'] = d['calculate'].question_path
         if len(d) > 1:
             bind = _make_elem('bind', d)
             conflicting = self.get_bind(bind.attrib['nodeset'])
