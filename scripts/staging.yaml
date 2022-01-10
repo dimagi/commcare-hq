@@ -81,5 +81,5 @@ branches:
     - mk/case-import-custom-validations # MK Jan 6
     - mjr/remove_export_label_markup # Matt Jan 6
     - dependabot/pip/requirements/reportlab-3.6.5  # Biyeun Jan 7
-    - jls/combine-toggle-dirs # Jenny Jan 10
+    #- jls/combine-toggle-dirs # Jenny Jan 10
 submodules: { }
