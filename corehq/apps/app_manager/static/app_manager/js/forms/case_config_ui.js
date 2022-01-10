@@ -385,6 +385,25 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 saveButton.fire('change');
             };
 
+            self.switchSaveOnlyIfEdited = function (property, event) {
+                if (!self.hasPrivilege) return;
+                var checked = event.target.checked;
+                if (checked) {
+                    hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Checked "Save only if edited"');
+                } else {
+                    hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Unchecked "Save only if edited"');
+                }
+                var updatedCaseProp = caseProperty.wrap({
+                    path: property.path(),
+                    key: property.key(),
+                    required: property.required(),
+                    save_only_if_edited: checked,
+                }, self)
+                self.case_properties.replace(property, updatedCaseProp);
+                self.visible_case_properties.replace(property, updatedCaseProp);
+                saveButton.fire('change');
+            }
+
             self.propertyCounts = ko.computed(function () {
                 var count = {};
                 _(self.case_properties()).each(function (p) {

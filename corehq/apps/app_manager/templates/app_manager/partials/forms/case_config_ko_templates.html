@@ -283,6 +283,13 @@
             <p data-bind="text: $data.description"></p>
           <!-- /ko -->
         </td>
+        <td class="col-sm-2 text-center">
+          <div class="checkbox-save-only-if-edited">
+            <input type="checkbox"
+                   data-bind="click: $parent.switchSaveOnlyIfEdited, checked: $data.save_only_if_edited"
+                   value="$data.name"/>
+          </div>
+        </td>
       </tr>
       </tbody>
     </table>
