@@ -213,8 +213,17 @@
           {% trans "Question" %}
         </th>
         <th class="col-sm-1"></th>
-        <th class="col-sm-5">
+        <th class="col-sm-3">
           {% trans "Case Property" %}
+        </th>
+        <th class="col-sm-1 text-center text-nowrap" style="position:relative">
+            <span style="padding-right: 25px">{% trans "Save Only If Edited" %}</span>
+            {% comment %} These odd style additions were necessary to get the question mark icon to
+            the right of the text without wrapping or vertical disalignment. {% endcomment %}
+            <span style="position: absolute; margin-top: -2px; margin-left: -20px;" data-bind="makeHqHelp: {
+              description: '{% trans "Only save the answer if it the propery will change from its previous value." %}',
+              placement: 'left'
+            }"></span>
         </th>
       </tr>
       </thead>
@@ -238,7 +247,7 @@
         <td class="text-center col-sm-1">
           <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
         </td>
-        <td class="col-sm-5">
+        <td class="col-sm-3">
           <div class="full-width-select2"
                data-bind="template: {
                             name: 'case-config:case-properties:property',
