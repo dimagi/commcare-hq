@@ -72,7 +72,6 @@ branches:
     - jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
     - cs/SC-1904-invalid-datum-generation # Charl 7 Dec
-    - gh/improve-queueing-repeaters # Graham Dec 10
     - mk/support-multibar-reports # MK Dec 14
     - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
     - sk/enterprise-domain-user-filter # Simon Dec 17
