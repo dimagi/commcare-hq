@@ -57,17 +57,15 @@
       <div class="col-sm-12">
         <div class="btn-toolbar">
 
-          {% if request.can_access_all_locations %}
-            <a class="btn btn-info"
-              {% if not has_location_types %}
-               disabled
-              {% else %}
-               href="{{ bulk_download_url }}"
-              {% endif %}
-            >
-              <i class="fa fa-cloud-download"></i> {% trans 'Download Organization Structure' %}
-            </a>
-          {% endif %}
+          <a class="btn btn-info"
+            {% if not has_location_types %}
+             disabled
+            {% else %}
+             href="{{ bulk_download_url }}"
+            {% endif %}
+          >
+            <i class="fa fa-cloud-download"></i> {% trans 'Download Organization Structure' %}
+          </a>
 
           {% if not request.is_view_only %}
             <a class="btn btn-default"
