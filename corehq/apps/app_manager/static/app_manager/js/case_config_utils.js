@@ -74,11 +74,12 @@ hqDefine('app_manager/js/case_config_utils', function () {
             return _(suggestedProperties).difference(used_properties);
         },
         propertyDictToArray: function (required, property_dict, caseConfig, keyIsPath) {
-            var property_array = _(property_dict).map(function (value, key) {
+            var property_array = _(property_dict).map(function (smartCaseUpdate, caseName) {
                 return {
-                    path: !keyIsPath ? value : key,
-                    key: !keyIsPath ? key : value,
+                    path: !keyIsPath ? smartCaseUpdate.question_path : caseName,
+                    key: !keyIsPath ? caseName : smartCaseUpdate.question_path,
                     required: false,
+                    save_only_if_edited: smartCaseUpdate.update_mode === 'edit',
                 };
             });
             property_array = _(property_array).sortBy(function (property) {
@@ -92,11 +93,12 @@ hqDefine('app_manager/js/case_config_utils', function () {
             _(property_array).each(function (case_property) {
                 var key = case_property.key;
                 var path = case_property.path;
+                var update_mode = case_property.save_only_if_edited ? 'edit' : 'always';
                 if (key || path) {
                     if (_(required).contains(key) && case_property.required) {
-                        extra_dict[key] = path;
+                        extra_dict[key] = {question_path: path, update_mode: update_mode};
                     } else {
-                        property_dict[key] = path;
+                        property_dict[key] = {question_path: path, update_mode: update_mode};
                     }
                 }
             });
