@@ -1,7 +1,3 @@
-
-
-
-
 class FilterException(Exception):
     """
     Exceptions involving report filters.

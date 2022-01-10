@@ -43,7 +43,7 @@ class FormDisplay(object):
         username = self.form["form"]["meta"].get("username")
         try:
             if username not in ['demo_user', 'admin']:
-                full_name = get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)
+                full_name = get_cached_property(CouchUser, uid, 'full_name', expiry=7 * 24 * 60 * 60)
                 name = '"%s"' % full_name if full_name else ""
             else:
                 name = ""

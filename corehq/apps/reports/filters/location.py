@@ -29,8 +29,8 @@ class LocationGroupFilter(ExpandedMobileWorkerFilter):
     def selected(self):
         selected_ids = self.request.GET.getlist(self.slug)
 
-        selected = (self._selected_group_entries(selected_ids) +
-                    self._selected_location_entries(selected_ids))
+        selected = (self._selected_group_entries(selected_ids)
+        + self._selected_location_entries(selected_ids))
         known_ids = dict(selected)
 
         return [

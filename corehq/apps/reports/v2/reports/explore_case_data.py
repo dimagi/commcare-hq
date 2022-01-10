@@ -76,8 +76,8 @@ class ExploreCaseDataReport(BaseReport):
 
     @property
     def can_view_ecd_preview(self):
-        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self.request) and
-                is_eligible_for_ecd_preview(self.request))
+        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self.request)
+            and is_eligible_for_ecd_preview(self.request))
 
     @property
     def has_permission(self):

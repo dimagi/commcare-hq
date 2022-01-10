@@ -11,7 +11,7 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 import pytz
 from memoized import memoized
 from pygooglechart import ScatterChart
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.safe_index import safe_index
@@ -285,7 +285,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return DataTablesColumn(title, sort_type=DTSortType.NUMERIC,
                                     help_text=help_text.format(num_days),
                                     sortable=False if title == "Proportion" else True)
-
 
         columns = [DataTablesColumn(_("Users"))]
 
@@ -1187,9 +1186,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                     total_seconds += td_total
                     total += 1
         else:
-            rows.append(['No Submissions Available for this Date Range'] + ['--']*5)
+            rows.append(['No Submissions Available for this Date Range'] + ['--'] * 5)
 
-        self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds // total), False) if total > 0 else "--"]
+        self.total_row = [_("Average"), "-", "-", "-", "-",
+            self._format_td_status(int(total_seconds // total), False) if total > 0 else "--"]
         return rows
 
     def get_user_link(self, username, user):
@@ -1216,9 +1216,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         if isinstance(td, datetime.timedelta):
             hours = td.seconds // 3600
             minutes = (td.seconds // 60) % 60
-            vals = [td.days, hours, minutes, (td.seconds - hours*3600 - minutes*60)]
+            vals = [td.days, hours, minutes, (td.seconds - hours * 3600 - minutes * 60)]
             names = [_("day"), _("hour"), _("minute"), _("second")]
-            status = ["%s %s%s" % (val, names[i], "s" if val != 1 else "") for (i, val) in enumerate(vals) if val > 0]
+            status = ["%s %s%s" % (val, names[i], "s"
+                if val != 1 else "") for (i, val) in enumerate(vals) if val > 0]
 
             if td.days > 1:
                 klass = "label-danger"
@@ -1229,7 +1230,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             if not status:
                 status.append("same")
             elif td.days < 0:
-                if abs(td).seconds > 15*60:
+                if abs(td).seconds > 15 * 60:
                     status = [_("submitted before completed [strange]")]
                     klass = "label-info"
                 else:
@@ -1252,7 +1253,7 @@ class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
 
 @location_safe
 class WorkerActivityTimes(WorkerMonitoringChartBase,
-    MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin, DatespanMixin):
+        MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin, DatespanMixin):
     name = ugettext_noop("Worker Activity Times")
     slug = "worker_activity_times"
     is_cacheable = True
@@ -1341,7 +1342,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
 
         chart.add_data([(h % 24) for h in range(24 * 8)])
 
-        d=[]
+        d = []
         for i in range(8):
             d.extend([i] * 24)
         chart.add_data(d)
@@ -1352,7 +1353,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         # i.e. Sun, Sat, Fri, Thu, etc
         days = (6, 5, 4, 3, 2, 1, 0)
 
-        sizes=[]
+        sizes = []
         for d in days:
             sizes.extend([data[(d, h)] for h in range(24)])
         sizes.extend([0] * 24)
@@ -1438,9 +1439,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Number of forms submitted in chosen date range. %s" % CASE_TYPE_MSG)),
             DataTablesColumn(_("Avg # Forms Submitted"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Average number of forms submitted in the three preceding date ranges of the same length. %s" % CASE_TYPE_MSG)),
+                help_text=_("Average number of forms submitted in the three preceding date ranges "
+                    "of the same length. %s" % CASE_TYPE_MSG)),
             DataTablesColumn(_("Last Form Submission"),
-                help_text=_("Date of last form submission in time period.  Total row displays proportion of users submitting forms in date range")) \
+                help_text=_("Date of last form submission in time period."
+                    "  Total row displays proportion of users submitting forms in date range"))
             if not by_group else DataTablesColumn(_("# Active Users"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Proportion of users in group who submitted forms in date range."))
         ))
@@ -1449,15 +1452,17 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 help_text=_("Number of cases created in the date range.")),
             DataTablesColumn(_("# Cases Closed"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Number of cases closed in the date range.")),
-            ))
+        ))
         columns.append(DataTablesColumnGroup(_("Case Activity"),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Number of cases owned by the user that were opened, modified or closed in date range.  This includes case sharing cases.")),
+                help_text=_("Number of cases owned by the user that were opened, modified or closed in date range."
+                "  This includes case sharing cases.")),
             DataTablesColumn(_("# Total Cases (Owned & Shared)"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Total number of cases owned by the user.  This includes cases created by the user "
                             "and cases that were shared with this user.")),
             DataTablesColumn(_("% Active Cases"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Percentage of cases owned by user that were active.  This includes case sharing cases.")),
+                help_text=_("Percentage of cases owned by user that were active."
+                "  This includes case sharing cases.")),
         ))
         return DataTablesHeader(*columns)
 
@@ -1668,7 +1673,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
             if self.include_active_cases:
-                active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
+                active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0))
+                    for owner_id in owner_ids])
                 active_cases_cell = util.numcell(active_cases)
                 pct_active = util.numcell(
                     (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
@@ -1730,7 +1736,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
 
             if self.include_active_cases:
-                active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
+                active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0))
+                    for owner_id in owner_ids])
                 if today_or_tomorrow(self.datespan.enddate):
                     active_cases_cell = util.numcell(
                         self._html_anchor_tag(self._case_list_url_active_cases(user['user_id']), active_cases),

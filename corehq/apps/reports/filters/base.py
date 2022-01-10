@@ -43,7 +43,8 @@ class BaseReportFilter(object):
     @property
     def is_disabled(self):
         """
-            If necessary, determine whether to show this filter based on the results of surrounding (related) filters.
+            If necessary, determine whether to show this filter based
+            on the results of surrounding (related) filters.
         """
         return False
 
@@ -165,7 +166,7 @@ class BaseMultipleOptionFilter(BaseSingleOptionFilter):
         Displays a multiselect field.
     """
     template = "reports/filters/multi_option.html"
-    default_options = [] # specify a list
+    default_options = []  # specify a list
 
     @classmethod
     def get_value(cls, request, domain):
@@ -293,7 +294,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             'val': val,
             'text': text,
             'next': next,
-            }
+        }
 
     @property
     def shared_pagination_GET_params(self):

@@ -35,7 +35,8 @@ class ReportField(object):
         self.css_field = css_field or CSS_FIELD_CLASS
 
     def render(self):
-        if not self.template: return ""
+        if not self.template:
+            return ""
         self.context["slug"] = self.slug
         self.context['css_label_class'] = self.css_label
         self.context['css_field_class'] = self.css_field

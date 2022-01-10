@@ -36,9 +36,9 @@ def get_status_display(event, sms=None):
         return get_sms_status_display(sms)
 
     # If survey without error, short circuit to the survey status display
-    if (isinstance(event, MessagingSubEvent) and
-            event.status == MessagingEvent.STATUS_COMPLETED and
-            event.xforms_session_id):
+    if (isinstance(event, MessagingSubEvent)
+            and event.status == MessagingEvent.STATUS_COMPLETED
+            and event.xforms_session_id):
         return _(event.xforms_session.status)
 
     status = event.status
@@ -52,9 +52,9 @@ def get_status_display(event, sms=None):
     # If we have a MessagingEvent that's completed but it's tied to
     # unfinished surveys, then mark it as being in progress
     if (
-        isinstance(event, MessagingEvent) and
-        event.status == MessagingEvent.STATUS_COMPLETED and
-        MessagingSubEvent.objects.filter(
+        isinstance(event, MessagingEvent)
+        and event.status == MessagingEvent.STATUS_COMPLETED
+        and MessagingSubEvent.objects.filter(
             parent_id=event.pk,
             content_type=MessagingEvent.CONTENT_SMS_SURVEY,
             # without this line, django does a left join which is not what we want

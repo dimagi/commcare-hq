@@ -157,8 +157,8 @@ class BasicTabularReport(GenericTabularReport, metaclass=ColumnCollector):
             row = self.View.get_result(key, **kwargs)
 
             yield [format_datatables_data(row[c], row[c]) if c in self.View.key_views
-                          else self.function_views[c].view(key, self)
-                   for c in self.default_column_order]
+                else self.function_views[c].view(key, self)
+                for c in self.default_column_order]
 
 
 class SummingTabularReport(BasicTabularReport):
@@ -171,6 +171,6 @@ class SummingTabularReport(BasicTabularReport):
         for i in range(num_cols):
             colrows = [cr[i] for cr in ret if isinstance(cr[i], dict)]
             colnums = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), int)]
-            total_row.append(reduce(lambda x, y: x+ y, colnums, 0))
+            total_row.append(reduce(lambda x, y: x + y, colnums, 0))
         self.total_row = total_row
         return ret

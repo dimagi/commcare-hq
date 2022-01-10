@@ -47,7 +47,8 @@ class MultiBarChart(Chart):
         stacked: True to make default view stacked, False for grouped
         staggerLabels: True to stagger the X-Axis labels.
         groupSpacing: Used to adjust amount of space between X-Axis groups. Value between 0 and 1.
-        forceY: Used to force values into the Y scale domain. Useful to ensure max / min scales. Must be list of numbers
+        forceY: Used to force values into the Y scale domain.
+            Useful to ensure max / min scales. Must be list of numbers
         translateLabelsX: Pixels to move X-Axis labels in X direction
         translateLabelsY: Pixels to move X-Axis labels in Y direction
 
@@ -127,7 +128,8 @@ class PieChart(Chart):
     template_partial = 'reports/partials/graphs/pie_chart.html'
 
     def __init__(self, title, key, values, color=None):
-        if not color: color = []
+        if not color:
+            color = []
         self.title = title
         self.data = [dict(key=key, values=values)]
         self.marginTop = 30

@@ -26,7 +26,7 @@ from couchdbkit.ext.django.schema import (
 )
 from django_prbac.exceptions import PermissionDenied
 from memoized import memoized
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 from sqlalchemy.util import immutabledict
 
 from dimagi.ext.couchdbkit import Document
@@ -361,10 +361,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
         if getattr(self.report, 'is_deprecated', False):
             return ReportContent(
-                self.report.deprecation_email_message or
-                _("[DEPRECATED] %s report has been deprecated and will stop working soon. "
-                  "Please update your saved reports email settings if needed." % self.report.name
-                  ),
+                self.report.deprecation_email_message
+                or _("[DEPRECATED] %s report has been deprecated and will stop working soon. "
+                  "Please update your saved reports email settings if needed." % self.report.name),
                 None,
             )
 

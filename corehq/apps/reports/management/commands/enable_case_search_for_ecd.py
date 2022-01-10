@@ -44,8 +44,8 @@ class Command(BaseCommand):
             is_active=True,
             is_trial=False,
         ).filter(
-            Q(plan_version__plan__edition=SoftwarePlanEdition.ADVANCED) |
-            Q(plan_version__plan__edition=SoftwarePlanEdition.PRO)
+            Q(plan_version__plan__edition=SoftwarePlanEdition.ADVANCED)
+            | Q(plan_version__plan__edition=SoftwarePlanEdition.PRO)
         ).all()
         return [sub.subscriber.domain for sub in relevant_subs]
 

@@ -2,8 +2,8 @@ from numbers import Number
 
 from memoized import memoized
 from nose.tools import nottest
-from sqlagg import *
-from sqlagg.columns import *
+from sqlagg import SumColumn
+from sqlagg.columns import SimpleColumn
 
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin

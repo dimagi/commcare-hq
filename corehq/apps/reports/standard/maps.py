@@ -1,20 +1,14 @@
-import json
 import re
 
 from django.conf import settings
 
-import csv
-
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.modules import to_function
 
 from corehq.apps.reports.api import ReportDataSource
-from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.standard import (
     ProjectReport,
     ProjectReportParametersMixin,
 )
-from corehq.apps.reports.standard.cases.basic import CaseListReport
 
 
 class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
@@ -42,7 +36,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         def _parse_geopoint(raw):
             try:
                 latlon = [float(k) for k in re.split(' *,? *', raw)[:2]]
-                return [latlon[1], latlon[0]] # geojson is lon, lat
+                return [latlon[1], latlon[0]]  # geojson is lon, lat
             except ValueError:
                 return None
 
@@ -115,7 +109,8 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
         DataSource = to_function(params['report'])
 
-        assert issubclass(DataSource, ReportDataSource), '[%s] does not implement the ReportDataSource API!' % params['report']
+        assert issubclass(DataSource, ReportDataSource), \
+            '[%s] does not implement the ReportDataSource API!' % params['report']
 
         return DataSource(config).get_data()
 

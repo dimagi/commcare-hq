@@ -21,9 +21,12 @@ class Command(BaseCommand):
         parser.add_argument('reportname')
         parser.add_argument('reportclass')
         parser.add_argument('reportproperties', dest='config_raw', help='JSON (if "-" read from stdin)')
-        parser.add_argument('-u', '--update', action='store_true', help='update existing report config if already exists')
-        parser.add_argument('-x', '--execute', action='store_true', help='actually make the change; otherwise just a dry run')
-        parser.add_argument('-a', '--all', action='store_true', help='make report visible to all (otherwise just previewers')
+        parser.add_argument('-u', '--update', action='store_true',
+            help='update existing report config if already exists')
+        parser.add_argument('-x', '--execute', action='store_true',
+            help='actually make the change; otherwise just a dry run')
+        parser.add_argument('-a', '--all', action='store_true',
+            help='make report visible to all (otherwise just previewers')
 
     def handle(self, domainname, subsection, reportname, reportclass, config_raw, **options):
         domain = Domain.get_by_name(domainname)

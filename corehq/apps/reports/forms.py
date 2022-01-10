@@ -8,7 +8,7 @@ from memoized import memoized
 
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.bootstrap import StrictButton
 
 import langcodes
 from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper, LinkButton
@@ -221,11 +221,11 @@ class EmailReportForm(forms.Form):
 
 
 def _verify_email(cleaned_data):
-    if ('recipient_emails' in cleaned_data
-        and not (cleaned_data['recipient_emails'] or
-                     cleaned_data['send_to_owner'])):
-        raise forms.ValidationError("You must specify at least one "
-                                    "valid recipient")
+    if (
+        'recipient_emails' in cleaned_data
+        and not (cleaned_data['recipient_emails'] or cleaned_data['send_to_owner'])
+    ):
+        raise forms.ValidationError("You must specify at least one valid recipient")
 
 
 class TableauServerForm(forms.Form):

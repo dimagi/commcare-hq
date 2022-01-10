@@ -121,8 +121,7 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
                 date_field,
                 gte=datespan.startdate.date(),
                 lte=datespan.enddate.date(),
-            )
-        )
+            ))
         .terms_aggregation(user_field, 'by_user')
         .size(0))
 
@@ -203,16 +202,15 @@ def get_last_forms_by_app(user_id):
     :return: last form submission for every app that user has submitted
     """
     query = (
-        FormES()
-            .user_id(user_id)
-            .aggregation(
-            TermsAggregation('app_id', 'app_id').aggregation(
-                TopHitsAggregation(
-                    'top_hits_last_form_submissions',
-                    'received_on',
-                    is_ascending=False,
-                )
-            )
+        FormES().user_id(user_id)
+                .aggregation(
+                    TermsAggregation('app_id', 'app_id').aggregation(
+                        TopHitsAggregation(
+                            'top_hits_last_form_submissions',
+                            'received_on',
+                            is_ascending=False,
+                        )
+                    )
         )
         .size(0)
     )
@@ -382,10 +380,8 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
                      TermsAggregation('app_id', 'app_id').aggregation(
                          TermsAggregation('xmlns', 'xmlns.exact')
                      )
-                 )
-             )
-             .size(0)
-    )
+                 ))
+             .size(0))
 
     if user_ids:
         query = (query
