@@ -93,12 +93,12 @@ hqDefine('app_manager/js/case_config_utils', function () {
             _(property_array).each(function (case_property) {
                 var key = case_property.key;
                 var path = case_property.path;
-                var update_mode = case_property.save_only_if_edited ? 'edit' : 'always';
+                var updateMode = case_property.save_only_if_edited ? 'edit' : 'always';
                 if (key || path) {
                     if (_(required).contains(key) && case_property.required) {
-                        extra_dict[key] = {question_path: path, update_mode: update_mode};
+                        extra_dict[key] = {question_path: path, update_mode: updateMode};
                     } else {
-                        property_dict[key] = {question_path: path, update_mode: update_mode};
+                        property_dict[key] = {question_path: path, update_mode: updateMode};
                     }
                 }
             });

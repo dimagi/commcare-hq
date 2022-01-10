@@ -398,11 +398,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     key: property.key(),
                     required: property.required(),
                     save_only_if_edited: checked,
-                }, self)
+                }, self);
                 self.case_properties.replace(property, updatedCaseProp);
                 self.visible_case_properties.replace(property, updatedCaseProp);
                 saveButton.fire('change');
-            }
+            };
 
             self.propertyCounts = ko.computed(function () {
                 var count = {};
@@ -577,8 +577,8 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
         var DEFAULT_UPDATE_ALWAYS = {
             question_path: '',
-            update_mode: 'always'
-        }
+            update_mode: 'always',
+        };
 
         var cleanCondition = function (condition) {
             if (condition.type !== 'if') {
