@@ -67,6 +67,7 @@ class ReportCasePillowTest(BasePillowTestCase):
 
 
 @override_settings(ES_CASE_FULL_INDEX_DOMAINS=[DOMAIN])
+@es_test
 class ReportCaseReindexerTest(TestCase):
 
     def setUp(self):
