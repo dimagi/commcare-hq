@@ -1,5 +1,10 @@
 from django.conf.urls import url
 
+from corehq.apps.oauth.views.google import (
+    redirect_oauth_view,
+    call_back_view
+)
+
 from corehq.apps.export.views.download import (
     BulkDownloadNewFormExportView,
     DownloadDETSchemaView,
@@ -226,4 +231,12 @@ urlpatterns = [
     url(r"^build_full_schema/$",
         GenerateSchemaFromAllBuildsView.as_view(),
         name=GenerateSchemaFromAllBuildsView.urlname),
+
+    # OAuth redirect views
+    url(r"^google_sheets_oauth/redirect/$",
+        redirect_oauth_view,
+        name="google_sheet_oauth_redirect"),
+    url(r"^google_sheets_oauth/callback/$",
+        call_back_view,
+        name="google_sheet_oauth_callback")
 ]
