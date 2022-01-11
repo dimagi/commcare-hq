@@ -691,7 +691,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         - it is owned and available or,
         - it has a live child or,
         - it has a live extension or,
-        - it is the exension of a live case.
+        - it is the extension of a live case.
 
         Algorithm:
         ----------
