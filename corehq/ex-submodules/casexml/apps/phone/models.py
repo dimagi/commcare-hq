@@ -860,10 +860,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
         assert index.relationship == const.CASE_INDEX_EXTENSION
         self.extension_index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
 
-        if index.referenced_id not in self.case_ids_on_phone:
-            self.case_ids_on_phone.add(index.referenced_id)
-            self.dependent_case_ids_on_phone.add(index.referenced_id)
-
         case_child_indices = [idx for idx in case_update.indices_to_add
                               if idx.relationship == const.CASE_INDEX_CHILD
                               and idx.referenced_id == index.referenced_id]
@@ -874,9 +870,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def _add_child_index(self, index):
         assert index.relationship == const.CASE_INDEX_CHILD
         self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
-        if index.referenced_id not in self.case_ids_on_phone:
-            self.case_ids_on_phone.add(index.referenced_id)
-            self.dependent_case_ids_on_phone.add(index.referenced_id)
 
     def _delete_index(self, index):
         self.index_tree.delete_index(index.case_id, index.identifier)
@@ -989,6 +982,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         for update in non_live_updates:
             _get_logger().debug('case {} is NOT live.'.format(update.case_id))
+            if self.index_tree.get_cases_that_directly_depend_on_case(update.case_id):
+                _get_logger().debug('adding dependent case %s', update.case_id)
+                self.case_ids_on_phone.add(update.case_id)
+                self.dependent_case_ids_on_phone.add(update.case_id)
+                made_changes = True
+
             if update.has_extension_indices_to_add():
                 # non-live cases with extension indices should be added and processed
                 self.case_ids_on_phone.add(update.case_id)
