@@ -20,6 +20,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.const import OPENROSA_VERSION_3
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.motech.repeaters.exceptions import ReferralError, DataRegistryCaseUpdateError
 from dimagi.utils.parsing import json_format_datetime
@@ -245,12 +246,11 @@ class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         return 'application/json'
 
     def get_test_payload(self, domain):
-        from casexml.apps.case.models import CommCareCase
         return self.get_payload(
             None,
-            CommCareCase(
+            CommCareCaseSQL(
                 domain=domain, type='case_type', name='Demo',
-                user_id='user1', prop_a=True, prop_b='value'
+                user_id='user1', case_json={'prop_a': True, 'prop_b': 'value'},
             )
         )
 
