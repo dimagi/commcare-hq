@@ -33,7 +33,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     SortElement,
     UpdateCaseAction,
-    SmartCaseUpdate,
+    ConditionalCaseUpdate,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -386,7 +386,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         child_form.xmlns = 'http://id_m1-f0'
         child_form.requires = 'case'
         child_form.actions.usercase_update = UpdateCaseAction(
-            update={'name': SmartCaseUpdate(question_path='/data/question1')})
+            update={'name': ConditionalCaseUpdate(question_path='/data/question1')})
         child_form.actions.usercase_update.condition.type = 'always'
 
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
@@ -435,7 +435,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         form.xmlns = 'http://m0-f0'
         form.requires = 'case'
         form.actions.update_case = UpdateCaseAction(
-            update={'question1': SmartCaseUpdate(question_path='/data/question1')})
+            update={'question1': ConditionalCaseUpdate(question_path='/data/question1')})
         form.actions.update_case.condition.type = 'always'
         form.actions.subcases.append(OpenSubCaseAction(
             case_type=module.case_type,

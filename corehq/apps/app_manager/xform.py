@@ -503,8 +503,8 @@ class XFormCaseBlock(object):
         update_mapping = {}
         attachments = {}
         for key, value in updates.items():
-            from corehq.apps.app_manager.models import SmartCaseUpdate
-            if type(value) is SmartCaseUpdate:
+            from corehq.apps.app_manager.models import ConditionalCaseUpdate
+            if type(value) is ConditionalCaseUpdate:
                 value = value.question_path
             if key == 'name':
                 key = 'case_name'
@@ -980,7 +980,7 @@ class XForm(WrappedNode):
 
     def resolve_path(self, path, path_context=""):
         '''
-            input: path with type SmartCaseUpdate
+            input: path with type ConditionalCaseUpdate
             output: typen str
         '''
         try:
@@ -1003,8 +1003,8 @@ class XForm(WrappedNode):
             return "%s/%s" % (path_context_str, path_str)
 
     def hashtag_path(self, path):
-        from corehq.apps.app_manager.models import SmartCaseUpdate
-        if isinstance(path, SmartCaseUpdate):
+        from corehq.apps.app_manager.models import ConditionalCaseUpdate
+        if isinstance(path, ConditionalCaseUpdate):
             for hashtag, replaces in hashtag_replacements:
                 path = re.sub(replaces, hashtag, path.question_path)
         else:
@@ -1053,7 +1053,7 @@ class XForm(WrappedNode):
         :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
         :param include_fixtures: add fixture data for questions that we can infer it from
         """
-        from corehq.apps.app_manager.models import SmartCaseUpdate
+        from corehq.apps.app_manager.models import ConditionalCaseUpdate
         from corehq.apps.app_manager.util import first_elem, extract_instance_id_from_nodeset_ref
 
         def _get_select_question_option(item):
@@ -1172,7 +1172,7 @@ class XForm(WrappedNode):
 
         save_to_case_nodes = {}
         for path, data_node in leaf_data_nodes.items():
-            if isinstance(path, SmartCaseUpdate):
+            if isinstance(path, ConditionalCaseUpdate):
                 path = path.question_path
             if path not in excluded_paths:
                 bind = self.get_bind(path)
@@ -1555,8 +1555,8 @@ class XForm(WrappedNode):
         if d.get('relevant') == 'true()':
             del d['relevant']
         d['nodeset'] = self.resolve_path(d['nodeset'])
-        from corehq.apps.app_manager.models import SmartCaseUpdate
-        if 'calculate' in d and isinstance(d['calculate'], SmartCaseUpdate):
+        from corehq.apps.app_manager.models import ConditionalCaseUpdate
+        if 'calculate' in d and isinstance(d['calculate'], ConditionalCaseUpdate):
             d['calculate'] = d['calculate'].question_path
         if len(d) > 1:
             bind = _make_elem('bind', d)

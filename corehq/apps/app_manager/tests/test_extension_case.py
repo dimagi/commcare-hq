@@ -14,7 +14,7 @@ from corehq.apps.app_manager.models import (
     Module,
     OpenSubCaseAction,
     PreloadAction,
-    UpdateCaseAction, SmartCaseUpdate,
+    UpdateCaseAction, ConditionalCaseUpdate,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import (
@@ -69,8 +69,8 @@ class ExtCasePropertiesTests(SimpleTestCase, TestXmlMixin):
         """
         self.freshwater_form.requires = 'case'
         self.freshwater_form.actions.update_case = UpdateCaseAction(update={
-            'question1': SmartCaseUpdate(question_path='/data/question1'),
-            'host/question1': SmartCaseUpdate(question_path='/data/question1'),
+            'question1': ConditionalCaseUpdate(question_path='/data/question1'),
+            'host/question1': ConditionalCaseUpdate(question_path='/data/question1'),
         })
         self.freshwater_form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_host_case'), self.freshwater_form.render_xform())
@@ -126,8 +126,8 @@ class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestXmlMixin):
             case_type=self.module.case_type,
             case_tag='load_1',
             case_properties={
-                'question1': SmartCaseUpdate(question_path='/data/question1'),
-                'host/question1': SmartCaseUpdate(question_path='/data/question1')
+                'question1': ConditionalCaseUpdate(question_path='/data/question1'),
+                'host/question1': ConditionalCaseUpdate(question_path='/data/question1')
             },
         ))
         self.assertXmlEqual(self.get_xml('update_host_case_adv'), self.form.render_xform())
@@ -164,7 +164,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
             case_name='Wanda',
             name_path='/data/question1',
             open_condition=FormActionCondition(type='always'),
-            case_properties={'name': SmartCaseUpdate(question_path='/data/question1')},
+            case_properties={'name': ConditionalCaseUpdate(question_path='/data/question1')},
             case_indices=[self.case_index],
         )
         self.form.actions.open_cases.append(self.subcase)
@@ -277,7 +277,7 @@ class ExtensionCasesCreateOwnerID(SimpleTestCase):
         """When owner_id is explicitly set, don't autoset"""
         advanced_open_action = AdvancedOpenCaseAction.wrap({
             'case_properties': {"owner_id": {
-                                "doc_type": "SmartCaseUpdate",
+                                "doc_type": "ConditionalCaseUpdate",
                                 "question_path": "owner",
                                 "update_mode": "always"}
                                 },
@@ -293,7 +293,7 @@ class ExtensionCasesCreateOwnerID(SimpleTestCase):
 
         advanced_open_action = AdvancedOpenCaseAction.wrap({
             'case_properties': {"owner_id": {
-                                "doc_type": "SmartCaseUpdate",
+                                "doc_type": "ConditionalCaseUpdate",
                                 "question_path": "owner",
                                 "update_mode": "always"}
                                 },
@@ -309,7 +309,7 @@ class ExtensionCasesCreateOwnerID(SimpleTestCase):
 
         advanced_open_action = AdvancedOpenCaseAction.wrap({
             'case_properties': {"owner_id": {
-                                "doc_type": "SmartCaseUpdate",
+                                "doc_type": "ConditionalCaseUpdate",
                                 "question_path": "owner",
                                 "update_mode": "always"}
                                 },

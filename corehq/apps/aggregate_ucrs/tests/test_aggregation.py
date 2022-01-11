@@ -22,7 +22,7 @@ from corehq.apps.aggregate_ucrs.ingestion import (
 )
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
 from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
-from corehq.apps.app_manager.models import SmartCaseUpdate
+from corehq.apps.app_manager.models import ConditionalCaseUpdate
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.app_manager.xform_builder import XFormBuilder
@@ -79,7 +79,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         f1 = factory.new_form(m0)
         f1.source = cls._get_xform()
         factory.form_requires_case(f1, case_type=cls.case_type, update={
-            cp[0]: SmartCaseUpdate(question_path='/data/{}'.format(cp[0])) for cp in cls.case_properties
+            cp[0]: ConditionalCaseUpdate(question_path='/data/{}'.format(cp[0])) for cp in cls.case_properties
         })
         cls.followup_form = f1
 
