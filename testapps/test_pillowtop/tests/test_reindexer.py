@@ -191,6 +191,7 @@ def test_checkpoint_creation(self, reindexer_factory, pillow_name):
     (UserReindexerFactory, 'user-pillow'),
     (GroupReindexerFactory, 'group-pillow'),
 ], CheckpointCreationTest)
+@es_test
 def test_no_checkpoint_creation(self, reindexer_factory, pillow_name):
     # these pillows should not touch checkpoints since they are run with other
     # reindexers
