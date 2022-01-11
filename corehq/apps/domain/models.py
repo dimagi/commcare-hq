@@ -441,6 +441,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
+    disable_mobile_login_lockout = BooleanProperty(default=False)
 
     requested_report_builder_subscription = StringListProperty()
 
