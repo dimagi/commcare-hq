@@ -76,7 +76,6 @@ branches:
     - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
     - sk/enterprise-domain-user-filter # Simon Dec 17
     - sr/datums  # sravan Dec 21
-    - jls/auto-refresh-questions # Jenny Jan 5
     - mjr/remove_export_label_markup # Matt Jan 6
     - dependabot/pip/requirements/reportlab-3.6.5  # Biyeun Jan 7
     #- jls/combine-toggle-dirs # Jenny Jan 10
