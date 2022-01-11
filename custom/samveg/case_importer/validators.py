@@ -134,11 +134,11 @@ class UploadLimitValidator(BaseValidator):
 
     @classmethod
     def _upload_limit_reached(cls, import_context, owner_name, call_number):
-        return cls._counter(import_context)[owner_name][call_number] >= ROW_LIMIT_PER_OWNER_PER_CALL_TYPE
+        return cls._counter(import_context)[owner_name][f"Call{call_number}"] >= ROW_LIMIT_PER_OWNER_PER_CALL_TYPE
 
     @classmethod
     def _update_counter(cls, import_context, owner_name, call_number):
-        cls._counter(import_context)[owner_name][call_number] += 1
+        cls._counter(import_context)[owner_name][f"Call{call_number}"] += 1
 
     @classmethod
     def _counter(cls, import_context):

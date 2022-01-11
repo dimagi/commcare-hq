@@ -130,7 +130,7 @@ class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
         fields_to_update, error_messages = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context)
 
         self.assertEqual(
-            import_context['counter']['watson'][1],
+            import_context['counter']['watson']['Call1'],
             1
         )
         self.assertEqual(len(error_messages), 0)
@@ -139,7 +139,7 @@ class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
         raw_row = _sample_valid_rch_upload()
         row_num = 1
         # initialize context to replicate limit reached
-        import_context = {'counter': {raw_row[OWNER_NAME]: {1: ROW_LIMIT_PER_OWNER_PER_CALL_TYPE}}}
+        import_context = {'counter': {raw_row[OWNER_NAME]: {'Call1': ROW_LIMIT_PER_OWNER_PER_CALL_TYPE}}}
 
         fields_to_update, error_messages = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context)
 
