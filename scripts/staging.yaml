@@ -82,4 +82,5 @@ branches:
     - ml/switch-to-recaptcha # Minha Jan 10
     - mk/samveg/custom-case-upload # MK Jan 11
     - mk/samveg/count-limit-case-upload # MK Jan 11
+    - do/fix-date-widget-bug # Dominic Jan 11
 submodules: { }
