@@ -8,8 +8,14 @@ from custom.samveg.case_importer.validators import (
     CallValidator,
     MandatoryColumnsValidator,
     MandatoryValueValidator,
+    UploadLimitValidator,
 )
-from custom.samveg.const import MANDATORY_COLUMNS, NEWBORN_WEIGHT_COLUMN
+from custom.samveg.const import (
+    MANDATORY_COLUMNS,
+    NEWBORN_WEIGHT_COLUMN,
+    OWNER_NAME,
+    ROW_LIMIT_PER_OWNER_PER_CALL_TYPE,
+)
 
 
 class TestMandatoryColumnsValidator(SimpleTestCase, TestFileMixin):
@@ -108,6 +114,49 @@ class TestCallValidator(SimpleTestCase, TestFileMixin):
         self.assertEqual(
             error_messages,
             ['Latest call not in last month']
+        )
+
+
+class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
+
+    def test_update_counter(self):
+        raw_row = _sample_valid_rch_upload()
+        row_num = 1
+        import_context = {}
+
+        fields_to_update, error_messages = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context)
+
+        self.assertEqual(
+            import_context['counter']['watson'][1],
+            1
+        )
+        self.assertEqual(len(error_messages), 0)
+
+    def test_upload_limit(self):
+        raw_row = _sample_valid_rch_upload()
+        row_num = 1
+        # initialize context to replicate limit reached
+        import_context = {'counter': {raw_row[OWNER_NAME]: {1: ROW_LIMIT_PER_OWNER_PER_CALL_TYPE}}}
+
+        fields_to_update, error_messages = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context)
+
+        self.assertEqual(
+            error_messages,
+            ['Limit reached for watson for call 1']
+        )
+
+    def test_missing_call_column(self):
+        raw_row = _sample_valid_rch_upload()
+        raw_row.pop('Call1')
+        row_num = 1
+
+        fields_to_update, error_messages = UploadLimitValidator.run(row_num, raw_row, raw_row, {})
+
+        self.assertEqual(
+            error_messages,
+            ['Missing owner or call details']
         )
 
 

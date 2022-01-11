@@ -15,7 +15,7 @@ def custom_case_upload_file_operations(domain, case_upload) -> List[str]:
 
 
 @extension_point(result_format=ResultFormat.FIRST)
-def custom_case_import_operations(domain, row_num, raw_row, fields_to_update):
+def custom_case_import_operations(domain, row_num, raw_row, fields_to_update, import_context):
     """
     Perform additional operations on a row and return final updates to be done.
     To skip the row return error messages. These messages are then shown to the user.
