@@ -1193,7 +1193,8 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
-    captcha = ReCaptchaField(label="")
+    if settings.RECAPTCHA_PRIVATE_KEY:
+        captcha = ReCaptchaField(label="")
     error_messages = {
         'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
                                  "registered?"),
