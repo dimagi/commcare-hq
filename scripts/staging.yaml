@@ -78,8 +78,7 @@ branches:
     - sr/datums  # sravan Dec 21
     - mjr/remove_export_label_markup # Matt Jan 6
     - dependabot/pip/requirements/reportlab-3.6.5  # Biyeun Jan 7
-    #- jls/combine-toggle-dirs # Jenny Jan 10
-    - jls/combine-toggle-dirs-debug # Jenny Jan 10
+    - jls/combine-toggle-dirs # Jenny Jan 10
     - ml/switch-to-recaptcha # Minha Jan 10
     - mk/samveg/custom-case-upload # MK Jan 11
     - mk/samveg/count-limit-case-upload # MK Jan 11
