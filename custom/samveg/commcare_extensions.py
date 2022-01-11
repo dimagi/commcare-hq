@@ -37,6 +37,6 @@ def samveg_case_upload_row_operations(domain, row_num, raw_row, fields_to_update
     for operation in row_level_operations:
         if hasattr(operation, 'run'):
             fields_to_update, errors = getattr(operation, 'run')(row_num, raw_row, fields_to_update,
-                                                                 import_context)
+                                                                 import_context=import_context)
             all_errors.extend(errors)
     return fields_to_update, all_errors

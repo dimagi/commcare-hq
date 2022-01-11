@@ -60,7 +60,7 @@ class MandatoryColumnsValidator(BaseValidator):
 
 class MandatoryValueValidator(BaseValidator):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context):
+    def run(cls, row_num, raw_row, fields_to_update, **kwargs):
         error_messages = []
         error_messages.extend(cls._validate_mandatory_columns(row_num, raw_row))
         return fields_to_update, error_messages
@@ -86,7 +86,7 @@ class MandatoryValueValidator(BaseValidator):
 
 class CallValidator(BaseValidator):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context):
+    def run(cls, row_num, raw_row, fields_to_update, **kwargs):
         error_messages = []
         call_value, call_number = cls._get_latest_call_value_and_number(raw_row)
         if not call_value:
