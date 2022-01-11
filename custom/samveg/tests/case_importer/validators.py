@@ -59,7 +59,6 @@ class TestMandatoryValueValidator(SimpleTestCase, TestFileMixin):
 
     def _assert_missing_values_for_sheet(self, spreadsheet_name, mandatory_values):
         with get_spreadsheet(self.get_path(spreadsheet_name, 'xlsx')) as spreadsheet:
-            import_context = {}
             for row_num, raw_row in enumerate(spreadsheet.iter_row_dicts()):
                 if row_num == 0:
                     continue  # skip first row (header row)
