@@ -522,7 +522,7 @@ class IndexTree(DocumentSchema):
 
     @staticmethod
     def get_all_dependencies(case_id, child_index_tree, extension_index_tree):
-        """Takes a child and extension index tree and returns returns a set of all dependencies of <case_id>
+        """Takes a child and extension index tree and returns a set of all dependencies of <case_id>
 
         Traverse each incoming index, return each touched case.
         Traverse each outgoing index in the extension tree, return each touched case
