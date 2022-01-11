@@ -63,7 +63,7 @@
         "marionette.templatecache": "^1.0.0",
         "markdown-it": "12.0.4",
         "modernizr": "^3.11.3",
-        "moment": "2.27.0",
+        "moment": "2.29.1",
         "multiselect": "0.9.12",
         "npm": "6.14.6",
         "nprogress": "0.2.0",
