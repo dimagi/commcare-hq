@@ -59,10 +59,12 @@ class TestMandatoryValueValidator(SimpleTestCase, TestFileMixin):
 
     def _assert_missing_values_for_sheet(self, spreadsheet_name, mandatory_values):
         with get_spreadsheet(self.get_path(spreadsheet_name, 'xlsx')) as spreadsheet:
+            import_context = {}
             for row_num, raw_row in enumerate(spreadsheet.iter_row_dicts()):
                 if row_num == 0:
                     continue  # skip first row (header row)
-                fields_to_update, error_messages = MandatoryValueValidator.run(row_num, raw_row, raw_row)
+                fields_to_update, error_messages = MandatoryValueValidator.run(row_num, raw_row, raw_row,
+                                                                               import_context)
                 self.assertEqual(
                     error_messages[0],
                     f"Mandatory columns {', '.join(mandatory_values)}"
@@ -86,7 +88,7 @@ class TestCallValidator(SimpleTestCase, TestFileMixin):
         raw_row.pop('Call1')
         row_num = 1
 
-        fields_to_update, error_messages = CallValidator.run(row_num, raw_row, raw_row)
+        fields_to_update, error_messages = CallValidator.run(row_num, raw_row, raw_row, {})
 
         self.assertEqual(
             error_messages,
@@ -98,7 +100,7 @@ class TestCallValidator(SimpleTestCase, TestFileMixin):
         raw_row['Call1'] = 'abc'
         row_num = 1
 
-        fields_to_update, error_messages = CallValidator.run(row_num, raw_row, raw_row)
+        fields_to_update, error_messages = CallValidator.run(row_num, raw_row, raw_row, {})
 
         self.assertEqual(
             error_messages,
@@ -109,7 +111,7 @@ class TestCallValidator(SimpleTestCase, TestFileMixin):
         raw_row = _sample_valid_rch_upload()
         row_num = 1
 
-        fields_to_update, error_messages = CallValidator.run(row_num, raw_row, raw_row)
+        fields_to_update, error_messages = CallValidator.run(row_num, raw_row, raw_row, {})
 
         self.assertEqual(
             error_messages,
