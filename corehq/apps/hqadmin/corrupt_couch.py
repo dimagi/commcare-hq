@@ -23,10 +23,10 @@ from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
+from corehq.apps.toggle_ui.models import Toggle
 from corehq.motech.repeaters.models import Repeater
 from corehq.util.couch_helpers import NoSkipArgsProvider
 from corehq.util.pagination import ResumableFunctionIterator
-from toggle.models import Toggle
 
 log = logging.getLogger(__name__)
 COUCH_NODE_PORT = 15984

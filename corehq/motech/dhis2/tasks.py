@@ -5,8 +5,8 @@ from django.utils.translation import ugettext_lazy as _
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
+from corehq.apps.toggle_ui.shortcuts import find_domains_with_toggle_enabled
 from corehq.motech.utils import pformat_json
-from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
 from corehq.motech.dhis2.models import (
