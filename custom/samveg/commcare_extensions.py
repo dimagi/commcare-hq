@@ -3,6 +3,7 @@ from corehq.apps.case_importer.extension_points import (
     custom_case_upload_file_operations,
 )
 from custom.samveg.case_importer.validators import (
+    CallValidator,
     MandatoryColumnsValidator,
     MandatoryValueValidator,
 )
@@ -15,6 +16,7 @@ validators = [
 
 row_level_operations = [
     MandatoryValueValidator,
+    CallValidator,
 ]
 
 

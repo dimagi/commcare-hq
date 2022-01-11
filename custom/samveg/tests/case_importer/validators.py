@@ -5,6 +5,7 @@ from django.test import SimpleTestCase
 from corehq.apps.case_importer.util import get_spreadsheet
 from corehq.util.test_utils import TestFileMixin
 from custom.samveg.case_importer.validators import (
+    CallValidator,
     MandatoryColumnsValidator,
     MandatoryValueValidator,
 )
@@ -68,3 +69,56 @@ class TestMandatoryValueValidator(SimpleTestCase, TestFileMixin):
         mandatory_values = ['name', 'MobileNo', 'DIST_NAME', 'Health_Block', 'visit_type',
                             'owner_name', 'admission_id', 'newborn_weight']
         self._assert_missing_values_for_sheet('missing_values_sncu_case_upload', mandatory_values)
+
+
+class TestCallValidator(SimpleTestCase, TestFileMixin):
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
+
+    def test_missing_call_column(self):
+        raw_row = _sample_valid_rch_upload()
+        raw_row.pop('Call1')
+        row_num = 1
+
+        fields_to_update, error_messages = CallValidator.run(row_num, raw_row, raw_row)
+
+        self.assertEqual(
+            error_messages,
+            ['Missing call details']
+        )
+
+    def test_invalid_call_value(self):
+        raw_row = _sample_valid_rch_upload()
+        raw_row['Call1'] = 'abc'
+        row_num = 1
+
+        fields_to_update, error_messages = CallValidator.run(row_num, raw_row, raw_row)
+
+        self.assertEqual(
+            error_messages,
+            ['Could not parse latest call date']
+        )
+
+    def test_call_value_not_in_last_month(self):
+        raw_row = _sample_valid_rch_upload()
+        row_num = 1
+
+        fields_to_update, error_messages = CallValidator.run(row_num, raw_row, raw_row)
+
+        self.assertEqual(
+            error_messages,
+            ['Latest call not in last month']
+        )
+
+
+def _sample_valid_rch_upload():
+    return {
+        'Rch_id': 98765,
+        'name': 'Sherlock',
+        'MobileNo': 9999999999,
+        'DIST_NAME': 'USA',
+        'Health_Block': 'DC',
+        'visit_type': 'investigation',
+        'owner_name': 'watson',
+        'Call1': '10-10-21'
+    }
