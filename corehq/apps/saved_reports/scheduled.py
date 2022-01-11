@@ -32,11 +32,12 @@ def _make_all_notification_view_keys(period, target):
     else:
         minutes = (target.minute,)
 
-    if period == 'hourly':
-        # Todo
-        pass
-
-    if period == 'daily':
+    if period == 'hourly' and target.minute == 0:
+        yield {
+            'startkey': [period],
+            'endkey': [period, {}]
+        }
+    elif period == 'daily':
         for minute in minutes:
             yield {
                 'startkey': [period, target.hour, minute],
@@ -90,6 +91,9 @@ def get_scheduled_report_ids(period, start_datetime=None, end_datetime=None):
         start_datetime = _get_default_start_datetime(end_datetime)
 
     for target_point_in_time in _iter_15_minute_marks_in_range(start_datetime, end_datetime):
+        if period == 'hourly' and target_point_in_time.minute != 0:
+            # Don't care if not on hour
+            continue
         keys = _make_all_notification_view_keys(period, target_point_in_time)
         for key in keys:
             for result in ReportNotification.view(
