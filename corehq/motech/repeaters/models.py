@@ -385,6 +385,13 @@ class SQLCaseRepeater(SQLRepeater):
     def payload_doc(self, repeat_record):
         return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
 
+    def get_headers(self, repeat_record):
+        headers = super().get_headers(repeat_record)
+        headers.update({
+            "server-modified-on": self.payload_doc(repeat_record).server_modified_on.isoformat() + "Z"
+        })
+        return headers
+
     @classmethod
     def _migration_get_fields(cls):
         return [
