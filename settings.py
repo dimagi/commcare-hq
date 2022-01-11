@@ -230,7 +230,10 @@ DEFAULT_APPS = (
     'oauth2_provider',
 )
 
-CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
+SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+RECAPTCHA_PRIVATE_KEY = ''
+RECAPTCHA_PUBLIC_KEY = ''
+
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
