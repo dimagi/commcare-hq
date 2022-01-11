@@ -1018,7 +1018,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     self.case_ids_on_phone.add(update.case_id)
                     for index in update.indices_to_add:
                         self._add_index(index, update)
-                        made_changes = True
+                    made_changes = True
 
         _get_logger().debug('case ids mid update: {}'.format(', '.join(self.case_ids_on_phone)))
         _get_logger().debug('dependent case ids mid update: {}'.format(
