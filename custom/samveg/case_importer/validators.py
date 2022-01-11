@@ -29,7 +29,7 @@ class BaseValidator:
         latest_call_number = None
         for i in range(1, 7):
             if raw_row.get(f"Call{i}"):
-                latest_call_value = raw_row.get(f"Call{i}")
+                latest_call_value = raw_row[f"Call{i}"]
                 latest_call_number = i
         return latest_call_value, latest_call_number
 
