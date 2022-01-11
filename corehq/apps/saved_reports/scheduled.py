@@ -18,7 +18,7 @@ _soft_assert = soft_assert(
 def _make_all_notification_view_keys(period, target):
     """
 
-    :param period: 'daily', 'weekly', or 'monthly'
+    :param period: 'hourly', 'daily', 'weekly', or 'monthly'
     :param target: The 15-minute-aligned point in time we are targeting for a match
     :return: generator of couch view kwargs to use in view query for 'reportconfig/all_notifications'
     """
@@ -31,6 +31,10 @@ def _make_all_notification_view_keys(period, target):
         minutes = (None, target.minute)
     else:
         minutes = (target.minute,)
+
+    if period == 'hourly':
+        # Todo
+        pass
 
     if period == 'daily':
         for minute in minutes:
@@ -67,7 +71,7 @@ def create_records_for_scheduled_reports(fake_now_for_tests=None):
         start_datetime = _get_default_start_datetime(end_datetime)
     new_checkpoint = ScheduledReportsCheckpoint(start_datetime=start_datetime, end_datetime=end_datetime)
     report_ids = []
-    for period in ('daily', 'weekly', 'monthly'):
+    for period in ('hourly', 'daily', 'weekly', 'monthly'):
         for report_id in get_scheduled_report_ids(period, start_datetime, end_datetime):
             report_ids.append(report_id)
     new_checkpoint.save()
@@ -81,7 +85,7 @@ def _get_default_start_datetime(end_datetime):
 
 def get_scheduled_report_ids(period, start_datetime=None, end_datetime=None):
     end_datetime = end_datetime or datetime.utcnow()
-    assert period in ('daily', 'weekly', 'monthly'), period
+    assert period in ('hourly', 'daily', 'weekly', 'monthly'), period
     if not start_datetime:
         start_datetime = _get_default_start_datetime(end_datetime)
 

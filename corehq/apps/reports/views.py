@@ -366,7 +366,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
             'recipient_emails': report.recipient_emails,
             'config_ids': report.config_ids,
             'send_to_owner': report.send_to_owner,
-            'hour': report.hour,
+            'hour': report.hour if report.interval != 'hourly' else None,
             'minute': report.minute,
             'day': report.day,
             'uuid': report.uuid,
