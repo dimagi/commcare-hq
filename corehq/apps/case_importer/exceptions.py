@@ -43,6 +43,11 @@ class InvalidCustomFieldNameException(ImporterError):
     pass
 
 
+class CustomImporterError(ImporterError):
+    """Raised for errors returned by extensions for file being imported"""
+    pass
+
+
 class CaseRowErrorList(Exception):
     def __init__(self, errors=None):
         self.error_list = errors if errors else []
@@ -169,3 +174,8 @@ class CaseNameTooLong(CaseRowError):
 class ExternalIdTooLong(CaseRowError):
     title = ugettext_noop('External ID Too Long')
     message = ugettext_lazy(f"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters")
+
+
+class CustomCaseRowError(CaseRowError):
+    """Raised for errors returned by extensions for a row case upload"""
+    title = ugettext_noop('Invalid Row')
