@@ -20,7 +20,6 @@ from corehq.apps.users.models import CouchUser
 from corehq.const import OPENROSA_VERSION_3
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseSQL
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.motech.repeaters.exceptions import ReferralError, DataRegistryCaseUpdateError
 from dimagi.utils.parsing import json_format_datetime
@@ -61,14 +60,6 @@ class BasePayloadGenerator(object):
 
     def get_headers(self):
         return {'Content-Type': self.content_type}
-
-    def get_test_payload(self, domain):
-        return (
-            "<?xml version='1.0' ?>"
-            "<data id='test'>"
-            "<TestString>Test post from CommCareHQ on %s</TestString>"
-            "</data>" % datetime.utcnow()
-        )
 
 
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
@@ -212,9 +203,6 @@ class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.get_xml()
 
-    def get_test_payload(self, domain):
-        return self.get_payload(None, _get_test_form(domain))
-
 
 class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     format_name = 'case_xml'
@@ -222,15 +210,6 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.to_xml(self.repeater.version or V2, include_case_on_closed=True)
-
-    def get_test_payload(self, domain):
-        from casexml.apps.case.mock import CaseBlock
-        return CaseBlock.deprecated_init(
-            case_id='test-case-%s' % uuid4().hex,
-            create=True,
-            case_type='test',
-            case_name='test case',
-        ).as_text()
 
 
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
@@ -244,15 +223,6 @@ class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     @property
     def content_type(self):
         return 'application/json'
-
-    def get_test_payload(self, domain):
-        return self.get_payload(
-            None,
-            CommCareCaseSQL(
-                domain=domain, type='case_type', name='Demo',
-                user_id='user1', case_json={'prop_a': True, 'prop_b': 'value'},
-            )
-        )
 
 
 @attr.s
@@ -274,7 +244,8 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
 
         case_ids_to_forward = payload_doc.get_case_property('cases_to_forward')
         if not case_ids_to_forward:
-            raise ReferralError(f'No cases included in transfer. Please add case ids to "cases_to_forward" property')
+            raise ReferralError('No cases included in transfer. '
+                'Please add case ids to "cases_to_forward" property')
         else:
             case_ids_to_forward = [cid for cid in case_ids_to_forward.split(' ') if cid]
         new_owner = payload_doc.get_case_property('new_owner')
@@ -330,7 +301,8 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
                 if index.referenced_id in case_ids_to_forward:
                     index.referenced_id = self._get_updated_case_id(index.referenced_id, case_id_map)
                 else:
-                    raise ReferralError(f'case {original_id} included without referenced case {index.referenced_id}')
+                    raise ReferralError(f'case {original_id} included without '
+                        f'referenced case {index.referenced_id}')
             config = case_type_configs[case.type]
             original_case_json = case.case_json.copy()
             if config.use_blacklist:
@@ -705,13 +677,6 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def content_type(self):
         return 'application/json'
 
-    def get_test_payload(self, domain):
-        return json.dumps({
-            'form_id': 'test-form-' + uuid4().hex,
-            'received_on': json_format_datetime(datetime.utcnow()),
-            'case_ids': ['test-case-' + uuid4().hex, 'test-case-' + uuid4().hex]
-        })
-
 
 class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
@@ -728,9 +693,6 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     @property
     def content_type(self):
         return 'application/json'
-
-    def get_test_payload(self, domain):
-        return self.get_payload(None, _get_test_form(domain))
 
 
 class FormDictPayloadGenerator(BasePayloadGenerator):

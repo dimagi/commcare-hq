@@ -545,7 +545,7 @@ class FindPatientTest(SimpleTestCase):
 
         with mock.patch('corehq.motech.openmrs.repeater_helpers.CaseAccessors') as CaseAccessorsPatch, \
                 mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch, \
-                mock.patch('corehq.motech.openmrs.repeater_helpers.save_match_ids') as save_match_ids_patch:
+                mock.patch('corehq.motech.openmrs.repeater_helpers.save_match_ids'):
             requests = mock.Mock()
             info = mock.Mock(case_id='123')
             CaseAccessorsPatch.return_value = mock.Mock(get_case=mock.Mock())
