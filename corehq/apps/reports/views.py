@@ -88,6 +88,7 @@ from corehq.apps.hqcase.utils import (
 )
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
+    use_daterangepicker,
     use_jquery_ui,
     use_multiselect,
 )
@@ -230,6 +231,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     @use_jquery_ui
     @use_datatables
+    @use_daterangepicker
     def dispatch(self, request, *args, **kwargs):
         return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
 
