@@ -52,9 +52,11 @@ class TestIncrementalExport(TestCase):
         create_domain(cls.domain)
         cls.now = datetime.utcnow()
         cases = [
-            new_case(domain=cls.domain, foo="apple", bar="banana",
+            new_case(domain=cls.domain,
+                     case_json={"foo": "apple", "bar": "banana"},
                      server_modified_on=cls.now - timedelta(hours=3)),
-            new_case(domain=cls.domain, foo="orange", bar="pear",
+            new_case(domain=cls.domain,
+                     case_json={"foo": "orange", "bar": "pear"},
                      server_modified_on=cls.now - timedelta(hours=2)),
         ]
 
@@ -139,7 +141,11 @@ class TestIncrementalExport(TestCase):
         checkpoint.status = IncrementalExportStatus.SUCCESS
         checkpoint.save()
 
-        case = new_case(domain=self.domain, foo="peach", bar="plumb", server_modified_on=datetime.utcnow())
+        case = new_case(
+            domain=self.domain,
+            case_json={"foo": "peach", "bar": "plumb"},
+            server_modified_on=datetime.utcnow(),
+        )
         send_to_elasticsearch('cases', case.to_json())
         self.es.indices.refresh(CASE_INDEX_INFO.index)
         self.addCleanup(self._cleanup_case(case.case_id))
@@ -205,22 +211,19 @@ class TestIncrementalExport(TestCase):
         cases = [
             new_case(
                 domain=self.domain,
-                foo="peach",
-                bar="plumb",
+                case_json={"foo": "peach", "bar": "plumb"},
                 server_modified_on=datetime.utcnow() + timedelta(hours=-1),
                 owner_id='123',
             ),
             new_case(
                 domain=self.domain,
-                foo="orange",
-                bar="melon",
+                case_json={"foo": "orange", "bar": "melon"},
                 server_modified_on=datetime.utcnow(),
                 owner_id=user.user_id,  # this user is part of the team1 location.
             ),
             new_case(
                 domain=self.domain,
-                foo="grape",
-                bar="pineapple",
+                case_json={"foo": "grape", "bar": "pineapple"},
                 server_modified_on=datetime.utcnow(),
             ),
         ]
