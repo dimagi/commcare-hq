@@ -161,7 +161,7 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
 
     error_messages = custom_case_upload_file_operations(domain=domain, case_upload=case_upload)
     if error_messages:
-        raise CustomImporterError(", ".join(error_messages))
+        raise CustomImporterError("; ".join(error_messages))
 
     context = {
         'columns': columns,
