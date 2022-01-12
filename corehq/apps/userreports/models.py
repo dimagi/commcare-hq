@@ -61,8 +61,7 @@ from corehq.apps.userreports.dbaccessors import (
     get_number_of_report_configs_by_data_source,
     get_report_configs_for_domain,
     get_all_registry_data_source_ids,
-    get_registry_data_sources_by_domain, get_registry_report_configs_for_domain,
-    get_number_of_registry_report_configs_by_data_source,
+    get_registry_data_sources_by_domain,
 )
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -88,7 +87,7 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
-    get_indicator_adapter, wrap_report_config_by_type,
+    get_indicator_adapter,
 )
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
@@ -160,8 +159,6 @@ class DataSourceBuildInformation(DocumentSchema):
     app_id = StringProperty()
     # The version of the app at the time of the data source's configuration.
     app_version = IntegerProperty()
-    # The registry_slug associated with the registry of the report.
-    registry_slug = StringProperty()
     # True if the data source has been built, that is, if the corresponding SQL table has been populated.
     finished = BooleanProperty(default=False)
     # Start time of the most recent build SQL table celery task.
@@ -517,10 +514,6 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if not connection_manager.resolves_to_unique_dbs(mirrored_engine_ids + [self.engine_id]):
             raise BadSpecError("No two engine_ids should point to the same database")
 
-    @property
-    def data_domains(self):
-        return [self.domain]
-
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -667,7 +660,7 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
     def default_indicators(self):
         default_indicators = super().default_indicators
         default_indicators.append(IndicatorFactory.from_spec({
-            "column_id": "commcare_project",
+            "column_id": "domain",
             "type": "expression",
             "display_name": "Project Space",
             "datatype": "string",
@@ -690,12 +683,6 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
     @classmethod
     def all_ids(cls):
         return get_all_registry_data_source_ids()
-
-    def get_report_count(self):
-        """
-        Return the number of ReportConfigurations that reference this data source.
-        """
-        return RegistryReportConfiguration.count_by_data_source(self.domain, self._id)
 
 
 class ReportMeta(DocumentSchema):
@@ -882,17 +869,6 @@ CUSTOM_REPORT_PREFIX = 'custom-'
 
 
 class RegistryReportConfiguration(ReportConfiguration):
-
-    @classmethod
-    @quickcache(['cls.__name__', 'domain'])
-    def by_domain(cls, domain):
-        return get_registry_report_configs_for_domain(domain)
-
-    @classmethod
-    @quickcache(['cls.__name__', 'domain', 'data_source_id'])
-    def count_by_data_source(cls, domain, data_source_id):
-        return get_number_of_registry_report_configs_by_data_source(domain, data_source_id)
-
     @property
     def registry_slug(self):
         return self.config.registry_slug
@@ -1311,10 +1287,7 @@ def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_S
             try:
                 config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
             except DocumentNotFound:
-                try:
-                    config = get_document_or_not_found(RegistryDataSourceConfiguration, domain, config_id)
-                except DocumentNotFound:
-                    _raise_not_found()
+                _raise_not_found()
         return config, is_static
     elif data_source_type == DATA_SOURCE_TYPE_AGGREGATE:
         from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
@@ -1371,7 +1344,7 @@ def get_report_configs(config_ids, domain):
     dynamic_report_configs = []
     if dynamic_report_config_ids:
         dynamic_report_configs = [
-            wrap_report_config_by_type(doc) for doc in
+            ReportConfiguration.wrap(doc) for doc in
             get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
         ]
 

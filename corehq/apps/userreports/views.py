@@ -69,14 +69,11 @@ from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
 from corehq.apps.linked_domain.ucr import create_linked_ucr, linked_downstream_reports_by_domain
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
-from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.registry.models import DataRegistry
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_RAW,
-    DATA_SOURCE_TYPE_CASE,
 )
 from corehq.apps.userreports.app_manager.helpers import (
     get_case_data_source,
@@ -110,7 +107,7 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
     id_is_static,
-    report_config_id_is_static, RegistryReportConfiguration,
+    report_config_id_is_static,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
@@ -200,7 +197,7 @@ class BaseUserConfigReportsView(BaseDomainView):
         static_reports = list(StaticReportConfiguration.by_domain(self.domain))
         context = super(BaseUserConfigReportsView, self).main_context
         context.update({
-            'reports': ReportConfiguration.by_domain(self.domain) + RegistryReportConfiguration.by_domain(self.domain) + static_reports,
+            'reports': ReportConfiguration.by_domain(self.domain) + static_reports,
             'data_sources': get_datasources_for_domain(self.domain, include_static=True)
         })
         if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
@@ -420,7 +417,6 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
             "domain": self.domain,
             'report': {"title": _("Create New Report")},
             'form': self.form,
-            "dropdown_map": self.form.dropdown_map,
         }
         return context
 
@@ -454,8 +450,6 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'source_type': app_source.source_type,
                 'source': app_source.source,
             }
-            if app_source.registry_slug != '':
-                get_params['registry_slug'] = app_source.registry_slug
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
             )
@@ -467,8 +461,7 @@ class EditReportInBuilder(View):
 
     def dispatch(self, request, *args, **kwargs):
         report_id = kwargs['report_id']
-        report = get_document_or_404(ReportConfiguration, request.domain, report_id,
-                                     additional_doc_types=["RegistryReportConfiguration"])
+        report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
             try:
                 return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
@@ -496,28 +489,20 @@ class ConfigureReport(ReportBuilderView):
                 self.source_id = self.existing_report.config.meta.build.source_id
                 self.app_id = self.existing_report.config.meta.build.app_id
                 self.app = Application.get(self.app_id) if self.app_id else None
-                self.registry_slug = self.existing_report.config.meta.build.registry_slug
             else:
                 self.source_id = self.existing_report.config_id
-                self.app_id = self.app = self.registry_slug = None
+                self.app_id = self.app = None
         else:
-            self.registry_slug = self.request.GET.get('registry_slug', None)
-            self.app_id = self.request.GET.get('application', None)
+            self.app_id = self.request.GET['application']
+            self.app = Application.get(self.app_id)
+            self.source_type = self.request.GET['source_type']
             self.source_id = self.request.GET['source']
-            if self.registry_slug:
-                helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
-                helper.check_data_access(request.couch_user, [self.source_id], case_domain=self.domain)
-                self.source_type = DATA_SOURCE_TYPE_CASE
-                self.app = None
-            else:
-                self.app = Application.get(self.app_id)
-                self.source_type = self.request.GET['source_type']
 
-        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug:
+        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW:
             raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         try:
             data_source_interface = get_data_source_interface(
-                self.domain, self.app, self.source_type, self.source_id, self.registry_slug
+                self.domain, self.app, self.source_type, self.source_id
             )
         except ResourceNotFound:
             self.template_name = 'userreports/report_error.html'
@@ -610,7 +595,7 @@ class ConfigureReport(ReportBuilderView):
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
         report_form = form_type(
-            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report, self.registry_slug,
+            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
         return {
@@ -630,7 +615,6 @@ class ConfigureReport(ReportBuilderView):
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,
-            'registry_slug': self.registry_slug,
             'report_preview_url': reverse(ReportPreview.urlname,
                                           args=[self.domain, temp_ds_id]),
             'preview_datasource_id': temp_ds_id,
@@ -648,11 +632,10 @@ class ConfigureReport(ReportBuilderView):
         return form_class(
             self.domain,
             self._get_report_name(),
-            self.app._id if self.app else None,
+            self.app._id,
             self.source_type,
             self.source_id,
             self.existing_report,
-            self.registry_slug,
             report_data
         )
 
@@ -716,8 +699,7 @@ class ConfigureReport(ReportBuilderView):
 
 def update_report_description(request, domain, report_id):
     new_description = request.POST['value']
-    report = get_document_or_404(ReportConfiguration, domain, report_id,
-                                 additional_doc_types=["RegistryReportConfiguration"])
+    report = get_document_or_404(ReportConfiguration, domain, report_id)
     report.description = new_description
     report.save()
     return json_response({})
@@ -762,7 +744,6 @@ class ReportPreview(BaseDomainView):
             report_data['source_type'],
             report_data['source_id'],
             None,
-            report_data['registry_slug'],
             report_data
         )
         if bound_form.is_valid():
@@ -795,8 +776,7 @@ def _assert_report_delete_privileges(request):
 @require_permission(Permissions.edit_reports)
 def delete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
-    config = get_document_or_404(ReportConfiguration, domain, report_id,
-                                 additional_doc_types=["RegistryReportConfiguration"])
+    config = get_document_or_404(ReportConfiguration, domain, report_id)
 
     # Delete the data source too if it's not being used by any other reports.
     try:
@@ -1186,8 +1166,7 @@ def delete_data_source(request, domain, config_id):
 
 
 def delete_data_source_shared(domain, config_id, request=None):
-    config = get_document_or_404(DataSourceConfiguration, domain, config_id,
-                                 additional_doc_types=["RegistryDataSourceConfiguration"])
+    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     adapter = get_indicator_adapter(config)
     username = request.user.username if request else None
     skip = not request  # skip logging when we remove temporary tables

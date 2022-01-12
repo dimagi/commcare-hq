@@ -25,7 +25,6 @@ DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
 USER = 'user'
 OWNER = 'owner'
-COMMCARE_PROJECT = 'commcare_project'
 
 assert_user_passed_in = soft_assert(to="@".join(["esoergel", "dimagi.com"]), fail_if_debug=True)
 

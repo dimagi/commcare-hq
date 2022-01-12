@@ -79,7 +79,6 @@ def get_docs_in_domain_by_class(domain, doc_class, limit=None, skip=None):
         'HQGroupExportConfiguration',
         'Group',
         'ReportConfiguration',
-        'RegistryReportConfiguration',
         'LinkedApplication',
     ]
     doc_type = doc_class.__name__

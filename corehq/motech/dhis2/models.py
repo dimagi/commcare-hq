@@ -23,7 +23,7 @@ from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
 from corehq.motech.models import ConnectionSettings
-from corehq.util.couch import DocumentNotFound
+from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.quickcache import quickcache
 
 from .const import (
@@ -37,7 +37,6 @@ from .const import (
     COMPLETE_DATE_ON_PERIOD_END,
     COMPLETE_DATE_ON_SEND,
 )
-from corehq.apps.userreports.util import get_report_config_or_not_found
 
 
 class DataValueMap(DocumentSchema):
@@ -126,7 +125,8 @@ class SQLDataSetMap(models.Model):
     @memoized_property
     def ucr(self) -> Optional[ReportConfiguration]:
         try:
-            return get_report_config_or_not_found(self.domain, self.ucr_id)
+            return get_document_or_not_found(ReportConfiguration,
+                                             self.domain, self.ucr_id)
         except DocumentNotFound:
             return None
 

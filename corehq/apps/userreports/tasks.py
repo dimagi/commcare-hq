@@ -1,4 +1,3 @@
-import itertools
 import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -15,7 +14,6 @@ from botocore.vendored.requests.packages.urllib3.exceptions import (
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from couchdbkit import ResourceConflict, ResourceNotFound
-
 from corehq.util.es.elasticsearch import ConnectionTimeout
 from corehq.util.metrics import metrics_counter, metrics_gauge, metrics_histogram_timer
 from corehq.util.metrics.const import MPM_MAX, MPM_MIN, MPM_LIVESUM
@@ -48,8 +46,11 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.userreports.models import (
     AsyncIndicator,
+    DataSourceConfiguration,
+    StaticDataSourceConfiguration,
     get_report_config,
-    id_is_static, )
+    id_is_static,
+)
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
@@ -57,7 +58,7 @@ from corehq.apps.userreports.reports.data_source import (
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
-    get_indicator_adapter, get_ucr_datasource_config_by_id,
+    get_indicator_adapter,
 )
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
@@ -66,6 +67,13 @@ from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
 
 celery_task_logger = logging.getLogger('celery.task')
+
+
+def _get_config_by_id(indicator_config_id):
+    if id_is_static(indicator_config_id):
+        return StaticDataSourceConfiguration.by_id(indicator_config_id)
+    else:
+        return DataSourceConfiguration.get(indicator_config_id)
 
 
 def _build_indicators(config, document_store, relevant_ids):
@@ -83,7 +91,7 @@ def _build_indicators(config, document_store, relevant_ids):
 
 @serial_task('{indicator_config_id}', default_retry_delay=60 * 10, timeout=3 * 60 * 60, max_retries=20, queue=UCR_CELERY_QUEUE, ignore_result=True)
 def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None, diffs=None, trigger_time=None, domain=None):
-    config = get_ucr_datasource_config_by_id(indicator_config_id)
+    config = _get_config_by_id(indicator_config_id)
     if trigger_time is not None and trigger_time < config.last_modified:
         return
 
@@ -123,7 +131,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=
     queue=UCR_CELERY_QUEUE, ignore_result=True
 )
 def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=None, domain=None):
-    config = get_ucr_datasource_config_by_id(indicator_config_id)
+    config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
@@ -141,7 +149,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def resume_building_indicators(indicator_config_id, initiated_by=None):
-    config = get_ucr_datasource_config_by_id(indicator_config_id)
+    config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
@@ -159,17 +167,18 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
     case_type_or_xmlns_list = config.get_case_type_or_xmlns_filter()
-    domains = config.data_domains
+    completed_ct_xmlns = resume_helper.get_completed_case_type_or_xmlns()
+    if completed_ct_xmlns:
+        case_type_or_xmlns_list = [
+            case_type_or_xmlns
+            for case_type_or_xmlns in case_type_or_xmlns_list
+            if case_type_or_xmlns not in completed_ct_xmlns
+        ]
 
-    loop_iterations = list(itertools.product(domains, case_type_or_xmlns_list))
-    completed_iterations = resume_helper.get_completed_iterations()
-    if completed_iterations:
-        loop_iterations = list(set(loop_iterations) - set(completed_iterations))
-
-    for domain, case_type_or_xmlns in loop_iterations:
+    for case_type_or_xmlns in case_type_or_xmlns_list:
         relevant_ids = []
         document_store = get_document_store_for_doc_type(
-            domain, config.referenced_doc_type,
+            config.domain, config.referenced_doc_type,
             case_type_or_xmlns=case_type_or_xmlns,
             load_source="build_indicators",
         )
@@ -185,7 +194,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
         if relevant_ids:
             _build_indicators(config, document_store, relevant_ids)
 
-        resume_helper.add_completed_iteration(domain, case_type_or_xmlns)
+        resume_helper.add_completed_case_type_or_xmlns(case_type_or_xmlns)
 
     resume_helper.clear_resume_info()
     if not id_is_static(indicator_config_id):
@@ -196,7 +205,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
         try:
             config.save()
         except ResourceConflict:
-            current_config = get_ucr_datasource_config_by_id(config._id)
+            current_config = DataSourceConfiguration.get(config._id)
             # check that a new build has not yet started
             if in_place:
                 if config.meta.build.initiated_in_place == current_config.meta.build.initiated_in_place:
@@ -404,7 +413,7 @@ def build_async_indicators(indicator_doc_ids):
         if config_id in config_by_id:
             return config_by_id[config_id]
         else:
-            config = get_ucr_datasource_config_by_id(config_id)
+            config = _get_config_by_id(config_id)
             config_by_id[config_id] = config
             return config
 

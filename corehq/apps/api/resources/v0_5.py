@@ -73,7 +73,7 @@ from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
 )
-from corehq.apps.userreports.util import get_configurable_and_static_reports, get_report_config_or_not_found
+from corehq.apps.userreports.util import get_configurable_and_static_reports
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
@@ -671,7 +671,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
             if report_config_id_is_static(id_):
                 return StaticReportConfiguration.by_id(id_, domain=domain)
             else:
-                return get_report_config_or_not_found(domain, id_)
+                return get_document_or_not_found(ReportConfiguration, domain, id_)
         except DocumentNotFound:
             raise NotFound
 

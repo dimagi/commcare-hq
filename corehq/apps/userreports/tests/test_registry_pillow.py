@@ -195,7 +195,7 @@ class RegistryUcrPillowTest(TestCase):
 
         self.assertEqual(2, self.adapter.get_query_object().count())
         actual = {
-            row.doc_id: row.commcare_project
+            row.doc_id: row.domain
             for row in self.adapter.get_query_object()
         }
         self.assertDictEqual(actual, expected)
@@ -233,7 +233,7 @@ class RegistryUcrPillowTest(TestCase):
 
         self.assertEqual(3, adapter.get_query_object().count())
         actual = {
-            row.doc_id: row.commcare_project
+            row.doc_id: row.domain
             for row in adapter.get_query_object()
         }
         self.assertDictEqual(actual, expected)
