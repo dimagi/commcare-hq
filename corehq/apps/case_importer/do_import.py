@@ -557,7 +557,8 @@ class _ImportResults(object):
         if 'rows' not in self._errors[key][column_name]:
             self._errors[key][column_name]['rows'] = []
 
-        self._errors[key][column_name]['rows'].append(row_num)
+        if row_num not in self._errors[key][column_name]['rows']:
+            self._errors[key][column_name]['rows'].append(row_num)
 
         if 'sample' not in self._errors[key][column_name] and hasattr(error, 'sample'):
             self._errors[key][column_name]['sample'] = _(
