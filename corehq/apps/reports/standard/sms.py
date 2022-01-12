@@ -14,8 +14,6 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from casexml.apps.case.models import CommCareCase
-
 from corehq import toggles
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
@@ -245,9 +243,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
                     couch_object = CommCareCaseGroup.get(recipient_id)
                 elif recipient_doc_type.startswith('CommCareCase'):
                     obj = CaseAccessors(domain).get_case(recipient_id)
-                    if isinstance(obj, CommCareCase):
-                        couch_object = obj
-                    elif isinstance(obj, CommCareCaseSQL):
+                    if isinstance(obj, CommCareCaseSQL):
                         sql_object = obj
                 elif recipient_doc_type in ('CommCareUser', 'WebUser'):
                     couch_object = CouchUser.get_by_user_id(recipient_id)

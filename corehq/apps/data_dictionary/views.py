@@ -1,6 +1,7 @@
 import io
 import itertools
 import json
+from collections import defaultdict
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -22,6 +23,7 @@ from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import (
     PROPERTY_TYPE_CHOICES,
     CaseProperty,
+    CasePropertyAllowedValue,
     CaseType,
 )
 from corehq.apps.data_dictionary.util import save_case_property
@@ -42,8 +44,10 @@ from corehq.project_limits.rate_limiter import (
 )
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
+from corehq.util.workbook_reading.datamodels import Cell
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
+ALLOWED_VALUES_SHEET_SUFFIX = "-vl"
 
 data_dictionary_rebuild_rate_limiter = RateLimiter(
     feature_key='data_dictionary_rebuilds_per_user',
@@ -84,7 +88,8 @@ def data_dictionary_json(request, domain, case_type_name=None):
     fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
-        Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))
+        Prefetch('properties', queryset=CaseProperty.objects.order_by('name')),
+        Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
         fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = load_fhir_resource_mappings(
@@ -105,6 +110,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                 "data_type": prop.data_type,
                 "group": prop.group,
                 "deprecated": prop.deprecated,
+                "allowed_values": {av.allowed_value: av.description for av in prop.allowed_values.all()},
             })
         props.append(p)
     return JsonResponse({'case_types': props})
@@ -148,13 +154,15 @@ def update_case_property(request, domain):
             data_type = property.get('data_type')
             group = property.get('group')
             deprecated = property.get('deprecated')
+            allowed_values = property.get('allowed_values')
             if update_fhir_resources:
                 fhir_resource_prop_path = property.get('fhir_resource_prop_path')
                 remove_path = property.get('removeFHIRResourcePropertyPath', False)
             else:
                 fhir_resource_prop_path, remove_path = None, None
             error = save_case_property(name, case_type, domain, data_type, description, group, deprecated,
-                                       fhir_resource_prop_path, fhir_resource_type_obj, remove_path)
+                                       fhir_resource_prop_path, fhir_resource_type_obj, remove_path,
+                                       allowed_values)
             if error:
                 errors.append(error)
 
@@ -198,16 +206,18 @@ def _export_data_dictionary(domain):
     export_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
     case_type_headers = [_('Case Type'), _('FHIR Resource Type'), _('Remove Resource Type(Y)')]
     case_prop_headers = [_('Case Property'), _('Group'), _('Data Type'), _('Description'), _('Deprecated')]
+    allowed_value_headers = [_('Case Property'), _('Valid Value'), _('Valid Value Description')]
 
     case_type_data, case_prop_data = _generate_data_for_export(domain, export_fhir_data)
 
     outfile = io.BytesIO()
     writer = Excel2007ExportWriter()
-    header_table = _get_headers_for_export(export_fhir_data, case_type_headers, case_prop_headers, case_prop_data)
+    header_table = _get_headers_for_export(
+        export_fhir_data, case_type_headers, case_prop_headers, case_prop_data, allowed_value_headers)
     writer.open(header_table=header_table, file=outfile)
     if export_fhir_data:
         _export_fhir_data(writer, case_type_headers, case_type_data)
-    _export_case_prop_data(writer, case_prop_headers, case_prop_data)
+    _export_case_prop_data(writer, case_prop_headers, case_prop_data, allowed_value_headers)
     writer.close()
     return outfile
 
@@ -217,16 +227,25 @@ def _generate_data_for_export(domain, export_fhir_data):
         prop_dict = {
             _('Case Property'): case_prop.name,
             _('Group'): case_prop.group,
-            _('Data Type'): case_prop.data_type,
+            _('Data Type'): case_prop.get_data_type_display() if case_prop.data_type else '',
             _('Description'): case_prop.description,
             _('Deprecated'): case_prop.deprecated
         }
+        if case_prop.data_type == 'select':
+            prop_dict['allowed_values'] = [
+                {
+                    _('Case Property'): case_prop.name,
+                    _('Valid Value'): av.allowed_value,
+                    _('Valid Value Description'): av.description,
+                } for av in case_prop.allowed_values.all()
+            ]
         if export_fhir_data:
             prop_dict[_('FHIR Resource Property')] = fhir_resource_prop
         return prop_dict
 
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
-        Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))
+        Prefetch('properties', queryset=CaseProperty.objects.order_by('name')),
+        Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
     case_type_data = {}
     case_prop_data = {}
@@ -257,13 +276,15 @@ def _add_fhir_resource_mapping_sheet(case_type_data, fhir_resource_type_name_by_
     ]
 
 
-def _get_headers_for_export(export_fhir_data, case_type_headers, case_prop_headers, case_prop_data):
+def _get_headers_for_export(export_fhir_data, case_type_headers, case_prop_headers, case_prop_data,
+                            allowed_value_headers):
     header_table = []
     if export_fhir_data:
         header_table.append((FHIR_RESOURCE_TYPE_MAPPING_SHEET, [case_type_headers]))
         case_prop_headers.extend([_('FHIR Resource Property'), _('Remove Resource Property(Y)')])
     for tab_name in case_prop_data:
         header_table.append((tab_name, [case_prop_headers]))
+        header_table.append((f'{tab_name}{ALLOWED_VALUES_SHEET_SUFFIX}', [allowed_value_headers]))
     return header_table
 
 
@@ -275,12 +296,19 @@ def _export_fhir_data(writer, case_type_headers, case_type_data):
     writer.write([(FHIR_RESOURCE_TYPE_MAPPING_SHEET, rows)])
 
 
-def _export_case_prop_data(writer, case_prop_headers, case_prop_data):
+def _export_case_prop_data(writer, case_prop_headers, case_prop_data, allowed_value_headers):
     for tab_name, tab in case_prop_data.items():
         tab_rows = []
+        allowed_values = []
         for row in tab:
             tab_rows.append([row.get(header, '') for header in case_prop_headers])
+            if 'allowed_values' in row:
+                allowed_values.extend(row['allowed_values'])
         writer.write([(tab_name, tab_rows)])
+        tab_rows = []
+        for row in allowed_values:
+            tab_rows.append([row.get(header, '') for header in allowed_value_headers])
+        writer.write([(f'{tab_name}{ALLOWED_VALUES_SHEET_SUFFIX}', tab_rows)])
 
 
 class ExportDataDictionaryView(View):
@@ -376,12 +404,43 @@ def _process_bulk_upload(bulk_file, domain):
     import_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
     fhir_resource_type_by_case_type = {}
     expected_columns_in_prop_sheet = 5
+    data_type_map = {display_val: raw_val for raw_val, display_val in PROPERTY_TYPE_CHOICES}
 
     if import_fhir_data:
         expected_columns_in_prop_sheet = 7
 
+    worksheets = []
+    allowed_value_info = {}
+    prop_row_info = {}
+    seen_props = defaultdict(set)
+    missing_valid_values = set()
     with open_any_workbook(filename) as workbook:
         for worksheet in workbook.worksheets:
+            if worksheet.title.endswith(ALLOWED_VALUES_SHEET_SUFFIX):
+                case_type = worksheet.title[:-len(ALLOWED_VALUES_SHEET_SUFFIX)]
+                allowed_value_info[case_type] = defaultdict(dict)
+                prop_row_info[case_type] = defaultdict(list)
+                for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None), start=2):
+                    row_len = len(row)
+                    if row_len < 1:
+                        # simply ignore any fully blank rows
+                        continue
+                    if row_len < 3:
+                        # if missing value or description, fill in "blank"
+                        row += [Cell(value='') for _ in range(3 - row_len)]
+                    row = [cell.value if cell.value is not None else '' for cell in row]
+                    prop_name, allowed_value, description = [str(val) for val in row[0:3]]
+                    if allowed_value and not prop_name:
+                        msg_format = _('Error in valid values for case type {}, row {}: missing case property')
+                        msg_val = msg_format.format(case_type, i)
+                        errors.append(msg_val)
+                    else:
+                        allowed_value_info[case_type][prop_name][allowed_value] = description
+                        prop_row_info[case_type][prop_name].append(i)
+            else:
+                worksheets.append(worksheet)
+
+        for worksheet in worksheets:
             if worksheet.title == FHIR_RESOURCE_TYPE_MAPPING_SHEET:
                 if import_fhir_data:
                     _errors, fhir_resource_type_by_case_type = _process_fhir_resource_type_mapping_sheet(
@@ -389,12 +448,18 @@ def _process_bulk_upload(bulk_file, domain):
                     errors.extend(_errors)
                 continue
             case_type = worksheet.title
-            for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
+            for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None), start=2):
                 if len(row) < expected_columns_in_prop_sheet:
                     error = _('Not enough columns')
                 else:
                     error, fhir_resource_prop_path, fhir_resource_type, remove_path = None, None, None, None
-                    name, group, data_type, description, deprecated = [cell.value for cell in row[:5]]
+                    name, group, data_type_display, description, deprecated = [cell.value for cell in row[:5]]
+                    # Fall back to value from file if data_type_display is not found in the map.
+                    # This allows existing error path to report accurately the value that isn't found,
+                    # and also has a side-effect of allowing older files (pre change to export
+                    # display values) to import successfully.
+                    data_type = data_type_map.get(data_type_display, data_type_display)
+                    seen_props[case_type].add(name)
                     if import_fhir_data:
                         fhir_resource_prop_path, remove_path = row[5:]
                         remove_path = remove_path == 'Y' if remove_path else False
@@ -402,11 +467,29 @@ def _process_bulk_upload(bulk_file, domain):
                         if fhir_resource_prop_path and not fhir_resource_type:
                             error = _('Could not find resource type for {}').format(case_type)
                     if not error:
+                        if case_type in allowed_value_info:
+                            allowed_values = allowed_value_info[case_type][name]
+                        else:
+                            allowed_values = None
+                            missing_valid_values.add(case_type)
                         error = save_case_property(name, case_type, domain, data_type, description, group,
                                                    deprecated, fhir_resource_prop_path, fhir_resource_type,
-                                                   remove_path)
+                                                   remove_path, allowed_values)
                 if error:
                     errors.append(_('Error in case type {}, row {}: {}').format(case_type, i, error))
+
+    for case_type in missing_valid_values:
+        errors.append(_('Missing valid values sheet for case type {}').format(case_type))
+
+    for case_type in allowed_value_info:
+        for prop_name in allowed_value_info[case_type]:
+            if prop_name not in seen_props[case_type]:
+                msg_format = _(
+                    'Error in valid values for case type {}, nonexistent property listed ({}), row(s): {}')
+                msg_val = msg_format.format(
+                    case_type, prop_name, ', '.join(str(v) for v in prop_row_info[case_type][prop_name]))
+                errors.append(msg_val)
+
     return errors
 
 

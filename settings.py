@@ -230,7 +230,10 @@ DEFAULT_APPS = (
     'oauth2_provider',
 )
 
-CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
+SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+RECAPTCHA_PRIVATE_KEY = ''
+RECAPTCHA_PUBLIC_KEY = ''
+
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
@@ -830,6 +833,9 @@ LOCAL_REPEATER_CLASSES = []
 # This will not prevent users from creating
 REPEATERS_WHITELIST = None
 
+# how many tasks to split the check_repeaters process into
+CHECK_REPEATERS_PARTITION_COUNT = 1
+
 # If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
 ENABLE_PRELOGIN_SITE = False
 
@@ -1389,7 +1395,7 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file'],
+            'handlers': ['file'],
             'level': 'INFO',
             'propagate': True
         },

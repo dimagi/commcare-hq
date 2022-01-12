@@ -215,17 +215,35 @@ describe('Entries', function () {
         assert.isTrue(entry instanceof Controls.MultiSelectEntry);
         assert.equal(entry.templateType, 'select');
         assert.sameMembers(entry.answer(), [1]);
-        assert.sameMembers(entry.rawAnswer(), [1]);
+        assert.sameMembers(entry.rawAnswer(), ['a']);
 
         // Did not change answer, do not call change
-        entry.rawAnswer([1]);
+        entry.rawAnswer(['a']);
         this.clock.tick(1000);
         assert.equal(spy.callCount, 0);
         assert.sameMembers(entry.answer(), [1]);
 
-        entry.rawAnswer([2]);
+        entry.rawAnswer(['b']);
         assert.equal(spy.calledOnce, true);
         assert.sameMembers(entry.answer(), [2]);
+    });
+
+    it('Should retain MultiSelectEntry when choices change', function () {
+        questionJSON.datatype = Const.MULTI_SELECT;
+        questionJSON.choices = ['a', 'b'];
+        questionJSON.answer = [1, 2]; // answer is based on a 1 indexed index of the choices
+
+        var entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.MultiSelectEntry);
+        assert.sameMembers(entry.answer(), [1, 2]);
+        assert.sameMembers(entry.rawAnswer(), ['a', 'b']);
+
+        entry.answer([1]);
+        entry.choices(['a', 'c']);
+        this.clock.tick(1000);
+        assert.equal(spy.calledOnce, true);
+        assert.sameMembers(entry.rawAnswer(), ['a']);
+        assert.sameMembers(entry.answer(), [1]);
     });
 
     it('Should return SingleSelectEntry', function () {
@@ -236,12 +254,47 @@ describe('Entries', function () {
         var entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.SingleSelectEntry);
         assert.equal(entry.templateType, 'select');
-        assert.equal(entry.rawAnswer(), 1);
+        assert.equal(entry.rawAnswer(), 'a');
 
-        entry.rawAnswer(2);
+        entry.rawAnswer('b');
         this.clock.tick(1000);
         assert.isTrue(spy.calledOnce);
         assert.equal(entry.answer(), 2);
+        assert.equal(entry.rawAnswer(), 'b');
+    });
+
+    it('Should retain SingleSelect value on choices change with valid value', function () {
+        questionJSON.datatype = Const.SELECT;
+        questionJSON.choices = ['a', 'b'];
+        questionJSON.answer = 1;
+
+        var entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.SingleSelectEntry);
+        assert.equal(entry.rawAnswer(), 'a');
+
+        entry.choices(['c', 'a', 'b']);
+        entry.answer(2);
+        this.clock.tick(1000);
+        assert.isTrue(spy.calledOnce);
+        assert.equal(entry.answer(), 2);
+        assert.equal(entry.rawAnswer(), 'a');
+    });
+
+    it('Should retain SingleSelect value on choices change with invalid value', function () {
+        questionJSON.datatype = Const.SELECT;
+        questionJSON.choices = ['a', 'b'];
+        questionJSON.answer = 1;
+
+        var entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.SingleSelectEntry);
+        assert.equal(entry.rawAnswer(), 'a');
+
+        entry.choices(['c', 'b']);
+        entry.answer(null);
+        this.clock.tick(1000);
+        assert.isTrue(spy.calledOnce);
+        assert.isNull(entry.answer());
+        assert.isNull(entry.rawAnswer());
     });
 
     it('Should return DateEntry', function () {

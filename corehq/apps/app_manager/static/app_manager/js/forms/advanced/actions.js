@@ -194,6 +194,12 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             ko.mapping.fromJS(data, loadUpdateAction.mapping(self), self);
             self.hasPrivilege = true;
 
+            // needed for compatibility with shared templates
+            self.searchAndFilter = false;
+            self.visible_case_properties = ko.computed(function () {
+                return self.case_properties();
+            });
+
             // for compatibility with common templates
             // template: case-config:condition
             self.allow = {

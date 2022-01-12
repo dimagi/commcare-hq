@@ -849,6 +849,16 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     """
 )
 
+USH_USERCASES_FOR_WEB_USERS = StaticToggle(
+    'usercases_for_web_users',
+    "USH: Enable the creation of usercases for web users.",
+    TAG_CUSTOM,
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Usercase+Creation',
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Toggle to enable the creation of usercases for web users."""
+)
+
 WEBAPPS_STICKY_SEARCH = StaticToggle(
     "webapps_sticky_search",
     "USH: Sticky search: In web apps, save user's most recent inputs on case search & claim screen.",
@@ -1564,13 +1574,6 @@ COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     description='Reports for comparison must be listed in settings.UCR_COMPARISONS.'
 )
 
-MOBILE_LOGIN_LOCKOUT = StaticToggle(
-    'mobile_user_login_lockout',
-    "On too many wrong password attempts, lock out mobile users",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
     'Allow linking project spaces (successor to linked apps)',
@@ -2147,7 +2150,7 @@ DATA_REGISTRY = StaticToggle(
   
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
     'case_import_data_dictionary_validaton',
-    'Validate data per data dictionary definitions during case import',
+    'USH: Validate data per data dictionary definitions during case import',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Validate+data+per+data+dictionary+definitions+during+case+import",

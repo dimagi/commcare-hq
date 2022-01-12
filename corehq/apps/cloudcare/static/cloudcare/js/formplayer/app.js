@@ -557,8 +557,8 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         var progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView,
             progressFinishTimeout = 200;
 
-        if (progressView) {
-            progressView.setProgress(1, progressFinishTimeout);
+        if (progressView && progressView.hasProgress()) {
+            progressView.setProgress(1, 1, progressFinishTimeout);
             setTimeout(function () {
                 FormplayerFrontend.regions.getRegion('loadingProgress').empty();
             }, progressFinishTimeout);

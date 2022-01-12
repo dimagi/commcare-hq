@@ -77,6 +77,8 @@ accounting
  0055_linked_projects
  0056_add_release_management
  0057_add_sms_report_toggle
+ 0058_delete_linked_projects_role
+ 0059_add_lite_release_management_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -145,8 +147,6 @@ blobs
  0009_delete_blobexpiration
  0010_auto_20191023_0938
  0011_blobmeta_compressed
-captcha
- 0001_initial
 case_importer
  0001_initial
  0002_auto_20161206_1937
@@ -240,6 +240,7 @@ data_dictionary
  0005_casetype_fully_generated
  0006_caseproperty_group
  0007_property_type_choices
+ 0008_casepropertyallowedvalue
 data_interfaces
  0001_initial
  0002_remove_exists_option
