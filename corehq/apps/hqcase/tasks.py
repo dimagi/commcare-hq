@@ -63,7 +63,7 @@ def explode_cases(domain, user_id, factor, task=None):
             del queue[:]
         return progress
 
-    for old_case_id in topological_sort_cases(cases):
+    for old_case_id in topological_sort_case_blocks(cases):
         for explosion in range(factor - 1):
             new_case = copy(cases[old_case_id])
             new_case_id = new_case_ids[old_case_id][explosion]
@@ -96,7 +96,7 @@ def explode_cases(domain, user_id, factor, task=None):
     ]}
 
 
-def topological_sort_cases(cases):
+def topological_sort_case_blocks(cases):
     """returns all cases in topological order
 
     Using Kahn's algorithm from here:
