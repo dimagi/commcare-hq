@@ -8,7 +8,7 @@ class UnexpectedFileError(Exception):
 
 
 class RequiredValueMissingError(CaseRowError):
-    title = ugettext_noop('Missing required value(s)')
+    title = ugettext_noop('Missing required column(s)')
 
 
 class CallValuesMissingError(CaseRowError):

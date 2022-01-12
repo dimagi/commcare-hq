@@ -70,7 +70,7 @@ class TestRequiredValueValidator(SimpleTestCase, TestFileMixin):
                 fields_to_update, errors = RequiredValueValidator.run(row_num, raw_row, raw_row)
                 self.assertEqual(
                     [error.title for error in errors],
-                    ['Missing required value(s)']
+                    ['Missing required column(s)']
                 )
                 self.assertEqual(
                     [error.message for error in errors],
