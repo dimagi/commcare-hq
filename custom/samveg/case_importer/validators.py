@@ -1,4 +1,5 @@
 import datetime
+from collections import Counter, defaultdict
 
 from django.utils.translation import ugettext as _
 
@@ -6,8 +7,10 @@ from corehq.util.dates import get_previous_month_date_range
 from custom.samveg.case_importer.exceptions import UnexpectedFileError
 from custom.samveg.const import (
     MANDATORY_COLUMNS,
+    OWNER_NAME,
     RCH_BENEFICIARY_IDENTIFIER,
     RCH_MANDATORY_COLUMNS,
+    ROW_LIMIT_PER_OWNER_PER_CALL_TYPE,
     SNCU_BENEFICIARY_IDENTIFIER,
     SNCU_MANDATORY_COLUMNS,
 )
@@ -26,7 +29,7 @@ class BaseValidator:
         latest_call_number = None
         for i in range(1, 7):
             if raw_row.get(f"Call{i}"):
-                latest_call_value = raw_row.get(f"Call{i}")
+                latest_call_value = raw_row[f"Call{i}"]
                 latest_call_number = i
         return latest_call_value, latest_call_number
 
@@ -57,7 +60,7 @@ class MandatoryColumnsValidator(BaseValidator):
 
 class MandatoryValueValidator(BaseValidator):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update):
+    def run(cls, row_num, raw_row, fields_to_update, **kwargs):
         error_messages = []
         error_messages.extend(cls._validate_mandatory_columns(row_num, raw_row))
         return fields_to_update, error_messages
@@ -83,7 +86,7 @@ class MandatoryValueValidator(BaseValidator):
 
 class CallValidator(BaseValidator):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update):
+    def run(cls, row_num, raw_row, fields_to_update, **kwargs):
         error_messages = []
         call_value, call_number = cls._get_latest_call_value_and_number(raw_row)
         if not call_value:
@@ -105,6 +108,43 @@ class CallValidator(BaseValidator):
                     )
 
         return fields_to_update, error_messages
+
+
+class UploadLimitValidator(BaseValidator):
+    @classmethod
+    def run(cls, row_num, raw_row, fields_to_update, import_context):
+        error_messages = []
+        owner_name = raw_row.get(OWNER_NAME)
+        call_value, call_number = cls._get_latest_call_value_and_number(raw_row)
+        if owner_name and call_number:
+            if cls._upload_limit_reached(import_context, owner_name, call_number):
+                error_messages.append(
+                    _('Limit reached for {owner_name} for call {call_number}').format(
+                        owner_name=owner_name,
+                        call_number=call_number
+                    )
+                )
+            else:
+                cls._update_counter(import_context, owner_name, call_number)
+        else:
+            error_messages.append(
+                _('Missing owner or call details')
+            )
+        return fields_to_update, error_messages
+
+    @classmethod
+    def _upload_limit_reached(cls, import_context, owner_name, call_number):
+        return cls._counter(import_context)[owner_name][f"Call{call_number}"] >= ROW_LIMIT_PER_OWNER_PER_CALL_TYPE
+
+    @classmethod
+    def _update_counter(cls, import_context, owner_name, call_number):
+        cls._counter(import_context)[owner_name][f"Call{call_number}"] += 1
+
+    @classmethod
+    def _counter(cls, import_context):
+        if 'counter' not in import_context:
+            import_context['counter'] = defaultdict(Counter)
+        return import_context['counter']
 
 
 def get_mandatory_columns(columns):
