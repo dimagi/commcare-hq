@@ -59,6 +59,9 @@ class TestStaleDataInESSQL(TestCase):
     def test_case_missing_then_not_domain_specific(self):
         self._test_case_missing_then_not({'domain': self.project.name})
 
+    def test_case_missing_date(self):
+        self._test_case_missing_date()
+
     def test_case_resume(self):
         iteration_key = uuid.uuid4().hex
 
@@ -192,6 +195,20 @@ class TestStaleDataInESSQL(TestCase):
 
         self._send_cases_to_es([case])
         self._assert_in_sync(call())
+
+    def _test_case_missing_date(self):
+        def call():
+            return self._stale_data_in_es('case')
+        form, (case,) = self._submit_form(self.project.name, new_cases=1)
+
+        pg_modified_on = case.server_modified_on
+        case.server_modified_on = None
+        self._send_cases_to_es([case])
+        case.server_modified_on = pg_modified_on
+
+        self._assert_not_in_sync(call(), rows=[
+            (case.case_id, 'CommCareCase', case.type, case.domain, None, case.server_modified_on)
+        ])
 
     def _stale_data_in_es(self, *args, **kwargs):
         f = StringIO()
