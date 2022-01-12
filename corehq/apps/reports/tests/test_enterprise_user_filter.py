@@ -113,7 +113,7 @@ class EnterpriseUserOptionsControllerTest(BaseEnterpriseUserFilterTest):
         options = [
             option['text'] for option in controller.get_options()[1]
         ]
-        self.assertCountEqual(options, expected_usernames)
+        self.assertCountEqual(options, [f'{u} [Active Mobile Worker]' for u in expected_usernames])
 
 
 def _make_request(domain, couch_user, can_access_all_locations=False):
