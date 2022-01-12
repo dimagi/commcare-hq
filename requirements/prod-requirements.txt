@@ -248,7 +248,7 @@ kombu==4.2.2.post1
     # via -r base-requirements.in
 laboratory==0.2.0
     # via -r base-requirements.in
-lxml==4.6.3
+lxml==4.7.1
     # via
     #   -r base-requirements.in
     #   eulxml
