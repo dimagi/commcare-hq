@@ -1,3 +1,8 @@
+from datetime import datetime
+
+import pytz
+
+
 class BaseOperation(object):
     @classmethod
     def run(cls, *args, **kwargs):
@@ -7,5 +12,6 @@ class BaseOperation(object):
 class AddCustomCaseProperties(BaseOperation):
     @classmethod
     def run(cls, row_num, raw_row, fields_to_update):
-        # ToDo: Add new case property
+        today = datetime.utcnow().astimezone(pytz.timezone('Asia/Kolkata')).date()
+        fields_to_update['last_upload_change'] = str(today)
         return fields_to_update
