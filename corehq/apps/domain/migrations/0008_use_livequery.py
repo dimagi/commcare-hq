@@ -5,8 +5,8 @@ from django.db import migrations
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.toggle_ui.models import generate_toggle_id, Toggle
 from corehq.util.django_migrations import skip_on_fresh_install
-from toggle.models import generate_toggle_id, Toggle
 
 
 @skip_on_fresh_install

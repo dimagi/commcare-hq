@@ -6,10 +6,9 @@ from django.test import TestCase, SimpleTestCase
 
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.toggle_ui.models import ToggleAudit
+from corehq.apps.toggle_ui.models import Toggle, ToggleAudit
 from corehq.apps.toggle_ui.views import _clear_cache_for_toggle
 from corehq.toggles import NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_OTHER, NAMESPACE_EMAIL_DOMAIN
-from toggle.models import Toggle
 
 from corehq.apps.toggle_ui.migration_helpers import move_toggles
 

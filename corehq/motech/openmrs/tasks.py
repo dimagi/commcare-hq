@@ -14,7 +14,6 @@ from jinja2 import Template
 from requests import ReadTimeout, RequestException
 
 from casexml.apps.case.mock import CaseBlock
-from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
@@ -24,6 +23,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.toggle_ui.shortcuts import find_domains_with_toggle_enabled
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.atom_feed import (

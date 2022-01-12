@@ -20,7 +20,6 @@ from django_prbac.utils import has_privilege
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
-from toggle.shortcuts import set_toggle
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -100,6 +99,7 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.dbaccessors import is_active_upstream_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
+from corehq.apps.toggle_ui.shortcuts import set_toggle
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors import (
     get_practice_mode_mobile_workers,
