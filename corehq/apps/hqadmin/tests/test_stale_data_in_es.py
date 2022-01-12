@@ -203,7 +203,7 @@ class TestStaleDataInESSQL(TestCase):
 
         pg_modified_on = case.server_modified_on
         case.server_modified_on = None
-        self._send_cases_to_es([case])
+        self._send_cases_to_es([case], refetch_doc=False)
         case.server_modified_on = pg_modified_on
 
         self._assert_not_in_sync(call(), rows=[
@@ -257,11 +257,14 @@ class TestStaleDataInESSQL(TestCase):
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
         self.forms_to_delete_from_es.update(form.form_id for form in forms)
 
-    def _send_cases_to_es(self, cases):
+    def _send_cases_to_es(self, cases, refetch_doc=True):
         for case in cases:
-            es_case = transform_case_for_elasticsearch(
-                CaseDocumentStore(case.domain, case.type).get_document(case.case_id)
-            )
+            if refetch_doc:
+                es_case = transform_case_for_elasticsearch(
+                    CaseDocumentStore(case.domain, case.type).get_document(case.case_id)
+                )
+            else:
+                es_case = transform_case_for_elasticsearch(case)
             send_to_elasticsearch('cases', es_case)
 
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
