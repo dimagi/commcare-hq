@@ -351,7 +351,6 @@ HQ_APPS = (
     'corehq.tabs',
     'custom.openclinica',
     'soil',
-    'toggle',
     'phonelog',
     'pillowtop',
     'pillow_retry',
