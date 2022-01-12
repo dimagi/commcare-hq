@@ -11,6 +11,7 @@ function(doc) {
             name: doc.name,
             owner_id: doc.owner_id,
             sharing: doc.sharing,
+            integration_type: doc.integration_type,
         });
     }
 }
