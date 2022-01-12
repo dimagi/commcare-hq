@@ -121,10 +121,10 @@ class _Importer(object):
     def import_row(self, row_num, raw_row, import_context):
         search_id = self._parse_search_id(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
-        fields_to_update, error_messages = custom_case_import_operations(self.domain, row_num, raw_row,
-                                                                         fields_to_update, import_context)
-        if error_messages:
-            raise exceptions.CustomCaseRowError(message=", ".join(error_messages))
+        fields_to_update, custom_errors = custom_case_import_operations(self.domain, row_num, raw_row,
+                                                                        fields_to_update, import_context)
+        if custom_errors:
+            raise exceptions.CaseRowErrorList(custom_errors)
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
             return

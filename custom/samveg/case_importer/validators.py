@@ -4,7 +4,15 @@ from collections import Counter, defaultdict
 from django.utils.translation import ugettext as _
 
 from corehq.util.dates import get_previous_month_date_range
-from custom.samveg.case_importer.exceptions import UnexpectedFileError
+from custom.samveg.case_importer.exceptions import (
+    CallNotInLastMonthError,
+    CallValueInvalidError,
+    CallValuesMissingError,
+    OwnerNameMissingError,
+    RequiredValueMissingError,
+    UnexpectedFileError,
+    UploadLimitReachedError,
+)
 from custom.samveg.const import (
     MANDATORY_COLUMNS,
     OWNER_NAME,
@@ -77,9 +85,13 @@ class MandatoryValueValidator(BaseValidator):
             if not raw_row.get(mandatory_column):
                 missing_values.add(mandatory_column)
         if missing_values:
-            error_messages.append(_('Mandatory columns {column_names}').format(
-                column_names=', '.join(mandatory_columns)
-            ))
+            error_messages.append(
+                RequiredValueMissingError(
+                    message=_('Mandatory columns are {column_names}').format(
+                        column_names=', '.join(mandatory_columns)
+                    )
+                )
+            )
         return error_messages
 
 
@@ -90,21 +102,19 @@ class CallValidator(BaseValidator):
         call_value, call_number = cls._get_latest_call_value_and_number(raw_row)
         if not call_value:
             error_messages.append(
-                _('Missing call details')
+                CallValuesMissingError()
             )
         else:
             try:
                 call_date = datetime.datetime.strptime(call_value, '%d-%m-%y')
             except ValueError:
                 error_messages.append(
-                    _('Could not parse latest call date')
+                    CallValueInvalidError()
                 )
             else:
                 last_month_first_day, last_month_last_day = get_previous_month_date_range(datetime.date.today())
                 if call_date.replace(day=1) != last_month_first_day:
-                    error_messages.append(
-                        _('Latest call not in last month')
-                    )
+                    error_messages.append(CallNotInLastMonthError())
 
         return fields_to_update, error_messages
 
@@ -117,18 +127,14 @@ class UploadLimitValidator(BaseValidator):
         call_value, call_number = cls._get_latest_call_value_and_number(raw_row)
         if owner_name and call_number:
             if cls._upload_limit_reached(import_context, owner_name, call_number):
-                error_messages.append(
-                    _('Limit reached for {owner_name} for call {call_number}').format(
-                        owner_name=owner_name,
-                        call_number=call_number
-                    )
-                )
+                error_messages.append(UploadLimitReachedError())
             else:
                 cls._update_counter(import_context, owner_name, call_number)
         else:
-            error_messages.append(
-                _('Missing owner or call details')
-            )
+            if not owner_name:
+                error_messages.append(OwnerNameMissingError())
+            if not call_number:
+                error_messages.append(CallValuesMissingError())
         return fields_to_update, error_messages
 
     @classmethod

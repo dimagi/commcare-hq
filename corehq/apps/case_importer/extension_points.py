@@ -18,11 +18,12 @@ def custom_case_upload_file_operations(domain, case_upload) -> List[str]:
 def custom_case_import_operations(domain, row_num, raw_row, fields_to_update, import_context):
     """
     Perform additional operations on a row and return final updates to be done.
-    To skip the row return error messages. These messages are then shown to the user.
+    To skip the row return errors inherited from CaseRowError.
+    These messages are then shown to the user.
 
     Parameters:
         Domain name, row number, raw excel row, fields_to_updated
     Returns:
-        Final fields to update, error messages
+        Final fields to update, errors
     """
     return fields_to_update, []

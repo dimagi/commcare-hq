@@ -62,10 +62,14 @@ class TestMandatoryValueValidator(SimpleTestCase, TestFileMixin):
             for row_num, raw_row in enumerate(spreadsheet.iter_row_dicts()):
                 if row_num == 0:
                     continue  # skip first row (header row)
-                fields_to_update, error_messages = MandatoryValueValidator.run(row_num, raw_row, raw_row)
+                fields_to_update, errors = MandatoryValueValidator.run(row_num, raw_row, raw_row)
                 self.assertEqual(
-                    error_messages[0],
-                    f"Mandatory columns {', '.join(mandatory_values)}"
+                    [error.title for error in errors],
+                    ['Missing required value(s)']
+                )
+                self.assertEqual(
+                    [error.message for error in errors],
+                    [f"Mandatory columns are {', '.join(mandatory_values)}"]
                 )
 
     def test_validate_mandatory_values(self):
@@ -86,11 +90,11 @@ class TestCallValidator(SimpleTestCase, TestFileMixin):
         raw_row.pop('Call1')
         row_num = 1
 
-        fields_to_update, error_messages = CallValidator.run(row_num, raw_row, raw_row)
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, raw_row)
 
         self.assertEqual(
-            error_messages,
-            ['Missing call details']
+            [error.title for error in errors],
+            ['Missing call values']
         )
 
     def test_invalid_call_value(self):
@@ -98,21 +102,21 @@ class TestCallValidator(SimpleTestCase, TestFileMixin):
         raw_row['Call1'] = 'abc'
         row_num = 1
 
-        fields_to_update, error_messages = CallValidator.run(row_num, raw_row, raw_row)
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, raw_row)
 
         self.assertEqual(
-            error_messages,
-            ['Could not parse latest call date']
+            [error.title for error in errors],
+            ['Latest call value not a date']
         )
 
     def test_call_value_not_in_last_month(self):
         raw_row = _sample_valid_rch_upload()
         row_num = 1
 
-        fields_to_update, error_messages = CallValidator.run(row_num, raw_row, raw_row)
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, raw_row)
 
-        self.assertEqual(
-            error_messages,
+        self.assertListEqual(
+            [error.title for error in errors],
             ['Latest call not in last month']
         )
 
@@ -126,13 +130,13 @@ class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
         row_num = 1
         import_context = {}
 
-        fields_to_update, error_messages = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context)
+        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context)
 
         self.assertEqual(
             import_context['counter']['watson']['Call1'],
             1
         )
-        self.assertEqual(len(error_messages), 0)
+        self.assertEqual(len(errors), 0)
 
     def test_upload_limit(self):
         raw_row = _sample_valid_rch_upload()
@@ -140,23 +144,24 @@ class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
         # initialize context to replicate limit reached
         import_context = {'counter': {raw_row[OWNER_NAME]: {'Call1': ROW_LIMIT_PER_OWNER_PER_CALL_TYPE}}}
 
-        fields_to_update, error_messages = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context)
+        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context)
 
         self.assertEqual(
-            error_messages,
-            ['Limit reached for watson for call 1']
+            [error.title for error in errors],
+            ['Upload limit reached for owner and call type']
         )
 
     def test_missing_call_column(self):
         raw_row = _sample_valid_rch_upload()
         raw_row.pop('Call1')
+        raw_row.pop(OWNER_NAME)
         row_num = 1
 
-        fields_to_update, error_messages = UploadLimitValidator.run(row_num, raw_row, raw_row, {})
+        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, raw_row, {})
 
         self.assertEqual(
-            error_messages,
-            ['Missing owner or call details']
+            [error.title for error in errors],
+            ['Missing owner name', 'Missing call values']
         )
 
 
