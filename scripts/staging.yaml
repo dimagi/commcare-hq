@@ -83,4 +83,5 @@ branches:
     - cs/SC-1551-hourly-scheduled-reports+mk/support-multibar-reports # Charl Jan 12
     - cs/SC-1551-hourly-scheduled-reports # Charl Jan 12
     - mk/support-multibar-reports # MK Dec 14
+    - ml/unreachable-mobile-privileges # Minha Jan 12
 submodules: { }
