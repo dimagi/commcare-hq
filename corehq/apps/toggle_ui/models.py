@@ -75,10 +75,6 @@ def generate_toggle_id(slug):
     # and to make looking up in futon easier
     return '{prefix}-{slug}'.format(prefix=TOGGLE_ID_PREFIX, slug=slug)
 
-# This is in preparation for moving the Toggle model here and will be removed in
-# https://github.com/dimagi/commcare-hq/pull/30920
-from toggle.models import Toggle    # noqa
-
 
 class ToggleAuditManager(models.Manager):
     def log_toggle_changes(self, slug, username, current_items, previous_items, randomness):
