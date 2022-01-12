@@ -86,4 +86,5 @@ branches:
     - mk/support-multibar-reports # MK Dec 14
     - ml/unreachable-mobile-privileges # Minha Jan 12
     - dependabot/pip/requirements/lxml-4.7.1 # Graham Jan 12
+    - mjr/add-eslint  # Matt Jan 12
 submodules: { }
