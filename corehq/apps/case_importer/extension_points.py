@@ -25,6 +25,6 @@ def custom_case_import_operations(domain, row_num, raw_row, fields_to_update, im
     Parameters:
         Domain name, row number, raw excel row, fields_to_updated
     Returns:
-        Final fields to update, errors
+        Tuple: dict of fields to update, list of errors
     """
     return fields_to_update, []
