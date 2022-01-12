@@ -13,7 +13,7 @@ hqDefine("linked_domain/js/domain_links", [
     _,
     ko,
     alertUser,
-    multiselect_utils
+    multiselectUtils
 ) {
     var _private = {};
     _private.RMI = function () {};
@@ -91,11 +91,9 @@ hqDefine("linked_domain/js/domain_links", [
         self.hasFullAccess = data.has_full_access;
         self.domainLinks = ko.observableArray(_.map(data.linked_domains, DomainLink));
         self.domainLinksByNames = ko.computed(function () {
-            tmp = {};
-            for (link of self.domainLinks()) {
-                tmp[link.downstreamDomain()] = link;
-            }
-            return tmp;
+            var linkByNameMap = {};
+            self.domainLinks().forEach(link => linkByNameMap[link.downstreamDomain()] = link);
+            return linkByNameMap;
         });
 
         self.showRemoteReports = function () {
@@ -247,21 +245,34 @@ hqDefine("linked_domain/js/domain_links", [
         self.modelsToPush = ko.observableArray();
         self.buildAppsOnPush = ko.observable(false);
         self.pushInProgress = ko.observable(false);
+        self.shouldShowSelectedERMDomain = ko.observable(false);
+        self.shouldShowSelectedMRMDomain = ko.observable(false);
         self.enablePushButton = ko.computed(function () {
             return self.domainsToPush().length && self.modelsToPush().length && !self.pushInProgress();
         });
-        self.shouldShowSelectedERMDomain = ko.observable(false);
-        self.shouldShowSelectedMRMDomain = ko.observable(false);
+        self.containsLiteAndFullLinks = ko.computed(function () {
+            if (!self.parent.hasFullAccess) {
+                // should not contain both
+                return false;
+            }
+            const accessSet = new Set();
+            for (const link of Object.values(self.parent.domainLinksByNames())) {
+                // if any link is limited, contains both
+                accessSet.add(link.hasFullAccess);
+                if (accessSet.size >= 2) {
+                    return true;
+                }
+            }
+            return false;
+        });
 
         self.domainsToPushSubscription = self.domainsToPush.subscribe(function (newValue) {
             // receives updates every time a domain is selected/unselected from the multiselect
-            if (newValue.length > 1) {
-                for (var option of $('#domain-multiselect')[0].options) {
-                    var tempLink = self.parent.domainLinksByNames()[option.value];
-                    if (option.selected && tempLink.hasFullAccess) {
-                        self.shouldShowSelectedERMDomain(true);
-                    }
-                }
+
+            // handles the Add All edge case if both lite and full access links exist
+            if (newValue.length > 1 && self.containsLiteAndFullLinks()) {
+                // the non-enterprise domains would have already been hidden in the callback, so just show the info text
+                self.shouldShowSelectedERMDomain(true);
                 // no need to rebuild multiselect
                 return;
             }
@@ -269,14 +280,14 @@ hqDefine("linked_domain/js/domain_links", [
             if (newValue.length > 0) {
                 var selectedDomainLink = self.parent.domainLinksByNames()[newValue[0]];
                 var pushedNonEnterpriseLink = !selectedDomainLink.hasFullAccess;
-                for (var option of $('#domain-multiselect')[0].options) {
+                for (const option of $('#domain-multiselect')[0].options) {
                     if (!newValue.includes(option.value)) {
                         if (pushedNonEnterpriseLink) {
                             option.disabled = true;
                             self.shouldShowSelectedMRMDomain(true);
                         } else {
                             // disable if link does not have full access
-                            var tempLink = self.parent.domainLinksByNames()[option.value];
+                            const tempLink = self.parent.domainLinksByNames()[option.value];
                             if (!tempLink.hasFullAccess) {
                                 option.disabled = !tempLink.hasFullAccess;
                                 self.shouldShowSelectedERMDomain(true);
@@ -285,14 +296,15 @@ hqDefine("linked_domain/js/domain_links", [
                     }
                 }
             } else {
-                for (var option of $('#domain-multiselect')[0].options) {
+                // nothing is selected, enable all options, hide info text
+                for (const option of $('#domain-multiselect')[0].options) {
                     option.disabled = false;
-                    self.shouldShowSelectedERMDomain(false);
-                    self.shouldShowSelectedMRMDomain(false);
                 }
+                self.shouldShowSelectedERMDomain(false);
+                self.shouldShowSelectedMRMDomain(false);
             }
 
-            multiselect_utils.rebuildMultiselect('domain-multiselect', self.domainMultiselect.properties);
+            multiselectUtils.rebuildMultiselect('domain-multiselect', self.domainMultiselect.properties);
         });
 
         self.localDownstreamDomains = ko.computed(function () {
@@ -320,9 +332,9 @@ hqDefine("linked_domain/js/domain_links", [
                         }
                     }
                     if (requiresRebuild) {
-                        multiselect_utils.rebuildMultiselect('domain-multiselect', self.domainMultiselect.properties);
+                        multiselectUtils.rebuildMultiselect('domain-multiselect', self.domainMultiselect.properties);
                     }
-                }
+                },
             },
             options: self.localDownstreamDomains,
         };
