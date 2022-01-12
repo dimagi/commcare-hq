@@ -11,7 +11,7 @@ hqDefine("reports/js/report_config_models", [
     _,
     googleAnalytics,
     standardHQReportModule,
-    dateRangePicker  // jshint ignore:line
+    dateRangePicker  // eslint-disable-line no-unused-vars
 ) {
     var reportConfig = function (data) {
         var self = ko.mapping.fromJS(data, {
