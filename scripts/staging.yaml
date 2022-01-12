@@ -71,7 +71,6 @@ branches:
     - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
     - jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
-    - mk/support-multibar-reports # MK Dec 14
     - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
     - sk/enterprise-domain-user-filter # Simon Dec 17
     - sr/datums  # sravan Dec 21
@@ -81,5 +80,7 @@ branches:
     - ml/switch-to-recaptcha # Minha Jan 10
     - mk/samveg/custom-case-upload # MK Jan 11
     - do/fix-date-widget-bug # Dominic Jan 11
+    - cs/SC-1551-hourly-scheduled-reports+mk/support-multibar-reports # Charl Jan 12
     - cs/SC-1551-hourly-scheduled-reports # Charl Jan 12
+    - mk/support-multibar-reports # MK Dec 14
 submodules: { }
