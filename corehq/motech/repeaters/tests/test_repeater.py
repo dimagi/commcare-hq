@@ -438,12 +438,11 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
         )
-        # We don't have ShorFormRepeater yet
-        cls.repeater.save(sync_to_sql=False)
+        cls.repeater.save()
 
     @classmethod
     def tearDownClass(cls):
-        cls.repeater.delete(sync_to_sql=False)
+        cls.repeater.delete()
         cls.connx.delete()
         super().tearDownClass()
 
@@ -816,7 +815,7 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
             domain=self.domain,
             connection_settings_id=self.connx.id,
         )
-        self.repeater.save(sync_to_sql=False)
+        self.repeater.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -892,7 +891,7 @@ class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
             domain=self.domain,
             connection_settings_id=self.connx.id,
         )
-        self.repeater.save(sync_to_sql=False)
+        self.repeater.save()
         self.location_type = LocationType.objects.create(
             domain=self.domain,
             name="city",

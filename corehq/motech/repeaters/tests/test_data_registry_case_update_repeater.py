@@ -44,8 +44,7 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
             connection_settings_id=cls.connx.id,
             white_listed_case_types=[IntentCaseBuilder.CASE_TYPE]
         )
-        # We don't have SQL class for DataRegistryCaseUpdateRepeater, so not syncing it to SQL
-        cls.repeater.save(sync_to_sql=False)
+        cls.repeater.save()
 
         cls.user = create_user("admin", "123")
         cls.registry_slug = create_registry_for_test(
