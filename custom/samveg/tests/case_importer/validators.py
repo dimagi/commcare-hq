@@ -39,7 +39,7 @@ class TestRequiredColumnsValidator(SimpleTestCase, TestFileMixin):
         with get_spreadsheet(self.get_path('missing_columns_rch_case_upload', 'xlsx')) as spreadsheet:
             errors = RequiredColumnsValidator.run(spreadsheet)
         # extract missing columns from message
-        missing_columns = set(errors[0].split('Missing columns ')[1].split(', '))
+        missing_columns = set(errors[0].removeprefix('Missing columns ').split(', '))
         expected_missing_columns = set(REQUIRED_COLUMNS)
         self.assertEqual(
             missing_columns,
@@ -49,7 +49,7 @@ class TestRequiredColumnsValidator(SimpleTestCase, TestFileMixin):
         with get_spreadsheet(self.get_path('missing_columns_sncu_case_upload', 'xlsx')) as spreadsheet:
             errors = RequiredColumnsValidator.run(spreadsheet)
         # extract missing columns from message
-        missing_columns = set(errors[0].split('Missing columns ')[1].split(', '))
+        missing_columns = set(errors[0].removeprefix('Missing columns ').split(', '))
         expected_missing_columns = set(REQUIRED_COLUMNS)
         expected_missing_columns.add(NEWBORN_WEIGHT_COLUMN)
         self.assertEqual(
