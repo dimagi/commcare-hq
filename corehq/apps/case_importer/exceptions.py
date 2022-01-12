@@ -45,7 +45,6 @@ class InvalidCustomFieldNameException(ImporterError):
 
 class CustomImporterError(ImporterError):
     """Raised for errors returned by extensions for file being imported"""
-    pass
 
 
 class CaseRowErrorList(Exception):
