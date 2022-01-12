@@ -245,9 +245,10 @@ class OptionValue(property):
 
     NOT_SET = object()
 
-    def __init__(self, default=NOT_SET, choices=None):
+    def __init__(self, default=NOT_SET, choices=None, obj_schema=None):
         self.default = default
         self.choices = choices
+        self.schema = obj_schema
 
     def __set_name__(self, owner, name):
         self.name = name
@@ -256,6 +257,8 @@ class OptionValue(property):
         if obj is None:
             return self
         if self.name in obj.options:
+            if self.schema:
+                return self.schema.wrap(obj.options[self.name])
             return obj.options[self.name]
         if self.default is self.NOT_SET:
             raise AttributeError(self.name)
@@ -266,6 +269,10 @@ class OptionValue(property):
     def __set__(self, obj, value):
         if self.choices and value not in self.choices:
             raise ValueError(f"{value!r} not in {self.choices!r}")
+        if self.schema and not isinstance(value, self.schema):
+            raise TypeError(
+                f"Expected {self.name} to be of type {self.schema.__name__} but got {type(value).__name__}"
+            )
         obj.options[self.name] = value
 
 
