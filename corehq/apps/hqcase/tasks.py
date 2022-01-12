@@ -3,6 +3,7 @@ from collections import defaultdict
 from copy import copy
 
 from celery.task import task
+from toposort import toposort_flatten
 
 from casexml.apps.case.mock.case_block import IndexAttrs
 from casexml.apps.phone.const import LIVEQUERY
@@ -63,7 +64,7 @@ def explode_cases(domain, user_id, factor, task=None):
             del queue[:]
         return progress
 
-    for old_case_id in topological_sort_case_blocks(cases):
+    for old_case_id in reversed(topological_sort_case_blocks(cases)):
         for explosion in range(factor - 1):
             new_case = copy(cases[old_case_id])
             new_case_id = new_case_ids[old_case_id][explosion]
@@ -97,44 +98,15 @@ def explode_cases(domain, user_id, factor, task=None):
 
 
 def topological_sort_case_blocks(cases):
-    """returns all cases in topological order
-
-    Using Kahn's algorithm from here:
-    https://en.wikipedia.org/wiki/Topological_sorting
-    L = sorted_ids
-    roots = S
-    root_id = n
-    case_id = m
-
+    """returns a list of case IDs in topological order according to their
+    case indices
     """
-    graph = {}
-    inverse_graph = defaultdict(list)
-    roots = []
-
-    # compile graph
+    tree = defaultdict(set)
     for case_id, case in cases.items():
-        graph[case.case_id] = indices = []
+        tree[case_id]  # prime for case
         for index in case.index.values():
-            indices.append(index.case_id)
-            inverse_graph[index.case_id].append(case.case_id)
-        if not indices:
-            roots.append(case.case_id)
-
-    # sort graph
-    sorted_ids = []
-    while roots:
-        root_id = roots.pop()
-        sorted_ids.append(root_id)
-        for case_id in sorted(inverse_graph[root_id]):
-            graph[case_id].remove(root_id)
-            if not graph[case_id]:
-                roots.append(case_id)
-
-    for indices in graph.values():
-        if indices:
-            raise ValueError("graph has cycles")
-
-    return sorted_ids
+            tree[index.case_id].add(case_id)
+    return toposort_flatten(tree)
 
 
 @task

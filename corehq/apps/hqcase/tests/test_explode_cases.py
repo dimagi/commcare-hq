@@ -197,7 +197,7 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
     def test_case_graph(self):
         cases = self.device.restore().cases
         self.assertEqual(
-            ['host', 'parent_host', 'extension', 'child'],
+            ['child', 'extension', 'parent_host', 'host'],
             topological_sort_case_blocks(cases)
         )
 
