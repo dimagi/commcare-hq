@@ -6,7 +6,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.reports.extension_points import customize_user_query
 from corehq.apps.reports.filters.case_list import CaseListFilterUtils
-from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils
+from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils, EnterpriseUsersUtils
 from corehq.apps.reports.util import SimplifiedUserInfo
 
 
@@ -112,7 +112,7 @@ class EmwfOptionsController(object):
         else:
             user_query = self.active_user_es_query(query)
         users = (user_query
-                 .fields(SimplifiedUserInfo.ES_FIELDS)
+                 .fields(SimplifiedUserInfo.ES_FIELDS + ['domain'])
                  .start(start)
                  .size(size)
                  .sort("username.exact"))
@@ -291,6 +291,10 @@ class EnterpriseUserOptionsController(EmwfOptionsController):
         # this will include all domains in the enterprise only if the current domain
         # is the 'source'
         self.enterprise_domains = list(set(EnterprisePermissions.get_domains(domain)) | {domain})
+
+    @property
+    def utils(self):
+        return EnterpriseUsersUtils(self.domain)
 
     @property
     def data_sources(self):

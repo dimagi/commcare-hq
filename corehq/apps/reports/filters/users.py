@@ -466,6 +466,23 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         }
 
 
+class EnterpriseUsersUtils(EmwfUtils):
+
+    def user_tuple(self, user):
+        user_dict = util._report_user_dict(user)
+        uid = "u__%s" % user_dict['user_id']
+        is_active = False
+        report_username = user_dict['username_in_report']
+        if user['doc_type'] == 'WebUser':
+            name = f"{report_username} [Web User]"
+        elif user_dict['is_active']:
+            is_active = True
+            name = f"{report_username} [Active Mobile Worker in '{user['domain']}']"
+        else:
+            name = f"{report_username} [Deactivated Mobile Worker in '{user['domain']}']"
+        return uid, name, is_active
+
+
 class EnterpriseUserFilter(ExpandedMobileWorkerFilter):
     """User filter for use with enterprise reports. The filter will
     give access to all users across the enterprise provided the current
@@ -480,6 +497,11 @@ class EnterpriseUserFilter(ExpandedMobileWorkerFilter):
             ('t__5', _("[Deactivated Mobile Workers]")),
             ('t__6', _("[Web Users]"))
         ]
+
+    @property
+    @memoized
+    def utils(self):
+        return EnterpriseUsersUtils(self.domain)
 
     @property
     def filter_context(self):

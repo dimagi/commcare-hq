@@ -88,13 +88,13 @@ class EnterpriseUserFilterTest(BaseEnterpriseUserFilterTest):
 
 class EnterpriseUserOptionsControllerTest(BaseEnterpriseUserFilterTest):
     def test_active_users_from_source_domain(self):
-        self._check_user_results('state', ['state_u', 'county_u'])
+        self._check_user_results('state', [('state_u', 'state'), ('county_u', 'county')])
 
     def test_active_users_from_enterprise_controlled_domain(self):
-        self._check_user_results('county', ['county_u'])
+        self._check_user_results('county', [('county_u', 'county')])
 
     def test_active_users_from_other_domain(self):
-        self._check_user_results('staging', ['staging_u'])
+        self._check_user_results('staging', [('staging_u', 'staging')])
 
     def test_active_users_from_source_domain_location_restricted(self):
         controller = self.get_controller('state', can_access_all_locations=False)
@@ -113,7 +113,7 @@ class EnterpriseUserOptionsControllerTest(BaseEnterpriseUserFilterTest):
         options = [
             option['text'] for option in controller.get_options()[1]
         ]
-        self.assertCountEqual(options, [f'{u} [Active Mobile Worker]' for u in expected_usernames])
+        self.assertCountEqual(options, [f"{u} [Active Mobile Worker in '{d}']" for u, d in expected_usernames])
 
 
 def _make_request(domain, couch_user, can_access_all_locations=False):
