@@ -58,7 +58,7 @@ class TestRequiredColumnsValidator(SimpleTestCase, TestFileMixin):
         )
 
 
-class TestRequiedValueValidator(SimpleTestCase, TestFileMixin):
+class TestRequiredValueValidator(SimpleTestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
