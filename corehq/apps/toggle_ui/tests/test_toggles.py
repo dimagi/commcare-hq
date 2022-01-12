@@ -16,14 +16,14 @@ from corehq.toggles import (
     DynamicallyPredictablyRandomToggle,
     NAMESPACE_EMAIL_DOMAIN,
 )
-from corehq.apps.toggle_ui.shortcuts import (
+from ..models import generate_toggle_id, Toggle
+from ..shortcuts import (
     namespaced_item,
     find_users_with_toggle_enabled,
     find_domains_with_toggle_enabled,
     toggle_enabled,
     set_toggle,
 )
-from corehq.apps.toggle_ui.models import generate_toggle_id, Toggle
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 

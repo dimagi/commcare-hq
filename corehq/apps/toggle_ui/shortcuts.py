@@ -1,7 +1,7 @@
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 
-from corehq.apps.toggle_ui.models import Toggle
+from .models import Toggle
 
 
 def toggle_enabled(slug, item, namespace=None):
