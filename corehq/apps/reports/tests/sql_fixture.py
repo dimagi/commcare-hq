@@ -33,36 +33,24 @@ def load_data():
     metadata.create_all()
 
     user_data = [
-        {"user": "user1", "date": date(2013, 1, 1),
-            "indicator_a": 1, "indicator_b": 0, "indicator_c": 1, "indicator_d": 1},
-        {"user": "user1", "date": date(2013, 2, 1),
-            "indicator_a": 0, "indicator_b": 1, "indicator_c": 1, "indicator_d": 1},
-        {"user": "user2", "date": date(2013, 1, 1),
-            "indicator_a": 0, "indicator_b": 1, "indicator_c": 1, "indicator_d": 2},
-        {"user": "user2", "date": date(2013, 2, 1),
-            "indicator_a": 1, "indicator_b": 0, "indicator_c": 1, "indicator_d": 2},
+        {"user": "user1", "date": date(2013, 1, 1), "indicator_a": 1, "indicator_b": 0, "indicator_c": 1, "indicator_d": 1},  # noqa: E501
+        {"user": "user1", "date": date(2013, 2, 1), "indicator_a": 0, "indicator_b": 1, "indicator_c": 1, "indicator_d": 1},  # noqa: E501
+        {"user": "user2", "date": date(2013, 1, 1), "indicator_a": 0, "indicator_b": 1, "indicator_c": 1, "indicator_d": 2},  # noqa: E501
+        {"user": "user2", "date": date(2013, 2, 1), "indicator_a": 1, "indicator_b": 0, "indicator_c": 1, "indicator_d": 2},  # noqa: E501
     ]
 
     region_data = [
-        {"region": "region1", "sub_region": "region1_a", "date": date(2013, 1, 1),
-            "indicator_a": 1, "indicator_b": 0},
-        {"region": "region1", "sub_region": "region1_a", "date": date(2013, 2, 1),
-            "indicator_a": 1, "indicator_b": 1},
+        {"region": "region1", "sub_region": "region1_a", "date": date(2013, 1, 1), "indicator_a": 1, "indicator_b": 0},  # noqa: E501
+        {"region": "region1", "sub_region": "region1_a", "date": date(2013, 2, 1), "indicator_a": 1, "indicator_b": 1},  # noqa: E501
 
-        {"region": "region1", "sub_region": "region1_b", "date": date(2013, 1, 1),
-            "indicator_a": 0, "indicator_b": 1},
-        {"region": "region1", "sub_region": "region1_b", "date": date(2013, 2, 1),
-            "indicator_a": 0, "indicator_b": 0},
+        {"region": "region1", "sub_region": "region1_b", "date": date(2013, 1, 1), "indicator_a": 0, "indicator_b": 1},  # noqa: E501
+        {"region": "region1", "sub_region": "region1_b", "date": date(2013, 2, 1), "indicator_a": 0, "indicator_b": 0},  # noqa: E501
 
-        {"region": "region2", "sub_region": "region2_a", "date": date(2013, 1, 1),
-            "indicator_a": 0, "indicator_b": 1},
-        {"region": "region2", "sub_region": "region2_a", "date": date(2013, 2, 1),
-            "indicator_a": 1, "indicator_b": 1},
+        {"region": "region2", "sub_region": "region2_a", "date": date(2013, 1, 1), "indicator_a": 0, "indicator_b": 1},  # noqa: E501
+        {"region": "region2", "sub_region": "region2_a", "date": date(2013, 2, 1), "indicator_a": 1, "indicator_b": 1},  # noqa: E501
 
-        {"region": "region2", "sub_region": "region2_b", "date": date(2013, 1, 1),
-            "indicator_a": 1, "indicator_b": 0},
-        {"region": "region2", "sub_region": "region2_b", "date": date(2013, 2, 1),
-            "indicator_a": 0, "indicator_b": 0},
+        {"region": "region2", "sub_region": "region2_b", "date": date(2013, 1, 1), "indicator_a": 1, "indicator_b": 0},  # noqa: E501
+        {"region": "region2", "sub_region": "region2_b", "date": date(2013, 2, 1), "indicator_a": 0, "indicator_b": 0},  # noqa: E501
     ]
 
     connection = engine.connect()
