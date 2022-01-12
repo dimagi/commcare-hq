@@ -4,19 +4,19 @@ from corehq.apps.case_importer.extension_points import (
 )
 from custom.samveg.case_importer.validators import (
     CallValidator,
-    MandatoryColumnsValidator,
-    MandatoryValueValidator,
+    RequiredColumnsValidator,
+    RequiredValueValidator,
     UploadLimitValidator,
 )
 from custom.samveg.const import SAMVEG_DOMAINS
 
 validators = [
-    MandatoryColumnsValidator,
+    RequiredColumnsValidator,
 ]
 
 
 row_level_operations = [
-    MandatoryValueValidator,
+    RequiredValueValidator,
     CallValidator,
     UploadLimitValidator,
 ]

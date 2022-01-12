@@ -14,13 +14,13 @@ from custom.samveg.case_importer.exceptions import (
     UploadLimitReachedError,
 )
 from custom.samveg.const import (
-    MANDATORY_COLUMNS,
     OWNER_NAME,
     RCH_BENEFICIARY_IDENTIFIER,
-    RCH_MANDATORY_COLUMNS,
+    RCH_REQUIRED_COLUMNS,
+    REQUIRED_COLUMNS,
     ROW_LIMIT_PER_OWNER_PER_CALL_TYPE,
     SNCU_BENEFICIARY_IDENTIFIER,
-    SNCU_MANDATORY_COLUMNS,
+    SNCU_REQUIRED_COLUMNS,
 )
 
 
@@ -42,23 +42,23 @@ class BaseValidator:
         return latest_call_value, latest_call_number
 
 
-class MandatoryColumnsValidator(BaseValidator):
+class RequiredColumnsValidator(BaseValidator):
     @classmethod
     def run(cls, spreadsheet):
         errors = []
-        errors.extend(cls._validate_mandatory_columns(spreadsheet))
+        errors.extend(cls._validate_required_columns(spreadsheet))
         return errors
 
     @classmethod
-    def _validate_mandatory_columns(cls, spreadsheet):
+    def _validate_required_columns(cls, spreadsheet):
         columns = spreadsheet.get_header_columns()
         error_messages = []
         try:
-            mandatory_columns = get_mandatory_columns(columns)
+            required_columns = get_required_columns(columns)
         except UnexpectedFileError:
             return [_('Unexpected sheet uploaded')]
 
-        missing_columns = set(mandatory_columns) - set(columns)
+        missing_columns = set(required_columns) - set(columns)
         if missing_columns:
             error_messages.append(_('Missing columns {column_names}').format(
                 column_names=", ".join(missing_columns)
@@ -66,29 +66,29 @@ class MandatoryColumnsValidator(BaseValidator):
         return error_messages
 
 
-class MandatoryValueValidator(BaseValidator):
+class RequiredValueValidator(BaseValidator):
     @classmethod
     def run(cls, row_num, raw_row, fields_to_update, **kwargs):
         error_messages = []
-        error_messages.extend(cls._validate_mandatory_columns(row_num, raw_row))
+        error_messages.extend(cls._validate_required_columns(row_num, raw_row))
         return fields_to_update, error_messages
 
     @classmethod
-    def _validate_mandatory_columns(cls, row_num, raw_row):
+    def _validate_required_columns(cls, row_num, raw_row):
         error_messages = []
         missing_values = set()
 
         columns = set(raw_row.keys())
-        mandatory_columns = get_mandatory_columns(columns)
+        required_columns = get_required_columns(columns)
 
-        for mandatory_column in mandatory_columns:
-            if not raw_row.get(mandatory_column):
-                missing_values.add(mandatory_column)
+        for required_column in required_columns:
+            if not raw_row.get(required_column):
+                missing_values.add(required_column)
         if missing_values:
             error_messages.append(
                 RequiredValueMissingError(
-                    message=_('Mandatory columns are {column_names}').format(
-                        column_names=', '.join(mandatory_columns)
+                    message=_('Required columns are {column_names}').format(
+                        column_names=', '.join(required_columns)
                     )
                 )
             )
@@ -152,11 +152,11 @@ class UploadLimitValidator(BaseValidator):
         return import_context['counter']
 
 
-def get_mandatory_columns(columns):
+def get_required_columns(columns):
     if RCH_BENEFICIARY_IDENTIFIER in columns:
-        sheet_specific_columns = RCH_MANDATORY_COLUMNS
+        sheet_specific_columns = RCH_REQUIRED_COLUMNS
     elif SNCU_BENEFICIARY_IDENTIFIER in columns:
-        sheet_specific_columns = SNCU_MANDATORY_COLUMNS
+        sheet_specific_columns = SNCU_REQUIRED_COLUMNS
     else:
         raise UnexpectedFileError
-    return MANDATORY_COLUMNS + sheet_specific_columns
+    return REQUIRED_COLUMNS + sheet_specific_columns
