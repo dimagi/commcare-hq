@@ -264,7 +264,7 @@ class TestStaleDataInESSQL(TestCase):
                     CaseDocumentStore(case.domain, case.type).get_document(case.case_id)
                 )
             else:
-                es_case = transform_case_for_elasticsearch(case)
+                es_case = transform_case_for_elasticsearch(case.to_json())
             send_to_elasticsearch('cases', es_case)
 
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
