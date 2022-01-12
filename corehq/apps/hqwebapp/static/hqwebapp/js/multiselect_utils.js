@@ -24,7 +24,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         });
     };
 
-    var _renderAction = function (buttonId, buttonClass, buttonIcon, text, disabled=false) {
+    var _renderAction = function (buttonId, buttonClass, buttonIcon, text, disabled = false) {
         var action = _.template(
             '<button class="btn <%-actionButtonClass %> btn-xs pull-right" id="<%- actionButtonId %>" <% if (actionDisabled) { %> disabled <% } %>>' +
                 '<i class="<%- actionButtonIcon %>"></i> <%- actionButtonText %>' +
