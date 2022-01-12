@@ -293,11 +293,6 @@ class EnterpriseUserOptionsController(EmwfOptionsController):
         self.enterprise_domains = list(set(EnterprisePermissions.get_domains(domain)) | {domain})
 
     @property
-    @memoized
-    def utils(self):
-        return UsersUtils(self.domain)
-
-    @property
     def data_sources(self):
         return [
             (self.get_all_users_size, self.get_all_users),
