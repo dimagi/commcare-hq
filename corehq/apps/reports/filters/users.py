@@ -481,6 +481,13 @@ class EnterpriseUserFilter(ExpandedMobileWorkerFilter):
             ('t__6', _("[Web Users]"))
         ]
 
+    @property
+    def filter_context(self):
+        context = super().filter_context
+        # this filter doesn't support locations
+        context.pop('search_help_inline', None)
+        return context
+
     @classmethod
     def _base_user_es_query(cls, domain, request_user):
         if not request_user.has_permission(domain, 'access_all_locations'):
