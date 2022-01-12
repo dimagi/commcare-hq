@@ -14,6 +14,7 @@ from custom.samveg.case_importer.exceptions import (
     UploadLimitReachedError,
 )
 from custom.samveg.const import (
+    CALL_VALUE_FORMAT,
     OWNER_NAME,
     RCH_BENEFICIARY_IDENTIFIER,
     RCH_REQUIRED_COLUMNS,
@@ -106,7 +107,7 @@ class CallValidator(BaseValidator):
             )
         else:
             try:
-                call_date = datetime.datetime.strptime(call_value, '%d-%m-%y')
+                call_date = datetime.datetime.strptime(call_value, CALL_VALUE_FORMAT).date()
             except ValueError:
                 error_messages.append(
                     CallValueInvalidError()

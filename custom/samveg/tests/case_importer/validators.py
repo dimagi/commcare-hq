@@ -1,6 +1,9 @@
+import datetime
 import os
 
 from django.test import SimpleTestCase
+
+from dateutil.relativedelta import relativedelta
 
 from corehq.apps.case_importer.util import get_spreadsheet
 from corehq.util.test_utils import TestFileMixin
@@ -10,7 +13,9 @@ from custom.samveg.case_importer.validators import (
     RequiredValueValidator,
     UploadLimitValidator,
 )
+from custom.samveg.commcare_extensions import samveg_case_upload_row_operations
 from custom.samveg.const import (
+    CALL_VALUE_FORMAT,
     NEWBORN_WEIGHT_COLUMN,
     OWNER_NAME,
     REQUIRED_COLUMNS,
@@ -163,6 +168,15 @@ class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
             [error.title for error in errors],
             ['Missing owner name', 'Missing call values']
         )
+
+
+class TestSuccessfulUpload(SimpleTestCase):
+    def test_successful_upload(self):
+        raw_row = _sample_valid_rch_upload()
+        raw_row['Call1'] = (datetime.date.today() - relativedelta(months=1)).strftime(CALL_VALUE_FORMAT)
+        row_num = 1
+        fields_to_update, all_errors = samveg_case_upload_row_operations(None, row_num, raw_row, raw_row, {})
+        self.assertListEqual(all_errors, [])
 
 
 def _sample_valid_rch_upload():
