@@ -39,7 +39,7 @@ class TestEmwfPagination(SimpleTestCase):
             return len(matching_objects(query))
 
         def get_objects(query, start, size):
-            return matching_objects(query)[start:start+size]
+            return matching_objects(query)[start:start + size]
 
         return (get_size, get_objects)
 

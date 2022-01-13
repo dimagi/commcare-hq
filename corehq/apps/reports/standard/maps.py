@@ -36,7 +36,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         def _parse_geopoint(raw):
             try:
                 latlon = [float(k) for k in re.split(' *,? *', raw)[:2]]
-                return [latlon[1], latlon[0]] # geojson is lon, lat
+                return [latlon[1], latlon[0]]  # geojson is lon, lat
             except ValueError:
                 return None
 
@@ -109,7 +109,8 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
         DataSource = to_function(params['report'])
 
-        assert issubclass(DataSource, ReportDataSource), '[%s] does not implement the ReportDataSource API!' % params['report']
+        assert issubclass(DataSource, ReportDataSource), \
+            '[%s] does not implement the ReportDataSource API!' % params['report']
 
         return DataSource(config).get_data()
 

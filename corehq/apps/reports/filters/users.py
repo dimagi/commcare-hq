@@ -195,7 +195,7 @@ class EmwfUtils(object):
             raise Exception("Unexpcted id: {}".format(id_))
 
         if hasattr(owner, 'is_deleted'):
-            if (callable(owner.is_deleted) and owner.is_deleted()) or owner.is_deleted == True:
+            if (callable(owner.is_deleted) and owner.is_deleted()) or owner.is_deleted is True:
                 # is_deleted may be an attr or callable depending on owner type
                 ret = (ret[0], 'Deleted - ' + ret[1])
 
@@ -266,7 +266,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     @staticmethod
     def selected_location_ids(mobile_user_and_group_slugs):
-        return [l[3:] for l in mobile_user_and_group_slugs if l.startswith("l__")]
+        return [slug[3:] for slug in mobile_user_and_group_slugs if slug.startswith("l__")]
 
     @staticmethod
     def show_all_mobile_workers(mobile_user_and_group_slugs):
@@ -297,10 +297,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             return [{'id': url_id, 'text': text}
                     for url_id, text in self.get_default_selections()]
 
-        selected = (self.selected_static_options(selected_ids) +
-                    self._selected_user_entries(selected_ids) +
-                    self._selected_group_entries(selected_ids) +
-                    self._selected_location_entries(selected_ids))
+        selected = (self.selected_static_options(selected_ids)
+            + self._selected_user_entries(selected_ids)
+            + self._selected_group_entries(selected_ids)
+            + self._selected_location_entries(selected_ids))
         return [
             {'id': entry[0], 'text': entry[1]} if len(entry) == 2 else
             {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} for entry in selected

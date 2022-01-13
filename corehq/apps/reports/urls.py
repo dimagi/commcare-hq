@@ -168,7 +168,7 @@ for module in get_installed_custom_modules():
     module_name = module.__name__.split('.')[-1]
     try:
         custom_report_urls += [
-             url(r"^%s/" % module_name, include('{0}.urls'.format(module.__name__))),
+            url(r"^%s/" % module_name, include('{0}.urls'.format(module.__name__))),
         ]
     except ImproperlyConfigured:
         logging.info("Module %s does not provide urls" % module_name)

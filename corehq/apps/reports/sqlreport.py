@@ -17,7 +17,6 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
-from corehq.util.soft_assert import soft_assert
 
 
 class SqlReportException(Exception):
@@ -68,8 +67,8 @@ class DatabaseColumn(Column):
                 Instance of sqlagg column class. See sqlagg.columns.BaseColumn
         Kwargs:
             :param header_group=None:
-                An instance of corehq.apps.reports.datatables.DataTablesColumnGroup to which this column header will
-                be added.
+                An instance of corehq.apps.reports.datatables.DataTablesColumnGroup to which this column header
+                will be added.
             :param sortable:
                 Indicates if the column should be sortable. If true and no format_fn is provided then
                 the default datatables format function is used. Defaults to True.
@@ -225,9 +224,9 @@ class SqlData(ReportDataSource):
     @memoized
     def keys(self):
         """
-        The list of report keys (e.g. users) or None to just display all the data returned from the query. Each value
-        in this list should be a list of the same dimension as the 'group_by' list. If group_by is None then keys
-        must also be None.
+        The list of report keys (e.g. users) or None to just display all the data returned from the query.
+        Each value in this list should be a list of the same dimension as the 'group_by' list.
+        If group_by is None then keys must also be None.
 
         These allow you to specify which rows you expect in the output data.
         Its main use is to add rows for keys that don’t exist in the data.

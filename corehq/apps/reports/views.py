@@ -73,7 +73,6 @@ from corehq.apps.cloudcare.touchforms_api import (
 )
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
-    login_or_digest,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.views.base import BaseDomainView
@@ -189,8 +188,10 @@ require_form_deid_export_permission = require_permission(
 require_case_export_permission = require_permission(
     Permissions.view_report, CASE_EXPORT_PERMISSION, login_decorator=None)
 
-require_form_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.SubmitHistory', login_decorator=None)
-require_case_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.cases.basic.CaseListReport', login_decorator=None)
+require_form_view_permission = require_permission(
+    Permissions.view_report, 'corehq.apps.reports.standard.inspect.SubmitHistory', login_decorator=None)
+require_case_view_permission = require_permission(
+    Permissions.view_report, 'corehq.apps.reports.standard.cases.basic.CaseListReport', login_decorator=None)
 
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
@@ -501,6 +502,7 @@ class AddSavedReportConfigView(View):
     def user_id(self):
         return self.request.couch_user._id
 
+
 @login_and_domain_required
 @datespan_default
 def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
@@ -672,8 +674,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @memoized
     def configs(self):
         user = self.request.couch_user
-        if (self.scheduled_report_id and user.is_domain_admin(self.domain) and
-                user._id != self.owner_id):
+        if (self.scheduled_report_id and user.is_domain_admin(self.domain)
+                and user._id != self.owner_id):
             return self.report_notification.configs
         return [
             c for c in ReportConfig.by_domain_and_owner(self.domain, user._id)
@@ -933,6 +935,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
     else:
         return HttpResponseRedirect(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
 
+
 def _can_send_test_report(report_id, user, domain):
     try:
         report = ReportNotification.get(report_id)
@@ -1077,8 +1080,8 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 def safely_get_case(request, domain, case_id):
     """Get case if accessible else raise a 404 or 403"""
     case = get_case_or_404(domain, case_id)
-    if not (request.can_access_all_locations or
-            user_can_access_case(domain, request.couch_user, case)):
+    if not (request.can_access_all_locations
+            or user_can_access_case(domain, request.couch_user, case)):
         raise location_restricted_exception(request)
     return case
 
@@ -1098,8 +1101,8 @@ class CaseDataView(BaseProjectReportSectionView):
                           _("Sorry, we couldn't find that case. If you think this "
                             "is a mistake please report an issue."))
             return HttpResponseRedirect(CaseListReport.get_url(domain=self.domain))
-        if not (request.can_access_all_locations or
-                user_can_access_case(self.domain, self.request.couch_user, self.case_instance)):
+        if not (request.can_access_all_locations
+                or user_can_access_case(self.domain, self.request.couch_user, self.case_instance)):
             raise location_restricted_exception(request)
         return super(CaseDataView, self).dispatch(request, *args, **kwargs)
 
@@ -1699,25 +1702,25 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
 
 
 def _top_level_tags(form):
-        """
-        Returns a OrderedDict of the top level tags found in the xml, in the
-        order they are found.
+    """
+    Returns a OrderedDict of the top level tags found in the xml, in the
+    order they are found.
 
-        The actual values are taken from the form JSON data and not from the XML
-        """
-        to_return = OrderedDict()
+    The actual values are taken from the form JSON data and not from the XML
+    """
+    to_return = OrderedDict()
 
-        element = form.get_xml_element()
-        if element is None:
-            return OrderedDict(sorted(form.form_data.items()))
+    element = form.get_xml_element()
+    if element is None:
+        return OrderedDict(sorted(form.form_data.items()))
 
-        for child in element:
-            # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
-            key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag
-            if key == "Meta":
-                key = "meta"
-            to_return[key] = form.get_data('form/' + key)
-        return to_return
+    for child in element:
+        # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
+        key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag
+        if key == "Meta":
+            key = "meta"
+        to_return[key] = form.get_data('form/' + key)
+    return to_return
 
 
 def _sorted_form_metadata_keys(keys):
@@ -2188,7 +2191,6 @@ def edit_form(request, domain, instance_id):
 def resave_form_view(request, domain, instance_id):
     """Re-save the form to have it re-processed by pillows
     """
-    from corehq.form_processor.change_publishers import publish_form_saved
     instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
     resave_form(domain, instance)
