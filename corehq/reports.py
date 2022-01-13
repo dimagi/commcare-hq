@@ -29,7 +29,6 @@ from corehq.apps.data_interfaces.interfaces import (
     CaseReassignmentInterface,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
-from corehq.apps.domain.models import Domain
 from corehq.apps.export.views.incremental import IncrementalExportLogView
 from corehq.apps.fixtures.interface import (
     FixtureEditInterface,
@@ -44,7 +43,7 @@ from corehq.apps.hqadmin.reports import (
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports import commtrack
-from corehq.apps.reports.standard import deployments, inspect, monitoring, sms, tableau
+from corehq.apps.reports.standard import deployments, inspect, monitoring, sms
 from corehq.apps.reports.standard.cases.case_list_explorer import (
     CaseListExplorer,
 )
@@ -178,8 +177,8 @@ def _filter_reports(report_set, reports):
 def _get_dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
     for reportset in project.dynamic_reports:
-        yield (reportset.section_title,
-               [_f for _f in (_make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports) if _f])
+        reports = (_make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports)
+        yield (reportset.section_title, [_f for _f in reports if _f])
 
 
 def _make_dynamic_report(report_config, keyprefix):
@@ -259,8 +258,8 @@ def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
         @classmethod
         def show_item(cls, domain=None, project=None, user=None):
             return additional_requirement and (
-                config.visible or
-                (user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
+                config.visible
+                or (user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
             )
         return show_item
 

@@ -1,4 +1,4 @@
-from six.moves.urllib.error import URLError
+from urllib.error import URLError
 
 
 class Format(object):

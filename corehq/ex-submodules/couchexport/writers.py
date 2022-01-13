@@ -485,7 +485,7 @@ class JsonExportWriter(InMemoryExportWriter):
     def _close(self):
         new_tables = {}
         for tablename, data in self.tables.items():
-            new_tables[self.table_names[tablename]] = {"headers":data[0], "rows": data[1:]}
+            new_tables[self.table_names[tablename]] = {"headers": data[0], "rows": data[1:]}
 
         json_dump = json.dumps(new_tables, cls=self.ConstantEncoder).encode('utf-8')
         self.file.write(json_dump)
