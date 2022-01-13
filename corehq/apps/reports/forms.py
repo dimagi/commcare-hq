@@ -104,7 +104,11 @@ class SavedReportConfigForm(forms.Form):
 
 
 class ScheduledReportForm(forms.Form):
-    INTERVAL_CHOICES = [("daily", "Daily"), ("weekly", "Weekly"), ("monthly", "Monthly")]
+    INTERVAL_CHOICES = [
+        ("daily", ugettext("Daily")),
+        ("weekly", ugettext("Weekly")),
+        ("monthly", ugettext("Monthly"))
+    ]
 
     config_ids = forms.MultipleChoiceField(
         label=_("Saved report(s)"),
@@ -172,8 +176,8 @@ class ScheduledReportForm(forms.Form):
 
         domain = kwargs.get('initial', {}).get('domain', None)
         if domain is not None and HOURLY_SCHEDULED_REPORT.enabled(domain, NAMESPACE_DOMAIN):
-            self.fields['interval'].choices.insert(0, ("hourly", "Hourly"))
-            self.fields['interval'].widget.choices.insert(0, ("hourly", "Hourly"))
+            self.fields['interval'].choices.insert(0, ("hourly", ugettext("Hourly")))
+            self.fields['interval'].widget.choices.insert(0, ("hourly", ugettext("Hourly")))
 
         self.helper.add_layout(
             crispy.Layout(
