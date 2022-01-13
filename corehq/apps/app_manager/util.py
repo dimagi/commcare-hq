@@ -699,3 +699,19 @@ def extract_instance_id_from_nodeset_ref(nodeset):
     if nodeset:
         matches = re.findall(r"instance\('(.*?)'\)", nodeset)
         return matches[0] if matches else None
+
+
+def wrap_transition_from_old_update_case_action(properties_dict):
+    if(properties_dict):
+        first_prop_value = list(properties_dict.values())[0]
+        # If the dict just holds question paths (strings) as values we want to translate the old
+        # type of UpdateCaseAction model to the new.
+        if isinstance(first_prop_value, str):
+            old_dict_values = properties_dict
+            new_dict_values = {}
+            for case_property, question_path in old_dict_values:
+                new_dict_values[case_property] = {
+                    'question_path': question_path
+                }
+            return new_dict_values
+    return properties_dict
