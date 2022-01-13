@@ -106,6 +106,13 @@ class InvalidSelectValue(CaseRowError):
     )
 
 
+class MissingRequiredValue(CaseRowError):
+    title = ugettext_noop('Missing required case property')
+    message = ugettext_lazy(
+        'All required case properties must be be present in the upload'
+    )
+
+
 class BlankExternalId(CaseRowError):
     title = ugettext_noop('Blank External ID')
     message = ugettext_lazy(

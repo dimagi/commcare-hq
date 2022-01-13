@@ -1,6 +1,7 @@
 import datetime
 import uuid
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from corehq.apps.case_importer import exceptions
@@ -58,3 +59,9 @@ class TestCaseProperty(TestCase):
         # and ensure it is not accepted.
         with self.assertRaises(exceptions.InvalidSelectValue):
             self.select_property.check_validity(self.valid_choices[0].upper())
+
+    def test_clean(self):
+        with self.assertRaisesMessage(ValidationError, "A required property can't be deprecated"):
+            self.date_property.required = True
+            self.date_property.deprecated = True
+            self.date_property.full_clean()

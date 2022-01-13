@@ -150,7 +150,7 @@ def get_deprecated_fields(domain, case_type_name):
 def save_case_property(name, case_type, domain=None, data_type=None,
                        description=None, group=None, deprecated=None,
                        fhir_resource_prop_path=None, fhir_resource_type=None, remove_path=False,
-                       allowed_values=None):
+                       allowed_values=None, required=None):
     """
     Takes a case property to update and returns an error if there was one
     """
@@ -168,6 +168,8 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         prop.group = group
     if deprecated is not None:
         prop.deprecated = deprecated
+    if required is not None:
+        prop.required = required
     try:
         prop.full_clean()
     except ValidationError as e:
@@ -229,3 +231,12 @@ def fields_to_validate(domain, case_type_name):
     }
     props = CaseProperty.objects.filter(**filter_kwargs)
     return {prop.name: prop for prop in props}
+
+
+def required_case_props(domain, case_type_name):
+    case_type_filter_kwargs = {
+        'case_type__domain': domain,
+        'case_type__name': case_type_name,
+    }
+    return CaseProperty.objects.filter(**case_type_filter_kwargs).filter(required=True).values_list('name',
+                                                                                                    flat=True)
