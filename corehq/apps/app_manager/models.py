@@ -383,14 +383,14 @@ class OpenReferralAction(UpdateReferralAction):
 
 class OpenCaseAction(FormAction):
 
-    name_path = StringProperty()
+    name_update = SchemaProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
 
     case_type = StringProperty()
-    case_name = StringProperty()
+    name_update = SchemaProperty(ConditionalCaseUpdate)
     reference_id = StringProperty()
     case_properties = DictProperty()
     repeat_context = StringProperty()
@@ -591,7 +591,7 @@ class LoadUpdateAction(AdvancedAction):
 
 
 class AdvancedOpenCaseAction(AdvancedAction):
-    name_path = StringProperty()
+    name_update = SchemaProperty(ConditionalCaseUpdate)
     repeat_context = StringProperty()
     case_indices = SchemaListProperty(CaseIndex)
 
