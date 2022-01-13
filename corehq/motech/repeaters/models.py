@@ -967,7 +967,7 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
             "domain",
             "version",
             'is_paused',
-            'repeater_type'
+            'repeater_type',
             "connection_settings",
         ]
 
