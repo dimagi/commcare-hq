@@ -26,7 +26,9 @@ def reprocess_submission(submssion_stub_id):
             return
 
         reprocess_unfinished_stub(stub)
-        metrics_counter('commcare.submission_reprocessing.count')
+        metrics_counter('commcare.submission_reprocessing.count', tags={
+            'domain': stub.domain
+        })
 
 
 @periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
