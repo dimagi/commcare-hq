@@ -13,6 +13,7 @@ from custom.samveg.case_importer.exceptions import (
     UnexpectedFileError,
     UploadLimitReachedError,
 )
+from custom.samveg.case_importer.operations import BaseOperation
 from custom.samveg.const import (
     CALL_VALUE_FORMAT,
     OWNER_NAME,
@@ -25,25 +26,7 @@ from custom.samveg.const import (
 )
 
 
-class BaseValidator:
-    @classmethod
-    def run(cls, *args, **kwargs):
-        raise NotImplementedError
-
-    @classmethod
-    def _get_latest_call_value_and_number(cls, raw_row):
-        # A row is assumed to have call columns named, Call1 till Call6
-        # return latest call's value and call number
-        latest_call_value = None
-        latest_call_number = None
-        for i in range(1, 7):
-            if raw_row.get(f"Call{i}"):
-                latest_call_value = raw_row[f"Call{i}"]
-                latest_call_number = i
-        return latest_call_value, latest_call_number
-
-
-class RequiredColumnsValidator(BaseValidator):
+class RequiredColumnsValidator(BaseOperation):
     @classmethod
     def run(cls, spreadsheet):
         errors = []
@@ -67,7 +50,7 @@ class RequiredColumnsValidator(BaseValidator):
         return error_messages
 
 
-class RequiredValueValidator(BaseValidator):
+class RequiredValueValidator(BaseOperation):
     @classmethod
     def run(cls, row_num, raw_row, fields_to_update, **kwargs):
         error_messages = []
@@ -96,11 +79,11 @@ class RequiredValueValidator(BaseValidator):
         return error_messages
 
 
-class CallValidator(BaseValidator):
+class CallValidator(BaseOperation):
     @classmethod
     def run(cls, row_num, raw_row, fields_to_update, **kwargs):
         error_messages = []
-        call_value, call_number = cls._get_latest_call_value_and_number(raw_row)
+        call_value, call_number = _get_latest_call_value_and_number(raw_row)
         if not call_value:
             error_messages.append(
                 CallValuesMissingError()
@@ -120,12 +103,12 @@ class CallValidator(BaseValidator):
         return fields_to_update, error_messages
 
 
-class UploadLimitValidator(BaseValidator):
+class UploadLimitValidator(BaseOperation):
     @classmethod
     def run(cls, row_num, raw_row, fields_to_update, import_context):
         error_messages = []
         owner_name = raw_row.get(OWNER_NAME)
-        call_value, call_number = cls._get_latest_call_value_and_number(raw_row)
+        call_value, call_number = _get_latest_call_value_and_number(raw_row)
         if owner_name and call_number:
             if cls._upload_limit_reached(import_context, owner_name, call_number):
                 error_messages.append(UploadLimitReachedError())
@@ -161,3 +144,15 @@ def get_required_columns(columns):
     else:
         raise UnexpectedFileError
     return REQUIRED_COLUMNS + sheet_specific_columns
+
+
+def _get_latest_call_value_and_number(raw_row):
+    # A row is assumed to have call columns named, Call1 till Call6
+    # return latest call's value and call number
+    latest_call_value = None
+    latest_call_number = None
+    for i in range(1, 7):
+        if raw_row.get(f"Call{i}"):
+            latest_call_value = raw_row[f"Call{i}"]
+            latest_call_number = i
+    return latest_call_value, latest_call_number
