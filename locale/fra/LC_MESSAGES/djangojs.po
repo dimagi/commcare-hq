@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-05 22:28+0000\n"
+"POT-Creation-Date: 2022-01-13 02:35+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2021\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -192,12 +192,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:110
 msgid "Invalid Project Selected"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/case_config_utils.js:65
-msgid ""
-"Something went wrong refreshing your form properties. Please refresh the "
-"page and try again"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:118
@@ -555,24 +549,24 @@ msgstr "Propriétés de l'utilisateur"
 msgid "Case Index"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:333
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:331
 msgid "Load / Update / Close a case"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:336
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:334
 msgid "Automatic Case Selection"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:339
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:337
 msgid "Load Case From Fixture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:347
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:345
 msgid "Open a Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js:71
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:525
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:523
 msgid "Property updated by two questions"
 msgstr "La propriété a été mise à jour par deux questions"
 
@@ -582,7 +576,7 @@ msgid "Reserved word: "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js:75
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:529
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:527
 msgid "Inside the wrong repeat!"
 msgstr ""
 
@@ -603,7 +597,7 @@ msgstr "Vous avez des paramètres de dossier non sauvegardées"
 msgid "You have unchanged user properties settings"
 msgstr "Vous avez des paramètres d'utilisateur non sauvegardées"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:534
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:532
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La propriété utilise un préfixe non reconnu"
 
@@ -2915,11 +2909,6 @@ msgid ""
 "Geocoder privilege"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:236
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:65
-msgid "Clear"
-msgstr "Effacer"
-
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:41
 msgid "Delete incomplete form?"
 msgstr "Supprimer le formulaire incomplet?"
@@ -3363,6 +3352,10 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:97
 msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:65
+msgid "Clear"
+msgstr "Effacer"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:70
 #: corehq/apps/registry/static/registry/js/registry_logs.js:19

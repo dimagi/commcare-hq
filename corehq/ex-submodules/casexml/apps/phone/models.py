@@ -13,6 +13,7 @@ import architect
 import six
 from django.db.models import Q
 from memoized import memoized
+from toposort import toposort_flatten
 
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
@@ -521,7 +522,7 @@ class IndexTree(DocumentSchema):
 
     @staticmethod
     def get_all_dependencies(case_id, child_index_tree, extension_index_tree):
-        """Takes a child and extension index tree and returns returns a set of all dependencies of <case_id>
+        """Takes a child and extension index tree and returns a set of all dependencies of <case_id>
 
         Traverse each incoming index, return each touched case.
         Traverse each outgoing index in the extension tree, return each touched case
@@ -691,7 +692,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         - it is owned and available or,
         - it has a live child or,
         - it has a live extension or,
-        - it is the exension of a live case.
+        - it is the extension of a live case.
 
         Algorithm:
         ----------
@@ -860,10 +861,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
         assert index.relationship == const.CASE_INDEX_EXTENSION
         self.extension_index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
 
-        if index.referenced_id not in self.case_ids_on_phone:
-            self.case_ids_on_phone.add(index.referenced_id)
-            self.dependent_case_ids_on_phone.add(index.referenced_id)
-
         case_child_indices = [idx for idx in case_update.indices_to_add
                               if idx.relationship == const.CASE_INDEX_CHILD
                               and idx.referenced_id == index.referenced_id]
@@ -874,9 +871,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def _add_child_index(self, index):
         assert index.relationship == const.CASE_INDEX_CHILD
         self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
-        if index.referenced_id not in self.case_ids_on_phone:
-            self.case_ids_on_phone.add(index.referenced_id)
-            self.dependent_case_ids_on_phone.add(index.referenced_id)
 
     def _delete_index(self, index):
         self.index_tree.delete_index(index.case_id, index.identifier)
@@ -987,13 +981,43 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 if case_update.is_closed:
                     self.closed_cases.add(case_update.case_id)
 
+        # generate list of case IDs ordered topologically by case indices
+        tree = defaultdict(set)
         for update in non_live_updates:
-            _get_logger().debug('case {} is NOT live.'.format(update.case_id))
-            if update.has_extension_indices_to_add():
-                # non-live cases with extension indices should be added and processed
-                self.case_ids_on_phone.add(update.case_id)
-                for index in update.indices_to_add:
-                    self._add_index(index, update)
+            tree[update.case_id]  # prime for case
+            for index in update.indices_to_add:
+                tree[index.referenced_id].add(update.case_id)
+        ordered_case_ids = toposort_flatten(tree)
+
+        non_live_updates_by_case_id = defaultdict(list)
+        for update in non_live_updates:
+            non_live_updates_by_case_id[update.case_id].append(update)
+
+        for case_id in ordered_case_ids:
+            if case_id not in non_live_updates_by_case_id:
+                continue
+            _get_logger().debug('case {} is NOT live.'.format(case_id))
+            is_dependent = (
+                self.index_tree.get_cases_that_directly_depend_on_case(case_id)
+                or self.extension_index_tree.get_cases_that_directly_depend_on_case(case_id)
+            )
+            if is_dependent:
+                _get_logger().debug('adding dependent case %s', case_id)
+                self.case_ids_on_phone.add(case_id)
+                self.dependent_case_ids_on_phone.add(case_id)
+
+                for update in non_live_updates_by_case_id[case_id]:
+                    for index in update.indices_to_add:
+                        self._add_index(index, update)
+
+                made_changes = True
+
+            for update in non_live_updates_by_case_id[case_id]:
+                if update.has_extension_indices_to_add():
+                    # non-live cases with extension indices should be added and processed
+                    self.case_ids_on_phone.add(update.case_id)
+                    for index in update.indices_to_add:
+                        self._add_index(index, update)
                     made_changes = True
 
         _get_logger().debug('case ids mid update: {}'.format(', '.join(self.case_ids_on_phone)))

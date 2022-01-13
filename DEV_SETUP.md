@@ -201,7 +201,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 - For downloading Python 3.9 consider:
 
   - Using [pyenv](https://github.com/pyenv/pyenv-installer)
-  - Using Homebrew with this [brew formula](https://gist.github.com/SamuelMarks/0ceaaf6d3de12b6408e3e67aae80ae3b)
+  - Using Homebrew with this [brew formula](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/python@3.9.rb)
 
 - For using Java, consider:
   - Using [jenv](https://github.com/jenv/jenv)

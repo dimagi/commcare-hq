@@ -233,9 +233,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 locale: {
                     format: dateFormat,
                     separator: separator,
-                    cancelLabel: gettext('Clear'),
                 },
                 autoUpdateInput: false,
+                "autoApply": true,
             });
             this.ui.dateRange.on('cancel.daterangepicker', function () {
                 $(this).val('').trigger('change');

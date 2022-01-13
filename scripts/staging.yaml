@@ -71,14 +71,19 @@ branches:
     - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
     - jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
-    - cs/SC-1904-invalid-datum-generation # Charl 7 Dec
-    - dependabot/npm_and_yarn/jquery-ui-1.13.0  # Biyeun Dec 8 
-    - gh/improve-queueing-repeaters # Graham Dec 10
-    - mk/support-multibar-reports # MK Dec 14
     - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
     - sk/enterprise-domain-user-filter # Simon Dec 17
     - sr/datums  # sravan Dec 21
-    - jls/auto-refresh-questions # Jenny Jan 5
-    - mk/case-import-custom-validations # MK Jan 6
     - mjr/remove_export_label_markup # Matt Jan 6
+    - dependabot/pip/requirements/reportlab-3.6.5  # Biyeun Jan 7
+    - jls/combine-toggle-dirs # Jenny Jan 10
+    - mk/samveg/custom-case-upload # MK Jan 11
+    - mk/samveg/add-case-prop-case-upload # MK Jan 12
+    - do/fix-date-widget-bug # Dominic Jan 11
+    - cs/SC-1551-hourly-scheduled-reports+mk/support-multibar-reports # Charl Jan 12
+    - cs/SC-1551-hourly-scheduled-reports # Charl Jan 12
+    - mk/support-multibar-reports # MK Dec 14
+    - ml/unreachable-mobile-privileges # Minha Jan 12
+    - dependabot/pip/requirements/lxml-4.7.1 # Graham Jan 12
+    - mjr/add-eslint  # Matt Jan 12
 submodules: { }
