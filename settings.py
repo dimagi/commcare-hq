@@ -349,7 +349,6 @@ HQ_APPS = (
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
-    'custom.openclinica',
     'soil',
     'toggle',
     'phonelog',
@@ -1553,7 +1552,6 @@ COUCHDB_APPS = [
     'registration',
     'crs_reports',
     'grapevine',
-    'openclinica',
 
     # custom reports
     'pact',
