@@ -1429,6 +1429,7 @@ DATA_DICTIONARY = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     description='Available in the Data section, shows the names of all properties of each case type.',
+    help_link='https://confluence.dimagi.com/display/GS/Data+Dictionary+for+Case+Properties',
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
