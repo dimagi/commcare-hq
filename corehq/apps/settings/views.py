@@ -560,7 +560,7 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
 
     def dispatch(self, request, *args, **kwargs):
         # raises a 404 if a user tries to access this page without the right authorizations
-        if self.is_user_authorized(request.couch_user):
+        if hasattr(request, 'couch_user') and self.is_user_authorized(request.couch_user):
             return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
         return not_found(request)
 

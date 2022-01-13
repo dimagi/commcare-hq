@@ -33,7 +33,7 @@ django-phonenumber-field
 django-prbac
 django-redis-sessions
 django-redis
-django-simple-captcha
+django-recaptcha
 django-statici18n
 django-tastypie
 django-transfer
@@ -112,6 +112,7 @@ stripe
 suds-py3
 text-unidecode
 tinys3
+toposort
 tropo-webapi-python
 turn-python
 twilio
