@@ -414,11 +414,11 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         form = app.new_form(0, "Untitled Form", None)
         form.xmlns = 'http://m0-f0'
-        form.actions.open_case = OpenCaseAction(name_path="/data/question1")
+        form.actions.open_case = OpenCaseAction(name_update=ConditionalCaseUpdate(question_path="/data/question1"))
         form.actions.open_case.condition.type = 'always'
         form.actions.subcases.append(OpenSubCaseAction(
             case_type='tablet',
-            case_name="/data/question1",
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             condition=FormActionCondition(type='always')
         ))
 
@@ -439,7 +439,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         form.actions.update_case.condition.type = 'always'
         form.actions.subcases.append(OpenSubCaseAction(
             case_type=module.case_type,
-            case_name="/data/question1",
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             condition=FormActionCondition(type='always')
         ))
 
@@ -1065,25 +1065,25 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module_0.case_type = 'parent'
         form = app.new_form(0, "Form", None)
 
-        form.actions.open_case = OpenCaseAction(name_path="/data/question1")
+        form.actions.open_case = OpenCaseAction(name_update=ConditionalCaseUpdate(question_path="/data/question1"))
         form.actions.open_case.condition.type = 'always'
 
         child_case_type = 'child'
         form.actions.subcases.append(OpenSubCaseAction(
             case_type=child_case_type,
-            case_name="/data/question1",
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             condition=FormActionCondition(type='always')
         ))
         # subcase in the middle that has a repeat context
         form.actions.subcases.append(OpenSubCaseAction(
             case_type=child_case_type,
-            case_name="/data/repeat/question1",
+            name_update=ConditionalCaseUpdate(question_path="/data/repeat/question1"),
             repeat_context='/data/repeat',
             condition=FormActionCondition(type='always')
         ))
         form.actions.subcases.append(OpenSubCaseAction(
             case_type=child_case_type,
-            case_name="/data/question1",
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             condition=FormActionCondition(type='always')
         ))
 

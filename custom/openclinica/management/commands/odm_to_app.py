@@ -144,7 +144,7 @@ class Study(StudyObject):
             reg_form.get_unique_id()
             reg_form.source = self.get_subject_form_source('Register Subject')
             reg_form.actions.open_case = OpenCaseAction(
-                name_path='/data/' + CC_SUBJECT_KEY,
+                name_update=ConditionalCaseUpdate(question_path='/data/' + CC_SUBJECT_KEY),
                 external_id=None,
                 condition=FormActionCondition(type='always')
             )
@@ -280,7 +280,7 @@ class StudyEvent(StudyObject):
                         )
             return OpenSubCaseAction(
                 case_type='event',
-                case_name='/data/name',
+                name_update=ConditionalCaseUpdate(question_path='/data/name'),
                 case_properties=props,
                 condition=FormActionCondition(type='always')
             )

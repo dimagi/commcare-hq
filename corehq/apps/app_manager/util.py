@@ -185,13 +185,13 @@ def save_xform(app, form, xml):
         # case name unless something else has been specified
         questions = form.get_questions([app.default_language])
         if hasattr(form.actions, 'open_case'):
-            path = form.actions.open_case.name_path
+            path = form.actions.open_case.name_update.question_path
             if path:
                 name_questions = [q for q in questions if q['value'] == path]
                 if not len(name_questions):
                     path = None
             if not path and len(questions):
-                form.actions.open_case.name_path = questions[0]['value']
+                form.actions.open_case.name_update.question_path = questions[0]['value']
 
     return xml
 

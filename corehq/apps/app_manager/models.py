@@ -330,6 +330,8 @@ class FormAction(DocumentSchema):
             yield 'name', action.name_path
         if 'case_name' in action_properties:
             yield 'name', action.case_name
+        if 'name_update' in action_properties and action.name_update:
+            yield 'name', action.name_update.question_path
         if 'external_id' in action_properties and action.external_id:
             yield 'external_id', action.external_id
         if 'update' in action_properties:
@@ -601,7 +603,7 @@ class AdvancedOpenCaseAction(AdvancedAction):
         for path in super(AdvancedOpenCaseAction, self).get_paths():
             yield path
 
-        yield self.name_path
+        yield self.name_update.question_path
 
         if self.open_condition.type == 'if':
             yield self.open_condition.question
@@ -3125,7 +3127,10 @@ class AdvancedModule(ModuleBase):
                 base_action = AdvancedOpenCaseAction(
                     case_type=case_type,
                     case_tag='open_{0}_0'.format(case_type),
-                    name_path=open.name_path,
+                    name_update=ConditionalCaseUpdate(
+                        question_path=open.name_update.question_path,
+                        update_mode=open.name_update.update_mode,
+                    ),
                     open_condition=open.condition,
                     case_properties=update.update if update else {},
                     )
@@ -3161,7 +3166,7 @@ class AdvancedModule(ModuleBase):
                     open_subcase_action = AdvancedOpenCaseAction(
                         case_type=subcase.case_type,
                         case_tag='open_{0}_{1}'.format(subcase.case_type, i+1),
-                        name_path=subcase.case_name,
+                        name_update=ConditionalCaseUpdate(question_path=subcase.name_update.question_path),
                         open_condition=subcase.condition,
                         case_properties=subcase.case_properties,
                         repeat_context=subcase.repeat_context,

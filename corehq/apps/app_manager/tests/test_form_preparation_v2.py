@@ -41,12 +41,18 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(self.get_xml('no_actions'), self.form.render_xform())
 
     def test_open_case(self):
-        self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
+        self.form.actions.open_case = OpenCaseAction(
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
+            external_id=None
+        )
         self.form.actions.open_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('open_case'), self.form.render_xform())
 
     def test_open_case_external_id(self):
-        self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id='/data/question1')
+        self.form.actions.open_case = OpenCaseAction(
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
+            external_id='/data/question1'
+        )
         self.form.actions.open_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('open_case_external_id'), self.form.render_xform())
 
@@ -67,8 +73,11 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(self.get_xml('update_parent_case'), self.form.render_xform())
 
     def test_open_update_case(self):
-        self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
-        self.form.actions.open_case.condition.type = 'always'
+        self.form.actions.open_case = OpenCaseAction(
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
+            external_id=None
+        )
+        self.form.actions.open_case.condition.type = 'name_update'
         self.form.actions.update_case = UpdateCaseAction(
             update={'question1': ConditionalCaseUpdate(question_path='/data/question1')})
         self.form.actions.update_case.condition.type = 'always'
@@ -150,24 +159,26 @@ class SubcaseRepeatTest(SimpleTestCase, TestXmlMixin):
         module_1.unique_id = 'm1'
         module_1.case_type = 'subcase'
 
-        form.actions.open_case = OpenCaseAction(name_path="/data/parent_name")
+        form.actions.open_case = OpenCaseAction(
+            name_update=ConditionalCaseUpdate(question_path="/data/parent_name")
+        )
         form.actions.open_case.condition.type = 'always'
 
         form.actions.subcases.append(OpenSubCaseAction(
             case_type=module_1.case_type,
-            case_name="/data/first_child_name",
+            name_update=ConditionalCaseUpdate(question_path="/data/first_child_name"),
             condition=FormActionCondition(type='always')
         ))
         # subcase in the middle that has a repeat context
         form.actions.subcases.append(OpenSubCaseAction(
             case_type=module_1.case_type,
-            case_name="/data/repeat_child/repeat_child_name",
+            name_update=ConditionalCaseUpdate(question_path="/data/repeat_child/repeat_child_name"),
             repeat_context='/data/repeat_child',
             condition=FormActionCondition(type='always')
         ))
         form.actions.subcases.append(OpenSubCaseAction(
             case_type=module_1.case_type,
-            case_name="/data/last_child_name",
+            name_update=ConditionalCaseUpdate(question_path="/data/last_child_name"),
             condition=FormActionCondition(type='always')
         ))
 
@@ -249,7 +260,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
             case_type=self.module.case_type,
             case_tag='open_1',
-            name_path="/data/question1"
+            name_update=ConditionalCaseUpdate(question_path="/data/question1")
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
         self.assertXmlEqual(self.get_xml('open_case'), self.form.render_xform())
@@ -266,7 +277,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
             case_type=self.module.case_type,
             case_tag='open_1',
-            name_path="/data/question1",
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             case_properties={'question1': ConditionalCaseUpdate(question_path='/data/question1')}
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
@@ -276,7 +287,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
             case_type=self.module.case_type,
             case_tag='open_1',
-            name_path="/data/question1",
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
         self.form.actions.open_cases[0].close_condition.type = 'always'
@@ -417,7 +428,10 @@ class BaseIndexTest(SimpleTestCase, TestXmlMixin):
         self.parent_form = self.app.new_form(0, 'New Form', lang='en')
         self.parent_module.case_type = 'parent_test_case_type'
         self.parent_form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
-        self.parent_form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
+        self.parent_form.actions.open_case = OpenCaseAction(
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
+            external_id=None
+        )
         self.parent_form.actions.open_case.condition.type = 'always'
 
         self.module = self.app.add_module(AdvancedModule.new_module('New Module', lang='en'))
@@ -448,7 +462,7 @@ class SubcaseRepeatTestAdvanced(BaseIndexTest):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
             case_type=self.module.case_type,
             case_tag='open_1',
-            name_path='/data/mother_name',
+            name_update=ConditionalCaseUpdate(question_path='/data/mother_name'),
             case_indices=[CaseIndex(tag='load_1')]
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
@@ -462,7 +476,7 @@ class SubcaseRepeatTestAdvanced(BaseIndexTest):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
             case_type=self.module.case_type,
             case_tag='open_1',
-            name_path='/data/mother_name',
+            name_update=ConditionalCaseUpdate(question_path='/data/mother_name'),
             case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child"
         ))
@@ -473,13 +487,13 @@ class SubcaseRepeatTestAdvanced(BaseIndexTest):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
             case_type=self.parent_module.case_type,
             case_tag='open_1',
-            name_path='/data/mother_name',
+            name_update=ConditionalCaseUpdate(question_path='/data/mother_name'),
         ))
 
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
             case_type=self.module.case_type,
             case_tag='open_2',
-            name_path='/data/mother_name',
+            name_update=ConditionalCaseUpdate(question_path='/data/mother_name'),
             case_indices=[CaseIndex(tag='open_1')],
             repeat_context="/data/child"
         ))
@@ -495,7 +509,7 @@ class SubcaseRepeatTestAdvanced(BaseIndexTest):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
             case_type=self.module.case_type,
             case_tag='open_1',
-            name_path='/data/mother_name',
+            name_update=ConditionalCaseUpdate(question_path='/data/mother_name'),
             case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child"
         ))
@@ -511,7 +525,7 @@ class SubcaseRepeatTestAdvanced(BaseIndexTest):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
             case_type='child1',
             case_tag='open_1',
-            name_path='/data/mother_name',
+            name_update=ConditionalCaseUpdate(question_path='/data/mother_name'),
             case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child",
         ))
@@ -522,7 +536,7 @@ class SubcaseRepeatTestAdvanced(BaseIndexTest):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
             case_type='child2',
             case_tag='open_2',
-            name_path='/data/mother_name',
+            name_update=ConditionalCaseUpdate(question_path='/data/mother_name'),
             case_indices=[CaseIndex(tag='load_1')],
             repeat_context="/data/child",
         ))
@@ -542,7 +556,7 @@ class TestExtensionCase(BaseIndexTest):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
             case_type='child1',
             case_tag='open_1',
-            name_path='/data/mother_name',
+            name_update=ConditionalCaseUpdate(question_path='/data/mother_name'),
             case_indices=[CaseIndex(tag='load_1'),
                           CaseIndex(tag='load_1', reference_id='host', relationship='extension')],
             repeat_context="/data/child",
@@ -636,7 +650,10 @@ class FormPreparationV2TestDataRegistry(SimpleTestCase, TestXmlMixin):
 
     def test_open_case(self):
         """Opening cases still works with registry search"""
-        self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
+        self.form.actions.open_case = OpenCaseAction(
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
+            external_id=None
+        )
         self.form.actions.open_case.condition.type = 'always'
         self.form.actions.update_case = UpdateCaseAction(
             update={'question1': ConditionalCaseUpdate(question_path='/data/question1')})

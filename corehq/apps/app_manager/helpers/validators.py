@@ -874,8 +874,8 @@ class FormValidator(IndexedFormBaseValidator):
             subcase_names.update(subcase_action.case_properties)
 
         if self.form.requires == 'none' and self.form.actions.open_case.is_active() \
-                and not self.form.actions.open_case.name_path:
-            errors.append({'type': 'case_name required'})
+                and not self.form.actions.open_case.name_update.question_path:
+            errors.append({'type': 'name_update question_path'})
 
         errors.extend(self.check_case_properties(
             all_names=self.form.actions.all_property_names(),
@@ -942,8 +942,8 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
                     errors.append({'type': 'missing relationship question', 'case_tag': case_index.tag})
 
             if isinstance(action, AdvancedOpenCaseAction):
-                if not action.name_path:
-                    errors.append({'type': 'case_name required', 'case_tag': action.case_tag})
+                if not action.name_update.question_path:
+                    errors.append({'type': 'name_update question_path required', 'case_tag': action.case_tag})
 
                 for case_index in action.case_indices:
                     meta = self.form.actions.actions_meta_by_tag.get(case_index.tag)

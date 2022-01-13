@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.models import (
+    ConditionalCaseUpdate,
     FormActionCondition,
     OpenSubCaseAction,
 )
@@ -67,7 +68,7 @@ def _ucla_form_modifier(form, question_ids):
     questions = [question_dict[k] for k in question_ids]
 
     # Get the existing subcases
-    existing_subcases = {c.case_name:c for c in form.actions.subcases}
+    existing_subcases = {c.name_update.question_path: c for c in form.actions.subcases}
 
     message += "Found %s questions.\n" % len(questions)
 
@@ -107,7 +108,7 @@ def _ucla_form_modifier(form, question_ids):
                         operator='selected',
                         answer=option.value,
                     ),
-                    case_name=hidden_value_path,
+                    name_update=ConditionalCaseUpdate(question_path=hidden_value_path),
                     case_type='task',
                     # Note, the case properties will not necessarily be created in the order given.
                     case_properties={

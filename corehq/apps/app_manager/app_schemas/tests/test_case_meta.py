@@ -39,7 +39,10 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         m.case_type = case_type
         mf = app.new_form(module_id, 'form {}'.format(case_type), lang='en',
                           attachment=self.get_xml('standard_questions').decode('utf-8'))
-        mf.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
+        mf.actions.open_case = OpenCaseAction(
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
+            external_id=None
+        )
         mf.actions.open_case.condition.type = 'always'
         return m
 
@@ -71,7 +74,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
             case_type='child',
             case_tag='child'))
         m3f0.actions.open_cases.append(AdvancedOpenCaseAction(
-            name_path='/data/question1',
+            name_update=ConditionalCaseUpdate(question_path='/data/question1'),
             case_type='other grand child',
             case_indices=[CaseIndex(tag='child', reference_id='father')]
         ))
@@ -88,12 +91,12 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         ])
         m4f0.actions.open_cases.extend([
             AdvancedOpenCaseAction(
-                name_path='/data/question1',
+                name_update=ConditionalCaseUpdate(question_path='/data/question1'),
                 case_type='extension',
                 case_indices=[CaseIndex(tag='child', relationship='extension', reference_id='host')]
             ),
             AdvancedOpenCaseAction(  # 'extension' case has 2 parents
-                name_path='/data/question1',
+                name_update=ConditionalCaseUpdate(question_path='/data/question1'),
                 case_type='extension',
                 case_indices=[CaseIndex(tag='other_child', relationship='extension', reference_id='host')]
             )

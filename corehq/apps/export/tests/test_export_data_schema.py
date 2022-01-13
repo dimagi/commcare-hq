@@ -569,7 +569,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
             AdvancedOpenCaseAction(
                 case_type="advanced",
                 case_tag="open_case_0",
-                name_path="/data/question3/question4",
+                name_update=ConditionalCaseUpdate(question_path="/data/question3/question4"),
                 repeat_context="/data/question3",
                 case_indices=[CaseIndex(tag='load_case0_0')]
             )

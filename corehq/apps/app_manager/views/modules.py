@@ -1449,7 +1449,7 @@ def _init_biometrics_enroll_module(app, lang):
 
     enroll = app.new_form(module.id, form_name, lang, attachment=attachment)
     enroll.actions.open_case = OpenCaseAction(
-        name_path="/data/name",
+        name_update=ConditionalCaseUpdate(question_path="/data/name"),
         condition=FormActionCondition(type='always'),
     )
     enroll.actions.update_case = UpdateCaseAction(

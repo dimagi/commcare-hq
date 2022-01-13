@@ -162,7 +162,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
             case_tag='open_freshwater_0',
             case_type='freshwater',
             case_name='Wanda',
-            name_path='/data/question1',
+            name_update=ConditionalCaseUpdate(question_path='/data/question1'),
             open_condition=FormActionCondition(type='always'),
             case_properties={'name': ConditionalCaseUpdate(question_path='/data/question1')},
             case_indices=[self.case_index],
@@ -182,7 +182,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         subcase_node.insert(0, self.subcase_block.elem)
         self.subcase_block.add_create_block(
             relevance=self.xform.action_relevance(action.open_condition),
-            case_name=self.subcase.case_name,
+            case_name=self.subcase.name_update.question_path,
             case_type=self.subcase.case_type,
             delay_case_id=bool(self.subcase.repeat_context),
             autoset_owner_id=autoset_owner_id_for_advanced_action(action),
@@ -326,32 +326,67 @@ class OpenSubCaseActionTests(SimpleTestCase):
         """
         OpenSubCaseAction should allow relationship to be set
         """
-        action = OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='extension')
+        action = OpenSubCaseAction(
+            case_type='mother',
+            name_update=ConditionalCaseUpdate(question_path='Eva'),
+            relationship='extension',
+        )
         self.assertEqual(action.relationship, 'extension')
 
     def test_open_subcase_action_default_relationship(self):
         """
         OpenSubCaseAction relationship should default to "child"
         """
-        action = OpenSubCaseAction(case_type='mother', case_name='Eva')
+        action = OpenSubCaseAction(
+            case_type='mother',
+            name_update=ConditionalCaseUpdate(question_path='Eva'),
+        )
         self.assertEqual(action.relationship, 'child')
 
     def test_open_subcase_action_valid_relationship(self):
         """
         OpenSubCaseAction relationship should only allow valid values
         """
-        OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='child')
-        OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='extension')
+        OpenSubCaseAction(
+            case_type='mother',
+            name_update=ConditionalCaseUpdate(question_path='Eva'),
+            relationship='child',
+        )
+        OpenSubCaseAction(
+            case_type='mother',
+            name_update=ConditionalCaseUpdate(question_path='Eva'),
+            relationship='extension',
+        )
         with self.assertRaises(BadValueError):
-            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='parent')
+            OpenSubCaseAction(
+                case_type='mother',
+                name_update=ConditionalCaseUpdate(question_path='Eva'),
+                relationship='parent',
+            )
         with self.assertRaises(BadValueError):
-            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='host')
+            OpenSubCaseAction(
+                case_type='mother',
+                name_update=ConditionalCaseUpdate(question_path='Eva'),
+                relationship='host'
+            )
         with self.assertRaises(BadValueError):
-            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='primary')
+            OpenSubCaseAction(
+                case_type='mother',
+                name_update=ConditionalCaseUpdate(question_path='Eva'),
+                relationship='primary',
+            )
         with self.assertRaises(BadValueError):
-            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='replica')
+            OpenSubCaseAction(
+                case_type='mother',
+                name_update=ConditionalCaseUpdate(question_path='Eva'),
+                relationship='replica',
+            )
         with self.assertRaises(BadValueError):
-            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='cousin')
+            OpenSubCaseAction(
+                case_type='mother',
+                name_update=ConditionalCaseUpdate(question_path='Eva'),
+                relationship='cousin',
+            )
 
 
 class CaseIndexTests(SimpleTestCase):

@@ -1664,7 +1664,7 @@ class XForm(WrappedNode):
                 open_case_action = actions['open_case']
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
-                    case_name=open_case_action.name_path,
+                    case_name=open_case_action.name_update.question_path,
                     case_type=form.get_case_type(),
                     autoset_owner_id=autoset_owner_id_for_open_case(actions),
                     has_case_sharing=form.get_app().case_sharing,
@@ -1729,7 +1729,7 @@ class XForm(WrappedNode):
                 subcase_node.insert(0, subcase_block.elem)
                 subcase_block.add_create_block(
                     relevance=self.action_relevance(subcase.condition),
-                    case_name=subcase.case_name,
+                    case_name=subcase.name_update.question_path,
                     case_type=subcase.case_type,
                     delay_case_id=bool(subcase.repeat_context),
                     autoset_owner_id=autoset_owner_id_for_subcase(subcase),
@@ -1989,7 +1989,7 @@ class XForm(WrappedNode):
             subcase_node.insert(0, open_case_block.elem)
             open_case_block.add_create_block(
                 relevance=self.action_relevance(action.open_condition),
-                case_name=action.name_path,
+                case_name=action.name_update.question_path,
                 case_type=action.case_type,
                 delay_case_id=bool(action.repeat_context),
                 autoset_owner_id=autoset_owner_id_for_advanced_action(action),
