@@ -1175,13 +1175,6 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
-OPENCLINICA = StaticToggle(
-    'openclinica',
-    'KEMRI: Offer OpenClinica settings and CDISC ODM export',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',

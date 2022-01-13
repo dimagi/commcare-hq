@@ -75,7 +75,6 @@ from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,
 )
-from custom.openclinica.reports import OdmExportReport
 
 from . import toggles
 
@@ -102,7 +101,7 @@ def REPORTS(project):
         ProjectHealthDashboard,
     )
     inspect_reports = [
-        inspect.SubmitHistory, CaseListReport, OdmExportReport,
+        inspect.SubmitHistory, CaseListReport,
     ]
     if toggles.CASE_LIST_EXPLORER.enabled(project.name):
         inspect_reports.append(CaseListExplorer)
