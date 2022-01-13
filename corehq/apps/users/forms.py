@@ -426,6 +426,7 @@ class SetUserPasswordForm(SetPasswordForm):
     new_password1 = forms.CharField(
         label=ugettext_noop("New password"),
         widget=forms.PasswordInput(),
+        help_text='<span data-bind="text: passwordHelp, css: color">',
     )
 
     def __init__(self, project, user_id, **kwargs):
@@ -465,7 +466,9 @@ class SetUserPasswordForm(SetPasswordForm):
                 ),
                 hqcrispy.FormActions(
                     crispy.ButtonHolder(
-                        Submit('submit', _('Reset Password'))
+                        Submit('submit',
+                               _('Reset Password'),
+                               data_bind="enable: passwordSufficient()")
                     )
                 ),
                 css_class="check-password",
