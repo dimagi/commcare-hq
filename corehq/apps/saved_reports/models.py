@@ -553,11 +553,23 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         return notification
 
     @classmethod
+    def by_domain(cls, domain, stale=True, **kwargs):
+        if stale:
+            kwargs['stale'] = settings.COUCH_STALE_QUERY
+
+        key = [domain]
+        return cls._get_view_by_key(key, **kwargs)
+
+    @classmethod
     def by_domain_and_owner(cls, domain, owner_id, stale=True, **kwargs):
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
 
         key = [domain, owner_id]
+        return cls._get_view_by_key(key, **kwargs)
+
+    @classmethod
+    def _get_view_by_key(cls, key, **kwargs):
         db = cls.get_db()
         result = cache_core.cached_view(db, "reportconfig/user_notifications", reduce=False,
                                         include_docs=True, startkey=key, endkey=key + [{}],

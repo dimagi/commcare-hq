@@ -304,6 +304,29 @@ class MySavedReportsView(BaseProjectReportSectionView):
                 ret.append(scheduled_report)
         return sorted(ret, key=self._report_sort_key())
 
+    @property
+    def shared_saved_reports(self):
+        user = self.request.couch_user
+        configs = []
+
+        if user.role_label() == 'Admin':
+            all_shared_reports = ReportNotification.by_domain(self.domain)
+            reports_ids_belonging_to_user = [
+                r._id for r in ReportNotification.by_domain_and_owner(self.domain, user._id)
+            ]
+            [configs.extend(r.configs) for r in all_shared_reports if r._id not in reports_ids_belonging_to_user]
+        else:
+            [r.configs for r in self.scheduled_reports]
+
+        good_configs = []
+        for config in configs:
+            if config.is_configurable_report and not config.configurable_report:
+                continue
+
+            good_configs.append(config.to_complete_json(lang=self.language))
+
+        return good_configs
+
     def _report_sort_key(self):
         return lambda report: report.configs[0].full_name.lower() if report.configs else None
 
@@ -347,6 +370,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
             'configs': self.good_configs,
             'scheduled_reports': scheduled_reports,
             'others_scheduled_reports': others_scheduled_reports,
+            'shared_saved_reports': self.shared_saved_reports,
             'report': {
                 'title': self.page_title,
                 'show': True,
