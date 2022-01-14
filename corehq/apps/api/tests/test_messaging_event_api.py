@@ -437,6 +437,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
     def _test_cursor_response(self, expected, previous_content=None, extra_params=None):
         if previous_content:
             url = previous_content["meta"]["next"]
+            assert not extra_params, "extra_params not allowed with previous_content"
         else:
             url = self.list_endpoint
             if extra_params:
