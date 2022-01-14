@@ -50,7 +50,7 @@ class RepeaterTestCase(TestCase):
         self.repeater = FormRepeater(
             domain=DOMAIN,
             url=url,
-            connections_settings_id=conn.id
+            connection_settings_id=conn.id,
         )
         self.repeater.save()
         self.sql_repeater = SQLRepeater.objects.create(
