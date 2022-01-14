@@ -260,7 +260,7 @@ class DomainForwardingRepeatRecords(BaseRepeatRecordReport):
         formatted = formatter.format_record(record)
         checkbox = format_html(
             '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
-            record.get_id)
+            record.record_id)
         row = [
             checkbox,
             formatted['state'],
@@ -268,14 +268,14 @@ class DomainForwardingRepeatRecords(BaseRepeatRecordReport):
             formatted['last_checked'],
             formatted['next_attempt_at'],
             formatted['attempts'],
-            self._make_view_payload_button(record.get_id),
-            self._make_resend_payload_button(record.get_id),
+            self._make_view_payload_button(record.record_id),
+            self._make_resend_payload_button(record.record_id),
         ]
 
         if record.cancelled and not record.succeeded:
-            row.append(self._make_requeue_payload_button(record.get_id))
+            row.append(self._make_requeue_payload_button(record.record_id))
         elif not record.cancelled and not record.succeeded:
-            row.append(self._make_cancel_payload_button(record.get_id))
+            row.append(self._make_cancel_payload_button(record.record_id))
         else:
             row.append(None)
 
@@ -292,7 +292,7 @@ class SQLRepeatRecordReport(BaseRepeatRecordReport):
         formatted = formatter.format_record(record)
         checkbox = format_html(
             '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
-            record.pk)
+            record.record_id)
         row = [
             checkbox,
             formatted['state'],
@@ -300,14 +300,14 @@ class SQLRepeatRecordReport(BaseRepeatRecordReport):
             formatted['last_checked'],
             formatted['next_attempt_at'],
             formatted['attempts'],
-            self._make_view_payload_button(record.pk),
-            self._make_resend_payload_button(record.pk),
+            self._make_view_payload_button(record.record_id),
+            self._make_resend_payload_button(record.record_id),
         ]
 
         if record.state == RECORD_CANCELLED_STATE:
-            row.append(self._make_requeue_payload_button(record.pk))
+            row.append(self._make_requeue_payload_button(record.record_id))
         elif is_queued(record):
-            row.append(self._make_cancel_payload_button(record.pk))
+            row.append(self._make_cancel_payload_button(record.record_id))
         else:
             row.append(None)
 
