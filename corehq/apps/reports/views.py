@@ -1178,7 +1178,6 @@ class CaseDataView(BaseProjectReportSectionView):
             dynamic_properties = None
 
         the_time_is_now = datetime.utcnow()
-        tz_offset_ms = int(timezone.utcoffset(the_time_is_now).total_seconds()) * 1000
         tz_abbrev = timezone.localize(the_time_is_now).tzname()
 
         product_name_by_id = {
@@ -1220,7 +1219,6 @@ class CaseDataView(BaseProjectReportSectionView):
             "timezone": timezone,
             "tz_abbrev": tz_abbrev,
             "ledgers": ledger_map,
-            "timezone_offset": tz_offset_ms,
             "show_transaction_export": show_transaction_export,
             "xform_api_url": reverse('single_case_forms', args=[self.domain, self.case_id]),
             "repeat_records": repeat_records,
