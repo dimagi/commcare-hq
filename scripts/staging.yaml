@@ -76,7 +76,6 @@ branches:
     - sr/datums  # sravan Dec 21
     - mjr/remove_export_label_markup # Matt Jan 6
     - dependabot/pip/requirements/reportlab-3.6.5  # Biyeun Jan 7
-    - jls/combine-toggle-dirs # Jenny Jan 10
     - mk/samveg/custom-case-upload # MK Jan 11
     - mk/samveg/add-case-prop-case-upload # MK Jan 12
     - do/fix-date-widget-bug # Dominic Jan 11
@@ -85,4 +84,5 @@ branches:
     - mk/support-multibar-reports # MK Dec 14
     - dependabot/pip/requirements/lxml-4.7.1 # Graham Jan 12
     - mjr/add-eslint  # Matt Jan 12
+    - jls/fix-no-role-500  # Jenny Jan 14
 submodules: { }
