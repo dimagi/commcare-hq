@@ -28,7 +28,7 @@ For more information, see :doc:`docs/fhir_import_config`.
 """
 import json
 import os
-from typing import Optional, Union
+from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -39,8 +39,6 @@ from jsonfield import JSONField
 from jsonschema import RefResolver
 from jsonschema import ValidationError as JSONValidationError
 from jsonschema import validate
-
-from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
@@ -216,7 +214,7 @@ class FHIRResourceProperty(models.Model):
 
 
 def build_fhir_resource(
-    case: Union[CommCareCase, CommCareCaseSQL],
+    case: CommCareCaseSQL,
     fhir_version: str = FHIR_VERSION_4_0_1,
 ) -> Optional[dict]:
     """
@@ -268,7 +266,7 @@ def _build_fhir_resource(
 
 
 def get_case_trigger_info(
-    case: Union[CommCareCase, CommCareCaseSQL],
+    case: CommCareCaseSQL,
     resource_type: FHIRResourceType,
     case_block: Optional[dict] = None,
     form_question_values: Optional[dict] = None,

@@ -25,7 +25,6 @@ from requests import RequestException
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
-from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
@@ -475,7 +474,7 @@ def get_case_id_owner_id_case_block(
 def get_case(
     repeater: OpenmrsRepeater,
     patient_uuid: str,
-) -> Union[CommCareCase, CommCareCaseSQL, None]:
+) -> Union[CommCareCaseSQL, None]:
 
     case_type = repeater.white_listed_case_types[0]
     case, error = importer_util.lookup_case(
