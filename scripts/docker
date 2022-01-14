@@ -112,6 +112,20 @@ function usage() {
     exit
 }
 
+case "$(uname -m)" in
+    x86_64)
+        arch_suffix='x86'
+        ;;
+    arm64)
+        arch_suffix='arm64'
+        ;;
+    *)
+        arch_suffix='x86'
+        echo "WARNING: unrecognized system architecture ($(uname -m)), falling back to ${arch_suffix}" >&2
+        ;;
+esac
+export COMPOSE_ARCH="hq-compose-arch-${arch_suffix}.yml"
+
 CMD="$1"
 shift
 if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
@@ -122,7 +136,7 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
             CMD=help
         fi
     fi
-    export COMPOSE_FILE=docker/hq-compose.yml
+    export COMPOSE_FILE="docker/hq-compose.yml"
     export COMPOSE_PROJECT_NAME=hqtest
     if [ -n "$TRAVIS_BUILD_DIR" ]; then
         export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
@@ -244,6 +258,8 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
+    # Disabled due to: https://github.com/github/feedback/discussions/8848
+    # [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
     echo "Pulling docker containers..."
     docker-compose pull --quiet
     docker-compose run --rm web run_tests "${TEST:-python}" "$@"

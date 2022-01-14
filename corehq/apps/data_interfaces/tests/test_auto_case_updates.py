@@ -999,15 +999,17 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         self.assertEqual(DomainCaseRuleRun.objects.count(), count)
 
     def assertLastRuleRun(self, cases_checked, num_updates=0, num_closes=0, num_related_updates=0,
-            num_related_closes=0, num_creates=0):
+            num_related_closes=0, num_creates=0, num_errors=0):
         last_run = DomainCaseRuleRun.objects.filter(domain=self.domain).order_by('-finished_on')[0]
-        self.assertEqual(last_run.status, DomainCaseRuleRun.STATUS_FINISHED)
+        expected_status = DomainCaseRuleRun.STATUS_HAD_ERRORS if num_errors else DomainCaseRuleRun.STATUS_FINISHED
+        self.assertEqual(last_run.status, expected_status)
         self.assertEqual(last_run.cases_checked, cases_checked)
         self.assertEqual(last_run.num_updates, num_updates)
         self.assertEqual(last_run.num_closes, num_closes)
         self.assertEqual(last_run.num_related_updates, num_related_updates)
         self.assertEqual(last_run.num_related_closes, num_related_closes)
         self.assertEqual(last_run.num_creates, num_creates)
+        self.assertEqual(last_run.num_errors, num_errors)
 
     def test_scheduled_task_run(self):
         rule = _create_empty_rule(self.domain)
@@ -1055,6 +1057,28 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
                 run_case_update_rules_for_domain(self.domain)
                 self.assertRuleRunCount(3)
                 self.assertLastRuleRun(1)
+
+    def test_single_failure_is_isolated(self):
+
+        def fail_on_person2(case, now):
+            if case.type == 'person2':
+                raise AssertionError()
+            return CaseRuleActionResult(num_updates=1)
+
+        _create_empty_rule(self.domain)
+        with _with_case(self.domain, 'person1', datetime.utcnow()) as case1, \
+                _with_case(self.domain, 'person2', datetime.utcnow()) as case2, \
+                _with_case(self.domain, 'person3', datetime.utcnow()) as case3, \
+                patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.iter_cases') as iter_cases_patch, \
+                patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.run_rule') as run_rule:
+            iter_cases_patch.return_value = [case1, case2, case3]
+            run_rule.side_effect = fail_on_person2
+
+            self.assertRuleRunCount(0)
+            run_case_update_rules_for_domain(self.domain)
+            self.assertRuleRunCount(1)
+            # Three cases were checked, two were updated, one failed hard
+            self.assertLastRuleRun(cases_checked=3, num_updates=2, num_errors=1)
 
 
 class TestParentCaseReferences(BaseCaseRuleTest):

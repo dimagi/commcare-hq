@@ -100,6 +100,7 @@ hqDefine('userreports/js/report_config', function () {
                 self._app = config['app'];
                 self._sourceType = config['sourceType'];
                 self._sourceId = config['sourceId'];
+                self._registrySlug = config['registrySlug'];
 
                 self.dateRangeOptions = config['dateRangeOptions'];
 
@@ -368,6 +369,7 @@ hqDefine('userreports/js/report_config', function () {
                                     'app': self._app,
                                     'source_type': self._sourceType,
                                     'source_id': self._sourceId,
+                                    'registry_slug': self._registrySlug,
                                 }
                             )),
                             dataType: 'json',

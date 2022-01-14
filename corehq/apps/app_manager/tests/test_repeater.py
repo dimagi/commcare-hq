@@ -76,7 +76,7 @@ class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
         self.app_structure_repeater.save()
         self.addCleanup(self.app_structure_repeater.delete)
 
-        with patch('corehq.motech.repeaters.models.simple_post') as mock_fire:
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_fire:
             self.application = Application(domain=self.domain)
             self.application.save()
             self.addCleanup(self.application.delete)

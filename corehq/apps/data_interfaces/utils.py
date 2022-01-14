@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound
 
-from dimagi.utils.logging import notify_error
+from dimagi.utils.logging import notify_error, notify_exception
 from soil import DownloadBase
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -244,16 +244,14 @@ def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_typ
             notify_error("Halting rule run for domain %s and case type %s." % (domain, case_type))
 
             return DomainCaseRuleRun.done(
-                run_id, DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result, db=db
+                run_id, cases_checked, case_update_result, db=db, halted=True
             )
 
         case_update_result.add_result(run_rules_for_case(case, rules, now))
         if progress_helper is not None:
             progress_helper.increment_current_case_count()
         cases_checked += 1
-    return DomainCaseRuleRun.done(
-        run_id, DomainCaseRuleRun.STATUS_FINISHED, cases_checked, case_update_result, db=db
-    )
+    return DomainCaseRuleRun.done(run_id, cases_checked, case_update_result, db=db)
 
 
 def _check_data_migration_in_progress(domain, last_migration_check_time):
@@ -276,7 +274,16 @@ def run_rules_for_case(case, rules, now):
             ):
                 case = CaseAccessors(case.domain).get_case(case.case_id)
 
-        last_result = rule.run_rule(case, now)
+        try:
+            last_result = rule.run_rule(case, now)
+        except Exception:
+            last_result = CaseRuleActionResult(num_errors=1)
+            notify_exception(None, "Error applying case update rule", {
+                'domain': case.domain,
+                'rule_pk': rule.pk,
+                'case_id': case.case_id,
+            })
+
         aggregated_result.add_result(last_result)
         if last_result.num_closes > 0:
             break

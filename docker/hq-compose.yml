@@ -57,7 +57,9 @@ services:
       - "8081"
 
   postgres:
-    image: dimagi/docker-postgresql
+    extends:
+      file: "${COMPOSE_ARCH}"
+      service: postgres
     environment:
       POSTGRES_USER: commcarehq
       POSTGRES_PASSWORD: commcarehq

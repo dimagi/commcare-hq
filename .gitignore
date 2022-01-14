@@ -39,7 +39,7 @@ dump.rdb
 /staticmedia*
 .transifexrc
 python_env
-python_env-3.6
+python_env-*
 services
 KEEP_UNTIL__*
 formplayer.properties
@@ -70,6 +70,7 @@ node_modules/
 /sharedfiles/
 docker/data
 *.lock
+!migrations.lock
 !yarn.lock
 fab/config.py
 extensions/

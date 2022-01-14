@@ -34,4 +34,5 @@ DELETABLE_COUCH_DOC_TYPES = {
     'SurveyKeyword': (MAIN_DB,),
     'SurveyKeywordAction': (MAIN_DB,),
     'WisePillDeviceEvent': (MAIN_DB,),
+    '*': ('commcarehq__m4change',),
 }

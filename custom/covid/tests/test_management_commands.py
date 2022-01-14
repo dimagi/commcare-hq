@@ -343,3 +343,22 @@ class CaseCommandsTest(TestCase):
         call_command('add_assignment_cases', self.domain, 'patient', '--location=loc-thats-not-act')
         assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
         self.assertEqual(len(assignment_cases), 0)
+
+    def test_clear_owner_ids(self):
+        patient1_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, patient1_case_id, user_id=self.user_id, owner_id='owner1', case_type='patient',
+        )
+
+        patient2_case_id = uuid.uuid4().hex
+        self.submit_case_block(
+            True, patient2_case_id, user_id=self.user_id, owner_id='owner1', case_type='patient',
+        )
+
+        call_command('clear_owner_ids', self.domain, 'patient')
+
+        patient1_case = self.case_accessor.get_case(patient1_case_id)
+        patient2_case = self.case_accessor.get_case(patient2_case_id)
+
+        self.assertEqual(patient1_case.get_case_property('owner_id'), '-')
+        self.assertEqual(patient2_case.get_case_property('owner_id'), '-')

@@ -3,11 +3,13 @@ from uuid import uuid4
 
 from django.test import SimpleTestCase, TestCase
 
+from nose.tools import assert_equal
+
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import Attachment
+from corehq.form_processor.models import Attachment, CommCareCaseSQL
 
 DOMAIN = 'test-domain'
 
@@ -129,3 +131,54 @@ class TestIndices(TestCase):
 def are_cases_equal(a, b):  # or at least equal enough for our test
     attrs = ('domain', 'case_id', 'type', 'name', 'owner_id')
     return all(getattr(a, attr) == getattr(b, attr) for attr in attrs)
+
+
+def test_case_to_json():
+    case_id = str(uuid4())
+    case = CommCareCaseSQL(
+        case_id=case_id,
+        domain=DOMAIN,
+        type='case',
+        name='Justin Case',
+        case_json={
+            'given_name': 'Justin',
+            'family_name': 'Case',
+            'actions': 'eating sleeping typing',
+            'indices': 'Dow_Jones_Industrial_Average S&P_500',
+        },
+    )
+    case_dict = case.to_json()
+    assert_equal(case_dict, {
+        '_id': case_id,
+        'actions': [],  # Not replaced by case_json
+        'backend_id': 'sql',
+        'case_attachments': {},
+        'case_id': case_id,
+        'case_json': {
+            'actions': 'eating sleeping typing',
+            'family_name': 'Case',
+            'given_name': 'Justin',
+            'indices': 'Dow_Jones_Industrial_Average S&P_500',
+        },
+        'closed': False,
+        'closed_by': None,
+        'closed_on': None,
+        'deleted': False,
+        'doc_type': 'CommCareCase',
+        'domain': DOMAIN,
+        'external_id': None,
+        'family_name': 'Case',
+        'given_name': 'Justin',
+        'indices': [],  # Not replaced by case_json
+        'location_id': None,
+        'modified_by': '',
+        'modified_on': None,
+        'name': 'Justin Case',
+        'opened_by': None,
+        'opened_on': None,
+        'owner_id': '',
+        'server_modified_on': None,
+        'type': 'case',
+        'user_id': '',
+        'xform_ids': [],
+    })

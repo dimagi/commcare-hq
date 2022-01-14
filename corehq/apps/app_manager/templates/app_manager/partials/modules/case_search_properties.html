@@ -95,13 +95,13 @@
           <div class="form-group">
             {% if show_search_workflow %}
               <div class="form-group">
-                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="hidden: dataRegistry">
+                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="hidden: restrictWorkflowForDataRegistry">
                   {% trans "Web Apps Search Workflow" %}
                   <span class="hq-help-template" data-title="{% trans "Web Apps Search Workflow" %}"
                         data-content="{% trans_html_attr "<strong>Normal Case List</strong> is the &quot;classic&quot; case search workflow.  <br><br><strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is typically used for a &quot;Search Cases&quot; module.  <br><br><strong>See More</strong> is the same functionality as Normal Case List, except clicking the search button runs the default searches and returns the results. The user doesn't get to change the search criteria. This enables a workflow where the user sees what's in the local casedb then clicks &quot;See More&quot; to view all cases that fit the criteria.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search. The user never sees the results of the casedb." %}">
                   </span>
                 </label>
-                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="visible: dataRegistry">
+                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="visible: restrictWorkflowForDataRegistry">
                   {% trans "Web Apps Search Workflow" %}
                   <span class="hq-help-template" data-title="{% trans "Web Apps Search Workflow (Data Registry)" %}"
                         data-content="{% trans_html_attr "<strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is the default for Data Registry search.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search." %}">
@@ -109,9 +109,9 @@
                 </label>
                 <div class="{% css_field_class %}">
                   <select class="form-control" data-bind="value: workflow" id="search-workflow">
-                    <option value="classic" data-bind="hidden: dataRegistry">{% trans "Normal Case List" %}</option>
+                    <option value="classic" data-bind="hidden: restrictWorkflowForDataRegistry">{% trans "Normal Case List" %}</option>
                     <option value="auto_launch">{% trans "Search First" %}</option>
-                    <option value="see_more" data-bind="hidden: dataRegistry">{% trans "See More" %}</option>
+                    <option value="see_more" data-bind="hidden: restrictWorkflowForDataRegistry">{% trans "See More" %}</option>
                     <option value="es_only">{% trans "Skip to Default Case Search Results" %}</option>
                   </select>
                 </div>
@@ -253,7 +253,19 @@
                   </select>
               </div>
           </div>
-          <div class="form-group">
+          <div class="form-group" data-bind="slideVisible: dataRegistry()">
+              <label for="data-registry" class="{% css_label_class %} control-label">
+                  {% trans "Data Registry Workflow" %}
+              </label>
+              <div class="{% css_field_class %}">
+                  <select class="form-control" data-bind="value: dataRegistryWorkflow">
+                    {% for slug, name in data_registry_workflow_choices %}
+                      <option value="{{ slug }}">{{ name }}</option>
+                    {% endfor %}
+                  </select>
+              </div>
+          </div>
+          <div class="form-group" data-bind="visible: dataRegistryWorkflow() == 'load_case'">
               <label for="data-registry" class="{% css_label_class %} control-label">
                   {% trans "Load Additional Data Registry Cases" %}
                   <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
@@ -293,6 +305,28 @@
                   <button type="button" class="btn btn-default" data-bind="click: addRegistryQuery">
                     <i class="fa fa-plus"></i> {% trans "Add Case ID to Data Registry Query" %}
                   </button>
+              </div>
+          </div>
+          {% endif %}
+          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+          <div class="form-group">
+              <label for="custom-related-case-property" class="{% css_label_class %} control-label">
+                  {% trans "Case property with additional case id to add to results" %}
+                  <span class="hq-help-template" data-title="{% trans "Custom Related Case Property" %}"
+                        data-content="{% blocktrans %}
+                               Enter in the name of a case property that contains the ID of another
+                               case you'd like included in the results instance.  This is to allow
+                               you to configure your case list display to show properties of that
+                               related case. Read more on the
+                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Help Site</a>.
+                        {% endblocktrans %}">
+                  </span>
+              </label>
+              <div class="{% css_field_class %}">
+                  <input id="custom-related-case-property"
+                         type="text"
+                         class="form-control"
+                         data-bind="value: customRelatedCaseProperty"/>
               </div>
           </div>
           {% endif %}

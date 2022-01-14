@@ -136,6 +136,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater.domain = self.domain
         repeater.connection_settings_id = int(cleaned_data['connection_settings_id'])
+        repeater.request_method = cleaned_data['request_method']
         repeater.format = cleaned_data['format']
         return repeater
 

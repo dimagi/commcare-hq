@@ -10,6 +10,7 @@ from flaky import flaky
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
+from corehq.util.test_utils import flag_enabled
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -290,6 +291,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
 
 
 @es_test
+@flag_enabled("SYNC_SEARCH_CASE_CLAIM")
 class CaseClaimEndpointTests(TestCase):
     def setUp(self):
         self.domain = create_domain(DOMAIN)
@@ -467,7 +469,7 @@ class CaseClaimEndpointTests(TestCase):
             '<external_id>Jamie Hand</external_id>'
             '<date_opened>2016-04-17</date_opened>'
             '<commcare_search_score>xxx</commcare_search_score>'
-            '<location_id>None</location_id>'
+            '<opened_by>nerc</opened_by>'
             '</case>'
             '</results>'.format(
                 case_id=self.case_id,
