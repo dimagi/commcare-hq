@@ -146,7 +146,7 @@ hqDefine("reports/js/edit_scheduled_report", [
     var scheduled_report_form_helper = new ScheduledReportFormHelper({
         weekly_options: initialPageData.get('weekly_day_options'),
         monthly_options: initialPageData.get('monthly_day_options'),
-        day_value: initialPageData.get('day_value')
+        day_value: initialPageData.get('day_value'),
     });
     scheduled_report_form_helper.init();
 
