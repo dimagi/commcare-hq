@@ -223,6 +223,9 @@ class SQLRepeater(models.Model):
     def repeater(self):
         return Repeater.get(self.repeater_id)
 
+    def get_url(self, record):
+        return self.repeater.get_url(record),
+
     @property
     def repeat_records_ready(self):
         return self.repeat_records.filter(state__in=(RECORD_PENDING_STATE,
@@ -904,6 +907,10 @@ class RepeatRecord(Document):
     def record_id(self):
         return self._id
 
+    @property
+    def next_attempt_at(self):
+        return self.next_check
+
     @classmethod
     def wrap(cls, data):
         should_bootstrap_attempts = ('attempts' not in data)
@@ -1257,6 +1264,10 @@ class SQLRepeatRecord(models.Model):
     def last_checked(self):
         # Used by .../case/partials/repeat_records.html
         return self.repeater.last_attempt_at
+
+    @property
+    def next_attempt_at(self):
+        return self.repeater.next_attempt_at
 
     @property
     def url(self):

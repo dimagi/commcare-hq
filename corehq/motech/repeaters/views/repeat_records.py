@@ -34,6 +34,7 @@ from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
+from .repeat_record_format import SimpleFormat
 
 from ..const import (
     RECORD_CANCELLED_STATE,
@@ -255,16 +256,18 @@ class DomainForwardingRepeatRecords(BaseRepeatRecordReport):
     slug = 'couch_repeat_record_report'
 
     def _make_row(self, record):
+        formatter = SimpleFormat(self.timezone, date_format='%b %d, %Y %H:%M:%S %Z')
+        formatted = formatter.format_record(record)
         checkbox = format_html(
             '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
             record.get_id)
         row = [
             checkbox,
-            self._make_state_label(record),
-            record.repeater.get_url(record) if record.repeater else _('Unable to generate url for record'),
-            self._format_date(record.last_checked) if record.last_checked else '---',
-            self._format_date(record.next_check) if record.next_check else '---',
-            render_to_string('repeaters/partials/attempt_history.html', {'record': record}),
+            formatted['state'],
+            formatted['url'],
+            formatted['last_checked'],
+            formatted['next_attempt_at'],
+            formatted['attempts'],
             self._make_view_payload_button(record.get_id),
             self._make_resend_payload_button(record.get_id),
         ]
@@ -285,27 +288,18 @@ class SQLRepeatRecordReport(BaseRepeatRecordReport):
     slug = 'repeat_record_report'
 
     def _make_row(self, record):
+        formatter = SimpleFormat(self.timezone, date_format='%b %d, %Y %H:%M:%S %Z')
+        formatted = formatter.format_record(record)
         checkbox = format_html(
             '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
             record.pk)
-        if record.attempts:
-            # Use prefetched `record.attempts` instead of requesting a
-            # different queryset
-            created_at = self._format_date(list(record.attempts)[-1].created_at)
-        else:
-            created_at = '---'
-        if record.repeater.next_attempt_at:
-            next_attempt_at = self._format_date(record.repeater.next_attempt_at)
-        else:
-            next_attempt_at = '---'
         row = [
             checkbox,
-            self._make_state_label(record),
-            record.repeater.repeater.get_url(record),
-            created_at,
-            next_attempt_at,
-            render_to_string('repeaters/partials/attempt_history.html',
-                             {'record': record}),
+            formatted['state'],
+            formatted['url'],
+            formatted['last_checked'],
+            formatted['next_attempt_at'],
+            formatted['attempts'],
             self._make_view_payload_button(record.pk),
             self._make_resend_payload_button(record.pk),
         ]
