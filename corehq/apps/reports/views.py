@@ -148,7 +148,7 @@ from corehq.form_processor.utils.xform import resave_form
 from corehq.motech.repeaters.dbaccessors import (
     get_repeat_records_by_payload_id,
 )
-from corehq.motech.repeaters.views.repeat_record_format import SimpleFormat
+from corehq.motech.repeaters.views.repeat_record_display import RepeatRecordDisplay
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.couch import get_document_or_404
 from corehq.util.timezones.conversions import ServerTime
@@ -1200,9 +1200,8 @@ class CaseDataView(BaseProjectReportSectionView):
             product_tuples.sort(key=lambda x: x[0])
             ledger_map[section] = product_tuples
 
-        formatter = SimpleFormat(timezone, date_format=DATE_FORMAT)
         repeat_records = [
-            formatter.format_record(record)
+            RepeatRecordDisplay(record, timezone, date_format=DATE_FORMAT)
             for record in get_repeat_records_by_payload_id(self.domain, self.case_id)
         ]
 

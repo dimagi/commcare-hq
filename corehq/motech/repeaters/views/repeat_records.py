@@ -34,7 +34,7 @@ from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
-from .repeat_record_format import SimpleFormat
+from .repeat_record_display import RepeatRecordDisplay
 
 from ..const import (
     RECORD_CANCELLED_STATE,
@@ -198,18 +198,17 @@ class BaseRepeatRecordReport(GenericTabularReport):
         )
 
     def _make_row(self, record):
-        formatter = SimpleFormat(self.timezone, date_format='%b %d, %Y %H:%M:%S %Z')
-        formatted = formatter.format_record(record)
+        display = RepeatRecordDisplay(record, self.timezone, date_format='%b %d, %Y %H:%M:%S %Z')
         checkbox = format_html(
             '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
             record.record_id)
         row = [
             checkbox,
-            formatted['state'],
-            formatted['url'],
-            formatted['last_checked'],
-            formatted['next_attempt_at'],
-            formatted['attempts'],
+            display.state,
+            display.url,
+            display.last_checked,
+            display.next_attempt_at,
+            display.attempts,
             self._make_view_payload_button(record.record_id),
             self._make_resend_payload_button(record.record_id),
         ]

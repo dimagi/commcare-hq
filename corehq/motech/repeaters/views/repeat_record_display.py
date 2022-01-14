@@ -11,21 +11,38 @@ from corehq.motech.repeaters.const import (
 from corehq.util.timezones.conversions import ServerTime
 
 
-class SimpleFormat:
-    def __init__(self, timezone, date_format="%Y-%m-%d %H:%M"):
+class RepeatRecordDisplay:
+    def __init__(self, record, timezone, date_format="%Y-%m-%d %H:%M"):
+        self.record = record
         self.timezone = timezone
         self.date_format = date_format
 
-    def format_record(self, record):
-        url = record.repeater.get_url(record) if record.repeater else _('Unable to generate url for record')
-        return {
-            'id': record.record_id,
-            'last_checked': self._format_date(record.last_checked),
-            'next_attempt_at': self._format_date(record.next_attempt_at),
-            'url': url,
-            'state': format_html('<span class="label label-{}">{}</span>', *_get_state(record)),
-            'attempts': render_to_string('repeaters/partials/attempt_history.html', {'record': record}),
-        }
+    @property
+    def record_id(self):
+        return self.record.record_id
+
+    @property
+    def last_checked(self):
+        return self._format_date(self.record.last_checked)
+
+    @property
+    def next_attempt_at(self):
+        return self._format_date(self.record.next_attempt_at)
+
+    @property
+    def url(self):
+        if self.record.repeater:
+            return self.record.repeater.get_url(self.record)
+        else:
+            return _('Unable to generate url for record')
+
+    @property
+    def state(self):
+        return format_html('<span class="label label-{}">{}</span>', *_get_state_tuple(self.record))
+
+    @property
+    def attempts(self):
+        return render_to_string('repeaters/partials/attempt_history.html', {'record': self.record})
 
     def _format_date(self, date):
         if not date:
@@ -33,7 +50,7 @@ class SimpleFormat:
         return ServerTime(date).user_time(self.timezone).done().strftime(self.date_format)
 
 
-def _get_state(record):
+def _get_state_tuple(record):
     if record.state == RECORD_SUCCESS_STATE:
         label_cls = 'success'
         label_text = _('Success')
