@@ -5,7 +5,6 @@ from django.http import (
     JsonResponse,
     QueryDict,
 )
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
@@ -13,7 +12,6 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
-import pytz
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
@@ -34,14 +32,8 @@ from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
-from .repeat_record_display import RepeatRecordDisplay
 
-from ..const import (
-    RECORD_CANCELLED_STATE,
-    RECORD_FAILURE_STATE,
-    RECORD_PENDING_STATE,
-    RECORD_SUCCESS_STATE,
-)
+from ..const import RECORD_CANCELLED_STATE
 from ..dbaccessors import (
     get_cancelled_repeat_record_count,
     get_paged_repeat_records,
@@ -50,6 +42,7 @@ from ..dbaccessors import (
     get_repeat_records_by_payload_id,
 )
 from ..models import RepeatRecord, are_repeat_records_migrated, is_queued
+from .repeat_record_display import RepeatRecordDisplay
 
 
 class BaseRepeatRecordReport(GenericTabularReport):
@@ -109,28 +102,6 @@ class BaseRepeatRecordReport(GenericTabularReport):
         </button>
         ''', record_id)
 
-    def _get_state(self, record):
-        if record.state == RECORD_SUCCESS_STATE:
-            label_cls = 'success'
-            label_text = _('Success')
-        elif record.state == RECORD_PENDING_STATE:
-            label_cls = 'warning'
-            label_text = _('Pending')
-        elif record.state == RECORD_CANCELLED_STATE:
-            label_cls = 'danger'
-            label_text = _('Cancelled')
-        elif record.state == RECORD_FAILURE_STATE:
-            label_cls = 'danger'
-            label_text = _('Failed')
-        else:
-            label_cls = ''
-            label_text = ''
-
-        return (label_cls, label_text)
-
-    def _make_state_label(self, record):
-        return format_html('<span class="label label-{}">{}</span>', *self._get_state(record))
-
     @property
     def total_records(self):
         if self.payload_id:
@@ -145,10 +116,6 @@ class BaseRepeatRecordReport(GenericTabularReport):
             {'name': 'record_state', 'value': self.request.GET.get('record_state')},
             {'name': 'payload_id', 'value': self.request.GET.get('payload_id')},
         ]
-
-    def _format_date(self, date):
-        tz_utc_aware_date = pytz.utc.localize(date)
-        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M:%S %Z')
 
     @memoized
     def _get_all_records_by_payload(self):
