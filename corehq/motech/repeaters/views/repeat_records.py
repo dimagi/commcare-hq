@@ -198,7 +198,32 @@ class BaseRepeatRecordReport(GenericTabularReport):
         )
 
     def _make_row(self, record):
-        raise NotImplementedError
+        formatter = SimpleFormat(self.timezone, date_format='%b %d, %Y %H:%M:%S %Z')
+        formatted = formatter.format_record(record)
+        checkbox = format_html(
+            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
+            record.record_id)
+        row = [
+            checkbox,
+            formatted['state'],
+            formatted['url'],
+            formatted['last_checked'],
+            formatted['next_attempt_at'],
+            formatted['attempts'],
+            self._make_view_payload_button(record.record_id),
+            self._make_resend_payload_button(record.record_id),
+        ]
+
+        if self._is_cancelled(record):
+            row.append(self._make_requeue_payload_button(record.record_id))
+        elif self._is_queued(record):
+            row.append(self._make_cancel_payload_button(record.record_id))
+        else:
+            row.append(None)
+
+        if toggles.SUPPORT.enabled_for_request(self.request):
+            row.insert(2, self._payload_id_and_search_link(record.payload_id))
+        return row
 
     @property
     def headers(self):
@@ -251,69 +276,31 @@ class BaseRepeatRecordReport(GenericTabularReport):
         )
         return context
 
+    def _is_cancelled(self, record):
+        raise NotImplementedError
+
+    def _is_queued(self, record):
+        raise NotImplementedError
+
 
 class DomainForwardingRepeatRecords(BaseRepeatRecordReport):
     slug = 'couch_repeat_record_report'
 
-    def _make_row(self, record):
-        formatter = SimpleFormat(self.timezone, date_format='%b %d, %Y %H:%M:%S %Z')
-        formatted = formatter.format_record(record)
-        checkbox = format_html(
-            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
-            record.record_id)
-        row = [
-            checkbox,
-            formatted['state'],
-            formatted['url'],
-            formatted['last_checked'],
-            formatted['next_attempt_at'],
-            formatted['attempts'],
-            self._make_view_payload_button(record.record_id),
-            self._make_resend_payload_button(record.record_id),
-        ]
+    def _is_cancelled(self, record):
+        return record.cancelled and not record.succeeded
 
-        if record.cancelled and not record.succeeded:
-            row.append(self._make_requeue_payload_button(record.record_id))
-        elif not record.cancelled and not record.succeeded:
-            row.append(self._make_cancel_payload_button(record.record_id))
-        else:
-            row.append(None)
-
-        if toggles.SUPPORT.enabled_for_request(self.request):
-            row.insert(2, self._payload_id_and_search_link(record.payload_id))
-        return row
+    def _is_queued(self, record):
+        return not record.cancelled and not record.succeeded
 
 
 class SQLRepeatRecordReport(BaseRepeatRecordReport):
     slug = 'repeat_record_report'
 
-    def _make_row(self, record):
-        formatter = SimpleFormat(self.timezone, date_format='%b %d, %Y %H:%M:%S %Z')
-        formatted = formatter.format_record(record)
-        checkbox = format_html(
-            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
-            record.record_id)
-        row = [
-            checkbox,
-            formatted['state'],
-            formatted['url'],
-            formatted['last_checked'],
-            formatted['next_attempt_at'],
-            formatted['attempts'],
-            self._make_view_payload_button(record.record_id),
-            self._make_resend_payload_button(record.record_id),
-        ]
+    def _is_cancelled(self, record):
+        return record.state == RECORD_CANCELLED_STATE
 
-        if record.state == RECORD_CANCELLED_STATE:
-            row.append(self._make_requeue_payload_button(record.record_id))
-        elif is_queued(record):
-            row.append(self._make_cancel_payload_button(record.record_id))
-        else:
-            row.append(None)
-
-        if toggles.SUPPORT.enabled_for_request(self.request):
-            row.insert(2, self._payload_id_and_search_link(record.payload_id))
-        return row
+    def _is_queued(self, record):
+        return is_queued(record)
 
 
 @method_decorator(domain_admin_required, name='dispatch')
