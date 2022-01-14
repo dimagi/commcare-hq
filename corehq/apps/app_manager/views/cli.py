@@ -54,18 +54,7 @@ def direct_ccz(request, domain):
     """
 
     def error(msg, code=400):
-        return JsonResponse({'status': 'error', 'message': msg}, status_code=code)
-
-    def get_app(app_id, version, latest):
-        if version:
-            return get_build_doc_by_version(domain, app_id, version)
-        elif latest == 'build':
-            return get_latest_build_doc(domain, app_id)
-        elif latest == 'release':
-            return get_latest_released_app_doc(domain, app_id)
-        else:
-            # either latest=='save' or they didn't specify
-            return get_current_app(domain, app_id)
+        return JsonResponse({'status': 'error', 'message': msg}, status=code)
 
     app_id = request.GET.get('app_id', None)
     version = request.GET.get('version', None)
@@ -86,18 +75,36 @@ def direct_ccz(request, domain):
         except ValueError:
             return error("'version' must be an integer")
 
-    try:
-        app = get_app(app_id, version, latest)
-        if not app:
-            raise ResourceNotFound()
-        app = app if isinstance(app, Document) else wrap_app(app)
-    except (ResourceNotFound, DocTypeError):
+    app = _get_app(domain, app_id, version, latest)
+    if not app:
         return error("Application not found", code=404)
 
     lang, langs = get_langs(request, app)
 
     with report_build_time(domain, app._id, 'live_preview'):
         return get_direct_ccz(domain, app, langs, version, include_multimedia, visit_scheduler_enabled)
+
+
+def _get_app(domain, app_id, version, latest):
+    app = None
+
+    try:
+        if version:
+            app = get_build_doc_by_version(domain, app_id, version)
+        elif latest == 'build':
+            app = get_latest_build_doc(domain, app_id)
+        elif latest == 'release':
+            app = get_latest_released_app_doc(domain, app_id)
+        else:
+            # either latest=='save' or they didn't specify
+            app = get_current_app(domain, app_id)
+    except (ResourceNotFound, DocTypeError):
+        pass  # swallow error, leave app as None
+
+    if app:
+        app = app if isinstance(app, Document) else wrap_app(app)
+
+    return app
 
 
 def get_direct_ccz(domain, app, langs, version=None, include_multimedia=False, visit_scheduler_enabled=False):
@@ -116,7 +123,7 @@ def get_direct_ccz(domain, app, langs, version=None, include_multimedia=False, v
         })
         return JsonResponse(
             {'error_html': error_html},
-            status_code=400,
+            status=400,
         )
 
     app.set_media_versions()
