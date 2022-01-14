@@ -224,7 +224,7 @@ class SQLRepeater(models.Model):
         return Repeater.get(self.repeater_id)
 
     def get_url(self, record):
-        return self.repeater.get_url(record),
+        return self.repeater.get_url(record)
 
     @property
     def repeat_records_ready(self):
