@@ -148,6 +148,7 @@ from corehq.form_processor.utils.xform import resave_form
 from corehq.motech.repeaters.dbaccessors import (
     get_repeat_records_by_payload_id,
 )
+from corehq.motech.repeaters.views.repeat_record_format import SimpleFormat
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.couch import get_document_or_404
 from corehq.util.timezones.conversions import ServerTime
@@ -171,6 +172,8 @@ from .lookup import ReportLookup, get_full_report_name
 from .models import TableauVisualization, TableauServer
 from .standard import ProjectReport, inspect
 from .standard.cases.basic import CaseListReport
+
+DATE_FORMAT = "%Y-%m-%d %H:%M"
 
 # Number of columns in case property history popup
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
@@ -1197,7 +1200,11 @@ class CaseDataView(BaseProjectReportSectionView):
             product_tuples.sort(key=lambda x: x[0])
             ledger_map[section] = product_tuples
 
-        repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)
+        formatter = SimpleFormat(timezone, date_format=DATE_FORMAT)
+        repeat_records = [
+            formatter.format_record(record)
+            for record in get_repeat_records_by_payload_id(self.domain, self.case_id)
+        ]
 
         can_edit_data = self.request.couch_user.can_edit_data
         show_properties_edit = (
@@ -1234,7 +1241,7 @@ def form_to_json(domain, form, timezone):
         app_id=form.app_id,
         lang=get_language(),
     )
-    received_on = ServerTime(form.received_on).user_time(timezone).done().strftime("%Y-%m-%d %H:%M")
+    received_on = ServerTime(form.received_on).user_time(timezone).done().strftime(DATE_FORMAT)
 
     return {
         'id': form.form_id,
@@ -1590,7 +1597,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
         for operation in instance.history:
             user_date = ServerTime(operation.date).user_time(timezone).done()
             instance_history.append({
-                'readable_date': user_date.strftime("%Y-%m-%d %H:%M"),
+                'readable_date': user_date.strftime(DATE_FORMAT),
                 'readable_action': form_operations.get(operation.operation, operation.operation),
                 'user_info': get_doc_info_by_id(domain, operation.user),
             })
