@@ -391,7 +391,12 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
+        role_choices = get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
+        try:
+            self.existing_role
+        except MissingRoleException:
+            role_choices = [('none', _('(none)'))] + role_choices
+        return role_choices
 
     @property
     @memoized

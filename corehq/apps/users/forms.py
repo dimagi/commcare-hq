@@ -191,7 +191,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
     def clean_role(self):
         role = self.cleaned_data.get('role')
-        if not role and self.existing_user.is_web_user():
+        if role == 'none' and self.existing_user.is_web_user():
             raise forms.ValidationError(_('Role is required for web users.'))
         return role
 
@@ -253,14 +253,10 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
     def load_roles(self, role_choices=None, current_role=None):
         if role_choices is None:
             role_choices = []
+        self.fields['role'].choices = role_choices
 
         if current_role:
             self.initial['role'] = current_role
-        else:
-            # Admin is likely to be first in the list and is a bad default
-            role_choices = [('', '')] + role_choices
-
-        self.fields['role'].choices = role_choices
 
 
 class BaseUserInfoForm(forms.Form):
