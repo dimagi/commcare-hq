@@ -3,7 +3,6 @@ from datetime import datetime
 from unittest.mock import patch
 from uuid import uuid4
 
-from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.test import TestCase, TransactionTestCase
 from django.utils.decorators import classproperty
@@ -22,7 +21,6 @@ from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only
-from dimagi.utils.couch.database import safe_delete
 
 from .json2xml import convert_form_to_xml
 
@@ -41,18 +39,10 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_cases(cls, domain=None):
-        from couchdbkit.ext.django.loading import get_db
-        logger.debug("Deleting all Couch cases for domain %s", domain)
-        db = get_db("case")
-        assert db.dbname.startswith('test_'), db
-        cls._delete_all(db, ['CommCareCase', 'CommCareCase-Deleted'], domain)
-        FormProcessorTestUtils.delete_all_sql_cases(domain)
-
-    @classmethod
-    @unit_testing_only
-    def delete_all_sql_cases(cls, domain=None):
         logger.debug("Deleting all SQL cases for domain %s", domain)
         cls._delete_all_sql_sharded_models(CommCareCaseSQL, domain)
+
+    delete_all_sql_cases = delete_all_cases
 
     @staticmethod
     @unit_testing_only
@@ -103,37 +93,6 @@ class FormProcessorTestUtils(object):
             if domain:
                 query = query.filter(domain=domain)
             query.delete()
-
-    @staticmethod
-    @unit_testing_only
-    def _delete_all(db, doc_types, domain=None):
-        for doc_type in doc_types:
-            if domain:
-                view = 'by_domain_doc_type_date/view'
-                view_kwargs = {
-                    'startkey': [domain, doc_type],
-                    'endkey': [domain, doc_type, {}],
-                }
-            else:
-                view = 'all_docs/by_doc_type'
-                view_kwargs = {
-                    'startkey': [doc_type],
-                    'endkey': [doc_type, {}],
-                }
-            FormProcessorTestUtils._delete_all_from_view(db, view, view_kwargs)
-
-    @staticmethod
-    def _delete_all_from_view(db, view, view_kwargs=None):
-        view_kwargs = view_kwargs or {}
-        deleted = set()
-        for row in db.view(view, reduce=False, **view_kwargs):
-            doc_id = row['id']
-            if doc_id not in deleted:
-                try:
-                    safe_delete(db, doc_id)
-                    deleted.add(doc_id)
-                except ResourceNotFound:
-                    pass
 
 
 def sharded(cls):
