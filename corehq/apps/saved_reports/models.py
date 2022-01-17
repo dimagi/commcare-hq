@@ -155,6 +155,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         result = super(ReportConfig, self).to_json()
         result.update({
             'url': self.url,
+            'report_owner': self.owner.username,
             'report_name': self.report_name,
             'date_description': self.date_description,
             'datespan_filters': self.datespan_filter_choices(
