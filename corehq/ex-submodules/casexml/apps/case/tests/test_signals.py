@@ -17,14 +17,14 @@ class TestCasesReceivedSignal(TestCase):
             CommCareCaseSQL(case_id='fake2'),
         ])
         form = FormAccessorSQL.get_form(case.xform_ids[0])
+        received = []
 
-        def assert_exactly_one_case(sender, xform, cases, **kwargs):
-            global case_count
-            case_count = len(cases)
+        def receive_cases(sender, xform, cases, **kwargs):
+            received.extend(cases)
 
-        cases_received.connect(assert_exactly_one_case)
+        cases_received.connect(receive_cases)
         try:
             process_cases_with_casedb([form], case_db)
-            self.assertEqual(1, case_count)
+            self.assertEqual(len(received), 1)
         finally:
-            cases_received.disconnect(assert_exactly_one_case)
+            cases_received.disconnect(receive_cases)
