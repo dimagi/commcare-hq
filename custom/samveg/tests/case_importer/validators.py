@@ -32,7 +32,7 @@ class TestRequiredColumnsValidator(SimpleTestCase, TestFileMixin):
             errors = RequiredColumnsValidator.run(spreadsheet)
         self.assertEqual(
             errors,
-            ['Unexpected sheet uploaded']
+            ['Unexpected sheet uploaded. Either Rch_id or admission_id should be present']
         )
 
     def test_validate_required_columns(self):

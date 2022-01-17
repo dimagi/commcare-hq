@@ -40,7 +40,12 @@ class RequiredColumnsValidator(object):
         try:
             required_columns = get_required_columns(columns)
         except UnexpectedFileError:
-            return [_('Unexpected sheet uploaded')]
+            return [_(
+                'Unexpected sheet uploaded. Either {rch_identifier} or {sncu_identifier} should be present'
+            ).format(
+                rch_identifier=RCH_BENEFICIARY_IDENTIFIER,
+                sncu_identifier=SNCU_BENEFICIARY_IDENTIFIER
+            )]
 
         missing_columns = set(required_columns) - set(columns)
         if missing_columns:
