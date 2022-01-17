@@ -77,7 +77,7 @@ branches:
     - mjr/remove_export_label_markup # Matt Jan 6
     - dependabot/pip/requirements/reportlab-3.6.5  # Biyeun Jan 7
     - mk/samveg/custom-case-upload # MK Jan 11
-    - mk/samveg/add-case-prop-case-upload # MK Jan 12
+    - mk/samveg/notify-unexpected-errors # MK Jan 17
     - do/fix-date-widget-bug # Dominic Jan 11
     - cs/SC-1551-hourly-scheduled-reports+mk/support-multibar-reports # Charl Jan 12
     - cs/SC-1551-hourly-scheduled-reports # Charl Jan 12
