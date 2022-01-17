@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from corehq.elastic import SIZE_LIMIT
+from corehq.apps.es.const import SIZE_LIMIT
 
 disallowed_settings_by_es_version = {
     2: [

@@ -93,7 +93,6 @@ from memoized import memoized
 
 from corehq.elastic import (
     ES_DEFAULT_INSTANCE,
-    SIZE_LIMIT,
     ESError,
     run_query,
     count_query,
@@ -101,6 +100,7 @@ from corehq.elastic import (
 )
 
 from . import aggregations, filters, queries
+from .const import SIZE_LIMIT
 from .registry import verify_registered
 from .utils import flatten_field_dict, values_list
 

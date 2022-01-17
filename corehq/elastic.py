@@ -11,10 +11,8 @@ from corehq.util.metrics import metrics_counter
 
 
 # TODO: remove these (update where imported)
-from corehq.apps.es.const import MAX_CLAUSE_COUNT, SIZE_LIMIT  # noqa: F401
 ES_DEFAULT_INSTANCE = CLIENT_DEFAULT
 ES_EXPORT_INSTANCE = CLIENT_EXPORT
-ES_MAX_CLAUSE_COUNT = MAX_CLAUSE_COUNT
 
 
 def get_es_new():
