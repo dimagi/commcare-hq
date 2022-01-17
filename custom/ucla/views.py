@@ -112,12 +112,12 @@ def _ucla_form_modifier(form, question_ids):
                     case_type='task',
                     # Note, the case properties will not necessarily be created in the order given.
                     case_properties={
-                        'task_responsible': '/data/task_responsible',
-                        'task_due': '/data/task_due',
-                        'owner_id': '/data/owner_id',
-                        'task_risk_factor': '/data/task_risk_factor',
-                        'study_id': '/data/study_id',
-                        'patient_name': '/data/patient_name'
+                        'task_responsible': ConditionalCaseUpdate(question_path='/data/task_responsible'),
+                        'task_due': ConditionalCaseUpdate(question_path='/data/task_due'),
+                        'owner_id': ConditionalCaseUpdate(question_path='/data/owner_id'),
+                        'task_risk_factor': ConditionalCaseUpdate(question_path='/data/task_risk_factor'),
+                        'study_id': ConditionalCaseUpdate(question_path='/data/study_id'),
+                        'patient_name': ConditionalCaseUpdate(question_path='/data/patient_name')
                     },
                     close_condition=FormActionCondition(
                         answer=None,

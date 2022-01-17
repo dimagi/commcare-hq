@@ -757,20 +757,71 @@
                   "doc_type": "FormActionCondition"
                 },
                 "case_properties": {
-                  "land_ownership": "/data/farmer/land_use/land_ownership",
-                  "first_name": "/data/farmer/farmer_name/first_name",
-                  "last_name": "/data/farmer/farmer_name/last_name",
-                  "rice_farmer": "/data/farmer/rice_farmer",
-                  "crops": "/data/farmer/crops",
-                  "member_since": "/data/farmer/demographic_data/member_since",
-                  "farmer_phone_number": "/data/farmer/demographic_data/farmer_phone_number",
-                  "other_farmer": "/data/farmer/other_farmer",
-                  "farmer_address": "/data/farmer/demographic_data/farmer_address",
-                  "farmer_sex": "/data/farmer/demographic_data/farmer_sex",
-                  "corn_farmer": "/data/farmer/corn_farmer",
-                  "land_access": "/data/farmer/land_use/land_access",
-                  "farmer_age": "/data/farmer/demographic_data/farmer_age",
-                  "arable_land": "/data/farmer/land_use/total_arable_land"
+                  "land_ownership": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/land_use/land_ownership",
+                    "update_mode": "always"
+                  },
+                  "first_name": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/farmer_name/first_name",
+                    "update_mode": "always"
+                  },
+                  "last_name": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/farmer_name/last_name",
+                    "update_mode": "always"
+                  },
+                  "rice_farmer": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/rice_farmer",
+                    "update_mode": "always"
+                  },
+                  "crops": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/crops",
+                    "update_mode": "always"
+                  },
+                  "member_since": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/demographic_data/member_since""farmer_phone_number",
+                    "update_mode": "always"
+                  },
+                  "other_farmer": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/other_farmer",
+                    "update_mode": "always"
+                  },
+                  "farmer_address": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/demographic_data/farmer_address",
+                    "update_mode": "always"
+                  },
+                  "farmer_sex": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/demographic_data/farmer_sex",
+                    "update_mode": "always"
+                  },
+                  "corn_farmer": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/corn_farmer",
+                    "update_mode": "always"
+                  },
+                  "land_access": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/land_use/land_access",
+                    "update_mode": "always"
+                  },
+                  "farmer_age": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/demographic_data/farmer_age",
+                    "update_mode": "always"
+                  },
+                  "arable_land": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/land_use/total_arable_land",
+                    "update_mode": "always"
+                  }
                 },
                 "case_type": "farmer",
                 "reference_id": null,

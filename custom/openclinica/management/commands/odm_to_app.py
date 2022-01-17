@@ -261,12 +261,12 @@ class StudyEvent(StudyObject):
 
         def get_open_subcase_action():
             props = {
-                'start_date': '/data/start_date',
-                'start_time': '/data/start_time',
-                'end_date': '/data/end_date',
-                'end_time': '/data/end_time',
-                'event_type': '/data/event_type',
-                'event_repeats': '/data/event_repeats',
+                'start_date': ConditionalCaseUpdate(question_path='/data/start_date'),
+                'start_time': ConditionalCaseUpdate(question_path='/data/start_time'),
+                'end_date': ConditionalCaseUpdate(question_path='/data/end_date'),
+                'end_time': ConditionalCaseUpdate(question_path='/data/end_time'),
+                'event_type': ConditionalCaseUpdate(question_path='/data/event_type'),
+                'event_repeats': ConditionalCaseUpdate(question_path='/data/event_repeats'),
             }
             # Save all properties to the case. We will use them to pre-populate the event's update forms (see
             # StudyForm.add_form_to_module) ... but we won't use them for the export. We will use all the form

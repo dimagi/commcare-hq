@@ -151,7 +151,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             OpenSubCaseAction(
                 repeat_context='/data/repeat',
                 case_properties={
-                    'weight': '/data/repeat/group/weight',
+                    'weight': ConditionalCaseUpdate(question_path='/data/repeat/group/weight'),
                 },
                 subcase_index=0,
                 _nest=True
@@ -159,7 +159,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             OpenSubCaseAction(
                 repeat_context='/data/repeat',
                 case_properties={
-                    'height': '/data/repeat/height',
+                    'height': ConditionalCaseUpdate(question_path='/data/repeat/height'),
                 },
                 subcase_index=1,
                 _nest=True
@@ -167,7 +167,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             OpenSubCaseAction(
                 repeat_context='/data/repeat/nested_repeat',
                 case_properties={
-                    'age': '/data/repeat/nested_repeat/age',
+                    'age': ConditionalCaseUpdate(question_path='/data/repeat/nested_repeat/age'),
                 },
                 subcase_index=2,
                 _nest=False

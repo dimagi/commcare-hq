@@ -406,7 +406,7 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
     case_type = StringProperty()
     name_update = SchemaProperty(ConditionalCaseUpdate)
     reference_id = StringProperty()
-    case_properties = DictProperty()
+    case_properties = SchemaProperty(ConditionalCaseUpdate)
     repeat_context = StringProperty()
     # relationship = "child" for index to a parent case (default)
     # relationship = "extension" for index to a host case
