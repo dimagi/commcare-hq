@@ -370,8 +370,6 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'pact',
-
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.ucla',
@@ -1554,7 +1552,6 @@ COUCHDB_APPS = [
     'grapevine',
 
     # custom reports
-    'pact',
     'accounting',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
@@ -1917,7 +1914,6 @@ COUCH_CACHE_BACKENDS = [
 # Custom fully indexed domains for ReportCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
-    'pact',
     'commtrack-public-demo',
     'crs-remind',
 ]
@@ -1928,7 +1924,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 # Adding a domain will not automatically index that domain's existing forms
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
-    'pact',
 ]
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -1944,7 +1939,6 @@ CUSTOM_MODULES = [
 
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
-    'pact': 'pact',
 
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
