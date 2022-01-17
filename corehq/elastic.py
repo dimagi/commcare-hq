@@ -1,18 +1,13 @@
 from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
-from corehq.apps.es.client import CLIENT_DEFAULT, CLIENT_EXPORT, get_client
+from corehq.apps.es.client import get_client
 from corehq.apps.es.exceptions import ESError, ESShardFailure
 from corehq.apps.es.registry import registry_entry
 from corehq.util.es.elasticsearch import ElasticsearchException
 from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.files import TransientTempfile
 from corehq.util.metrics import metrics_counter
-
-
-# TODO: remove these (update where imported)
-ES_DEFAULT_INSTANCE = CLIENT_DEFAULT
-ES_EXPORT_INSTANCE = CLIENT_EXPORT
 
 
 def get_es_new():
@@ -22,19 +17,14 @@ def get_es_new():
 
 def get_es_export():
     # TODO: remove this (update where imported)
-    return get_client(client_type=CLIENT_EXPORT)
-
-
-def get_es_instance(es_instance_alias=ES_DEFAULT_INSTANCE):
-    # TODO: remove this (update where imported)
-    return get_client(client_type=es_instance_alias)
+    return get_client(for_export=True)
 
 
 def doc_exists_in_es(index_info, doc_id):
     """
     Check if a document exists
     """
-    return ElasticsearchInterface(get_es_new()).doc_exists(index_info.alias, doc_id, index_info.type)
+    return ElasticsearchInterface(get_client()).doc_exists(index_info.alias, doc_id, index_info.type)
 
 
 def send_to_elasticsearch(index_cname, doc, delete=False, es_merge_update=False):
@@ -50,7 +40,7 @@ def send_to_elasticsearch(index_cname, doc, delete=False, es_merge_update=False)
         index_info=index_info,
         doc_type=index_info.type,
         doc_id=doc_id,
-        es_getter=get_es_new,
+        es_getter=get_client,
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
                                   send_to_elasticsearch.__name__, index_cname),
         data=doc,
@@ -61,12 +51,12 @@ def send_to_elasticsearch(index_cname, doc, delete=False, es_merge_update=False)
 
 def refresh_elasticsearch_index(index_cname):
     index_info = registry_entry(index_cname)
-    es = get_es_new()
+    es = get_client()
     es.indices.refresh(index=index_info.alias)
 
 
-def run_query(index_cname, q, es_instance_alias=ES_DEFAULT_INSTANCE):
-    es_instance = get_es_instance(es_instance_alias)
+def run_query(index_cname, q, for_export=False):
+    es_instance = get_client(for_export=for_export)
     es_interface = ElasticsearchInterface(es_instance)
     index_info = registry_entry(index_cname)
     try:
@@ -81,7 +71,7 @@ def mget_query(index_cname, ids):
     if not ids:
         return []
 
-    es_interface = ElasticsearchInterface(get_es_new())
+    es_interface = ElasticsearchInterface(get_client())
     index_info = registry_entry(index_cname)
     try:
         return es_interface.get_bulk_docs(index_info.alias, index_info.type, ids)
@@ -115,13 +105,13 @@ def iter_es_docs_from_query(query):
     return ScanResult(query.count(), iter_export_docs())
 
 
-def scroll_query(index_cname, query, es_instance_alias=ES_DEFAULT_INSTANCE, **kw):
+def scroll_query(index_cname, query, for_export=False, **kw):
     """Perfrom a scrolling search, yielding each doc until the entire context
     is exhausted.
 
     :param index_cname: Canonical (registered) name of index to search.
     :param query: Dict, raw search query.
-    :param es_instance_alias: Name of Elastic instance (for interface instantiation).
+    :param for_export: See `corehq.apps.es.client.get_client()`
     :param **kw: Additional scroll keyword arguments. Valid options:
                  `size`: Integer, scroll size (number of documents per "scroll")
                  `scroll`: String, time value specifying how long the Elastic
@@ -131,7 +121,7 @@ def scroll_query(index_cname, query, es_instance_alias=ES_DEFAULT_INSTANCE, **kw
     if not set(kw).issubset(valid_kw):
         raise ValueError(f"invalid keyword args: {set(kw) - valid_kw}")
     index_info = registry_entry(index_cname)
-    es_interface = ElasticsearchInterface(get_es_instance(es_instance_alias))
+    es_interface = ElasticsearchInterface(get_client(for_export=for_export))
     try:
         for results in es_interface.iter_scroll(index_info.alias, index_info.type,
                                                 body=query, **kw):
@@ -144,7 +134,7 @@ def scroll_query(index_cname, query, es_instance_alias=ES_DEFAULT_INSTANCE, **kw
 
 def count_query(index_cname, q):
     index_info = registry_entry(index_cname)
-    es_interface = ElasticsearchInterface(get_es_new())
+    es_interface = ElasticsearchInterface(get_client())
     return es_interface.count(index_info.alias, index_info.type, q)
 
 

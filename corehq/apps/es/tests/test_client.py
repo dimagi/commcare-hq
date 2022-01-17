@@ -3,13 +3,7 @@ from django.test import SimpleTestCase, override_settings
 from corehq.util.es.elasticsearch import Elasticsearch
 
 from .utils import es_test
-from ..client import (
-    CLIENT_DEFAULT,
-    CLIENT_EXPORT,
-    CLIENT_TYPES,
-    get_client,
-    _elastic_hosts,
-)
+from ..client import get_client, _elastic_hosts
 
 
 @override_settings(ELASTICSEARCH_HOSTS=["localhost"],
@@ -48,18 +42,8 @@ class TestClient(SimpleTestCase):
     def test_get_client(self):
         self.assertIsInstance(get_client(), Elasticsearch)
 
-    def test_get_client_type_default(self):
-        # depends on memoized client
-        self.assertIs(get_client(), get_client(client_type=CLIENT_DEFAULT))
-
-    def test_get_client_type_export(self):
-        export_client = get_client(client_type=CLIENT_EXPORT)
+    def test_get_client_for_export(self):
+        export_client = get_client(for_export=True)
         self.assertIsInstance(export_client, Elasticsearch)
         # depends on memoized client
         self.assertIsNot(export_client, get_client())
-
-    def test_get_client_type_invalid(self):
-        invalid_type = "not_a_client_type"
-        self.assertNotIn(invalid_type, CLIENT_TYPES)
-        with self.assertRaises(ValueError):
-            get_client(client_type=invalid_type)

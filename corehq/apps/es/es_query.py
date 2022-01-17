@@ -92,7 +92,6 @@ from copy import deepcopy
 from memoized import memoized
 
 from corehq.elastic import (
-    ES_DEFAULT_INSTANCE,
     ESError,
     run_query,
     count_query,
@@ -136,7 +135,7 @@ class ESQuery(object):
         "match_all": filters.match_all()
     }
 
-    def __init__(self, index=None, es_instance_alias=ES_DEFAULT_INSTANCE):
+    def __init__(self, index=None, for_export=False):
         if index is not None:
             self.index = index
         # verify index canonical name
@@ -144,7 +143,7 @@ class ESQuery(object):
 
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
-        self.es_instance_alias = es_instance_alias
+        self.for_export = for_export
         self.es_query = {
             "query": {
                 "bool": {
@@ -203,7 +202,7 @@ class ESQuery(object):
         raw = run_query(
             query.index,
             query.raw_query,
-            es_instance_alias=self.es_instance_alias,
+            for_export=self.for_export,
         )
         return ESQuerySet(raw, deepcopy(query))
 
@@ -218,7 +217,7 @@ class ESQuery(object):
         Run the query against the scroll api. Returns an iterator yielding each
         document that matches the query.
         """
-        result = scroll_query(self.index, self.raw_query, es_instance_alias=self.es_instance_alias)
+        result = scroll_query(self.index, self.raw_query, for_export=self.for_export)
         for r in result:
             yield ESQuerySet.normalize_result(self, r)
 

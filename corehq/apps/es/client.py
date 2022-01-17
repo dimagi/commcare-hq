@@ -6,49 +6,37 @@ from corehq.util.es.elasticsearch import Elasticsearch
 from .utils import ElasticJSONSerializer
 
 
-CLIENT_DEFAULT = "default"
-CLIENT_EXPORT = "export"
-
-
-def get_client(client_type=CLIENT_DEFAULT):
+def get_client(for_export=False):
     """Get an elasticsearch client instance.
 
-    :param client_type: (optional) specifies the type of elasticsearch client
-                        needed (default=`CLIENT_DEFAULT`)
+    :param for_export: (optional boolean) specifies whether the returned
+                          client should be optimized for slow export queries.
     :returns: `elasticsearch.Elasticsearch` instance.
     """
-    if client_type not in CLIENT_TYPES:
-        raise ValueError(f"invalid client type: {client_type!r} "
-                         f"(must be one of {list(CLIENT_TYPES)})")
-    return CLIENT_TYPES[client_type]()
+    if for_export:
+        return _client_for_export()
+    return _client_default()
 
 
 @memoized
 def _client_default():
     """
     Get a configured elasticsearch client instance.
-    Returns an elasticsearch.Elasticsearch instance.
     """
     return _client()
 
 
 @memoized
-def _client_export():
+def _client_for_export():
     """
-    Get an elasticsearch client with settings geared towards exports.
-    Returns an elasticsearch.Elasticsearch instance.
+    Get an elasticsearch client with settings more tolerant of slow queries
+    (better suited for large exports).
     """
     return _client(
         retry_on_timeout=True,
         max_retries=3,
         timeout=300,  # query timeout in seconds
     )
-
-
-CLIENT_TYPES = {
-    CLIENT_DEFAULT: _client_default,
-    CLIENT_EXPORT: _client_export,
-}
 
 
 def _client(**override_kw):
