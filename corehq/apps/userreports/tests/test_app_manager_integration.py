@@ -8,6 +8,7 @@ from unittest.mock import patch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
+from corehq.apps.app_manager.models import ConditionalCaseUpdate
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
@@ -41,7 +42,7 @@ class AppManagerDataSourceConfigTest(TestCase):
         f0.source = get_simple_xform()
         f0.name = {'en': 'Main Form'}
         factory.form_requires_case(f0, case_type=cls.case_type, update={
-            cp: '/data/{}'.format(cp) for cp in cls.case_properties.keys()
+            cp: ConditionalCaseUpdate(question_path='/data/{}'.format(cp)) for cp in cls.case_properties.keys()
         })
         cls.main_form = f0
         # create another module/form to generate a parent case relationship

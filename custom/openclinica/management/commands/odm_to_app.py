@@ -97,10 +97,10 @@ class StudyObject(object):
 class Study(StudyObject):
 
     case_update = {
-        CC_STUDY_SUBJECT_ID: '/data/' + CC_STUDY_SUBJECT_ID,
-        CC_DOB: '/data/' + CC_DOB,
-        CC_SEX: '/data/' + CC_SEX,
-        CC_ENROLLMENT_DATE: '/data/' + CC_ENROLLMENT_DATE,
+        CC_STUDY_SUBJECT_ID: ConditionalCaseUpdate(question_path='/data/' + CC_STUDY_SUBJECT_ID),
+        CC_DOB: ConditionalCaseUpdate(question_path='/data/' + CC_DOB),
+        CC_SEX: ConditionalCaseUpdate(question_path='/data/' + CC_SEX),
+        CC_ENROLLMENT_DATE: ConditionalCaseUpdate(question_path='/data/' + CC_ENROLLMENT_DATE),
     }
 
     def __init__(self, defn, meta):
@@ -149,7 +149,7 @@ class Study(StudyObject):
                 condition=FormActionCondition(type='always')
             )
             reg_form.actions.update_case = UpdateCaseAction(
-                update=ConditionalCaseUpdate(question_path=self.case_update),
+                update=self.case_update,
                 condition=FormActionCondition(type='always')
             )
 
