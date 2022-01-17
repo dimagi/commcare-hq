@@ -494,8 +494,7 @@ def get_repeaters_for_type_in_domain(domain, repeater_types):
     """
     repeaters = get_repeaters_by_domain(domain)
     if repeater_types:
-        return [repeater for repeater in get_repeaters_by_domain(domain)
-                if isinstance(repeater, repeater_types)]
+        return [repeater for repeater in repeaters if isinstance(repeater, repeater_types)]
     return repeaters
 
 
