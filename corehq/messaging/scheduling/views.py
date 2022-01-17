@@ -29,6 +29,7 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
 )
+from django.utils.html import format_html
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
@@ -771,13 +772,9 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @property
     def help_text(self):
-        return _("""
-            For information on Conditional Alerts, see the
-            <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts">
-                Conditional Alerts
-            </a>
-            help page.
-        """)
+        help_url = 'https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts'
+        link = format_html('<a target="_blank" href="{}">{}</a>', help_url, _("Conditional Alerts"))
+        return format_html(_('For information on Conditional Alerts, see the {} help page.'), link)
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_jquery_ui
