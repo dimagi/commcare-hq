@@ -77,7 +77,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
             name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             external_id=None
         )
-        self.form.actions.open_case.condition.type = 'name_update'
+        self.form.actions.open_case.condition.type = 'always'
         self.form.actions.update_case = UpdateCaseAction(
             update={'question1': ConditionalCaseUpdate(question_path='/data/question1')})
         self.form.actions.update_case.condition.type = 'always'

@@ -182,7 +182,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         subcase_node.insert(0, self.subcase_block.elem)
         self.subcase_block.add_create_block(
             relevance=self.xform.action_relevance(action.open_condition),
-            case_name=self.subcase.name_update.question_path,
+            case_name=self.subcase.case_name,
             case_type=self.subcase.case_type,
             delay_case_id=bool(self.subcase.repeat_context),
             autoset_owner_id=autoset_owner_id_for_advanced_action(action),

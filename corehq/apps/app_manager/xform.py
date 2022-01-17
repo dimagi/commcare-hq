@@ -979,16 +979,10 @@ class XForm(WrappedNode):
     def resolve_path(self, path, path_context=""):
         '''
             input: path with type ConditionalCaseUpdate
-            output: typen str
+            output: type str
         '''
-        try:
-            path_str = path.question_path
-        except AttributeError:
-            path_str = path
-        try:
-            path_context_str = path_context.question_path
-        except AttributeError:
-            path_context_str = path_context
+        path_str = getattr(path, "question_path", path)
+        path_context_str = getattr(path_context, "question_path", path_context)
         if path_str == "":
             return path_context_str
         elif path_str is None:
