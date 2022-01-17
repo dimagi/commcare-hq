@@ -135,7 +135,8 @@ class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
         row_num = 1
         import_context = {}
 
-        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context)
+        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, raw_row,
+                                                            import_context=import_context)
 
         self.assertEqual(
             import_context['counter']['watson']['Call1'],
@@ -149,7 +150,8 @@ class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
         # initialize context to replicate limit reached
         import_context = {'counter': {raw_row[OWNER_NAME]: {'Call1': ROW_LIMIT_PER_OWNER_PER_CALL_TYPE}}}
 
-        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context)
+        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, raw_row,
+                                                            import_context=import_context)
 
         self.assertEqual(
             [error.title for error in errors],
@@ -162,7 +164,7 @@ class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
         raw_row.pop(OWNER_NAME)
         row_num = 1
 
-        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, raw_row, {})
+        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context={})
 
         self.assertEqual(
             [error.title for error in errors],

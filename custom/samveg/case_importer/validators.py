@@ -13,7 +13,7 @@ from custom.samveg.case_importer.exceptions import (
     UnexpectedFileError,
     UploadLimitReachedError,
 )
-from custom.samveg.case_importer.operations import BaseOperation
+from custom.samveg.case_importer.operations import BaseRowOperation
 from custom.samveg.const import (
     CALL_VALUE_FORMAT,
     OWNER_NAME,
@@ -26,7 +26,7 @@ from custom.samveg.const import (
 )
 
 
-class RequiredColumnsValidator(BaseOperation):
+class RequiredColumnsValidator(object):
     @classmethod
     def run(cls, spreadsheet):
         errors = []
@@ -50,7 +50,7 @@ class RequiredColumnsValidator(BaseOperation):
         return error_messages
 
 
-class RequiredValueValidator(BaseOperation):
+class RequiredValueValidator(BaseRowOperation):
     @classmethod
     def run(cls, row_num, raw_row, fields_to_update, **kwargs):
         error_messages = []
@@ -79,7 +79,7 @@ class RequiredValueValidator(BaseOperation):
         return error_messages
 
 
-class CallValidator(BaseOperation):
+class CallValidator(BaseRowOperation):
     @classmethod
     def run(cls, row_num, raw_row, fields_to_update, **kwargs):
         error_messages = []
@@ -103,9 +103,10 @@ class CallValidator(BaseOperation):
         return fields_to_update, error_messages
 
 
-class UploadLimitValidator(BaseOperation):
+class UploadLimitValidator(BaseRowOperation):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context):
+    def run(cls, row_num, raw_row, fields_to_update, **kwargs):
+        import_context = kwargs['import_context']
         error_messages = []
         owner_name = raw_row.get(OWNER_NAME)
         call_value, call_number = _get_latest_call_value_and_number(raw_row)
