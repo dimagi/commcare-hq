@@ -11,7 +11,6 @@ from nose.plugins.attrib import attr
 from nose.tools import nottest
 from unittest import skipIf, skipUnless
 
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
@@ -42,9 +41,11 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_cases(cls, domain=None):
+        from couchdbkit.ext.django.loading import get_db
         logger.debug("Deleting all Couch cases for domain %s", domain)
-        assert CommCareCase.get_db().dbname.startswith('test_')
-        cls._delete_all(CommCareCase.get_db(), ['CommCareCase', 'CommCareCase-Deleted'], domain)
+        db = get_db("case")
+        assert db.dbname.startswith('test_'), db
+        cls._delete_all(db, ['CommCareCase', 'CommCareCase-Deleted'], domain)
         FormProcessorTestUtils.delete_all_sql_cases(domain)
 
     @classmethod

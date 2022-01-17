@@ -929,7 +929,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @property
     def actions(self):
-        """For compatability with CommCareCase. Please use transactions when possible"""
+        """DEPRECATED use transactions instead"""
         return self.non_revoked_transactions
 
     def _get_unsaved_transaction_for_form(self, form_id):
