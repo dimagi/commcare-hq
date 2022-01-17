@@ -4310,10 +4310,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         return reverse('app_aware_restore', args=[self.domain, self._id])
 
     @absolute_url_property
-    def form_record_url(self):
-        return '/a/%s/api/custom/pact_formdata/v1/' % self.domain
-
-    @absolute_url_property
     def hq_profile_url(self):
         # RemoteApp already has a property called "profile_url",
         # Application.profile_url just points here to stop the conflict
