@@ -117,7 +117,7 @@ class Command(BaseCommand):
                         case_tag='open_{0}_{1}'.format(subcase.case_type, i + 1),
                         name_update=ConditionalCaseUpdate(question_path=subcase.name_update.question_path),
                         open_condition=subcase.condition,
-                        case_properties=subcase.case_properties,  # TODO: confirm proper format
+                        case_properties=subcase.case_properties,
                         repeat_context=subcase.repeat_context,
                         case_indices=[CaseIndex(
                             tag=base_action.case_tag if base_action else '',

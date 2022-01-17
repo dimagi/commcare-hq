@@ -503,9 +503,7 @@ class XFormCaseBlock(object):
         update_mapping = {}
         attachments = {}
         for key, value in updates.items():
-            from corehq.apps.app_manager.models import ConditionalCaseUpdate
-            if type(value) is ConditionalCaseUpdate:
-                value = value.question_path
+            value = getattr(value, "question_path", value)
             if key == 'name':
                 key = 'case_name'
             if self.is_attachment(value):
@@ -1003,13 +1001,9 @@ class XForm(WrappedNode):
             return "%s/%s" % (path_context_str, path_str)
 
     def hashtag_path(self, path):
-        from corehq.apps.app_manager.models import ConditionalCaseUpdate
-        if isinstance(path, ConditionalCaseUpdate):
-            for hashtag, replaces in hashtag_replacements:
-                path = re.sub(replaces, hashtag, path.question_path)
-        else:
-            for hashtag, replaces in hashtag_replacements:
-                path = re.sub(replaces, hashtag, path)
+        path = getattr(path, "question_path", path)
+        for hashtag, replaces in hashtag_replacements:
+            path = re.sub(replaces, hashtag, path)
         return path
 
     @requires_itext(list)
