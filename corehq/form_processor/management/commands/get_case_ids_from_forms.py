@@ -27,6 +27,7 @@ class Command(BaseCommand):
         print(f"Writing data to {output_path}")
         with open(output_path, 'w') as out:
             writer = csv.writer(out)
+            writer.writerow(["form_id", "case_id"])
             for form_id, case_ids in _get_case_ids(with_progress_bar(form_ids)):
                 for case_id in case_ids:
                     writer.writerow([form_id, case_id])
