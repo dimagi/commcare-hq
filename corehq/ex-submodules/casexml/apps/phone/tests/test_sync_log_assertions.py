@@ -5,7 +5,7 @@ from django.test import TestCase
 from unittest.mock import patch
 
 from casexml.apps.case.const import CASE_ACTION_UPDATE
-from casexml.apps.phone.models import CaseState, IndexTree, SimplifiedSyncLog
+from casexml.apps.phone.models import IndexTree, SimplifiedSyncLog
 
 from corehq.form_processor.models import CaseAction, CommCareCaseSQL
 from corehq.form_processor.tests.utils import create_form_for_test, sharded
@@ -48,7 +48,6 @@ class SyncLogAssertionTest(TestCase):
             owner_ids_on_phone={'user1'}
         )
 
-        dependent_case_state = CaseState(case_id="d1", indices=[])
         xform_id = uuid.uuid4().hex
         xform = create_form_for_test("domain", form_id=xform_id, save=False)
         form_actions = [CaseAction(
@@ -60,4 +59,4 @@ class SyncLogAssertionTest(TestCase):
             parent_case = CommCareCaseSQL(case_id='d1')
             # before this test was added, the following call raised a ValueError on legacy logs.
             sync_log.update_phone_lists(xform, [parent_case])
-            self.assertIn(dependent_case_state, sync_log.test_only_get_dependent_cases_on_phone())
+            self.assertIn("d1", sync_log.dependent_case_ids_on_phone)

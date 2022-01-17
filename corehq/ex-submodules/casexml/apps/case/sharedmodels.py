@@ -34,13 +34,7 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema):
 
         :return: referenced case
         """
-        if not hasattr(self, "_case"):
-            from casexml.apps.case.models import CommCareCase
-            if self.referenced_id:
-                self._case = CommCareCase.get(self.referenced_id)
-            else:
-                self._case = None
-        return self._case
+        raise NotImplementedError("the couch case model is obsolete")
 
     @classmethod
     def from_case_index_update(cls, index):
@@ -108,52 +102,3 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, IsImageMixin):
         else:
             ret = cls(identifier=attachment.identifier)
         return ret
-
-
-class IndexHoldingMixIn(object):
-    """
-    Since multiple objects need this functionality, implement it as a mixin
-    """
-    
-    def has_index(self, id):
-        return id in (i.identifier for i in self.indices)
-    
-    def get_index(self, id):
-        found = [i for i in self.indices if i.identifier == id]
-        if found:
-            assert(len(found) == 1)
-            return found[0]
-        return None
-    
-    def get_index_by_ref_id(self, doc_id):
-        found = [i for i in self.indices if i.referenced_id == doc_id]
-        if found:
-            assert(len(found) == 1)
-            return found[0]
-        return None
-
-    def update_indices(self, index_update_list):
-        for index_update in index_update_list:
-            if index_update.referenced_id:
-                # NOTE: used to check the existence of the referenced
-                # case here but is moved into the pre save processing
-                pass
-            if self.has_index(index_update.identifier):
-                # update
-                index = self.get_index(index_update.identifier)
-                index.referenced_type = index_update.referenced_type
-                index.referenced_id = index_update.referenced_id
-                index.relationship = index_update.relationship
-            else:
-                # no id, no index
-                if index_update.referenced_id:
-                    self.indices.append(CommCareCaseIndex(identifier=index_update.identifier,
-                                                          referenced_type=index_update.referenced_type,
-                                                          referenced_id=index_update.referenced_id,
-                                                          relationship=index_update.relationship,))
-
-    def remove_index_by_ref_id(self, doc_id):
-        index = self.get_index_by_ref_id(doc_id)
-        if not index:
-            raise ValueError('index with id %s not found in doc %s' % (id, self._id))
-        self.indices.remove(index)

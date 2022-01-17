@@ -5,7 +5,6 @@ objects from things from xforms.
 import datetime
 
 from casexml.apps.case import const
-from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
 from dimagi.utils.parsing import string_to_utc_datetime
 
@@ -333,18 +332,6 @@ class CaseUpdate(object):
 
     def has_attachments(self):
         return bool(self.attachment_block)
-
-    def get_case_actions(self, xformdoc):
-        """
-        Gets case actions from this object. These are the actual objects that get stored
-        in the CommCareCase model (as opposed to the parser's representation of those)
-        """
-        return [
-            CommCareCaseAction.from_parsed_action(
-                self.guess_modified_on(), self.user_id, xformdoc, action
-            )
-            for action in self.actions
-        ]
 
     def __str__(self):
         return "%s: %s" % (self.version, self.id)

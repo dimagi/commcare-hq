@@ -1,10 +1,7 @@
 import uuid
 
 from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
-from casexml.apps.case.dbaccessors.related import get_reverse_indices_json
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from django.test import TestCase
@@ -183,45 +180,3 @@ class TestIndexedCaseIds(TestCase):
         )
         returned_cases = CaseAccessors(self.domain).get_indexed_case_ids([extension_id])
         self.assertItemsEqual(returned_cases, [host_id])
-
-
-class TestReverseIndexedCases(TestCase):
-
-    def setUp(self):
-        super(TestReverseIndexedCases, self).setUp()
-        self.domain = 'domain'
-        self.indexed_case_id = uuid.uuid4().hex
-        self.index = CommCareCaseIndex(
-            identifier="host",
-            referenced_type="host",
-            relationship=CASE_INDEX_EXTENSION,
-            referenced_id=self.indexed_case_id
-        )
-        self.case = CommCareCase(domain=self.domain, indices=[self.index])
-        self.case.save()
-
-    def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases()
-        FormProcessorTestUtils.delete_all_xforms()
-        super(TestReverseIndexedCases, self).tearDown()
-
-    def _delete_relationship(self):
-        del self.case.indices[0].relationship
-        self.case.save()
-
-    def test_legacy_reverse_index_json(self):
-        expected_returned_json = [{
-            'doc_type': 'CommCareCaseIndex',
-            'identifier': self.index.identifier,
-            'relationship': self.index.relationship,
-            'referenced_type': self.index.referenced_type,
-            'referenced_id': self.case._id
-        }]
-        self.assertEqual(
-            expected_returned_json,
-            get_reverse_indices_json(self.domain, self.indexed_case_id))
-
-        self._delete_relationship()
-        # it should now be a child relationship
-        expected_returned_json[0]['relationship'] = CASE_INDEX_CHILD
-        self.assertEqual(expected_returned_json, get_reverse_indices_json(self.domain, self.indexed_case_id))

@@ -267,90 +267,9 @@ class RedisLockableMixIn(object):
                 return LockManager(obj, obj_lock)
 
 
-class CouchDocLockableMixIn(RedisLockableMixIn):
-    """
-    A mixin to prevent document update conflicts and race conditions.
-    An example implementation would be:
-    
-    >>> class Patient(Document, CouchDocLockableMixIn):
-            patient_id = StringProperty()
-            last_visit = DateProperty()
-
-            @classmethod
-            def get_obj(cls, patient_id, *args, **kwargs):
-                return Patient.view("patient/by_patient_id",
-                                    key=patient_id,
-                                    include_docs=True).one()
-
-            @classmethod
-            def create_obj(cls, patient_id, *args, **kwargs):
-                obj = Patient(patient_id=patient_id)
-                obj.save()
-                return obj
-
-    >>> # Prevent race condition from creating two patients
-    >>> patient, lock = Patient.get_locked_obj("pid-1234", create=True)
-    >>> patient.last_visit = date(2014, 1, 24)
-    >>> patient.save()
-    >>> release_lock(lock, True)
-
-    >>> # Prevent doc update conflict
-    >>> patient, lock = Patient.get_locked_obj("pid-1234")
-    >>> if not patient:
-    >>>     raise RunTimeError("Patient not found")
-    >>>
-    >>> patient.last_visit = date(2014, 1, 25)
-    >>> patient.save()
-    >>> release_lock(lock, True)
-
-    >>> # Lookup using couch doc _id
-    >>> patient, lock = Patient.get_locked_obj(_id="fa98e2...")
-    >>> if not patient:
-    >>>     raise RunTimeError("Patient not found")
-    >>>
-    >>> patient.last_visit = date(2014, 1, 26)
-    >>> patient.save()
-    >>> release_lock(lock, True)
-
-    >>> # or using 'with' syntax
-
-    >>> with Patient.get_locked_obj("pid-1234", create=True) as patient:
-    ...     patient.last_visit = date(2014, 1, 24)
-    ...     patient.save()
-    ...
-    >>> # etc.
-    """
-
-    @classmethod
-    def get_obj_id(cls, obj):
-        return obj._id
-
-    @classmethod
-    def get_obj(cls, *args, **kwargs):
-        """
-        This method should lookup to the appropriate couch view using the
-        passed arguments and return the object if found, otherwise None.
-        """
-        raise NotImplementedError("Please implement this method.")
-
-    @classmethod
-    def get_obj_by_id(cls, _id):
-        return cls.get(_id)
-
-    @classmethod
-    def create_obj(cls, *args, **kwargs):
-        """
-        This method should create and return an instance of this class using the
-        passed arguments.
-        """
-        raise NotImplementedError("Please implement this method.")
-
-
 class CriticalSection(object):
     """
-    An object to facilitate the use of locking in critical sections where
-    you can't use CouchDocLockableMixIn (i.e., in cases where you don't
-    necessarily want or need a document to be created).
+    An object to facilitate the use of locking in critical sections.
 
     Sample usage:
         with CriticalSection(["my-update-key"]):

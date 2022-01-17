@@ -1902,11 +1902,10 @@ class SyncTokenReprocessingTest(BaseSyncTest):
         case_id = "should_have"
         self.device.post_changes(case_id=case_id, create=True)
         sync_log = self.device.last_sync.get_log()
-        cases_on_phone = sync_log.tests_only_get_cases_on_phone()
-        self.assertEqual({case_id}, {c.case_id for c in cases_on_phone})
+        self.assertEqual({case_id}, sync_log.case_ids_on_phone)
 
         # manually delete it and then try to update
-        sync_log.test_only_clear_cases_on_phone()
+        sync_log.case_ids_on_phone = set()
         sync_log.save()
 
         self.device.post_changes(CaseBlock.deprecated_init(
