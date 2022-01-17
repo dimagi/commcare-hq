@@ -96,7 +96,7 @@ class Command(BaseCommand):
                     else:
                         cases = ', '.join([c.case_id for c in result.cases])
                         ledgers = ', '.join([l.ledger_reference for l in result.ledgers])
-                        logger.info("Form re-processed successfully: {}:{}".format(
+                        logger.info("Form re-processed successfully: {}:{} cases={} ledgers={}".format(
                             result.form.domain, result.form.form_id, cases, ledgers
                         ))
                 if not page.has_next():
