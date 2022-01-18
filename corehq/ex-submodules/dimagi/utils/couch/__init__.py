@@ -317,20 +317,6 @@ class CriticalSection(object):
             release_lock(lock, True)
 
 
-class LooselyEqualDocumentSchema(DocumentSchema):
-    """
-    A DocumentSchema that will pass equality and hash checks if its
-    contents are the same as another document.
-    """
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self._doc == other._doc
-
-    def __hash__(self):
-        return hash(json.dumps(self._doc, sort_keys=True))
-
-
 class IncompatibleDocument(Exception):
     pass
 
