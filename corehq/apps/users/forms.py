@@ -426,7 +426,6 @@ class SetUserPasswordForm(SetPasswordForm):
     new_password1 = forms.CharField(
         label=ugettext_noop("New password"),
         widget=forms.PasswordInput(),
-        help_text='<span data-bind="text: passwordHelp, css: color">',
     )
 
     def __init__(self, project, user_id, **kwargs):
@@ -437,11 +436,8 @@ class SetUserPasswordForm(SetPasswordForm):
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
             self.fields['new_password1'].help_text = format_html_lazy(
-                ('<i class="fa fa-warning"></i>{}<br />'
-                    '<span data-bind="text: passwordHelp, css: color">'),
-                ugettext_lazy(
-                    "This password is automatically generated. "
-                    "Please copy it or create your own. It will not be shown again."))
+                '<span id="help_text" data-bind="html: passwordHelp, css: color, click: firstSuggestion">')
+
             initial_password = generate_strong_password()
 
         self.helper = FormHelper()
@@ -466,9 +462,7 @@ class SetUserPasswordForm(SetPasswordForm):
                 ),
                 hqcrispy.FormActions(
                     crispy.ButtonHolder(
-                        Submit('submit',
-                               _('Reset Password'),
-                               data_bind="enable: passwordSufficient()")
+                        Submit('submit', _('Reset Password'))
                     )
                 ),
                 css_class="check-password",
