@@ -17,6 +17,7 @@ from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
     CASE_ID,
+    UPDATE_MODE_EDIT,
     SCHEDULE_CURRENT_VISIT_NUMBER,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
     SCHEDULE_LAST_VISIT,
@@ -515,10 +516,9 @@ class XFormCaseBlock(object):
         for key, q_path in sorted(update_mapping.items()):
             resolved_path = self.xform.resolve_path(q_path)
             edit_mode_path = ''
-            if isinstance(q_path, SmartCaseUpdate):
-                if q_path.update_mode == 'edit':
-                    edit_mode_path = ' and {} != {}'.format(CaseIDXPath(session_var('case_id')).case().slash(key),
-                                                            resolved_path)
+            if isinstance(q_path, SmartCaseUpdate) and q_path.update_mode == UPDATE_MODE_EDIT:
+                case_value = CaseIDXPath(session_var('case_id')).case().slash(key)
+                edit_mode_path = f' and {case_value} != {resolved_path}'
             update_block.append(make_case_elem(key))
             nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
             if make_relative:
@@ -527,7 +527,7 @@ class XFormCaseBlock(object):
             self.xform.add_bind(
                 nodeset=nodeset,
                 calculate=resolved_path,
-                relevant=("count(%s) > 0" % resolved_path + edit_mode_path)
+                relevant=(f"count({resolved_path}) > 0" + edit_mode_path)
             )
 
         if attachments:
