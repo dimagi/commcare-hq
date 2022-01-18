@@ -12,12 +12,20 @@
             {% blocktrans %}
               CommCare recommends that you get the latest version of this app.
             {% endblocktrans %}
-          </p>
-          <p id="incompleteFormWarning" style="display: none;">
-              {% blocktrans %}
-                To keep any unsaved changes, (1) click on “Update Later”, (2) submit your changes, and (3) update by clicking on “Web Apps” at the top left of the browser page. If you don’t have any unsaved changes and would like to update, click on “Get Latest App” .
-              {% endblocktrans %}
-          </p>
+          <p>
+          <div id="incompleteFormWarning" style="display: none;">
+              <p> {% trans "To keep any unsaved changes -" %} </p>
+              <ol>
+                <li>{% trans 'Click on “Update Later”.' %}</li>
+                <li>{% trans 'Submit your changes.' %}</li>
+                <li>{% trans 'Update by clicking on “Web Apps” at the top left of the browser page.' %}</li>
+              </ol>
+              <p>
+                {% blocktrans %}
+                  If you don’t have any unsaved changes and would like to update, click on “Get Latest App”.
+                {% endblocktrans %}
+              </p>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Later" %}</button>
