@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from casexml.apps.case.signals import case_post_save
+from corehq.form_processor.signals import sql_case_post_save
 from couchforms.signals import successful_form_received
 
 from corehq.apps.locations.models import SQLLocation
@@ -68,4 +68,4 @@ def create_location_repeat_records(sender, raw=False, **kwargs):
 
 successful_form_received.connect(create_form_repeat_records)
 successful_form_received.connect(create_short_form_repeat_records)
-case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
+sql_case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
