@@ -60,6 +60,44 @@ def test_generator_create_case():
     )
 
 
+def test_generator_create_case_with_index():
+    builder = IntentCaseBuilder().create_case("123").create_index("case2", "parent_type", "child")
+
+    def _get_case(case_id):
+        assert case_id == "case2"
+        return Mock(domain=TARGET_DOMAIN, type="parent_type")
+
+    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+        _test_payload_generator(
+            intent_case=builder.get_case(), registry_mock_cases={},
+            expected_creates={"1": {"case_type": "patient", "owner_id": "123"}},
+            expected_indices={"1": {"parent": IndexAttrs("parent_type", "case2", "child")}})
+
+
+def test_generator_create_case_with_index_to_another_case_being_created():
+    create_parent = IntentCaseBuilder()\
+        .target_case(case_id="1", case_type="patient")\
+        .create_case(owner_id="123")
+
+    create_child = (
+        IntentCaseBuilder()
+        .target_case(case_id="sub1", case_type="child")
+        .create_case(owner_id="123")
+        .create_index(case_id="1", case_type="patient")
+        .get_case()
+    )
+    create_parent.set_subcases([create_child])
+
+    _test_payload_generator(
+        intent_case=create_parent.get_case(),
+        registry_mock_cases={},
+        expected_creates={
+            "1": {"case_type": "patient", "owner_id": "123"},
+            "sub1": {"case_type": "child", "owner_id": "123"}
+        },
+        expected_indices={"sub1": {"parent": IndexAttrs("patient", "1", "child")}})
+
+
 def test_generator_create_case_target_exists():
     builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val").create_case("123")
 
@@ -310,8 +348,11 @@ def _test_payload_generator(intent_case, registry_mock_cases=None,
 
 
 class DataRegistryUpdateForm:
-    def __init__(self, form, intent_case):
-        self.intent_case = intent_case
+    def __init__(self, form, primary_intent_case):
+        self.intent_cases = {
+            case.case_json['target_case_id']: case
+            for case in [primary_intent_case] + primary_intent_case.get_subcases()
+        }
         self.formxml = ElementTree.fromstring(form)
         self.cases = {
             case.get('case_id'): CaseBlock.from_xml(case)
@@ -327,7 +368,7 @@ class DataRegistryUpdateForm:
         """
         for case_id, updates in expected_updates.items():
             case = self.cases[case_id]
-            case.date_modified = self.intent_case.modified_on
+            case.date_modified = self.intent_cases[case_id].modified_on
             eq(case.update, updates)
 
     def assert_case_index(self, expected_indices):
@@ -350,7 +391,7 @@ class DataRegistryUpdateForm:
         for case_id, create in expected_creates.items():
             case = self.cases[case_id]
             eq(case.create, True)
-            eq(case.date_opened, self.intent_case.opened_on)
+            eq(case.date_opened, self.intent_cases[case_id].opened_on)
             for key, val in create.items():
                 eq(getattr(case, key), val)
 

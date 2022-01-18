@@ -57,8 +57,12 @@ class CaseRowError(Exception):
     title = ""
     message = ""
 
-    def __init__(self, column_name=None):
+    def __init__(self, column_name=None, message=None, sample=None):
         self.column_name = column_name
+        if message:
+            self.message = message
+        if sample:
+            self.sample = sample
         super(CaseRowError, self).__init__(self.message)
 
 
@@ -90,9 +94,15 @@ class InvalidParentId(CaseRowError):
 class InvalidDate(CaseRowError):
     title = ugettext_noop('Invalid Date')
     message = ugettext_lazy(
-        "Date fields were specified that caused an error during "
-        "conversion. This is likely caused by a value from Excel having "
-        "the wrong type or not being formatted properly."
+        'Required format: YYYY-MM-DD (e.g. "2021-12-31")'
+    )
+
+
+class InvalidSelectValue(CaseRowError):
+    title = ugettext_noop('Unexpected multiple choice value')
+    message = ugettext_lazy(
+        "Multiple choice values were specified that are not listed "
+        "in the valid values defined in the property's data dictionary."
     )
 
 

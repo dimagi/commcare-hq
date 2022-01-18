@@ -146,12 +146,11 @@ hqDefine("accounting/js/software_plan_version_handler", [
 
         self.init = function () {
             if (options.multiSelectField) {
-                multiselectUtils.createFullMultiselectWidget(
-                    'id_' + options.multiSelectField.slug,
-                    options.multiSelectField.titleSelect,
-                    options.multiSelectField.titleSelected,
-                    options.multiSelectField.titleSearch
-                );
+                multiselectUtils.createFullMultiselectWidget('id_' + options.multiSelectField.slug, {
+                    selectableHeaderTitle: options.multiSelectField.titleSelect,
+                    selectedHeaderTitle: options.multiSelectField.titleSelected,
+                    searchItemTitle: options.multiSelectField.titleSearch,
+                });
             }
             self.existingRoles(_.map(options.existingRoles, function (data) {
                 return role(data);

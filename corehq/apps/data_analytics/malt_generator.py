@@ -35,9 +35,14 @@ class MALTTableGenerator(object):
     def __init__(self, datespan_object_list):
         self.monthspan_list = datespan_object_list
 
-    def build_table(self):
+    def build_table(self, domains=None):
+        domains = domains or Domain.get_all()
+        for domain in domains:
+            if isinstance(domain, str):
+                domain = Domain.get_by_name(domain)
+                if not domain:
+                    continue
 
-        for domain in Domain.get_all():
             logger.info("Building MALT for {}".format(domain.name))
 
             for monthspan in self.monthspan_list:

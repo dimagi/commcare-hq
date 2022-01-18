@@ -16,6 +16,7 @@ from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 from corehq.apps.reports.filters.users import (
     ChangeActionFilter,
     ChangedByUserFilter,
+    EnterpriseUserFilter,
 )
 from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
@@ -32,7 +33,6 @@ from corehq.apps.users.audit.change_messages import (
     get_messages,
 )
 from corehq.apps.users.models import UserHistory
-from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 
@@ -125,7 +125,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         return es_query.values_list('_id', flat=True)
 
     def _get_users_es_query(self, slugs):
-        return EMWF.user_es_query(
+        return EnterpriseUserFilter.user_es_query(
             self.domain,
             slugs,
             self.request.couch_user,
@@ -195,8 +195,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     def _user_history_row(self, record, domain, timezone):
         return [
-            cached_user_id_to_username(record.user_id),
-            cached_user_id_to_username(record.changed_by),
+            record.user_repr,
+            record.changed_by_repr,
             _get_action_display(record.action),
             record.changed_via,
             self._user_history_details_cell(record.changes, domain),

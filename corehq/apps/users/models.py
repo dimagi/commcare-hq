@@ -99,7 +99,8 @@ from .models_role import (  # noqa
     UserRole,
 )
 
-MAX_LOGIN_ATTEMPTS = 5
+MAX_WEB_USER_LOGIN_ATTEMPTS = 5
+MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
 
 
 def _add_to_list(list, obj, default):
@@ -999,7 +1000,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return self.supports_lockout() and self.should_be_locked_out()
 
     def should_be_locked_out(self):
-        return self.login_attempts >= MAX_LOGIN_ATTEMPTS
+        max_attempts = MAX_WEB_USER_LOGIN_ATTEMPTS if self.is_web_user() else MAX_COMMCARE_USER_LOGIN_ATTEMPTS
+        return self.login_attempts >= max_attempts
+
+    def supports_lockout(self):
+        return True
 
     @property
     def raw_username(self):
@@ -1040,9 +1045,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def is_web_user(self):
         return self._get_user_type() == 'web'
-
-    def supports_lockout(self):
-        return self.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(self.domain)
 
     def _get_user_type(self):
         if self.doc_type == 'WebUser':
@@ -1789,6 +1791,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def is_web_user(self):
         return False
 
+    def supports_lockout(self):
+        return not self.project.disable_mobile_login_lockout
+
     def to_ota_restore_user(self, request_user=None):
         return OTARestoreCommCareUser(
             self.domain,
@@ -2432,6 +2437,13 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         for user_doc in iter_docs(cls.get_db(), user_ids):
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
+
+    def save(self, fire_signals=True, **params):
+        super().save(fire_signals=fire_signals, **params)
+        if fire_signals:
+            from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
+            for domain in self.get_domains():
+                sync_web_user_usercases_if_applicable(self, domain)
 
     def add_to_assigned_locations(self, domain, location):
         membership = self.get_domain_membership(domain)

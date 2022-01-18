@@ -302,7 +302,7 @@ class RetireUserTestCase(TestCase):
 
     def test_all_case_forms_deleted(self):
         from corehq.apps.callcenter.sync_usercase import sync_usercase
-        sync_usercase(self.commcare_user)
+        sync_usercase(self.commcare_user, self.domain)
 
         usercase_id = self.commcare_user.get_usercase_id()
 

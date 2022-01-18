@@ -12,7 +12,6 @@ from dateutil.parser import parse as parse_date
 from django.conf import settings
 from memoized import memoized
 
-from custom.m4change.models import FixtureReportResult
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.couch.database import retry_on_couch_error
@@ -64,10 +63,6 @@ DOC_TYPES_BY_NAME = {
     "fixtures": {
         "type": FixtureDataType,
         "use_domain": True
-    },
-    "m4change": {
-        "type": FixtureReportResult,
-        "view": "m4change/fixture_by_composite_key",
     },
     "receiver_wrapper_repeaters": {
         "type": Repeater,

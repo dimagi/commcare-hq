@@ -222,7 +222,7 @@ class CaseHelper:
             .case_ids(case_ids)
             .values_list('_id', 'server_modified_on', 'domain')
         )
-        return {_id: (iso_string_to_datetime(server_modified_on), domain)
+        return {_id: (iso_string_to_datetime(server_modified_on) if server_modified_on else None, domain)
                 for _id, server_modified_on, domain in results}
 
     @staticmethod
@@ -233,7 +233,7 @@ class CaseHelper:
             .case_ids(case_ids)
             .values_list('_id', 'server_modified_on', 'domain')
         )
-        return {_id: (iso_string_to_datetime(server_modified_on), domain)
+        return {_id: (iso_string_to_datetime(server_modified_on) if server_modified_on else None, domain)
                 for _id, server_modified_on, domain in results}
 
     @staticmethod

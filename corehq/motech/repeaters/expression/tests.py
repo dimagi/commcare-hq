@@ -34,13 +34,34 @@ class CaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
             domain=cls.domain,
             connection_settings_id=cls.connection.id,
             configured_filter={
-                "type": "boolean_expression",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": "type",
-                },
-                "operator": "eq",
-                "property_value": "forward-me",
+                "type": "or",
+                "filters": [
+                    {
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "reduce_items",
+                            "aggregation_fn": "count",
+                            "items_expression": {
+                                "type": "get_case_forms",
+                                "case_id_expression": {
+                                    "property_name": "case_id",
+                                    "type": "property_name"
+                                }
+                            }
+                        },
+                        "operator": "gt",
+                        "property_value": 1
+                    },
+                    {
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "type",
+                        },
+                        "operator": "eq",
+                        "property_value": "forward-me",
+                    }
+                ]
             },
             configured_expression={
                 "type": "dict",
@@ -79,10 +100,15 @@ class CaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
 
     def test_filter_cases(self):
         forwardable_case = self.factory.create_case(case_type='forward-me')
-        unforwardable_case = self.factory.create_case(case_type='dont-forward-me')  # noqa
+        unforwardable_case = self.factory.create_case(case_type='dont-forward-me')
         repeat_records = self.repeat_records(self.domain).all()
         self.assertEqual(RepeatRecord.count(domain=self.domain), 1)
         self.assertEqual(repeat_records[0].payload_id, forwardable_case.case_id)
+
+        self.factory.update_case(unforwardable_case.case_id, update={'now-this-case': 'can-be-forwarded'})
+        repeat_records = self.repeat_records(self.domain).all()
+        self.assertEqual(RepeatRecord.count(domain=self.domain), 2)
+        self.assertEqual(repeat_records[1].payload_id, unforwardable_case.case_id)
 
     def test_payload(self):
         forwardable_case = self.factory.create_case(case_type='forward-me')

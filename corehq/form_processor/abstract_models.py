@@ -193,7 +193,7 @@ class AbstractCommCareCase(CaseToXMLMixin):
     def get_parent(self, identifier=None, relationship=None):
         raise NotImplementedError
 
-    def get_case_property(self, property):
+    def get_case_property(self, property, dynamic_only=False):
         raise NotImplementedError
 
     def get_closing_transactions(self):

@@ -15,7 +15,7 @@
     <session>
       <query default_search="false" storage-instance="results" template="case" url="https://www.example.com/a/test_domain/phone/search/{app_id}/">
         <data key="case_type" ref="'leaf'"/>
-        <data key="commcare_registry" ref="'a_registry'"/>
+        <data key="x_commcare_data_registry" ref="'a_registry'"/>
         <prompt key="name">
           <display>
             <text>

@@ -259,9 +259,9 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
         )
         # ensure that the rest is the same as the default config
         dest_json = self.dest_module.search_config.to_json()
-        dest_json.pop("properties")
+        dest_json.pop("properties", [])
         blank_json = CaseSearch().to_json()
-        blank_json.pop("properties")
+        blank_json.pop("properties", [])
         self.assertEqual(dest_json, blank_json)
 
     def test_overwrite_default_properties(self):
@@ -273,9 +273,9 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
         )
         # ensure that the rest is the same as the default config
         dest_json = self.dest_module.search_config.to_json()
-        dest_json.pop("default_properties")
+        dest_json.pop("default_properties", [])
         blank_json = CaseSearch().to_json()
-        blank_json.pop("default_properties")
+        blank_json.pop("default_properties", [])
         self.assertEqual(dest_json, blank_json)
 
     def test_overwrite_options(self):
@@ -296,6 +296,6 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
         # everything else should match the source config
         src_json = self.src_module.search_config.to_json()
         for config_dict in (final_json, src_json):
-            config_dict.pop("properties")
-            config_dict.pop("default_properties")
+            config_dict.pop("properties", [])
+            config_dict.pop("default_properties", [])
         self.assertEqual(final_json, src_json)

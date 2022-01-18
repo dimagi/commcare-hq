@@ -12,6 +12,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.users.util import raw_username
+from corehq.motech.const import REQUEST_METHODS, REQUEST_POST
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
@@ -51,6 +52,12 @@ class GenericRepeaterForm(forms.Form):
             required=True,
             help_text=_(f'<a href="{url}">Add/Edit Connections Settings</a>')
         )
+        self.fields['request_method'] = forms.ChoiceField(
+            label=_("HTTP Request Method"),
+            choices=[(rm, rm) for rm in REQUEST_METHODS],
+            initial=REQUEST_POST,
+            required=True,
+        )
         if self.formats and len(self.formats) > 1:
             self.fields['format'] = forms.ChoiceField(
                 required=True,
@@ -83,7 +90,7 @@ class GenericRepeaterForm(forms.Form):
         """
         Override this to change the order of the crispy form fields and add extra crispy fields
         """
-        form_fields = ["connection_settings_id"]
+        form_fields = ["connection_settings_id", "request_method"]
         if self.formats and len(self.formats) > 1:
             form_fields.append('format')
         return form_fields
