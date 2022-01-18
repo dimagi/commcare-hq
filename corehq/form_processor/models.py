@@ -707,6 +707,7 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       MessagingCaseContactMixin):
+    DOC_TYPE = 'CommCareCase'
     partition_attr = 'case_id'
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -749,7 +750,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @property
     def doc_type(self):
-        dt = 'CommCareCase'
+        dt = self.DOC_TYPE
         if self.is_deleted:
             dt += DELETED_SUFFIX
         return dt
