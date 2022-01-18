@@ -183,11 +183,6 @@ class CaseAttachment(object):
         `name` value could be considered as well, although having a non-empty
         `name` with empty `src` and `from` is an undefined state.
         https://github.com/dimagi/commcare-core/wiki/casexml20#case-action-elements
-
-        This property is named differently from
-        `casexml.apps.case.sharedmodels.CommCareCaseAttachment.is_present`
-        to disambiguate the interface of that class from this one since
-        they are not the same but are used in very similar contexts.
         """
         return not (self.attachment_src or self.attachment_from)
 
