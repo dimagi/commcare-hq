@@ -1536,8 +1536,10 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
 
     @property
     def lead_text(self):
-        return ugettext_lazy("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"
-                             .format(plan=self.current_subscription.plan_version.plan.edition))
+        return format_html(
+            _("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"),
+            plan=_(self.current_subscription.plan_version.plan.edition)
+        )
 
     @property
     def page_context(self):
