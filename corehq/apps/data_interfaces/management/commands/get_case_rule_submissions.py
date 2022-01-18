@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.data_interfaces.models import CaseRuleSubmission
 from corehq.util.argparse_types import date_type
 from corehq.util.log import with_progress_bar
+from corehq.util.queries import queryset_to_iterator
 
 
 class Command(BaseCommand):
@@ -73,7 +74,8 @@ class Command(BaseCommand):
         with open(filename, "w") as f:
             writer = csv.writer(f)
             writer.writerow(["domain", "rule_id", "created_on", "form_id", "archived"])
-            for submission in with_progress_bar(qs, count):
+            iterator = queryset_to_iterator(qs, CaseRuleSubmission, limit=10000)
+            for submission in with_progress_bar(iterator, count):
                 writer.writerow([
                     submission.domain,
                     submission.rule_id,
