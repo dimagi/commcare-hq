@@ -2156,3 +2156,10 @@ DO_NOT_REPUBLISH_DOCS = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+HOURLY_SCHEDULED_REPORT = StaticToggle(
+    'hourly-scheduled-report',
+    'Add ability to send a scheduled report hourly',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
