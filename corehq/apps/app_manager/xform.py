@@ -984,17 +984,11 @@ class XForm(WrappedNode):
 
     def resolve_path(self, path, path_context=""):
         '''
-            input: path with type SmartCaseUpdate
-            output: typen str
+            input: path with type ConditionalCaseUpdate
+            output: type str
         '''
-        try:
-            path_str = path.question_path
-        except AttributeError:
-            path_str = path
-        try:
-            path_context_str = path_context.question_path
-        except AttributeError:
-            path_context_str = path_context
+        path_str = getattr(path, "question_path", path)
+        path_context_str = getattr(path_context, "question_path", path_context)
         if path_str == "":
             return path_context_str
         elif path_str is None:
@@ -1007,13 +1001,9 @@ class XForm(WrappedNode):
             return "%s/%s" % (path_context_str, path_str)
 
     def hashtag_path(self, path):
-        from corehq.apps.app_manager.models import SmartCaseUpdate
-        if isinstance(path, SmartCaseUpdate):
-            for hashtag, replaces in hashtag_replacements:
-                path = re.sub(replaces, hashtag, path.question_path)
-        else:
-            for hashtag, replaces in hashtag_replacements:
-                path = re.sub(replaces, hashtag, path)
+        path = getattr(path, "question_path", path)
+        for hashtag, replaces in hashtag_replacements:
+            path = re.sub(replaces, hashtag, path)
         return path
 
     @requires_itext(list)
@@ -1057,7 +1047,7 @@ class XForm(WrappedNode):
         :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
         :param include_fixtures: add fixture data for questions that we can infer it from
         """
-        from corehq.apps.app_manager.models import SmartCaseUpdate
+        from corehq.apps.app_manager.models import ConditionalCaseUpdate
         from corehq.apps.app_manager.util import first_elem, extract_instance_id_from_nodeset_ref
 
         def _get_select_question_option(item):
@@ -1176,7 +1166,7 @@ class XForm(WrappedNode):
 
         save_to_case_nodes = {}
         for path, data_node in leaf_data_nodes.items():
-            if isinstance(path, SmartCaseUpdate):
+            if isinstance(path, ConditionalCaseUpdate):
                 path = path.question_path
             if path not in excluded_paths:
                 bind = self.get_bind(path)
@@ -1559,8 +1549,8 @@ class XForm(WrappedNode):
         if d.get('relevant') == 'true()':
             del d['relevant']
         d['nodeset'] = self.resolve_path(d['nodeset'])
-        from corehq.apps.app_manager.models import SmartCaseUpdate
-        if 'calculate' in d and isinstance(d['calculate'], SmartCaseUpdate):
+        from corehq.apps.app_manager.models import ConditionalCaseUpdate
+        if 'calculate' in d and isinstance(d['calculate'], ConditionalCaseUpdate):
             d['calculate'] = d['calculate'].question_path
         if len(d) > 1:
             bind = _make_elem('bind', d)
@@ -1668,7 +1658,7 @@ class XForm(WrappedNode):
                 open_case_action = actions['open_case']
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
-                    case_name=open_case_action.name_path,
+                    case_name=open_case_action.name_update.question_path,
                     case_type=form.get_case_type(),
                     autoset_owner_id=autoset_owner_id_for_open_case(actions),
                     has_case_sharing=form.get_app().case_sharing,
@@ -1733,7 +1723,7 @@ class XForm(WrappedNode):
                 subcase_node.insert(0, subcase_block.elem)
                 subcase_block.add_create_block(
                     relevance=self.action_relevance(subcase.condition),
-                    case_name=subcase.case_name,
+                    case_name=subcase.name_update.question_path,
                     case_type=subcase.case_type,
                     delay_case_id=bool(subcase.repeat_context),
                     autoset_owner_id=autoset_owner_id_for_subcase(subcase),
@@ -1993,7 +1983,7 @@ class XForm(WrappedNode):
             subcase_node.insert(0, open_case_block.elem)
             open_case_block.add_create_block(
                 relevance=self.action_relevance(action.open_condition),
-                case_name=action.name_path,
+                case_name=action.name_update.question_path,
                 case_type=action.case_type,
                 delay_case_id=bool(action.repeat_context),
                 autoset_owner_id=autoset_owner_id_for_advanced_action(action),

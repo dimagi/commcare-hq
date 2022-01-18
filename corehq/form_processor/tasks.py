@@ -25,8 +25,12 @@ def reprocess_submission(submssion_stub_id):
         except UnfinishedSubmissionStub.DoesNotExist:
             return
 
-        reprocess_unfinished_stub(stub)
-        metrics_counter('commcare.submission_reprocessing.count')
+        result = reprocess_unfinished_stub(stub)
+        if result:
+            metrics_counter('commcare.submission_reprocessing.count', tags={
+                'domain': stub.domain,
+                'status': 'error' if result.error else 'success'
+            })
 
 
 @periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)

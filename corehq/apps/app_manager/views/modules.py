@@ -72,7 +72,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
     get_all_mobile_filter_configs,
-    get_auto_filter_configurations, SmartCaseUpdate,
+    get_auto_filter_configurations, ConditionalCaseUpdate,
 )
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
@@ -1449,16 +1449,16 @@ def _init_biometrics_enroll_module(app, lang):
 
     enroll = app.new_form(module.id, form_name, lang, attachment=attachment)
     enroll.actions.open_case = OpenCaseAction(
-        name_path="/data/name",
+        name_update=ConditionalCaseUpdate(question_path="/data/name"),
         condition=FormActionCondition(type='always'),
     )
     enroll.actions.update_case = UpdateCaseAction(
         update={
-            'simprintsId': SmartCaseUpdate(question_path='/data/simprintsId'),
-            'rightIndex': SmartCaseUpdate(question_path='/data/rightIndex'),
-            'rightThumb': SmartCaseUpdate(question_path='/data/rightThumb'),
-            'leftIndex': SmartCaseUpdate(question_path='/data/leftIndex'),
-            'leftThumb': SmartCaseUpdate(question_path='/data/leftThumb'),
+            'simprintsId': ConditionalCaseUpdate(question_path='/data/simprintsId'),
+            'rightIndex': ConditionalCaseUpdate(question_path='/data/rightIndex'),
+            'rightThumb': ConditionalCaseUpdate(question_path='/data/rightThumb'),
+            'leftIndex': ConditionalCaseUpdate(question_path='/data/leftIndex'),
+            'leftThumb': ConditionalCaseUpdate(question_path='/data/leftThumb'),
         },
         condition=FormActionCondition(type='always'),
     )

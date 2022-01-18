@@ -4,7 +4,6 @@ from collections import defaultdict
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.dbaccessors import get_app_cached
@@ -32,7 +31,7 @@ from corehq.apps.es.case_search import (
     case_property_missing,
     case_property_query,
     case_property_range_query,
-    flatten_result,
+    wrap_case_search_hit,
 )
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
@@ -107,9 +106,7 @@ class _QueryHelper:
         return CaseSearchES().domain(self.domain)
 
     def wrap_case(self, es_hit, include_score=False, is_related_case=False):
-        flat = flatten_result(es_hit, include_score=include_score, is_related_case=is_related_case)
-        # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
-        return CommCareCase.wrap(flat)
+        return wrap_case_search_hit(es_hit, include_score=include_score, is_related_case=is_related_case)
 
 
 class _RegistryQueryHelper:
@@ -121,9 +118,9 @@ class _RegistryQueryHelper:
         return CaseSearchES().domain(self.query_domains)
 
     def wrap_case(self, es_hit, include_score=False, is_related_case=False):
-        flat = flatten_result(es_hit, include_score=include_score, is_related_case=is_related_case)
-        flat = {**flat, **{COMMCARE_PROJECT: flat['domain']}}
-        return CommCareCase.wrap(flat)
+        case = wrap_case_search_hit(es_hit, include_score=include_score, is_related_case=is_related_case)
+        case.case_json[COMMCARE_PROJECT] = case.domain
+        return case
 
 
 class CaseSearchCriteria:

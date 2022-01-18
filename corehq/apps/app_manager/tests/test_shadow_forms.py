@@ -3,7 +3,7 @@ from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import (
     AdvancedOpenCaseAction,
     LoadUpdateAction,
-    SmartCaseUpdate,
+    ConditionalCaseUpdate,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -31,7 +31,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
                 case_type="patient",
                 case_tag="load_0",
                 case_properties={
-                    "name": SmartCaseUpdate(question_path="/data/name")
+                    "name": ConditionalCaseUpdate(question_path="/data/name")
                 },
                 preload={
                     "/data/name": "name"
@@ -212,7 +212,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
                     case_type="patient",
                     case_tag="load_0",
                     case_properties={
-                        "name": SmartCaseUpdate(question_path="/data/name")
+                        "name": ConditionalCaseUpdate(question_path="/data/name")
                     },
                     preload={
                         "/data/name": "name"
@@ -223,7 +223,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
                     case_type="patient",
                     case_tag="load_1",
                     case_properties={
-                        "name": SmartCaseUpdate(question_path="/data/name")
+                        "name": ConditionalCaseUpdate(question_path="/data/name")
                     },
                     preload={
                         "/data/name": "name"

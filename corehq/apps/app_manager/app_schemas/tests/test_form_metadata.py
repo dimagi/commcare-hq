@@ -6,7 +6,7 @@ from corehq.apps.app_manager.app_schemas.form_metadata import (
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
-    LoadUpdateAction, SmartCaseUpdate,
+    LoadUpdateAction, ConditionalCaseUpdate,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
@@ -29,8 +29,8 @@ class TestGetFormData(TestCase):
 
         form1.source = form1_builder.tostring(pretty_print=True).decode('utf-8')
         factory.form_requires_case(form1, case_type='household', update={
-            "name": SmartCaseUpdate(question_path='/data/name'),
-            "age": SmartCaseUpdate(question_path='/data/demographics/age'),
+            "name": ConditionalCaseUpdate(question_path='/data/name'),
+            "age": ConditionalCaseUpdate(question_path='/data/demographics/age'),
         }, preload={
             '/data/polar_bears_seen': 'polar_bears_seen',
         })

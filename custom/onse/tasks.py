@@ -3,7 +3,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from time import sleep
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Iterable, List, Optional, Tuple
 from urllib.error import HTTPError
 
 import attr
@@ -13,7 +13,6 @@ from dateutil.relativedelta import relativedelta
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.dbaccessors import domain_exists
@@ -51,7 +50,7 @@ class CassiusMarcellus:  # TODO: Come up with a better name. Please!
 
     Allows us to read current case property values and build a CaseBlock
     """
-    case: Union[CommCareCase, CommCareCaseSQL]
+    case: CommCareCaseSQL
     updates: dict = attr.Factory(dict)
 
     @property
