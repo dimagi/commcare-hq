@@ -3,11 +3,12 @@ from unittest import mock
 from datetime import datetime, timedelta
 from django.test import TestCase
 
+from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tasks import reprocess_archive_stubs
 from corehq.apps.change_feed import topics
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.util.context_managers import drop_connected_signals
+from corehq.util.context_managers import drop_connected_signals, catch_signal
 from couchforms.signals import xform_archived, xform_unarchived
 
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
@@ -388,38 +389,26 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)
 
     def testSignal(self):
-        global archive_counter, restore_counter
-        archive_counter = 0
-        restore_counter = 0
-
-        def count_archive(**kwargs):
-            global archive_counter
-            archive_counter += 1
-
-        def count_unarchive(**kwargs):
-            global restore_counter
-            restore_counter += 1
-
-        xform_archived.connect(count_archive)
-        xform_unarchived.connect(count_unarchive)
-
         xml_data = self.get_xml('basic')
         result = submit_form_locally(
             xml_data,
             'test-domain',
         )
+        case_id = result.case.case_id
 
-        self.assertEqual(0, archive_counter)
-        self.assertEqual(0, restore_counter)
-
-        result.xform.archive()
-        self.assertEqual(1, archive_counter)
-        self.assertEqual(0, restore_counter)
+        with catch_signal(xform_archived) as unarchive_form_handler, \
+             catch_signal(sql_case_post_save) as archive_case_handler:
+            result.xform.archive()
+        self.assertEqual(result.xform.form_id, unarchive_form_handler.call_args[1]['xform'].form_id)
+        self.assertEqual(case_id, archive_case_handler.call_args[1]['case'].case_id)
 
         xform = self.formdb.get_form(result.xform.form_id)
-        xform.unarchive()
-        self.assertEqual(1, archive_counter)
-        self.assertEqual(1, restore_counter)
+
+        with catch_signal(xform_unarchived) as unarchive_form_handler, \
+             catch_signal(sql_case_post_save) as unarchive_case_handler:
+            xform.unarchive()
+        self.assertEqual(result.xform.form_id, unarchive_form_handler.call_args[1]['xform'].form_id)
+        self.assertEqual(case_id, unarchive_case_handler.call_args[1]['case'].case_id)
 
     def testPublishChanges(self):
         xml_data = self.get_xml('basic')
@@ -430,14 +419,14 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         xform = result.xform
         with capture_kafka_changes_context(topics.FORM_SQL) as change_context:
-            with drop_connected_signals(xform_archived):
+            with drop_connected_signals(xform_archived), drop_connected_signals(sql_case_post_save):
                 xform.archive()
         self.assertEqual(1, len(change_context.changes))
         self.assertEqual(change_context.changes[0].id, xform.form_id)
 
         xform = self.formdb.get_form(xform.form_id)
         with capture_kafka_changes_context(topics.FORM_SQL) as change_context:
-            with drop_connected_signals(xform_unarchived):
+            with drop_connected_signals(xform_unarchived), drop_connected_signals(sql_case_post_save):
                 xform.unarchive()
         self.assertEqual(1, len(change_context.changes))
         self.assertEqual(change_context.changes[0].id, xform.form_id)

@@ -6,7 +6,6 @@ from django.test import TestCase, TransactionTestCase
 from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
-from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
@@ -23,6 +22,7 @@ from corehq.form_processor.reprocess import (
     reprocess_unfinished_stub,
     reprocess_xform_error,
 )
+from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -308,7 +308,8 @@ class ReprocessSubmissionStubTests(TestCase):
 
         form = self.formdb.get_form(form_id)
 
-        with catch_signal(successful_form_received) as form_handler, catch_signal(case_post_save) as case_handler:
+        with catch_signal(successful_form_received) as form_handler, \
+             catch_signal(sql_case_post_save) as case_handler:
             submit_form_locally(
                 instance=form.get_xml(),
                 domain=self.domain,
