@@ -427,7 +427,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
             # Send the first event, and schedule the next event for the next day
             utcnow_patch.return_value = datetime(2018, 7, 1, 13, 1)
-            handle_case_timed_schedule_instance(case.case_id, instance.schedule_instance_id, self.domain)
+            handle_case_timed_schedule_instance(case.case_id, instance.schedule_instance_id.hex, self.domain)
             self.assertEqual(send_patch.call_count, 1)
 
             [instance] = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
@@ -445,7 +445,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
             # Send the second event, and deactivate because the stop date has been reached
             utcnow_patch.return_value = datetime(2018, 7, 2, 13, 1)
-            handle_case_timed_schedule_instance(case.case_id, instance.schedule_instance_id, self.domain)
+            handle_case_timed_schedule_instance(case.case_id, instance.schedule_instance_id.hex, self.domain)
             self.assertEqual(send_patch.call_count, 2)
 
             [instance] = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
