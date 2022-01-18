@@ -18,6 +18,7 @@ xform_archived.connect(rebuild_form_cases)
 xform_unarchived.connect(rebuild_form_cases)
 
 # any time a case is saved
+# deprecated and to be removed along with CommCareCase couch model
 case_post_save = Signal(providing_args=["case"])
 
 # only when one or more cases are updated as the result of an xform submission

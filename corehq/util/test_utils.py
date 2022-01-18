@@ -583,7 +583,6 @@ def _create_case(domain, **kwargs):
 
 def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None,
         drop_signals=True, owner_id=None, user_id=None, index=None):
-    from casexml.apps.case.signals import case_post_save
     from corehq.form_processor.signals import sql_case_post_save
 
     kwargs = {
@@ -605,7 +604,7 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
 
     if drop_signals:
         # this avoids having to deal with all the reminders code bootstrap
-        with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
+        with drop_connected_signals(sql_case_post_save):
             form, cases = _create_case(domain, **kwargs)
     else:
         form, cases = _create_case(domain, **kwargs)
