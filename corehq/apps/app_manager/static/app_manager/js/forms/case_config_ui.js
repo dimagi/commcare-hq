@@ -626,11 +626,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     self.update_case.update,
                     caseConfig
                 );
-                var case_preload = caseConfigUtils.propertyDictToArray(
-                    [],
+                var case_preload = caseConfigUtils.preloadDictToArray(
                     self.case_preload.preload,
-                    caseConfig,
-                    true
+                    caseConfig
                 );
                 var x = caseTransaction({
                     case_type: null, // will get overridden by the default
@@ -706,11 +704,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     self.usercase_update.update,
                     caseConfig
                 );
-                var case_preload = caseConfigUtils.propertyDictToArray(
-                    [],
+                var case_preload = caseConfigUtils.preloadDictToArray(
                     self.usercase_preload.preload,
-                    caseConfig,
-                    true
+                    caseConfig
                 );
                 return usercaseTransaction({
                     case_properties: case_properties,

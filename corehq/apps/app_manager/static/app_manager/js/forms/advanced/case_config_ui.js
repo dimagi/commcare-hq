@@ -281,7 +281,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             };
 
             self.load_update_cases = ko.observableArray(_(params.actions.load_update_cases).map(function (a) {
-                var preload = caseConfigUtils.propertyDictToArray([], a.preload, caseConfig, true);
+                var preload = caseConfigUtils.preloadDictToArray(a.preload, caseConfig);
                 var case_properties = caseConfigUtils.propertyDictToArray([], a.case_properties, caseConfig);
                 a.preload = [];
                 a.case_properties = [];

@@ -80,13 +80,13 @@ hqDefine('app_manager/js/case_config_utils', function () {
             });
             return _(suggestedProperties).difference(used_properties);
         },
-        propertyDictToArray: function (required, property_dict, caseConfig, keyIsPath) {
-            var property_array = _(property_dict).map(function (smartCaseUpdate, caseName) {
+        propertyDictToArray: function (required, property_dict, caseConfig) {
+            var property_array = _(property_dict).map(function (conditionalCaseUpdate, caseName) {
                 return {
-                    path: !keyIsPath ? smartCaseUpdate.question_path : caseName,
-                    key: !keyIsPath ? caseName : smartCaseUpdate.question_path,
+                    path: conditionalCaseUpdate.question_path,
+                    key: caseName,
                     required: false,
-                    save_only_if_edited: smartCaseUpdate.update_mode === 'edit',
+                    save_only_if_edited: conditionalCaseUpdate.update_mode === 'edit',
                 };
             });
             property_array = _(property_array).sortBy(function (property) {
@@ -110,6 +110,20 @@ hqDefine('app_manager/js/case_config_utils', function () {
                 }
             });
             return [property_dict, extra_dict];
+        },
+        preloadDictToArray: function (propertyDict, caseConfig) {
+            var propertyArray = _(propertyDict).map(function (path, caseName) {
+                return {
+                    path: caseName,
+                    key: path,
+                    required: false,
+                    save_only_if_edited: false,
+                };
+            });
+            propertyArray = _(propertyArray).sortBy(function (property) {
+                return caseConfig.questionScores[property.path] * 2 + (property.required ? 0 : 1);
+            });
+            return propertyArray;
         },
         preloadArrayToDict: function (preloadArray) {
             // i.e. {i.path: i.key for i in preloadArray if i.key or i.path}
