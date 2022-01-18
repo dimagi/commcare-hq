@@ -50,7 +50,7 @@ class TestCanUserAccessReleaseManagement(SimpleTestCase):
             return privilege == LITE_RELEASE_MANAGEMENT
 
         with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = True
+            mock_domain_has_privilege.side_effect = mock_handler
             result = can_user_access_release_management(mock_user, 'test')
 
         self.assertTrue(result)

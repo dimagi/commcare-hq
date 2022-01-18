@@ -67,9 +67,9 @@ def get_available_domains_to_link(upstream_domain_name, user, billing_account=No
     if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
         return get_available_domains_to_link_for_account(upstream_domain_name, user, billing_account)
     elif domain_has_privilege(upstream_domain_name, LITE_RELEASE_MANAGEMENT):
-        return get_available_domains_to_link_for_user(upstream_domain_name, user, True)
+        return get_available_domains_to_link_for_user(upstream_domain_name, user, should_enforce_admin=True)
     elif toggles.LINKED_DOMAINS.enabled(upstream_domain_name):
-        return get_available_domains_to_link_for_user(upstream_domain_name, user, False)
+        return get_available_domains_to_link_for_user(upstream_domain_name, user, should_enforce_admin=False)
 
     return []
 
