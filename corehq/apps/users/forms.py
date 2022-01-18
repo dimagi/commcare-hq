@@ -265,7 +265,7 @@ class BaseUserInfoForm(forms.Form):
             "<i class=\"fa fa-info-circle\"></i> "
             "Becomes default language seen in Web Apps and reports (if applicable), "
             "but does not affect mobile applications. "
-            "Supported languages for reports are en, fr (partial), and hin (partial)."
+            "Supported languages for reports are en, fra (partial), and hin (partial)."
         )
     )
 
