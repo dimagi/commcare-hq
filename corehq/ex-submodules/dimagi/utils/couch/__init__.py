@@ -1,14 +1,14 @@
+import re
+import sys
 from collections import namedtuple
 from datetime import timedelta
-from six.moves import zip_longest
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.ext.couchdbkit import DateTimeProperty, DocumentSchema
+from itertools import zip_longest
+
 from couchdbkit.exceptions import ResourceConflict
-from redis.exceptions import RedisError, LockError
-import json
-import re
-import six
-import sys
+from redis.exceptions import LockError, RedisError
+
+from dimagi.ext.couchdbkit import DateTimeProperty, DocumentSchema
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.util.metrics.lockmeter import MeteredLock
 
@@ -132,9 +132,9 @@ def release_lock(lock, degrade_gracefully):
                         message='Warning: Could not release redis lock%s' % ext,
                         exc_info=exc,
                     )
-                except:
+                except:  # noqa: E722
                     pass
-                six.reraise(*exc)
+                raise e
         except RedisError:
             if degrade_gracefully:
                 if hasattr(lock, "release_failed"):
@@ -217,8 +217,8 @@ class RedisLockableMixIn(object):
     @classmethod
     def get_locked_obj(cls, *args, **kwargs):
         """
-        Returns a two-tuple containing the object and its lock, which has 
-        already been acquired. Once you're finished processing the object, 
+        Returns a two-tuple containing the object and its lock, which has
+        already been acquired. Once you're finished processing the object,
         you should call release_lock() on the lock.
 
         Pass in a kwarg of _id to get the object with get_obj_by_id. Otherwise,
@@ -252,7 +252,7 @@ class RedisLockableMixIn(object):
                 else:
                     release_lock(lock, degrade_gracefully)
                     return LockManager(None, None)
-        except:
+        except:  # noqa: E722
             release_lock(lock, degrade_gracefully)
             raise
         else:
@@ -321,11 +321,12 @@ class IncompatibleDocument(Exception):
     pass
 
 
-def get_cached_property(couch_cls, obj_id, prop_name, expiry=12*60*60):
+def get_cached_property(couch_cls, obj_id, prop_name, expiry=12 * 60 * 60):
     """
-        A function that returns a property of any couch object. If it doesn't find the property in memcached, it does
-        the couch query to pull the object and grabs the property. Then it caches the retrieved property.
-        Note: The property needs to be pickleable
+    A function that returns a property of any couch object. If it
+    doesn't find the property in memcached, it does the couch query to
+    pull the object and grabs the property. Then it caches the retrieved
+    property. Note: The property needs to be pickleable
     """
     from django.core.cache import cache
     cache_str = "{0}:{1}:{2}".format(couch_cls.__name__, obj_id, prop_name)
