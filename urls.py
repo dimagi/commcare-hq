@@ -141,7 +141,6 @@ urlpatterns = [
     url(r'^500/$', TemplateView.as_view(template_name='500.html')),
     url(r'^404/$', TemplateView.as_view(template_name='404.html')),
     url(r'^403/$', TemplateView.as_view(template_name='403.html')),
-    url(r'^captcha/', include('captcha.urls')),
     url(r'^eula/$', redirect_to_dimagi('terms/')),
     url(r'^product_agreement/$', redirect_to_dimagi('terms/')),
     url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),
