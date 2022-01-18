@@ -3,11 +3,12 @@ from unittest import mock
 from datetime import datetime, timedelta
 from django.test import TestCase
 
+from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tasks import reprocess_archive_stubs
 from corehq.apps.change_feed import topics
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.util.context_managers import drop_connected_signals
+from corehq.util.context_managers import drop_connected_signals, catch_signal
 from couchforms.signals import xform_archived, xform_unarchived
 
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
@@ -412,14 +413,19 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(0, archive_counter)
         self.assertEqual(0, restore_counter)
 
-        result.xform.archive()
+        with catch_signal(sql_case_post_save) as case_handler:
+            result.xform.archive()
         self.assertEqual(1, archive_counter)
         self.assertEqual(0, restore_counter)
+        self.assertEqual('ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169', case_handler.call_args[1]['case'].case_id)
 
         xform = self.formdb.get_form(result.xform.form_id)
-        xform.unarchive()
+
+        with catch_signal(sql_case_post_save) as case_signal:
+            xform.unarchive()
         self.assertEqual(1, archive_counter)
         self.assertEqual(1, restore_counter)
+        self.assertEqual('ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169', case_handler.call_args[1]['case'].case_id)
 
     def testPublishChanges(self):
         xml_data = self.get_xml('basic')
