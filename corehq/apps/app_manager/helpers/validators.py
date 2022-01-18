@@ -875,7 +875,7 @@ class FormValidator(IndexedFormBaseValidator):
 
         if self.form.requires == 'none' and self.form.actions.open_case.is_active() \
                 and not self.form.actions.open_case.name_update.question_path:
-            errors.append({'type': 'name_update question_path'})
+            errors.append({'type': 'case_name required'})
 
         errors.extend(self.check_case_properties(
             all_names=self.form.actions.all_property_names(),
@@ -943,7 +943,7 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
 
             if isinstance(action, AdvancedOpenCaseAction):
                 if not action.name_update.question_path:
-                    errors.append({'type': 'name_update question_path required', 'case_tag': action.case_tag})
+                    errors.append({'type': 'case_name', 'case_tag': action.case_tag})
 
                 for case_index in action.case_indices:
                     meta = self.form.actions.actions_meta_by_tag.get(case_index.tag)
