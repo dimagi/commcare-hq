@@ -40,7 +40,7 @@ django-transfer
 django-two-factor-auth
 django-user-agents
 django-websocket-redis
-django<3.0  # we are not ready to move to django 3.0
+django<4.0  # we are not ready to move to django 3.0
 djangorestframework
 dnspython
 dropbox
