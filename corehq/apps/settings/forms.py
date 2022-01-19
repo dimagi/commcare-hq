@@ -50,15 +50,16 @@ class HQPasswordChangeForm(PasswordChangeForm):
                     data_bind="value: password, valueUpdate: 'input'",
                 ),
                 'new_password2',
+                hqcrispy.FormActions(
+                    twbscrispy.StrictButton(
+                        _('Change Password'),
+                        css_class='btn-primary',
+                        type='submit',
+                        data_bind="enable: passwordSufficient()"
+                    )
+                ),
                 css_class='check-password',
-            ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _('Change Password'),
-                    css_class='btn-primary',
-                    type='submit',
-                )
-            ),
+            )
         )
 
     def save(self, commit=True):

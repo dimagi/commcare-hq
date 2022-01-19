@@ -442,11 +442,8 @@ class SetUserPasswordForm(SetPasswordForm):
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
             self.fields['new_password1'].help_text = format_html_lazy(
-                ('<i class="fa fa-warning"></i>{}<br />'
-                    '<span data-bind="text: passwordHelp, css: color">'),
-                ugettext_lazy(
-                    "This password is automatically generated. "
-                    "Please copy it or create your own. It will not be shown again."))
+                '<span id="help_text" data-bind="html: passwordHelp, css: color, click: firstSuggestion">')
+
             initial_password = generate_strong_password()
 
         self.helper = FormHelper()
