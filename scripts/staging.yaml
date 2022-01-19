@@ -79,6 +79,7 @@ branches:
     - mk/samveg/custom-case-upload # [QA] MK Jan 11
     - mk/samveg/support-parsed-date # [QA] MK Jan 19
     - mk/samveg/treat-calls-as-mandatory # [QA] MK Jan 19
+    - mk/case-upload-fix-cols-check # MK Jan 19
     - do/fix-date-widget-bug # Dominic Jan 11
     - cs/SC-1551-hourly-scheduled-reports+mk/support-multibar-reports # Charl Jan 12
     - cs/SC-1551-hourly-scheduled-reports # Charl Jan 12
