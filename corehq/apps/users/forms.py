@@ -189,6 +189,12 @@ class BaseUpdateUserForm(forms.Form):
 class UpdateUserRoleForm(BaseUpdateUserForm):
     role = forms.ChoiceField(choices=(), required=False)
 
+    def clean_role(self):
+        role = self.cleaned_data.get('role')
+        if role == 'none' and self.existing_user.is_web_user():
+            raise forms.ValidationError(_('Role is required for web users.'))
+        return role
+
     def update_user(self, metadata_updated=False, profile_updated=False):
         is_update_successful, props_updated = super(UpdateUserRoleForm, self).update_user(save=False)
         role_updated = False
