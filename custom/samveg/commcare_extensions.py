@@ -4,6 +4,7 @@ from corehq.apps.case_importer.extension_points import (
 )
 from custom.samveg.case_importer.operations import AddCustomCaseProperties
 from custom.samveg.case_importer.validators import (
+    CallColumnsValidator,
     CallValidator,
     RequiredColumnsValidator,
     RequiredValueValidator,
@@ -11,6 +12,10 @@ from custom.samveg.case_importer.validators import (
 )
 from custom.samveg.const import SAMVEG_DOMAINS
 
+sheet_level_validations = [
+    RequiredColumnsValidator,
+    CallColumnsValidator,
+]
 
 row_level_validations = [
     RequiredValueValidator,
@@ -25,8 +30,10 @@ additional_row_level_operations = [
 
 @custom_case_upload_file_operations.extend(domains=SAMVEG_DOMAINS)
 def samveg_case_upload_checks(domain, case_upload):
+    errors = []
     with case_upload.get_spreadsheet() as spreadsheet:
-        errors = RequiredColumnsValidator.run(spreadsheet)
+        for validator in sheet_level_validations:
+            errors.extend(validator.run(spreadsheet))
     return errors
 
 
