@@ -88,4 +88,5 @@ branches:
     - mjr/add-eslint  # Matt Jan 12
     - jls/fix-no-role-500  # Jenny Jan 14
     - ml/enforce-password-policy # Minha Jan 18
+    - fr/pickleable-subject      # Farid Jan 19
 submodules: { }
