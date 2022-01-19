@@ -26,7 +26,7 @@ from custom.samveg.const import (
 )
 
 
-class RequiredColumnsValidator(object):
+class RequiredColumnsValidator:
     @classmethod
     def run(cls, spreadsheet):
         errors = []
