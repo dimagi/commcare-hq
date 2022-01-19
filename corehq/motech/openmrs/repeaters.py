@@ -258,25 +258,11 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
     atom_feed_status = OptionValue(obj_schema=AtomFeedStatus)
     openmrs_config = OptionValue(obj_schema=OpenmrsConfig)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def __eq__(self, other):
         return (
             isinstance(other, self.__class__)
             and self.id == other.id
         )
-
-    @classmethod
-    def wrap(cls, data):
-        if 'atom_feed_last_polled_at' in data:
-            data['atom_feed_status'] = {
-                ATOM_FEED_NAME_PATIENT: {
-                    'last_polled_at': data.pop('atom_feed_last_polled_at'),
-                    'last_page': data.pop('atom_feed_last_page', None),
-                }
-            }
-        return super().wrap(data)
 
     @cached_property
     def requests(self):
