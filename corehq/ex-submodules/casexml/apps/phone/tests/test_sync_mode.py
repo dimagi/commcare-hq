@@ -18,6 +18,7 @@ from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -28,7 +29,6 @@ from casexml.apps.phone.models import (
     AbstractSyncLog,
     get_properly_wrapped_sync_log,
     LOG_FORMAT_LIVEQUERY,
-    LOG_FORMAT_SIMPLIFIED,
 )
 from casexml.apps.phone.restore import (
     CachedResponse,
@@ -37,7 +37,6 @@ from casexml.apps.phone.restore import (
     RestoreCacheSettings,
 )
 from casexml.apps.case.xml import V2, V1
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
 USERNAME = "syncguy"
 OTHER_USERNAME = "ferrel"
@@ -207,7 +206,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 identifier=new_index_identifier,
             )],
         ))
-        new_index_ref = CommCareCaseIndex(
+        new_index_ref = CommCareCaseIndexSQL(
             identifier=new_index_identifier,
             referenced_type=PARENT_TYPE,
             referenced_id=new_case_id,
@@ -254,9 +253,9 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 ),
             ],
         ))
-        parent_ref_1 = CommCareCaseIndex(
+        parent_ref_1 = CommCareCaseIndexSQL(
             identifier=index_id_1, referenced_type=PARENT_TYPE, referenced_id=parent_id_1)
-        parent_ref_2 = CommCareCaseIndex(
+        parent_ref_2 = CommCareCaseIndexSQL(
             identifier=index_id_2, referenced_type=PARENT_TYPE, referenced_id=parent_id_2)
         self._testUpdate(self.device.last_sync.log.get_id, {parent_id_1: [], parent_id_2: [],
                                                 child_id: [parent_ref_1, parent_ref_2]})
@@ -285,7 +284,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 identifier=index_id,
             )],
         ))
-        parent_ref = CommCareCaseIndex(
+        parent_ref = CommCareCaseIndexSQL(
             identifier=index_id,
             referenced_type=PARENT_TYPE,
             referenced_id=parent_id,
@@ -313,7 +312,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 )],
             )
         ])
-        index_ref = CommCareCaseIndex(identifier=index_id,
+        index_ref = CommCareCaseIndexSQL(identifier=index_id,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
 
@@ -347,7 +346,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 )],
             )
         ])
-        index_ref = CommCareCaseIndex(identifier=index_id,
+        index_ref = CommCareCaseIndexSQL(identifier=index_id,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
         # should be there
@@ -468,7 +467,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 )],
             )
         ])
-        index_ref = CommCareCaseIndex(identifier=PARENT_TYPE,
+        index_ref = CommCareCaseIndexSQL(identifier=PARENT_TYPE,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
         self._testUpdate(self.device.last_sync.log._id,
@@ -505,7 +504,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 walk_related=False
             )
         ])
-        index_ref = CommCareCaseIndex(identifier=PARENT_TYPE,
+        index_ref = CommCareCaseIndexSQL(identifier=PARENT_TYPE,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=case_not_on_device.case_id)
         self._testUpdate(self.device.last_sync.log._id, {child_id: [index_ref]})
@@ -711,11 +710,11 @@ class SyncTokenUpdateTest(BaseSyncTest):
             )],
             attrs={'create': True}
         )
-        parent_ref = CommCareCaseIndex(
+        parent_ref = CommCareCaseIndexSQL(
             identifier=PARENT_TYPE,
             referenced_type=PARENT_TYPE,
             referenced_id=parent.case_id)
-        grandparent_ref = CommCareCaseIndex(
+        grandparent_ref = CommCareCaseIndexSQL(
             identifier=PARENT_TYPE,
             referenced_type=PARENT_TYPE,
             referenced_id=grandparent.case_id)
@@ -1616,7 +1615,7 @@ class MultiUserSyncTest(BaseSyncTest):
                 )],
             )
         ])
-        index_ref = CommCareCaseIndex(identifier=PARENT_TYPE,
+        index_ref = CommCareCaseIndexSQL(identifier=PARENT_TYPE,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
 
@@ -1657,8 +1656,8 @@ class MultiUserSyncTest(BaseSyncTest):
                 ],
             )
         ])
-        mom_ref = CommCareCaseIndex(identifier='mom', referenced_type='mom', referenced_id=mom_id)
-        dad_ref = CommCareCaseIndex(identifier='dad', referenced_type='dad', referenced_id=dad_id)
+        mom_ref = CommCareCaseIndexSQL(identifier='mom', referenced_type='mom', referenced_id=mom_id)
+        dad_ref = CommCareCaseIndexSQL(identifier='dad', referenced_type='dad', referenced_id=dad_id)
         # sanity check that we are in the right state
         self._testUpdate(self.guy.last_sync.log._id, {
             child_id: [mom_ref, dad_ref],
@@ -1681,7 +1680,7 @@ class MultiUserSyncTest(BaseSyncTest):
                 ]
             )
         )
-        new_mom_ref = CommCareCaseIndex(identifier='mom', referenced_type='mom', referenced_id=new_mom_id)
+        new_mom_ref = CommCareCaseIndexSQL(identifier='mom', referenced_type='mom', referenced_id=new_mom_id)
         self._testUpdate(self.guy.sync().log._id, {
             child_id: [new_mom_ref, dad_ref],
             mom_id: [],
@@ -1902,11 +1901,10 @@ class SyncTokenReprocessingTest(BaseSyncTest):
         case_id = "should_have"
         self.device.post_changes(case_id=case_id, create=True)
         sync_log = self.device.last_sync.get_log()
-        cases_on_phone = sync_log.tests_only_get_cases_on_phone()
-        self.assertEqual({case_id}, {c.case_id for c in cases_on_phone})
+        self.assertEqual({case_id}, sync_log.case_ids_on_phone)
 
         # manually delete it and then try to update
-        sync_log.test_only_clear_cases_on_phone()
+        sync_log.case_ids_on_phone = set()
         sync_log.save()
 
         self.device.post_changes(CaseBlock.deprecated_init(

@@ -5,7 +5,6 @@ objects from things from xforms.
 import datetime
 
 from casexml.apps.case import const
-from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
 from dimagi.utils.parsing import string_to_utc_datetime
 
@@ -184,11 +183,6 @@ class CaseAttachment(object):
         `name` value could be considered as well, although having a non-empty
         `name` with empty `src` and `from` is an undefined state.
         https://github.com/dimagi/commcare-core/wiki/casexml20#case-action-elements
-
-        This property is named differently from
-        `casexml.apps.case.sharedmodels.CommCareCaseAttachment.is_present`
-        to disambiguate the interface of that class from this one since
-        they are not the same but are used in very similar contexts.
         """
         return not (self.attachment_src or self.attachment_from)
 
@@ -333,18 +327,6 @@ class CaseUpdate(object):
 
     def has_attachments(self):
         return bool(self.attachment_block)
-
-    def get_case_actions(self, xformdoc):
-        """
-        Gets case actions from this object. These are the actual objects that get stored
-        in the CommCareCase model (as opposed to the parser's representation of those)
-        """
-        return [
-            CommCareCaseAction.from_parsed_action(
-                self.guess_modified_on(), self.user_id, xformdoc, action
-            )
-            for action in self.actions
-        ]
 
     def __str__(self):
         return "%s: %s" % (self.version, self.id)

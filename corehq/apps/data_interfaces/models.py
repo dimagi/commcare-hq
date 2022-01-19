@@ -645,14 +645,10 @@ class CustomMatchDefinition(CaseRuleCriteriaDefinition):
 
 
 class ClosedParentDefinition(CaseRuleCriteriaDefinition):
-    # This matches up to the identifier attribute in a CommCareCaseIndex
-    # (couch backend) or CommCareCaseIndexSQL (postgres backend) record.
+    # This matches up to the identifier attribute of CommCareCaseIndexSQL.
     identifier = models.CharField(max_length=126, default=DEFAULT_PARENT_IDENTIFIER)
 
     # This matches up to the CommCareCaseIndexSQL.relationship_id field.
-    # The framework will automatically convert it to the string used in
-    # the CommCareCaseIndex (couch backend) model for domains that use
-    # the couch backend.
     relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndexSQL.CHILD)
 
     def matches(self, case, now):
