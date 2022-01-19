@@ -1725,7 +1725,7 @@ class XForm(WrappedNode):
                     case_id=case_id
                 )
 
-                subcase_block.add_case_updates(subcase.case_properties)
+                subcase_block.add_case_updates(subcase.case_properties.question_path)
 
                 if subcase.close_condition.is_active():
                     subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
