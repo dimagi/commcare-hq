@@ -9,12 +9,12 @@ class BaseRowOperation(object):
     """
 
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, **kwargs):
+    def run(cls, row_num, raw_row, fields_to_update, import_context):
         """
         :param row_num: 1-based row number. Headers are in row zero.
         :param raw_row: Row dict.
         :param fields_to_update: Current set of fields to update
-        :param kwargs: Optional additional kwargs passed for a specific operation
+        :param import_context: import context available during import for extensions
 
         :return: fields to update, list of errors
         """
@@ -23,7 +23,7 @@ class BaseRowOperation(object):
 
 class AddCustomCaseProperties(BaseRowOperation):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, **kwargs):
+    def run(cls, row_num, raw_row, fields_to_update, import_context):
         today = datetime.now(pytz.timezone('Asia/Kolkata')).date()
         fields_to_update['last_upload_change'] = str(today)
         return fields_to_update, []

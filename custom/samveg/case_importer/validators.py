@@ -57,7 +57,7 @@ class RequiredColumnsValidator:
 
 class RequiredValueValidator(BaseRowOperation):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, **kwargs):
+    def run(cls, row_num, raw_row, fields_to_update, import_context):
         error_messages = []
         error_messages.extend(cls._validate_required_columns(row_num, raw_row))
         return fields_to_update, error_messages
@@ -86,7 +86,7 @@ class RequiredValueValidator(BaseRowOperation):
 
 class CallValidator(BaseRowOperation):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, **kwargs):
+    def run(cls, row_num, raw_row, fields_to_update, import_context):
         error_messages = []
         call_value, call_number = _get_latest_call_value_and_number(raw_row)
         if not call_value:
@@ -110,8 +110,7 @@ class CallValidator(BaseRowOperation):
 
 class UploadLimitValidator(BaseRowOperation):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, **kwargs):
-        import_context = kwargs['import_context']
+    def run(cls, row_num, raw_row, fields_to_update, import_context):
         error_messages = []
         owner_name = raw_row.get(OWNER_NAME)
         call_value, call_number = _get_latest_call_value_and_number(raw_row)
