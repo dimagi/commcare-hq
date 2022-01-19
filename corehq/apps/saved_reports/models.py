@@ -511,6 +511,21 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 'slug': None,
             }] + localized_datespan_filters
 
+    @property
+    # @memoized
+    # Will memoized cause it to give inaccurate results when the
+    # related ReportNotification is removed?
+    # If so, clear memoized value or recalculate it?
+    def is_shared_on_domain(self):
+        # Is there a better way of checking this?
+        domain_scheduled_reports = ReportNotification.by_domain(self.domain)
+        config_id = self._id
+
+        for report in domain_scheduled_reports:
+            if config_id in report.config_ids:
+                return True
+        return False
+
 
 class ReportNotification(CachedCouchDocumentMixin, Document):
     domain = StringProperty()

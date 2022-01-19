@@ -505,7 +505,11 @@ class AddSavedReportConfigView(View):
         config = ReportConfig.get_or_create(_id)
         if config.owner_id:
             # in case a non-admin user maliciously tries to edit another user's config
-            assert config.owner_id == self.user_id or self.user.is_domain_admin(self.domain)
+            # or an admin edits a non-shared report in some way
+            assert config.owner_id == self.user_id or (
+                self.user.is_domain_admin(self.domain) and
+                config.is_shared_on_domain(self.domain)
+            )
         else:
             config.domain = self.domain
             config.owner_id = self.user_id
