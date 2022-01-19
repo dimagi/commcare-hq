@@ -121,10 +121,9 @@ class _Importer(object):
     def import_row(self, row_num, raw_row, import_context):
         search_id = self._parse_search_id(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
-        fields_to_update, custom_errors = custom_case_import_operations(self.domain, row_num, raw_row,
-                                                                        fields_to_update, import_context)
-        if custom_errors:
-            raise exceptions.CaseRowErrorList(custom_errors)
+        if self._has_custom_case_import_operations():
+            fields_to_update = self._perform_custom_case_import_operations(row_num, raw_row, fields_to_update,
+                                                                           import_context)
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
             return
@@ -155,6 +154,22 @@ class _Importer(object):
             raise exceptions.CaseGeneration()
 
         self.add_caseblock(RowAndCase(row_num, caseblock))
+
+    def _has_custom_case_import_operations(self):
+        return any(
+            extension.should_call_for_domain(self.domain)
+            for extension in custom_case_import_operations.extensions
+        )
+
+    def _perform_custom_case_import_operations(self, row_num, raw_row, fields_to_update, import_context):
+        extensions_response = custom_case_import_operations(self.domain, row_num, raw_row,
+                                                            fields_to_update, import_context)
+        if not extensions_response:
+            raise exceptions.UnexpectedError()
+        fields_to_update, custom_errors = extensions_response
+        if custom_errors:
+            raise exceptions.CaseRowErrorList(custom_errors)
+        return fields_to_update
 
     @cached_property
     def user(self):
