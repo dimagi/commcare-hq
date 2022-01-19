@@ -16,7 +16,7 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.reports.util import get_user_id
+from corehq.apps.reports.util import get_user_id_from_form
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
@@ -81,7 +81,7 @@ class CaseDisplay:
             if 'actions' in self.case:
                 for action in self.case['actions']:
                     if action['action_type'] == 'create':
-                        creator_id = get_user_id(action["xform_id"])
+                        creator_id = get_user_id_from_form(action["xform_id"])
                         break
 
         if not creator_id:
