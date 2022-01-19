@@ -1,13 +1,12 @@
 from copy import deepcopy
+from datetime import datetime
+from unittest.mock import patch
 
 from django.contrib.admin.models import LogEntry
 from django.test import SimpleTestCase, TestCase
 
-from unittest.mock import patch
-
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
-from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
     CustomDataFieldsDefinition,
@@ -15,26 +14,152 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
+from corehq.apps.groups.models import Group
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.user_importer.importer import (
+    check_headers,
     create_or_update_commcare_users_and_groups,
+    create_or_update_groups,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import (
     CommCareUser,
     Invitation,
-    UserRole,
     UserHistory,
+    UserRole,
     WebUser,
 )
-from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
+from corehq.util.test_utils import flag_enabled
+
+
+class TestCheckHeaders(SimpleTestCase):
+    domain = 'test'
+    minimum_required_headers = ['username']
+
+    def test_deprecated_headers(self):
+        deprecated_header = 'location-sms-code'
+        headers = set(self.minimum_required_headers)
+        headers.add(deprecated_header)
+        with self.assertRaisesMessage(
+            UserUploadError,
+            "The column header 'location-sms-code' is deprecated, please use 'location_code' instead."
+        ):
+            check_headers(headers, self.domain)
+
+    def test_domain_header(self):
+        with self.assertRaisesMessage(
+            UserUploadError,
+            "The following are illegal column headers: domain."
+        ):
+            check_headers({'username', 'domain'}, self.domain)
+
+        with flag_enabled('DOMAIN_PERMISSIONS_MIRROR'):
+            check_headers({'username', 'domain'}, self.domain)
+
+    def test_web_upload_missing_headers(self):
+        with self.assertRaisesMessage(
+            UserUploadError,
+            "The following are required column headers: role."
+        ):
+            check_headers({'username'}, self.domain, is_web_upload=True)
+
+        with self.assertRaisesMessage(
+            UserUploadError,
+            "The following are required column headers: username."
+        ):
+            check_headers({'role'}, self.domain, is_web_upload=True)
+
+        # happy path
+        check_headers({'username', 'role'}, self.domain, is_web_upload=True)
+
+    def test_mobile_upload_missing_headers(self):
+        with self.assertRaisesMessage(
+            UserUploadError,
+            "The following are required column headers: username."
+        ):
+            check_headers(set(), self.domain)
+
+        # happy path
+        check_headers({'username'}, self.domain)
+
+
+class TestCreateOrUpdateGroups(TestCase):
+    domain = 'test'
+
+    def test_duplicate_names(self):
+        group_memoizer, log = create_or_update_groups(
+            self.domain,
+            [
+                {
+                    'id': '1',
+                    'name': 'group1'
+                },
+                {
+                    'id': '2',
+                    'name': 'group1'
+                },
+            ]
+        )
+        self.assertIn(
+            'Your spreadsheet has multiple groups called "group1" and only the first was processed',
+            log['errors']
+        )
+
+    def test_groups_with_no_name_or_id(self):
+        group_memoizer, log = create_or_update_groups(
+            self.domain,
+            [
+                {
+                    'id': '',
+                    'name': ''
+                },
+            ]
+        )
+        self.assertIn(
+            'Your spreadsheet has a group with no name or id and it has been ignored',
+            log['errors']
+        )
+
+    def test_missing_group(self):
+        group_memoizer, log = create_or_update_groups(
+            self.domain,
+            [
+                {
+                    'id': '1',
+                },
+            ]
+        )
+        self.assertIn(
+            'There are no groups on CommCare HQ with id "1"',
+            log['errors']
+        )
+
+    def test_group_rename(self):
+        group = Group(domain=self.domain, name='test-group')
+        group.save()
+        self.addCleanup(group.delete)
+
+        group_memoizer, log = create_or_update_groups(
+            self.domain,
+            [
+                {
+                    'id': group.get_id,
+                    'name': 'group1'
+                }
+            ]
+        )
+        self.assertEqual(
+            group_memoizer.groups_by_id[group.get_id].name, 'group1'
+        )
 
 from corehq.apps.groups.models import Group
 
@@ -912,7 +1037,70 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.changes, {})
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
 
-    def test_remove_web_user(self):
+    def test_remove_non_existing_web_user(self):
+        result_messages = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(web_user='a@a.com', remove_web_user='True')],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_result_row = result_messages['messages']['rows'][0]
+        self.assertEqual(user_result_row['row']['web_user'], 'a@a.com')
+        self.assertEqual(
+            user_result_row['flag'],
+            'You cannot remove a web user that is not a member of this project.'
+        )
+        self.assertEqual(UserHistory.objects.filter(action=UserModelAction.UPDATE.value).count(), 0)
+
+    def test_remove_non_member_web_user(self):
+        username = 'a@a.com'
+        WebUser.create(None, username, 'password', None, None)
+        result_messages = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(web_user='a@a.com', remove_web_user='True')],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_result_row = result_messages['messages']['rows'][0]
+        self.assertEqual(user_result_row['row']['web_user'], 'a@a.com')
+        self.assertEqual(
+            user_result_row['flag'],
+            'You cannot remove a web user that is not a member of this project.'
+        )
+        self.assertEqual(UserHistory.objects.filter(action=UserModelAction.UPDATE.value).count(), 0)
+
+    def test_remove_uploading_user_as_web_user(self):
+        uploading_user = WebUser.create(self.domain_name, "stark@avengers.com", 'password', None, None,
+                                        is_superuser=True)
+        upload_record = UserUploadRecord(
+            domain=self.domain_name,
+            user_id=uploading_user.get_id
+        )
+        upload_record.save()
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None)
+        result_messages = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(user_id=user.get_id, web_user=uploading_user.username, remove_web_user='True')],
+            [],
+            uploading_user,
+            upload_record.pk,
+            False
+        )
+        user_result_row = result_messages['messages']['rows'][0]
+        self.assertEqual(user_result_row['row']['web_user'], uploading_user.username)
+        self.assertEqual(
+            user_result_row['flag'],
+            'You cannot remove yourself from a domain via bulk upload'
+        )
+        self.assertEqual(UserHistory.objects.filter(action=UserModelAction.UPDATE.value,
+                                                    user_id=uploading_user.get_id).count(), 0)
+
+    def test_remove_member_web_user(self):
         username = 'a@a.com'
         web_user = WebUser.create(self.domain.name, username, 'password', None, None)
         import_users_and_groups(
@@ -1647,7 +1835,32 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         change_messages = UserChangeMessage.domain_removal(self.domain.name)
         self.assertDictEqual(user_history.change_messages, change_messages)
 
-    def test_remove_invited_user(self):
+    def test_remove_invited_existing_user(self):
+        Invitation.objects.all().delete()
+        self.setup_users()
+        user = WebUser.create(None, 'tony@stark.com', '*jarvis*', None, None)
+        Invitation.objects.update_or_create(domain=self.domain_name, email=user.username,
+                                            invited_by=self.uploading_user.user_id,
+                                            invited_on=datetime.utcnow()
+                                            )
+        # remove invite in upload
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(username=user.username, remove='True')],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            True
+        )
+        self.assertIsNone(Invitation.objects.filter(domain=self.domain_name, email=user.username).first())
+
+        user_history = UserHistory.objects.filter(
+            user_id=user.get_id, changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
+        ).last()
+        change_messages = UserChangeMessage.invitation_revoked_for_domain(self.domain.name)
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+    def test_remove_invited_non_existing_user(self):
         Invitation.objects.all().delete()
         self.setup_users()
         import_users_and_groups(
@@ -1671,13 +1884,19 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def test_remove_uploading_user(self):
         self.setup_users()
-        import_users_and_groups(
+        result_messages = import_users_and_groups(
             self.domain.name,
             [self._get_spec(username=self.uploading_user.username, remove='True')],
             [],
             self.uploading_user,
             self.upload_record.pk,
             True
+        )
+        user_result_row = result_messages['messages']['rows'][0]
+        self.assertEqual(user_result_row['username'], self.uploading_user.username)
+        self.assertEqual(
+            user_result_row['flag'],
+            'You cannot remove yourself from a domain via bulk upload'
         )
         web_user = WebUser.get_by_username(self.uploading_user.username)
         self.assertTrue(web_user.is_member_of(self.domain.name))

@@ -194,12 +194,9 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         return get_group_ids_by_domain(domain)
 
     @classmethod
-    def by_name(cls, domain, name, one=True):
+    def by_name(cls, domain, name):
         result = stale_group_by_name(domain, name)
-        if one and result:
-            return result[0]
-        else:
-            return result
+        return result[0] if result else result
 
     @classmethod
     def by_user_id(cls, user_id, wrap=True):

@@ -8,7 +8,6 @@ from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import (
     BulkSaveError,
-    MultipleResultsFound,
     ResourceNotFound,
     ResourceConflict
 )
@@ -63,9 +62,8 @@ old_headers = {
 }
 
 
-def check_headers(user_specs, domain, is_web_upload=False):
+def check_headers(headers, domain, is_web_upload=False):
     messages = []
-    headers = set(user_specs.fieldnames)
 
     # Backwards warnings
     for (old_name, new_name) in old_headers.items():
@@ -266,8 +264,6 @@ def create_or_update_groups(domain, group_specs):
                     group = group_memoizer.create(domain=domain, name=group_name)
         except ResourceNotFound:
             log["errors"].append('There are no groups on CommCare HQ with id "%s"' % group_id)
-        except MultipleResultsFound:
-            log["errors"].append("There are multiple groups on CommCare HQ named: %s" % group_name)
         else:
             if group_name:
                 group_memoizer.rename_group(group, group_name)
@@ -804,9 +800,8 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
             if user_change_logger:
                 user_change_logger.add_info(UserChangeMessage.invitation_revoked_for_domain(domain))
         else:
-            raise UserUploadError(_("You cannot remove a web user that is not a member of this project."
-                                    " {web_user} is not a member.").format(web_user=user))
-    elif username == upload_user.username:
+            raise UserUploadError(_("You cannot remove a web user that is not a member of this project."))
+    elif user.username == upload_user.username:
         raise UserUploadError(_("You cannot remove yourself from a domain via bulk upload"))
     else:
         user.delete_domain_membership(domain)
