@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-13 02:35+0000\n"
+"POT-Creation-Date: 2022-01-19 20:07+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -205,7 +205,7 @@ msgid "Lookup Table Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:129
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:92
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50381
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50798
 msgid "Lookup Table"
@@ -517,35 +517,35 @@ msgstr ""
 msgid "Select parent"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:85
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:86
 msgid "Raw"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:88
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:89
 msgid "User Data"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:94
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:95
 msgid "User Properties"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:99
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:100
 msgid "Case Index"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:331
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:348
 msgid "Load / Update / Close a case"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:334
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:351
 msgid "Automatic Case Selection"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:337
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:354
 msgid "Load Case From Fixture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:345
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:362
 msgid "Open a Case"
 msgstr ""
 
@@ -3329,15 +3329,15 @@ msgstr ""
 msgid "Show All Dates"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:163
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:208
 msgid "Could not authenticate, please log in and try again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:180
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:225
 msgid "There was a problem, please refresh and try again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:185
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:230
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:49
 msgid "Done"
 msgstr "समाप्त"
@@ -3771,20 +3771,20 @@ msgstr ""
 msgid "Select a value"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:120
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:125
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:28
 msgid "Select a language..."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:134
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:139
 msgid "Available Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:135
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:140
 msgid "Included Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:136
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:141
 msgid "Search Reports..."
 msgstr ""
 
