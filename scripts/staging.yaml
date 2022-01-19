@@ -71,7 +71,6 @@ branches:
     - jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/datums  # sravan Dec 21
-    - mjr/remove_export_label_markup # Matt Jan 6
     - mk/samveg/custom-case-upload # [QA] MK Jan 11
     - mk/samveg/support-parsed-date # [QA] MK Jan 19
     - mk/samveg/treat-calls-as-mandatory # [QA] MK Jan 19
