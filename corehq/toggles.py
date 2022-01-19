@@ -2114,6 +2114,7 @@ EXPRESSION_REPEATER = StaticToggle(
     'Integrate with generic APIs using UCR expressions',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/saas/Configurable+Repeaters",
 )
 
 TURN_IO_BACKEND = StaticToggle(
