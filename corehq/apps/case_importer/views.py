@@ -50,7 +50,7 @@ def validate_column_names(column_names, invalid_column_names):
     for column_name in column_names:
         try:
             validate_property(column_name, allow_parents=False)
-        except ValueError:
+        except (ValueError, TypeError):
             invalid_column_names.add(column_name)
 
 
