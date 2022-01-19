@@ -88,22 +88,26 @@ class CallValidator(BaseRowOperation):
     @classmethod
     def run(cls, row_num, raw_row, fields_to_update, import_context):
         error_messages = []
+        call_date = None
         call_value, call_number = _get_latest_call_value_and_number(raw_row)
         if not call_value:
             error_messages.append(
                 CallValuesMissingError()
             )
         else:
-            try:
-                call_date = datetime.datetime.strptime(call_value, CALL_VALUE_FORMAT).date()
-            except ValueError:
-                error_messages.append(
-                    CallValueInvalidError()
-                )
+            if isinstance(call_value, datetime.date):
+                call_date = call_value
             else:
-                last_month_first_day, last_month_last_day = get_previous_month_date_range(datetime.date.today())
-                if call_date.replace(day=1) != last_month_first_day:
-                    error_messages.append(CallNotInLastMonthError())
+                try:
+                    call_date = datetime.datetime.strptime(call_value, CALL_VALUE_FORMAT).date()
+                except ValueError:
+                    error_messages.append(
+                        CallValueInvalidError()
+                    )
+        if call_date:
+            last_month_first_day, last_month_last_day = get_previous_month_date_range(datetime.date.today())
+            if call_date.replace(day=1) != last_month_first_day:
+                error_messages.append(CallNotInLastMonthError())
 
         return fields_to_update, error_messages
 
