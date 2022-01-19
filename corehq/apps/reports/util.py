@@ -128,12 +128,12 @@ def get_username_from_forms(domain, user_id):
         return HQUserType.human_readable[HQUserType.ADMIN]
 
 
-def get_user_id(form_id):
+def get_user_id_from_form(form_id):
     key = f'xform-{form_id}-user_id'
     user_id = cache.get(key)
     if not user_id:
         try:
-            user_id = FormAccessorSQL.get_form(form_id).metadata.userID
+            user_id = FormAccessorSQL.get_form(form_id).user_id
         except XFormNotFound:
             return None
         cache.set(key, user_id, 12 * 60 * 60)
