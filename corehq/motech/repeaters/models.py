@@ -533,11 +533,11 @@ class SQLShortFormRepeater(SQLRepeater):
     FORMAT_OPTIONS = ['short_form_json']
 
     format = OptionValue(choices=FORMAT_OPTIONS)
+    version = OptionValue(choices=LEGAL_VERSIONS, default=V2)
 
     class Meta:
         proxy = True
 
-    version = OptionValue(choices=LEGAL_VERSIONS, default=V2)
     friendly_name = _("Forward Form Stubs")
 
     payload_generator_classes = (ShortFormRepeaterJsonPayloadGenerator,)
