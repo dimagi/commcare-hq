@@ -6,7 +6,11 @@ import datetime
 
 from casexml.apps.case import const
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
+from dimagi.utils.logging import notify_error
 from dimagi.utils.parsing import string_to_utc_datetime
+
+from corehq.util.global_request import get_request_domain
+from corehq.util.metrics import metrics_counter
 
 XMLNS_ATTR = "@xmlns"
 KNOWN_PROPERTIES = {
@@ -31,6 +35,10 @@ def get_version(case_block):
                 "We don't know how to handle this version." % xmlns
             )
         return NS_REVERSE_LOOKUP_MAP[xmlns]
+    domain = get_request_domain()
+    tags = {"domain": domain} if domain else {}
+    metrics_counter("commcare.deprecated.v1caseblock", tags=tags)
+    notify_error("encountered deprecated V1 case block")
     return DEFAULT_VERSION
 
 
