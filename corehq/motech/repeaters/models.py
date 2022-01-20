@@ -217,11 +217,6 @@ class RepeaterSuperProxy(models.Model):
         return super().__new__(repeater_class)
 
 
-class RepeaterProxyManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(repeater_type=self.model._repeater_type)
-
-
 class RepeaterManager(models.Manager):
 
     def all_ready(self):
