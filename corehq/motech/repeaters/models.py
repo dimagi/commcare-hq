@@ -242,6 +242,13 @@ class RepeaterManager(models.Manager):
                 .filter(next_attempt_not_in_the_future)
                 .filter(repeat_records_ready_to_send))
 
+    def get_queryset(self):
+        repeater_obj = self.model()
+        if type(repeater_obj).__name__ in ("SQLRepeater", "Repeater"):
+            return super().get_queryset()
+        else:
+            return super().get_queryset().filter(repeater_type=repeater_obj._repeater_type)
+
 
 class OptionValue(property):
 
