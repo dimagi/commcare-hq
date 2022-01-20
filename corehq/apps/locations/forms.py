@@ -635,6 +635,18 @@ class LocationFilterForm(forms.Form):
             return False
         return None
 
+    def is_valid(self):
+        if not super().is_valid():
+            return False
+        location_id = self.cleaned_data.get('location_id')
+        if location_id is None:
+            return True
+        domain_membership = self.user.get_domain_membership(self.domain)
+        if domain_membership and domain_membership.assigned_location_ids:
+            # Ensure location_id is available to a location-restricted user
+            return location_id in domain_membership.assigned_location_ids
+        return True
+
     def get_filters(self):
         """
         This function translates some form inputs to their relevant SQLLocation attributes

@@ -289,7 +289,7 @@ class TestLocationExport(LocationHierarchyTestCase):
             domain=self.domain,
             user=self.user,
         )
-        self.assertTrue(form.is_valid())  # <--
+        self.assertFalse(form.is_valid())
         location_filters = form.get_filters()
         self.assertEqual(location_filters, {
             'location_ids': [],
