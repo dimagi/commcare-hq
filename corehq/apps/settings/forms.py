@@ -55,7 +55,7 @@ class HQPasswordChangeForm(PasswordChangeForm):
                         _('Change Password'),
                         css_class='btn-primary',
                         type='submit',
-                        data_bind="enable: passwordSufficient()"
+                        data_bind="enable: passwordSufficient(), click: submitCheck"
                     )
                 ),
                 css_class='check-password',

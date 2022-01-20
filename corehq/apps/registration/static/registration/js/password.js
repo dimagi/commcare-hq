@@ -23,7 +23,7 @@ hqDefine('registration/js/password', [
             return 0;
         });
         var suggestionClick = 0;
-        $(document).ready(function() {
+        $(document).ready(function () {
             $("#help_text").trigger('click');
             suggestionClick += 1;
         });
@@ -64,6 +64,11 @@ hqDefine('registration/js/password', [
         self.passwordSufficient = ko.computed(function () {
             return self.strength() > 1;
         });
+        self.submitCheck = function (formElement) {
+            if (self.passwordSufficient()) {
+                return true;
+            }
+        }
         return self;
     };
 

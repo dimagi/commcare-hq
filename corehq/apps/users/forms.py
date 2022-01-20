@@ -437,7 +437,6 @@ class SetUserPasswordForm(SetPasswordForm):
             self.fields['new_password1'].widget = forms.TextInput()
             self.fields['new_password1'].help_text = format_html_lazy(
                 '<span id="help_text" data-bind="html: passwordHelp, css: color, click: firstSuggestion">')
-
             initial_password = generate_strong_password()
 
         self.helper = FormHelper()
@@ -448,6 +447,19 @@ class SetUserPasswordForm(SetPasswordForm):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_action = reverse("change_password", args=[project.name, user_id])
+        if self.project.strong_mobile_passwords:
+            submitButton = hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _('Reset Password'),
+                           data_bind="enable: passwordSufficient(), click: submitCheck")
+                )
+            )
+        else:
+            submitButton = hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _('Reset Password'))
+                )
+            )
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Reset Password for Mobile Worker"),
@@ -460,11 +472,7 @@ class SetUserPasswordForm(SetPasswordForm):
                     'new_password2',
                     value=initial_password,
                 ),
-                hqcrispy.FormActions(
-                    crispy.ButtonHolder(
-                        Submit('submit', _('Reset Password'))
-                    )
-                ),
+                submitButton,
                 css_class="check-password",
             ),
         )
