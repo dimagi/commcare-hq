@@ -1,8 +1,11 @@
+import time
+
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from corehq.form_processor.signals import sql_case_post_save
+from corehq.util.metrics import metrics_counter
 from couchforms.signals import successful_form_received
 
 from corehq.apps.locations.models import SQLLocation
@@ -15,6 +18,7 @@ from corehq.motech.repeaters.models import (
     domain_can_forward,
     DataRegistryCaseUpdateRepeater,
 )
+from dimagi.utils.logging import notify_exception
 
 
 def create_form_repeat_records(sender, xform, **kwargs):
@@ -41,6 +45,33 @@ def create_short_form_repeat_records(sender, xform, **kwargs):
 
 
 def create_repeat_records(repeater_cls, payload):
+    # Since this is called from a signal
+    # the object to be forwarded has already been saved to the db
+    # so we try _really_ hard to save a repeat record
+    # even if there's an error the first time.
+    # Unless there's a complete outage this should be enough.
+    # A somewhat more robust fix would be to queue this somewhere else on failure,
+    # but at the end of the day the only real fix would be
+    # to make this somehow transactional with the original object save
+    for sleep_length in [.5, 1, 2, 4, 8]:
+        try:
+            _create_repeat_records(repeater_cls, payload)
+        except Exception:
+            notify_exception(None, "create_repeat_records had an error resulting in a retry")
+            metrics_counter('commcare.repeaters.error_creating_record', tags={
+                'domain': payload.domain,
+                'repeater_type': repeater_cls.__name__,
+            })
+            time.sleep(sleep_length)
+        else:
+            return
+    metrics_counter('commcare.repeaters.failed_to_create_record', tags={
+        'domain': payload.domain,
+        'repeater_type': repeater_cls.__name__,
+    })
+
+
+def _create_repeat_records(repeater_cls, payload):
     repeater_name = repeater_cls.__module__ + '.' + repeater_cls.__name__
     if settings.REPEATERS_WHITELIST is not None and repeater_name not in settings.REPEATERS_WHITELIST:
         return
