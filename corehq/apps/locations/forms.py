@@ -641,14 +641,15 @@ class LocationFilterForm(forms.Form):
         """
         location_id = self.cleaned_data.get('location_id', None)
         location_ids = []
-        # Handle user location restriction
-        if location_id is None:
-            domain_membership = self.user.get_domain_membership(self.domain)
-            # Superusers may not have domain_membership
-            if domain_membership and domain_membership.assigned_location_ids:
+        domain_membership = self.user.get_domain_membership(self.domain)
+        # Superusers may not have domain_membership
+        if domain_membership and domain_membership.assigned_location_ids:
+            if location_id is None:
                 location_ids = domain_membership.assigned_location_ids
-        else:
-            location_ids = [location_id]  # <--
+            elif location_id in domain_membership.assigned_location_ids:
+                location_ids = [location_id]
+        elif location_id:
+            location_ids = [location_id]
 
         filters = {
             'location_ids': location_ids,
