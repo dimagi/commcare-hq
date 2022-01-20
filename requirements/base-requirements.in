@@ -68,13 +68,13 @@ jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_
 jsonschema
 kafka-python
 kombu
-# via celery
-# See https://github.com/jazzband/pip-tools/issues/1505
-# This comment can be removed when that issue is resolved.
+    # via celery
+    # See https://github.com/jazzband/pip-tools/issues/1505
+    # This comment can be removed when that issue is resolved.
 billiard!=3.5.0.5 # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
-# via celery
-# See https://github.com/jazzband/pip-tools/issues/1505
-# This comment can be removed when that issue is resolved.
+    # via celery
+    # See https://github.com/jazzband/pip-tools/issues/1505
+    # This comment can be removed when that issue is resolved.
 laboratory
 lxml
 openpyxl
@@ -95,9 +95,9 @@ python-imap
 pyphonetics
 python-magic
 pytz
-# via celery
-# See https://github.com/jazzband/pip-tools/issues/1505
-# This comment can be removed when that issue is resolved.
+    # via celery
+    # See https://github.com/jazzband/pip-tools/issues/1505
+    # This comment can be removed when that issue is resolved.
 PyYAML
 pyzxcvbn
 qrcode
