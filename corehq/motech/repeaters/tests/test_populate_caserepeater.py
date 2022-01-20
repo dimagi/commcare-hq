@@ -3,7 +3,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.management.commands.populate_caserepeater import \
+from corehq.motech.repeaters.management.commands.migrate_caserepeater import \
     Command as MigrationCommand
 from corehq.motech.repeaters.models import CaseRepeater, SQLCaseRepeater
 
@@ -101,7 +101,7 @@ class TestMigrationCommand(TestCase):
         self.assertEqual(SQLCaseRepeater.objects.count(), 0)
         # when multiple tests run in the same second they try to create log file with same name
         # so we have to pass custom log_path to avoid test failure because of it
-        call_command('populate_caserepeater', log_path=f'caserepeater_noargs_{self.date}.log')
+        call_command('migrate_caserepeater', log_path=f'caserepeater_noargs_{self.date}.log')
         self.assertEqual(SQLCaseRepeater.objects.count(), len(self.repeaters))
         sql_repeater_ids = SQLCaseRepeater.objects.all().values_list('repeater_id', flat=True)
         couch_repeater_ids = [r._id for r in self.repeaters]
@@ -110,7 +110,7 @@ class TestMigrationCommand(TestCase):
     def test_migration_for_one_domain(self):
         self.assertEqual(SQLCaseRepeater.objects.count(), 0)
         call_command(
-            'populate_caserepeater',
+            'migrate_caserepeater',
             domains=[self.domain_1],
             log_path=f'caserepeater_one_domain_{self.date}.log'
         )
@@ -121,7 +121,7 @@ class TestMigrationCommand(TestCase):
         )
         # running migration twice to verify nothing unexpected happens
         call_command(
-            'populate_caserepeater',
+            'migrate_caserepeater',
             domains=[self.domain_1],
             log_path=f'caserepeater_onedomain_{self.date}.log'
         )
