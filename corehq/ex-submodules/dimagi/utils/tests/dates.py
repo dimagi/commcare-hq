@@ -2,7 +2,11 @@ import pickle
 from datetime import datetime, timedelta, date
 from six.moves.urllib.parse import urlencode
 import pytz
-from dimagi.utils.dates import DateSpan, add_months_to_date
+from dimagi.utils.dates import (
+    DateSpan,
+    add_months_to_date,
+    get_start_and_end_dates_of_month,
+)
 from django.test import SimpleTestCase
 from django.http import HttpRequest, QueryDict
 from dimagi.utils.decorators.datespan import datespan_in_request
@@ -179,3 +183,25 @@ class DateSpanPickleTest(SimpleTestCase):
             ),
 
         )
+
+
+class StartAndEndDatesOfMonthTest(SimpleTestCase):
+    def ensure_start_and_end_dates_are_correct_for_30_days(self):
+        date_start, date_end = get_start_and_end_dates_of_month(6, 2020)
+        self.assertEqual(date_start, date(2020, 6, 1))
+        self.assertEqual(date_end, date(2020, 6, 30))
+
+    def ensure_start_and_end_dates_are_correct_for_31_days(self):
+        date_start, date_end = get_start_and_end_dates_of_month(7, 2020)
+        self.assertEqual(date_start, date(2020, 7, 1))
+        self.assertEqual(date_end, date(2020, 7, 31))
+
+    def ensure_start_and_end_dates_are_correct_feb_leap_year(self):
+        date_start, date_end = get_start_and_end_dates_of_month(2, 2020)
+        self.assertEqual(date_start, date(2020, 2, 1))
+        self.assertEqual(date_end, date(2020, 2, 29))
+
+    def ensure_start_and_end_dates_are_correct_feb_no_leap_year(self):
+        date_start, date_end = get_start_and_end_dates_of_month(2, 2021)
+        self.assertEqual(date_start, date(2021, 2, 1))
+        self.assertEqual(date_end, date(2021, 2, 28))
