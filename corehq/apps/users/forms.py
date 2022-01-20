@@ -1486,7 +1486,6 @@ class UserFilterForm(forms.Form):
             return False
         return None
 
-    # get_cleaned_data
     def clean(self):
         data = self.cleaned_data
 

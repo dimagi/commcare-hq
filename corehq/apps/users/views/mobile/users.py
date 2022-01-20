@@ -1352,7 +1352,6 @@ def _count_users(request, domain, user_type):
     form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=user_type)
 
     if form.is_valid():
-        # get_cleaned_data
         user_filters = form.cleaned_data
     else:
         return HttpResponseBadRequest("Invalid Request")
@@ -1384,7 +1383,6 @@ def download_users(request, domain, user_type):
 
     form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=user_type)
     if form.is_valid():
-        # get_cleaned_data
         user_filters = form.cleaned_data
     else:
         view = FilteredCommCareUserDownload if user_type == MOBILE_USER_TYPE else FilteredWebUserDownload
