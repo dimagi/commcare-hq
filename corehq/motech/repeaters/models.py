@@ -402,7 +402,7 @@ class SQLCaseRepeater(SQLRepeater):
     def get_headers(self, repeat_record):
         headers = super().get_headers(repeat_record)
         headers.update({
-            "server-modified-on": self.payload_doc(repeat_record).server_modified_on.isoformat() + "Z"
+            "server-modified-on": json_format_datetime(self.payload_doc(repeat_record).server_modified_on)
         })
         return headers
 
@@ -557,7 +557,7 @@ class SQLShortFormRepeater(SQLRepeater):
     def get_headers(self, repeat_record):
         headers = super().get_headers(repeat_record)
         headers.update({
-            "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
+            "received-on": json_format_datetime(self.payload_doc(repeat_record).received_on)
         })
         return headers
 
@@ -1038,7 +1038,7 @@ class SQLFormRepeater(SQLRepeater):
     def get_headers(self, repeat_record):
         headers = super(FormRepeater, self).get_headers(repeat_record)
         headers.update({
-            "received-on": self.payload_doc(repeat_record).received_on.isoformat() + "Z"
+            "received-on": json_format_datetime(self.payload_doc(repeat_record).received_on)
         })
         return headers
 
@@ -1104,7 +1104,7 @@ class FormRepeater(Repeater):
     def get_headers(self, repeat_record):
         headers = super(FormRepeater, self).get_headers(repeat_record)
         headers.update({
-            "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
+            "received-on": json_format_datetime(self.payload_doc(repeat_record).received_on)
         })
         return headers
 
@@ -1165,7 +1165,7 @@ class CaseRepeater(Repeater):
     def get_headers(self, repeat_record):
         headers = super(CaseRepeater, self).get_headers(repeat_record)
         headers.update({
-            "server-modified-on": self.payload_doc(repeat_record).server_modified_on.isoformat()+"Z"
+            "server-modified-on": json_format_datetime(self.payload_doc(repeat_record).server_modified_on)
         })
         return headers
 
@@ -1336,7 +1336,7 @@ class ShortFormRepeater(Repeater):
     def get_headers(self, repeat_record):
         headers = super(ShortFormRepeater, self).get_headers(repeat_record)
         headers.update({
-            "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
+            "received-on": json_format_datetime(self.payload_doc(repeat_record).received_on)
         })
         return headers
 
