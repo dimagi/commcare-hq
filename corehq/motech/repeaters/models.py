@@ -275,7 +275,10 @@ class OptionValue(property):
             raise TypeError(
                 f"Expected {self.name} to be of type {self.schema.__name__} but got {type(value).__name__}"
             )
-        obj.options[self.name] = value
+        if self.schema:
+            obj.options[self.name] = value.to_json()
+        else:
+            obj.options[self.name] = value
 
 
 class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
