@@ -999,8 +999,8 @@ def location_export(request, domain):
 
     form = LocationFilterForm(request.GET, domain=domain, user=request.couch_user)
 
-    if form.is_valid():
-        location_filters = form.get_filters()
+    if form.is_valid():  # <--
+        location_filters = form.get_filters()  # <--
     else:
         return HttpResponseBadRequest('Location filters invalid')
 

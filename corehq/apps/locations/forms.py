@@ -648,7 +648,7 @@ class LocationFilterForm(forms.Form):
             if domain_membership and domain_membership.assigned_location_ids:
                 location_ids = domain_membership.assigned_location_ids
         else:
-            location_ids = [location_id]
+            location_ids = [location_id]  # <--
 
         filters = {
             'location_ids': location_ids,
