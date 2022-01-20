@@ -2,7 +2,7 @@ language: python
 group: edge
 branches:
   only:
-    - master
+    - travis-is-disabled
 env:
   jobs:
     - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes

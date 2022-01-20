@@ -4,7 +4,7 @@ import re
 from django.test import SimpleTestCase
 
 import commcare_translations
-import mock
+from unittest import mock
 from lxml.etree import tostring
 
 from corehq.apps.app_manager.exceptions import (

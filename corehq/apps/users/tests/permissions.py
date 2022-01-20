@@ -1,7 +1,7 @@
 from couchdbkit.ext.django.schema import ListProperty
 from django.test import SimpleTestCase
 
-import mock
+from unittest import mock
 from testil import eq, assert_raises
 
 from corehq.apps.export.views.utils import user_can_view_deid_exports

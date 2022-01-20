@@ -76,13 +76,6 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "LedgerToElasticsearchPillow"
     },
-    "M4ChangeFormFluffPillow": {
-        "advertised_name": "M4ChangeFormFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.M4ChangeFormFluffPillow.testhq",
-        "full_class_name": "custom.m4change.models.M4ChangeFormFluffPillow",
-        "name": "M4ChangeFormFluffPillow"
-    },
     "ReportCaseToElasticsearchPillow": {
         "advertised_name": "ReportCaseToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",

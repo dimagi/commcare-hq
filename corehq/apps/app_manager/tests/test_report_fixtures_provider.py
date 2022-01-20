@@ -4,7 +4,7 @@ from django.test import SimpleTestCase
 
 from lxml import etree
 from lxml.builder import E
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from casexml.apps.phone.models import UCRSyncLog
 

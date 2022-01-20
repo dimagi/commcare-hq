@@ -1,0 +1,61 @@
+<partial>
+  <remote-request>
+    <post relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0" url="https://www.example.com/a/test_domain/phone/claim-case/">
+      <data key="case_id" ref="instance('commcaresession')/session/data/search_case_id"/>
+    </post>
+    <command id="search_command.m1">
+      <display>
+        <text>
+          <locale id="case_search.m1"/>
+        </text>
+      </display>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <query default_search="false" storage-instance="results" template="case" url="https://www.example.com/a/test_domain/phone/search/{app_id}/">
+        <data key="case_type" ref="'leaf'"/>
+        <data key="x_commcare_data_registry" ref="'a_registry'"/>
+        <prompt key="name">
+          <display>
+            <text>
+              <locale id="search_property.m1.name"/>
+            </text>
+          </display>
+        </prompt>
+        <prompt key="shape">
+          <display>
+            <text>
+              <locale id="search_property.m1.shape"/>
+            </text>
+          </display>
+        </prompt>
+      </query>
+      <datum detail-confirm="m1_search_long" detail-select="m1_search_short" id="search_case_id" nodeset="instance('results')/results/case[@case_type='leaf'][not(commcare_is_related_case=true())]" value="./@case_id"/>
+    </session>
+    <stack>
+      <push if="not(instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project = instance('commcaresession')/session/user/data/commcare_project)">
+        <jump>
+          <url>
+            <text>
+              <xpath function="concat('https://www.example.com/a/', $domain, '/app/v1/{app_id}/child_endpoint/', '?case_id_leaf=', $case_id_leaf, '&amp;case_id=', $case_id)">
+                <variable name="domain">
+                  <xpath function="instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project"/>
+                </variable>
+                <variable name="case_id">
+                  <xpath function="instance('commcaresession')/session/data/case_id"/>
+                </variable>
+                <variable name="case_id_leaf">
+                  <xpath function="instance('commcaresession')/session/data/search_case_id"/>
+                </variable>
+              </xpath>
+            </text>
+          </url>
+        </jump>
+      </push>
+      <push if="instance('results')/results/case[@case_id=instance('commcaresession')/session/data/search_case_id]/commcare_project = instance('commcaresession')/session/user/data/commcare_project">
+        <rewind value="instance('commcaresession')/session/data/search_case_id"/>
+      </push>
+    </stack>
+  </remote-request>
+</partial>

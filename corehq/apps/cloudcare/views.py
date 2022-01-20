@@ -43,7 +43,9 @@ from corehq.apps.app_manager.dbaccessors import (
     get_current_app,
     get_current_app_doc,
     get_latest_build_doc,
+    get_latest_build_id,
     get_latest_released_app_doc,
+    get_latest_released_build_id,
     wrap_app,
 )
 from corehq.apps.app_manager.exceptions import (
@@ -224,6 +226,13 @@ def _fetch_build(domain, username, app_id):
         return get_latest_released_app_doc(domain, app_id)
 
 
+def _fetch_build_id(domain, username, app_id):
+    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+        return get_latest_build_id(domain, app_id)
+    else:
+        return get_latest_released_build_id(domain, app_id)
+
+
 class FormplayerMainPreview(FormplayerMain):
 
     preview = True
@@ -371,7 +380,7 @@ class LoginAsUsers(View):
 
 
 def _format_app_doc(doc):
-    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile']
+    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile', 'upstream_app_id']
     context = {key: doc.get(key) for key in keys}
     context['imageUri'] = doc.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
     return context
@@ -587,8 +596,8 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     if not toggles.SESSION_ENDPOINTS.enabled_for_request(request):
         return _fail(_("Linking directly into Web Apps has been disabled."))
 
-    build = _fetch_build(domain, request.couch_user.username, app_id)
-    if not build:
+    build_id = _fetch_build_id(domain, request.couch_user.username, app_id)
+    if not build_id:
         # These links can be used for cross-domain web apps workflows, where a link jumps to the
         # same screen but in another domain's corresponding app. This works if both the source and
         # target apps are downstream apps that share an upstream app - the link references the upstream app.
@@ -596,16 +605,9 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         id_map = get_downstream_app_id_map(domain)
         if app_id in id_map:
             if len(id_map[app_id]) == 1:
-                build = _fetch_build(domain, request.couch_user.username, id_map[app_id][0])
-        if not build:
+                build_id = _fetch_build_id(domain, request.couch_user.username, id_map[app_id][0])
+        if not build_id:
             return _fail(_("Could not find application."))
-    build = wrap_app(build)
-
-    valid_endpoint_ids = {m.session_endpoint_id for m in build.get_modules() if m.session_endpoint_id}
-    valid_endpoint_ids |= {f.session_endpoint_id for f in build.get_forms() if f.session_endpoint_id}
-    if endpoint_id not in valid_endpoint_ids:
-        return _fail(_("This link does not exist. "
-                       "Your app may have changed so that the given link is no longer valid."))
 
     restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
     force_login_as = not restore_as_user.is_commcare_user()
@@ -613,7 +615,7 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         return _fail(_("This user cannot access this link."))
 
     cloudcare_state = json.dumps({
-        "appId": build._id,
+        "appId": build_id,
         "endpointId": endpoint_id,
         "endpointArgs": {
             urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)

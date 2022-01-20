@@ -44,9 +44,9 @@ class CaseBlock(object):
                                 else date_opened)
         else:
             self.date_opened = date_opened
-        self.case_type = "" if create and case_type is CaseBlock.undefined else case_type
-        self.case_name = "" if create and case_name is CaseBlock.undefined else case_name
-        self.owner_id = "" if create and owner_id is CaseBlock.undefined else owner_id
+        self.case_type = case_type
+        self.case_name = case_name
+        self.owner_id = owner_id
         self.close = close
         self.case_id = case_id
         self.user_id = user_id
@@ -59,6 +59,14 @@ class CaseBlock(object):
 
     @classmethod
     def deprecated_init(cls, *args, **kwargs):
+        """
+        You almost certainly don't need this - it defaults date_opened to today
+        at midnight, instead of now(). This method exists so we don't have to
+        update a bunch of tests built on the old, bad behavior.
+
+        Replace any CaseBlock.deprecated_init(...) with CaseBlock(...) and just
+        make sure tests pass
+        """
         return cls(date_opened_deprecated_behavior=True, *args, **kwargs)
 
     def _updatable_built_ins(self):
@@ -98,6 +106,8 @@ class CaseBlock(object):
         create_or_update = {key: val for key, val in self._updatable_built_ins()
                             if val is not CaseBlock.undefined}
         if self.create:
+            for key in self._built_ins:
+                create_or_update.setdefault(key, "")
             result['create'] = create_or_update
         else:
             result['update'].update(create_or_update)
@@ -152,6 +162,7 @@ class CaseBlock(object):
         fields = {"update": updates}
         for node in case.find(NS + "create") or []:
             tag = tag_of(node)
+            fields["create"] = True
             if tag in cls._built_ins:
                 fields[tag] = node.text
             # can create node have date_opened child node?
@@ -164,6 +175,9 @@ class CaseBlock(object):
             else:
                 # can this be a hierarchical structure? if yes, how to decode?
                 updates[tag] = node.text
+
+        if case.find(NS + "close") is not None:
+            fields["close"] = True
 
         if case.get("date_modified"):
             fields['date_modified'] = string_to_datetime(case.get("date_modified")).replace(tzinfo=None)

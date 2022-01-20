@@ -226,6 +226,9 @@ def excel_fields(request, domain):
     # see: https://dimagi-dev.atlassian.net/browse/USH-81
     if 'domain' in excel_fields and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         excel_fields.remove('domain')
+        mirroring_enabled = True
+    else:
+        mirroring_enabled = False
 
     field_specs = get_suggested_case_fields(
         domain, case_type, exclude=[search_field])
@@ -241,6 +244,7 @@ def excel_fields(request, domain):
         'excel_fields': excel_fields,
         'case_field_specs': case_field_specs,
         'domain': domain,
+        'mirroring_enabled': mirroring_enabled,
     }
     context.update(_case_importer_breadcrumb_context(_('Match Excel Columns to Case Properties'), domain))
     return render(request, "case_importer/excel_fields.html", context)

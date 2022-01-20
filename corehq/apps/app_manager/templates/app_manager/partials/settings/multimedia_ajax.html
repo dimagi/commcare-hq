@@ -41,6 +41,12 @@
               {% trans "Email when finished (recommended for applications with large number of multimedia files or heavy files)" %}
             </label>
           </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="force">
+              {% trans "Force pull all multimedia (this can take a long time and will re-write all the multimedia in your app)" %}
+            </label>
+          </div>
           <button type="submit" class="btn btn-primary">
             <i class="fa fa-refresh"></i>
             {% trans "Sync" %}

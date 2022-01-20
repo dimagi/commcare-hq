@@ -33,7 +33,7 @@ from ..models import (
     parse_dataset_for_request,
     get_end_of_period,
 )
-from mock import patch
+from unittest.mock import patch
 
 
 def test_should_send_on_date():

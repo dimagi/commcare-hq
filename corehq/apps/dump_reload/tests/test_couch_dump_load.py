@@ -8,7 +8,7 @@ from io import StringIO
 from django.test import SimpleTestCase, TestCase
 
 from couchdbkit.exceptions import ResourceNotFound
-from mock import patch
+from unittest.mock import patch
 from nose.tools import nottest
 
 from dimagi.utils.chunked import chunked

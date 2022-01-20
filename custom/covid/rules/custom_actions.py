@@ -4,8 +4,7 @@ COVID: Available Actions
 
 The following actions can be used in messaging in projects using the ``covid`` custom module.
 """
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
-from casexml.apps.case.models import CommCareCase
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.cases import case_type
 from corehq.apps.data_interfaces.models import CaseRuleActionResult, AUTO_UPDATE_XMLNS
 from corehq.apps.hqcase.utils import update_case
@@ -41,11 +40,11 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
         "assigned_to_primary_username": "",
     }
     num_related_updates = 0
-    for assigned_case in _get_assigned_cases(checkin_case):
+    for assigned_case_domain, assigned_case_id in _get_assigned_cases(checkin_case):
         num_related_updates += 1
         (submission, cases) = update_case(
-            assigned_case.domain,
-            assigned_case.case_id,
+            assigned_case_domain,
+            assigned_case_id,
             case_properties=blank_properties,
             xmlns=AUTO_UPDATE_XMLNS,
             device_id=__name__ + ".close_cases_assigned_to_checkin",
@@ -68,11 +67,10 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
 
 
 def _get_assigned_cases(checkin_case):
-    query = (
+    return (
         CaseSearchES()
         .domain(checkin_case.domain)
         .filter(filters.OR(case_type("patient"), case_type("contact")))
         .case_property_query("assigned_to_primary_checkin_case_id", checkin_case.case_id)
+        .values_list('domain', '_id')
     )
-
-    return [CommCareCase.wrap(flatten_result(hit)) for hit in query.run().hits]

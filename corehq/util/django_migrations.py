@@ -121,7 +121,7 @@ def run_once_off_migration(command_name, *args, required_commit=None, **kwargs):
     manually if the command fails or has since been removed from the codebase"""
     @skip_on_fresh_install
     def _run_command(apps, schema_editor):
-        run_management_command_or_exit(command_name, required_commit, *args, **kwargs)
+        run_management_command_or_exit(command_name, required_commit=required_commit, *args, **kwargs)
 
     return migrations.RunPython(_run_command, reverse_code=migrations.RunPython.noop, elidable=True)
 

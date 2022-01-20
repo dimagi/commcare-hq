@@ -598,7 +598,7 @@ V1_SHADOW_MODULES = StaticToggle(
     'Allow creation and management of deprecated Shadow Module behaviour',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://github.com/dimagi/commcare-hq/blob/master/docs/advanced_app_features.rst#shadow-modules',
+    help_link='https://github.com/dimagi/commcare-hq/blob/master/docs/apps/advanced_app_features.rst#shadow-modules',  # noqa
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -849,6 +849,16 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     """
 )
 
+USH_USERCASES_FOR_WEB_USERS = StaticToggle(
+    'usercases_for_web_users',
+    "USH: Enable the creation of usercases for web users.",
+    TAG_CUSTOM,
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Usercase+Creation',
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Toggle to enable the creation of usercases for web users."""
+)
+
 WEBAPPS_STICKY_SEARCH = StaticToggle(
     "webapps_sticky_search",
     "USH: Sticky search: In web apps, save user's most recent inputs on case search & claim screen.",
@@ -924,13 +934,6 @@ CASE_API_V0_6 = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_enable_search_index,
-)
-
-LIVEQUERY_SYNC = DynamicallyPredictablyRandomToggle(
-    'livequery_sync',
-    'Enable livequery sync algorithm',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
@@ -1049,13 +1052,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/GS/CommCare+Android+Developer+Options+--+Internal#'
               'CommCareAndroidDeveloperOptions--Internal-SettingtheValueofaDeveloperOptionfromHQ',
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-WEBAPPS_CASE_MIGRATION = StaticToggle(
-    'webapps_case_migration',
-    "Work-in-progress to support user-written migrations",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
@@ -1179,13 +1175,6 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
-OPENCLINICA = StaticToggle(
-    'openclinica',
-    'KEMRI: Offer OpenClinica settings and CDISC ODM export',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
@@ -1220,13 +1209,6 @@ NON_PARENT_MENU_SELECTION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description="Allow selecting of module of any case-type in select-parent workflow",
     help_link="https://confluence.dimagi.com/display/USH/Selecting+any+case+in+%27select+parent+first%27+workflow"
-)
-
-FORMPLAYER_USE_LIVEQUERY = StaticToggle(
-    'formplayer_use_livequery',
-    'Use LiveQuery on Web Apps',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
 )
 
 FIXTURE_CASE_SELECTION = StaticToggle(
@@ -1264,6 +1246,13 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
     TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
+CASE_DEDUPE = StaticToggle(
+    'case_dedupe',
+    'Case deduplication feature',
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1433,6 +1422,7 @@ DATA_DICTIONARY = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     description='Available in the Data section, shows the names of all properties of each case type.',
+    help_link='https://confluence.dimagi.com/display/GS/Data+Dictionary+for+Case+Properties',
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -1448,14 +1438,6 @@ VIEW_APP_CHANGES = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
     help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
-)
-
-ACTIVE_COUCH_DOMAINS = StaticToggle(
-    'active_couch_domains',
-    "Domains that are still on the Couch DB backend which we consider most "
-    "active / important to ensure that data in ES is never stale.",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
 )
 
 PAGINATED_EXPORTS = StaticToggle(
@@ -1576,13 +1558,6 @@ COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
     default_randomness=0.001,  # 1 in 1000
     description='Reports for comparison must be listed in settings.UCR_COMPARISONS.'
-)
-
-MOBILE_LOGIN_LOCKOUT = StaticToggle(
-    'mobile_user_login_lockout',
-    "On too many wrong password attempts, lock out mobile users",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
 )
 
 LINKED_DOMAINS = StaticToggle(
@@ -1869,7 +1844,7 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
 
 RESTRICT_MOBILE_ACCESS = StaticToggle(
     'restrict_mobile_endpoints',
-    'USH: Require explicit permissions to access mobile app endpoints',
+    'USH: Displays a security setting option to require explicit permissions to access mobile app endpoints',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints",
@@ -2126,6 +2101,13 @@ COWIN_INTEGRATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+EXPRESSION_REPEATER = StaticToggle(
+    'expression_repeater',
+    'Integrate with generic APIs using UCR expressions',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/saas/Configurable+Repeaters",
+)
 
 TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
@@ -2155,7 +2137,7 @@ DATA_REGISTRY = StaticToggle(
   
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
     'case_import_data_dictionary_validaton',
-    'Validate data per data dictionary definitions during case import',
+    'USH: Validate data per data dictionary definitions during case import',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Validate+data+per+data+dictionary+definitions+during+case+import",
@@ -2166,4 +2148,11 @@ DO_NOT_REPUBLISH_DOCS = StaticToggle(
     'Prevents automatic attempts to repair stale ES docs in this domain',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+HOURLY_SCHEDULED_REPORT = StaticToggle(
+    'hourly-scheduled-report',
+    'Add ability to send a scheduled report hourly',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
 )

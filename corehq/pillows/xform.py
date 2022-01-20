@@ -11,9 +11,10 @@ from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
 from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
+from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
@@ -179,6 +180,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
       - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
       - :py:class:`corehq.pillows.user.UnknownUsersProcessor` (disabled when RUN_UNKNOWN_USER_PILLOW=False)
       - :py:class:`pillowtop.form.FormSubmissionMetadataTrackerProcessor` (disabled when RUN_FORM_META_PILLOW=False)
+      - :py:class:`corehq.apps.data_interfaces.pillow.CaseDeduplicationPillow``
     """
     # avoid circular dependency
     from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
@@ -191,7 +193,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         dedicated_migration_process=dedicated_migration_process
     )
 
-    table_manager = ConfigurableReportTableManager(
+    ucr_processor = get_ucr_processor(
         data_source_providers=[
             DynamicDataSourceProvider('XFormInstance'),
             StaticDataSourceProvider('XFormInstance')
@@ -200,10 +202,9 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
         run_migrations=(process_num == 0),  # only first process runs migrations
+        ucr_configs=ucr_configs
     )
-    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
-    if ucr_configs:
-        table_manager.bootstrap(ucr_configs)
+
     xform_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
@@ -225,6 +226,9 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         processors.append(unknown_user_form_processor)
     if settings.RUN_FORM_META_PILLOW:
         processors.append(form_meta_processor)
+    if settings.RUN_DEDUPLICATION_PILLOW:
+        processors.append(CaseDeduplicationProcessor())
+
     if not settings.ENTERPRISE_MODE:
         xform_to_report_es_processor = BulkElasticProcessor(
             elasticsearch=get_es_new(),
@@ -236,6 +240,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         processors.append(xform_to_report_es_processor)
     if not skip_ucr:
         processors.append(ucr_processor)
+
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,

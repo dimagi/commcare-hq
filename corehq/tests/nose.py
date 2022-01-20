@@ -25,7 +25,7 @@ from django.test.utils import get_unique_databases_and_mirrors
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
 from django_nose.plugin import DatabaseContext
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 from nose.plugins import Plugin
 from nose.tools import nottest
 from requests.exceptions import HTTPError

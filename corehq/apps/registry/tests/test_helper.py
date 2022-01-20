@@ -32,7 +32,7 @@ class TestDataRegistryHelper(SimpleTestCase):
     def test_get_case(self):
         mock_case = _mock_case("a", "domain1")
         with patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case):
-            case = self.helper.get_case("case1", "a", _mock_user(), "app")
+            case = self.helper.get_case("case1", _mock_user(), "app")
         self.assertEqual(case, mock_case)
         self.log_data_access.assert_called_with("user", "domain1", "app", filters={
             "case_type": "a",
@@ -43,34 +43,27 @@ class TestDataRegistryHelper(SimpleTestCase):
         mock_case = _mock_case("other-type", "domain1")
         with patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case), \
              self.assertRaisesMessage(RegistryAccessException, "'other-type' not available in registry"):
-            self.helper.get_case("case1", "other-type", _mock_user(), "app")
+            self.helper.get_case("case1", _mock_user(), "app")
         self.log_data_access.not_called()
 
     def test_get_case_not_found(self):
         with self.assertRaises(CaseNotFound), \
              patch.object(CaseAccessorSQL, 'get_case', side_effect=CaseNotFound):
-            self.helper.get_case("case1", "a", _mock_user(), "app")
-        self.log_data_access.not_called()
-
-    def test_get_case_type_mismatch(self):
-        mock_case = _mock_case("other-type", "domain1")
-        with self.assertRaisesMessage(CaseNotFound, "Case type mismatch"), \
-             patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case):
-            self.helper.get_case("case1", "a", _mock_user(), "app")
+            self.helper.get_case("case1", _mock_user(), "app")
         self.log_data_access.not_called()
 
     def test_get_case_domain_not_in_registry(self):
         mock_case = _mock_case("a", "other-domain")
         with self.assertRaisesMessage(RegistryAccessException, "Data not available in registry"), \
              patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case):
-            self.helper.get_case("case1", "a", _mock_user(), "app")
+            self.helper.get_case("case1", _mock_user(), "app")
         self.log_data_access.not_called()
 
     def test_get_case_access_to_current_domain_allowed_even_if_user_has_no_permission(self):
         mock_case = _mock_case("a", "domain1")
         mock_user = _mock_user(has_permission=False)
         with patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case):
-            self.helper.get_case("case1", "a", mock_user, "app")
+            self.helper.get_case("case1", mock_user, "app")
         self.log_data_access.assert_called_with("user", "domain1", "app", filters={
             "case_type": "a",
             "case_id": "case1"
@@ -81,13 +74,13 @@ class TestDataRegistryHelper(SimpleTestCase):
         mock_user = _mock_user(has_permission=False)
         with self.assertRaisesMessage(RegistryAccessException, "User not permitted to access registry data"),\
              patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case):
-            self.helper.get_case("case1", "a", mock_user, "app")
+            self.helper.get_case("case1", mock_user, "app")
 
     def test_get_case_access_to_other_domain_allowed_if_user_has_permission(self):
         mock_case = _mock_case("a", "domain2")
         mock_user = _mock_user(has_permission=True)
         with patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case):
-            self.helper.get_case("case1", "a", mock_user, "app")
+            self.helper.get_case("case1", mock_user, "app")
         self.log_data_access.assert_called_with("user", "domain2", "app", filters={
             "case_type": "a",
             "case_id": "case1"

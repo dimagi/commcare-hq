@@ -50,8 +50,8 @@ from corehq.privileges import RELEASE_MANAGEMENT
 
 
 @task(queue='linked_domain_queue')
-def pull_missing_multimedia_for_app_and_notify_task(domain, app_id, email=None):
-    pull_missing_multimedia_for_app_and_notify(domain, app_id, email)
+def pull_missing_multimedia_for_app_and_notify_task(domain, app_id, email=None, force=False):
+    pull_missing_multimedia_for_app_and_notify(domain, app_id, email, force)
 
 
 @task(queue='linked_domain_queue')

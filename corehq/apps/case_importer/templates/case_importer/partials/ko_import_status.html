@@ -1,6 +1,6 @@
 {% load i18n %}
 <!--ko if: state === $root.states.SUCCESS && result-->
-<div class="text-success">
+<div>
   <!--ko if: result.match_count-->
   <p>
     {% blocktrans with match_count='result.match_count' %}
@@ -32,15 +32,31 @@
     <!--ko foreach: result.errors-->
     <!--ko if: rows-->
     <li>
-      <p>
-        <strong data-bind="text: title"></strong>
-        <!--ko if: column--> {% trans 'in column' %}
-        <strong data-bind="text: column"></strong><!--/ko-->
-      </p>
+      <!--ko if: column-->
+      <p><strong>
+        <!-- ko if: rows.length == 1-->
+        {% blocktrans %}
+          <span data-bind="text: rows.length"></span> row had an invalid
+          "<span data-bind="text: column"></span>" cell and was not saved
+        {% endblocktrans %}
+        <!--/ko-->
+        <!-- ko if: rows.length > 1-->
+        {% blocktrans %}
+          <span data-bind="text: rows.length"></span> rows had invalid
+          "<span data-bind="text: column"></span>" cells and were not saved
+        {% endblocktrans %}
+        <!--/ko-->
+      </strong></p>
+      <!--/ko-->
+      <!--ko if: !column -->
+      <p><strong data-bind="text: title"></strong></p>
+      <!--/ko-->
       <p data-bind="text: description">
       </p>
+      <p data-bind="visible: sample, text: sample">
+      </p>
       <p>
-        <span>{% trans "Affected rows:" %}</span>
+        <span>{% trans "Row(s):" %}</span>
         <span data-bind="text: rows.join(', ')"></span>
       </p>
     </li>

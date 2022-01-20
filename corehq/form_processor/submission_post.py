@@ -428,7 +428,6 @@ class SubmissionPost(object):
         instance = xforms[0]
         case_db.clear_changed()
         try:
-            case_stock_result.case_result.commit_dirtiness_flags()
             case_stock_result.stock_result.finalize()
 
             SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)
@@ -481,14 +480,14 @@ class SubmissionPost(object):
 
     @staticmethod
     def _fire_post_save_signals(instance, cases):
-        from casexml.apps.case.signals import case_post_save
+        from corehq.form_processor.signals import sql_case_post_save
         error_message = "Error occurred during form submission post save (%s)"
         error_details = {'domain': instance.domain, 'form_id': instance.form_id}
         results = successful_form_received.send_robust(None, xform=instance)
         has_errors = log_signal_errors(results, error_message, error_details)
 
         for case in cases:
-            results = case_post_save.send_robust(case.__class__, case=case)
+            results = sql_case_post_save.send_robust(case.__class__, case=case)
             has_errors |= log_signal_errors(results, error_message, error_details)
         if has_errors:
             raise PostSaveError

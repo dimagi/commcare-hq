@@ -8,9 +8,9 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
-    extract_xml_partial,
     patch_get_xform_resource_overrides,
 )
+from corehq.tests.util.xml import extract_xml_partial
 
 
 @patch_get_xform_resource_overrides()

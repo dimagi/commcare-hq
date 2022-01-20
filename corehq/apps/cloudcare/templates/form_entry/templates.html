@@ -419,20 +419,23 @@
   <legend aria-hidden="true" class="sr-only">{% trans "Answer Choices" %}</legend>
     <div class="sel clear">
       <div data-bind="foreach: choices, as: 'choice'">
-        <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
+        <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }, class: $parent.colStyleIfHideLabel">
           <label>
-            <input data-bind="
-                        checked: $parent.rawAnswer,
-                        checkedValue: $index() + 1,
-                        attr: {
-                            id: 'group-' + $parent.entryId + '-choice-' + $index(),
-                            type: $parent.isMulti ? 'checkbox' : 'radio',
-                            name: $parent.entryId,
-                            class: 'group-' + $parent.entryId,
-                        },
-                    "/>
-            <span data-bind="renderMarkdown: $data"></span>
+              <input data-bind="
+                          checked: $parent.rawAnswer,
+                          checkedValue: $data,
+                          attr: {
+                              id: 'group-' + $parent.entryId + '-choice-' + $index(),
+                              type: $parent.isMulti ? 'checkbox' : 'radio',
+                              name: $parent.entryId,
+                              class: 'group-' + $parent.entryId,
+                          },
+                      "/>
+            <!-- ko ifnot: $parent.hideLabel -->
+              <span data-bind="renderMarkdown: $data"></span>
+            <!-- /ko -->
           </label>
+          </div>
         </div>
       </div>
       <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">
@@ -468,7 +471,7 @@
         visible: helpText(),
     "></span>
   <select multiple class="form-control" data-bind="
-        foreach: options,
+        options: choices,
         selectedOptions: rawAnswer,
         attr: {
             id: entryId,
@@ -476,7 +479,6 @@
         },
         valueAllowUnset: true,
         ">
-    <option data-bind="value: id, text: text"></option>
   </select>
   <span class="help-block type" aria-hidden="true" data-bind="
         text: helpText(),

@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
     def handle(self, build_path, version, build_number, **options):
         if options.get('latest'):
-            _create_build_with_latest_version()
+            self._create_build_with_latest_version()
         else:
             if build_path and version and build_number:
                 try:
@@ -33,17 +33,16 @@ class Command(BaseCommand):
             else:
                 raise CommandError("<build_path>, <version> or <build_number> not specified!")
 
+    def _create_build_with_latest_version(self):
+        version = _get_latest_commcare_build_version()
+        self.stdout.write(f"Latest published version: {version}")
 
-def _create_build_with_latest_version():
-    version = _get_latest_commcare_build_version()
-
-    commcare_version_build = next(
-        (cc_build for cc_build in CommCareBuild.all_builds() if cc_build.version == version),
-        None
-    )
-    if commcare_version_build is None:
-        CommCareBuild.create_without_artifacts(version, None)
-        _update_commcare_build_menu(version)
+        if any(build.version == version for build in CommCareBuild.all_builds()):
+            self.stdout.write(f"A build for version {version} already exists. You're up-to-date!")
+        else:
+            CommCareBuild.create_without_artifacts(version, None)
+            _update_commcare_build_menu(version)
+            self.stdout.write(f"Added build for version {version}.")
 
 
 def _get_latest_commcare_build_version():

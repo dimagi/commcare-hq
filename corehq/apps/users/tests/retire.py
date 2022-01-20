@@ -3,7 +3,7 @@ from xml.etree import cElementTree as ElementTree
 
 from django.test import TestCase, override_settings
 
-import mock
+from unittest import mock
 
 from casexml.apps.case.mock import (
     CaseBlock,
@@ -302,7 +302,7 @@ class RetireUserTestCase(TestCase):
 
     def test_all_case_forms_deleted(self):
         from corehq.apps.callcenter.sync_usercase import sync_usercase
-        sync_usercase(self.commcare_user)
+        sync_usercase(self.commcare_user, self.domain)
 
         usercase_id = self.commcare_user.get_usercase_id()
 

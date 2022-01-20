@@ -21,7 +21,7 @@ Postgres and Couch data.
   - Create a pg dump.  You'll need to verify the host IP address:
 
     ```sh
-    pg_dump -h 0.0.0.0 -U commcarehq commcarehq > /path/to/backup_hq_db.sql
+    pg_dump -h localhost -U commcarehq commcarehq > /path/to/backup_hq_db.sql
     ```
 
 - CouchDB
@@ -52,11 +52,11 @@ Save those backups to somewhere you'll be able to access from the new environmen
     "Rosetta 2 is an emulator designed to bridge the transition between Intel and Apple processors. In short, it translates apps built for Intel so they will run on Apple Silicon." [Link](https://www.computerworld.com/article/3597949/everything-you-need-to-know-about-rosetta-2-on-apple-silicon-macs.html).
     While reading through this document, be careful to watch out for specific reccomendations regarding your architecture.
     
-- [Python 3.6](https://www.python.org/downloads/) and `python-dev`. In Ubuntu
+- [Python 3.9](https://www.python.org/downloads/) and `python-dev`. In Ubuntu
   you will also need to install the modules for pip and venv explicitly.
 
     ```sh
-    sudo apt install python3.6-dev python3-pip python3-venv
+    sudo apt install python3.9-dev python3-pip python3-venv
     ```
     
     - If you have a Mac with an M1 chip, you can try installing Python 3.8.12 instead using the Rosetta-enabled homebrew (make sure you have enabled the ibrew command using the MacOS notes below):
@@ -198,10 +198,10 @@ Save those backups to somewhere you'll be able to access from the new environmen
     sudo pip install virtualenvwrapper --ignore-installed six
     ```
 
-- For downloading Python 3.6 consider:
+- For downloading Python 3.9 consider:
 
   - Using [pyenv](https://github.com/pyenv/pyenv-installer)
-  - Using Homebrew with this [brew formula](https://gist.github.com/SamuelMarks/0ceaaf6d3de12b6408e3e67aae80ae3b)
+  - Using Homebrew with this [brew formula](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/python@3.9.rb)
 
 - For using Java, consider:
   - Using [jenv](https://github.com/jenv/jenv)
@@ -442,7 +442,7 @@ that to the new install.
   - Restore the backup:
 
     ```sh
-    psql -U commcarehq -h 0.0.0.0 commcarehq < /path/to/backup_hq_db.sql
+    psql -U commcarehq -h localhost commcarehq < /path/to/backup_hq_db.sql
     ```
 
 - CouchDB
@@ -459,7 +459,7 @@ that to the new install.
     ./scripts/docker start couch
     ```
 
-  - Fire up Fauxton to check that the dbs are there: http://0.0.0.0:5984/_utils/
+  - Fire up Fauxton to check that the dbs are there: http://localhost:5984/_utils/
 
 - Shared Directory
   - If you are following the default instructions, move/merge the `sharedfiles`
@@ -472,15 +472,8 @@ Devs using computers with the ARM64 architecture (often Apple computers with the
 
 - Postgres
 
-    In your hq-compose.yml, try updating the following:
-        ```
-        image: dimagi/docker-postgresql
-        ```
-        to
-        ```
-        image: arm64v8/postgres
-        ```
-        So that you are using a Postgres image built for ARM64 archtecture. Now your Docker service should run properly. Note that you may run into errors while testing because of this different image--see details on a fix in the testing section farther down.
+    The Docker scripts should detect what architecture you have and automatically use the [Postgres image made for ARM64](https://hub.docker.com/r/arm64v8/postgres/). Note that this image doesn't include the pghashlib and plproxy extensions that the [Dimagi Postgres image](https://github.com/dimagi/docker-postgresql) uses, but you shouldn't need these extensions for your development environment (exception: note the `USE_PARTITIONED_DATABASE` setting when running tests in the "Running Tests" section below).
+
 - Elasticsearch
     
     Download the TAR for ES 2.4.2 from [here](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-2). Open it, and move it somewhere you can reliably remember, maybe your root directory. In a new tab/window:
@@ -558,7 +551,7 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
 
 - If you get errors saying "Segmentation fault (core dumped)", with a warning like
   "RuntimeWarning: greenlet.greenlet size changed, may indicate binary incompatibility.
-  Expected 144 from C header, got 152 from PyObject" check that your Python version is correct (3.6).
+  Expected 144 from C header, got 152 from PyObject" check that your Python version is correct (3.9).
   Alternatively, you can try upgrading `gevent` (`pip install --upgrade gevent`) to fix this error
   on Python 3.8, but you may run into other issues!
 
@@ -677,7 +670,7 @@ LOCAL_APPS += ('django_extensions',)
 When running HQ, be sure to use `runserver_plus`:
 
 ```sh
-./manage.py runserver_plus 0.0.0.0:8000
+./manage.py runserver_plus localhost:8000
 ```
 
 Then you need to have Formplayer running.
@@ -741,7 +734,7 @@ it can give you a good idea of what's broken.
 Then run the django server with the following command:
 
 ```sh
-./manage.py runserver 0.0.0.0:8000
+./manage.py runserver localhost:8000
 ```
 
 You should now be able to load CommCare HQ in a browser at [http://localhost:8000](http://localhost:8000).
@@ -842,15 +835,6 @@ files from Vellum directly, do the following.
     # symlink existing Vellum code at submodules/formdesigner
     ln -s absolute/path/to/Vellum ./submodules/formdesigner
     ```
-
-
-## Airflow
-
-It is usually not required to have a local airflow environment running.
-
-However, if you do need to get setup on Airflow (which is used to back some
-reporting infrastructure) you can follow the instructions in the
-[pipes repository](https://github.com/dimagi/pipes/).
 
 
 ## Running Tests

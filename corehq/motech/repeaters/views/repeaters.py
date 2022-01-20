@@ -136,6 +136,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater.domain = self.domain
         repeater.connection_settings_id = int(cleaned_data['connection_settings_id'])
+        repeater.request_method = cleaned_data['request_method']
         repeater.format = cleaned_data['format']
         return repeater
 
@@ -249,6 +250,8 @@ class AddFormRepeaterView(AddRepeaterView):
         repeater = super().set_repeater_attr(repeater, cleaned_data)
         repeater.include_app_id_param = (
             self.add_repeater_form.cleaned_data['include_app_id_param'])
+        repeater.user_blocklist = (
+            self.add_repeater_form.cleaned_data['user_blocklist'])
         return repeater
 
 

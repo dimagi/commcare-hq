@@ -1,7 +1,7 @@
 import uuid
 
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.domain.shortcuts import create_user
@@ -195,7 +195,7 @@ class RegistryUcrPillowTest(TestCase):
 
         self.assertEqual(2, self.adapter.get_query_object().count())
         actual = {
-            row.doc_id: row.domain
+            row.doc_id: row.commcare_project
             for row in self.adapter.get_query_object()
         }
         self.assertDictEqual(actual, expected)
@@ -233,7 +233,7 @@ class RegistryUcrPillowTest(TestCase):
 
         self.assertEqual(3, adapter.get_query_object().count())
         actual = {
-            row.doc_id: row.domain
+            row.doc_id: row.commcare_project
             for row in adapter.get_query_object()
         }
         self.assertDictEqual(actual, expected)
