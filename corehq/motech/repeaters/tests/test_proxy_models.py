@@ -14,6 +14,7 @@ from ..models import (
     SQLDataRegistryCaseUpdateRepeater,
     SQLLocationRepeater,
     SQLReferCaseRepeater,
+    SQLRepeater,
     SQLShortFormRepeater,
     SQLUserRepeater,
 )
@@ -104,6 +105,13 @@ class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
                 self.dataregistry_repeater_obj.repeater_type
             }
         )
+
+    def test_query_results_are_correct(self):
+        self.assertEqual(len(SQLCreateCaseRepeater.objects.all()), 1)
+        self.assertEqual(len(SQLCaseRepeater.objects.all()), 1)
+        self.assertEqual(len(SQLReferCaseRepeater.objects.all()), 1)
+        self.assertEqual(len(SQLDataRegistryCaseUpdateRepeater.objects.all()), 1)
+        self.assertEqual(len(SQLRepeater.objects.all()), 4)
 
 
 class TestSQLRepeaterSubClasses(RepeaterProxyTests):
