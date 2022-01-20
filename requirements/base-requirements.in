@@ -67,11 +67,14 @@ jsonobject
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
 jsonschema
 kafka-python
-# missing celery specified as parent dependency in .txt files. Check https://github.com/jazzband/pip-tools/issues/1505
 kombu
-# Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
-# missing celery specified as parent dependency in .txt files. Check https://github.com/jazzband/pip-tools/issues/1505
-billiard!=3.5.0.5
+# via celery
+# See https://github.com/jazzband/pip-tools/issues/1505
+# This comment can be removed when that issue is resolved.
+billiard!=3.5.0.5 # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
+# via celery
+# See https://github.com/jazzband/pip-tools/issues/1505
+# This comment can be removed when that issue is resolved.
 laboratory
 lxml
 openpyxl
@@ -91,8 +94,10 @@ python-dateutil
 python-imap
 pyphonetics
 python-magic
-# missing celery specified as parent dependency in .txt files. Check https://github.com/jazzband/pip-tools/issues/1505
 pytz
+# via celery
+# See https://github.com/jazzband/pip-tools/issues/1505
+# This comment can be removed when that issue is resolved.
 PyYAML
 pyzxcvbn
 qrcode
