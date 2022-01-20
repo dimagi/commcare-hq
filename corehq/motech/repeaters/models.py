@@ -249,10 +249,10 @@ class OptionValue(property):
 
     NOT_SET = object()
 
-    def __init__(self, default=NOT_SET, choices=None, obj_schema=None):
+    def __init__(self, default=NOT_SET, choices=None, schema=None):
         self.default = default
         self.choices = choices
-        self.schema = obj_schema
+        self.schema = schema
 
     def __set_name__(self, owner, name):
         self.name = name

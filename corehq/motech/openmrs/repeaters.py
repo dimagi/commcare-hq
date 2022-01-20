@@ -255,8 +255,8 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
     # owner is set to the first CommCareUser instance found at that
     # location.
     atom_feed_enabled = OptionValue(default=False)
-    atom_feed_status = OptionValue(obj_schema=AtomFeedStatus)
-    openmrs_config = OptionValue(obj_schema=OpenmrsConfig)
+    atom_feed_status = OptionValue(schema=AtomFeedStatus)
+    openmrs_config = OptionValue(schema=OpenmrsConfig)
 
     def __eq__(self, other):
         return (
