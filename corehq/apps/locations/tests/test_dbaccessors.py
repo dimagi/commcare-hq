@@ -27,6 +27,7 @@ from ..dbaccessors import (
     get_user_ids_from_primary_location_ids
 )
 from .util import make_loc, delete_all_locations
+from ..dbaccessors import get_filtered_locations_count
 
 
 class TestUsersByLocation(TestCase):
@@ -168,9 +169,7 @@ class TestFilteredLocationsCount(TestCase):
         cls.ccdomain.delete()
         super().tearDownClass()
 
-    def test_location_filters(self):
-        from ..dbaccessors import get_filtered_locations_count
-        # can filter by location_id (pseudo root)
+    def test_location_filter_location_id(self):
         filters = {}
         self.assertEqual(get_filtered_locations_count(
             self.ccdomain.name,
@@ -183,7 +182,7 @@ class TestFilteredLocationsCount(TestCase):
             root_location_ids=[self.loc2._id],
             **filters), 1)
 
-        # can filter by location active status
+    def test_location_filter_active_status(self):
         filters = {'is_archived': True}
         self.assertEqual(get_filtered_locations_count(self.ccdomain.name, **filters), 0)
 

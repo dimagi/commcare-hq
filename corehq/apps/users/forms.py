@@ -1415,10 +1415,10 @@ class UserFilterForm(forms.Form):
             ),
             crispy.Field("search_string", data_bind="value: search_string"),
         ]
-        user_type_title = _('Users')
 
+        fieldset_label = _('Filter and Download Users')
         if self.user_type == MOBILE_USER_TYPE:
-            user_type_title = _('Mobile Workers')
+            fieldset_label = _('Filter and Download Mobile Workers')
             fields += [
                 crispy.Div(
                     crispy.Field("location_id",),
@@ -1437,7 +1437,7 @@ class UserFilterForm(forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _('Filter and Download {user_type_title}').format(user_type_title=user_type_title),
+                fieldset_label,
                 *fields,
             ),
             hqcrispy.FormActions(
@@ -1487,7 +1487,8 @@ class UserFilterForm(forms.Form):
             return False
         return None
 
-    def get_cleaned_data(self):
+    # get_cleaned_data
+    def clean(self):
         data = self.cleaned_data
 
         if not data.get('location_id'):
