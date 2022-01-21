@@ -26,7 +26,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('blobs.BlobMeta', SimpleFilter('domain')),
 
     FilteredModelIteratorBuilder('form_processor.XFormInstance', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.XFormOperationSQL', SimpleFilter('form__domain')),
+    FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain')),
 
     FilteredModelIteratorBuilder('form_processor.CommCareCaseSQL', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndexSQL', SimpleFilter('domain')),

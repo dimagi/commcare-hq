@@ -6,7 +6,7 @@ from corehq.blobs.models import BlobMeta
 from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
-    XFormInstance, XFormOperationSQL,
+    XFormInstance, XFormOperation,
     LedgerValue, CaseAttachmentSQL)
 
 
@@ -23,11 +23,11 @@ class DeletableModelSerializer(serializers.ModelSerializer):
             self.fields.pop('deleted_on')
 
 
-class XFormOperationSQLSerializer(serializers.ModelSerializer):
+class XFormOperationSerializer(serializers.ModelSerializer):
     user = serializers.CharField(source="user_id")
 
     class Meta(object):
-        model = XFormOperationSQL
+        model = XFormOperation
         exclude = ('id', 'form', 'user_id')
 
 
@@ -44,7 +44,7 @@ def _serialize_form_attachments(form):
 
 
 def _serialize_form_history(form):
-    return list(XFormOperationSQLSerializer(form.history, many=True).data)
+    return list(XFormOperationSerializer(form.history, many=True).data)
 
 
 lazy_serialize_form_attachments = lazy(_serialize_form_attachments, dict)
@@ -84,7 +84,7 @@ class JsonFieldSerializerMixin(object):
 
 class XFormInstanceRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
     state = XFormStateField()
-    history = XFormOperationSQLSerializer(many=True, read_only=True)
+    history = XFormOperationSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     external_blobs = serializers.JSONField(source='serialized_attachments')
 

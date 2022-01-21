@@ -13,7 +13,7 @@ from corehq.form_processor.models import (
     CommCareCaseIndexSQL_DB_TABLE, CaseTransaction_DB_TABLE,
     XFormInstance_DB_TABLE,
     LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE,
-    XFormOperationSQL_DB_TABLE,
+    XFormOperation_DB_TABLE,
 )
 
 
@@ -72,7 +72,7 @@ def form_operation_adapter(operation):
         operation.date,
         operation.form_id,
     ]
-    return ObjectAdapter(fields, XFormOperationSQL_DB_TABLE)
+    return ObjectAdapter(fields, XFormOperation_DB_TABLE)
 
 
 def case_adapter(case):

@@ -20,7 +20,7 @@ from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
     XFormInstance, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
+    CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperation)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq import toggles
@@ -163,10 +163,10 @@ class FormProcessorSQL(object):
         existing_xform.state = XFormInstance.DEPRECATED
         default_user_id = new_xform.user_id or 'unknown'
         user_id = new_xform.auth_context and new_xform.auth_context.get('user_id') or default_user_id
-        operation = XFormOperationSQL(
+        operation = XFormOperation(
             user_id=user_id,
             date=new_xform.edited_on,
-            operation=XFormOperationSQL.EDIT
+            operation=XFormOperation.EDIT
         )
         new_xform.track_create(operation)
         return existing_xform, new_xform

@@ -24,7 +24,7 @@ from corehq.form_processor.models import (
     LedgerTransaction,
     RebuildWithReason,
     XFormInstance,
-    XFormOperationSQL,
+    XFormOperation,
 )
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
@@ -84,9 +84,9 @@ def undo_form_edits(form_tuples, logger):
         )
 
         for form in (live_form, deprecated_form):
-            form.track_create(XFormOperationSQL(
+            form.track_create(XFormOperation(
                 user_id='system',
-                operation=XFormOperationSQL.UUID_DATA_FIX,
+                operation=XFormOperation.UUID_DATA_FIX,
                 date=operation_date)
             )
             FormAccessorSQL.update_form(form)

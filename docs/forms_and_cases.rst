@@ -22,7 +22,7 @@ Models
 +----------------------+
 | XFormInstance        |
 +----------------------+
-| XFormOperationSQL    |
+| XFormOperation       |
 +----------------------+
 
 **Form Instance API**

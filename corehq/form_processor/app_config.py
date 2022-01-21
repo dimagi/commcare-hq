@@ -14,9 +14,9 @@ class FormProcessorAppConfig(AppConfig):
         )
 
         XFormInstance = self.get_model('XFormInstance')
-        XFormOperationSQL = self.get_model('XFormOperationSQL')
+        XFormOperation = self.get_model('XFormOperation')
         register_adapter(XFormInstance, form_adapter)
-        register_adapter(XFormOperationSQL, form_operation_adapter)
+        register_adapter(XFormOperation, form_operation_adapter)
 
         CommCareCaseSQL = self.get_model('CommCareCaseSQL')
         CaseTransaction = self.get_model('CaseTransaction')

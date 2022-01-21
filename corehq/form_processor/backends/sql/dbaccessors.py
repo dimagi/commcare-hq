@@ -50,7 +50,7 @@ from corehq.form_processor.models import (
     LedgerTransaction,
     LedgerValue,
     XFormInstance,
-    XFormOperationSQL,
+    XFormOperation,
 )
 from corehq.form_processor.utils.sql import (
     fetchall_as_namedtuple,
@@ -467,7 +467,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_form_operations(form_id):
-        return list(XFormOperationSQL.objects.partitioned_query(form_id).filter(form_id=form_id).order_by('date'))
+        return list(XFormOperation.objects.partitioned_query(form_id).filter(form_id=form_id).order_by('date'))
 
     @staticmethod
     def get_forms_with_attachments_meta(form_ids, ordered=False):
@@ -564,8 +564,8 @@ class FormAccessorSQL(AbstractFormAccessor):
         if isinstance(form_attachment_new_xml, bytes):
             form_attachment_new_xml = BytesIO(form_attachment_new_xml)
         get_blob_db().put(form_attachment_new_xml, meta=attachment_metadata)
-        operation = XFormOperationSQL(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
-                                      operation=XFormOperationSQL.GDPR_SCRUB)
+        operation = XFormOperation(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
+                                   operation=XFormOperation.GDPR_SCRUB)
         form_data.track_create(operation)
         FormAccessorSQL.update_form(form_data)
 
@@ -607,11 +607,11 @@ class FormAccessorSQL(AbstractFormAccessor):
             raise XFormSaveError('form already saved')
         logging.debug('Saving new form: %s', form)
 
-        operations = form.get_tracked_models_to_create(XFormOperationSQL)
+        operations = form.get_tracked_models_to_create(XFormOperation)
         for operation in operations:
             if operation.is_saved():
                 raise XFormSaveError(
-                    'XFormOperationSQL {} has already been saved'.format(operation.id)
+                    'XFormOperation {} has already been saved'.format(operation.id)
                 )
             operation.form_id = form.form_id
 
@@ -640,7 +640,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert not form.has_tracked_models_to_create(BlobMeta), \
             'Adding new attachments not supported by this method'
 
-        new_operations = form.get_tracked_models_to_create(XFormOperationSQL)
+        new_operations = form.get_tracked_models_to_create(XFormOperation)
         db_name = form.db
         if form.orig_id:
             old_db_name = get_db_alias_for_partitioned_doc(form.orig_id)

@@ -48,7 +48,7 @@ from .exceptions import AttachmentNotFound
 STANDARD_CHARFIELD_LENGTH = 255
 
 XFormInstance_DB_TABLE = 'form_processor_xforminstancesql'
-XFormOperationSQL_DB_TABLE = 'form_processor_xformoperationsql'
+XFormOperation_DB_TABLE = 'form_processor_xformoperationsql'
 
 CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
 CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
@@ -518,10 +518,10 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
     @property
     @memoized
     def history(self):
-        """:returns: List of XFormOperationSQL objects"""
+        """:returns: List of XFormOperation objects"""
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         operations = FormAccessorSQL.get_form_operations(self.form_id) if self.is_saved() else []
-        operations += self.get_tracked_models_to_create(XFormOperationSQL)
+        operations += self.get_tracked_models_to_create(XFormOperation)
         return operations
 
     @property
@@ -636,7 +636,7 @@ class DeprecatedXFormAttachmentSQL(models.Model):
         ]
 
 
-class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
+class XFormOperation(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'form_id'
 
     ARCHIVE = 'archive'
@@ -661,7 +661,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
 
     class Meta(object):
         app_label = "form_processor"
-        db_table = XFormOperationSQL_DB_TABLE
+        db_table = XFormOperation_DB_TABLE
 
 
 class XFormPhoneMetadata(jsonobject.JsonObject):

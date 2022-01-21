@@ -27,7 +27,7 @@ from corehq.form_processor.interfaces.processor import (
     FormProcessorInterface,
     ProcessedForms,
 )
-from corehq.form_processor.models import XFormInstance, XFormOperationSQL
+from corehq.form_processor.models import XFormInstance, XFormOperation
 from corehq.form_processor.parsers.form import apply_deprecation
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -167,10 +167,10 @@ class FormAccessorTestsSQL(TestCase):
         operations = FormAccessorSQL.get_form_operations(form.form_id)
         self.assertEqual(2, len(operations))
         self.assertEqual('user1', operations[0].user_id)
-        self.assertEqual(XFormOperationSQL.ARCHIVE, operations[0].operation)
+        self.assertEqual(XFormOperation.ARCHIVE, operations[0].operation)
         self.assertIsNotNone(operations[0].date)
         self.assertEqual('user2', operations[1].user_id)
-        self.assertEqual(XFormOperationSQL.UNARCHIVE, operations[1].operation)
+        self.assertEqual(XFormOperation.UNARCHIVE, operations[1].operation)
         self.assertIsNotNone(operations[1].date)
         self.assertGreater(operations[1].date, operations[0].date)
 
@@ -380,10 +380,10 @@ class FormAccessorTestsSQL(TestCase):
         form = create_form_for_test(DOMAIN)
         form.user_id = 'user2'
         operation_date = datetime.utcnow()
-        form.track_create(XFormOperationSQL(
+        form.track_create(XFormOperation(
             user_id='user2',
             date=operation_date,
-            operation=XFormOperationSQL.EDIT
+            operation=XFormOperation.EDIT
         ))
         FormAccessorSQL.update_form(form)
 
