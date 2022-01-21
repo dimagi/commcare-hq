@@ -7,7 +7,7 @@ from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCase, CaseTransaction,
     XFormInstance, XFormOperation,
-    LedgerValue, CaseAttachmentSQL)
+    LedgerValue, CaseAttachment)
 
 
 class DeletableModelSerializer(serializers.ModelSerializer):
@@ -137,9 +137,9 @@ class CommCareCaseRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSeria
         fields = '__all__'
 
 
-class CaseAttachmentSQLSerializer(serializers.ModelSerializer):
+class CaseAttachmentSerializer(serializers.ModelSerializer):
     class Meta(object):
-        model = CaseAttachmentSQL
+        model = CaseAttachment
         fields = (
             'content_type',
             'content_length',

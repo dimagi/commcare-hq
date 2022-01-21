@@ -43,7 +43,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseIndexInfo,
 )
 from corehq.form_processor.models import (
-    CaseAttachmentSQL,
+    CaseAttachment,
     CaseTransaction,
     CommCareCaseIndexSQL,
     CommCareCase,
@@ -925,7 +925,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_attachment_by_name(case_id, attachment_name):
         try:
-            return CaseAttachmentSQL.objects.plproxy_raw(
+            return CaseAttachment.objects.plproxy_raw(
                 'select * from get_case_attachment_by_name(%s, %s)',
                 [case_id, attachment_name]
             )[0]
@@ -939,7 +939,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_attachments(case_id):
-        return list(CaseAttachmentSQL.objects.partitioned_query(case_id).filter(case_id=case_id))
+        return list(CaseAttachment.objects.partitioned_query(case_id).filter(case_id=case_id))
 
     @staticmethod
     def get_transactions(case_id):
@@ -1004,8 +1004,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         indices_to_save_or_update = case.get_live_tracked_models(CommCareCaseIndexSQL)
         index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
 
-        attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
-        attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachmentSQL)]
+        attachments_to_save = case.get_tracked_models_to_create(CaseAttachment)
+        attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachment)]
         for attachment in attachments_to_save:
             if attachment.is_saved():
                 raise CaseSaveError(
@@ -1034,7 +1034,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 for attachment in attachments_to_save:
                     attachment.save()
 
-                CaseAttachmentSQL.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
+                CaseAttachment.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
 
                 case.clear_tracked_models()
         except DatabaseError as e:

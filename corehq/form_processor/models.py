@@ -52,7 +52,7 @@ XFormOperation_DB_TABLE = 'form_processor_xformoperationsql'
 
 CommCareCase_DB_TABLE = 'form_processor_commcarecasesql'
 CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
-CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
+CaseAttachment_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 LedgerTransaction_DB_TABLE = 'form_processor_ledgertransaction'
@@ -958,11 +958,11 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def serialized_attachments(self):
-        from .serializers import CaseAttachmentSQLSerializer
+        from .serializers import CaseAttachmentSerializer
         return {
-            att.name: dict(CaseAttachmentSQLSerializer(att).data)
+            att.name: dict(CaseAttachmentSerializer(att).data)
             for att in self.get_attachments()
-            }
+        }
 
     @memoized
     def get_closing_transactions(self):
@@ -1083,7 +1083,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         db_table = CommCareCase_DB_TABLE
 
 
-class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
+class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
     """Case attachment
 
     Case attachments reference form attachments, and therefore this
@@ -1111,7 +1111,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
     blob_id = models.CharField(max_length=255, default=None)
     blob_bucket = models.CharField(max_length=255, null=True, default="")
 
-    # DEPRECATED - use CaseAttachmentSQL.content_md5() instead
+    # DEPRECATED - use CaseAttachment.content_md5() instead
     md5 = models.CharField(max_length=255, default="")
 
     @property
@@ -1162,7 +1162,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
     def __str__(self):
         return str(
-            "CaseAttachmentSQL("
+            "CaseAttachment("
             "attachment_id='{a.attachment_id}', "
             "case_id='{a.case_id}', "
             "name='{a.name}', "
@@ -1186,7 +1186,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
     class Meta(object):
         app_label = "form_processor"
-        db_table = CaseAttachmentSQL_DB_TABLE
+        db_table = CaseAttachment_DB_TABLE
         index_together = [
             ["case", "name"],
         ]

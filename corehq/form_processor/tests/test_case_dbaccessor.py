@@ -19,7 +19,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
-    CaseAttachmentSQL,
+    CaseAttachment,
     CaseTransaction,
     CommCareCaseIndexSQL,
     CommCareCase,
@@ -41,7 +41,7 @@ class CaseAccessorTestsSQL(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.using = router.db_for_read(CaseAttachmentSQL, **{HINT_PLPROXY: True})
+        self.using = router.db_for_read(CaseAttachment, **{HINT_PLPROXY: True})
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
@@ -164,7 +164,7 @@ class CaseAccessorTestsSQL(TestCase):
             referenced_id=uuid.uuid4().hex,
             relationship_id=CommCareCaseIndexSQL.CHILD
         ))
-        case1.track_create(CaseAttachmentSQL(
+        case1.track_create(CaseAttachment(
             case=case1,
             attachment_id=uuid.uuid4().hex,
             name='pic.jpg',
@@ -186,7 +186,7 @@ class CaseAccessorTestsSQL(TestCase):
     def test_get_attachment_by_name(self):
         case = _create_case()
 
-        case.track_create(CaseAttachmentSQL(
+        case.track_create(CaseAttachment(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='pic.jpg',
@@ -194,7 +194,7 @@ class CaseAccessorTestsSQL(TestCase):
             blob_id='123',
             md5='123'
         ))
-        case.track_create(CaseAttachmentSQL(
+        case.track_create(CaseAttachment(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='my_doc',
@@ -217,7 +217,7 @@ class CaseAccessorTestsSQL(TestCase):
     def test_get_attachments(self):
         case = _create_case()
 
-        case.track_create(CaseAttachmentSQL(
+        case.track_create(CaseAttachment(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='pic.jpg',
@@ -225,7 +225,7 @@ class CaseAccessorTestsSQL(TestCase):
             blob_id='125',
             md5='123',
         ))
-        case.track_create(CaseAttachmentSQL(
+        case.track_create(CaseAttachment(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='doc',
@@ -358,7 +358,7 @@ class CaseAccessorTestsSQL(TestCase):
     def test_save_case_delete_attachment(self):
         case = _create_case()
 
-        case.track_create(CaseAttachmentSQL(
+        case.track_create(CaseAttachment(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='doc',
@@ -376,7 +376,7 @@ class CaseAccessorTestsSQL(TestCase):
     def test_save_case_update_attachment(self):
         case = _create_case()
 
-        case.track_create(CaseAttachmentSQL(
+        case.track_create(CaseAttachment(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='doc',

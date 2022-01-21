@@ -16,7 +16,7 @@ Models
 +----------------------+
 | CaseTransaction      |
 +----------------------+
-| CaseAttachmentSQL    |
+| CaseAttachment       |
 +----------------------+
 | CommCareCaseIndexSQL |
 +----------------------+

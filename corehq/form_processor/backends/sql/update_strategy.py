@@ -24,7 +24,7 @@ from corehq import toggles
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import StockProcessingError
 from corehq.form_processor.models import (
-    CaseAttachmentSQL,
+    CaseAttachment,
     CaseTransaction,
     CommCareCaseIndexSQL,
     CommCareCase,
@@ -228,7 +228,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                         form_attachment, att.attachment_src)
                     self.case.track_update(existing_attachment)
                 else:
-                    new_attachment = CaseAttachmentSQL.new(att.identifier)
+                    new_attachment = CaseAttachment.new(att.identifier)
                     new_attachment.from_form_attachment(
                         form_attachment, att.attachment_src)
                     new_attachment.case = self.case
@@ -297,7 +297,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         )
         self._delete_old_related_models(
             original_attachments,
-            self.case.get_live_tracked_models(CaseAttachmentSQL),
+            self.case.get_live_tracked_models(CaseAttachment),
             key="name",
         )
 

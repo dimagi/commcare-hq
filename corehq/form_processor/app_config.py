@@ -21,11 +21,11 @@ class FormProcessorAppConfig(AppConfig):
         CommCareCase = self.get_model('CommCareCase')
         CaseTransaction = self.get_model('CaseTransaction')
         CommCareCaseIndexSQL = self.get_model('CommCareCaseIndexSQL')
-        CaseAttachmentSQL = self.get_model('CaseAttachmentSQL')
+        CaseAttachment = self.get_model('CaseAttachment')
         register_adapter(CommCareCase, case_adapter)
         register_adapter(CaseTransaction, case_transaction_adapter)
         register_adapter(CommCareCaseIndexSQL, case_index_adapter)
-        register_adapter(CaseAttachmentSQL, case_attachment_adapter)
+        register_adapter(CaseAttachment, case_attachment_adapter)
 
         LedgerValue = self.get_model('LedgerValue')
         LedgerTransaction = self.get_model('LedgerTransaction')
