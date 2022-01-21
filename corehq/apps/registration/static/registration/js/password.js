@@ -33,14 +33,14 @@ hqDefine('registration/js/password', [
             if (suggestionClick < 1) {
                 self.isSuggestedPassword(true);
             }
-        }
+        };
         self.password.subscribe(function () {
             self.isSuggestedPassword(false);
         });
         self.color = ko.computed(function () {
             if (self.strength() < 1) {
                 return "text-error text-danger";
-            } else if (self.strength() == 1 || self.isSuggestedPassword()) {
+            } else if (self.strength() === 1 || self.isSuggestedPassword()) {
                 return "text-warning";
             } else {
                 return "text-success";
@@ -68,7 +68,7 @@ hqDefine('registration/js/password', [
             if (self.passwordSufficient()) {
                 return true;
             }
-        }
+        };
         return self;
     };
 
