@@ -30,7 +30,6 @@ def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(CreateCaseRepeater, case)
     create_repeat_records(UpdateCaseRepeater, case)
     create_repeat_records(ReferCaseRepeater, case)
-    create_repeat_records(DataRegistryCaseUpdateRepeater, case)
     create_repeat_records(CaseExpressionRepeater, case)
 
 
@@ -40,7 +39,7 @@ def create_short_form_repeat_records(sender, xform, **kwargs):
         create_repeat_records(ShortFormRepeater, xform)
 
 
-def create_repeat_records(repeater_cls, payload):
+def create_repeat_records(repeater_cls, payload, fire_synchronously=False):
     repeater_name = repeater_cls.__module__ + '.' + repeater_cls.__name__
     if settings.REPEATERS_WHITELIST is not None and repeater_name not in settings.REPEATERS_WHITELIST:
         return
@@ -49,7 +48,7 @@ def create_repeat_records(repeater_cls, payload):
     if domain_can_forward(domain):
         repeaters = repeater_cls.by_domain(domain, stale_query=True)
         for repeater in repeaters:
-            repeater.register(payload)
+            repeater.register(payload, fire_synchronously=fire_synchronously)
 
 
 @receiver(commcare_user_post_save, dispatch_uid="create_user_repeat_records")
@@ -64,6 +63,11 @@ def create_location_repeat_records(sender, raw=False, **kwargs):
     if raw:
         return
     create_repeat_records(LocationRepeater, kwargs['instance'])
+
+
+@receiver(sql_case_post_save, sender=CommCareCaseSQL, dispatch_uid="fire_synchronous_repeaters")
+def fire_synchronous_case_repeaters(sender, case, **kwargs):
+    create_repeat_records(DataRegistryCaseUpdateRepeater, case, fire_synchronously=True)
 
 
 successful_form_received.connect(create_form_repeat_records)
