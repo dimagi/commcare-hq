@@ -433,11 +433,7 @@ form_processor
  0090_auto_20190523_0833
  0091_auto_20190603_2023
  0092_auto_20200924_1753
- 0093_rename_xforminstancesql
- 0094_rename_xformoperation
- 0095_rename_commcarecase
- 0096_rename_caseattachment
- 0097_rename_commcarecaseindex
+ 0093_rename_models (5 squashed migrations)
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
