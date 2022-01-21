@@ -1588,7 +1588,7 @@ class UserArchivedRebuild(CaseTransactionDetail):
     user_id = StringProperty()
 
 
-class FormArchiveRebuild(CaseTransactionDetail):
+class FormArchiveRebuild(FormSubmissionDetail):
     _type = CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED
     form_id = StringProperty()
     archived = BooleanProperty()
