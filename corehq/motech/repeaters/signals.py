@@ -67,6 +67,9 @@ def create_location_repeat_records(sender, raw=False, **kwargs):
 
 @receiver(sql_case_post_save, sender=CommCareCaseSQL, dispatch_uid="fire_synchronous_repeaters")
 def fire_synchronous_case_repeaters(sender, case, **kwargs):
+    """These repeaters need to fire synchronously since the changes they make to cases
+    must reflect by the end of form submission processing
+    """
     create_repeat_records(DataRegistryCaseUpdateRepeater, case, fire_synchronously=True)
 
 
