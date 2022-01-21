@@ -45,14 +45,10 @@ def create_short_form_repeat_records(sender, xform, **kwargs):
 
 
 def create_repeat_records(repeater_cls, payload):
-    # Since this is called from a signal
-    # the object to be forwarded has already been saved to the db
-    # so we try _really_ hard to save a repeat record
-    # even if there's an error the first time.
-    # Unless there's a complete outage this should be enough.
-    # A somewhat more robust fix would be to queue this somewhere else on failure,
-    # but at the end of the day the only real fix would be
-    # to make this somehow transactional with the original object save
+    # As a temporary fix for https://dimagi-dev.atlassian.net/browse/SUPPORT-12244
+    # Make a serious attempt to retry creating the repeat record
+    # The real fix is to figure out why the form reprocessing system
+    # isn't resulting in the signal getting re-fired and the repeat record getting created.
     for sleep_length in [.5, 1, 2, 4, 8]:
         try:
             _create_repeat_records(repeater_cls, payload)
