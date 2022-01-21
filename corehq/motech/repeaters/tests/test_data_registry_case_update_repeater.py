@@ -125,6 +125,9 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
         url = self.repeater.get_url(repeat_records[0])
         self.assertEqual(url, f"case-repeater-url/{self.target_domain}/")
 
+        # check that the synchronous attempt of the repeat record happened
+        self.assertEqual(1, len(repeat_records[0].attempts))
+
     @classmethod
     def repeat_records(cls, domain_name):
         # Enqueued repeat records have next_check set 48 hours in the future.
