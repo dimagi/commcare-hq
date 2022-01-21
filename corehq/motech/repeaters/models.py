@@ -792,7 +792,15 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         # Exclude extension cases where the host is also a case type that this repeater
         # would act on since they get forwarded along with their host
         host_index = payload.get_index(CASE_INDEX_IDENTIFIER_HOST)
-        return not host_index or host_index.referenced_type not in self.white_listed_case_types
+        if host_index and host_index.referenced_type in self.white_listed_case_types:
+            return False
+
+        transactions = payload.get_form_transactions()
+        if transactions:
+            # prevent chaining updates
+            return transactions[-1].form.xmlns != DataRegistryCaseUpdatePayloadGenerator.XMLNS
+
+        return True
 
 
 class ShortFormRepeater(Repeater):
