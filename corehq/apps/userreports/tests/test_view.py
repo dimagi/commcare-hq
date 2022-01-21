@@ -6,7 +6,6 @@ from django.test import TestCase
 from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 
@@ -21,6 +20,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.users.models import Permissions, UserRole, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.signals import sql_case_post_save
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 
@@ -38,7 +38,7 @@ class ConfigurableReportTestMixin(object):
             case_type=cls.case_type,
             update=properties,
         ).as_xml()
-        with drop_connected_signals(case_post_save):
+        with drop_connected_signals(sql_case_post_save):
             post_case_blocks([case_block], {'domain': cls.domain})
         return CaseAccessors(cls.domain).get_case(id)
 

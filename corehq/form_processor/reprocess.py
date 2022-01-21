@@ -40,7 +40,7 @@ def reprocess_unfinished_stub(stub, save=True):
                 'domain': stub.domain
             })
         save and stub.delete()
-        return
+        return ReprocessingResult(None, None, None, "Form not found for reprocessing")
 
     return reprocess_unfinished_stub_with_form(stub, form, save)
 

@@ -526,7 +526,8 @@ class TimedScheduleInstance(AbstractTimedScheduleInstance):
 
 @attr.s
 class EmailAddressRecipient(object):
-    email_address = attr.ib()
+    case = attr.ib()
+    email_property = attr.ib()
 
     @property
     def doc_type(self):
@@ -534,13 +535,16 @@ class EmailAddressRecipient(object):
 
     @property
     def get_id(self):
-        return self.email_address
+        return self.get_email()
 
     def get_email(self):
-        return self.email_address
+        return self.case.get_case_property(self.email_property)
 
     def get_language_code(self):
-        return None
+        return self.case.get_language_code()
+
+    def get_time_zone(self):
+        return self.case.get_time_zone()
 
 
 class CaseScheduleInstanceMixin(object):
@@ -632,8 +636,7 @@ class CaseScheduleInstanceMixin(object):
             full_username = format_username(username, self.domain)
             return CommCareUser.get_by_username(full_username)
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL:
-            email = self.case.get_case_property(self.recipient_id)
-            return EmailAddressRecipient(email)
+            return EmailAddressRecipient(self.case, self.recipient_id)
         else:
             return super(CaseScheduleInstanceMixin, self).recipient
 

@@ -66,18 +66,20 @@ branches:
     - ml/remove-pickles-user-importer # Minha Oct 13
     # - ml/remove-pickles-reports # Minha Oct 21
     - rp/status-embed # Rynhard Nov 9
-    - ap/web-app-refresh # Amit Nov 29
     - es/mobile-auth # Simon Nov 23
     - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
     - jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
-    - cs/SC-1904-invalid-datum-generation # Charl 7 Dec
-    - dependabot/npm_and_yarn/jquery-ui-1.13.0  # Biyeun Dec 8 
-    - gh/improve-queueing-repeaters # Graham Dec 10
-    - mk/support-multibar-reports # MK Dec 14
-    - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Dec 14
-    - sk/enterprise-domain-user-filter # Simon Dec 17
     - sr/datums  # sravan Dec 21
-    - revert-30629-revert-30613-gh/remove-pickles-from-messaging # Graham Jan 3
-    - revert-30907-revert-30897-gh/refactor-multiselect # Graham Jan 4
+    - mk/samveg/custom-case-upload # [QA] MK Jan 11
+    - mk/samveg/support-parsed-date # [QA] MK Jan 19
+    - mk/samveg/treat-calls-as-mandatory # [QA] MK Jan 19
+    - mk/case-upload-fix-cols-check # MK Jan 19
+    - cs/SC-1551-hourly-scheduled-reports+mk/support-multibar-reports # Charl Jan 12
+    - cs/SC-1551-hourly-scheduled-reports # Charl Jan 12
+    - mk/support-multibar-reports # MK Dec 14
+    - dependabot/pip/requirements/lxml-4.7.1 # Graham Jan 12
+    - jls/fix-no-role-500  # Jenny Jan 14
+    - ml/enforce-password-policy # Minha Jan 18
+    - fr/pickleable-subject      # Farid Jan 19
 submodules: { }

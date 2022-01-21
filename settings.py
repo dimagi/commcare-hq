@@ -230,7 +230,10 @@ DEFAULT_APPS = (
     'oauth2_provider',
 )
 
-CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
+SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+RECAPTCHA_PRIVATE_KEY = ''
+RECAPTCHA_PUBLIC_KEY = ''
+
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
@@ -347,7 +350,6 @@ HQ_APPS = (
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
-    'custom.openclinica',
     'soil',
     'toggle',
     'phonelog',
@@ -369,8 +371,6 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'pact',
-
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.ucla',
@@ -830,6 +830,9 @@ LOCAL_REPEATER_CLASSES = []
 # Set to None to enable all or empty tuple to disable all.
 # This will not prevent users from creating
 REPEATERS_WHITELIST = None
+
+# how many tasks to split the check_repeaters process into
+CHECK_REPEATERS_PARTITION_COUNT = 1
 
 # If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
 ENABLE_PRELOGIN_SITE = False
@@ -1548,10 +1551,8 @@ COUCHDB_APPS = [
     'registration',
     'crs_reports',
     'grapevine',
-    'openclinica',
 
     # custom reports
-    'pact',
     'accounting',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
@@ -1914,7 +1915,6 @@ COUCH_CACHE_BACKENDS = [
 # Custom fully indexed domains for ReportCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
-    'pact',
     'commtrack-public-demo',
     'crs-remind',
 ]
@@ -1925,7 +1925,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 # Adding a domain will not automatically index that domain's existing forms
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
-    'pact',
 ]
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -1941,7 +1940,6 @@ CUSTOM_MODULES = [
 
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
-    'pact': 'pact',
 
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',

@@ -311,11 +311,6 @@ class AbstractCaseAccessor(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
     def get_extension_case_ids(domain, case_ids, include_closed, exclude_for_case_type=None):
         raise NotImplementedError
 
@@ -461,9 +456,6 @@ class CaseAccessors(object):
         since sync date/log id
         """
         return self.db_accessor.get_modified_case_ids(self, case_ids, sync_log)
-
-    def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
-        return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)
 
     def get_extension_case_ids(self, case_ids, exclude_for_case_type=None):
         return self.db_accessor.get_extension_case_ids(

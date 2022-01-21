@@ -12,7 +12,8 @@ from django.http import HttpResponse
 from couchforms import const
 
 from corehq.apps.api.resources import DictObject
-from corehq.form_processor.abstract_models import CaseToXMLMixin
+from corehq.form_processor.models import CommCareCaseIndexSQL
+from corehq.form_processor.abstract_models import CaseToXMLMixin, get_index_map
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -196,11 +197,9 @@ class ESCase(DictObject, CaseToXMLMixin):
 
     @property
     def indices(self):
-        from casexml.apps.case.sharedmodels import CommCareCaseIndex
-        return [CommCareCaseIndex.wrap(index) for index in self._data['indices'] if index["referenced_id"]]
+        return [CommCareCaseIndexSQL(**index) for index in self._data['indices'] if index["referenced_id"]]
 
     def get_index_map(self):
-        from corehq.form_processor.abstract_models import get_index_map
         return get_index_map(self.indices)
 
     def get_properties_in_api_format(self):
@@ -247,8 +246,8 @@ class ESCase(DictObject, CaseToXMLMixin):
         from corehq.apps.api.util import case_to_es_case
         accessor = CaseAccessors(self.domain)
         return {
-            index['identifier']: case_to_es_case(accessor.get_case(index['referenced_id']))
-            for index in self.indices if index['referenced_id']
+            index.identifier: case_to_es_case(accessor.get_case(index.referenced_id))
+            for index in self.indices if index.referenced_id
         }
 
     @property
