@@ -62,7 +62,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
         case_blocks = ''.join(case_blocks)
     form_id = form_id or uuid.uuid4().hex
     form_xml = render_to_string('hqcase/xml/case_block.xml', {
-        'xmlns': xmlns or SYSTEM_FORM_XMLNS,
+        'xmlns': xmlns or form_extras.pop('xmlns', SYSTEM_FORM_XMLNS),
         'case_block': case_blocks,
         'time': now,
         'uid': form_id,
