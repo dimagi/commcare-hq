@@ -2,7 +2,8 @@ from django.core.management import BaseCommand
 
 from dimagi.utils.chunked import chunked
 
-from corehq.form_processor.backends.sql.dbaccessors import *
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.pillows.xform import SqlFormReindexerFactory
 
 

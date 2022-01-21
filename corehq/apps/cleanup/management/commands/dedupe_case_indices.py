@@ -6,7 +6,6 @@ Use this in preparation ``for form_processor/0067_auto_20170915_1506.py`` migrat
 from itertools import groupby
 
 from django.core.management.base import BaseCommand
-from django.db import connections
 
 from dimagi.utils.chunked import chunked
 
@@ -134,7 +133,7 @@ def _add_unique_constraint_to_case_index_table(db):
             cursor.execute(create_index_sql)
             log_sql(add_constraint_sql)
             cursor.execute(add_constraint_sql)
-    except:
+    except:  # noqa: E722
         # if the index creation failed make sure we remove it otherwise we
         # are left with an invalid index
         _drop_index(db, UNIQIE_INDEX_NAME)
@@ -148,7 +147,8 @@ def _delete_duplicate_indices(case_ids, db):
         DELETE FROM {case_index_table} WHERE id in (
         SELECT id FROM (
           SELECT id, case_id, row_number() OVER (PARTITION BY case_id, identifier, referenced_id, relationship_id)
-          FROM {case_index_table} JOIN (SELECT UNNEST(ARRAY['{{case_ids}}']) AS case_id) AS cx USING (case_id)) as indices
+          FROM {case_index_table}
+          JOIN (SELECT UNNEST(ARRAY['{{case_ids}}']) AS case_id) AS cx USING (case_id)) as indices
         WHERE row_number > 1
         )
     """.format(case_index_table=CommCareCaseIndexSQL._meta.db_table)
