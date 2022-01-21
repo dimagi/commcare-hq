@@ -798,7 +798,7 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         transactions = payload.get_form_transactions()
         if transactions:
             # prevent chaining updates
-            return transactions[-1].form.xmlns != DataRegistryCaseUpdatePayloadGenerator.XMLNS
+            return transactions[-1].xmlns != DataRegistryCaseUpdatePayloadGenerator.XMLNS
 
         return True
 
