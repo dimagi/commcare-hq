@@ -1,9 +1,12 @@
-ElasticSearch
-~~~~~~~~~~~~~
+Elasticsearch
+*************
 
-Indexes
+Overview
+========
+
+Indices
 -------
-We have indexes for each of the following doc types:
+We have indices for each of the following doc types:
  * Applications - ``hqapps``
  * Cases - ``hqcases``
  * Domains - ``hqdomains``
@@ -13,9 +16,9 @@ We have indexes for each of the following doc types:
  * Report Cases - ``report_cases``
  * Report Forms - ``report_xforms``
  * SMS logs - ``smslogs``
- * TrialConnect SMS logs - ``tc_smslogs``
+ * Case Search - ``case_search``
 
-The *Report* cases and forms indexes are only configured to run for a few
+The *Report* cases and forms indices are only configured to run for a few
 domains, and they store additional mappings allowing you to query on form
 and case properties (not just metadata).
 
@@ -35,7 +38,7 @@ ptop_preindex`` command).  Once the new index is finished, the alias is
 to the new index, allowing for a relatively seamless transition.
 
 
-Keeping indexes up-to-date
+Keeping indices up-to-date
 --------------------------
 Pillowtop looks at the changes feed from couch and listens for any relevant
 new/changed docs.  In order to have your changes appear in elasticsearch,
@@ -72,12 +75,12 @@ The hash suffix to the index can just be a random alphanumeric string and
 is usually the date of the edit by convention. The alias should also be updated
 to a new one of format ``xforms_<date-modified>`` (the date is just by convention), so that
 production operations continue to use the old alias pointing to existing index.
-This will trigger a preindex as outlined in the `Indexes` section. In subsequent commits
+This will trigger a preindex as outlined in the `Indices` section. In subsequent commits
 alias can be flipped back to what it was, for example ``xforms``. Changing the alias
 name doesn't trigger a reindex.
 
 
-Updating indexes in a production environment
+Updating indices in a production environment
 ''''''''''''''''''''''''''''''''''''''''''''
 Updates in a production environment should be done in two steps, so to not show incomplete data.
 
@@ -90,7 +93,7 @@ Updates in a production environment should be done in two steps, so to not show 
 4. Merge your PR and deploy your latest master branch.
 
 
-How to un-bork your broken indexes
+How to un-bork your broken indices
 ----------------------------------
 Sometimes things get in a weird state and (locally!) it's easiest to just
 blow away the index and start over.
@@ -176,3 +179,7 @@ The best way to do this is by using helpers like ESQuery's ``.count()``
 that know to do this for you—your code will look better and you won't have to remember
 to check for that every time. (If you ever find *helpers* not doing this correctly,
 then it's definitely worth fixing.)
+
+----
+
+.. include:: es_query.rst
