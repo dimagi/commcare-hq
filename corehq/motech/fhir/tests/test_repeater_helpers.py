@@ -11,7 +11,7 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.form_processor.models import CommCareCase, CommCareCaseIndexSQL
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_TEXT,
@@ -477,9 +477,9 @@ class TestWhenToBundle(TestCase):
 
 
 def add_case_index(child_case, **props):
-    child_case.index_set.add(CommCareCaseIndexSQL(
+    child_case.index_set.add(CommCareCaseIndex(
         case=child_case,
         domain=DOMAIN,
-        relationship_id=CommCareCaseIndexSQL.CHILD,
+        relationship_id=CommCareCaseIndex.CHILD,
         **props
     ), bulk=False)

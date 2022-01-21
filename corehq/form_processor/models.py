@@ -51,7 +51,7 @@ XFormInstance_DB_TABLE = 'form_processor_xforminstancesql'
 XFormOperation_DB_TABLE = 'form_processor_xformoperationsql'
 
 CommCareCase_DB_TABLE = 'form_processor_commcarecasesql'
-CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
+CommCareCaseIndex_DB_TABLE = 'form_processor_commcarecaseindexsql'
 CaseAttachment_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
@@ -872,9 +872,9 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         whose state is being mutated.
 
         :param value: A list of dicts that will be used to construct
-        `CommCareCaseIndexSQL` objects.
+        `CommCareCaseIndex` objects.
         """
-        self.cached_indices = [CommCareCaseIndexSQL(**x) for x in value]
+        self.cached_indices = [CommCareCaseIndex(**x) for x in value]
 
     @property
     def indices(self):
@@ -882,11 +882,11 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
 
         to_delete = [
             (to_delete.id, to_delete.identifier)
-            for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndexSQL)
+            for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndex)
         ]
         indices = [index for index in indices if (index.id, index.identifier) not in to_delete]
 
-        indices += self.get_tracked_models_to_create(CommCareCaseIndexSQL)
+        indices += self.get_tracked_models_to_create(CommCareCaseIndex)
 
         return indices
 
@@ -1053,13 +1053,13 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         """
         result = self.get_parent(
             identifier=DEFAULT_PARENT_IDENTIFIER,
-            relationship=CommCareCaseIndexSQL.CHILD
+            relationship=CommCareCaseIndex.CHILD
         )
         return result[0] if result else None
 
     @property
     def host(self):
-        result = self.get_parent(relationship=CommCareCaseIndexSQL.EXTENSION)
+        result = self.get_parent(relationship=CommCareCaseIndex.EXTENSION)
         return result[0] if result else None
 
     def __str__(self):
@@ -1192,7 +1192,7 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
         ]
 
 
-class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
+class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
 
     # relationship_ids should be powers of 2
@@ -1250,7 +1250,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         self.relationship_id = self.RELATIONSHIP_MAP[relationship]
 
     def __eq__(self, other):
-        return isinstance(other, CommCareCaseIndexSQL) and (
+        return isinstance(other, CommCareCaseIndex) and (
             self.case_id == other.case_id
             and self.identifier == other.identifier
             and self.referenced_id == other.referenced_id
@@ -1278,7 +1278,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             ["domain", "referenced_id"],
         ]
         unique_together = ('case', 'identifier')
-        db_table = CommCareCaseIndexSQL_DB_TABLE
+        db_table = CommCareCaseIndex_DB_TABLE
         app_label = "form_processor"
 
 

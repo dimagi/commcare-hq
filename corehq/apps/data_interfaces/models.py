@@ -43,7 +43,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCase
+from corehq.form_processor.models import CommCareCaseIndex, CommCareCase
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
@@ -645,11 +645,11 @@ class CustomMatchDefinition(CaseRuleCriteriaDefinition):
 
 
 class ClosedParentDefinition(CaseRuleCriteriaDefinition):
-    # This matches up to the identifier attribute of CommCareCaseIndexSQL.
+    # This matches up to the identifier attribute of CommCareCaseIndex.
     identifier = models.CharField(max_length=126, default=DEFAULT_PARENT_IDENTIFIER)
 
-    # This matches up to the CommCareCaseIndexSQL.relationship_id field.
-    relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndexSQL.CHILD)
+    # This matches up to the CommCareCaseIndex.relationship_id field.
+    relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndex.CHILD)
 
     def matches(self, case, now):
         relationship = self.relationship_id

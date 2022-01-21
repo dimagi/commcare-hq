@@ -9,7 +9,7 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCase
+from corehq.form_processor.models import CommCareCaseIndex, CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 
 
@@ -26,8 +26,8 @@ class IndexSimpleTest(SimpleTestCase):
             'referenced_type': 't2',
             'referenced_id': 'id2',
         }
-        self.i1 = CommCareCaseIndexSQL(**i1)
-        self.i2 = CommCareCaseIndexSQL(**i2)
+        self.i1 = CommCareCaseIndex(**i1)
+        self.i2 = CommCareCaseIndex(**i2)
         self.case = CommCareCase(indices=[i1, i2])
 
     def testHasIndex(self):

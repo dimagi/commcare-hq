@@ -41,7 +41,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.models import (
     CaseTransaction,
-    CommCareCaseIndexSQL,
+    CommCareCaseIndex,
     CommCareCase,
     LedgerTransaction,
     LedgerValue,
@@ -198,7 +198,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             BlobMeta: 2,
             CommCareCase: 2,
             CaseTransaction: 3,
-            CommCareCaseIndexSQL: 1
+            CommCareCaseIndex: 1
 
         })
 

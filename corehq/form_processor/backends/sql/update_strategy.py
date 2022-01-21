@@ -26,7 +26,7 @@ from corehq.form_processor.exceptions import StockProcessingError
 from corehq.form_processor.models import (
     CaseAttachment,
     CaseTransaction,
-    CommCareCaseIndexSQL,
+    CommCareCaseIndex,
     CommCareCase,
     RebuildWithReason,
     STANDARD_CHARFIELD_LENGTH,
@@ -196,7 +196,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             else:
                 # no id, no index
                 if index_update.referenced_id:
-                    index = CommCareCaseIndexSQL(
+                    index = CommCareCaseIndex(
                         domain=self.case.domain,
                         case=self.case,
                         identifier=index_update.identifier,
@@ -293,7 +293,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
         self._delete_old_related_models(
             original_indices,
-            self.case.get_live_tracked_models(CommCareCaseIndexSQL)
+            self.case.get_live_tracked_models(CommCareCaseIndex)
         )
         self._delete_old_related_models(
             original_attachments,

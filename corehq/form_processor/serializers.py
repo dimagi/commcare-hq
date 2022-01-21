@@ -5,7 +5,7 @@ from rest_framework import serializers
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.models import (
-    CommCareCaseIndexSQL, CommCareCase, CaseTransaction,
+    CommCareCaseIndex, CommCareCase, CaseTransaction,
     XFormInstance, XFormOperation,
     LedgerValue, CaseAttachment)
 
@@ -101,12 +101,12 @@ class XFormInstanceRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSeri
         fields = '__all__'
 
 
-class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
+class CommCareCaseIndexSerializer(serializers.ModelSerializer):
     case_id = serializers.CharField()
     relationship = serializers.CharField()
 
     class Meta(object):
-        model = CommCareCaseIndexSQL
+        model = CommCareCaseIndex
         fields = ('case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship')
 
 
@@ -128,7 +128,7 @@ class CaseTransactionActionRawDocSerializer(JsonFieldSerializerMixin, CaseTransa
 
 
 class CommCareCaseRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
-    indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
+    indices = CommCareCaseIndexSerializer(many=True, read_only=True)
     transactions = CaseTransactionActionRawDocSerializer(
         many=True, read_only=True, source='non_revoked_transactions')
 
@@ -148,7 +148,7 @@ class CaseAttachmentSerializer(serializers.ModelSerializer):
 
 
 def _serialize_case_indices(case):
-    return list(CommCareCaseIndexSQLSerializer(case.indices, many=True).data)
+    return list(CommCareCaseIndexSerializer(case.indices, many=True).data)
 
 
 def _serialize_case_transactions(case):

@@ -437,6 +437,7 @@ form_processor
  0094_rename_xformoperation
  0095_rename_commcarecase
  0096_rename_caseattachment
+ 0097_rename_commcarecaseindex
 hqadmin
  0001_initial
  0002_vcmmigrationaudit

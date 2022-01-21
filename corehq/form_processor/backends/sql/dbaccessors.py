@@ -45,7 +45,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.models import (
     CaseAttachment,
     CaseTransaction,
-    CommCareCaseIndexSQL,
+    CommCareCaseIndex,
     CommCareCase,
     LedgerTransaction,
     LedgerValue,
@@ -825,12 +825,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_indices(domain, case_id):
-        query = CommCareCaseIndexSQL.objects.partitioned_query(case_id)
+        query = CommCareCaseIndex.objects.partitioned_query(case_id)
         return list(query.filter(case_id=case_id, domain=domain))
 
     @staticmethod
     def get_reverse_indices(domain, case_id):
-        indices = list(CommCareCaseIndexSQL.objects.plproxy_raw(
+        indices = list(CommCareCaseIndex.objects.plproxy_raw(
             'SELECT * FROM get_case_indices_reverse(%s, %s)', [domain, case_id]
         ))
 
@@ -847,7 +847,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         if not case_ids:
             return []
 
-        indexes = CommCareCaseIndexSQL.objects.plproxy_raw(
+        indexes = CommCareCaseIndex.objects.plproxy_raw(
             'SELECT * FROM get_all_reverse_indices(%s, %s)',
             [domain, case_ids]
         )
@@ -869,7 +869,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         if not case_ids:
             return []
 
-        with CommCareCaseIndexSQL.get_plproxy_cursor(readonly=True) as cursor:
+        with CommCareCaseIndex.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT referenced_id FROM get_multiple_cases_indices(%s, %s)',
                 [domain, list(case_ids)]
@@ -890,7 +890,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         )
         cases_by_id = {case.case_id: case for case in cases}
         if cases_by_id:
-            indices = list(CommCareCaseIndexSQL.objects.plproxy_raw(
+            indices = list(CommCareCaseIndex.objects.plproxy_raw(
                 'SELECT * FROM get_multiple_cases_indices(%s, %s)',
                 [domain, list(cases_by_id)])
             )
@@ -1001,8 +1001,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     def save_case(case):
         transactions_to_save = case.get_live_tracked_models(CaseTransaction)
 
-        indices_to_save_or_update = case.get_live_tracked_models(CommCareCaseIndexSQL)
-        index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
+        indices_to_save_or_update = case.get_live_tracked_models(CommCareCaseIndex)
+        index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndex)]
 
         attachments_to_save = case.get_tracked_models_to_create(CaseAttachment)
         attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachment)]
@@ -1029,7 +1029,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                         update_fields = ['referenced_id', 'referenced_type', 'relationship_id']
                     index.save(update_fields=update_fields)
 
-                CommCareCaseIndexSQL.objects.using(case.db).filter(id__in=index_ids_to_delete).delete()
+                CommCareCaseIndex.objects.using(case.db).filter(id__in=index_ids_to_delete).delete()
 
                 for attachment in attachments_to_save:
                     attachment.save()
@@ -1070,7 +1070,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
-        return list(CommCareCaseIndexSQL.objects.plproxy_raw(
+        return list(CommCareCaseIndex.objects.plproxy_raw(
             'SELECT * FROM get_related_indices(%s, %s, %s)',
             [domain, case_ids, list(exclude_indices)]))
 
@@ -1109,9 +1109,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         extension_case_ids = set()
         for db_name in get_db_aliases_for_partitioned_query():
-            query = CommCareCaseIndexSQL.objects.using(db_name).filter(
+            query = CommCareCaseIndex.objects.using(db_name).filter(
                 domain=domain,
-                relationship_id=CommCareCaseIndexSQL.EXTENSION,
+                relationship_id=CommCareCaseIndex.EXTENSION,
                 case__deleted=False,
                 referenced_id__in=case_ids)
             if not include_closed:

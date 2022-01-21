@@ -10,7 +10,7 @@ from psycopg2.extensions import adapt
 
 from corehq.form_processor.models import (
     CommCareCase_DB_TABLE, CaseAttachment_DB_TABLE,
-    CommCareCaseIndexSQL_DB_TABLE, CaseTransaction_DB_TABLE,
+    CommCareCaseIndex_DB_TABLE, CaseTransaction_DB_TABLE,
     XFormInstance_DB_TABLE,
     LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE,
     XFormOperation_DB_TABLE,
@@ -127,7 +127,7 @@ def case_index_adapter(index):
         index.relationship_id,
         index.case_id,
     ]
-    return ObjectAdapter(fields, CommCareCaseIndexSQL_DB_TABLE)
+    return ObjectAdapter(fields, CommCareCaseIndex_DB_TABLE)
 
 
 def case_transaction_adapter(transaction):
