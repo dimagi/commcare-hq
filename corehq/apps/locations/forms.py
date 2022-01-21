@@ -641,27 +641,20 @@ class LocationFilterForm(forms.Form):
         location_id = self.cleaned_data.get('location_id')
         if location_id is None:
             return True
-        domain_membership = self.user.get_domain_membership(self.domain)
-        if domain_membership and domain_membership.assigned_location_ids:
-            # Ensure location_id is available to a location-restricted user
-            return location_id in domain_membership.assigned_location_ids
-        return True
+        return user_can_access_location_id(self.domain, self.user, location_id)
 
     def get_filters(self):
         """
         This function translates some form inputs to their relevant SQLLocation attributes
         """
-        location_id = self.cleaned_data.get('location_id', None)
-        location_ids = []
-        domain_membership = self.user.get_domain_membership(self.domain)
-        # Superusers may not have domain_membership
-        if domain_membership and domain_membership.assigned_location_ids:
-            if location_id is None:
-                location_ids = domain_membership.assigned_location_ids
-            elif location_id in domain_membership.assigned_location_ids:
-                location_ids = [location_id]
-        elif location_id:
+        location_id = self.cleaned_data.get('location_id')
+        if (
+            location_id
+            and user_can_access_location_id(self.domain, self.user, location_id)
+        ):
             location_ids = [location_id]
+        else:
+            location_ids = []
 
         filters = {
             'location_ids': location_ids,

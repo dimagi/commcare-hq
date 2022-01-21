@@ -262,23 +262,28 @@ class TestLocationExport(LocationHierarchyTestCase):
         ])
     ]
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.user = WebUser.create(cls.domain, 'jbloggs', 'Passw0rd!', None, None)
-        cls.user.set_location(cls.domain, cls.locations['Cambridgeshire'])
-        cls.restrict_user_to_assigned_locations(cls.user)
+    def setUp(self):
+        super().setUp()
+        self.user = WebUser.create(
+            self.domain,
+            'jbloggs',
+            'Passw0rd!',
+            None,
+            None,
+        )
+        self.user.set_location(self.domain, self.locations['Cambridgeshire'])
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain, deleted_by=None)
-        super().tearDownClass()
+    def tearDown(self):
+        self.user.delete(self.domain, deleted_by=None)
+        super().tearDown()
 
-    def test_location_filter_form(self):
+    def test_location_filter_form_restricted(self):
         """
-        ``LocationFilterForm.is_valid()`` returns True although ``user``
-        is in a separate location hierarchy from ``location_id``.
+        LocationFilterForm.is_valid() returns False when a
+        location-restricted user is in a separate location hierarchy
+        from location_id.
         """
+        self.restrict_user_to_assigned_locations(self.user)
         request_params = {
             'location_id': self.locations['California'].location_id,
             'selected_location_only': False,
@@ -293,5 +298,27 @@ class TestLocationExport(LocationHierarchyTestCase):
         location_filters = form.get_filters()
         self.assertEqual(location_filters, {
             'location_ids': [],
+            'selected_location_only': False,
+        })
+
+    def test_location_filter_form_unrestricted(self):
+        """
+        LocationFilterForm.is_valid() returns True when an unrestricted
+        user is in a separate location hierarchy from location_id.
+        """
+        request_params = {
+            'location_id': self.locations['California'].location_id,
+            'selected_location_only': False,
+            'location_status_active': LocationFilterForm.SHOW_ALL,
+        }
+        form = LocationFilterForm(
+            request_params,
+            domain=self.domain,
+            user=self.user,
+        )
+        self.assertTrue(form.is_valid())
+        location_filters = form.get_filters()
+        self.assertEqual(location_filters, {
+            'location_ids': [self.locations['California'].location_id],
             'selected_location_only': False,
         })
