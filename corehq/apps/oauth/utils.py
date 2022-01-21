@@ -42,21 +42,11 @@ def load_credentials(stringified_credentials):
     return credentials
 
 
-def check_token_exists(user):
+def get_token(user):
     try:
         return GoogleApiToken.objects.get(user=user)
     except GoogleApiToken.DoesNotExist:
         return None
-
-
-def get_redirect_uri(domain):
-    if settings.SERVER_ENVIRONMENT == "localdev":
-        return "http://127.0.0.1:8000/a/{}/data/export/google_sheets_oauth/callback/".format(domain)
-    elif settings.SERVER_ENVIRONMENT == "staging":
-        return "https://staging.commcarehq.org/a/{}/data/export/google_sheets_oauth/callback/".format(domain)
-    elif settings.SERVER_ENVIRONMENT == "production":
-        return "https://www.commcarehq.org/a/{}/data/export/google_sheets_oauth/callback/".format(domain)
-    return ""
 
 
 def get_query_results(export_instance, domain, id):
@@ -91,7 +81,7 @@ def create_spreadsheet(spreadsheet_data, user):
 
 def listify_data(query_results):
     data = []
-    for row_number, document in enumerate(query_results.hits):
+    for row_number, document in enumerate(query_results):
         row_values = document.get("case_json")
 
         if(row_number == 0):
