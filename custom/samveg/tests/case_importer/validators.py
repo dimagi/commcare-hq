@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 
 from corehq.apps.case_importer.util import get_spreadsheet
 from corehq.util.test_utils import TestFileMixin
+from custom.samveg.case_importer.exceptions import CallValueInvalidError
 from custom.samveg.case_importer.validators import (
     CallValidator,
     RequiredColumnsValidator,
@@ -112,6 +113,21 @@ class TestCallValidator(SimpleTestCase, TestFileMixin):
         self.assertEqual(
             [error.title for error in errors],
             ['Latest call value not a date']
+        )
+
+    def test_valid_call_value_type(self):
+        raw_row = _sample_valid_rch_upload()
+        row_num = 1
+
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, raw_row, {})
+        self.assertFalse(
+            any(isinstance(error, CallValueInvalidError) for error in errors)
+        )
+
+        raw_row['Call1'] = datetime.date.today()
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, raw_row, {})
+        self.assertFalse(
+            any(isinstance(error, CallValueInvalidError) for error in errors)
         )
 
     def test_call_value_not_in_last_month(self):
