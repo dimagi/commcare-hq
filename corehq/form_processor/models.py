@@ -47,7 +47,7 @@ from .exceptions import AttachmentNotFound
 
 STANDARD_CHARFIELD_LENGTH = 255
 
-XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
+XFormInstance_DB_TABLE = 'form_processor_xforminstancesql'
 XFormOperationSQL_DB_TABLE = 'form_processor_xformoperationsql'
 
 CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
@@ -326,8 +326,8 @@ class AttachmentMixin(SaveStateMixin):
         raise NotImplementedError
 
 
-class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
-                       AbstractXFormInstance, TrackRelatedChanges):
+class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
+                    AbstractXFormInstance, TrackRelatedChanges):
     partition_attr = 'form_id'
 
     # states should be powers of 2
@@ -406,7 +406,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     app_version = models.PositiveIntegerField(null=True, blank=True)
 
     def __init__(self, *args, **kwargs):
-        super(XFormInstanceSQL, self).__init__(*args, **kwargs)
+        super(XFormInstance, self).__init__(*args, **kwargs)
         # keep track to avoid refetching to check whether value is updated
         self.__original_form_id = self.form_id
 
@@ -536,9 +536,9 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         self.state |= self.DELETED
 
     def to_json(self, include_attachments=False):
-        from .serializers import XFormInstanceSQLSerializer, lazy_serialize_form_attachments, \
+        from .serializers import XFormInstanceSerializer, lazy_serialize_form_attachments, \
             lazy_serialize_form_history
-        serializer = XFormInstanceSQLSerializer(self)
+        serializer = XFormInstanceSerializer(self)
         data = dict(serializer.data)
         if include_attachments:
             data['external_blobs'] = lazy_serialize_form_attachments(self)
@@ -601,7 +601,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         ).format(f=self)
 
     class Meta(object):
-        db_table = XFormInstanceSQL_DB_TABLE
+        db_table = XFormInstance_DB_TABLE
         app_label = "form_processor"
         index_together = [
             ('domain', 'state'),
@@ -645,7 +645,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     UUID_DATA_FIX = 'uuid_data_fix'
     GDPR_SCRUB = 'gdpr_scrub'
 
-    form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
+    form = models.ForeignKey(XFormInstance, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)
     operation = models.CharField(max_length=255, default=None)
     date = models.DateTimeField(null=False)

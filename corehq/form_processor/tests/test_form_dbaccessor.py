@@ -27,7 +27,7 @@ from corehq.form_processor.interfaces.processor import (
     FormProcessorInterface,
     ProcessedForms,
 )
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
+from corehq.form_processor.models import XFormInstance, XFormOperationSQL
 from corehq.form_processor.parsers.form import apply_deprecation
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -96,7 +96,7 @@ class FormAccessorTestsSQL(TestCase):
         # Test that it gets all states
         form2 = create_form_for_test(
             DOMAIN,
-            state=XFormInstanceSQL.ARCHIVED,
+            state=XFormInstance.ARCHIVED,
             received_on=datetime(2017, 1, 1)
         )
         # Test that other date fields are properly fetched
@@ -284,7 +284,7 @@ class FormAccessorTestsSQL(TestCase):
     def test_archive_unarchive_form(self):
         case_id = uuid.uuid4().hex
         form = create_form_for_test(DOMAIN, case_id=case_id)
-        self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
+        self.assertEqual(XFormInstance.NORMAL, form.state)
         self.assertEqual(0, len(form.history))
 
         transactions = CaseAccessorSQL.get_transactions(case_id)
@@ -295,7 +295,7 @@ class FormAccessorTestsSQL(TestCase):
         for i in range(2):
             self.archive_form(form, 'user1')
             form = FormAccessorSQL.get_form(form.form_id)
-            self.assertEqual(XFormInstanceSQL.ARCHIVED, form.state)
+            self.assertEqual(XFormInstance.ARCHIVED, form.state)
             operations = form.history
             self.assertEqual(i + 1, len(operations))
             self.assertEqual(form.form_id, operations[i].form_id)
@@ -309,7 +309,7 @@ class FormAccessorTestsSQL(TestCase):
         for i in range(2, 4):
             self.unarchive_form(form, 'user2')
             form = FormAccessorSQL.get_form(form.form_id)
-            self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
+            self.assertEqual(XFormInstance.NORMAL, form.state)
             operations = form.history
             self.assertEqual(i + 1, len(operations))
             self.assertEqual(form.form_id, operations[i].form_id)
@@ -362,17 +362,17 @@ class FormAccessorTestsSQL(TestCase):
 
     def test_update_form_problem_and_state(self):
         form = create_form_for_test(DOMAIN)
-        self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
+        self.assertEqual(XFormInstance.NORMAL, form.state)
 
         original_domain = form.domain
         problem = 'Houston, we have a problem'
-        form.state = XFormInstanceSQL.ERROR
+        form.state = XFormInstance.ERROR
         form.problem = problem
         form.domain = 'new domain'  # shouldn't get saved
         FormAccessorSQL.update_form_problem_and_state(form)
 
         saved_form = FormAccessorSQL.get_form(form.form_id)
-        self.assertEqual(XFormInstanceSQL.ERROR, saved_form.state)
+        self.assertEqual(XFormInstance.ERROR, saved_form.state)
         self.assertEqual(problem, saved_form.problem)
         self.assertEqual(original_domain, saved_form.domain)
 
@@ -401,7 +401,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(saved_new_form.form_id, deprecated_form.orig_id)
 
     def _check_simple_form(self, form):
-        self.assertIsInstance(form, XFormInstanceSQL)
+        self.assertIsInstance(form, XFormInstance)
         self.assertIsNotNone(form)
         self.assertEqual(DOMAIN, form.domain)
         self.assertEqual('user1', form.user_id)

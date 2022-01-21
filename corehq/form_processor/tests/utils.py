@@ -18,7 +18,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     iter_all_rows, FormAccessorSQL)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import ProcessedForms
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
+from corehq.form_processor.models import XFormInstance, CommCareCaseSQL, CaseTransaction, Attachment
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only
 
@@ -73,7 +73,7 @@ class FormProcessorTestUtils(object):
             params["domain"] = domain
         for db in get_db_aliases_for_partitioned_query():
             BlobMeta.objects.using(db).filter(**params).delete()
-        cls._delete_all_sql_sharded_models(XFormInstanceSQL, domain)
+        cls._delete_all_sql_sharded_models(XFormInstance, domain)
 
     delete_all_sql_forms = delete_all_xforms
 
@@ -228,7 +228,7 @@ def create_form_for_test(
     case_id=None,
     attachments=None,
     save=True,
-    state=XFormInstanceSQL.NORMAL,
+    state=XFormInstance.NORMAL,
     received_on=None,
     user_id=None,
     edited_on=None,
@@ -260,7 +260,7 @@ def create_form_for_test(
     if user_id is None:
         user_id = 'user1'
 
-    form = XFormInstanceSQL(
+    form = XFormInstance(
         form_id=form_id,
         received_on=utcnow,
         user_id=user_id,
@@ -302,7 +302,7 @@ def create_form_for_test(
 
 
 def create_case(case) -> CommCareCaseSQL:
-    form = XFormInstanceSQL(
+    form = XFormInstance(
         form_id=uuid4().hex,
         xmlns='http://commcarehq.org/formdesigner/form-processor',
         received_on=case.server_modified_on,

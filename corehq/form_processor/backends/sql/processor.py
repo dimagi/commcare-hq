@@ -19,7 +19,7 @@ from corehq.form_processor.change_publishers import (
 from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
-    XFormInstanceSQL, CaseTransaction,
+    XFormInstance, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
 from corehq.util.metrics.load_counters import case_load_counter
@@ -49,7 +49,7 @@ class FormProcessorSQL(object):
     def new_xform(cls, form_data):
         form_id = extract_meta_instance_id(form_data) or str(uuid.uuid4())
 
-        return XFormInstanceSQL(
+        return XFormInstance(
             # other properties can be set post-wrap
             form_id=form_id,
             xmlns=form_data.get('@xmlns'),
@@ -67,7 +67,7 @@ class FormProcessorSQL(object):
         FormAccessorSQL.hard_delete_forms(domain, form_ids)
         CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
         for form in xforms:
-            form.state |= XFormInstanceSQL.DELETED
+            form.state |= XFormInstance.DELETED
             publish_form_saved(form)
         case.deleted = True
         publish_case_saved(case)
@@ -160,7 +160,7 @@ class FormProcessorSQL(object):
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
-        existing_xform.state = XFormInstanceSQL.DEPRECATED
+        existing_xform.state = XFormInstance.DEPRECATED
         default_user_id = new_xform.user_id or 'unknown'
         user_id = new_xform.auth_context and new_xform.auth_context.get('user_id') or default_user_id
         operation = XFormOperationSQL(
@@ -173,7 +173,7 @@ class FormProcessorSQL(object):
 
     @classmethod
     def deduplicate_xform(cls, xform):
-        xform.state = XFormInstanceSQL.DUPLICATE
+        xform.state = XFormInstance.DUPLICATE
         xform.orig_id = xform.form_id
         xform.problem = "Form is a duplicate of another! (%s)" % xform.form_id
         return cls.assign_new_id(xform)
@@ -187,7 +187,7 @@ class FormProcessorSQL(object):
 
     @classmethod
     def xformerror_from_xform_instance(cls, instance, error_message, with_new_id=False):
-        instance.state = XFormInstanceSQL.ERROR
+        instance.state = XFormInstance.ERROR
         instance.problem = error_message
 
         if with_new_id:
@@ -202,12 +202,12 @@ class FormProcessorSQL(object):
 
     @classmethod
     def submission_error_form_instance(cls, domain, instance, message):
-        xform = XFormInstanceSQL(
+        xform = XFormInstance(
             domain=domain,
             form_id=uuid.uuid4().hex,
             received_on=datetime.datetime.utcnow(),
             problem=message,
-            state=XFormInstanceSQL.SUBMISSION_ERROR_LOG,
+            state=XFormInstance.SUBMISSION_ERROR_LOG,
             xmlns=''
         )
         cls.store_attachments(xform, [Attachment(

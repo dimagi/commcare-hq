@@ -23,7 +23,7 @@ from corehq.form_processor.models import (
     CaseTransaction,
     CommCareCaseIndexSQL,
     CommCareCaseSQL,
-    XFormInstanceSQL,
+    XFormInstance,
 )
 from corehq.form_processor.tests.test_basics import _submit_case_block
 from corehq.form_processor.tests.utils import (
@@ -701,7 +701,7 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
     user_id = user_id or 'user1'
     utcnow = datetime.utcnow()
 
-    form = XFormInstanceSQL(
+    form = XFormInstance(
         form_id=form_id,
         xmlns='http://openrosa.org/formdesigner/form-processor',
         received_on=utcnow,

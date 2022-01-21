@@ -13,9 +13,9 @@ class FormProcessorAppConfig(AppConfig):
             ledger_value_adapter, ledger_transaction_adapter
         )
 
-        XFormInstanceSQL = self.get_model('XFormInstanceSQL')
+        XFormInstance = self.get_model('XFormInstance')
         XFormOperationSQL = self.get_model('XFormOperationSQL')
-        register_adapter(XFormInstanceSQL, form_adapter)
+        register_adapter(XFormInstance, form_adapter)
         register_adapter(XFormOperationSQL, form_operation_adapter)
 
         CommCareCaseSQL = self.get_model('CommCareCaseSQL')

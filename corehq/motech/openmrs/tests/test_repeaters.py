@@ -18,7 +18,7 @@ from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstance
 from corehq.motech.const import DIRECTION_EXPORT, DIRECTION_IMPORT
 from corehq.motech.openmrs.atom_feed import get_observation_mappings
 from corehq.motech.openmrs.const import (
@@ -306,7 +306,7 @@ class AllowedToForwardTests(TestCase):
         """
         payloads from OpenMRS should not be forwarded back to OpenMRS
         """
-        payload = XFormInstanceSQL(
+        payload = XFormInstance(
             domain=DOMAIN,
             xmlns=XMLNS_OPENMRS,
         )

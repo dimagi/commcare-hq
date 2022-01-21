@@ -6,7 +6,7 @@ from corehq.blobs.models import BlobMeta
 from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
-    XFormInstanceSQL, XFormOperationSQL,
+    XFormInstance, XFormOperationSQL,
     LedgerValue, CaseAttachmentSQL)
 
 
@@ -51,7 +51,7 @@ lazy_serialize_form_attachments = lazy(_serialize_form_attachments, dict)
 lazy_serialize_form_history = lazy(_serialize_form_history, dict)
 
 
-class XFormInstanceSQLSerializer(DeletableModelSerializer):
+class XFormInstanceSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='form_id')
     doc_type = serializers.CharField()
     form = serializers.JSONField(source='form_data')
@@ -59,13 +59,13 @@ class XFormInstanceSQLSerializer(DeletableModelSerializer):
     openrosa_headers = serializers.DictField()
 
     class Meta(object):
-        model = XFormInstanceSQL
+        model = XFormInstance
         exclude = ('id', 'form_id', 'time_end', 'time_start', 'commcare_version', 'app_version')
 
 
 class XFormStateField(serializers.ChoiceField):
     def __init__(self, **kwargs):
-        super(XFormStateField, self).__init__(XFormInstanceSQL.STATES, **kwargs)
+        super(XFormStateField, self).__init__(XFormInstance.STATES, **kwargs)
 
     def get_attribute(self, obj):
         choice = super(serializers.ChoiceField, self).get_attribute(obj)
@@ -82,14 +82,14 @@ class JsonFieldSerializerMixin(object):
     serializer_field_mapping[JSONField] = serializers.JSONField
 
 
-class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
+class XFormInstanceRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
     state = XFormStateField()
     history = XFormOperationSQLSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     external_blobs = serializers.JSONField(source='serialized_attachments')
 
     def __init__(self, instance=None, *args, **kwargs):
-        super(XFormInstanceSQLRawDocSerializer, self).__init__(instance=instance, *args, **kwargs)
+        super(XFormInstanceRawDocSerializer, self).__init__(instance=instance, *args, **kwargs)
         if instance is not None:
             try:
                 instance.get_xml()
@@ -97,7 +97,7 @@ class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelS
                 self.fields.pop('form')
 
     class Meta(object):
-        model = XFormInstanceSQL
+        model = XFormInstance
         fields = '__all__'
 
 

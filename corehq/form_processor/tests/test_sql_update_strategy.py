@@ -151,7 +151,7 @@ class SqlUpdateStrategyTest(TestCase):
         """
         Create the models directly so that these tests aren't dependent on any
         other apps.
-        :return: XFormInstanceSQL
+        :return: XFormInstance
         """
         user_id = user_id or 'mr_wednesday'
         received_on = received_on or datetime.utcnow()

@@ -1,9 +1,9 @@
 from django.contrib import admin
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, LedgerValue
+from corehq.form_processor.models import XFormInstance, CommCareCaseSQL, LedgerValue
 
 
-@admin.register(XFormInstanceSQL)
-class XFormInstanceSQLAdmin(admin.ModelAdmin):
+@admin.register(XFormInstance)
+class XFormInstanceAdmin(admin.ModelAdmin):
     date_hierarchy = 'received_on'
     list_display = ('form_id', 'domain', 'xmlns', 'user_id', 'received_on')
     list_filter = ('domain',)

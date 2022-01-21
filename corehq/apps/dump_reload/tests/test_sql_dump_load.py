@@ -45,7 +45,7 @@ from corehq.form_processor.models import (
     CommCareCaseSQL,
     LedgerTransaction,
     LedgerValue,
-    XFormInstanceSQL,
+    XFormInstance,
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -175,7 +175,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
 
     def test_dump_load_form(self):
         expected_object_counts = Counter({
-            XFormInstanceSQL: 2,
+            XFormInstance: 2,
             BlobMeta: 2
         })
 
@@ -194,7 +194,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
 
     def test_sql_dump_load_case(self):
         expected_object_counts = Counter({
-            XFormInstanceSQL: 2,
+            XFormInstance: 2,
             BlobMeta: 2,
             CommCareCaseSQL: 2,
             CaseTransaction: 3,
@@ -225,7 +225,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
 
     def test_ledgers(self):
         expected_object_counts = Counter({
-            XFormInstanceSQL: 3,
+            XFormInstance: 3,
             BlobMeta: 3,
             CommCareCaseSQL: 1,
             CaseTransaction: 3,

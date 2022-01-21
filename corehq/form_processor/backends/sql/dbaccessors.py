@@ -49,7 +49,7 @@ from corehq.form_processor.models import (
     CommCareCaseSQL,
     LedgerTransaction,
     LedgerValue,
-    XFormInstanceSQL,
+    XFormInstance,
     XFormOperationSQL,
 )
 from corehq.form_processor.utils.sql import (
@@ -65,7 +65,7 @@ from corehq.sql_db.util import (
 from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
 
-doc_type_to_state = XFormInstanceSQL.DOC_TYPE_TO_STATE
+doc_type_to_state = XFormInstance.DOC_TYPE_TO_STATE
 
 
 def iter_all_rows(reindex_accessor):
@@ -113,7 +113,7 @@ class ShardAccessor(object):
             SELECT doc_id, hash_string(doc_id, 'siphash24') AS hash
             FROM (VALUES {}) AS t (doc_id)
         """.format(params)
-        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
+        with XFormInstance.get_plproxy_cursor() as cursor:
             cursor.execute(query, doc_ids)
             rows = fetchall_as_namedtuple(cursor)
             return {row.doc_id: row.hash for row in rows}
@@ -131,7 +131,7 @@ class ShardAccessor(object):
             raise ValueError("Expected an instance of UUID")
 
         query = "SELECT hash_string(CAST(%s AS bytea), 'siphash24') AS hash"
-        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
+        with XFormInstance.get_plproxy_cursor() as cursor:
             doc_uuid_before_cast = '\\x%s' % doc_uuid.hex
             cursor.execute(query, [doc_uuid_before_cast])
             return fetchone_as_namedtuple(cursor).hash
@@ -341,7 +341,7 @@ class FormReindexAccessor(ReindexAccessor):
 
     @property
     def model_class(self):
-        return XFormInstanceSQL
+        return XFormInstance
 
     @property
     def id_field(self):
@@ -364,7 +364,7 @@ class FormReindexAccessor(ReindexAccessor):
         if not (for_count or self.include_deleted):
             # don't inlucde in count query since the query planner can't account for it
             # hack for django: 'state & DELETED = 0' so 'state = state + state & DELETED'
-            filters.append(Q(state=F('state').bitand(XFormInstanceSQL.DELETED) + F('state')))
+            filters.append(Q(state=F('state').bitand(XFormInstance.DELETED) + F('state')))
         if self.domain:
             filters.append(Q(domain=self.domain))
         if self.start_date is not None:
@@ -379,8 +379,8 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_form(form_id):
         try:
-            return XFormInstanceSQL.objects.partitioned_get(form_id)
-        except XFormInstanceSQL.DoesNotExist:
+            return XFormInstance.objects.partitioned_get(form_id)
+        except XFormInstance.DoesNotExist:
             raise XFormNotFound(form_id)
 
     @staticmethod
@@ -388,7 +388,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert isinstance(form_ids, list)
         if not form_ids:
             return []
-        forms = list(XFormInstanceSQL.objects.plproxy_raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
+        forms = list(XFormInstance.objects.plproxy_raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
         if ordered:
             _sort_with_id_list(forms, form_ids, 'form_id')
 
@@ -409,7 +409,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         :param start_datetime: The start date of which modified forms must be greater than
         :param end_datetime: The end date of which modified forms must be less than or equal to
 
-        :returns: An iterator of XFormInstanceSQL objects
+        :returns: An iterator of XFormInstance objects
         '''
         from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
@@ -418,7 +418,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         }
 
         return paginate_query_across_partitioned_databases(
-            XFormInstanceSQL,
+            XFormInstance,
             Q(last_modified__gt=start_datetime, last_modified__lte=end_datetime),
             annotate=annotate,
             load_source='forms_by_last_modified'
@@ -428,12 +428,12 @@ class FormAccessorSQL(AbstractFormAccessor):
     def iter_form_ids_by_xmlns(domain, xmlns=None):
         from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
-        q_expr = Q(domain=domain) & Q(state=XFormInstanceSQL.NORMAL)
+        q_expr = Q(domain=domain) & Q(state=XFormInstance.NORMAL)
         if xmlns:
             q_expr &= Q(xmlns=xmlns)
 
         for form_id in paginate_query_across_partitioned_databases(
-                XFormInstanceSQL, q_expr, values=['form_id'], load_source='formids_by_xmlns'):
+                XFormInstance, q_expr, values=['form_id'], load_source='formids_by_xmlns'):
             yield form_id[0]
 
     @staticmethod
@@ -494,7 +494,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert limit is not None
         # apply limit in python as well since we may get more results than we expect
         # if we're in a sharded environment
-        forms = XFormInstanceSQL.objects.plproxy_raw(
+        forms = XFormInstance.objects.plproxy_raw(
             'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
             [domain, state, limit, recent_first]
         )
@@ -503,7 +503,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def form_exists(form_id, domain=None):
-        query = XFormInstanceSQL.objects.partitioned_query(form_id).filter(form_id=form_id)
+        query = XFormInstance.objects.partitioned_query(form_id).filter(form_id=form_id)
         if domain:
             query = query.filter(domain=domain)
 
@@ -516,10 +516,10 @@ class FormAccessorSQL(AbstractFormAccessor):
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
             # cascade should delete the operations
-            _, deleted_models = XFormInstanceSQL.objects.using(db_name).filter(
+            _, deleted_models = XFormInstance.objects.using(db_name).filter(
                 domain=domain, form_id__in=split_form_ids
             ).delete()
-            deleted_count += deleted_models.get(XFormInstanceSQL._meta.label, 0)
+            deleted_count += deleted_models.get(XFormInstance._meta.label, 0)
 
         if delete_attachments and deleted_count:
             if deleted_count != len(form_ids):
@@ -542,7 +542,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         assert isinstance(form_ids, list)
         problem = 'Restored on {}'.format(datetime.utcnow())
-        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
+        with XFormInstance.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT soft_undelete_forms(%s, %s, %s) as affected_count',
                 [domain, form_ids, problem]
@@ -574,7 +574,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         from corehq.form_processor.change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
         deletion_date = deletion_date or datetime.utcnow()
-        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
+        with XFormInstance.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
                 [domain, form_ids, deletion_date, deletion_id]
@@ -592,11 +592,11 @@ class FormAccessorSQL(AbstractFormAccessor):
         from casexml.apps.case.xform import get_case_ids_from_form
         form_id = form.form_id
         case_ids = list(get_case_ids_from_form(form))
-        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
+        with XFormInstance.get_plproxy_cursor() as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
                            [case_ids, form_id, archive])
-        form.state = XFormInstanceSQL.ARCHIVED if archive else XFormInstanceSQL.NORMAL
+        form.state = XFormInstance.ARCHIVED if archive else XFormInstance.NORMAL
 
     @staticmethod
     def save_new_form(form):
@@ -666,7 +666,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def update_form_problem_and_state(form):
-        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
+        with XFormInstance.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT update_form_problem_and_state(%s, %s, %s)',
                 [form.form_id, form.problem, form.state]
@@ -690,15 +690,15 @@ class FormAccessorSQL(AbstractFormAccessor):
         result = []
         for db_name in get_db_aliases_for_partitioned_query():
             result.extend(
-                XFormInstanceSQL.objects.using(db_name)
-                .annotate(state_deleted=F('state').bitand(XFormInstanceSQL.DELETED))
-                .filter(domain=domain, state_deleted=XFormInstanceSQL.DELETED).values_list('form_id', flat=True)
+                XFormInstance.objects.using(db_name)
+                .annotate(state_deleted=F('state').bitand(XFormInstance.DELETED))
+                .filter(domain=domain, state_deleted=XFormInstance.DELETED).values_list('form_id', flat=True)
             )
         return result
 
     @staticmethod
     def get_form_ids_in_domain_by_state(domain, state):
-        with XFormInstanceSQL.get_plproxy_cursor(readonly=True) as cursor:
+        with XFormInstance.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT form_id from get_form_ids_in_domain_by_type(%s, %s)',
                 [domain, state]
@@ -716,7 +716,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def _get_form_ids_for_user(domain, user_id, is_deleted):
-        with XFormInstanceSQL.get_plproxy_cursor(readonly=True) as cursor:
+        with XFormInstance.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT form_id FROM get_form_ids_for_user(%s, %s, %s)',
                 [domain, user_id, is_deleted]

@@ -20,7 +20,7 @@ Models
 +----------------------+
 | CommCareCaseIndexSQL |
 +----------------------+
-| XFormInstanceSQL     |
+| XFormInstance        |
 +----------------------+
 | XFormOperationSQL    |
 +----------------------+
