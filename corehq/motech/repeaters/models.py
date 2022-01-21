@@ -153,7 +153,8 @@ from .repeater_generators import (
     DataRegistryCaseUpdatePayloadGenerator,
 )
 from ..repeater_helpers import RepeaterResponse
-from ...util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -529,9 +530,9 @@ class Repeater(QuickCachedDocumentMixin, Document):
             return self.handle_response(RequestConnectionError(error), repeat_record)
         except RequestException as err:
             return self.handle_response(err, repeat_record)
-        except PossibleSSRFAttempt:
+        except (PossibleSSRFAttempt, CannotResolveHost):
             return self.handle_response(Exception("Invalid URL"), repeat_record)
-        except Exception as e:
+        except Exception:
             # This shouldn't ever happen in normal operation and would mean code broke
             # we want to notify ourselves of the error detail and tell the user something vague
             notify_exception(None, "Unexpected error sending repeat record request")
