@@ -49,7 +49,7 @@ def create_repeat_records(repeater_cls, payload):
     # Make a serious attempt to retry creating the repeat record
     # The real fix is to figure out why the form reprocessing system
     # isn't resulting in the signal getting re-fired and the repeat record getting created.
-    for sleep_length in [.5, 1, 2, 4, 8]:
+    for sleep_length in [.5, 1, 2, 4, 8] if not settings.UNIT_TESTING else [0, 0]:
         try:
             _create_repeat_records(repeater_cls, payload)
         except Exception:
