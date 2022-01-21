@@ -17,6 +17,7 @@ from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.saved_reports.exceptions import (
     UnsupportedScheduledReportError,
 )
+from couchdbkit import ResourceNotFound
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.saved_reports.scheduled import (
     create_records_for_scheduled_reports,
@@ -86,7 +87,11 @@ def purge_old_scheduled_report_logs():
 @serial_task('queue_scheduled_reports', queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def queue_scheduled_reports():
     for report_id in create_records_for_scheduled_reports():
-        send_delayed_report(report_id)
+        try:
+            send_delayed_report(report_id)
+        except ResourceNotFound:
+            # swallow the exception. If the report was deleted, it won't show up on future runs anyway
+            pass
 
 
 @task(serializer='pickle', bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
