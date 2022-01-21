@@ -369,6 +369,12 @@ class Repeater(QuickCachedDocumentMixin, Document):
             'mode': 'sync' if fire_synchronously else 'async'
         })
         repeat_record.save()
+
+        if fire_synchronously:
+            # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
+            # to prevent serializing the repeater in the celery task payload
+            RepeatRecord.repeater.fget.get_cache(repeat_record)[()] = self
+
         repeat_record.attempt_forward_now(fire_synchronously)
         return repeat_record
 
