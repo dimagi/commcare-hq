@@ -735,11 +735,6 @@ class CaseExportInstanceFilters(ExportInstanceFilters):
 class FormExportInstanceFilters(ExportInstanceFilters):
     user_types = ListProperty(IntegerProperty, default=[HQUserType.ACTIVE, HQUserType.DEACTIVATED])
 
-
-class ExportIntegrationType():
-    LIVE_GOOGLE_SHEET = "live_google_sheet"
-
-
 class ExportInstance(BlobMixin, Document):
     """
     This is an instance of an export. It contains the tables to export and
@@ -751,7 +746,6 @@ class ExportInstance(BlobMixin, Document):
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='xlsx')
     app_id = StringProperty()
-    integration_type = StringProperty()
 
     # The id of the schema that was used to generate the instance.
     # Used for information and debugging purposes
