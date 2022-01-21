@@ -365,7 +365,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
         )
         metrics_counter('commcare.repeaters.new_record', tags={
             'domain': self.domain,
-            'doc_type': self.doc_type
+            'doc_type': self.doc_type,
+            'mode': 'sync' if fire_synchronously else 'async'
         })
         repeat_record.save()
         repeat_record.attempt_forward_now(fire_synchronously)
