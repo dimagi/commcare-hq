@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import Attachment, CommCareCaseSQL
+from corehq.form_processor.models import Attachment, CommCareCase
 
 DOMAIN = 'test-domain'
 
@@ -38,7 +38,7 @@ class AttachmentHasSizeTests(SimpleTestCase):
 class TestIndices(TestCase):
     """
     Verify that when two indices are created with the same identifier,
-    CommCareCaseSQL.indices returns only the last one created.
+    CommCareCase.indices returns only the last one created.
     """
 
     @classmethod
@@ -135,7 +135,7 @@ def are_cases_equal(a, b):  # or at least equal enough for our test
 
 def test_case_to_json():
     case_id = str(uuid4())
-    case = CommCareCaseSQL(
+    case = CommCareCase(
         case_id=case_id,
         domain=DOMAIN,
         type='case',

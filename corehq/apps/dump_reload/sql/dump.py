@@ -28,7 +28,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('form_processor.XFormInstance', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain')),
 
-    FilteredModelIteratorBuilder('form_processor.CommCareCaseSQL', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndexSQL', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CaseAttachmentSQL', SimpleFilter('case__domain')),
     FilteredModelIteratorBuilder('form_processor.CaseTransaction', SimpleFilter('case__domain')),

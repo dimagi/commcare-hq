@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
-from corehq.form_processor.models import XFormInstance, CommCareCaseSQL
+from corehq.form_processor.models import XFormInstance, CommCareCase
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, sharded
 from corehq.sql_db.config import plproxy_config
 
@@ -42,7 +42,7 @@ class ShardingTests(TestCase):
             if form_in_db:
                 dbs_with_form.append(db)
 
-            case_in_db = CommCareCaseSQL.objects.using(db).filter(case_id=case_id).exists()
+            case_in_db = CommCareCase.objects.using(db).filter(case_id=case_id).exists()
             if case_in_db:
                 dbs_with_case.append(db)
 
@@ -61,7 +61,7 @@ class ShardingTests(TestCase):
         cases_per_db = {}
         for db in plproxy_config.form_processing_dbs:
             forms_per_db[db] = XFormInstance.objects.using(db).filter(domain=DOMAIN).count()
-            cases_per_db[db] = CommCareCaseSQL.objects.using(db).filter(domain=DOMAIN).count()
+            cases_per_db[db] = CommCareCase.objects.using(db).filter(domain=DOMAIN).count()
 
         self.assertEqual(num_forms, sum(forms_per_db.values()), forms_per_db)
         self.assertEqual(num_forms, sum(cases_per_db.values()), cases_per_db)

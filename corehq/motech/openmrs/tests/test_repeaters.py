@@ -18,7 +18,7 @@ from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.const import DIRECTION_EXPORT, DIRECTION_IMPORT
 from corehq.motech.openmrs.atom_feed import get_observation_mappings
 from corehq.motech.openmrs.const import (
@@ -142,7 +142,7 @@ CASE_CONFIG = {
 
 
 @mock.patch.object(CaseAccessors, 'get_cases', lambda self, case_ids, ordered=False: [{
-    '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCaseSQL(
+    '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCase(
         case_id='65e55473-e83b-4d78-9dde-eaf949758997',
         type='paciente',
         name='Elsa',
@@ -664,7 +664,7 @@ class VoidedPatientTests(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
-        self.case = CommCareCaseSQL(
+        self.case = CommCareCase(
             domain=DOMAIN,
             case_id="123456",
             type="person",

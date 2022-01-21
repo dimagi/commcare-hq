@@ -7,7 +7,7 @@ from couchforms.const import DEVICE_LOG_XMLNS
 from corehq.apps import es
 from corehq.apps.es import aggregations
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
@@ -109,7 +109,7 @@ def get_primary_db_form_counts(domain, startdate=None, enddate=None):
 def get_primary_db_case_counts(domain, startdate=None, enddate=None):
     counter = Counter()
     for db_alias in get_db_aliases_for_partitioned_query():
-        queryset = CommCareCaseSQL.objects.using(db_alias).filter(domain=domain)
+        queryset = CommCareCase.objects.using(db_alias).filter(domain=domain)
         if startdate is not None:
             queryset = queryset.filter(server_modified_on__gte=startdate)
         if enddate is not None:
@@ -124,7 +124,7 @@ def get_primary_db_case_ids(domain, doc_type, startdate, enddate):
     sql_ids = set()
     deleted = doc_type == 'CommCareCase-Deleted'
     for db_alias in get_db_aliases_for_partitioned_query():
-        queryset = CommCareCaseSQL.objects.using(db_alias) \
+        queryset = CommCareCase.objects.using(db_alias) \
             .filter(domain=domain, deleted=deleted)
 
         if startdate:

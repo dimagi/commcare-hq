@@ -5,7 +5,7 @@ from rest_framework import serializers
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.models import (
-    CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
+    CommCareCaseIndexSQL, CommCareCase, CaseTransaction,
     XFormInstance, XFormOperation,
     LedgerValue, CaseAttachmentSQL)
 
@@ -127,13 +127,13 @@ class CaseTransactionActionRawDocSerializer(JsonFieldSerializerMixin, CaseTransa
         fields = ('form_id', 'server_date', 'date', 'sync_log_id', 'type', 'details')
 
 
-class CommCareCaseSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
+class CommCareCaseRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
     indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
     transactions = CaseTransactionActionRawDocSerializer(
         many=True, read_only=True, source='non_revoked_transactions')
 
     class Meta(object):
-        model = CommCareCaseSQL
+        model = CommCareCase
         fields = '__all__'
 
 
@@ -169,18 +169,18 @@ lazy_serialize_case_xform_ids = lazy(_serialize_case_xform_ids, list)
 lazy_serialize_case_attachments = lazy(_serialize_case_attachments, dict)
 
 
-class CommCareCaseSQLSerializer(DeletableModelSerializer):
+class CommCareCaseSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='case_id')
     doc_type = serializers.CharField()
     user_id = serializers.CharField(source='modified_by')
     case_json = serializers.JSONField()
 
     class Meta(object):
-        model = CommCareCaseSQL
+        model = CommCareCase
         exclude = ('id',)
 
 
-class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
+class CommCareCaseAPISerializer(serializers.ModelSerializer):
     """This serializer is for presenting a case in json for APIs to access"""
     user_id = serializers.CharField(source='modified_by')
     date_closed = serializers.DateTimeField(source='closed_on')
@@ -195,10 +195,10 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
         lite = kwargs.pop('lite', False)
         if lite:
             self.fields.pop('reverse_indices')
-        super(CommCareCaseSQLAPISerializer, self).__init__(*args, **kwargs)
+        super(CommCareCaseAPISerializer, self).__init__(*args, **kwargs)
 
     class Meta(object):
-        model = CommCareCaseSQL
+        model = CommCareCase
         fields = (
             'domain',
             'case_id',

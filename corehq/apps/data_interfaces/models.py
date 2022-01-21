@@ -43,7 +43,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
+from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCase
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
@@ -230,10 +230,10 @@ class AutomaticUpdateRule(models.Model):
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
 
         if db:
-            return paginate_query(db, CommCareCaseSQL, q_expression, load_source='auto_update_rule')
+            return paginate_query(db, CommCareCase, q_expression, load_source='auto_update_rule')
         else:
             return paginate_query_across_partitioned_databases(
-                CommCareCaseSQL, q_expression, load_source='auto_update_rule'
+                CommCareCase, q_expression, load_source='auto_update_rule'
             )
 
     @classmethod
@@ -322,7 +322,7 @@ class AutomaticUpdateRule(models.Model):
         if not self.active:
             raise self.RuleError("Attempted to call run_rule on an inactive rule")
 
-        if not isinstance(case, CommCareCaseSQL) or case.domain != self.domain:
+        if not isinstance(case, CommCareCase) or case.domain != self.domain:
             raise self.RuleError("Invalid case given")
 
         if self.criteria_match(case, now):

@@ -42,7 +42,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.models import (
     CaseTransaction,
     CommCareCaseIndexSQL,
-    CommCareCaseSQL,
+    CommCareCase,
     LedgerTransaction,
     LedgerValue,
     XFormInstance,
@@ -196,7 +196,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         expected_object_counts = Counter({
             XFormInstance: 2,
             BlobMeta: 2,
-            CommCareCaseSQL: 2,
+            CommCareCase: 2,
             CaseTransaction: 3,
             CommCareCaseIndexSQL: 1
 
@@ -227,7 +227,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         expected_object_counts = Counter({
             XFormInstance: 3,
             BlobMeta: 3,
-            CommCareCaseSQL: 1,
+            CommCareCase: 1,
             CaseTransaction: 3,
             LedgerValue: 1,
             LedgerTransaction: 2

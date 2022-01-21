@@ -9,7 +9,7 @@ from jsonfield.fields import JSONEncoder
 from psycopg2.extensions import adapt
 
 from corehq.form_processor.models import (
-    CommCareCaseSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE,
+    CommCareCase_DB_TABLE, CaseAttachmentSQL_DB_TABLE,
     CommCareCaseIndexSQL_DB_TABLE, CaseTransaction_DB_TABLE,
     XFormInstance_DB_TABLE,
     LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE,
@@ -98,7 +98,7 @@ def case_adapter(case):
         case.deleted_on,
         case.deletion_id,
     ]
-    return ObjectAdapter(fields, CommCareCaseSQL_DB_TABLE)
+    return ObjectAdapter(fields, CommCareCase_DB_TABLE)
 
 
 def case_attachment_adapter(attachment):

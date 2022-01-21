@@ -18,7 +18,7 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.domain.dbaccessors import domain_exists
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.models import ConnectionSettings
 from corehq.util.soft_assert import soft_assert
 from custom.onse.const import (
@@ -50,7 +50,7 @@ class CassiusMarcellus:  # TODO: Come up with a better name. Please!
 
     Allows us to read current case property values and build a CaseBlock
     """
-    case: CommCareCaseSQL
+    case: CommCareCase
     updates: dict = attr.Factory(dict)
 
     @property

@@ -50,7 +50,7 @@ STANDARD_CHARFIELD_LENGTH = 255
 XFormInstance_DB_TABLE = 'form_processor_xforminstancesql'
 XFormOperation_DB_TABLE = 'form_processor_xformoperationsql'
 
-CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
+CommCareCase_DB_TABLE = 'form_processor_commcarecasesql'
 CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
 CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
@@ -704,9 +704,9 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
             return LooseVersion(version_text)
 
 
-class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
-                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
-                      MessagingCaseContactMixin):
+class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
+                   AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
+                   MessagingCaseContactMixin):
     DOC_TYPE = 'CommCareCase'
     partition_attr = 'case_id'
 
@@ -804,13 +804,13 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return OrderedDict(sorted(self.case_json.items()))
 
     def to_api_json(self, lite=False):
-        from .serializers import CommCareCaseSQLAPISerializer
-        serializer = CommCareCaseSQLAPISerializer(self, lite=lite)
+        from .serializers import CommCareCaseAPISerializer
+        serializer = CommCareCaseAPISerializer(self, lite=lite)
         return serializer.data
 
     def to_json(self):
         from .serializers import (
-            CommCareCaseSQLSerializer,
+            CommCareCaseSerializer,
             lazy_serialize_case_attachments,
             lazy_serialize_case_indices,
             lazy_serialize_case_transactions,
@@ -820,7 +820,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         def union(*dicts):
             return {k: v for d in dicts for k, v in d.items()}
 
-        serializer = CommCareCaseSQLSerializer(self)
+        serializer = CommCareCaseSerializer(self)
         return union(self.case_json, serializer.data, {
             'indices': lazy_serialize_case_indices(self),
             'actions': lazy_serialize_case_transactions(self),
@@ -1080,7 +1080,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             ["domain", "type"],
         ]
         app_label = "form_processor"
-        db_table = CommCareCaseSQL_DB_TABLE
+        db_table = CommCareCase_DB_TABLE
 
 
 class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
@@ -1099,7 +1099,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
     partition_attr = 'case_id'
 
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False,
+        'CommCareCase', to_field='case_id', db_index=False,
         related_name="attachment_set", related_query_name="attachment",
         on_delete=models.CASCADE,
     )
@@ -1206,7 +1206,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False,
+        'CommCareCase', to_field='case_id', db_index=False,
         related_name="index_set", related_query_name="index",
         on_delete=models.CASCADE,
     )
@@ -1323,7 +1323,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         TYPE_LEDGER,
     )
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False,
+        'CommCareCase', to_field='case_id', db_index=False,
         related_name="transaction_set", related_query_name="transaction",
         on_delete=models.CASCADE,
     )
@@ -1602,7 +1602,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
 
     domain = models.CharField(max_length=255, null=False, default=None)
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False, on_delete=models.CASCADE
+        'CommCareCase', to_field='case_id', db_index=False, on_delete=models.CASCADE
     )
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
@@ -1697,7 +1697,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     report_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False, on_delete=models.CASCADE
+        'CommCareCase', to_field='case_id', db_index=False, on_delete=models.CASCADE
     )
     entry_id = models.CharField(max_length=100, default=None)
     section_id = models.CharField(max_length=100, default=None)

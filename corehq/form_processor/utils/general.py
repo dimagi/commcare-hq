@@ -3,5 +3,5 @@ def use_sqlite_backend(domain_name):
 
 
 def is_commcarecase(obj):
-    from corehq.form_processor.models import CommCareCaseSQL
-    return isinstance(obj, CommCareCaseSQL)
+    from corehq.form_processor.models import CommCareCase
+    return isinstance(obj, CommCareCase)

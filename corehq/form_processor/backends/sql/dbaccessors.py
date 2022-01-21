@@ -46,7 +46,7 @@ from corehq.form_processor.models import (
     CaseAttachmentSQL,
     CaseTransaction,
     CommCareCaseIndexSQL,
-    CommCareCaseSQL,
+    CommCareCase,
     LedgerTransaction,
     LedgerValue,
     XFormInstance,
@@ -740,7 +740,7 @@ class CaseReindexAccessor(ReindexAccessor):
 
     @property
     def model_class(self):
-        return CommCareCaseSQL
+        return CommCareCase
 
     @property
     def id_field(self):
@@ -770,8 +770,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case(case_id):
         try:
-            return CommCareCaseSQL.objects.partitioned_get(case_id)
-        except CommCareCaseSQL.DoesNotExist:
+            return CommCareCase.objects.partitioned_get(case_id)
+        except CommCareCase.DoesNotExist:
             raise CaseNotFound(case_id)
 
     @staticmethod
@@ -787,7 +787,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list)
         if not case_ids:
             return []
-        cases = list(CommCareCaseSQL.objects.plproxy_raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
+        cases = list(CommCareCase.objects.plproxy_raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
 
         if ordered:
             _sort_with_id_list(cases, case_ids, 'case_id')
@@ -801,13 +801,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def case_exists(case_id):
-        return CommCareCaseSQL.objects.partitioned_query(case_id).filter(case_id=case_id).exists()
+        return CommCareCase.objects.partitioned_query(case_id).filter(case_id=case_id).exists()
 
     @staticmethod
     def get_case_ids_that_exist(domain, case_ids):
         result = []
         for db_name, case_ids_chunk in split_list_by_db_partition(case_ids):
-            result.extend(CommCareCaseSQL.objects
+            result.extend(CommCareCase.objects
                           .using(db_name)
                           .filter(domain=domain, case_id__in=case_ids_chunk)
                           .values_list('case_id', flat=True))
@@ -815,7 +815,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_xform_ids(case_id):
-        with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
+        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT form_id FROM get_case_transactions_by_type(%s, %s)',
                 [case_id, CaseTransaction.TYPE_FORM]
@@ -884,7 +884,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         if not case_ids:
             return []
 
-        cases = list(CommCareCaseSQL.objects.plproxy_raw(
+        cases = list(CommCareCase.objects.plproxy_raw(
             'SELECT * FROM get_reverse_indexed_cases_3(%s, %s, %s, %s)',
             [domain, case_ids, case_types, is_closed])
         )
@@ -917,7 +917,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
-        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
+        with CommCareCase.get_plproxy_cursor() as cursor:
             cursor.execute('SELECT hard_delete_cases(%s, %s) as deleted_count', [domain, case_ids])
             results = fetchall_as_namedtuple(cursor)
             return sum([result.deleted_count for result in results])
@@ -977,7 +977,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case_by_location(domain, location_id):
         try:
-            return CommCareCaseSQL.objects.plproxy_raw(
+            return CommCareCase.objects.plproxy_raw(
                 'SELECT * from get_case_by_location_id(%s, %s)',
                 [domain, location_id]
             )[0]
@@ -1057,7 +1057,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None, deleted=False):
         owner_ids = list(owner_ids) if owner_ids else None
-        with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
+        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s, %s)',
                 [domain, case_type, owner_ids, is_closed, deleted]
@@ -1079,7 +1079,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
-        with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
+        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
                 [domain, case_ids]
@@ -1091,7 +1091,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
-        with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
+        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
                 [accessor.domain, case_ids, sync_log.date, sync_log._id]
@@ -1129,7 +1129,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
         if not case_ids:
             return []
-        with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
+        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)',
                 [domain, case_ids]
@@ -1139,7 +1139,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
-        return list(CommCareCaseSQL.objects.plproxy_raw(
+        return list(CommCareCase.objects.plproxy_raw(
             'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
             [domain, external_id, case_type]
         ))
@@ -1157,7 +1157,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         assert isinstance(case_ids, list)
 
-        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
+        with CommCareCase.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT soft_undelete_cases(%s, %s) as affected_count',
                 [domain, case_ids]
@@ -1183,7 +1183,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list)
         utcnow = datetime.utcnow()
         deletion_date = deletion_date or utcnow
-        with CommCareCaseSQL.get_plproxy_cursor() as cursor:
+        with CommCareCase.get_plproxy_cursor() as cursor:
             cursor.execute(
                 'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as affected_count',
                 [domain, case_ids, utcnow, deletion_date, deletion_id]
@@ -1202,7 +1202,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         db_aliases = get_db_aliases_for_partitioned_query()
         owner_ids = set()
         for db_alias in db_aliases:
-            owner_ids.update(fast_distinct_in_domain(CommCareCaseSQL, 'owner_id', domain, using=db_alias))
+            owner_ids.update(fast_distinct_in_domain(CommCareCase, 'owner_id', domain, using=db_alias))
 
         return owner_ids
 

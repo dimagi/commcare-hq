@@ -20,7 +20,7 @@ from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
     XFormInstance, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperation)
+    CommCareCase, FormEditRebuild, Attachment, XFormOperation)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq import toggles
@@ -242,7 +242,7 @@ class FormProcessorSQL(object):
                 case = case_db.get(case_id)
                 is_creation = False
                 if not case:
-                    case = CommCareCaseSQL(domain=domain, case_id=case_id)
+                    case = CommCareCase(domain=domain, case_id=case_id)
                     is_creation = True
                     case_db.set(case_id, case)
                 previous_owner = case.owner_id
@@ -282,9 +282,9 @@ class FormProcessorSQL(object):
         case, lock_obj = FormProcessorSQL.get_case_with_lock(case_id, lock=lock)
         found = bool(case)
         if not found:
-            case = CommCareCaseSQL(case_id=case_id, domain=domain)
+            case = CommCareCase(case_id=case_id, domain=domain)
             if lock:
-                lock_obj = CommCareCaseSQL.get_obj_lock_by_id(case_id)
+                lock_obj = CommCareCase.get_obj_lock_by_id(case_id)
                 acquire_lock(lock_obj, degrade_gracefully=False)
 
         try:
@@ -334,7 +334,7 @@ class FormProcessorSQL(object):
         try:
             if lock:
                 try:
-                    return CommCareCaseSQL.get_locked_obj(_id=case_id)
+                    return CommCareCase.get_locked_obj(_id=case_id)
                 except redis.RedisError:
                     case = CaseAccessorSQL.get_case(case_id)
             else:

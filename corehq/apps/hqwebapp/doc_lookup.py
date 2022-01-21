@@ -7,9 +7,9 @@ from memoized import memoized
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.serializers import (
-    CommCareCaseSQLRawDocSerializer,
+    CommCareCaseRawDocSerializer,
     XFormInstanceRawDocSerializer,
 )
 from corehq.util.couchdb_management import couch_config
@@ -90,10 +90,10 @@ def get_databases():
             lambda doc: XFormInstanceRawDocSerializer(doc).data,
         ),
         _SQLDb(
-            CommCareCaseSQL._meta.db_table,
-            lambda id_: CommCareCaseSQL.get_obj_by_id(id_),
+            CommCareCase._meta.db_table,
+            lambda id_: CommCareCase.get_obj_by_id(id_),
             "CommCareCase",
-            lambda doc: CommCareCaseSQLRawDocSerializer(doc).data,
+            lambda doc: CommCareCaseRawDocSerializer(doc).data,
         ),
         _SQLDb(
             SQLLocation._meta.db_table,

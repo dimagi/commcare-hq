@@ -22,7 +22,7 @@ from corehq.form_processor.models import (
     CaseAttachmentSQL,
     CaseTransaction,
     CommCareCaseIndexSQL,
-    CommCareCaseSQL,
+    CommCareCase,
     XFormInstance,
 )
 from corehq.form_processor.tests.test_basics import _submit_case_block
@@ -53,7 +53,7 @@ class CaseAccessorTestsSQL(TestCase):
         with self.assertNumQueries(1, using=case.db):
             case = CaseAccessorSQL.get_case(case.case_id)
         self.assertIsNotNone(case)
-        self.assertIsInstance(case, CommCareCaseSQL)
+        self.assertIsInstance(case, CommCareCase)
         self.assertEqual(DOMAIN, case.domain)
         self.assertEqual('user1', case.owner_id)
 
@@ -693,7 +693,7 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
-    :return: CommCareCaseSQL
+    :return: CommCareCase
     """
     domain = domain or DOMAIN
     form_id = form_id or uuid.uuid4().hex
@@ -709,7 +709,7 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
         domain=domain
     )
 
-    case = CommCareCaseSQL(
+    case = CommCareCase(
         case_id=case_id,
         domain=domain,
         type=case_type or '',

@@ -10,7 +10,7 @@ from corehq.apps.es import CaseES
 from corehq.apps.sms import tasks as sms_tasks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.tasks import (
     delete_schedule_instances_for_cases,
 )
@@ -119,7 +119,7 @@ def initiate_messaging_rule_run(rule):
 
 def paginated_case_ids(domain, case_type, db_alias=None):
     args = [
-        CommCareCaseSQL,
+        CommCareCase,
         Q(domain=domain, type=case_type, deleted=False)
     ]
     if db_alias:

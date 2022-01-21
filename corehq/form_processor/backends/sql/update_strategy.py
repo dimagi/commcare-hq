@@ -27,7 +27,7 @@ from corehq.form_processor.models import (
     CaseAttachmentSQL,
     CaseTransaction,
     CommCareCaseIndexSQL,
-    CommCareCaseSQL,
+    CommCareCase,
     RebuildWithReason,
     STANDARD_CHARFIELD_LENGTH,
 )
@@ -66,7 +66,7 @@ def _convert_type_check_length(property_name, value):
 
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
-    case_implementation_class = CommCareCaseSQL
+    case_implementation_class = CommCareCase
 
     def apply_action_intents(self, primary_intent, deprecation_intent=None):
         # for now we only allow commtrack actions to be processed this way so just assert that's the case

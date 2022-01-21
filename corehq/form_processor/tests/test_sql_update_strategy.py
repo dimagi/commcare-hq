@@ -11,7 +11,7 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
-    CommCareCaseSQL,
+    CommCareCase,
     CaseTransaction,
     RebuildWithReason,
 )
@@ -176,7 +176,7 @@ class SqlUpdateStrategyTest(TestCase):
         user_id = user_id or 'mr_wednesday'
         utcnow = datetime.utcnow()
 
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=case_id,
             domain=self.DOMAIN,
             type=case_type or '',

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from corehq.form_processor.models import XFormInstance, CommCareCaseSQL, LedgerValue
+from corehq.form_processor.models import XFormInstance, CommCareCase, LedgerValue
 
 
 @admin.register(XFormInstance)
@@ -10,8 +10,8 @@ class XFormInstanceAdmin(admin.ModelAdmin):
     ordering = ('received_on',)
 
 
-@admin.register(CommCareCaseSQL)
-class CommCareCaseSQLAdmin(admin.ModelAdmin):
+@admin.register(CommCareCase)
+class CommCareCaseAdmin(admin.ModelAdmin):
     date_hierarchy = 'server_modified_on'
     list_display = ('case_id', 'domain', 'type', 'name', 'server_modified_on')
     list_filter = ('domain', 'closed', 'type')

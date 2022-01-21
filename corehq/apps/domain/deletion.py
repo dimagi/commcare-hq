@@ -275,7 +275,7 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('sms', _delete_domain_backends, ['SQLMobileBackend']),
     CustomDeletion('users', _delete_web_user_membership, []),
     CustomDeletion('accounting', _terminate_subscriptions, ['Subscription']),
-    CustomDeletion('form_processor', _delete_all_cases, ['CommCareCaseSQL']),
+    CustomDeletion('form_processor', _delete_all_cases, ['CommCareCase']),
     CustomDeletion('form_processor', _delete_all_forms, ['XFormInstance']),
     ModelDeletion('aggregate_ucrs', 'AggregateTableDefinition', 'domain', [
         'PrimaryColumn', 'SecondaryColumn', 'SecondaryTableDefinition', 'TimeAggregationDefinition',
