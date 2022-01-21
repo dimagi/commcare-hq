@@ -543,6 +543,8 @@ notifications
  0005_domain_specific_notifications
  0006_add_billing_type
  0007_auto_20170704_1643
+oauth
+ 0001_initial
 oauth2_provider
  0001_initial
  0002_auto_20190406_1805
@@ -921,7 +923,6 @@ two_factor
  0004_auto_20160205_1827
  0005_auto_20160224_0450
  0006_phonedevice_key_default
- 0007_auto_20201201_1019
 user_importer
  0001_initial
 userreports

@@ -6,8 +6,8 @@ from corehq.apps.oauth.models.gsuite import GoogleApiToken
 from corehq.apps.oauth.utils import (
     stringify_credentials,
     load_credentials,
-    check_token_exists,
-    get_redirect_uri)
+    get_token,
+)
 from corehq.apps.export.exceptions import InvalidLoginException
 
 from google.auth.transport.requests import Request
@@ -16,45 +16,45 @@ from google.auth.exceptions import RefreshError
 
 
 def redirect_oauth_view(request, domain):
-    redirect_uri = get_redirect_uri(domain)
-    INDEX_URL = 0
-
-    token = check_token_exists(request.user)
+    redirect_uri = request.build_absolute_uri(reverse("google_sheet_oauth_callback"))
+    token = get_token(request.user)
 
     if token is None:
-        flow = Flow.from_client_config(
-            settings.GOOGLE_OATH_CONFIG,
-            settings.GOOGLE_OAUTH_SCOPES,
-            redirect_uri=redirect_uri
-        )
-        # Returns a tuple containing (url, state) and we only want the url
-        auth_tuple = flow.authorization_url(prompt='consent')
-        return HttpResponseRedirect(auth_tuple[INDEX_URL])
+        return HttpResponseRedirect(get_url_from_google(redirect_uri))
     else:
         credentials = load_credentials(token.token)
         try:
-            credentials.refresh(Request())
+            token.token = stringify_credentials(refresh_credentials(credentials))
+            token.save()
         # When we lose access to a user's refresh token, we get this refresh error.
         # This will simply have them log into google sheets again to give us another refresh token
         except RefreshError:
-            flow = Flow.from_client_config(
-                settings.GOOGLE_OATH_CONFIG,
-                settings.GOOGLE_OAUTH_SCOPES,
-                redirect_uri=redirect_uri
-            )
-            auth_tuple = flow.authorization_url(prompt='consent')
-            return HttpResponseRedirect(auth_tuple[INDEX_URL])
-        return HttpResponseRedirect(reverse('google_sheet_view_redirect', args=[domain]))
+            return HttpResponseRedirect(get_url_from_google(redirect_uri))
+        #replace with google sheet view
+        return HttpResponseRedirect("placeholder.com")
+
+
+def refresh_credentials(credentials, user):
+    return credentials.refresh(Request())
+
+
+def get_url_from_google(redirect_uri):
+    INDEX_URL = 0
+    flow = Flow.from_client_config(
+        settings.GOOGLE_OATH_CONFIG,
+        settings.GOOGLE_OAUTH_SCOPES,
+        redirect_uri=redirect_uri
+    )
+    # Returns a tuple containing (url, state) and we only want the url
+    auth_tuple = flow.authorization_url(prompt='consent')
+    return auth_tuple[INDEX_URL]
 
 
 def call_back_view(request, domain):
-    redirect_uri = get_redirect_uri(domain)
+    redirect_uri = request.build_absolute_uri(reverse("google_sheet_oauth_callback"))
 
     try:
-        state = request.GET.get('state', None)
-
-        if not state:
-            raise InvalidLoginException
+        check_state(request)
 
         flow = Flow.from_client_config(
             settings.GOOGLE_OATH_CONFIG,
@@ -64,14 +64,11 @@ def call_back_view(request, domain):
         flow.redirect_uri = redirect_uri
 
         # Fetch the token and stringify it
-        authorization_response = request.build_absolute_uri()
-        flow.fetch_token(authorization_response)
-        credentials = flow.credentials
-        stringified_token = stringify_credentials(credentials)
+        stringified_token = get_token_from_google(request, flow)
 
-        token = GoogleApiToken.objects.get(user=request.user)
+        token = get_token(request.user)
 
-        if token is None:
+        if not token:
             GoogleApiToken.objects.create(
                 user=request.user,
                 token=stringified_token
@@ -83,4 +80,19 @@ def call_back_view(request, domain):
     except InvalidLoginException:
         print("Hello There")
 
-    return HttpResponseRedirect(reverse('google_sheet_view_redirect', args=[domain]))
+    #replace with google sheet view
+    return HttpResponseRedirect("placeholder.com")
+
+
+def check_state(request):
+    state = request.GET.get('state', None)
+
+    if not state:
+        raise InvalidLoginException
+
+
+def get_token_from_google(request, flow):
+    authorization_response = request.build_absolute_uri()
+    flow.fetch_token(authorization_response)
+    credentials = flow.credentials
+    return stringify_credentials(credentials)
