@@ -12,7 +12,7 @@ from unittest.mock import patch
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.json import CommCareJSONEncoder
@@ -156,9 +156,8 @@ class SubmissionTest(BaseSubmissionTest):
             attachments={"image": BytesIO(b"other fake image")},
             url=reverse("receiver_secure_post", args=[self.domain]),
         )
-        acc = FormAccessors(self.domain.name)
-        new_form = acc.get_form(response['X-CommCareHQ-FormID'])
-        old_form = acc.get_form(new_form.deprecated_form_id)
+        new_form = XFormInstance.objects.get_form(response['X-CommCareHQ-FormID'])
+        old_form = XFormInstance.objects.get_form(new_form.deprecated_form_id)
         self.assertIn(b"<bop>bang</bop>", old_form.get_xml())
         self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
         self.assertEqual(

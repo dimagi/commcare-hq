@@ -199,8 +199,7 @@ def _get_case_ids_needing_rebuild(form, cases):
 
 
 def _get_form(form_id):
-    from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
     try:
-        return FormAccessorSQL.get_form(form_id)
+        return XFormInstance.objects.get_form(form_id)
     except XFormNotFound:
         return None

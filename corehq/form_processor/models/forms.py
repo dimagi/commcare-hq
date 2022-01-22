@@ -153,8 +153,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
 
     @classmethod
     def get_obj_by_id(cls, form_id):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_form(form_id)
+        return cls.objects.get_form(form_id)
 
     @property
     def get_id(self):

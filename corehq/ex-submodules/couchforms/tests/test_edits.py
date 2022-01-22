@@ -9,7 +9,8 @@ from requests.exceptions import HTTPError
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -30,7 +31,7 @@ class EditFormTest(TestCase, TestFileMixin):
         super(EditFormTest, self).setUp()
         self.interface = FormProcessorInterface(self.domain)
         self.casedb = CaseAccessors(self.domain)
-        self.formdb = FormAccessors(self.domain)
+        self.formdb = XFormInstance.objects
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain)

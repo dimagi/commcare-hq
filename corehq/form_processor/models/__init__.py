@@ -719,12 +719,11 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @property
     def form(self):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         if not self.form_id:
             return None
         form = getattr(self, 'cached_form', None)
         if not form:
-            self.cached_form = FormAccessorSQL.get_form(self.form_id)
+            self.cached_form = XFormInstance.objects.get_form(self.form_id)
         return self.cached_form
 
     @property

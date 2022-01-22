@@ -348,7 +348,7 @@ class FormReindexAccessor(ReindexAccessor):
 
     def get_doc(self, doc_id):
         try:
-            return FormAccessorSQL.get_form(doc_id)
+            return XFormInstance.objects.get_form(doc_id, self.domain)
         except XFormNotFound:
             pass
 
@@ -440,7 +440,7 @@ class FormAccessorSQL:
         since the form_id can change (in the case of a deprecated form) which breaks
         the memoize hash.
         """
-        form = FormAccessorSQL.get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id)
         form.attachments_list = FormAccessorSQL.get_attachments(form_id)
         return form
 

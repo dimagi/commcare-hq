@@ -202,7 +202,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         self.assertEqual(set(form_ids), set(form.form_id for form in pre_forms))
 
         for pre_form in pre_forms:
-            post_form = self.form_accessors.get_form(pre_form.form_id)
+            post_form = XFormInstance.objects.get_form(pre_form.form_id)
             self.assertDictEqual(pre_form.to_json(), post_form.to_json())
 
     def test_load_renamed_model(self):

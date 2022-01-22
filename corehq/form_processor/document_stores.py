@@ -36,7 +36,7 @@ class FormDocumentStore(DocumentStore):
 
     def get_document(self, doc_id):
         try:
-            form = self.form_accessors.get_form(doc_id)
+            form = XFormInstance.objects.get_form(doc_id)
             return self._to_json(form)
         except (XFormNotFound, BlobError) as e:
             raise DocumentNotFoundError(e)
