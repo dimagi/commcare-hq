@@ -2,7 +2,6 @@ import datetime
 import logging
 from contextlib import contextmanager
 
-from couchdbkit import ResourceNotFound
 from ddtrace import tracer
 from django.conf import settings
 
@@ -108,7 +107,10 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None)
     xform.auth_context = auth_context
 
     # Maps all attachments to uniform format and adds form.xml to list before storing
-    attachments = [Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type) for a in attachments.items()]
+    attachments = [
+        Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type)
+        for a in attachments.items()
+    ]
     attachments.append(Attachment(name='form.xml', raw_content=instance_xml, content_type='text/xml'))
     interface.store_attachments(xform, attachments)
 

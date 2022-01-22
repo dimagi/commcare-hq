@@ -274,7 +274,7 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, lock=True, save=True):
-        assert save or not lock, f"refusing to lock when not saving"
+        assert save or not lock, "refusing to lock when not saving"
         if lock:
             # only record metric if locking since otherwise it has been
             # (most likley) recorded elsewhere
