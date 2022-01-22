@@ -26,7 +26,7 @@ class Command(BaseCommand):
         errored_form_ids = set()
         with open(form_ids_file, 'r') as f:
             lines = f.readlines()
-            form_ids = [l.strip() for l in lines]
+            form_ids = [line.strip() for line in lines]
 
         get_form = XFormInstance.objects.get_form
         for form_id in with_progress_bar(form_ids):

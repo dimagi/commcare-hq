@@ -110,8 +110,8 @@ class OpenmrsRepeater(CaseRepeater):
 
     def __eq__(self, other):
         return (
-            isinstance(other, self.__class__) and
-            self.get_id == other.get_id
+            isinstance(other, self.__class__)
+            and self.get_id == other.get_id
         )
 
     @classmethod

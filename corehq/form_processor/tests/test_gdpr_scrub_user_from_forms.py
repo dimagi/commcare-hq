@@ -5,8 +5,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import sharded
 from corehq.apps.users.management.commands.gdpr_scrub_user_from_forms import Command
 from corehq.form_processor.models import XFormInstance
-from corehq.form_processor.utils import TestFormMetadata
-from corehq.form_processor.utils import get_simple_wrapped_form
+from corehq.form_processor.utils import TestFormMetadata, get_simple_wrapped_form
 
 import uuid
 

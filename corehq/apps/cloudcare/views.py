@@ -46,7 +46,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_id,
     get_latest_released_app_doc,
     get_latest_released_build_id,
-    wrap_app,
 )
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -79,7 +78,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
-from corehq.apps.users.models import CouchUser, DomainMembershipError
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
@@ -542,7 +541,7 @@ def report_formplayer_error(request, domain):
             'domain': domain,
             'cloudcare_env': data.get('cloudcareEnv'),
         })
-        notify_error(message=f'[Cloudcare] unknown error type', details=data)
+        notify_error(message='[Cloudcare] unknown error type', details=data)
     return JsonResponse({'status': 'ok'})
 
 
@@ -577,7 +576,11 @@ def _message_to_sentry_thread_topic(message):
     ... 'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@1f984e3c, '
     ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
     ... 'If this error persists please report a bug to CommCareHQ.')
-    'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCareHQ.'
+    'EntityScreen EntityScreen [
+        Detail=org.commcare.suite.model.Detail@[...],
+        selection=null
+    ] could not select case [...].
+    If this error persists please report a bug to CommCareHQ.'
     """
     return re.sub(r'[a-f0-9-]{7,}', '[...]', message)
 

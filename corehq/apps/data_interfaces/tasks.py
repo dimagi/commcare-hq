@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from types import Literal
 from typing import List, Optional
 
 from django.conf import settings
@@ -108,7 +109,8 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
     return response
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
+    serializer='pickle',
     run_every=crontab(hour='*', minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True

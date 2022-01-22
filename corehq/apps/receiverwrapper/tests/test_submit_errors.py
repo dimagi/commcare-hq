@@ -82,7 +82,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
     def testSubmitBadAttachmentType(self):
         res = self.client.post(self.url, {
-                "xml_submission_file": "this isn't a file"
+            "xml_submission_file": "this isn't a file"
         })
         self.assertEqual(400, res.status_code)
         #self.assertIn("xml_submission_file", res.content)

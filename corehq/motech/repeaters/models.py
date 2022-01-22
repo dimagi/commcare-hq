@@ -616,8 +616,8 @@ class FormRepeater(Repeater):
 
     def allowed_to_forward(self, payload):
         return (
-            payload.xmlns != DEVICE_LOG_XMLNS and
-            (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns
+            payload.xmlns != DEVICE_LOG_XMLNS
+            and (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns
             and payload.user_id not in self.user_blocklist)
         )
 

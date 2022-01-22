@@ -99,7 +99,6 @@ class EditFormTest(TestCase, TestFileMixin):
                    </n1:meta>
                </data>""".format(
                 date=date,
-                attachment_source=attachment_source,
                 form_id=form_id
             )
         form_id = uuid.uuid4().hex

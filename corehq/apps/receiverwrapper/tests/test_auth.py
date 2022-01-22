@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django.test import TestCase
 from django.urls import reverse
 
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from couchforms import openrosa_response
 
