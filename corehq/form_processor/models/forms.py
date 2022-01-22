@@ -39,10 +39,11 @@ class XFormInstanceManager(RequireDBManager):
         except self.model.DoesNotExist:
             raise XFormNotFound(form_id)
 
-    def get_forms(self, form_ids, ordered=False):
+    def get_forms(self, form_ids, domain=None, ordered=False):
         """
         :param form_ids: list of form_ids to fetch
-        :type ordered:   True if the list of returned forms should have the
+        :param domain: Currently unused, may be enforced in the future.
+        :param ordered:  True if the list of returned forms should have the
                          same order as the list of form_ids passed in
         """
         assert isinstance(form_ids, list)

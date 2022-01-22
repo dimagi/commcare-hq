@@ -78,7 +78,7 @@ from corehq.apps.reports.v2.reports.explore_case_data import (
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.permissions import can_download_data_files
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -509,7 +509,7 @@ class XFormManagementView(DataInterfaceSection):
         )
 
     def inaccessible_forms_accessed(self, xform_ids, domain, couch_user):
-        xforms = FormAccessors(domain).get_forms(xform_ids)
+        xforms = XFormInstance.objects.get_forms(xform_ids, domain)
         xforms_user_ids = set([xform.user_id for xform in xforms])
         accessible_user_ids = set(user_ids_at_accessible_locations(domain, couch_user))
         return xforms_user_ids - accessible_user_ids
