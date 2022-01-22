@@ -54,7 +54,7 @@ def get_questions_with_answers(forms, domain, report_slug):
         for question in section['questions']:
 
             if 'answers' not in question:
-                    question['answers'] = []
+                question['answers'] = []
             if len(question['answers']) < count:
                 for i in range(len(question['answers']), count):
                     question['answers'].append('')

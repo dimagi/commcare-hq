@@ -492,7 +492,7 @@ class XFormManagementView(DataInterfaceSection):
                     "Inaccessible forms accessed. Id(s): %s " % ','.join(inaccessible_forms_accessed))
 
         mode = self.request.POST.get('mode')
-        task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
+        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
         task = bulk_form_management_async.delay(
             mode,
             self.domain,
@@ -518,14 +518,11 @@ class XFormManagementView(DataInterfaceSection):
         if 'select_all' in self.request.POST:
             # Altough evaluating form_ids and sending to task would be cleaner,
             # heavier calls should be in an async task instead
-            import six.moves.urllib.error
-            import six.moves.urllib.parse
-            import six.moves.urllib.request
-            form_query_string = six.moves.urllib.parse.unquote(self.request.POST.get('select_all'))
+            from urllib.parse import unquote
             from django.http import HttpRequest, QueryDict
-
             from django_otp.middleware import OTPMiddleware
 
+            form_query_string = unquote(self.request.POST.get('select_all'))
             _request = HttpRequest()
             _request.couch_user = request.couch_user
             _request.user = request.couch_user.get_django_user()
@@ -665,9 +662,10 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def page_context(self):
         context = self.pagination_context
         domain_obj = Domain.get_by_name(self.domain)
+        hour = domain_obj.auto_case_update_hour
         context.update({
             'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
-            'time': f"{domain_obj.auto_case_update_hour}:00" if domain_obj.auto_case_update_hour else _('midnight'),
+            'time': f"{hour}:00" if hour else _('midnight'),
         })
         return context
 
@@ -794,10 +792,9 @@ class AddCaseRuleView(DataInterfaceSection):
     @memoized
     def read_only_mode(self):
         return (
-            not self.is_system_admin and
-            (
-                self.criteria_form.requires_system_admin_to_edit or
-                self.actions_form.requires_system_admin_to_edit
+            not self.is_system_admin and (
+                self.criteria_form.requires_system_admin_to_edit
+                or self.actions_form.requires_system_admin_to_edit
             )
         )
 
@@ -849,8 +846,8 @@ class AddCaseRuleView(DataInterfaceSection):
 
         if rule_form_valid and criteria_form_valid and actions_form_valid:
             if not self.is_system_admin and (
-                self.criteria_form.requires_system_admin_to_save or
-                self.actions_form.requires_system_admin_to_save
+                self.criteria_form.requires_system_admin_to_save
+                or self.actions_form.requires_system_admin_to_save
             ):
                 # Don't allow adding custom criteria/actions to rules
                 # unless the user has permission to
