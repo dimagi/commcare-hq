@@ -104,6 +104,16 @@ class XFormInstanceManager(RequireDBManager):
                 self.model, q_expr, values=['form_id'], load_source='formids_by_xmlns'):
             yield form_id[0]
 
+    def set_archived_state(self, form, archive, user_id):
+        from casexml.apps.case.xform import get_case_ids_from_form
+        form_id = form.form_id
+        case_ids = list(get_case_ids_from_form(form))
+        with self.model.get_plproxy_cursor() as cursor:
+            cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
+            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
+                           [case_ids, form_id, archive])
+        form.state = self.model.ARCHIVED if archive else self.model.NORMAL
+
     @staticmethod
     def save_new_form(form):
         """Save a previously unsaved form"""
@@ -129,6 +139,12 @@ class XFormInstanceManager(RequireDBManager):
             raise XFormSaveError(e)
 
         form.clear_tracked_models()
+
+
+class XFormOperationManager(RequireDBManager):
+
+    def get_form_operations(self, form_id):
+        return list(self.partitioned_query(form_id).filter(form_id=form_id).order_by('date'))
 
 
 class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
@@ -232,8 +248,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
         Returns operations based on self.__original_form_id, useful
             to lookup correct attachments while modifying self.form_id
         """
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_form_operations(self.__original_form_id)
+        return XFormOperation.objects.get_form_operations(self.__original_form_id)
 
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
@@ -325,8 +340,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
     @memoized
     def history(self):
         """:returns: List of XFormOperation objects"""
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        operations = FormAccessorSQL.get_form_operations(self.form_id) if self.is_saved() else []
+        operations = XFormOperation.objects.get_form_operations(self.form_id) if self.is_saved() else []
         operations += self.get_tracked_models_to_create(XFormOperation)
         return operations
 
@@ -448,6 +462,8 @@ class XFormOperation(PartitionedModel, SaveStateMixin, models.Model):
     EDIT = 'edit'
     UUID_DATA_FIX = 'uuid_data_fix'
     GDPR_SCRUB = 'gdpr_scrub'
+
+    objects = XFormOperationManager()
 
     form = models.ForeignKey(XFormInstance, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)

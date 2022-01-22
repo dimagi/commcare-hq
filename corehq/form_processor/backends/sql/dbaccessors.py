@@ -412,7 +412,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_form_operations(form_id):
-        return list(XFormOperation.objects.partitioned_query(form_id).filter(form_id=form_id).order_by('date'))
+        """DEPRECATED"""
+        return XFormOperation.objects.get_form_operations(form_id)
 
     @staticmethod
     def get_forms_with_attachments_meta(form_ids, ordered=False):
@@ -534,14 +535,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def set_archived_state(form, archive, user_id):
-        from casexml.apps.case.xform import get_case_ids_from_form
-        form_id = form.form_id
-        case_ids = list(get_case_ids_from_form(form))
-        with XFormInstance.get_plproxy_cursor() as cursor:
-            cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
-            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
-                           [case_ids, form_id, archive])
-        form.state = XFormInstance.ARCHIVED if archive else XFormInstance.NORMAL
+        """DEPRECATED"""
+        type(form).objects.set_archived_state(form, archive, user_id)
 
     @staticmethod
     def save_new_form(form):

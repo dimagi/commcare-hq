@@ -7,7 +7,7 @@ from django.test import TestCase
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 
 from ..exceptions import AttachmentNotFound, XFormNotFound
-from ..models import XFormInstance
+from ..models import XFormInstance, XFormOperation
 from ..tests.utils import FormProcessorTestUtils, create_form_for_test, sharded
 from ..utils import get_simple_form_xml
 
@@ -144,3 +144,44 @@ class XFormInstanceManagerTest(TestCase):
         self.assertEqual(DOMAIN, form.domain)
         self.assertEqual('user1', form.user_id)
         return form
+
+
+@sharded
+class XFormOperationManagerTest(TestCase):
+
+    def tearDown(self):
+        if settings.USE_PARTITIONED_DATABASE:
+            FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
+            FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
+        super().tearDown()
+
+    def test_get_form_operations(self):
+        form = create_form_for_test(DOMAIN)
+
+        operations = XFormOperation.objects.get_form_operations('missing_form')
+        self.assertEqual([], operations)
+
+        operations = XFormOperation.objects.get_form_operations(form.form_id)
+        self.assertEqual([], operations)
+
+        # don't call form.archive to avoid sending the signals
+        archive_form(form, user_id='user1')
+        unarchive_form(form, user_id='user2')
+
+        operations = XFormOperation.objects.get_form_operations(form.form_id)
+        self.assertEqual(2, len(operations))
+        self.assertEqual('user1', operations[0].user_id)
+        self.assertEqual(XFormOperation.ARCHIVE, operations[0].operation)
+        self.assertIsNotNone(operations[0].date)
+        self.assertEqual('user2', operations[1].user_id)
+        self.assertEqual(XFormOperation.UNARCHIVE, operations[1].operation)
+        self.assertIsNotNone(operations[1].date)
+        self.assertGreater(operations[1].date, operations[0].date)
+
+
+def archive_form(form, user_id):
+    XFormInstance.objects.set_archived_state(form, True, user_id)
+
+
+def unarchive_form(form, user_id):
+    XFormInstance.objects.set_archived_state(form, False, user_id)
