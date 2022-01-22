@@ -14,7 +14,8 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from corehq.blobs import get_blob_db
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
@@ -27,7 +28,7 @@ from ..exceptions import (
 )
 from ..track_related import TrackRelatedChanges
 from .abstract import AbstractXFormInstance
-from .attachment import AttachmentMixin
+from .attachment import AttachmentContent, AttachmentMixin
 from .mixin import SaveStateMixin
 from .util import sort_with_id_list
 
@@ -79,6 +80,21 @@ class XFormInstanceManager(RequireDBManager):
         form = self.get_form(form_id, domain)
         form.attachments_list = self.get_attachments(form_id)
         return form
+
+    def get_attachment_by_name(self, form_id, attachment_name):
+        code = CODES.form_xml if attachment_name == "form.xml" else CODES.form_attachment
+        try:
+            return get_blob_db().metadb.get(
+                parent_id=form_id,
+                type_code=code,
+                name=attachment_name,
+            )
+        except BlobMeta.DoesNotExist:
+            raise AttachmentNotFound(form_id, attachment_name)
+
+    def get_attachment_content(self, form_id, attachment_name):
+        meta = self.get_attachment_by_name(form_id, attachment_name)
+        return AttachmentContent(meta.content_type, meta.open())
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
@@ -337,8 +353,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
         return data
 
     def _get_attachment_from_db(self, attachment_name):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_attachment_by_name(self.form_id, attachment_name)
+        return type(self).objects.get_attachment_by_name(self.form_id, attachment_name)
 
     def _get_attachments_from_db(self):
         return type(self).objects.get_attachments(self.form_id)

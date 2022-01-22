@@ -26,9 +26,9 @@ from corehq.apps.reports.views import (
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
-    FormAccessors,
     get_cached_case_attachment,
 )
+from corehq.form_processor.models import XFormInstance
 
 
 class CaseAttachmentAPI(View):
@@ -142,7 +142,7 @@ class FormAttachmentAPI(View):
         safely_get_form(request, domain, form_id)
 
         try:
-            content = FormAccessors(domain).get_attachment_content(form_id, attachment_id)
+            content = XFormInstance.objects.get_attachment_content(form_id, attachment_id)
         except AttachmentNotFound:
             raise Http404
 

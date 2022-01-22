@@ -23,7 +23,7 @@ from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.blobs import CODES, get_blob_db
+from corehq.blobs import get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.exceptions import (
     AttachmentNotFound,
@@ -38,10 +38,10 @@ from corehq.form_processor.models.util import sort_with_id_list as _sort_with_id
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor,
     AbstractLedgerAccessor,
-    AttachmentContent,
     CaseIndexInfo,
 )
 from corehq.form_processor.models import (
+    AttachmentContent,
     CaseAttachment,
     CaseTransaction,
     CommCareCaseIndex,
@@ -402,21 +402,13 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_attachment_by_name(form_id, attachment_name):
-        code = (CODES.form_xml if attachment_name == "form.xml"
-                else CODES.form_attachment)
-        try:
-            return get_blob_db().metadb.get(
-                parent_id=form_id,
-                type_code=code,
-                name=attachment_name,
-            )
-        except BlobMeta.DoesNotExist:
-            raise AttachmentNotFound(form_id, attachment_name)
+        """DEPRECATED"""
+        return XFormInstance.objects.get_attachment_by_name(form_id, attachment_name)
 
     @staticmethod
     def get_attachment_content(form_id, attachment_name, stream=False):
-        meta = FormAccessorSQL.get_attachment_by_name(form_id, attachment_name)
-        return AttachmentContent(meta.content_type, meta.open())
+        """DEPRECATED"""
+        return XFormInstance.objects.get_attachment_content(form_id, attachment_name)
 
     @staticmethod
     def get_form_operations(form_id):

@@ -4,14 +4,12 @@ from django.conf import settings
 from django.db import transaction
 from django.test import TestCase
 
-from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.models import XFormInstance
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    create_form_for_test,
-    sharded,
-)
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+
+from ..exceptions import AttachmentNotFound, XFormNotFound
+from ..models import XFormInstance
+from ..tests.utils import FormProcessorTestUtils, create_form_for_test, sharded
+from ..utils import get_simple_form_xml
 
 DOMAIN = 'test-forms-manager'
 
@@ -80,6 +78,24 @@ class XFormInstanceManagerTest(TestCase):
         self.assertEqual(form.form_id, attachment_meta.parent_id)
         self.assertEqual('form.xml', attachment_meta.name)
         self.assertEqual('text/xml', attachment_meta.content_type)
+
+    def test_get_attachment_by_name(self):
+        form = create_form_for_test(DOMAIN)
+        form_xml = get_simple_form_xml(form.form_id)
+        form_db = get_db_alias_for_partitioned_doc(form.form_id)
+        get_attachment = XFormInstance.objects.get_attachment_by_name
+
+        with self.assertRaises(AttachmentNotFound):
+            get_attachment(form.form_id, 'not_a_form.xml')
+
+        with self.assertNumQueries(1, using=form_db):
+            attachment_meta = get_attachment(form.form_id, 'form.xml')
+
+        self.assertEqual(form.form_id, attachment_meta.parent_id)
+        self.assertEqual('form.xml', attachment_meta.name)
+        self.assertEqual('text/xml', attachment_meta.content_type)
+        with attachment_meta.open() as content:
+            self.assertEqual(form_xml, content.read().decode('utf-8'))
 
     def test_iter_form_ids_by_xmlns(self):
         OTHER_XMLNS = "http://openrosa.org/other"

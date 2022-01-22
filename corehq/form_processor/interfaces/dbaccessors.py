@@ -21,17 +21,6 @@ CaseIndexInfo = namedtuple(
 ARCHIVE_FORM = "archive_form"
 
 
-class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'content_stream'])):
-
-    @property
-    def content_body(self):
-        # WARNING an error is likely if this property is accessed more than once
-        # self.content_stream is a file-like object, and most file-like objects
-        # will error on subsequent read attempt once closed (by with statement).
-        with self.content_stream as stream:
-            return stream.read()
-
-
 class FormAccessors:
 
     def __init__(self, domain=None):
@@ -88,6 +77,7 @@ class FormAccessors:
         return self.db_accessor.get_form_ids_for_user(self.domain, user_id)
 
     def get_attachment_content(self, form_id, attachment_name):
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.get_attachment_content(form_id, attachment_name)
 
     @classmethod
