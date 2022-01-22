@@ -1,6 +1,7 @@
 import uuid
 
 from django.conf import settings
+from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.test import TestCase
 
@@ -96,6 +97,37 @@ class XFormInstanceManagerTest(TestCase):
         self.assertEqual('text/xml', attachment_meta.content_type)
         with attachment_meta.open() as content:
             self.assertEqual(form_xml, content.read().decode('utf-8'))
+
+    def test_get_forms_with_attachments_meta(self):
+        attachment_file = open('./corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg', 'rb')
+        attachments = {
+            'pic.jpg': UploadedFile(attachment_file, 'pic.jpg', content_type='image/jpeg')
+        }
+        form_with_pic = create_form_for_test(DOMAIN, attachments=attachments)
+        plain_form = create_form_for_test(DOMAIN)
+
+        forms = XFormInstance.objects.get_forms_with_attachments_meta(
+            [form_with_pic.form_id, plain_form.form_id], ordered=True
+        )
+        self.assertEqual(2, len(forms))
+        form = forms[0]
+        self.assertEqual(form_with_pic.form_id, form.form_id)
+        with self.assertNumQueries(0, using=form.db):
+            expected = {
+                'form.xml': 'text/xml',
+                'pic.jpg': 'image/jpeg',
+            }
+            attachments = form.get_attachments()
+            self.assertEqual(2, len(attachments))
+            self.assertEqual(expected, {att.name: att.content_type for att in attachments})
+
+        with self.assertNumQueries(0, using=forms[1].db):
+            expected = {
+                'form.xml': 'text/xml',
+            }
+            attachments = forms[1].get_attachments()
+            self.assertEqual(1, len(attachments))
+            self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 
     def test_iter_form_ids_by_xmlns(self):
         OTHER_XMLNS = "http://openrosa.org/other"

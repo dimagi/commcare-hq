@@ -417,22 +417,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_forms_with_attachments_meta(form_ids, ordered=False):
-        assert isinstance(form_ids, list)
-        if not form_ids:
-            return []
-        forms = list(FormAccessorSQL.get_forms(form_ids))
-
-        attachments = sorted(
-            get_blob_db().metadb.get_for_parents(form_ids),
-            key=lambda meta: meta.parent_id
-        )
-        forms_by_id = {form.form_id: form for form in forms}
-        _attach_prefetch_models(forms_by_id, attachments, 'parent_id', 'attachments_list')
-
-        if ordered:
-            _sort_with_id_list(forms, form_ids, 'form_id')
-
-        return forms
+        """DEPRECATED"""
+        return XFormInstance.objects.get_forms_with_attachments_meta(form_ids, ordered)
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
@@ -1176,7 +1162,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         form_load_counter("rebuild_case", case.domain)(len(form_ids_to_fetch))
         xform_map = {
             form.form_id: form
-            for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)
+            for form in XFormInstance.objects.get_forms_with_attachments_meta(form_ids_to_fetch)
         }
 
         forms_missing_transactions = list(updated_xform_ids - form_ids)

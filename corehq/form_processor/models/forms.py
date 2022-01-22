@@ -30,7 +30,7 @@ from ..track_related import TrackRelatedChanges
 from .abstract import AbstractXFormInstance
 from .attachment import AttachmentContent, AttachmentMixin
 from .mixin import SaveStateMixin
-from .util import sort_with_id_list
+from .util import attach_prefetch_models, sort_with_id_list
 
 log = logging.getLogger(__name__)
 
@@ -95,6 +95,24 @@ class XFormInstanceManager(RequireDBManager):
     def get_attachment_content(self, form_id, attachment_name):
         meta = self.get_attachment_by_name(form_id, attachment_name)
         return AttachmentContent(meta.content_type, meta.open())
+
+    def get_forms_with_attachments_meta(self, form_ids, ordered=False):
+        assert isinstance(form_ids, list)
+        if not form_ids:
+            return []
+        forms = list(self.get_forms(form_ids))
+
+        attachments = sorted(
+            get_blob_db().metadb.get_for_parents(form_ids),
+            key=lambda meta: meta.parent_id
+        )
+        forms_by_id = {form.form_id: form for form in forms}
+        attach_prefetch_models(forms_by_id, attachments, 'parent_id', 'attachments_list')
+
+        if ordered:
+            sort_with_id_list(forms, form_ids, 'form_id')
+
+        return forms
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
