@@ -22,7 +22,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.util import normalize_username
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import sharded
 
 
@@ -121,7 +121,7 @@ class AuthTestMixin(object):
 
         if expected_auth_context is not None:
             xform_id = response['X-CommCareHQ-FormID']
-            xform = FormAccessors(self.domain).get_form(xform_id)
+            xform = XFormInstance.objects.get_form(xform_id, self.domain)
             self.assertEqual(xform.auth_context, expected_auth_context)
             return xform
 

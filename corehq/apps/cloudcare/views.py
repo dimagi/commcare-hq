@@ -84,10 +84,8 @@ from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from xml2json.lib import xml2json
 
 
@@ -419,7 +417,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     }
     if instance_id:
         try:
-            root_context['instance_xml'] = FormAccessors(domain).get_form(instance_id).get_xml()
+            root_context['instance_xml'] = XFormInstance.objects.get_form(instance_id, domain).get_xml()
         except XFormNotFound:
             raise Http404()
 

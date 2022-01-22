@@ -27,10 +27,8 @@ from corehq.apps.receiverwrapper.exceptions import (
 )
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.const import (
@@ -458,7 +456,7 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
 
     def test_get_payload(self):
         self.post_xml(self.xform_xml, self.domain)
-        payload_doc = FormAccessors(self.domain).get_form(self.instance_id)
+        payload_doc = XFormInstance.objects.get_form(self.instance_id, self.domain)
         payload = self.repeatergenerator.get_payload(None, payload_doc)
         self.assertXmlEqual(self.xform_xml, payload)
 

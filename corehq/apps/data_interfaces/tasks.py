@@ -13,7 +13,7 @@ from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.motech.repeaters.dbaccessors import (
     get_couch_repeat_record_ids_by_payload_id,
     get_sql_repeat_records_by_payload_id,
@@ -176,7 +176,7 @@ def run_case_update_rules_on_save(case):
     with CriticalSection([key]):
         update_case = True
         if case.xform_ids:
-            last_form = FormAccessors(case.domain).get_form(case.xform_ids[-1])
+            last_form = XFormInstance.objects.get_form(case.xform_ids[-1], case.domain)
             update_case = last_form.xmlns != AUTO_UPDATE_XMLNS
         if update_case:
             rules = AutomaticUpdateRule.by_domain(case.domain,

@@ -9,7 +9,6 @@ from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, PostSaveError
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstance, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
@@ -32,7 +31,7 @@ def reprocess_unfinished_stub(stub, save=True):
 
     form_id = stub.xform_id
     try:
-        form = FormAccessors(stub.domain).get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id, stub.domain)
     except XFormNotFound:
         if stub.saved:
             logger.error("Form not found for reprocessing", extra={

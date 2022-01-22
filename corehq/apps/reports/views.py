@@ -142,7 +142,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     LedgerAccessors,
 )
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import UserRequestedRebuild
+from corehq.form_processor.models import UserRequestedRebuild, XFormInstance
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.form_processor.utils.xform import resave_form
 from corehq.motech.repeaters.dbaccessors import (
@@ -1476,7 +1476,7 @@ def undo_close_case_view(request, domain, case_id, xform_id):
     else:
         closing_form_id = xform_id
         assert closing_form_id in case.xform_ids
-        form = FormAccessors(domain).get_form(closing_form_id)
+        form = XFormInstance.objects.get_form(closing_form_id, domain)
         form.archive(user_id=request.couch_user._id)
         messages.success(request, 'Case {} has been reopened.'.format(case.name))
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
