@@ -1,7 +1,6 @@
 from django.test import TestCase
 
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import sharded
 from corehq.apps.users.management.commands.gdpr_scrub_user_from_forms import Command
 from corehq.form_processor.models import XFormInstance
@@ -67,7 +66,7 @@ class GDPRScrubUserFromFormsTests(TestCase):
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
         new_form_xml = Command().update_form_data(form, NEW_USERNAME)
-        FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml, NEW_USERNAME)
+        XFormInstance.objects.modify_attachment_xml_and_metadata(form, new_form_xml)
 
         # Test that the metadata changed in the database
         form = XFormInstance.objects.get_form(form.form_id, DOMAIN)

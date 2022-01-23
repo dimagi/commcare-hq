@@ -6,7 +6,6 @@ import struct
 from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import namedtuple
 from datetime import datetime
-from io import BytesIO
 from itertools import groupby
 from uuid import UUID
 
@@ -22,8 +21,6 @@ from ddtrace import tracer
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.chunked import chunked
 
-from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
     AttachmentNotFound,
     CaseNotFound,
@@ -441,15 +438,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml, _):
-        attachment_metadata = form_data.get_attachment_meta("form.xml")
-        # Write the new xml to the database
-        if isinstance(form_attachment_new_xml, bytes):
-            form_attachment_new_xml = BytesIO(form_attachment_new_xml)
-        get_blob_db().put(form_attachment_new_xml, meta=attachment_metadata)
-        operation = XFormOperation(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
-                                   operation=XFormOperation.GDPR_SCRUB)
-        form_data.track_create(operation)
-        FormAccessorSQL.update_form(form_data)
+        """DEPRECATED"""
+        return XFormInstance.objects.modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml)
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):

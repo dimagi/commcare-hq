@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from io import BytesIO
 
 from django.db import InternalError, models, transaction
 from django.db.models import Q
@@ -16,6 +17,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
@@ -125,6 +127,17 @@ class XFormInstanceManager(RequireDBManager):
             sort_with_id_list(forms, form_ids, 'form_id')
 
         return forms
+
+    def modify_attachment_xml_and_metadata(self, form_data, form_attachment_new_xml):
+        attachment_metadata = form_data.get_attachment_meta("form.xml")
+        # Write the new xml to the database
+        if isinstance(form_attachment_new_xml, bytes):
+            form_attachment_new_xml = BytesIO(form_attachment_new_xml)
+        get_blob_db().put(form_attachment_new_xml, meta=attachment_metadata)
+        operation = XFormOperation(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
+                                   operation=XFormOperation.GDPR_SCRUB)
+        form_data.track_create(operation)
+        self.update_form(form_data)
 
     def get_forms_by_type(self, domain, type_, limit, recent_first=False):
         state = self.model.DOC_TYPE_TO_STATE[type_]
