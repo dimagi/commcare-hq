@@ -74,9 +74,11 @@ class FormAccessors:
         self.db_accessor.update_form_problem_and_state(form)
 
     def get_deleted_form_ids_for_user(self, user_id):
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.get_deleted_form_ids_for_user(self.domain, user_id)
 
     def get_form_ids_for_user(self, user_id):
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.get_form_ids_for_user(self.domain, user_id)
 
     def get_attachment_content(self, form_id, attachment_name):

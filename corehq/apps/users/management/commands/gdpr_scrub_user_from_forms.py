@@ -28,7 +28,7 @@ class Command(BaseCommand):
             logger.info("User {} not found.".format(username))
             sys.exit(1)
         user_id = user._id
-        form_ids = this_form_accessor.get_form_ids_for_user(user_id)
+        form_ids = XFormInstance.objects.get_form_ids_for_user(domain, user_id)
         input_response = input(
             "Update {} form(s) for user {} in domain {}? (y/n): ".format(len(form_ids), username, domain))
         if input_response == "y":

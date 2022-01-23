@@ -468,11 +468,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_deleted_form_ids_for_user(domain, user_id):
-        return FormAccessorSQL._get_form_ids_for_user(
-            domain,
-            user_id,
-            True,
-        )
+        """DEPRECATED"""
+        return XFormInstance.objects.get_deleted_form_ids_for_user(domain, user_id)
 
     @staticmethod
     def get_form_ids_in_domain_by_type(domain, type_):
@@ -502,21 +499,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_form_ids_for_user(domain, user_id):
-        return FormAccessorSQL._get_form_ids_for_user(
-            domain,
-            user_id,
-            False,
-        )
-
-    @staticmethod
-    def _get_form_ids_for_user(domain, user_id, is_deleted):
-        with XFormInstance.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT form_id FROM get_form_ids_for_user(%s, %s, %s)',
-                [domain, user_id, is_deleted]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.form_id for result in results]
+        """DEPRECATED"""
+        return XFormInstance.objects.get_form_ids_for_user(domain, user_id)
 
 
 class CaseReindexAccessor(ReindexAccessor):

@@ -159,6 +159,22 @@ class XFormInstanceManager(RequireDBManager):
                 self.model, q_expr, values=['form_id'], load_source='formids_by_xmlns'):
             yield form_id[0]
 
+    def get_form_ids_for_user(self, domain, user_id):
+        return self._get_form_ids_for_user(domain, user_id, is_deleted=False)
+
+    def get_deleted_form_ids_for_user(self, domain, user_id):
+        return self._get_form_ids_for_user(domain, user_id, is_deleted=True)
+
+    def _get_form_ids_for_user(self, domain, user_id, is_deleted):
+        from ..utils.sql import fetchall_as_namedtuple
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT form_id FROM get_form_ids_for_user(%s, %s, %s)',
+                [domain, user_id, is_deleted]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.form_id for result in results]
+
     def set_archived_state(self, form, archive, user_id):
         from casexml.apps.case.xform import get_case_ids_from_form
         form_id = form.form_id

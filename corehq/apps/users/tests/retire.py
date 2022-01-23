@@ -20,10 +20,7 @@ from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import UserArchivedRebuild, XFormInstance
 
 
@@ -319,7 +316,7 @@ class RetireUserTestCase(TestCase):
         case_ids = CaseAccessors(self.domain).get_case_ids_by_owners([self.commcare_user._id])
         self.assertEqual(1, len(case_ids))
 
-        form_ids = FormAccessors(self.domain).get_form_ids_for_user(self.commcare_user._id)
+        form_ids = XFormInstance.objects.get_form_ids_for_user(self.domain, self.commcare_user._id)
         self.assertEqual(0, len(form_ids))
 
         usercase = self.commcare_user.get_usercase()

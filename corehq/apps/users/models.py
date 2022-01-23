@@ -79,10 +79,7 @@ from corehq.apps.users.util import (
     username_to_user_id,
 )
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
@@ -1797,13 +1794,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         )
 
     def _get_form_ids(self):
-        return FormAccessors(self.domain).get_form_ids_for_user(self.user_id)
+        return XFormInstance.objects.get_form_ids_for_user(self.domain, self.user_id)
 
     def _get_case_ids(self):
         return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
 
     def _get_deleted_form_ids(self):
-        return FormAccessors(self.domain).get_deleted_form_ids_for_user(self.user_id)
+        return XFormInstance.objects.get_deleted_form_ids_for_user(self.domain, self.user_id)
 
     def _get_deleted_case_ids(self):
         return CaseAccessors(self.domain).get_deleted_case_ids_by_owner(self.user_id)
