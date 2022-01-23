@@ -463,11 +463,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def update_form_problem_and_state(form):
-        with XFormInstance.get_plproxy_cursor() as cursor:
-            cursor.execute(
-                'SELECT update_form_problem_and_state(%s, %s, %s)',
-                [form.form_id, form.problem, form.state]
-            )
+        """DEPRECATED"""
+        XFormInstance.objects.update_form_problem_and_state(form)
 
     @staticmethod
     def get_deleted_form_ids_for_user(domain, user_id):

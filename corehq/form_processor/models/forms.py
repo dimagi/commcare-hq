@@ -195,6 +195,13 @@ class XFormInstanceManager(RequireDBManager):
 
         form.clear_tracked_models()
 
+    def update_form_problem_and_state(self, form):
+        with self.model.get_plproxy_cursor() as cursor:
+            cursor.execute(
+                'SELECT update_form_problem_and_state(%s, %s, %s)',
+                [form.form_id, form.problem, form.state]
+            )
+
     def update_form(self, form, publish_changes=True):
         from ..change_publishers import publish_form_saved
         assert form.is_saved(), "this method doesn't support creating unsaved forms"

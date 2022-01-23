@@ -70,6 +70,7 @@ class FormAccessors:
         self.db_accessor.save_new_form(form)
 
     def update_form_problem_and_state(self, form):
+        """DEPRECATED use XFormInstance.objects"""
         self.db_accessor.update_form_problem_and_state(form)
 
     def get_deleted_form_ids_for_user(self, user_id):

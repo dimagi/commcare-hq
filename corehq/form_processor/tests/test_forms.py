@@ -231,6 +231,22 @@ class XFormInstanceManagerTest(TestCase):
 
         self._validate_deprecation(existing_form, new_form)
 
+    def test_update_form_problem_and_state(self):
+        form = create_form_for_test(DOMAIN)
+        self.assertEqual(XFormInstance.NORMAL, form.state)
+
+        original_domain = form.domain
+        problem = 'Houston, we have a problem'
+        form.state = XFormInstance.ERROR
+        form.problem = problem
+        form.domain = 'new domain'  # shouldn't get saved
+        XFormInstance.objects.update_form_problem_and_state(form)
+
+        saved_form = XFormInstance.objects.get_form(form.form_id)
+        self.assertEqual(XFormInstance.ERROR, saved_form.state)
+        self.assertEqual(problem, saved_form.problem)
+        self.assertEqual(original_domain, saved_form.domain)
+
     def test_update_form(self):
         form = create_form_for_test(DOMAIN)
         form.user_id = 'user2'
