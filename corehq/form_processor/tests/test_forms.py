@@ -5,7 +5,10 @@ from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.test import TestCase
 
+from corehq.blobs import NotFound as BlobNotFound, get_blob_db
+from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+from corehq.util.test_utils import trap_extra_setup
 
 from ..exceptions import AttachmentNotFound, XFormNotFound
 from ..models import XFormInstance, XFormOperation
@@ -206,6 +209,20 @@ class XFormInstanceManagerTest(TestCase):
         XFormInstance.objects.save_new_form(dup_form)
         self.assert_form_xml_attachment(dup_form)
 
+    def test_hard_delete_forms(self):
+        forms = [create_form_for_test(DOMAIN) for i in range(3)]
+        form_ids = [form.form_id for form in forms]
+        other_form = create_form_for_test('other_domain')
+        self.addCleanup(lambda: XFormInstance.objects.hard_delete_forms('other_domain', [other_form.form_id]))
+        forms = XFormInstance.objects.get_forms(form_ids)
+        self.assertEqual(3, len(forms))
+
+        deleted = XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids[1:] + [other_form.form_id])
+        self.assertEqual(2, deleted)
+        forms = XFormInstance.objects.get_forms(form_ids)
+        self.assertEqual(1, len(forms))
+        self.assertEqual(form_ids[0], forms[0].form_id)
+
     def assert_form_xml_attachment(self, form):
         attachments = XFormInstance.objects.get_attachments(form.form_id)
         self.assertEqual([a.name for a in attachments], ["form.xml"])
@@ -216,6 +233,61 @@ class XFormInstanceManagerTest(TestCase):
         self.assertEqual(DOMAIN, form.domain)
         self.assertEqual('user1', form.user_id)
         return form
+
+
+class DeleteAttachmentsFSDBTests(TestCase):
+    def setUp(self):
+        super(DeleteAttachmentsFSDBTests, self).setUp()
+        self.db = TemporaryFilesystemBlobDB()
+
+    def tearDown(self):
+        self.db.close()
+        super(DeleteAttachmentsFSDBTests, self).tearDown()
+
+    def test_hard_delete_forms_and_attachments(self):
+        forms = [create_form_for_test(DOMAIN) for i in range(3)]
+        form_ids = sorted(form.form_id for form in forms)
+        forms = XFormInstance.objects.get_forms(form_ids)
+        self.assertEqual(3, len(forms))
+
+        other_form = create_form_for_test('other_domain')
+        self.addCleanup(lambda: XFormInstance.objects.hard_delete_forms('other_domain', [other_form.form_id]))
+
+        attachments = sorted(
+            get_blob_db().metadb.get_for_parents(form_ids),
+            key=lambda meta: meta.parent_id
+        )
+        self.assertEqual(3, len(attachments))
+
+        deleted = XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids[1:] + [other_form.form_id])
+        self.assertEqual(2, deleted)
+
+        forms = XFormInstance.objects.get_forms(form_ids)
+        self.assertEqual(1, len(forms))
+        self.assertEqual(form_ids[0], forms[0].form_id)
+
+        for attachment in attachments[1:]:
+            with self.assertRaises(BlobNotFound):
+                attachment.open()
+
+        with attachments[0].open() as content:
+            self.assertIsNotNone(content.read())
+        other_form = XFormInstance.objects.get_form(other_form.form_id)
+        self.assertIsNotNone(other_form.get_xml())
+
+
+class DeleteAtachmentsS3DBTests(DeleteAttachmentsFSDBTests):
+    def setUp(self):
+        super(DeleteAtachmentsS3DBTests, self).setUp()
+        with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
+            config = settings.S3_BLOB_DB_SETTINGS
+
+        self.s3db = TemporaryS3BlobDB(config)
+        assert get_blob_db() is self.s3db, (get_blob_db(), self.s3db)
+
+    def tearDown(self):
+        self.s3db.close()
+        super(DeleteAtachmentsS3DBTests, self).tearDown()
 
 
 @sharded

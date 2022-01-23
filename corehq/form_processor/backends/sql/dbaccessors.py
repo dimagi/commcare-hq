@@ -432,30 +432,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def hard_delete_forms(domain, form_ids, delete_attachments=True):
-        assert isinstance(form_ids, list)
-
-        deleted_count = 0
-        for db_name, split_form_ids in split_list_by_db_partition(form_ids):
-            # cascade should delete the operations
-            _, deleted_models = XFormInstance.objects.using(db_name).filter(
-                domain=domain, form_id__in=split_form_ids
-            ).delete()
-            deleted_count += deleted_models.get(XFormInstance._meta.label, 0)
-
-        if delete_attachments and deleted_count:
-            if deleted_count != len(form_ids):
-                # in the unlikely event that we didn't delete all forms (because they weren't all
-                # in the specified domain), only delete attachments for forms that were deleted.
-                deleted_forms = [
-                    form_id for form_id in form_ids
-                    if not FormAccessorSQL.form_exists(form_id)
-                ]
-            else:
-                deleted_forms = form_ids
-            metas = get_blob_db().metadb.get_for_parents(deleted_forms)
-            get_blob_db().bulk_delete(metas=metas)
-
-        return deleted_count
+        """DEPRECATED"""
+        return XFormInstance.objects.hard_delete_forms(domain, form_ids, delete_attachments)
 
     @staticmethod
     def soft_undelete_forms(domain, form_ids):

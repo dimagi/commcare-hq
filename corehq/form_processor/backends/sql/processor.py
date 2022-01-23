@@ -64,7 +64,7 @@ class FormProcessorSQL(object):
     @classmethod
     def hard_delete_case_and_forms(cls, domain, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
-        FormAccessorSQL.hard_delete_forms(domain, form_ids)
+        XFormInstance.objects.hard_delete_forms(domain, form_ids)
         CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
         for form in xforms:
             form.state |= XFormInstance.DELETED

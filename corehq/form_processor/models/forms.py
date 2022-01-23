@@ -18,7 +18,10 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
-from corehq.sql_db.util import paginate_query_across_partitioned_databases
+from corehq.sql_db.util import (
+    paginate_query_across_partitioned_databases,
+    split_list_by_db_partition,
+)
 
 from ..exceptions import (
     AttachmentNotFound,
@@ -175,6 +178,32 @@ class XFormInstanceManager(RequireDBManager):
             raise XFormSaveError(e)
 
         form.clear_tracked_models()
+
+    def hard_delete_forms(self, domain, form_ids, delete_attachments=True):
+        assert isinstance(form_ids, list)
+
+        deleted_count = 0
+        for db_name, split_form_ids in split_list_by_db_partition(form_ids):
+            # cascade should delete the operations
+            _, deleted_models = self.using(db_name).filter(
+                domain=domain, form_id__in=split_form_ids
+            ).delete()
+            deleted_count += deleted_models.get(self.model._meta.label, 0)
+
+        if delete_attachments and deleted_count:
+            if deleted_count != len(form_ids):
+                # in the unlikely event that we didn't delete all forms (because they weren't all
+                # in the specified domain), only delete attachments for forms that were deleted.
+                deleted_forms = [
+                    form_id for form_id in form_ids
+                    if not self.form_exists(form_id)
+                ]
+            else:
+                deleted_forms = form_ids
+            metas = get_blob_db().metadb.get_for_parents(deleted_forms)
+            get_blob_db().bulk_delete(metas=metas)
+
+        return deleted_count
 
 
 class XFormOperationManager(RequireDBManager):
