@@ -17,8 +17,9 @@ from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.blobs import get_blob_db
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, XFormQuestionValueIterator
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.form_processor.utils import get_simple_form_xml
 from corehq.util.dates import coerce_to_datetime
@@ -44,7 +45,7 @@ class FundamentalBaseTests(TestCase):
         super(FundamentalBaseTests, self).setUp()
         self.interface = FormProcessorInterface()
         self.casedb = CaseAccessors(DOMAIN)
-        self.formdb = FormAccessors(DOMAIN)
+        self.formdb = XFormInstance.objects
 
 
 class FundamentalFormTests(FundamentalBaseTests):
@@ -87,7 +88,7 @@ class FundamentalFormTests(FundamentalBaseTests):
 
         before = form.server_modified_on
 
-        self.formdb.soft_undelete_forms([form_id])
+        self.formdb.soft_undelete_forms(DOMAIN, [form_id])
         form = self.formdb.get_form(form_id)
 
         self.assertFalse(form.is_deleted)

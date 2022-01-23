@@ -28,6 +28,7 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
+from corehq.form_processor.models import XFormInstance
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -1839,7 +1840,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.base_doc = self.base_doc[:-len(DELETED_SUFFIX)]
 
         deleted_form_ids = self._get_deleted_form_ids()
-        FormAccessors(self.domain).soft_undelete_forms(deleted_form_ids)
+        XFormInstance.objects.soft_undelete_forms(self.domain, deleted_form_ids)
 
         deleted_case_ids = self._get_deleted_case_ids()
         CaseAccessors(self.domain).soft_undelete_cases(deleted_case_ids)

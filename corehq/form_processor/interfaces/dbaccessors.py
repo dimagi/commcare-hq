@@ -135,6 +135,7 @@ class FormAccessors:
         return self.db_accessor.soft_delete_forms(self.domain, form_ids, deletion_date, deletion_id)
 
     def soft_undelete_forms(self, form_ids):
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.soft_undelete_forms(self.domain, form_ids)
 
     def modify_attachment_xml_and_metadata(self, form_data, form_attachment_new_xml, new_username):

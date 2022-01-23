@@ -437,24 +437,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def soft_undelete_forms(domain, form_ids):
-        from corehq.form_processor.change_publishers import publish_form_saved
-
-        assert isinstance(form_ids, list)
-        problem = 'Restored on {}'.format(datetime.utcnow())
-        with XFormInstance.get_plproxy_cursor() as cursor:
-            cursor.execute(
-                'SELECT soft_undelete_forms(%s, %s, %s) as affected_count',
-                [domain, form_ids, problem]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return_value = sum([result.affected_count for result in results])
-
-        for form_ids_chunk in chunked(form_ids, 500):
-            forms = FormAccessorSQL.get_forms(list(form_ids_chunk))
-            for form in forms:
-                publish_form_saved(form)
-
-        return return_value
+        """DEPRECATED"""
+        return XFormInstance.objects.soft_undelete_forms(domain, form_ids)
 
     @staticmethod
     def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml, _):

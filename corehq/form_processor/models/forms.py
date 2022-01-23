@@ -11,6 +11,7 @@ from memoized import memoized
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.ext import jsonobject
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -197,6 +198,26 @@ class XFormInstanceManager(RequireDBManager):
             publish_form_deleted(domain, form_id)
 
         return affected_count
+
+    def soft_undelete_forms(self, domain, form_ids):
+        from ..change_publishers import publish_form_saved
+        from ..utils.sql import fetchall_as_namedtuple
+        assert isinstance(form_ids, list)
+        problem = 'Restored on {}'.format(datetime.utcnow())
+        with self.model.get_plproxy_cursor() as cursor:
+            cursor.execute(
+                'SELECT soft_undelete_forms(%s, %s, %s) as affected_count',
+                [domain, form_ids, problem]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            count = sum([result.affected_count for result in results])
+
+        for form_ids_chunk in chunked(form_ids, 500):
+            forms = self.get_forms(list(form_ids_chunk))
+            for form in forms:
+                publish_form_saved(form)
+
+        return count
 
     def hard_delete_forms(self, domain, form_ids, delete_attachments=True):
         assert isinstance(form_ids, list)

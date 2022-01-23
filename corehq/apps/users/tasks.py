@@ -166,7 +166,7 @@ def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_i
 def undelete_system_forms(domain, deleted_forms, deleted_cases):
     """The reverse of tag_system_forms_as_deleted; called on user.unretire()"""
     to_undelete = _get_forms_to_modify(domain, deleted_forms, deleted_cases, is_deletion=False)
-    FormAccessors(domain).soft_undelete_forms(to_undelete)
+    XFormInstance.objects.soft_undelete_forms(domain, to_undelete)
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
