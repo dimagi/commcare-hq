@@ -85,7 +85,8 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
     }
 
 
-@task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
+# rate limit to two bulk saves per second so cloudant has time to reindex
+@task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True)
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.data_interfaces.tasks import delete_duplicates_for_cases
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners

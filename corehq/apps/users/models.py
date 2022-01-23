@@ -46,16 +46,13 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import get_static_url_prefix
 
-from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.domain.shortcuts import create_user
@@ -1236,7 +1233,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                     skip=skip
                 )
 
-        return cls.view("users/by_domain",
+        return cls.view(
+            "users/by_domain",
             reduce=reduce,
             startkey=key,
             endkey=key + [{}],
@@ -1273,8 +1271,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def is_previewer(self):
         from django.conf import settings
-        return (self.is_superuser or
-                bool(re.compile(settings.PREVIEWER_RE).match(self.username)))
+        return (self.is_superuser
+                or bool(re.compile(settings.PREVIEWER_RE).match(self.username)))
 
     def sync_from_django_user(self, django_user):
         if not django_user:
@@ -1718,7 +1716,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         super(CommCareUser, self).delete(deleted_by_domain, deleted_by=deleted_by, deleted_via=deleted_via)
 
     @property
-    @memoized
     def project(self):
         return Domain.get_by_name(self.domain)
 
@@ -1781,10 +1778,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def filter_flag(self):
         from corehq.apps.reports.models import HQUserType
         return HQUserType.ACTIVE
-
-    @property
-    def project(self):
-        return Domain.get_by_name(self.domain)
 
     def is_commcare_user(self):
         return True
@@ -2939,7 +2932,8 @@ class UserReportingMetadataStaging(models.Model):
 
     @classmethod
     def add_heartbeat(cls, domain, user_id, app_id, build_id, sync_date, device_id,
-        app_version, num_unsent_forms, num_quarantined_forms, commcare_version, build_profile_id):
+                      app_version, num_unsent_forms, num_quarantined_forms,
+                      commcare_version, build_profile_id):
         params = {
             'domain': domain,
             'user_id': user_id,

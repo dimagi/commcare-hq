@@ -97,7 +97,7 @@ def undo_form_edits(form_tuples, logger):
         cases_to_rebuild[live_form.domain].update(affected_cases)
         ledgers_to_rebuild[live_form.domain].update(affected_ledgers)
         logger.log('Cases to rebuild: {}'.format(','.join(affected_cases)))
-        logger.log('Ledgers to rebuild: {}'.format(','.join([l.as_id() for l in affected_ledgers])))
+        logger.log('Ledgers to rebuild: {}'.format(','.join([line.as_id() for line in affected_ledgers])))
 
     return cases_to_rebuild, ledgers_to_rebuild
 
@@ -154,11 +154,11 @@ def update_case_transactions_for_form(case_cache, live_case_updates, deprecated_
 
 
 def rebuild_cases(cases_to_rebuild_by_domain, logger):
-        detail = RebuildWithReason(reason='undo UUID clash')
-        for domain, case_ids in cases_to_rebuild_by_domain.items():
-            for case_id in case_ids:
-                FormProcessorSQL.hard_rebuild_case(domain, case_id, detail)
-                logger.log('Case %s rebuilt' % case_id)
+    detail = RebuildWithReason(reason='undo UUID clash')
+    for domain, case_ids in cases_to_rebuild_by_domain.items():
+        for case_id in case_ids:
+            FormProcessorSQL.hard_rebuild_case(domain, case_id, detail)
+            logger.log('Case %s rebuilt' % case_id)
 
 
 def rebuild_ledgers(ledgers_to_rebuild_by_domain, logger):
