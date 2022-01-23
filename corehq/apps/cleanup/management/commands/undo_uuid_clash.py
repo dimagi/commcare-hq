@@ -11,7 +11,6 @@ from corehq.apps.domain.dbaccessors import iter_domains
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
-    FormAccessorSQL,
     LedgerAccessorSQL,
 )
 from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
@@ -89,7 +88,7 @@ def undo_form_edits(form_tuples, logger):
                 operation=XFormOperation.UUID_DATA_FIX,
                 date=operation_date)
             )
-            FormAccessorSQL.update_form(form)
+            XFormInstance.objects.update_form(form)
 
         logger.log('Form edit undone: {}, {}({})'.format(
             live_form.form_id, deprecated_form.form_id, deprecated_form.original_form_id

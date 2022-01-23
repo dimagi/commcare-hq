@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
@@ -10,9 +11,12 @@ from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 
+from ..backends.sql.processor import FormProcessorSQL
 from ..exceptions import AttachmentNotFound, XFormNotFound
+from ..interfaces.processor import ProcessedForms
 from ..models import XFormInstance, XFormOperation
 from ..tests.utils import FormProcessorTestUtils, create_form_for_test, sharded
+from ..parsers.form import apply_deprecation
 from ..utils import get_simple_form_xml, get_simple_wrapped_form
 from ..utils.xform import TestFormMetadata
 
@@ -210,6 +214,39 @@ class XFormInstanceManagerTest(TestCase):
         XFormInstance.objects.save_new_form(dup_form)
         self.assert_form_xml_attachment(dup_form)
 
+    def test_save_form_deprecated(self):
+        existing_form, new_form = _simulate_form_edit()
+
+        XFormInstance.objects.update_form(existing_form, publish_changes=False)
+        XFormInstance.objects.save_new_form(new_form)
+
+        self._validate_deprecation(existing_form, new_form)
+
+    def test_save_processed_models_deprecated(self):
+        # This doesn't seem like a XFormInstanceManager test
+        # Maybe should be moved to FormProcessor* tests
+        existing_form, new_form = _simulate_form_edit()
+
+        FormProcessorSQL.save_processed_models(ProcessedForms(new_form, existing_form))
+
+        self._validate_deprecation(existing_form, new_form)
+
+    def test_update_form(self):
+        form = create_form_for_test(DOMAIN)
+        form.user_id = 'user2'
+        operation_date = datetime.utcnow()
+        form.track_create(XFormOperation(
+            user_id='user2',
+            date=operation_date,
+            operation=XFormOperation.EDIT
+        ))
+        XFormInstance.objects.update_form(form)
+
+        saved_form = XFormInstance.objects.get_form(form.form_id)
+        self.assertEqual('user2', saved_form.user_id)
+        self.assertEqual(1, len(saved_form.history))
+        self.assertEqual(operation_date, saved_form.history[0].date)
+
     def test_soft_delete(self):
         meta = TestFormMetadata(domain=DOMAIN)
         get_simple_wrapped_form('f1', metadata=meta)
@@ -247,6 +284,14 @@ class XFormInstanceManagerTest(TestCase):
     def assert_form_xml_attachment(self, form):
         attachments = XFormInstance.objects.get_attachments(form.form_id)
         self.assertEqual([a.name for a in attachments], ["form.xml"])
+
+    def _validate_deprecation(self, existing_form, new_form):
+        saved_new_form = XFormInstance.objects.get_form(new_form.form_id)
+        deprecated_form = XFormInstance.objects.get_form(existing_form.form_id)
+        self.assertEqual(deprecated_form.form_id, saved_new_form.deprecated_form_id)
+        self.assertTrue(deprecated_form.is_deprecated)
+        self.assertNotEqual(saved_new_form.form_id, deprecated_form.form_id)
+        self.assertEqual(saved_new_form.form_id, deprecated_form.orig_id)
 
     def _check_simple_form(self, form):
         self.assertIsInstance(form, XFormInstance)
@@ -350,3 +395,16 @@ def archive_form(form, user_id):
 
 def unarchive_form(form, user_id):
     XFormInstance.objects.set_archived_state(form, False, user_id)
+
+
+def _simulate_form_edit():
+    existing_form = create_form_for_test(DOMAIN, save=False)
+    XFormInstance.objects.save_new_form(existing_form)
+    existing_form = XFormInstance.objects.get_form(existing_form.form_id)
+
+    new_form = create_form_for_test(DOMAIN, save=False)
+    new_form.form_id = existing_form.form_id
+
+    existing_form, new_form = apply_deprecation(existing_form, new_form)
+    assert existing_form.form_id != new_form.form_id
+    return existing_form, new_form

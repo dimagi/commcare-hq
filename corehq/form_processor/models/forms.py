@@ -21,6 +21,7 @@ from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.sql_db.util import (
+    get_db_alias_for_partitioned_doc,
     paginate_query_across_partitioned_databases,
     split_list_by_db_partition,
 )
@@ -180,6 +181,39 @@ class XFormInstanceManager(RequireDBManager):
             raise XFormSaveError(e)
 
         form.clear_tracked_models()
+
+    def update_form(self, form, publish_changes=True):
+        from ..change_publishers import publish_form_saved
+        assert form.is_saved(), "this method doesn't support creating unsaved forms"
+        assert not form.has_unsaved_attachments(), 'Adding attachments to saved form not supported'
+        assert not form.has_tracked_models_to_delete(), 'Deleting other models not supported by this method'
+        assert not form.has_tracked_models_to_update(), 'Updating other models not supported by this method'
+        assert not form.has_tracked_models_to_create(BlobMeta), \
+            'Adding new attachments not supported by this method'
+
+        new_operations = form.get_tracked_models_to_create(XFormOperation)
+        db_name = form.db
+        if form.orig_id:
+            old_db_name = get_db_alias_for_partitioned_doc(form.orig_id)
+            assert old_db_name == db_name, "this method doesn't support moving the form to new db"
+
+        with transaction.atomic(using=db_name):
+            if form.form_id_updated():
+                operations = form.original_operations + new_operations
+                form.save()
+                get_blob_db().metadb.reparent(form.orig_id, form.form_id)
+                for model in operations:
+                    model.form = form
+                    model.save()
+            else:
+                with transaction.atomic(db_name):
+                    form.save()
+                    for operation in new_operations:
+                        operation.form = form
+                        operation.save()
+
+        if publish_changes:
+            publish_form_saved(form)
 
     def soft_delete_forms(self, domain, form_ids, deletion_date=None, deletion_id=None):
         from ..change_publishers import publish_form_deleted
