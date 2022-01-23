@@ -6,6 +6,7 @@ from django.http import Http404
 from corehq.apps.app_manager.models import Application
 from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.apps.app_manager.dbaccessors import get_app
 from dimagi.utils.django.management import are_you_sure
 from datetime import datetime
@@ -118,7 +119,7 @@ though deletion would be re-confirmed so dont panic
 
     def delete_forms_and_cases(self):
         print('Proceeding with deleting forms and cases')
-        self.forms_accessor.soft_delete_forms(self.filtered_xform_ids)
+        XFormInstance.objects.soft_delete_forms(self.domain, self.filtered_xform_ids)
         self.case_accessors.soft_delete_cases(list(self.case_ids))
 
 

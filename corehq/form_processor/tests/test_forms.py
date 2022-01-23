@@ -13,7 +13,8 @@ from corehq.util.test_utils import trap_extra_setup
 from ..exceptions import AttachmentNotFound, XFormNotFound
 from ..models import XFormInstance, XFormOperation
 from ..tests.utils import FormProcessorTestUtils, create_form_for_test, sharded
-from ..utils import get_simple_form_xml
+from ..utils import get_simple_form_xml, get_simple_wrapped_form
+from ..utils.xform import TestFormMetadata
 
 DOMAIN = 'test-forms-manager'
 
@@ -208,6 +209,26 @@ class XFormInstanceManagerTest(TestCase):
         dup_form.form_id = uuid.uuid4().hex
         XFormInstance.objects.save_new_form(dup_form)
         self.assert_form_xml_attachment(dup_form)
+
+    def test_soft_delete(self):
+        meta = TestFormMetadata(domain=DOMAIN)
+        get_simple_wrapped_form('f1', metadata=meta)
+        f2 = get_simple_wrapped_form('f2', metadata=meta)
+        f2.archive()
+        get_simple_wrapped_form('f3', metadata=meta)
+        manager = XFormInstance.objects
+
+        # delete
+        num = manager.soft_delete_forms(DOMAIN, ['f1', 'f2'], deletion_id='123')
+        self.assertEqual(num, 2)
+
+        for form_id in ['f1', 'f2']:
+            form = manager.get_form(form_id)
+            self.assertTrue(form.is_deleted)
+            self.assertEqual(form.deletion_id, '123')
+
+        form = manager.get_form('f3')
+        self.assertFalse(form.is_deleted)
 
     def test_hard_delete_forms(self):
         forms = [create_form_for_test(DOMAIN) for i in range(3)]

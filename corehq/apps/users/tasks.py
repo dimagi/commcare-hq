@@ -31,7 +31,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.form_processor.models import UserArchivedRebuild
+from corehq.form_processor.models import UserArchivedRebuild, XFormInstance
 from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
 
 logger = get_task_logger(__name__)
@@ -117,7 +117,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
         cases_to_rebuild.update(get_case_ids_from_form(form))
 
     # do this after getting case_id's since iter_forms won't return deleted forms
-    FormAccessors(domain).soft_delete_forms(list(form_id_list), deletion_date, deletion_id)
+    XFormInstance.objects.soft_delete_forms(domain, list(form_id_list), deletion_date, deletion_id)
 
     detail = UserArchivedRebuild(user_id=user_id)
     for case_id in cases_to_rebuild - deleted_cases:
@@ -159,7 +159,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
 def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_id, deletion_date):
     to_delete = _get_forms_to_modify(domain, deleted_forms, deleted_cases, is_deletion=True)
-    FormAccessors(domain).soft_delete_forms(to_delete, deletion_date, deletion_id)
+    XFormInstance.objects.soft_delete_forms(domain, to_delete, deletion_date, deletion_id)
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)

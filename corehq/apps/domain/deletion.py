@@ -25,6 +25,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
+from corehq.form_processor.models import XFormInstance
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
@@ -184,7 +185,7 @@ def _delete_all_forms(domain_name):
         for doc_type in doc_type_to_state
     ]))
     for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
-        form_accessor.soft_delete_forms(list(form_id_chunk))
+        XFormInstance.objects.soft_delete_forms(domain_name, list(form_id_chunk))
     logger.info('Deleting forms complete.')
 
 

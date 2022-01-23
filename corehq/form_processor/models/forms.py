@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from django.db import InternalError, models, transaction
 from django.db.models import Q
@@ -178,6 +179,24 @@ class XFormInstanceManager(RequireDBManager):
             raise XFormSaveError(e)
 
         form.clear_tracked_models()
+
+    def soft_delete_forms(self, domain, form_ids, deletion_date=None, deletion_id=None):
+        from ..change_publishers import publish_form_deleted
+        from ..utils.sql import fetchall_as_namedtuple
+        assert isinstance(form_ids, list)
+        deletion_date = deletion_date or datetime.utcnow()
+        with self.model.get_plproxy_cursor() as cursor:
+            cursor.execute(
+                'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
+                [domain, form_ids, deletion_date, deletion_id]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            affected_count = sum([result.affected_count for result in results])
+
+        for form_id in form_ids:
+            publish_form_deleted(domain, form_id)
+
+        return affected_count
 
     def hard_delete_forms(self, domain, form_ids, delete_attachments=True):
         assert isinstance(form_ids, list)
@@ -416,8 +435,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
             return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
 
     def soft_delete(self):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.soft_delete_forms(self.domain, [self.form_id])
+        type(self).objects.soft_delete_forms(self.domain, [self.form_id])
         self.state |= self.DELETED
 
     def to_json(self, include_attachments=False):

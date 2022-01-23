@@ -470,21 +470,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
-        from corehq.form_processor.change_publishers import publish_form_deleted
-        assert isinstance(form_ids, list)
-        deletion_date = deletion_date or datetime.utcnow()
-        with XFormInstance.get_plproxy_cursor() as cursor:
-            cursor.execute(
-                'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
-                [domain, form_ids, deletion_date, deletion_id]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            affected_count = sum([result.affected_count for result in results])
-
-        for form_id in form_ids:
-            publish_form_deleted(domain, form_id)
-
-        return affected_count
+        """DEPRECATED"""
+        return XFormInstance.objects.soft_delete_forms(domain, form_ids, deletion_date, deletion_id)
 
     @staticmethod
     def set_archived_state(form, archive, user_id):

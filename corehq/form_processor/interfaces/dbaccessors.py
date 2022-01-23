@@ -131,6 +131,7 @@ class FormAccessors:
                 signal.send(sender=sender, xform=form)
 
     def soft_delete_forms(self, form_ids, deletion_date=None, deletion_id=None):
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.soft_delete_forms(self.domain, form_ids, deletion_date, deletion_id)
 
     def soft_undelete_forms(self, form_ids):
