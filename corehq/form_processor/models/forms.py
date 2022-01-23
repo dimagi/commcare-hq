@@ -151,6 +151,23 @@ class XFormInstanceManager(RequireDBManager):
         forms = sorted(forms, key=lambda f: f.received_on, reverse=recent_first)
         return forms[:limit]
 
+    def get_all_form_ids_in_domain(self, domain, doc_type="XFormInstance"):
+        self.get_form_ids_in_domain_by_type(domain, doc_type)
+
+    def get_form_ids_in_domain_by_type(self, domain, type_):
+        state = self.model.DOC_TYPE_TO_STATE[type_]
+        return self.get_form_ids_in_domain_by_state(domain, state)
+
+    def get_form_ids_in_domain_by_state(self, domain, state):
+        from ..utils.sql import fetchall_as_namedtuple
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT form_id from get_form_ids_in_domain_by_type(%s, %s)',
+                [domain, state]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.form_id for result in results]
+
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
         if xmlns:

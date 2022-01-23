@@ -473,8 +473,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_form_ids_in_domain_by_type(domain, type_):
-        state = doc_type_to_state[type_]
-        return FormAccessorSQL.get_form_ids_in_domain_by_state(domain, state)
+        """DEPRECATED"""
+        return XFormInstance.objects.get_form_ids_in_domain_by_type(domain, type_)
 
     @staticmethod
     def get_deleted_form_ids_in_domain(domain):
@@ -489,13 +489,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_form_ids_in_domain_by_state(domain, state):
-        with XFormInstance.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT form_id from get_form_ids_in_domain_by_type(%s, %s)',
-                [domain, state]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.form_id for result in results]
+        """DEPRECATED"""
+        return XFormInstance.objects.get_form_ids_in_domain_by_state(domain, state)
 
     @staticmethod
     def get_form_ids_for_user(domain, user_id):

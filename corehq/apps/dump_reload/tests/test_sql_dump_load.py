@@ -37,10 +37,7 @@ from corehq.apps.zapier.signals.receivers import (
 )
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import (
     CaseTransaction,
     CommCareCaseIndex,
@@ -176,7 +173,6 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     def setUpClass(cls):
         super(TestSQLDumpLoadShardedModels, cls).setUpClass()
         cls.factory = CaseFactory(domain=cls.domain_name)
-        cls.form_accessors = FormAccessors(cls.domain_name)
         cls.case_accessors = CaseAccessors(cls.domain_name)
         cls.product = make_product(cls.domain_name, 'A Product', 'prodcode_a')
         cls.default_objects_counts.update({SQLProduct: 1})
@@ -198,7 +194,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         ]
         self._dump_and_load(expected_object_counts)
 
-        form_ids = self.form_accessors.get_all_form_ids_in_domain('XFormInstance')
+        form_ids = XFormInstance.objects.get_all_form_ids_in_domain(self.domain_name, 'XFormInstance')
         self.assertEqual(set(form_ids), set(form.form_id for form in pre_forms))
 
         for pre_form in pre_forms:

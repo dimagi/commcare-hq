@@ -1,4 +1,3 @@
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, doc_type_to_state
 from corehq.form_processor.change_publishers import change_meta_from_sql_form
 from corehq.form_processor.models import XFormInstance
 from corehq.util.pagination import paginate_function, ArgsListProvider
@@ -30,12 +29,12 @@ class SqlDomainXFormChangeProvider(ChangeProvider):
     def _iter_form_id_chunks(self):
         kwargs = []
         for domain in self.domains:
-            for doc_type in doc_type_to_state:
+            for doc_type in XFormInstance.DOC_TYPE_TO_STATE:
                 kwargs.append({'domain': domain, 'type_': doc_type})
 
         args_provider = ArgsListProvider(kwargs)
 
-        data_function = FormAccessorSQL.get_form_ids_in_domain_by_type
+        data_function = XFormInstance.objects.get_form_ids_in_domain_by_type
         chunk = []
         for form_id in paginate_function(data_function, args_provider):
             chunk.append(form_id)

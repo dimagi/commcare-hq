@@ -2,8 +2,8 @@ from collections import defaultdict
 
 from django.core.management.base import BaseCommand
 
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.reprocess import reprocess_xform_error
 from corehq.util.log import with_progress_bar
 
@@ -63,4 +63,4 @@ class Command(BaseCommand):
                       ("\n".join("%s: %s" % (v, k) for k, v in error_messages.items())))
 
     def _get_form_ids(self, domain):
-        return FormAccessorSQL.get_form_ids_in_domain_by_type(domain, 'XFormError')
+        return XFormInstance.objects.get_form_ids_in_domain_by_type(domain, 'XFormError')

@@ -177,6 +177,25 @@ class XFormInstanceManagerTest(TestCase):
         self.assertEqual(1, len(forms))
         self.assertEqual(form2.form_id, forms[0].form_id)
 
+    def test_get_form_ids_in_domain(self):
+        form1 = create_form_for_test(DOMAIN)
+        form2 = create_form_for_test(DOMAIN)
+        create_form_for_test('bad-domain')
+
+        # basic check
+        form_ids = XFormInstance.objects.get_form_ids_in_domain_by_type(DOMAIN, 'XFormInstance')
+        self.assertEqual(set(form_ids), {form1.form_id, form2.form_id})
+
+        # change state of form1
+        archive_form(form1, 'user1')
+
+        # check filtering by state
+        form_ids = XFormInstance.objects.get_form_ids_in_domain_by_type(DOMAIN, 'XFormArchived')
+        self.assertEqual(form_ids, [form1.form_id])
+
+        form_ids = XFormInstance.objects.get_form_ids_in_domain_by_type(DOMAIN, 'XFormInstance')
+        self.assertEqual(form_ids, [form2.form_id])
+
     def test_iter_form_ids_by_xmlns(self):
         OTHER_XMLNS = "http://openrosa.org/other"
         form1 = create_form_for_test(DOMAIN)

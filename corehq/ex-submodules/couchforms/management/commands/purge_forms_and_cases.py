@@ -64,7 +64,7 @@ though deletion would be re-confirmed so dont panic
 
     def handle(self, domain, app_id, version_number, test_run, **options):
         self.ensure_prerequisites(domain, app_id, version_number, test_run)
-        self.xform_ids = self.forms_accessor.get_all_form_ids_in_domain()
+        self.xform_ids = XFormInstance.objects.get_all_form_ids_in_domain(domain)
         self.iterate_forms_and_collect_case_ids()
         _print_final_debug_info(self.xform_ids, self.filtered_xform_ids, self.case_ids)
         if self.data_to_delete() and self.delete_permitted():
