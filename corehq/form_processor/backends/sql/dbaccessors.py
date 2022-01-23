@@ -422,16 +422,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
-        state = doc_type_to_state[type_]
-        assert limit is not None
-        # apply limit in python as well since we may get more results than we expect
-        # if we're in a sharded environment
-        forms = XFormInstance.objects.plproxy_raw(
-            'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
-            [domain, state, limit, recent_first]
-        )
-        forms = sorted(forms, key=lambda f: f.received_on, reverse=recent_first)
-        return forms[:limit]
+        """DEPRECATED"""
+        return XFormInstance.objects.get_forms_by_type(domain, type_, limit, recent_first)
 
     @staticmethod
     def form_exists(form_id, domain=None):

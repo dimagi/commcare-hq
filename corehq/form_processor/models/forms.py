@@ -114,6 +114,18 @@ class XFormInstanceManager(RequireDBManager):
 
         return forms
 
+    def get_forms_by_type(self, domain, type_, limit, recent_first=False):
+        state = self.model.DOC_TYPE_TO_STATE[type_]
+        assert limit is not None
+        # apply limit in python as well since we may get more results than we expect
+        # if we're in a sharded environment
+        forms = self.plproxy_raw(
+            'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
+            [domain, state, limit, recent_first]
+        )
+        forms = sorted(forms, key=lambda f: f.received_on, reverse=recent_first)
+        return forms[:limit]
+
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
         if xmlns:

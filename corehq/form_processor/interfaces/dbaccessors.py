@@ -53,6 +53,7 @@ class FormAccessors:
         return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, doc_type)
 
     def get_forms_by_type(self, type_, limit, recent_first=False):
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
 
     def iter_form_ids_by_xmlns(self, xmlns=None):

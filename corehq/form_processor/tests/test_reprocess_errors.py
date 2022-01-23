@@ -61,13 +61,13 @@ class ReprocessXFormErrorsTest(TestCase):
 
         post_case_blocks([case.as_xml()], domain=self.domain)
 
-        form_accessors = FormAccessors(self.domain)
-        error_forms = form_accessors.get_forms_by_type('XFormError', 10)
+        get_forms_by_type = XFormInstance.objects.get_forms_by_type
+        error_forms = get_forms_by_type(self.domain, 'XFormError', 10)
         self.assertEqual(1, len(error_forms))
 
         form = error_forms[0]
         reprocess_xform_error(form)
-        error_forms = form_accessors.get_forms_by_type('XFormError', 10)
+        error_forms = get_forms_by_type(self.domain, 'XFormError', 10)
         self.assertEqual(1, len(error_forms))
 
         case = CaseBlock.deprecated_init(
@@ -143,7 +143,7 @@ class ReprocessSubmissionStubTests(TestCase):
         # this is saved becuase the saving was assumed to be atomic so if there was any error it's assumed
         # the form didn't get saved
         # we don't really care about this form in this test
-        error_forms = FormAccessors(self.domain).get_forms_by_type('XFormError', 10)
+        error_forms = XFormInstance.objects.get_forms_by_type(self.domain, 'XFormError', 10)
         self.assertEqual(1, len(error_forms))
         self.assertIsNone(error_forms[0].orig_id)
         self.assertEqual(error_forms[0].form_id, stubs[0].xform_id)
