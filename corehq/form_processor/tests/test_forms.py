@@ -46,6 +46,15 @@ class XFormInstanceManagerTest(TestCase):
         with self.assertRaises(XFormNotFound):
             XFormInstance.objects.get_form('missing_form')
 
+    def test_form_exists(self):
+        form = create_form_for_test(DOMAIN)
+        form_exists = XFormInstance.objects.form_exists
+
+        self.assertFalse(form_exists('not a form'))
+        self.assertFalse(form_exists(form.form_id, 'wrong domain'))
+        self.assertTrue(form_exists(form.form_id))
+        self.assertTrue(form_exists(form.form_id, DOMAIN))
+
     def test_get_forms(self):
         form1 = create_form_for_test(DOMAIN)
         form2 = create_form_for_test(DOMAIN)

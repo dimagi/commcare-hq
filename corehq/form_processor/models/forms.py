@@ -52,6 +52,12 @@ class XFormInstanceManager(RequireDBManager):
         except self.model.DoesNotExist:
             raise XFormNotFound(form_id)
 
+    def form_exists(self, form_id, domain=None):
+        query = self.partitioned_query(form_id).filter(form_id=form_id)
+        if domain:
+            query = query.filter(domain=domain)
+        return query.exists()
+
     def get_forms(self, form_ids, domain=None, ordered=False):
         """
         :param form_ids: list of form_ids to fetch

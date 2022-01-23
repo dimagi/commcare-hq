@@ -47,6 +47,7 @@ class FormAccessors:
                 yield form
 
     def form_exists(self, form_id):
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.form_exists(form_id, domain=self.domain)
 
     def get_all_form_ids_in_domain(self, doc_type='XFormInstance'):

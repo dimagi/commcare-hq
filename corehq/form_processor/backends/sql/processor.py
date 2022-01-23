@@ -59,7 +59,7 @@ class FormProcessorSQL(object):
 
     @classmethod
     def is_duplicate(cls, xform_id, domain=None):
-        return FormAccessorSQL.form_exists(xform_id, domain=domain)
+        return XFormInstance.objects.form_exists(xform_id, domain=domain)
 
     @classmethod
     def hard_delete_case_and_forms(cls, domain, case, xforms):

@@ -427,11 +427,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def form_exists(form_id, domain=None):
-        query = XFormInstance.objects.partitioned_query(form_id).filter(form_id=form_id)
-        if domain:
-            query = query.filter(domain=domain)
-
-        return query.exists()
+        """DEPRECATED"""
+        return XFormInstance.objects.form_exists(form_id, domain)
 
     @staticmethod
     def hard_delete_forms(domain, form_ids, delete_attachments=True):
