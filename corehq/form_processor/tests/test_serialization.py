@@ -5,7 +5,7 @@ from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -22,7 +22,7 @@ class SerializationTests(TestCase):
         super(SerializationTests, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
 
-        cls.using = router.db_for_read(XFormInstanceSQL, **{HINT_PLPROXY: True})
+        cls.using = router.db_for_read(XFormInstance, **{HINT_PLPROXY: True})
 
     @classmethod
     def tearDownClass(cls):

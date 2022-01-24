@@ -336,7 +336,7 @@ def flatten_result(hit, include_score=False, is_related_case=False):
 
 
 def wrap_case_search_hit(hit, include_score=False, is_related_case=False):
-    """Convert case search index hit to CommCareCaseSQL
+    """Convert case search index hit to CommCareCase
 
     Nearly the opposite of
     `corehq.pillows.case_search.transform_case_for_elasticsearch`.
@@ -347,20 +347,20 @@ def wrap_case_search_hit(hit, include_score=False, is_related_case=False):
     dynamic properties.
 
     All fields excluding "case_properties" and its contents are assigned
-    as attributes on the case object if `CommCareCaseSQL` has a field
+    as attributes on the case object if `CommCareCase` has a field
     with a matching name. Fields like "doc_type" and "@indexed_on" are
     ignored.
 
     Warning: `include_score=True` or `is_related_case=True` may cause
     the relevant user-defined properties to be overwritten.
 
-    :returns: A `CommCareCaseSQL` instance.
+    :returns: A `CommCareCase` instance.
     """
-    from corehq.form_processor.models import CommCareCaseSQL
+    from corehq.form_processor.models import CommCareCase
     data = hit.get("_source", hit)
     _SPECIAL_PROPERTIES = SPECIAL_CASE_PROPERTIES_MAP
     _VALUE = VALUE
-    case = CommCareCaseSQL(
+    case = CommCareCase(
         case_id=data.get("_id", None),
         case_json={
             prop["key"]: prop[_VALUE]
@@ -386,8 +386,8 @@ def wrap_case_search_hit(hit, include_score=False, is_related_case=False):
 
 @memoized
 def _case_fields():
-    from corehq.form_processor.models import CommCareCaseSQL
-    fields = {f.attname for f in CommCareCaseSQL._meta.concrete_fields}
+    from corehq.form_processor.models import CommCareCase
+    fields = {f.attname for f in CommCareCase._meta.concrete_fields}
     fields.add("user_id")  # synonym for "modified_by"
     return fields
 

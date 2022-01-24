@@ -31,7 +31,7 @@ from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.exceptions import ConfigurationError, JsonpathError
 from corehq.motech.openmrs.const import (
     ATOM_FEED_NAME_PATIENT,
@@ -486,7 +486,7 @@ def get_case_id_owner_id_case_block(
 def get_case(
     repeater: OpenmrsRepeater,
     patient_uuid: str,
-) -> Union[CommCareCaseSQL, None]:
+) -> Union[CommCareCase, None]:
 
     case_type = repeater.white_listed_case_types[0]
     case, error = importer_util.lookup_case(

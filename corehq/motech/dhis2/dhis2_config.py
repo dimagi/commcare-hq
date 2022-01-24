@@ -73,7 +73,7 @@ class RelationshipConfig(DocumentSchema):
     """
     Used for mapping case indices to DHIS2 relationship types.
 
-    See CommCareCaseIndexSQL
+    See CommCareCaseIndex
     """
     identifier = StringProperty()
     referenced_type = StringProperty()

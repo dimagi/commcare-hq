@@ -20,7 +20,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 
 
 class UnexpectedBackend(Exception):
@@ -43,7 +43,7 @@ class FormDocumentStore(DocumentStore):
 
     @staticmethod
     def _to_json(form):
-        if isinstance(form, XFormInstanceSQL):
+        if isinstance(form, XFormInstance):
             return form.to_json(include_attachments=True)
         else:
             return form.to_json()

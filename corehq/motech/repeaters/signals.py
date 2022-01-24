@@ -10,7 +10,7 @@ from couchforms.signals import successful_form_received
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.signals import commcare_user_post_save
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeaters.models import (
     CreateCaseRepeater,
     ReferCaseRepeater,
@@ -95,4 +95,4 @@ def create_location_repeat_records(sender, raw=False, **kwargs):
 
 successful_form_received.connect(create_form_repeat_records)
 successful_form_received.connect(create_short_form_repeat_records)
-sql_case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
+sql_case_post_save.connect(create_case_repeat_records, CommCareCase)

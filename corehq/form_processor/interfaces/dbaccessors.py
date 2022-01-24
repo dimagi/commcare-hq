@@ -226,10 +226,10 @@ class FormAccessors(object):
     @contextmanager
     def _unfinished_archive(form, archive, user_id, trigger_signals=True):
         from ..change_publishers import publish_form_saved
-        from ..models import XFormInstanceSQL
+        from ..models import XFormInstance
         with unfinished_archive(instance=form, user_id=user_id, archive=archive) as archive_stub:
             yield archive_stub
-            is_sql = isinstance(form, XFormInstanceSQL)
+            is_sql = isinstance(form, XFormInstance)
             if is_sql:
                 publish_form_saved(form)
             if trigger_signals:

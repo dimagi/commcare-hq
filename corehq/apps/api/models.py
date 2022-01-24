@@ -12,7 +12,7 @@ from django.http import HttpResponse
 from couchforms import const
 
 from corehq.apps.api.resources import DictObject
-from corehq.form_processor.models import CommCareCaseIndexSQL
+from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.abstract_models import CaseToXMLMixin, get_index_map
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -197,7 +197,7 @@ class ESCase(DictObject, CaseToXMLMixin):
 
     @property
     def indices(self):
-        return [CommCareCaseIndexSQL(**index) for index in self._data['indices'] if index["referenced_id"]]
+        return [CommCareCaseIndex(**index) for index in self._data['indices'] if index["referenced_id"]]
 
     def get_index_map(self):
         return get_index_map(self.indices)

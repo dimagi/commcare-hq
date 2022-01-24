@@ -7,7 +7,7 @@ from unittest.mock import patch
 from casexml.apps.case.const import CASE_ACTION_UPDATE
 from casexml.apps.phone.models import IndexTree, SimplifiedSyncLog
 
-from corehq.form_processor.models import CaseAction, CommCareCaseSQL
+from corehq.form_processor.models import CaseAction, CommCareCase
 from corehq.form_processor.tests.utils import create_form_for_test, sharded
 
 
@@ -30,8 +30,8 @@ class SyncLogAssertionTest(TestCase):
             updated_known_properties={},
             indices=[],
         )]
-        with patch.object(CommCareCaseSQL, 'get_actions_for_form', return_value=form_actions):
-            parent_case = CommCareCaseSQL(case_id='hodor')
+        with patch.object(CommCareCase, 'get_actions_for_form', return_value=form_actions):
+            parent_case = CommCareCase(case_id='hodor')
             # before this test was added, the following call raised a SyncLogAssertionError on legacy logs.
             # this test just ensures it doesn't still do that.
             sync_log.update_phone_lists(xform, [parent_case])
@@ -55,8 +55,8 @@ class SyncLogAssertionTest(TestCase):
             updated_known_properties={'owner_id': 'user2'},
             indices=[],
         )]
-        with patch.object(CommCareCaseSQL, 'get_actions_for_form', return_value=form_actions):
-            parent_case = CommCareCaseSQL(case_id='d1')
+        with patch.object(CommCareCase, 'get_actions_for_form', return_value=form_actions):
+            parent_case = CommCareCase(case_id='d1')
             # before this test was added, the following call raised a ValueError on legacy logs.
             sync_log.update_phone_lists(xform, [parent_case])
             self.assertIn("d1", sync_log.dependent_case_ids_on_phone)
