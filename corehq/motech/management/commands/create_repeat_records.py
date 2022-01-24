@@ -13,6 +13,7 @@ from corehq.motech.repeaters.management.commands.find_missing_repeat_records imp
 )
 from corehq.motech.repeaters.models import Repeater, get_all_repeater_types
 from corehq.util.log import with_progress_bar
+from dimagi.utils.chunked import chunked
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -66,11 +67,23 @@ class Command(BaseCommand):
                     by_domain[doc.domain] = repeaters
                 return by_domain[doc.domain]
 
-        accessor = FormAccessorSQL.get_form if options['doc_type'] == 'form' else CaseAccessorSQL.get_case
-        for doc_id in with_progress_bar(doc_ids):
+        def _create_records(doc):
+            for repeater in _get_repeaters(doc):
+                repeater.register(doc)
+
+        bulk_accessor = FormAccessorSQL.get_forms if options['doc_type'] == 'form' else CaseAccessorSQL.get_cases
+        single_accessor = FormAccessorSQL.get_form if options['doc_type'] == 'form' else CaseAccessorSQL.get_case
+        for doc_ids in chunked(with_progress_bar(doc_ids), 100):
+            doc_ids = list(doc_ids)
             try:
-                form_or_case = accessor(doc_id)
-                for repeater in _get_repeaters(form_or_case):
-                    repeater.register(form_or_case)
+                docs = bulk_accessor(doc_ids)
+                for doc in docs:
+                    _create_records(doc)
             except Exception:
-                logger.exception(f"Unable to process doc '{doc_id}")
+                logger.exception("Unable to fetch bulk docs, falling back to individual fetches")
+                for doc_id in doc_ids:
+                    try:
+                        doc = single_accessor(doc_id)
+                        _create_records(doc)
+                    except Exception:
+                        logger.exception(f"Unable to process doc '{doc_id}'")
