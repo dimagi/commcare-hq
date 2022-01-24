@@ -78,4 +78,8 @@ branches:
     - mk/support-multibar-reports # MK Dec 14
     - jls/fix-no-role-500  # Jenny Jan 14
     - ml/enforce-password-policy # Minha Jan 18
+    - smh/save-only-edited-form-fields # Steph Jan 24
+    - smh/save-only-edit-fields-xml-changes # Steph Jan 24
+    - ad/save-only-edited-form-fields-UI # Steph Jan 24
+    
 submodules: { }
