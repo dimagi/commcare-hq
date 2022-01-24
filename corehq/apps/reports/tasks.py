@@ -10,6 +10,7 @@ from text_unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
+from dimagi.utils import DateSpan
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
@@ -161,7 +162,6 @@ def apps_update_calculated_properties():
 @task(ignore_result=True)
 def export_all_rows_task(report_class, report_state, recipient_list=None, subject=None):
     #will move imports to the top
-    import json
     from corehq.apps.reports.standard.monitoring import (
         WorkerActivityReport,
         DailyFormStatsReport,
