@@ -153,6 +153,15 @@ class ReportDispatcher(View):
                 report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
+                # grep help:
+                # return report.json_response
+                # return report.async_response
+                # return report.filters_response
+                # return report.export_response
+                # return report.mobile_response
+                # return report.email_response
+                # return report.partial_response
+                # return report.print_response
                 return getattr(report, '%s_response' % render_as)
             except BadRequestError as e:
                 return HttpResponseBadRequest(e)
@@ -184,6 +193,15 @@ class ReportDispatcher(View):
 
     @classmethod
     def pattern(cls):
+        # grep help:
+        # ^(json/)?(?P<report_slug>[\w_]+)/$
+        # ^(async/)?(?P<report_slug>[\w_]+)/$
+        # ^(filters/)?(?P<report_slug>[\w_]+)/$
+        # ^(export/)?(?P<report_slug>[\w_]+)/$
+        # ^(mobile/)?(?P<report_slug>[\w_]+)/$
+        # ^(email/)?(?P<report_slug>[\w_]+)/$
+        # ^(partial/)?(?P<report_slug>[\w_]+)/$
+        # ^(print/)?(?P<report_slug>[\w_]+)/$
         return r'^({renderings}/)?(?P<report_slug>[\w_]+)/$'.format(renderings=cls._rendering_pattern())
 
     @classmethod
