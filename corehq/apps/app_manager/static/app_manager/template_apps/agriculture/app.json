@@ -784,7 +784,12 @@
                   },
                   "member_since": {
                     "doc_type": "ConditionalCaseUpdate",
-                    "question_path": "/data/farmer/demographic_data/member_since""farmer_phone_number",
+                    "question_path": "/data/farmer/demographic_data/member_since",
+                    "update_mode": "always"
+                  },
+                  "farmer_phone_number": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/demographic_data/farmer_phone_number",
                     "update_mode": "always"
                   },
                   "other_farmer": {
