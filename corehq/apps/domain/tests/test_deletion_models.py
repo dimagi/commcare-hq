@@ -1,4 +1,6 @@
 import itertools
+import django
+import sys
 
 from django.apps import apps
 from testil import eq
@@ -63,6 +65,8 @@ IGNORE_MODELS = {
 
 
 def test_deletion_sql_models():
+    print(f'Python version: {sys.version_info}')
+    print(f'Django version: {django.VERSION}')
     covered_models = set(itertools.chain.from_iterable(
         op.get_model_classes() for op in DOMAIN_DELETE_OPERATIONS
     ))

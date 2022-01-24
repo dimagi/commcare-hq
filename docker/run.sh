@@ -179,9 +179,11 @@ function _run_tests {
     function _test_python {
         ./manage.py create_kafka_topics
         if [ -n "$CI" ]; then
-            logmsg INFO "coverage run manage.py test ${py_test_args[*]}"
+            # logmsg INFO "coverage run manage.py test ${py_test_args[*]}"
+            logmsg INFO "coverage run manage.py test -s corehq.apps.domain.tests.test_deletion_models"
             # `coverage` generates a file that's then sent to codecov
-            coverage run manage.py test "${py_test_args[@]}"
+            # coverage run manage.py test "${py_test_args[@]}"
+            coverage run manage.py test -s corehq.apps.domain.tests.test_deletion_models
             coverage xml
             if [ -n "$TRAVIS" ]; then
                 bash <(curl -s https://codecov.io/bash)
