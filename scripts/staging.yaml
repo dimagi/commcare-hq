@@ -63,8 +63,6 @@ branches:
     - ml/remove-pickles-phonelog # Minha Oct 7
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
-    - ml/remove-pickles-user-importer # Minha Oct 13
-    # - ml/remove-pickles-reports # Minha Oct 21
     - rp/status-embed # Rynhard Nov 9
     - es/mobile-auth # Simon Nov 23
     - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
@@ -81,5 +79,4 @@ branches:
     - dependabot/pip/requirements/lxml-4.7.1 # Graham Jan 12
     - jls/fix-no-role-500  # Jenny Jan 14
     - ml/enforce-password-policy # Minha Jan 18
-    - fr/pickleable-subject      # Farid Jan 19
 submodules: { }
