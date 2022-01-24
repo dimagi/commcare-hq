@@ -80,6 +80,7 @@ accounting
  0058_delete_linked_projects_role
  0059_add_lite_release_management_priv
  0060_add_help_text_for_is_customer_software_plan
+ 0061_upgrade_enterprise_plan_v0_to_v1
 admin
  0001_initial
  0002_logentry_remove_auto_add
