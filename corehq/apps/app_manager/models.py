@@ -74,7 +74,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
-from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.const import UPDATE_MODE_ALWAYS, UPDATE_MODE_EDIT, USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
@@ -349,8 +349,8 @@ class FormAction(DocumentSchema):
 class ConditionalCaseUpdate(DocumentSchema):
     question_path = StringProperty()
     update_mode = StringProperty(
-        choices=["always", "edit"],
-        default="always"
+        choices=[UPDATE_MODE_ALWAYS, UPDATE_MODE_EDIT],
+        default=UPDATE_MODE_ALWAYS
     )
 
 
