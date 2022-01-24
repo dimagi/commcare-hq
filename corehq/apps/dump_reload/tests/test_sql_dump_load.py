@@ -760,6 +760,7 @@ class TestSqlLoadWithError(BaseDumpLoadTest):
     def _load_with_errors(self, chunk_size):
         output_stream = StringIO()
         SqlDataDumper(self.domain_name, [], []).dump(output_stream)
+        output_stream.seek(0)
         self.delete_sql_data()
         # resave the product to force an error
         self.products[0].save()
