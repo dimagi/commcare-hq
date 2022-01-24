@@ -46,7 +46,7 @@ class CouchConfigTest(SimpleTestCase):
 
     def test_get_db_for_doc_type(self):
         config = CouchConfig(config=self._config)
-        self.assertEqual(config.get_db_for_doc_type('CommCareCase').uri, self.remote_db_uri)
+        self.assertEqual(config.get_db_for_doc_type('Toggle').uri, self.remote_db_uri)
         self.assertEqual(config.get_db_for_doc_type('CommCareUser').uri,
                          '{}__users'.format(self.remote_db_uri))
 

@@ -1175,13 +1175,6 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
-OPENCLINICA = StaticToggle(
-    'openclinica',
-    'KEMRI: Offer OpenClinica settings and CDISC ODM export',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
@@ -1429,6 +1422,7 @@ DATA_DICTIONARY = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     description='Available in the Data section, shows the names of all properties of each case type.',
+    help_link='https://confluence.dimagi.com/display/GS/Data+Dictionary+for+Case+Properties',
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -1572,13 +1566,6 @@ COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
     default_randomness=0.001,  # 1 in 1000
     description='Reports for comparison must be listed in settings.UCR_COMPARISONS.'
-)
-
-MOBILE_LOGIN_LOCKOUT = StaticToggle(
-    'mobile_user_login_lockout',
-    "On too many wrong password attempts, lock out mobile users",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
 )
 
 LINKED_DOMAINS = StaticToggle(
@@ -2127,6 +2114,7 @@ EXPRESSION_REPEATER = StaticToggle(
     'Integrate with generic APIs using UCR expressions',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/saas/Configurable+Repeaters",
 )
 
 TURN_IO_BACKEND = StaticToggle(
@@ -2157,7 +2145,7 @@ DATA_REGISTRY = StaticToggle(
   
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
     'case_import_data_dictionary_validaton',
-    'Validate data per data dictionary definitions during case import',
+    'USH: Validate data per data dictionary definitions during case import',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Validate+data+per+data+dictionary+definitions+during+case+import",
@@ -2168,4 +2156,11 @@ DO_NOT_REPUBLISH_DOCS = StaticToggle(
     'Prevents automatic attempts to repair stale ES docs in this domain',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+HOURLY_SCHEDULED_REPORT = StaticToggle(
+    'hourly-scheduled-report',
+    'Add ability to send a scheduled report hourly',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
 )

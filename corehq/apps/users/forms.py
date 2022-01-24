@@ -265,7 +265,7 @@ class BaseUserInfoForm(forms.Form):
             "<i class=\"fa fa-info-circle\"></i> "
             "Becomes default language seen in Web Apps and reports (if applicable), "
             "but does not affect mobile applications. "
-            "Supported languages for reports are en, fr (partial), and hin (partial)."
+            "Supported languages for reports are en, fra (partial), and hin (partial)."
         )
     )
 
@@ -857,12 +857,11 @@ class MultipleSelectionForm(forms.Form):
             // Multiselect widget
             $(function () {
                 var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-                multiselect_utils.createFullMultiselectWidget(
-                    'id_of_multiselect_field',
-                    gettext("Available Things"),
-                    gettext("Things Selected"),
-                    gettext("Search Things...")
-                );
+                multiselect_utils.createFullMultiselectWidget('id_of_multiselect_field', {
+                    selectableHeaderTitle: gettext("Available Things"),
+                    selectedHeaderTitle: gettext("Things Selected"),
+                    searchItemTitle: gettext("Search Things..."),
+                });
             });
         });
     """

@@ -6,7 +6,6 @@ from django.test import SimpleTestCase, TestCase
 import pytz
 from unittest.mock import MagicMock, patch
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -1252,8 +1251,8 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         self.assertEqual({'t1'}, get_case_types_for_domain_es(self.domain))
 
         # simulate a save
-        from casexml.apps.case.signals import case_post_save
-        case_post_save.send(self, case=CommCareCase(domain=self.domain, type='t2'))
+        from corehq.form_processor.signals import sql_case_post_save
+        sql_case_post_save.send(self, case=CommCareCaseSQL(domain=self.domain, type='t2'))
 
         self.assertEqual({'t1', 't2'}, get_case_types_for_domain_es(self.domain))
 

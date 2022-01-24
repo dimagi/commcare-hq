@@ -86,12 +86,11 @@ hqDefine('users/js/edit_commcare_user', [
     }
 
     // Groups form
-    multiselectUtils.createFullMultiselectWidget(
-        'id_selected_ids',
-        gettext("Available Groups"),
-        gettext("Groups with this User"),
-        gettext("Search Group...")
-    );
+    multiselectUtils.createFullMultiselectWidget('id_selected_ids', {
+        selectableHeaderTitle: gettext("Available Groups"),
+        selectedHeaderTitle: gettext("Groups with this User"),
+        searchItemTitle: gettext("Search Group..."),
+    });
 
     // "are you sure?" stuff
     var unsavedChanges = false;

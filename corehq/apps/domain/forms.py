@@ -33,11 +33,11 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-from captcha.fields import CaptchaField
+from captcha.fields import ReCaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
-from crispy_forms.layout import Submit
+from crispy_forms.layout import Layout, Submit
 from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from memoized import memoized
@@ -640,42 +640,47 @@ class PrivacySecurityForm(forms.Form):
             "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'> "
             "Read more about restricting mobile endpoint access here.</a>")),
     )
+    disable_mobile_login_lockout = BooleanField(
+        label=ugettext_lazy("Disable Mobile Worker Lockout"),
+        required=False,
+        help_text=ugettext_lazy("Mobile Workers will never be locked out of their account, regardless"
+            "of the number of failed attempts")
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
         domain = kwargs.pop('domain')
         super(PrivacySecurityForm, self).__init__(*args, **kwargs)
-        self.helper = hqcrispy.HQFormHelper(self)
-        self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
-        self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
-        self.helper[2] = twbscrispy.PrependedText('secure_sessions', '')
-        self.helper[3] = crispy.Field('secure_sessions_timeout')
-        self.helper[4] = twbscrispy.PrependedText('allow_domain_requests', '')
-        self.helper[5] = twbscrispy.PrependedText('hipaa_compliant', '')
-        self.helper[6] = twbscrispy.PrependedText('two_factor_auth', '')
-        self.helper[7] = twbscrispy.PrependedText('strong_mobile_passwords', '')
-        self.helper[8] = twbscrispy.PrependedText('ga_opt_out', '')
-        self.helper[9] = twbscrispy.PrependedText('restrict_mobile_access', '')
 
+        excluded_fields = []
         if not RESTRICT_MOBILE_ACCESS.enabled(domain):
-            self.helper.layout.pop(9)
+            excluded_fields.append('restrict_mobile_access')
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
-            self.helper.layout.pop(8)
-            self.helper.layout.pop(7)
-            self.helper.layout.pop(6)
+            excluded_fields.append('ga_opt_out')
+            excluded_fields.append('strong_mobile_passwords')
+            excluded_fields.append('two_factor_auth')
+            excluded_fields.append('secure_sessions')
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
-            self.helper.layout.pop(5)
+            excluded_fields.append('hipaa_compliant')
         if not SECURE_SESSION_TIMEOUT.enabled(domain):
-            self.helper.layout.pop(3)
-        if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
-            self.helper.layout.pop(2)
-        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
-        self.helper.layout.append(
+            excluded_fields.append('secure_sessions_timeout')
+
+        # PrependedText ensures the label is to the left of the checkbox, and the help text beneath.
+        # Feels like there should be a better way to apply these styles, as we aren't pre-pending anything
+        fields = [twbscrispy.PrependedText(field_name, '')
+            for field_name in self.fields.keys() if field_name not in excluded_fields]
+
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.layout = Layout(
+            crispy.Fieldset(
+                _('Edit Privacy Settings'),
+                *fields
+            ),
             hqcrispy.FormActions(
                 StrictButton(
-                    _("Update Privacy Settings"),
-                    type="submit",
-                    css_class='btn-primary',
+                    _('Update Privacy Settings'),
+                    type='submit',
+                    css_class='btn-primary'
                 )
             )
         )
@@ -701,6 +706,8 @@ class PrivacySecurityForm(forms.Form):
         domain_obj.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
         if RESTRICT_MOBILE_ACCESS.enabled(domain_obj.name):
             domain_obj.restrict_mobile_access = self.cleaned_data.get('restrict_mobile_access', False)
+
+        domain_obj.disable_mobile_login_lockout = self.cleaned_data.get('disable_mobile_login_lockout', False)
 
         domain_obj.save()
 
@@ -1193,8 +1200,8 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
-    if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
-        captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
+    if settings.RECAPTCHA_PRIVATE_KEY:
+        captcha = ReCaptchaField(label="")
     error_messages = {
         'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
                                  "registered?"),

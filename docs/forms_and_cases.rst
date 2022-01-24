@@ -8,28 +8,24 @@ This document provides a basic guide for how to do that.
 
 Models
 ------
-In the codebase there are now two models for form and case data.
 
-+------------------------+----------------------+
-| Couch                  | SQL                  |
-+========================+======================+
-| CommCareCase           | CommCareCaseSQL      |
-+------------------------+----------------------+
-| CommCareCaseAction     | CaseTransaction      |
-+------------------------+----------------------+
-| CommCareCaseAttachment | CaseAttachmentSQL    |
-+------------------------+----------------------+
-| CommCareCaseIndex      | CommCareCaseIndexSQL |
-+------------------------+----------------------+
-|                        | XFormInstanceSQL     |
-+------------------------+----------------------+
-|                        | XFormOperationSQL    |
-+------------------------+----------------------+
++----------------------+
+| SQL                  |
++======================+
+| CommCareCaseSQL      |
++----------------------+
+| CaseTransaction      |
++----------------------+
+| CaseAttachmentSQL    |
++----------------------+
+| CommCareCaseIndexSQL |
++----------------------+
+| XFormInstanceSQL     |
++----------------------+
+| XFormOperationSQL    |
++----------------------+
 
-Some of these models define a common interface that allows you to perform the same operations
-irrespective of the type. Some examples are shown below:
-
-**Form Instance**
+**Form Instance API**
 
 +------------------------------------+--------------------------------------------------+
 | Property / method                  | Description                                      |
@@ -64,7 +60,7 @@ irrespective of the type. Some examples are shown below:
 +------------------------------------+--------------------------------------------------+
 
 
-**Case**
+**Case API**
 
 +--------------------------------+---------------------------------------+
 | Property / method              | Description                           |

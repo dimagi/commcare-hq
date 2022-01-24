@@ -707,6 +707,7 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       MessagingCaseContactMixin):
+    DOC_TYPE = 'CommCareCase'
     partition_attr = 'case_id'
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -737,6 +738,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     case_json = JSONField(default=dict)
 
+    def __init__(self, *args, **kwargs):
+        if "indices" in kwargs:
+            self._set_indices(kwargs.pop("indices"))
+        super().__init__(*args, **kwargs)
+
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
@@ -744,7 +750,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @property
     def doc_type(self):
-        dt = 'CommCareCase'
+        dt = self.DOC_TYPE
         if self.is_deleted:
             dt += DELETED_SUFFIX
         return dt
@@ -857,6 +863,19 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
         return CaseAccessorSQL.get_indices(self.domain, self.case_id) if self.is_saved() else []
 
+    def _set_indices(self, value):
+        """Set previously-saved indices
+
+        Private setter used by the class constructor to populate indices
+        from a source such as ElasticSearch. This setter does not update
+        tracked models, and therefore is not intended for use with cases
+        whose state is being mutated.
+
+        :param value: A list of dicts that will be used to construct
+        `CommCareCaseIndexSQL` objects.
+        """
+        self.cached_indices = [CommCareCaseIndexSQL(**x) for x in value]
+
     @property
     def indices(self):
         indices = self._saved_indices()
@@ -911,7 +930,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @property
     def actions(self):
-        """For compatability with CommCareCase. Please use transactions when possible"""
+        """DEPRECATED use transactions instead"""
         return self.non_revoked_transactions
 
     def _get_unsaved_transaction_for_form(self, form_id):

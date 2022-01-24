@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
-from captcha.fields import CaptchaField
+from captcha.fields import ReCaptchaField
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
@@ -33,7 +33,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
     if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
-        captcha = CaptchaField(label=_("Type the letters in the box"))
+        captcha = ReCaptchaField(label="")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

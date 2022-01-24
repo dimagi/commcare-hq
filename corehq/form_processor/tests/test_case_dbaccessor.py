@@ -451,27 +451,6 @@ class CaseAccessorTestsSQL(TestCase):
             {case1.case_id, case2.case_id}
         )
 
-    def test_get_case_ids_modified_with_owner_since(self):
-        case1 = _create_case(user_id="user1")
-        date1 = datetime(1992, 1, 30)
-        case1.server_modified_on = date1
-        CaseAccessorSQL.save_case(case1)
-
-        case2 = _create_case(user_id="user2")
-        date2 = datetime(2015, 12, 28, 5, 48)
-        case2.server_modified_on = date2
-        CaseAccessorSQL.save_case(case2)
-
-        case3 = _create_case(user_id="user1")
-        date3 = datetime(1992, 1, 1)
-        case3.server_modified_on = date3
-        CaseAccessorSQL.save_case(case3)
-
-        self.assertEqual(
-            CaseAccessorSQL.get_case_ids_modified_with_owner_since(DOMAIN, "user1", datetime(1992, 1, 15)),
-            [case1.case_id]
-        )
-
     def test_get_extension_case_ids(self):
         # Create case and index
         referenced_id = uuid.uuid4().hex

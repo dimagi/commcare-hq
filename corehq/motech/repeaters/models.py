@@ -153,7 +153,8 @@ from .repeater_generators import (
     DataRegistryCaseUpdatePayloadGenerator,
 )
 from ..repeater_helpers import RepeaterResponse
-from ...util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -222,6 +223,9 @@ class SQLRepeater(models.Model):
     @memoized
     def repeater(self):
         return Repeater.get(self.repeater_id)
+
+    def get_url(self, record):
+        return self.repeater.get_url(record)
 
     @property
     def repeat_records_ready(self):
@@ -526,9 +530,9 @@ class Repeater(QuickCachedDocumentMixin, Document):
             return self.handle_response(RequestConnectionError(error), repeat_record)
         except RequestException as err:
             return self.handle_response(err, repeat_record)
-        except PossibleSSRFAttempt:
+        except (PossibleSSRFAttempt, CannotResolveHost):
             return self.handle_response(Exception("Invalid URL"), repeat_record)
-        except Exception as e:
+        except Exception:
             # This shouldn't ever happen in normal operation and would mean code broke
             # we want to notify ourselves of the error detail and tell the user something vague
             notify_exception(None, "Unexpected error sending repeat record request")
@@ -904,6 +908,10 @@ class RepeatRecord(Document):
     def record_id(self):
         return self._id
 
+    @property
+    def next_attempt_at(self):
+        return self.next_check
+
     @classmethod
     def wrap(cls, data):
         should_bootstrap_attempts = ('attempts' not in data)
@@ -1257,6 +1265,10 @@ class SQLRepeatRecord(models.Model):
     def last_checked(self):
         # Used by .../case/partials/repeat_records.html
         return self.repeater.last_attempt_at
+
+    @property
+    def next_attempt_at(self):
+        return self.repeater.next_attempt_at
 
     @property
     def url(self):

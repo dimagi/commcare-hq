@@ -1100,16 +1100,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
-        with CommCareCaseSQL.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_case_ids_modified_with_owner_since(%s, %s, %s)',
-                [domain, owner_id, reference_date]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
-
-    @staticmethod
     def get_extension_case_ids(domain, case_ids, include_closed=True, exclude_for_case_type=None):
         """
         Given a base list of case ids, get all ids of all extension cases that reference them

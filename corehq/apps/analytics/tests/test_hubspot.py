@@ -10,7 +10,7 @@ from corehq.apps.accounting.models import (
     Subscription,
 )
 from corehq.apps.accounting.tests import generator
-from corehq.apps.analytics.utils import (
+from corehq.apps.analytics.utils.hubspot import (
     get_blocked_hubspot_domains,
     get_blocked_hubspot_accounts,
     is_domain_blocked_from_hubspot,
