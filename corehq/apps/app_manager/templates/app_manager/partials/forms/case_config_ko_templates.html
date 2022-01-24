@@ -213,8 +213,17 @@
           {% trans "Question" %}
         </th>
         <th class="col-sm-1"></th>
-        <th class="col-sm-5">
+        <th class="col-sm-3">
           {% trans "Case Property" %}
+        </th>
+        {% comment %} The odd style additions in this block were necessary to put the question mark
+        in line with the text when the text is both wrapped and unwrapped. {% endcomment %}
+        <th class="col-sm-2 text-center" style="padding-right: 30px">
+            <span style="padding-right: 5px">{% trans "Save Only If Edited" %}</span>
+            <span style="position: absolute; margin-top: -2px;" data-bind="makeHqHelp: {
+              description: '{% trans "Only save the answer if the propery will change from its previous value." %}',
+              placement: 'left'
+            }"></span>
         </th>
       </tr>
       </thead>
@@ -238,7 +247,7 @@
         <td class="text-center col-sm-1">
           <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
         </td>
-        <td class="col-sm-5">
+        <td class="col-sm-3">
           <div class="full-width-select2"
                data-bind="template: {
                             name: 'case-config:case-properties:property',
@@ -273,6 +282,13 @@
           <!-- ko if: $data.description() && !$parent.hasPrivilege -->
             <p data-bind="text: $data.description"></p>
           <!-- /ko -->
+        </td>
+        <td class="col-sm-2 text-center">
+          <input type="checkbox"
+                 data-bind="click: $parent.switchSaveOnlyIfEdited,
+                            checked: $data.save_only_if_edited,
+                            visible: $parent.hasPrivilege"
+                  />
         </td>
       </tr>
       </tbody>
