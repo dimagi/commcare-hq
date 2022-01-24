@@ -321,18 +321,26 @@ def poll_openmrs_atom_feeds(domain_name):
     for repeater in OpenmrsRepeater.by_domain(domain_name):
         errors = []
         if repeater.atom_feed_enabled and not repeater.paused:
-            patient_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
-            encounter_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_ENCOUNTER)
-            for patient_uuid in patient_uuids:
-                try:
-                    update_patient(repeater, patient_uuid)
-                except (ConfigurationError, OpenmrsException) as err:
-                    errors.append(str(err))
-            for encounter_uuid in encounter_uuids:
-                try:
-                    import_encounter(repeater, encounter_uuid)
-                except (ConfigurationError, OpenmrsException) as err:
-                    errors.append(str(err))
+            try:
+                patient_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
+                for patient_uuid in patient_uuids:
+                    try:
+                        update_patient(repeater, patient_uuid)
+                    except (ConfigurationError, OpenmrsException) as err:
+                        errors.append(str(err))
+            except OpenmrsException as err:
+                errors.append(str(err))
+
+            try:
+                encounter_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_ENCOUNTER)
+                for encounter_uuid in encounter_uuids:
+                    try:
+                        import_encounter(repeater, encounter_uuid)
+                    except (ConfigurationError, OpenmrsException) as err:
+                        errors.append(str(err))
+            except OpenmrsException as err:
+                errors.append(str(err))
+
         if errors:
             repeater.requests.notify_error(
                 'Errors importing from Atom feed:\n' + '\n'.join(errors)

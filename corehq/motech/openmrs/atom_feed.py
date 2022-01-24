@@ -43,6 +43,7 @@ from corehq.motech.openmrs.exceptions import (
     DuplicateCaseMatch,
     OpenmrsException,
     OpenmrsFeedDoesNotExist,
+    OpenmrsFeedSyntaxError,
 )
 from corehq.motech.openmrs.openmrs_config import (
     ALL_CONCEPTS,
@@ -93,7 +94,15 @@ def get_feed_xml(requests, feed_name, page):
               "longer be found.")
         )
         raise exception
-    root = etree.fromstring(resp.content)
+    try:
+        root = etree.fromstring(resp.content)
+    except etree.XMLSyntaxError as err:
+        requests.notify_exception(
+            str(err),
+            _('There is an XML syntax error in the OpenMRS Atom feed at '
+              f'"{resp.url}".')
+        )
+        raise OpenmrsFeedSyntaxError() from err
     return root
 
 
@@ -216,10 +225,13 @@ def get_feed_updates(repeater, feed_name):
                     href = this_page[0].get('href')
                     page = href.split('/')[-1]
                 break
-    except (RequestException, HTTPError):
-        # Don't update repeater if OpenMRS is offline
+    except (OpenmrsFeedSyntaxError, RequestException, HTTPError):
+        # Don't update repeater if OpenMRS is offline, or XML cannot be
+        # parsed.
         return
     except OpenmrsFeedDoesNotExist:
+        # Reset feed status so that polling will start at the beginning
+        # of the feed.
         repeater.atom_feed_status[feed_name] = AtomFeedStatus()
         repeater.save()
     else:

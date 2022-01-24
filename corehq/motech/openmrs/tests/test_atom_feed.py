@@ -3,13 +3,15 @@ import inspect
 import os
 import re
 from datetime import datetime
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
 
 import attr
 from dateutil.tz import tzoffset, tzutc
 from lxml import etree
-from unittest.mock import Mock, patch
+from nose.tools import assert_raises
 
 import corehq.motech.openmrs.atom_feed
 from corehq.motech.openmrs.atom_feed import (
@@ -17,11 +19,14 @@ from corehq.motech.openmrs.atom_feed import (
     get_case_block_kwargs_from_observations,
     get_diagnosis_mappings,
     get_encounter_uuid,
+    get_feed_xml,
     get_observation_mappings,
     get_patient_uuid,
     get_timestamp,
     import_encounter,
 )
+from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT
+from corehq.motech.openmrs.exceptions import OpenmrsFeedSyntaxError
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import TestFileMixin
@@ -441,6 +446,27 @@ class ImportEncounterTest(TestCase, TestFileMixin):
             </case>"""
         case_block = ''.join((l.strip() for l in case_block.split('\n'))).replace('»', '')
         self.assertEqual(case_blocks[0].as_text(), case_block)
+
+
+def test_get_feed_xml():
+    response_url = 'https://www.example.com/openmrs/ws/atomfeed/patient/recent'
+    response = SimpleNamespace(
+        status_code=200,
+        url=response_url,
+        content='<html><body>Bad XML</html>',
+    )
+    requests = Mock(
+        domain_name='test_domain',
+        get=lambda url: response,
+    )
+    with assert_raises(OpenmrsFeedSyntaxError):
+        get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, None)
+    requests.notify_exception.assert_called_with(
+        'Opening and ending tag mismatch: body line 1 and html, line 1, '
+        'column 27 (<string>, line 1)',
+        'There is an XML syntax error in the OpenMRS Atom feed at '
+        f'"{response_url}".'
+    )
 
 
 def test_doctests():
