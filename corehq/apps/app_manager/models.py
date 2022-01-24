@@ -336,11 +336,11 @@ class FormAction(DocumentSchema):
         if 'external_id' in action_properties and action.external_id:
             yield 'external_id', action.external_id
         if 'update' in action_properties:
-            for name, smart_case_update in action.update.items():
-                yield name, smart_case_update.question_path
+            for name, conditional_case_update in action.update.items():
+                yield name, conditional_case_update.question_path
         if 'case_properties' in action_properties:
-            for name, path in action.case_properties.items():
-                yield name, path
+            for name, conditional_case_update in action.case_properties.items():
+                yield name, conditional_case_update.question_path
         if 'preload' in action_properties:
             for path, name in action.preload.items():
                 yield name, path
