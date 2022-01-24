@@ -333,6 +333,7 @@ def poll_openmrs_atom_feeds(domain_name):
                     import_encounter(repeater, encounter_uuid)
                 except (ConfigurationError, OpenmrsException) as err:
                     errors.append(str(err))
+
         if errors:
             repeater.requests.notify_error(
                 'Errors importing from Atom feed:\n' + '\n'.join(errors)

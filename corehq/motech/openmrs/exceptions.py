@@ -19,6 +19,10 @@ class OpenmrsFeedDoesNotExist(OpenmrsException):
     pass
 
 
+class OpenmrsFeedSyntaxError(OpenmrsException):
+    pass
+
+
 class OpenmrsHtmlUiChanged(OpenmrsException):
     """
     OpenMRS HTML UI is no longer what we expect.
