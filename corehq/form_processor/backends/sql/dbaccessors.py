@@ -474,7 +474,7 @@ class FormAccessorSQL:
     @staticmethod
     def get_form_ids_in_domain_by_type(domain, type_):
         """DEPRECATED"""
-        return XFormInstance.objects.get_form_ids_in_domain_by_type(domain, type_)
+        return XFormInstance.objects.get_form_ids_in_domain(domain, type_)
 
     @staticmethod
     def get_deleted_form_ids_in_domain(domain):

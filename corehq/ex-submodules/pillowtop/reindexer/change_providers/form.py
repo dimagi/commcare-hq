@@ -30,11 +30,11 @@ class SqlDomainXFormChangeProvider(ChangeProvider):
         kwargs = []
         for domain in self.domains:
             for doc_type in XFormInstance.DOC_TYPE_TO_STATE:
-                kwargs.append({'domain': domain, 'type_': doc_type})
+                kwargs.append({'domain': domain, 'doc_type': doc_type})
 
         args_provider = ArgsListProvider(kwargs)
 
-        data_function = XFormInstance.objects.get_form_ids_in_domain_by_type
+        data_function = XFormInstance.objects.get_form_ids_in_domain
         chunk = []
         for form_id in paginate_function(data_function, args_provider):
             chunk.append(form_id)

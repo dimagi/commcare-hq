@@ -63,4 +63,4 @@ class Command(BaseCommand):
                       ("\n".join("%s: %s" % (v, k) for k, v in error_messages.items())))
 
     def _get_form_ids(self, domain):
-        return XFormInstance.objects.get_form_ids_in_domain_by_type(domain, 'XFormError')
+        return XFormInstance.objects.get_form_ids_in_domain(domain, 'XFormError')

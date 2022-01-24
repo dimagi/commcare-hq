@@ -18,7 +18,7 @@ class Command(BaseCommand):
         cases_by_db = Counter()
         print('======================== forms ========================')
         print('id\t\t\t\t\tshard\tdatabase')
-        for form_id in sorted(XFormInstance.objects.get_all_form_ids_in_domain(domain=domain)):
+        for form_id in sorted(XFormInstance.objects.get_form_ids_in_domain(domain=domain)):
             shard_id, dbname = ShardAccessor.get_shard_id_and_database_for_doc(form_id)
             forms_by_shard[shard_id] += 1
             forms_by_db[dbname] += 1

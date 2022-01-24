@@ -177,7 +177,7 @@ def _delete_all_cases(domain_name):
 def _delete_all_forms(domain_name):
     logger.info('Deleting forms...')
     form_ids = list(itertools.chain(*[
-        XFormInstance.objects.get_all_form_ids_in_domain(domain_name, doc_type)
+        XFormInstance.objects.get_form_ids_in_domain(domain_name, doc_type)
         for doc_type in doc_type_to_state
     ]))
     for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):

@@ -194,7 +194,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         ]
         self._dump_and_load(expected_object_counts)
 
-        form_ids = XFormInstance.objects.get_all_form_ids_in_domain(self.domain_name, 'XFormInstance')
+        form_ids = XFormInstance.objects.get_form_ids_in_domain(self.domain_name, 'XFormInstance')
         self.assertEqual(set(form_ids), set(form.form_id for form in pre_forms))
 
         for pre_form in pre_forms:

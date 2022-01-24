@@ -183,17 +183,17 @@ class XFormInstanceManagerTest(TestCase):
         create_form_for_test('bad-domain')
 
         # basic check
-        form_ids = XFormInstance.objects.get_form_ids_in_domain_by_type(DOMAIN, 'XFormInstance')
+        form_ids = XFormInstance.objects.get_form_ids_in_domain(DOMAIN)
         self.assertEqual(set(form_ids), {form1.form_id, form2.form_id})
 
         # change state of form1
         archive_form(form1, 'user1')
 
         # check filtering by state
-        form_ids = XFormInstance.objects.get_form_ids_in_domain_by_type(DOMAIN, 'XFormArchived')
+        form_ids = XFormInstance.objects.get_form_ids_in_domain(DOMAIN, 'XFormArchived')
         self.assertEqual(form_ids, [form1.form_id])
 
-        form_ids = XFormInstance.objects.get_form_ids_in_domain_by_type(DOMAIN, 'XFormInstance')
+        form_ids = XFormInstance.objects.get_form_ids_in_domain(DOMAIN, 'XFormInstance')
         self.assertEqual(form_ids, [form2.form_id])
 
     def test_iter_form_ids_by_xmlns(self):

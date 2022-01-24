@@ -151,11 +151,12 @@ class XFormInstanceManager(RequireDBManager):
         forms = sorted(forms, key=lambda f: f.received_on, reverse=recent_first)
         return forms[:limit]
 
-    def get_all_form_ids_in_domain(self, domain, doc_type="XFormInstance"):
-        self.get_form_ids_in_domain_by_type(domain, doc_type)
+    def get_form_ids_in_domain(self, domain, doc_type="XFormInstance"):
+        """Get all form ids of doc type in domain
 
-    def get_form_ids_in_domain_by_type(self, domain, type_):
-        state = self.model.DOC_TYPE_TO_STATE[type_]
+        Old names: get_all_form_ids_in_domain, get_form_ids_in_domain_by_type
+        """
+        state = self.model.DOC_TYPE_TO_STATE[doc_type]
         return self.get_form_ids_in_domain_by_state(domain, state)
 
     def get_form_ids_in_domain_by_state(self, domain, state):

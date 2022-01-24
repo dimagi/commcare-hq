@@ -36,7 +36,7 @@ class Command(BaseCommand):
             os.mkdir(folder_path)
 
         form_accessors = FormAccessors(domain)
-        form_ids = XFormInstance.objects.get_all_form_ids_in_domain(domain)
+        form_ids = XFormInstance.objects.get_form_ids_in_domain(domain)
         for form in form_accessors.iter_forms(form_ids):
             form_path = os.path.join(folder_path, form.form_id)
             if not os.path.exists(form_path):

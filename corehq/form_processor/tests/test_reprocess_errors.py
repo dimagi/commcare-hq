@@ -134,7 +134,7 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertEqual(1, len(stubs))
 
         # form that was saved before case error raised
-        normal_form_ids = XFormInstance.objects.get_all_form_ids_in_domain(self.domain, 'XFormInstance')
+        normal_form_ids = XFormInstance.objects.get_form_ids_in_domain(self.domain, 'XFormInstance')
         self.assertEqual(0, len(normal_form_ids))
 
         # shows error form (duplicate of form that was saved before case error)
@@ -512,7 +512,7 @@ class TestTransactionErrors(TransactionTestCase):
                 form_id=form_id
             )
 
-        [error_form_id] = XFormInstance.objects.get_form_ids_in_domain_by_type(self.domain, 'XFormError')
+        [error_form_id] = XFormInstance.objects.get_form_ids_in_domain(self.domain, 'XFormError')
         self.assertNotEqual(error_form_id, form_id)
         form = XFormInstance.objects.get_form(error_form_id)
         self.assertTrue(form.is_error)
