@@ -9,6 +9,7 @@ from corehq.apps.case_importer.util import get_spreadsheet
 from corehq.util.test_utils import TestFileMixin
 from custom.samveg.case_importer.exceptions import CallValueInvalidError
 from custom.samveg.case_importer.validators import (
+    CallColumnsValidator,
     CallValidator,
     RequiredColumnsValidator,
     RequiredValueValidator,
@@ -56,6 +57,19 @@ class TestRequiredColumnsValidator(SimpleTestCase, TestFileMixin):
         self.assertEqual(
             missing_columns,
             expected_missing_columns
+        )
+
+
+class TestCallColumnsValidator(SimpleTestCase, TestFileMixin):
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
+
+    def test_validate_call_columns(self):
+        with get_spreadsheet(self.get_path('missing_call_columns_case_upload', 'xlsx')) as spreadsheet:
+            errors = CallColumnsValidator.run(spreadsheet)
+        self.assertEqual(
+            errors[0],
+            'Need at least one Call column for Calls 1-6'
         )
 
 
