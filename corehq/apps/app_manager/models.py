@@ -406,7 +406,7 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
     case_type = StringProperty()
     name_update = SchemaProperty(ConditionalCaseUpdate)
     reference_id = StringProperty()
-    case_properties = SchemaProperty(ConditionalCaseUpdate)
+    case_properties = SchemaDictProperty(ConditionalCaseUpdate)
     repeat_context = StringProperty()
     # relationship = "child" for index to a parent case (default)
     # relationship = "extension" for index to a host case
@@ -427,6 +427,8 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
             data['name_update'] = {
                 'question_path': path
             }
+        if 'case_properties' in data:
+            data['case_properties'] = wrap_transition_from_old_update_case_action(data['case_properties'])
         return super(OpenSubCaseAction, cls).wrap(data)
 
 
