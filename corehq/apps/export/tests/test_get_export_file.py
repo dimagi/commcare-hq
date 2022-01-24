@@ -684,16 +684,23 @@ class ExportTest(SimpleTestCase):
             cls.es = get_es_new()
             initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
 
-        case = new_case(_id='robin', name='batman', foo="apple", bar="banana", date='2016-4-24')
+        case = new_case(
+            case_id='robin',
+            name='batman',
+            case_json={"foo": "apple", "bar": "banana", "date": '2016-4-24'},
+        )
         send_to_elasticsearch('cases', case.to_json())
 
-        case = new_case(owner_id="some_other_owner", foo="apple", bar="banana", date='2016-4-04')
+        case = new_case(
+            owner_id="some_other_owner",
+            case_json={"foo": "apple", "bar": "banana", "date": '2016-4-04'},
+        )
         send_to_elasticsearch('cases', case.to_json())
 
-        case = new_case(type="some_other_type", foo="apple", bar="banana")
+        case = new_case(type="some_other_type", case_json={"foo": "apple", "bar": "banana"})
         send_to_elasticsearch('cases', case.to_json())
 
-        case = new_case(closed=True, foo="apple", bar="banana")
+        case = new_case(closed=True, case_json={"foo": "apple", "bar": "banana"})
         send_to_elasticsearch('cases', case.to_json())
 
         cls.es.indices.refresh(CASE_INDEX_INFO.index)

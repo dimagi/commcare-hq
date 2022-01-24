@@ -4,6 +4,7 @@ import uuid
 from collections import Counter
 from datetime import datetime
 from io import StringIO
+from pathlib import Path
 
 from unittest import mock
 from django.contrib.admin.utils import NestedObjects
@@ -25,6 +26,7 @@ from corehq.apps.dump_reload.sql.dump import (
 from corehq.apps.dump_reload.sql.load import (
     DefaultDictWithKey,
     constraint_checks_deferred,
+    update_model_name,
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
@@ -41,11 +43,11 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.models import (
     CaseTransaction,
-    CommCareCaseIndexSQL,
-    CommCareCaseSQL,
+    CommCareCaseIndex,
+    CommCareCase,
     LedgerTransaction,
     LedgerValue,
-    XFormInstanceSQL,
+    XFormInstance,
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -88,23 +90,29 @@ class BaseDumpLoadTest(TestCase):
         models = list(expected_dump_counts)
         self._check_signals_handle_raw(models)
 
+        # Dump
         output_stream = StringIO()
         if dumper_fn:
             dumper_fn(output_stream)
         else:
             SqlDataDumper(self.domain_name, [], []).dump(output_stream)
+        output_stream.seek(0)
 
         self.delete_sql_data()
+        self._do_load(output_stream, expected_dump_counts, load_filter, expected_load_counts)
 
+    def _load(self, output_stream, expected_load_counts):
+        expected_load_counts.update(self.default_objects_counts)
+        self._do_load(output_stream, expected_load_counts, None, expected_load_counts)
+
+    def _do_load(self, output_stream, expected_dump_counts, load_filter, expected_load_counts):
         # make sure that there's no data left in the DB
         objects_remaining = list(get_objects_to_dump(self.domain_name, [], []))
         object_classes = [obj.__class__.__name__ for obj in objects_remaining]
         counts = Counter(object_classes)
         self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
 
-        # Dump
         actual_model_counts, dump_lines = self._parse_dump_output(output_stream)
-
         expected_model_counts = _normalize_object_counter(expected_dump_counts)
         self.assertDictEqual(dict(expected_model_counts), dict(actual_model_counts))
 
@@ -119,9 +127,14 @@ class BaseDumpLoadTest(TestCase):
         return dump_lines
 
     def _parse_dump_output(self, output_stream):
-        dump_output = output_stream.getvalue().split('\n')
+        def get_model(line):
+            obj = json.loads(line)
+            update_model_name(obj)
+            return obj["model"]
+
+        dump_output = output_stream.readlines()
         dump_lines = [line.strip() for line in dump_output if line.strip()]
-        actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
+        actual_model_counts = Counter([get_model(line) for line in dump_lines])
         return actual_model_counts, dump_lines
 
     def _check_signals_handle_raw(self, models):
@@ -175,7 +188,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
 
     def test_dump_load_form(self):
         expected_object_counts = Counter({
-            XFormInstanceSQL: 2,
+            XFormInstance: 2,
             BlobMeta: 2
         })
 
@@ -192,13 +205,42 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             post_form = self.form_accessors.get_form(pre_form.form_id)
             self.assertDictEqual(pre_form.to_json(), post_form.to_json())
 
+    def test_load_renamed_model(self):
+        self.delete_sql_data()  # delete "default objects" created in setUpClass
+        expected_object_counts = Counter({
+            BlobMeta: 2,
+            CommCareCase: 2,
+            CommCareCaseIndex: 1,
+            CaseTransaction: 3,
+            XFormInstance: 2,
+        })
+
+        path = Path(__file__).parent / 'data/old-model-names.json'
+        with open(path, encoding="utf8") as stream:
+            self._load(stream, expected_object_counts)
+
+        domain = "d47de5734d2c4670a8c294b51788075f"
+        form_patch = mock.patch.object(self.form_accessors, "domain", domain)
+        case_patch = mock.patch.object(self.case_accessors, "domain", domain)
+        with form_patch, case_patch:
+            form_ids = self.form_accessors.get_all_form_ids_in_domain('XFormInstance')
+            self.assertEqual(set(form_ids), {
+                '580987967edf45169574193f844e97dc',
+                '56e8ba18e6ab407c862309f421930a7c',
+            })
+            case_ids = self.case_accessors.get_case_ids_in_domain()
+            self.assertEqual(set(case_ids), {
+                '1ff125c3ad39412891a7be47a590cd5d',
+                'f9e768d36ca34a5a95dca40a75488863',
+            })
+
     def test_sql_dump_load_case(self):
         expected_object_counts = Counter({
-            XFormInstanceSQL: 2,
+            XFormInstance: 2,
             BlobMeta: 2,
-            CommCareCaseSQL: 2,
+            CommCareCase: 2,
             CaseTransaction: 3,
-            CommCareCaseIndexSQL: 1
+            CommCareCaseIndex: 1
 
         })
 
@@ -225,9 +267,9 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
 
     def test_ledgers(self):
         expected_object_counts = Counter({
-            XFormInstanceSQL: 3,
+            XFormInstance: 3,
             BlobMeta: 3,
-            CommCareCaseSQL: 1,
+            CommCareCase: 1,
             CaseTransaction: 3,
             LedgerValue: 1,
             LedgerTransaction: 2
@@ -718,6 +760,7 @@ class TestSqlLoadWithError(BaseDumpLoadTest):
     def _load_with_errors(self, chunk_size):
         output_stream = StringIO()
         SqlDataDumper(self.domain_name, [], []).dump(output_stream)
+        output_stream.seek(0)
         self.delete_sql_data()
         # resave the product to force an error
         self.products[0].save()

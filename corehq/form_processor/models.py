@@ -47,12 +47,12 @@ from .exceptions import AttachmentNotFound
 
 STANDARD_CHARFIELD_LENGTH = 255
 
-XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
-XFormOperationSQL_DB_TABLE = 'form_processor_xformoperationsql'
+XFormInstance_DB_TABLE = 'form_processor_xforminstancesql'
+XFormOperation_DB_TABLE = 'form_processor_xformoperationsql'
 
-CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
-CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
-CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
+CommCareCase_DB_TABLE = 'form_processor_commcarecasesql'
+CommCareCaseIndex_DB_TABLE = 'form_processor_commcarecaseindexsql'
+CaseAttachment_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 LedgerTransaction_DB_TABLE = 'form_processor_ledgertransaction'
@@ -326,8 +326,8 @@ class AttachmentMixin(SaveStateMixin):
         raise NotImplementedError
 
 
-class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
-                       AbstractXFormInstance, TrackRelatedChanges):
+class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
+                    AbstractXFormInstance, TrackRelatedChanges):
     partition_attr = 'form_id'
 
     # states should be powers of 2
@@ -406,7 +406,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     app_version = models.PositiveIntegerField(null=True, blank=True)
 
     def __init__(self, *args, **kwargs):
-        super(XFormInstanceSQL, self).__init__(*args, **kwargs)
+        super(XFormInstance, self).__init__(*args, **kwargs)
         # keep track to avoid refetching to check whether value is updated
         self.__original_form_id = self.form_id
 
@@ -518,10 +518,10 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     @property
     @memoized
     def history(self):
-        """:returns: List of XFormOperationSQL objects"""
+        """:returns: List of XFormOperation objects"""
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         operations = FormAccessorSQL.get_form_operations(self.form_id) if self.is_saved() else []
-        operations += self.get_tracked_models_to_create(XFormOperationSQL)
+        operations += self.get_tracked_models_to_create(XFormOperation)
         return operations
 
     @property
@@ -536,9 +536,9 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         self.state |= self.DELETED
 
     def to_json(self, include_attachments=False):
-        from .serializers import XFormInstanceSQLSerializer, lazy_serialize_form_attachments, \
+        from .serializers import XFormInstanceSerializer, lazy_serialize_form_attachments, \
             lazy_serialize_form_history
-        serializer = XFormInstanceSQLSerializer(self)
+        serializer = XFormInstanceSerializer(self)
         data = dict(serializer.data)
         if include_attachments:
             data['external_blobs'] = lazy_serialize_form_attachments(self)
@@ -601,7 +601,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         ).format(f=self)
 
     class Meta(object):
-        db_table = XFormInstanceSQL_DB_TABLE
+        db_table = XFormInstance_DB_TABLE
         app_label = "form_processor"
         index_together = [
             ('domain', 'state'),
@@ -636,7 +636,7 @@ class DeprecatedXFormAttachmentSQL(models.Model):
         ]
 
 
-class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
+class XFormOperation(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'form_id'
 
     ARCHIVE = 'archive'
@@ -645,7 +645,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     UUID_DATA_FIX = 'uuid_data_fix'
     GDPR_SCRUB = 'gdpr_scrub'
 
-    form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
+    form = models.ForeignKey(XFormInstance, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)
     operation = models.CharField(max_length=255, default=None)
     date = models.DateTimeField(null=False)
@@ -661,7 +661,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
 
     class Meta(object):
         app_label = "form_processor"
-        db_table = XFormOperationSQL_DB_TABLE
+        db_table = XFormOperation_DB_TABLE
 
 
 class XFormPhoneMetadata(jsonobject.JsonObject):
@@ -704,9 +704,10 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
             return LooseVersion(version_text)
 
 
-class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
-                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
-                      MessagingCaseContactMixin):
+class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
+                   AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
+                   MessagingCaseContactMixin):
+    DOC_TYPE = 'CommCareCase'
     partition_attr = 'case_id'
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -737,6 +738,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     case_json = JSONField(default=dict)
 
+    def __init__(self, *args, **kwargs):
+        if "indices" in kwargs:
+            self._set_indices(kwargs.pop("indices"))
+        super().__init__(*args, **kwargs)
+
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
@@ -744,7 +750,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @property
     def doc_type(self):
-        dt = 'CommCareCase'
+        dt = self.DOC_TYPE
         if self.is_deleted:
             dt += DELETED_SUFFIX
         return dt
@@ -798,13 +804,13 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return OrderedDict(sorted(self.case_json.items()))
 
     def to_api_json(self, lite=False):
-        from .serializers import CommCareCaseSQLAPISerializer
-        serializer = CommCareCaseSQLAPISerializer(self, lite=lite)
+        from .serializers import CommCareCaseAPISerializer
+        serializer = CommCareCaseAPISerializer(self, lite=lite)
         return serializer.data
 
     def to_json(self):
         from .serializers import (
-            CommCareCaseSQLSerializer,
+            CommCareCaseSerializer,
             lazy_serialize_case_attachments,
             lazy_serialize_case_indices,
             lazy_serialize_case_transactions,
@@ -814,7 +820,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         def union(*dicts):
             return {k: v for d in dicts for k, v in d.items()}
 
-        serializer = CommCareCaseSQLSerializer(self)
+        serializer = CommCareCaseSerializer(self)
         return union(self.case_json, serializer.data, {
             'indices': lazy_serialize_case_indices(self),
             'actions': lazy_serialize_case_transactions(self),
@@ -857,17 +863,30 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
         return CaseAccessorSQL.get_indices(self.domain, self.case_id) if self.is_saved() else []
 
+    def _set_indices(self, value):
+        """Set previously-saved indices
+
+        Private setter used by the class constructor to populate indices
+        from a source such as ElasticSearch. This setter does not update
+        tracked models, and therefore is not intended for use with cases
+        whose state is being mutated.
+
+        :param value: A list of dicts that will be used to construct
+        `CommCareCaseIndex` objects.
+        """
+        self.cached_indices = [CommCareCaseIndex(**x) for x in value]
+
     @property
     def indices(self):
         indices = self._saved_indices()
 
         to_delete = [
             (to_delete.id, to_delete.identifier)
-            for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndexSQL)
+            for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndex)
         ]
         indices = [index for index in indices if (index.id, index.identifier) not in to_delete]
 
-        indices += self.get_tracked_models_to_create(CommCareCaseIndexSQL)
+        indices += self.get_tracked_models_to_create(CommCareCaseIndex)
 
         return indices
 
@@ -911,7 +930,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @property
     def actions(self):
-        """For compatability with CommCareCase. Please use transactions when possible"""
+        """DEPRECATED use transactions instead"""
         return self.non_revoked_transactions
 
     def _get_unsaved_transaction_for_form(self, form_id):
@@ -939,11 +958,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def serialized_attachments(self):
-        from .serializers import CaseAttachmentSQLSerializer
+        from .serializers import CaseAttachmentSerializer
         return {
-            att.name: dict(CaseAttachmentSQLSerializer(att).data)
+            att.name: dict(CaseAttachmentSerializer(att).data)
             for att in self.get_attachments()
-            }
+        }
 
     @memoized
     def get_closing_transactions(self):
@@ -1034,13 +1053,13 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         """
         result = self.get_parent(
             identifier=DEFAULT_PARENT_IDENTIFIER,
-            relationship=CommCareCaseIndexSQL.CHILD
+            relationship=CommCareCaseIndex.CHILD
         )
         return result[0] if result else None
 
     @property
     def host(self):
-        result = self.get_parent(relationship=CommCareCaseIndexSQL.EXTENSION)
+        result = self.get_parent(relationship=CommCareCaseIndex.EXTENSION)
         return result[0] if result else None
 
     def __str__(self):
@@ -1061,10 +1080,10 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             ["domain", "type"],
         ]
         app_label = "form_processor"
-        db_table = CommCareCaseSQL_DB_TABLE
+        db_table = CommCareCase_DB_TABLE
 
 
-class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
+class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
     """Case attachment
 
     Case attachments reference form attachments, and therefore this
@@ -1080,7 +1099,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
     partition_attr = 'case_id'
 
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False,
+        'CommCareCase', to_field='case_id', db_index=False,
         related_name="attachment_set", related_query_name="attachment",
         on_delete=models.CASCADE,
     )
@@ -1092,7 +1111,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
     blob_id = models.CharField(max_length=255, default=None)
     blob_bucket = models.CharField(max_length=255, null=True, default="")
 
-    # DEPRECATED - use CaseAttachmentSQL.content_md5() instead
+    # DEPRECATED - use CaseAttachment.content_md5() instead
     md5 = models.CharField(max_length=255, default="")
 
     @property
@@ -1143,7 +1162,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
     def __str__(self):
         return str(
-            "CaseAttachmentSQL("
+            "CaseAttachment("
             "attachment_id='{a.attachment_id}', "
             "case_id='{a.case_id}', "
             "name='{a.name}', "
@@ -1167,13 +1186,13 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
     class Meta(object):
         app_label = "form_processor"
-        db_table = CaseAttachmentSQL_DB_TABLE
+        db_table = CaseAttachment_DB_TABLE
         index_together = [
             ["case", "name"],
         ]
 
 
-class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
+class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
 
     # relationship_ids should be powers of 2
@@ -1187,7 +1206,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False,
+        'CommCareCase', to_field='case_id', db_index=False,
         related_name="index_set", related_query_name="index",
         on_delete=models.CASCADE,
     )
@@ -1231,7 +1250,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         self.relationship_id = self.RELATIONSHIP_MAP[relationship]
 
     def __eq__(self, other):
-        return isinstance(other, CommCareCaseIndexSQL) and (
+        return isinstance(other, CommCareCaseIndex) and (
             self.case_id == other.case_id
             and self.identifier == other.identifier
             and self.referenced_id == other.referenced_id
@@ -1259,7 +1278,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             ["domain", "referenced_id"],
         ]
         unique_together = ('case', 'identifier')
-        db_table = CommCareCaseIndexSQL_DB_TABLE
+        db_table = CommCareCaseIndex_DB_TABLE
         app_label = "form_processor"
 
 
@@ -1304,7 +1323,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         TYPE_LEDGER,
     )
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False,
+        'CommCareCase', to_field='case_id', db_index=False,
         related_name="transaction_set", related_query_name="transaction",
         on_delete=models.CASCADE,
     )
@@ -1583,7 +1602,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
 
     domain = models.CharField(max_length=255, null=False, default=None)
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False, on_delete=models.CASCADE
+        'CommCareCase', to_field='case_id', db_index=False, on_delete=models.CASCADE
     )
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
@@ -1678,7 +1697,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     report_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False, on_delete=models.CASCADE
+        'CommCareCase', to_field='case_id', db_index=False, on_delete=models.CASCADE
     )
     entry_id = models.CharField(max_length=100, default=None)
     section_id = models.CharField(max_length=100, default=None)

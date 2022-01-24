@@ -1747,13 +1747,6 @@ class ProjectSettingsTab(UITab):
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
-        if toggles.OPENCLINICA.enabled(self.domain):
-            from corehq.apps.domain.views.settings import EditOpenClinicaSettingsView
-            project_info.append({
-                'title': _(EditOpenClinicaSettingsView.page_title),
-                'url': reverse(EditOpenClinicaSettingsView.urlname, args=[self.domain])
-            })
-
         items.append((_('Project Information'), project_info))
 
         if user_is_admin and has_project_access:

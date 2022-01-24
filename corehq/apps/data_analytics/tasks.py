@@ -6,6 +6,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
@@ -23,14 +24,11 @@ logger = get_task_logger(__name__)
 def build_last_month_MALT():
     last_month = last_month_dict()
     domains = Domain.get_all_names()
-    grouped_malt_tasks = update_current_MALT_for_domains.chunks(
-        zip([last_month], domains), 1000
-    ).group()
+    task_results = []
+    for chunk in chunked(domains, 1000):
+        task_results.append(update_current_MALT_for_domains.delay(last_month, chunk))
 
-    group_result = grouped_malt_tasks.apply_async()
-    # celery 4.1 does not have support for disable_sync_subtasks in a GroupResult.get()
-    # this is a workaround until we upgrade
-    for result in group_result.results:
+    for result in task_results:
         result.get(disable_sync_subtasks=False)
 
     send_MALT_complete_email(last_month)
@@ -42,7 +40,8 @@ def update_current_MALT():
     today = datetime.date.today()
     this_month_dict = {'month': today.month, 'year': today.year}
     domains = Domain.get_all_names()
-    update_current_MALT_for_domains.chunks(zip([this_month_dict], domains), 5000).apply_async()
+    for chunk in chunked(domains, 1000):
+        update_current_MALT_for_domains.delay(this_month_dict, chunk)
 
 
 @periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='3'),

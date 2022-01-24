@@ -525,7 +525,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     hour = IntegerProperty(default=8)
     minute = IntegerProperty(default=0)
     day = IntegerProperty(default=1)
-    interval = StringProperty(choices=["daily", "weekly", "monthly"])
+    interval = StringProperty(choices=["hourly", "daily", "weekly", "monthly"])
     uuid = StringProperty()
     start_date = DateProperty(default=None)
 
@@ -634,6 +634,8 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     @property
     def day_name(self):
+        if self.interval == 'hourly':
+            return _("Every hour")
         if self.interval == 'weekly':
             return calendar.day_name[self.day]
         return {

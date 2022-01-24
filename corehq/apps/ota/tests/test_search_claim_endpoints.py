@@ -469,7 +469,7 @@ class CaseClaimEndpointTests(TestCase):
             '<external_id>Jamie Hand</external_id>'
             '<date_opened>2016-04-17</date_opened>'
             '<commcare_search_score>xxx</commcare_search_score>'
-            '<location_id>None</location_id>'
+            '<opened_by>nerc</opened_by>'
             '</case>'
             '</results>'.format(
                 case_id=self.case_id,

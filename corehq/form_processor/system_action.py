@@ -1,6 +1,6 @@
 import logging
 
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 
 log = logging.getLogger(__name__)
 
@@ -59,8 +59,8 @@ def handle_system_action(form, auth_context):
         raise UnauthorizedSystemAction(repr(form))
     # put form in archived state so it does not appear in exports
     assert form.xmlns == SYSTEM_ACTION_XMLNS, repr(form)
-    if isinstance(form, XFormInstanceSQL):
-        form.state = XFormInstanceSQL.ARCHIVED
+    if isinstance(form, XFormInstance):
+        form.state = XFormInstance.ARCHIVED
     else:
         form.doc_type = "XFormArchived"
 

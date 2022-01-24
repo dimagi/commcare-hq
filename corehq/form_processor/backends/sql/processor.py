@@ -19,8 +19,8 @@ from corehq.form_processor.change_publishers import (
 from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
-    XFormInstanceSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
+    XFormInstance, CaseTransaction,
+    CommCareCase, FormEditRebuild, Attachment, XFormOperation)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq import toggles
@@ -49,7 +49,7 @@ class FormProcessorSQL(object):
     def new_xform(cls, form_data):
         form_id = extract_meta_instance_id(form_data) or str(uuid.uuid4())
 
-        return XFormInstanceSQL(
+        return XFormInstance(
             # other properties can be set post-wrap
             form_id=form_id,
             xmlns=form_data.get('@xmlns'),
@@ -67,7 +67,7 @@ class FormProcessorSQL(object):
         FormAccessorSQL.hard_delete_forms(domain, form_ids)
         CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
         for form in xforms:
-            form.state |= XFormInstanceSQL.DELETED
+            form.state |= XFormInstance.DELETED
             publish_form_saved(form)
         case.deleted = True
         publish_case_saved(case)
@@ -152,7 +152,7 @@ class FormProcessorSQL(object):
         publish_form_saved(processed_forms.submitted)
         cases = cases or []
         for case in cases:
-            publish_case_saved(case)
+            publish_case_saved(case, send_post_save_signal=False)
 
         if stock_result:
             for ledger in stock_result.models_to_save:
@@ -160,20 +160,20 @@ class FormProcessorSQL(object):
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
-        existing_xform.state = XFormInstanceSQL.DEPRECATED
+        existing_xform.state = XFormInstance.DEPRECATED
         default_user_id = new_xform.user_id or 'unknown'
         user_id = new_xform.auth_context and new_xform.auth_context.get('user_id') or default_user_id
-        operation = XFormOperationSQL(
+        operation = XFormOperation(
             user_id=user_id,
             date=new_xform.edited_on,
-            operation=XFormOperationSQL.EDIT
+            operation=XFormOperation.EDIT
         )
         new_xform.track_create(operation)
         return existing_xform, new_xform
 
     @classmethod
     def deduplicate_xform(cls, xform):
-        xform.state = XFormInstanceSQL.DUPLICATE
+        xform.state = XFormInstance.DUPLICATE
         xform.orig_id = xform.form_id
         xform.problem = "Form is a duplicate of another! (%s)" % xform.form_id
         return cls.assign_new_id(xform)
@@ -187,7 +187,7 @@ class FormProcessorSQL(object):
 
     @classmethod
     def xformerror_from_xform_instance(cls, instance, error_message, with_new_id=False):
-        instance.state = XFormInstanceSQL.ERROR
+        instance.state = XFormInstance.ERROR
         instance.problem = error_message
 
         if with_new_id:
@@ -202,12 +202,12 @@ class FormProcessorSQL(object):
 
     @classmethod
     def submission_error_form_instance(cls, domain, instance, message):
-        xform = XFormInstanceSQL(
+        xform = XFormInstance(
             domain=domain,
             form_id=uuid.uuid4().hex,
             received_on=datetime.datetime.utcnow(),
             problem=message,
-            state=XFormInstanceSQL.SUBMISSION_ERROR_LOG,
+            state=XFormInstance.SUBMISSION_ERROR_LOG,
             xmlns=''
         )
         cls.store_attachments(xform, [Attachment(
@@ -242,7 +242,7 @@ class FormProcessorSQL(object):
                 case = case_db.get(case_id)
                 is_creation = False
                 if not case:
-                    case = CommCareCaseSQL(domain=domain, case_id=case_id)
+                    case = CommCareCase(domain=domain, case_id=case_id)
                     is_creation = True
                     case_db.set(case_id, case)
                 previous_owner = case.owner_id
@@ -282,9 +282,9 @@ class FormProcessorSQL(object):
         case, lock_obj = FormProcessorSQL.get_case_with_lock(case_id, lock=lock)
         found = bool(case)
         if not found:
-            case = CommCareCaseSQL(case_id=case_id, domain=domain)
+            case = CommCareCase(case_id=case_id, domain=domain)
             if lock:
-                lock_obj = CommCareCaseSQL.get_obj_lock_by_id(case_id)
+                lock_obj = CommCareCase.get_obj_lock_by_id(case_id)
                 acquire_lock(lock_obj, degrade_gracefully=False)
 
         try:
@@ -334,7 +334,7 @@ class FormProcessorSQL(object):
         try:
             if lock:
                 try:
-                    return CommCareCaseSQL.get_locked_obj(_id=case_id)
+                    return CommCareCase.get_locked_obj(_id=case_id)
                 except redis.RedisError:
                     case = CaseAccessorSQL.get_case(case_id)
             else:

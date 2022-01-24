@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-15 20:15+0000\n"
+"POT-Creation-Date: 2022-01-19 20:07+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -187,12 +187,6 @@ msgstr ""
 msgid "Invalid Project Selected"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/case_config_utils.js:65
-msgid ""
-"Something went wrong refreshing your form properties. Please refresh the "
-"page and try again"
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:118
 msgid "Mobile UCR Options"
 msgstr ""
@@ -214,7 +208,7 @@ msgid "Lookup Table Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:129
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:92
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50381
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50798
 msgid "Lookup Table"
@@ -526,40 +520,40 @@ msgstr ""
 msgid "Select parent"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:85
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:86
 msgid "Raw"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:88
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:89
 msgid "User Data"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:94
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:95
 msgid "User Properties"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:99
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:100
 msgid "Case Index"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:333
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:348
 msgid "Load / Update / Close a case"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:336
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:351
 msgid "Automatic Case Selection"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:339
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:354
 msgid "Load Case From Fixture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:347
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:362
 msgid "Open a Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js:71
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:525
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:523
 msgid "Property updated by two questions"
 msgstr ""
 
@@ -569,7 +563,7 @@ msgid "Reserved word: "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js:75
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:529
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:527
 msgid "Inside the wrong repeat!"
 msgstr ""
 
@@ -590,7 +584,7 @@ msgstr ""
 msgid "You have unchanged user properties settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:534
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:532
 msgid "Property uses unrecognized prefix <strong>"
 msgstr ""
 
@@ -679,24 +673,24 @@ msgstr "Remover"
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:109
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:110
 msgid "Case type is required."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:116
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:117
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:121
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:122
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:167
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:171
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:168
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:172
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:168
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:169
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -1565,7 +1559,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:45965
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:48707
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:49977
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:765
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:781
 #: corehq/apps/export/static/export/js/models.js:357
 #: corehq/apps/export/static/export/js/models.js:359
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:298
@@ -2722,24 +2716,24 @@ msgstr ""
 msgid "Not a valid number"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:422
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:534
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:440
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:550
 msgid "Please choose an item"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:586
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:602
 msgid "Combobox"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:658
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:674
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:920
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:936
 msgid "Map layer not configured."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:927
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:943
 msgid "Could not load map. Please try again later."
 msgstr ""
 
@@ -2884,11 +2878,6 @@ msgstr ""
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
 "Geocoder privilege"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:236
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:65
-msgid "Clear"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:41
@@ -3109,15 +3098,15 @@ msgstr ""
 msgid "Select a Timezone..."
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/internal_settings.js:79
+#: corehq/apps/domain/static/domain/js/internal_settings.js:78
 msgid "Available Countries"
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/internal_settings.js:80
+#: corehq/apps/domain/static/domain/js/internal_settings.js:79
 msgid "Active Countries"
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/internal_settings.js:81
+#: corehq/apps/domain/static/domain/js/internal_settings.js:80
 msgid "Search Countries..."
 msgstr ""
 
@@ -3333,21 +3322,25 @@ msgstr ""
 msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:65
+msgid "Clear"
+msgstr ""
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:70
 #: corehq/apps/registry/static/registry/js/registry_logs.js:19
 #: corehq/apps/reports/static/reports/js/filters/main.js:76
 msgid "Show All Dates"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:163
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:208
 msgid "Could not authenticate, please log in and try again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:180
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:225
 msgid "There was a problem, please refresh and try again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:185
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:230
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:49
 msgid "Done"
 msgstr ""
@@ -3377,28 +3370,25 @@ msgstr ""
 msgid "There was an error deleting"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:70
-msgid "Add All"
-msgstr "Adicionar Tudo"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:75
-msgid "Remove All"
-msgstr "Remover Tudo"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:153
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:173
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:58
 msgid "Items"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:154
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:174
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:59
 msgid "Selected items"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:155
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:175
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:60
 msgid "Search items"
 msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:72
+msgid "Add All"
+msgstr "Adicionar Tudo"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:77
+msgid "Remove All"
+msgstr "Remover Tudo"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js:18
 msgid "Your password is too weak! Try adding numbers or symbols."
@@ -3521,38 +3511,38 @@ msgid "Error updating."
 msgstr ""
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:183
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:334
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:336
 msgid "Report successfully linked."
 msgstr ""
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:186
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:191
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:206
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:273
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:338
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:343
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:275
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:340
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:345
 msgid ""
 "Something unexpected happened.\n"
 "Please try again, or report an issue if the problem persists."
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:253
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:254
 msgid "All project spaces"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:254
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:255
 msgid "Project spaces to push to"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:255
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:256
 msgid "Search project spaces"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:369
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:374
 msgid "Unable to link project spaces. <%- error %>"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:375
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:380
 msgid ""
 "Unable to link project spaces.\n"
 "Please try again, or report an issue if the problem persists."
@@ -3713,31 +3703,31 @@ msgstr ""
 msgid "label-info-light"
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js:9
+#: corehq/apps/reminders/static/reminders/js/keywords_list.js:8
 msgid "Keywords"
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js:10
+#: corehq/apps/reminders/static/reminders/js/keywords_list.js:9
 msgid "Keywords to copy"
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js:11
+#: corehq/apps/reminders/static/reminders/js/keywords_list.js:10
 msgid "Search keywords"
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js:15
+#: corehq/apps/reminders/static/reminders/js/keywords_list.js:14
 msgid "Linked Project Spaces"
+msgstr ""
+
+#: corehq/apps/reminders/static/reminders/js/keywords_list.js:15
+#: corehq/apps/userreports/static/userreports/js/configure_report.js:38
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js:11
+msgid "Projects to copy to"
 msgstr ""
 
 #: corehq/apps/reminders/static/reminders/js/keywords_list.js:16
 #: corehq/apps/userreports/static/userreports/js/configure_report.js:39
 #: corehq/apps/userreports/static/userreports/js/edit_report_config.js:12
-msgid "Projects to copy to"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js:17
-#: corehq/apps/userreports/static/userreports/js/configure_report.js:40
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js:13
 msgid "Search projects"
 msgstr ""
 
@@ -3784,20 +3774,20 @@ msgstr ""
 msgid "Select a value"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:120
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:125
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:28
 msgid "Select a language..."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:135
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:139
 msgid "Available Reports"
 msgstr "Relatórios Disponíveis"
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:136
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:140
 msgid "Included Reports"
 msgstr "Relatórios Incluídos"
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:137
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:141
 msgid "Search Reports..."
 msgstr ""
 
@@ -4095,8 +4085,8 @@ msgstr ""
 msgid "deactivated"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/configure_report.js:38
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js:11
+#: corehq/apps/userreports/static/userreports/js/configure_report.js:37
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js:10
 msgid "Linked projects"
 msgstr ""
 
@@ -4112,19 +4102,19 @@ msgstr ""
 msgid "Password was not changed "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:91
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:90
 msgid "Available Groups"
 msgstr "Grupos Disponíveis"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:92
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:91
 msgid "Groups with this User"
 msgstr "Grupos com este Usuário"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:93
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:92
 msgid "Search Group..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:104
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:103
 msgid "Group membership has changed."
 msgstr ""
 

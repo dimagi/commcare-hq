@@ -6,7 +6,6 @@ from django.test import TestCase, override_settings
 from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
-from casexml.apps.case.signals import case_post_save
 
 from corehq.apps import hqcase
 from corehq.apps.data_interfaces.models import (
@@ -39,7 +38,7 @@ from corehq.util.test_utils import set_parent_case as set_actual_parent_case
 
 @contextmanager
 def _with_case(domain, case_type, last_modified, **kwargs):
-    with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
+    with drop_connected_signals(sql_case_post_save):
         case = CaseFactory(domain).create_case(case_type=case_type, **kwargs)
 
     _update_case(domain, case.case_id, last_modified)

@@ -14,7 +14,7 @@ from corehq.apps.formplayer_api.smsforms.sms import SessionStartInfo
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 
 
 @patch('corehq.apps.smsforms.app.tfsms.start_session')
@@ -36,7 +36,7 @@ class TestStartSession(TestCase):
         cls.case_id = uuid.uuid4().hex
         cls.recipient = None
 
-        cls.case = CommCareCaseSQL(domain=cls.domain, case_id=cls.case_id, case_json={'language_code': 'fr'})
+        cls.case = CommCareCase(domain=cls.domain, case_id=cls.case_id, case_json={'language_code': 'fr'})
         cls.web_user = WebUser(username='web-user@example.com', _id=uuid.uuid4().hex, language='hin')
 
     @classmethod

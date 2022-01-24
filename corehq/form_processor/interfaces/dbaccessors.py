@@ -226,10 +226,10 @@ class FormAccessors(object):
     @contextmanager
     def _unfinished_archive(form, archive, user_id, trigger_signals=True):
         from ..change_publishers import publish_form_saved
-        from ..models import XFormInstanceSQL
+        from ..models import XFormInstance
         with unfinished_archive(instance=form, user_id=user_id, archive=archive) as archive_stub:
             yield archive_stub
-            is_sql = isinstance(form, XFormInstanceSQL)
+            is_sql = isinstance(form, XFormInstance)
             if is_sql:
                 publish_form_saved(form)
             if trigger_signals:
@@ -307,11 +307,6 @@ class AbstractCaseAccessor(metaclass=ABCMeta):
     @staticmethod
     @abstractmethod
     def get_related_indices(case_ids, exclude_indices):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
         raise NotImplementedError
 
     @staticmethod
@@ -461,9 +456,6 @@ class CaseAccessors(object):
         since sync date/log id
         """
         return self.db_accessor.get_modified_case_ids(self, case_ids, sync_log)
-
-    def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
-        return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)
 
     def get_extension_case_ids(self, case_ids, exclude_for_case_type=None):
         return self.db_accessor.get_extension_case_ids(
