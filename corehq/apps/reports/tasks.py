@@ -10,7 +10,7 @@ from text_unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
-from dimagi.utils import DateSpan
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
