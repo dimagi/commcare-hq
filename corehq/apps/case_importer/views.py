@@ -18,7 +18,14 @@ from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.base import location_safe_case_imports_enabled
 from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
-from corehq.apps.case_importer.exceptions import ImporterError, ImporterRawError
+from corehq.apps.case_importer.exceptions import (
+    CustomImporterError,
+    ImporterError,
+    ImporterRawError,
+)
+from corehq.apps.case_importer.extension_points import (
+    custom_case_upload_file_operations,
+)
 from corehq.apps.case_importer.suggested_fields import (
     get_suggested_case_fields,
 )
@@ -151,6 +158,10 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
             'Your project does not use cases yet. To import cases from Excel, '
             'you must first create an application with a case list.'
         ))
+
+    error_messages = custom_case_upload_file_operations(domain=domain, case_upload=case_upload)
+    if error_messages:
+        raise CustomImporterError("; ".join(error_messages))
 
     context = {
         'columns': columns,
