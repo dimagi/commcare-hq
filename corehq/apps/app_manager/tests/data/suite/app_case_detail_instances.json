@@ -358,7 +358,11 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "name": "\/data\/something"
+                "name": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "\/data\/something",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -1084,7 +1088,11 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "name": "\/data\/something"
+                "name": {
+                  "doc_type": "SmartCaseUpdate",
+                  "question_path": "\/data\/something",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
