@@ -19,6 +19,7 @@ from corehq.motech.openmrs.atom_feed import (
     get_case_block_kwargs_from_observations,
     get_diagnosis_mappings,
     get_encounter_uuid,
+    get_feed_updates,
     get_feed_xml,
     get_observation_mappings,
     get_patient_uuid,
@@ -467,6 +468,29 @@ def test_get_feed_xml():
         'There is an XML syntax error in the OpenMRS Atom feed at '
         f'"{response_url}".'
     )
+
+
+def test_get_feed_updates():
+    response = SimpleNamespace(
+        status_code=200,
+        url='https://www.example.com/openmrs/ws/atomfeed/patient/recent',
+        content='<html><body>Bad XML</html>',
+    )
+    requests = SimpleNamespace(
+        domain_name='test_domain',
+        get=lambda url: response,
+        notify_exception=lambda err, msg: None,
+    )
+    repeater = SimpleNamespace(
+        atom_feed_status={},
+        requests=requests,
+    )
+    with patch('corehq.motech.openmrs.atom_feed.get_feed_xml') \
+            as get_feed_xml_mock:
+        get_feed_xml_mock.side_effect = OpenmrsFeedSyntaxError
+
+        # Assert returns without raising
+        get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
 
 
 def test_doctests():
