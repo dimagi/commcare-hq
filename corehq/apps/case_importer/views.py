@@ -57,8 +57,8 @@ def validate_column_names(column_names, invalid_column_names):
     for column_name in column_names:
         try:
             validate_property(column_name, allow_parents=False)
-        except ValueError:
-            invalid_column_names.add(column_name)
+        except (ValueError, TypeError):
+            invalid_column_names.add(str(column_name))
 
 
 # Cobble together the context needed to render breadcrumbs that class-based views get from BasePageView
