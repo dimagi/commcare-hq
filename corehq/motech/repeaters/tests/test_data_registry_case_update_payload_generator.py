@@ -178,23 +178,37 @@ def test_generator_update_create_index_bad_relationship():
 
 
 def test_generator_update_remove_index_bad_relationship():
-    builder = IntentCaseBuilder().remove_index("case2", "cousin")
+    builder = IntentCaseBuilder().remove_index("case2", "parent", relationship="cousin")
     msg = "Index relationships must be either 'child' or 'extension'"
     with assert_raises(DataRegistryCaseUpdateError, msg=msg):
         _test_payload_generator(intent_case=builder.get_case())
 
 
 def test_generator_update_remove_index():
-    builder = IntentCaseBuilder().remove_index("parent_case_id", "child")
+    builder = IntentCaseBuilder().remove_index("parent_case_id", "parent_c")
 
     _test_payload_generator(intent_case=builder.get_case(), expected_indices={
-        "1": {"parent": IndexAttrs("parent_type", None, "child")}})
+        "1": {"parent_c": IndexAttrs("parent_type", None, "child")}})
+
+
+def test_generator_update_remove_index_extension():
+    builder = IntentCaseBuilder().remove_index("host_case_id", "host_c")
+
+    _test_payload_generator(intent_case=builder.get_case(), expected_indices={
+        "1": {"host_c": IndexAttrs("host_type", None, "extension")}})
+
+
+def test_generator_update_remove_index_check_relationship():
+    builder = IntentCaseBuilder().remove_index("parent_case_id", "parent_c", relationship="extension")
+    msg = "Index relationship does not match for index to remove"
+    with assert_raises(DataRegistryCaseUpdateError, msg=msg):
+        _test_payload_generator(intent_case=builder.get_case())
 
 
 def test_generator_update_create_and_remove_index():
     builder = IntentCaseBuilder() \
         .create_index("case2", "host_type", "extension") \
-        .remove_index("parent_case_id", "child")
+        .remove_index("parent_case_id", "parent_c")
 
     def _get_case(case_id):
         assert case_id == "case2"
@@ -204,7 +218,7 @@ def test_generator_update_create_and_remove_index():
         _test_payload_generator(intent_case=builder.get_case(), expected_indices={
             "1": {
                 "host": IndexAttrs("host_type", "case2", "extension"),
-                "parent": IndexAttrs("parent_type", None, "child")
+                "parent_c": IndexAttrs("parent_type", None, "child")
             }})
 
 
@@ -439,9 +453,10 @@ class IntentCaseBuilder:
         })
         return self
 
-    def remove_index(self, case_id, relationship):
+    def remove_index(self, case_id, identifier, relationship=None):
         self.props.update({
             "target_index_remove_case_id": case_id,
+            "target_index_remove_identifier": identifier,
             "target_index_remove_relationship": relationship,
         })
         return self
@@ -508,8 +523,12 @@ def _mock_case(case_id, props=None, domain=TARGET_DOMAIN, case_type="patient"):
         case_json=props,
         live_indices=[
             Mock(
-                identifier="parent", referenced_type="parent_type",
+                identifier="parent_c", referenced_type="parent_type",
                 referenced_id="parent_case_id", relationship_id="child"
+            ),
+            Mock(
+                identifier="host_c", referenced_type="host_type",
+                referenced_id="host_case_id", relationship_id="extension"
             )
         ])
     mock_case.name = None
