@@ -135,7 +135,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     if 'startdate' in request_GET:
         config.start_date = iso_string_to_datetime(request_GET['startdate']).date()
     else:
-        config.start_date = request_data['datespan'].startdate.date()
+        config.start_date = iso_string_to_datetime(request_data['startdate']).date()
     if 'enddate' in request_GET:
         config.date_range = 'range'
         config.end_date = iso_string_to_datetime(request_GET['enddate']).date()
