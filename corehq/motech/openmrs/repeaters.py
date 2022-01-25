@@ -61,7 +61,10 @@ from corehq.toggles import OPENMRS_INTEGRATION
 
 class AtomFeedStatus(DocumentSchema):
     last_polled_at = DateTimeProperty(default=None)
-    last_page = StringProperty(default=None)
+
+    # The first time the feed is polled, don't replay all the changes
+    # since OpenMRS was installed. Start from the most recent changes.
+    last_page = StringProperty(default='recent')
 
 
 class OpenmrsRepeater(CaseRepeater):
