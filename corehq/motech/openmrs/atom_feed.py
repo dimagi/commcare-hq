@@ -42,7 +42,7 @@ from corehq.motech.openmrs.const import (
 from corehq.motech.openmrs.exceptions import (
     DuplicateCaseMatch,
     OpenmrsException,
-    OpenmrsFeedDoesNotExist,
+    OpenmrsFeedRuntimeException,
     OpenmrsFeedSyntaxError,
 )
 from corehq.motech.openmrs.openmrs_config import (
@@ -68,15 +68,16 @@ class CaseAttrs(NamedTuple):
     owner_id: str
 
 
-def get_feed_xml(requests, feed_name, page):
+def get_feed_xml(requests, feed_name, page: str):
     assert feed_name in ATOM_FEED_NAMES
     feed_url = f'/ws/atomfeed/{feed_name}/{page}'
     resp = requests.get(feed_url)
+
     if resp.status_code == 500:
         if 'AtomFeedRuntimeException: feed does not exist' in resp.text:
-            exception = OpenmrsFeedDoesNotExist(
+            exception = OpenmrsFeedRuntimeException(
                 f'Domain "{requests.domain_name}": Page does not exist in Atom '
-                f'feed "{resp.url}". Resetting atom feed status.'
+                f'feed "{resp.url}". Resetting Atom feed status.'
             )
             requests.notify_exception(
                 str(exception),
@@ -87,6 +88,33 @@ def get_feed_xml(requests, feed_name, page):
                   "patients that can no longer be found.")
             )
             raise exception
+        if ('AtomFeedRuntimeException: feedId must not be null and must be '
+                'greater than 0') in resp.text:
+            exception = OpenmrsFeedRuntimeException(
+                f'Domain "{requests.domain_name}": Page "{page}" is not valid '
+                f'in Atom feed "{resp.url}". Resetting Atom feed status.'
+            )
+            requests.notify_exception(
+                str(exception),
+                _('It is unclear how Atom feed pagination can lead to page '
+                  '"{}". Follow up with OpenMRS system '
+                  'administrator.').format(page)
+            )
+            raise exception
+
+        # Use OpenmrsException instead of OpenmrsFeedRuntimeException so
+        # that we don't reset the Atom feed if we don't know what the
+        # problem is.
+        exception = OpenmrsException(
+            f'Domain "{requests.domain_name}": Unrecognized error in Atom '
+            f'feed "{resp.url}".'
+        )
+        requests.notify_exception(
+            str(exception),
+            _('Response text: \n{}').format(resp.text)
+        )
+        raise exception
+
     try:
         root = etree.fromstring(resp.content)
     except etree.XMLSyntaxError as err:
@@ -218,15 +246,15 @@ def get_feed_updates(repeater, feed_name):
                     href = this_page[0].get('href')
                     page = href.split('/')[-1]
                 break
-    except (OpenmrsFeedSyntaxError, RequestException, HTTPError):
-        # Don't update repeater if OpenMRS is offline, or XML cannot be
-        # parsed.
-        return
-    except OpenmrsFeedDoesNotExist:
+    except OpenmrsFeedRuntimeException:
         # Reset feed status so that polling will start at the beginning
         # of the feed.
         repeater.atom_feed_status[feed_name] = AtomFeedStatus()
         repeater.save()
+    except (OpenmrsException, RequestException, HTTPError):
+        # Don't update repeater if OpenMRS is offline, or XML cannot be
+        # parsed.
+        return
     else:
         repeater.atom_feed_status[feed_name] = AtomFeedStatus(
             last_polled_at=datetime.utcnow(),
