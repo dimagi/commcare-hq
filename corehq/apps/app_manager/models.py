@@ -471,6 +471,10 @@ class FormActions(DocumentSchema):
             data['update_case']['update'] = wrap_transition_from_old_update_case_action(
                 data['update_case']['update']
             )
+        if 'usercase_update' in data and 'update' in data['usercase_update']:
+            data['usercase_update']['update'] = wrap_transition_from_old_update_case_action(
+                data['usercase_update']['update']
+            )
         return super(FormActions, cls).wrap(data)
 
 
