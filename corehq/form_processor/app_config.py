@@ -43,7 +43,16 @@ class FormProcessorAppConfig(AppConfig):
 
     def register_renamed_model(self, new_name, old_name):
         registry_name = old_name.lower()
+        assert registry_name not in self.models, (registry_name, self.models)
         model = self.get_model(new_name)
-        models = self.apps.all_models[self.label]
-        assert registry_name not in models, (registry_name, models)
-        models[registry_name] = model
+        self.models[registry_name] = model
+        assert self.apps.all_models[self.label][registry_name] is model, \
+            (self.apps.all_models[self.label][registry_name], model)
+
+    def get_models(self, *args, **kw):
+        seen = set()
+        for model in super().get_models(*args, **kw):
+            if model in seen:
+                continue
+            seen.add(model)
+            yield model
