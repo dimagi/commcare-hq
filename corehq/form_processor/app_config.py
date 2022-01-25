@@ -31,3 +31,19 @@ class FormProcessorAppConfig(AppConfig):
         LedgerTransaction = self.get_model('LedgerTransaction')
         register_adapter(LedgerValue, ledger_value_adapter)
         register_adapter(LedgerTransaction, ledger_transaction_adapter)
+
+        for name in [
+            "XFormInstance",
+            "XFormOperation",
+            "CommCareCase",
+            "CommCareCaseIndex",
+            "CaseAttachment",
+        ]:
+            self.register_renamed_model(name, name + "SQL")
+
+    def register_renamed_model(self, new_name, old_name):
+        registry_name = old_name.lower()
+        model = self.get_model(new_name)
+        models = self.apps.all_models[self.label]
+        assert registry_name not in models, (registry_name, models)
+        models[registry_name] = model
