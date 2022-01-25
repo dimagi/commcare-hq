@@ -11,7 +11,7 @@ from django.test import SimpleTestCase, TestCase
 import attr
 from dateutil.tz import tzoffset, tzutc
 from lxml import etree
-from nose.tools import assert_raises
+from nose.tools import assert_equal, assert_is_none, assert_raises
 
 import corehq.motech.openmrs.atom_feed
 from corehq.motech.openmrs.atom_feed import (
@@ -28,7 +28,7 @@ from corehq.motech.openmrs.atom_feed import (
 )
 from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT
 from corehq.motech.openmrs.exceptions import OpenmrsFeedSyntaxError
-from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import TestFileMixin
 
@@ -491,6 +491,12 @@ def test_get_feed_updates():
 
         # Assert returns without raising
         get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
+
+
+def test_status_defaults():
+    status = AtomFeedStatus()
+    assert_is_none(status.last_polled_at)
+    assert_equal(status.last_page, 'recent')
 
 
 def test_doctests():

@@ -69,11 +69,6 @@ class CaseAttrs(NamedTuple):
 
 
 def get_feed_xml(requests, feed_name, page):
-    if not page:
-        # If this is the first time the patient feed is polled, just get
-        # the most recent changes. This shows updating patients
-        # successfully, but does not replay all OpenMRS changes.
-        page = 'recent'
     assert feed_name in ATOM_FEED_NAMES
     feed_url = '/'.join(('/ws/atomfeed', feed_name, page))
     resp = requests.get(feed_url)
