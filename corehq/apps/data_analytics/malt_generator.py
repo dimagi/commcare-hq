@@ -5,6 +5,7 @@ from django.db import IntegrityError
 from django.http.response import Http404
 
 from dimagi.utils.chunked import chunked
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -16,7 +17,6 @@ from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
 from corehq.const import MISSING_APP_ID
 from corehq.util.quickcache import quickcache
 
@@ -52,8 +52,11 @@ class MALTTableGenerator(object):
                     try:
                         malt_rows_to_save = self._get_malt_row_dicts(domain.name, monthspan, users_by_id)
                     except Exception as ex:
-                        logger.error("Failed to get rows for domain {name}. Exception is {ex}".format
-                                    (name=domain.name, ex=str(ex)), exc_info=True)
+                        logger.error(
+                            f"Failed to get rows for domain {domain.name}. Exception is {str(ex)}", exc_info=True
+                        )
+                        continue
+
                     if malt_rows_to_save:
                         self._save_to_db(malt_rows_to_save, domain._id)
 
@@ -63,14 +66,17 @@ class MALTTableGenerator(object):
             apps_submitted_for = get_app_submission_breakdown_es(domain_name, monthspan, users)
             for app_row in apps_submitted_for:
                 app_id = app_row.app_id
+                user_id = app_row.user_id
                 num_of_forms = app_row.doc_count
                 try:
                     app_data = self._app_data(domain_name, app_id)
-                    user_id, username, user_type, email = self._user_data(
-                        app_row.user_id,
-                        app_row.username,
-                        users_by_id
-                    )
+                    if app_row.user_id not in users_by_id:
+                        # highly unlikely, but adding a safety check for a recent refactor
+                        notify_exception(None, f"A form submission for user with id {user_id} was returned by "
+                                               f"get_app_submission_breakdown_es but was not found in the "
+                                               f"users_by_id parameter.")
+                        continue
+                    user = users_by_id[user_id]
                 except Exception as ex:
                     logger.error("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
                                  (id=user_id, app_id=app_id, ex=str(ex)), exc_info=True)
@@ -78,10 +84,10 @@ class MALTTableGenerator(object):
 
                 malt_dict = {
                     'month': monthspan.startdate,
-                    'user_id': user_id,
-                    'username': username,
-                    'email': email,
-                    'user_type': user_type,
+                    'user_id': user._id,
+                    'username': user.username,
+                    'email': user.email,
+                    'user_type': user.doc_type,
                     'domain_name': domain_name,
                     'num_of_forms': num_of_forms,
                     'app_id': app_id or MISSING_APP_ID,
@@ -151,15 +157,3 @@ class MALTTableGenerator(object):
                            getattr(app, 'minimum_use_threshold', 15),
                            getattr(app, 'experienced_threshold', 3),
                            app.is_deleted())
-
-    @classmethod
-    def _user_data(cls, user_id, username, users_by_id):
-        if user_id in users_by_id:
-            user = users_by_id[user_id]
-            return (user._id, user.username, user.doc_type, user.email)
-        elif user_id == DEMO_USER_ID:
-            return (user_id, username, 'DemoUser', '')
-        elif username == JAVA_ADMIN_USERNAME:
-            return (user_id, username, 'AdminUser', '')
-        else:
-            return (user_id, username, 'UnknownUser', '')
