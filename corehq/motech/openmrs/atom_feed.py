@@ -70,25 +70,23 @@ class CaseAttrs(NamedTuple):
 
 def get_feed_xml(requests, feed_name, page):
     assert feed_name in ATOM_FEED_NAMES
-    feed_url = '/'.join(('/ws/atomfeed', feed_name, page))
+    feed_url = f'/ws/atomfeed/{feed_name}/{page}'
     resp = requests.get(feed_url)
-    if (
-        resp.status_code == 500
-        and 'AtomFeedRuntimeException: feed does not exist' in resp.text
-    ):
-        exception = OpenmrsFeedDoesNotExist(
-            f'Domain "{requests.domain_name}": Page does not exist in atom '
-            f'feed "{resp.url}". Resetting atom feed status.'
-        )
-        requests.notify_exception(
-            str(exception),
-            _("This can happen if the IP address of a Repeater is changed to "
-              "point to a different server, or if a server has been rebuilt. "
-              "It can signal more severe consequences, like attempts to "
-              "synchronize CommCare cases with OpenMRS patients that can no "
-              "longer be found.")
-        )
-        raise exception
+    if resp.status_code == 500:
+        if 'AtomFeedRuntimeException: feed does not exist' in resp.text:
+            exception = OpenmrsFeedDoesNotExist(
+                f'Domain "{requests.domain_name}": Page does not exist in Atom '
+                f'feed "{resp.url}". Resetting atom feed status.'
+            )
+            requests.notify_exception(
+                str(exception),
+                _("This can happen if the IP address of a Repeater is changed "
+                  "to point to a different server, or if a server has been "
+                  "rebuilt. It can signal more severe consequences, like "
+                  "attempts to synchronize CommCare cases with OpenMRS "
+                  "patients that can no longer be found.")
+            )
+            raise exception
     try:
         root = etree.fromstring(resp.content)
     except etree.XMLSyntaxError as err:

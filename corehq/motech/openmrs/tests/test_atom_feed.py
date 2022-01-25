@@ -27,7 +27,10 @@ from corehq.motech.openmrs.atom_feed import (
     import_encounter,
 )
 from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT
-from corehq.motech.openmrs.exceptions import OpenmrsFeedSyntaxError
+from corehq.motech.openmrs.exceptions import (
+    OpenmrsFeedDoesNotExist,
+    OpenmrsFeedSyntaxError,
+)
 from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import TestFileMixin
@@ -449,7 +452,35 @@ class ImportEncounterTest(TestCase, TestFileMixin):
         self.assertEqual(case_blocks[0].as_text(), case_block)
 
 
-def test_get_feed_xml():
+def test_get_feed_xml_feed_does_not_exist():
+    response_url = 'https://www.example.com/openmrs/ws/atomfeed/patient/1000'
+    response = SimpleNamespace(
+        status_code=500,
+        url=response_url,
+        text=(
+            '<!DOCTYPE html>\n'
+            '<html><body><h1>HTTP Status 500 - Request processing failed; '
+            'nested exception is org.ict4h.atomfeed.server.exceptions'
+            '.AtomFeedRuntimeException: feed does not exist</h1></html>'
+        ),
+    )
+    requests = Mock(
+        domain_name='test_domain',
+        get=lambda url: response,
+    )
+    with assert_raises(OpenmrsFeedDoesNotExist):
+        get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, None)
+    requests.notify_exception.assert_called_with(
+        'Domain "test_domain": Page does not exist in Atom feed '
+        f'"{response_url}". Resetting atom feed status.',
+        'This can happen if the IP address of a Repeater is changed to point '
+        'to a different server, or if a server has been rebuilt. It can '
+        'signal more severe consequences, like attempts to synchronize '
+        'CommCare cases with OpenMRS patients that can no longer be found.'
+    )
+
+
+def test_get_feed_xml_bad_xml():
     response_url = 'https://www.example.com/openmrs/ws/atomfeed/patient/recent'
     response = SimpleNamespace(
         status_code=200,
