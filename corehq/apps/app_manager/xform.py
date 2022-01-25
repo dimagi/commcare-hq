@@ -497,7 +497,7 @@ class XFormCaseBlock(object):
         return update_block
 
     def add_case_updates(self, updates, make_relative=False):
-        from corehq.apps.app_manager.models import SmartCaseUpdate
+        from corehq.apps.app_manager.models import ConditionalCaseUpdate
         update_block = self.update_block
         if not updates:
             return
@@ -516,7 +516,7 @@ class XFormCaseBlock(object):
         for key, q_path in sorted(update_mapping.items()):
             resolved_path = self.xform.resolve_path(q_path)
             edit_mode_path = ''
-            if isinstance(q_path, SmartCaseUpdate) and q_path.update_mode == UPDATE_MODE_EDIT:
+            if isinstance(q_path, ConditionalCaseUpdate) and q_path.update_mode == UPDATE_MODE_EDIT:
                 case_value = CaseIDXPath(session_var('case_id')).case().slash(key)
                 edit_mode_path = f' and {case_value} != {resolved_path}'
             update_block.append(make_case_elem(key))

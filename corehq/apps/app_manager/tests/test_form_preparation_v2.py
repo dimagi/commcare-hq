@@ -66,7 +66,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
     def test_update_case_edit_update_mode(self):
         self.form.requires = 'case'
         self.form.actions.update_case = UpdateCaseAction(
-            update={'question1': SmartCaseUpdate(question_path='/data/question1', update_mode='edit')})
+            update={'question1': ConditionalCaseUpdate(question_path='/data/question1', update_mode='edit')})
         self.form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_case_edit_update_mode'), self.form.render_xform())
 
@@ -284,7 +284,8 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=self.module.case_type,
             case_tag='load_1',
-            case_properties={'question1': SmartCaseUpdate(question_path='/data/question1', update_mode='edit')}
+            case_properties={'question1': ConditionalCaseUpdate(question_path='/data/question1',
+                                                                update_mode='edit')}
         ))
         self.assertXmlEqual(self.get_xml('update_case_edit_update_mode'), self.form.render_xform())
 
