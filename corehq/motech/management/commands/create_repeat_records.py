@@ -67,23 +67,29 @@ class Command(BaseCommand):
                     by_domain[doc.domain] = repeaters
                 return by_domain[doc.domain]
 
-        def _create_records(doc):
-            for repeater in _get_repeaters(doc):
-                repeater.register(doc)
-
-        bulk_accessor = FormAccessorSQL.get_forms if options['doc_type'] == 'form' else CaseAccessorSQL.get_cases
-        single_accessor = FormAccessorSQL.get_form if options['doc_type'] == 'form' else CaseAccessorSQL.get_case
-        for doc_ids in chunked(with_progress_bar(doc_ids), 100):
-            doc_ids = list(doc_ids)
+        def doc_iterator(doc_ids):
             try:
-                docs = bulk_accessor(doc_ids)
-                for doc in docs:
-                    _create_records(doc)
+                yield from bulk_accessor(doc_ids)
             except Exception:
                 logger.exception("Unable to fetch bulk docs, falling back to individual fetches")
                 for doc_id in doc_ids:
                     try:
-                        doc = single_accessor(doc_id)
-                        _create_records(doc)
+                        yield single_accessor(doc_id)
                     except Exception:
-                        logger.exception(f"Unable to process doc '{doc_id}'")
+                        logger.exception(f"Unable to fetch doc '{doc_id}'")
+
+        bulk_accessor = FormAccessorSQL.get_forms if options['doc_type'] == 'form' else CaseAccessorSQL.get_cases
+        single_accessor = FormAccessorSQL.get_form if options['doc_type'] == 'form' else CaseAccessorSQL.get_case
+        for doc_ids in chunked(with_progress_bar(doc_ids), 100):
+            for doc in doc_iterator(list(doc_ids)):
+                try:
+                    repeaters = _get_repeaters(doc)
+                except Exception:
+                    logger.exception(f"Unable to fetch repeaters for doc '{doc.get_id}'")
+                    continue
+
+                for repeater in repeaters:
+                    try:
+                        repeater.register(doc)
+                    except Exception:
+                        logger.exception(f"Unable to create records for doc '{doc.get_id}'")
