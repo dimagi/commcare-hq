@@ -77,8 +77,8 @@ branches:
     - cs/SC-1551-hourly-scheduled-reports # Charl Jan 12
     - mk/support-multibar-reports # MK Dec 14
     - ml/enforce-password-policy # Minha Jan 18
-    - smh/save-only-edited-form-fields # Steph Jan 24
-    - smh/save-only-edit-fields-xml-changes # Steph Jan 24
-    - ad/save-only-edited-form-fields-UI # Steph Jan 24
+#     - smh/save-only-edited-form-fields # Steph Jan 24
+#     - smh/save-only-edit-fields-xml-changes # Steph Jan 24
+#     - ad/save-only-edited-form-fields-UI # Steph Jan 24
     - ml/remove-pickles-reports # Minha Jan 24
 submodules: { }
