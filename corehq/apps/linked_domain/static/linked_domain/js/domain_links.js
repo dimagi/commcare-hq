@@ -254,7 +254,7 @@ hqDefine("linked_domain/js/domain_links", [
                 return false;
             }
             // check if both values for hasFullAccess are present within the current domainLinks
-            return _.uniq(_.pluck(self.parent.domainLinks(), 'hasFullAccess')).length == 2;
+            return _.uniq(_.pluck(self.parent.domainLinks(), 'hasFullAccess')).length === 2;
         });
 
         self.domainsToPushSubscription = self.domainsToPush.subscribe(function (newValue) {
