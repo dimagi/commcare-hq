@@ -1,4 +1,5 @@
 import logging
+from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO
 
@@ -11,6 +12,7 @@ from memoized import memoized
 
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
+from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.ext import jsonobject
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import RedisLockableMixIn
@@ -35,6 +37,7 @@ from ..exceptions import (
     XFormNotFound,
     XFormSaveError,
 )
+from ..submission_process_tracker import unfinished_archive
 from ..track_related import TrackRelatedChanges
 from .abstract import AbstractXFormInstance
 from .attachment import AttachmentContent, AttachmentMixin
@@ -222,6 +225,25 @@ class XFormInstanceManager(RequireDBManager):
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
                            [case_ids, form_id, archive])
         form.state = self.model.ARCHIVED if archive else self.model.NORMAL
+
+    @classmethod
+    def publish_archive_action_to_kafka(cls, form, user_id, archive):
+        with cls._unfinished_archive(form, archive, user_id):
+            pass
+
+    @staticmethod
+    @contextmanager
+    def _unfinished_archive(form, archive, user_id, trigger_signals=True):
+        from ..change_publishers import publish_form_saved
+        with unfinished_archive(instance=form, user_id=user_id, archive=archive) as archive_stub:
+            yield archive_stub
+            is_sql = isinstance(form, XFormInstance)
+            if is_sql:
+                publish_form_saved(form)
+            if trigger_signals:
+                sender = "form_processor" if is_sql else "couchforms"
+                signal = xform_archived if archive else xform_unarchived
+                signal.send(sender=sender, xform=form)
 
     @staticmethod
     def save_new_form(form):

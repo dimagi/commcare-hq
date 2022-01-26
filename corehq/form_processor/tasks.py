@@ -61,7 +61,7 @@ def reprocess_archive_stubs():
 
             # If the history was updated the first time around, just send the update to kafka
             else:
-                FormAccessors.publish_archive_action_to_kafka(xform, stub.user_id, stub.archive)
+                XFormInstance.objects.publish_archive_action_to_kafka(xform, stub.user_id, stub.archive)
         except Exception:
             # Errors should not prevent processing other stubs
             notify_exception(None, "Error processing UnfinishedArchiveStub")

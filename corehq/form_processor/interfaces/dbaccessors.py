@@ -115,8 +115,8 @@ class FormAccessors:
 
     @classmethod
     def publish_archive_action_to_kafka(cls, form, user_id, archive):
-        with cls._unfinished_archive(form, archive, user_id):
-            pass
+        """DEPRECATED use XFormInstance.objects"""
+        XFormInstance.objects.publish_archive_action_to_kafka(form, user_id, archive)
 
     @staticmethod
     @contextmanager
