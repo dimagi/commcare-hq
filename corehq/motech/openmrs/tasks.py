@@ -14,7 +14,6 @@ from jinja2 import Template
 from requests import ReadTimeout, RequestException
 
 from casexml.apps.case.mock import CaseBlock
-from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
@@ -44,6 +43,7 @@ from corehq.motech.openmrs.models import OpenmrsImporter, deserialize
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import get_basic_requests
 from corehq.motech.utils import b64_aes_decrypt
+from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 # The location metadata key that maps to its corresponding OpenMRS location UUID
