@@ -131,8 +131,8 @@ class AutomaticUpdateRule(models.Model):
             if isinstance(definition, ClosedParentDefinition):
                 return True
             elif (
-                isinstance(definition, MatchPropertyDefinition) and
-                property_references_parent(definition.property_name)
+                isinstance(definition, MatchPropertyDefinition)
+                and property_references_parent(definition.property_name)
             ):
                 return True
 
@@ -143,14 +143,14 @@ class AutomaticUpdateRule(models.Model):
                     if property_references_parent(property_definition.name):
                         return True
                     if (
-                        property_definition.value_type == UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY and
-                        property_references_parent(property_definition.value)
+                        property_definition.value_type == UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY
+                        and property_references_parent(property_definition.value)
                     ):
                         return True
             elif isinstance(definition, CreateScheduleInstanceActionDefinition):
                 if (
-                    property_references_parent(definition.reset_case_property_name) or
-                    property_references_parent(definition.start_date_case_property)
+                    property_references_parent(definition.reset_case_property_name)
+                    or property_references_parent(definition.start_date_case_property)
                 ):
                     return True
 
@@ -458,6 +458,7 @@ class AutomaticUpdateRule(models.Model):
         data['id'] = self.id
         return data
 
+
 class CaseRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
     match_property_definition = models.ForeignKey('MatchPropertyDefinition', on_delete=models.CASCADE, null=True)
@@ -635,7 +636,7 @@ class CustomMatchDefinition(CaseRuleCriteriaDefinition):
         custom_function_path = settings.AVAILABLE_CUSTOM_RULE_CRITERIA[self.name]
         try:
             custom_function = to_function(custom_function_path)
-        except:
+        except:  # noqa: E722
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, now)
@@ -736,11 +737,11 @@ class CaseRuleActionResult(object):
     @property
     def total_updates(self):
         return (
-            self.num_updates +
-            self.num_closes +
-            self.num_related_updates +
-            self.num_related_closes +
-            self.num_creates
+            self.num_updates
+            + self.num_closes
+            + self.num_related_updates
+            + self.num_related_closes
+            + self.num_creates
         )
 
 
@@ -905,6 +906,7 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
             num_related_updates=num_related_updates,
         )
 
+
 class CustomActionDefinition(CaseRuleActionDefinition):
     name = models.CharField(max_length=126)
 
@@ -915,7 +917,7 @@ class CustomActionDefinition(CaseRuleActionDefinition):
         custom_function_path = settings.AVAILABLE_CUSTOM_RULE_ACTIONS[self.name]
         try:
             custom_function = to_function(custom_function_path)
-        except:
+        except:  # noqa: E722
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, rule)
@@ -1198,7 +1200,8 @@ class VisitSchedulerIntegrationHelper(object):
             return visit_due_date + timedelta(days=visit.starts)
         elif self.scheduler_module_info.window_position == VISIT_WINDOW_END:
             if not isinstance(visit.expires, int):
-                raise self.VisitSchedulerIntegrationException("Cannot schedule end date of visit that does not expire")
+                raise self.VisitSchedulerIntegrationException(
+                    "Cannot schedule end date of visit that does not expire")
 
             return visit_due_date + timedelta(days=visit.expires)
         elif self.scheduler_module_info.window_position == VISIT_WINDOW_DUE_DATE:
@@ -1210,7 +1213,7 @@ class VisitSchedulerIntegrationHelper(object):
         phase_num = self.case.get_case_property('current_schedule_phase')
         try:
             return int(phase_num)
-        except:
+        except:  # noqa: E722
             return None
 
     def get_visit(self, form):

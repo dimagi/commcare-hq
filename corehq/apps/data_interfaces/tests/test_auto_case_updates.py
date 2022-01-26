@@ -945,8 +945,8 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         rule1 = _create_empty_rule(self.domain, case_type='person-1')
         rule2 = _create_empty_rule(self.domain, case_type='person-1')
         rule3 = _create_empty_rule(self.domain, case_type='person-2')
-        rule4 = _create_empty_rule(self.domain, case_type='person-2', active=False)
-        rule5 = _create_empty_rule(self.domain, case_type='person-3', deleted=True)
+        _create_empty_rule(self.domain, case_type='person-2', active=False)
+        _create_empty_rule(self.domain, case_type='person-3', deleted=True)
 
         rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
@@ -979,7 +979,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         rule3.server_modified_boundary = 30
         rule3.save()
 
-        rule4 = _create_empty_rule(self.domain, case_type='person-2')
+        _create_empty_rule(self.domain, case_type='person-2')
 
         rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
