@@ -17,11 +17,13 @@ from corehq.apps.data_analytics.const import NOT_SET, YES
 from corehq.apps.data_analytics.malt_generator import (
     DEFAULT_EXPERIENCED_THRESHOLD,
     DEFAULT_MINIMUM_USE_THRESHOLD,
-    generate_malt,
     MaltAppData,
     _build_malt_row_dict,
     _get_malt_app_data,
     _get_malt_row_dicts,
+    _save_malt_row_dicts_to_db,
+    _update_or_create_malt_row,
+    generate_malt,
 )
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
@@ -161,6 +163,61 @@ class MaltGeneratorTest(TestCase):
             'num_of_forms': 1,
             'wam': NOT_SET,
         })
+
+
+class TestSaveMaltRowDictsToDB(TestCase):
+
+    def test_successful_bulk_create(self):
+        malt_row_dicts = [
+            create_mock_malt_row_dict({'domain': 'domain1'}),
+            create_mock_malt_row_dict({'domain': 'domain2'}),
+        ]
+        with patch('corehq.apps.data_analytics.malt_generator._update_or_create_malt_row') as mock_updateorcreate:
+            _save_malt_row_dicts_to_db(malt_row_dicts)
+
+        mock_updateorcreate.assert_not_called()
+
+    def test_update_or_create_called_if_integrity_error(self):
+        """
+        Ideally could avoid mocking _update_or_create_malt_row to ensure this recovers from an IntegrityError, but
+        because this test runs inside one transaction the IntegrityError corrupts the transaction.
+
+        An alternative is to subclass TransactionTestCase which implements a different rollback strategy, but this
+        ran too slowly to be worth it. See TestUpdateOrCreateMaltRow to be reassured _update_or_create_malt_row
+        works properly.
+        """
+        malt_row_dict = create_mock_malt_row_dict({'domain': 'test-domain', 'num_of_forms': 25})
+        # pre-save the object to force integrity error in bulk create
+        MALTRow.objects.create(**malt_row_dict)
+        with patch('corehq.apps.data_analytics.malt_generator._update_or_create_malt_row') as mock_updateorcreate:
+            _save_malt_row_dicts_to_db([malt_row_dict])
+
+        mock_updateorcreate.assert_called()
+
+
+class TestUpdateOrCreateMaltRow(TestCase):
+
+    def test_successful_create(self):
+        malt_row_dict = create_mock_malt_row_dict({'domain': 'test-domain', 'num_of_forms': 25})
+
+        _update_or_create_malt_row(malt_row_dict)
+
+        rows = MALTRow.objects.filter(domain_name='test-domain')
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].num_of_forms, 25)
+
+    def test_successful_update(self):
+        malt_row_dict = create_mock_malt_row_dict({'domain': 'test-domain', 'num_of_forms': 25})
+        # pre-save the object to force integrity error in bulk create
+        MALTRow.objects.create(**malt_row_dict)
+
+        updated_malt_row_dict = create_mock_malt_row_dict({'domain': 'test-domain', 'num_of_forms': 50})
+        _update_or_create_malt_row(updated_malt_row_dict)
+
+        rows = MALTRow.objects.filter(domain_name='test-domain')
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].num_of_forms, 50)
 
 
 @disable_quickcache
@@ -334,3 +391,22 @@ def create_mock_nested_query_row(user_id, app_id='abc123', device_id='web', doc_
     mock_nested_query_row.user_id = user_id
     mock_nested_query_row.doc_count = doc_count
     return mock_nested_query_row
+
+
+def create_mock_malt_row_dict(mock):
+    return {
+        'month': mock.get('month', datetime.datetime(2022, 1, 1, 0, 0)),
+        'user_id': mock.get('user_id', 'test-user-id'),
+        'username': mock.get('username', 'test-username'),
+        'email': mock.get('email', 'test-email'),
+        'user_type': mock.get('user_type', 'test-user-type'),
+        'domain_name': mock.get('domain', 'test-domain'),
+        'num_of_forms': mock.get('num_of_forms', 0),
+        'app_id': mock.get('app_id', MISSING_APP_ID),
+        'device_id': mock.get('device_id', 'web'),
+        'wam': mock.get('wam', None),
+        'pam': mock.get('pam', None),
+        'use_threshold': mock.get('use_threshold', DEFAULT_MINIMUM_USE_THRESHOLD),
+        'experienced_threshold': mock.get('experienced_threshold', DEFAULT_EXPERIENCED_THRESHOLD),
+        'is_app_deleted': mock.get('is_app_deleted', False),
+    }
