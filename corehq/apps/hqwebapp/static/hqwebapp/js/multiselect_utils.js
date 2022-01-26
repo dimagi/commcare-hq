@@ -54,6 +54,15 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         });
     };
 
+    /**
+     * Given an element, configures multiselect functionality based on the multiselect.js library
+     * @param {object} properties - a key-value object that expects the following optional keys:
+     * selectableHeaderTitle -  String title for items yet to be selected. Defaults to "Items".
+     * selectedHeaderTitle - String for selected items title. Defaults to "Selected items".
+     * searchItemTitle - String for search bar placeholder title. Defaults to "Search items".
+     * willSelectAllListener - Function to call before the multiselect processes the Add All action.
+     * disableModifyAllActions - Boolean value to enable/disable Add All and Remove All buttons. Defaults to false.
+     */
     multiselect_utils.createFullMultiselectWidget = function (elementOrId, properties) {
         assertProperties.assert(properties, [], ['selectableHeaderTitle', 'selectedHeaderTitle', 'searchItemTitle', 'willSelectAllListener', 'disableModifyAllActions']);
         var selectableHeaderTitle = properties.selectableHeaderTitle || gettext("Items");
@@ -141,13 +150,6 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             },
         });
 
-        multiselect_utils.rebuildMultiselect = function (elementId, multiselectProperties) {
-            var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId);
-            // multiSelect('refresh') breaks existing click handlers, so the alternative is to destroy and rebuild
-            $element.multiSelect('destroy');
-            multiselect_utils.createFullMultiselectWidget(elementId, multiselectProperties);
-        };
-
         $('#' + selectAllId).click(function () {
             if (willSelectAllListener) {
                 willSelectAllListener();
@@ -159,6 +161,13 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             $element.multiSelect('deselect_all');
             return false;
         });
+    };
+
+    multiselect_utils.rebuildMultiselect = function (elementOrId, multiselectProperties) {
+        var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId);
+        // multiSelect('refresh') breaks existing click handlers, so the alternative is to destroy and rebuild
+        $element.multiSelect('destroy');
+        multiselect_utils.createFullMultiselectWidget(elementOrId, multiselectProperties);
     };
 
     /*

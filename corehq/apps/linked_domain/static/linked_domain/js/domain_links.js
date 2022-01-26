@@ -90,7 +90,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.domain = data.domain;
         self.hasFullAccess = data.has_full_access;
         self.domainLinks = ko.observableArray(_.map(data.linked_domains, DomainLink));
-        self.domainLinksByNames = ko.computed(function () {
+        self.domainLinksByName = ko.computed(function () {
             var linkByNameMap = {};
             self.domainLinks().forEach(link => linkByNameMap[link.downstreamDomain()] = link);
             return linkByNameMap;
@@ -255,15 +255,8 @@ hqDefine("linked_domain/js/domain_links", [
                 // should not contain both
                 return false;
             }
-            const accessSet = new Set();
-            for (const link of Object.values(self.parent.domainLinksByNames())) {
-                // if any link is limited, contains both
-                accessSet.add(link.hasFullAccess);
-                if (accessSet.size >= 2) {
-                    return true;
-                }
-            }
-            return false;
+            // check if both values for hasFullAccess are present within the current domainLinks
+            return _.uniq(_.pluck(self.parent.domainLinks(), 'hasFullAccess')).length == 2;
         });
 
         self.domainsToPushSubscription = self.domainsToPush.subscribe(function (newValue) {
@@ -278,7 +271,7 @@ hqDefine("linked_domain/js/domain_links", [
             }
 
             if (newValue.length > 0) {
-                var selectedDomainLink = self.parent.domainLinksByNames()[newValue[0]];
+                var selectedDomainLink = self.parent.domainLinksByName()[newValue[0]];
                 var pushedNonEnterpriseLink = !selectedDomainLink.hasFullAccess;
                 for (const option of $('#domain-multiselect')[0].options) {
                     if (!newValue.includes(option.value)) {
@@ -287,7 +280,7 @@ hqDefine("linked_domain/js/domain_links", [
                             self.shouldShowSelectedMRMDomain(true);
                         } else {
                             // disable if link does not have full access
-                            const tempLink = self.parent.domainLinksByNames()[option.value];
+                            const tempLink = self.parent.domainLinksByName()[option.value];
                             if (!tempLink.hasFullAccess) {
                                 option.disabled = !tempLink.hasFullAccess;
                                 self.shouldShowSelectedERMDomain(true);
@@ -325,7 +318,7 @@ hqDefine("linked_domain/js/domain_links", [
                 willSelectAllListener: function () {
                     var requiresRebuild = false;
                     for (var option of $('#domain-multiselect')[0].options) {
-                        var tempLink = self.parent.domainLinksByNames()[option.value];
+                        var tempLink = self.parent.domainLinksByName()[option.value];
                         if (!option.selected && !option.disabled && !tempLink.hasFullAccess) {
                             option.disabled = true;
                             requiresRebuild = true;
