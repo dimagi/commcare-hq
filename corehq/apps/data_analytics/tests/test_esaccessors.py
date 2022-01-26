@@ -49,7 +49,7 @@ class MaltAnalyticsTest(SimpleTestCase):
 ], MaltAnalyticsTest)
 def test_app_submission_breakdown(self, combination_count_list):
     """
-    The breakdown of this report is (app, device, userid, username): count
+    The breakdown of this report is (app, device, userid): count
     """
     domain = 'test-data-analytics'
     received = datetime(2016, 3, 24)
