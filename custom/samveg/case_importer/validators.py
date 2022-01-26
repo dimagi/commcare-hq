@@ -1,4 +1,5 @@
 import datetime
+import re
 from collections import Counter, defaultdict
 
 from django.utils.translation import ugettext as _
@@ -26,7 +27,19 @@ from custom.samveg.const import (
 )
 
 
-class RequiredColumnsValidator:
+class BaseSheetValidator:
+    @classmethod
+    def run(cls, spreadsheet):
+        """Validate spreadsheet.
+
+        :param spreadsheet: Spreadsheet object provided by
+        corehq.apps.case_importer.tracking.case_upload_tracker.CaseUpload.get_spreadsheet
+        :return: List of error messages.
+        """
+        return []
+
+
+class RequiredColumnsValidator(BaseSheetValidator):
     @classmethod
     def run(cls, spreadsheet):
         errors = []
@@ -52,6 +65,26 @@ class RequiredColumnsValidator:
             error_messages.append(_('Missing columns {column_names}').format(
                 column_names=", ".join(missing_columns)
             ))
+        return error_messages
+
+
+class CallColumnsValidator(BaseSheetValidator):
+    @classmethod
+    def run(cls, spreadsheet):
+        errors = []
+        errors.extend(cls._validate_call_columns(spreadsheet))
+        return errors
+
+    @classmethod
+    def _validate_call_columns(cls, spreadsheet):
+        # at least one call column, Call1-6
+        columns = spreadsheet.get_header_columns()
+        error_messages = []
+        call_regex = re.compile(r'^Call[1-6]$')
+        if not any(call_regex.match(column_name) for column_name in columns):
+            error_messages.append(
+                _('Need at least one Call column for Calls 1-6')
+            )
         return error_messages
 
 
