@@ -11,9 +11,9 @@ from psycopg2.extensions import adapt
 from corehq.form_processor.models import (
     CommCareCase_DB_TABLE, CaseAttachment_DB_TABLE,
     CommCareCaseIndex_DB_TABLE, CaseTransaction_DB_TABLE,
-    XFormInstance_DB_TABLE,
+    XFormInstance,
     LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE,
-    XFormOperation_DB_TABLE,
+    XFormOperation,
 )
 
 
@@ -61,7 +61,7 @@ def form_adapter(form):
         form.deletion_id,
         form.server_modified_on,
     ]
-    return ObjectAdapter(fields, XFormInstance_DB_TABLE)
+    return ObjectAdapter(fields, XFormInstance.Meta.db_table)
 
 
 def form_operation_adapter(operation):
@@ -72,7 +72,7 @@ def form_operation_adapter(operation):
         operation.date,
         operation.form_id,
     ]
-    return ObjectAdapter(fields, XFormOperation_DB_TABLE)
+    return ObjectAdapter(fields, XFormOperation._meta.db_table)
 
 
 def case_adapter(case):
