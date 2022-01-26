@@ -82,4 +82,5 @@ branches:
 #     - ad/save-only-edited-form-fields-UI # Steph Jan 24
     # - ml/remove-pickles-reports # Minha Jan 24
     - jls/combine-toggle-dirs-2 # Jenny Jan 26
+    - jls/combine-toggle-dirs-2-bonus # Jenny Jan 26
 submodules: { }
