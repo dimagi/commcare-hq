@@ -377,10 +377,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_form(form_id):
-        try:
-            return XFormInstance.objects.partitioned_get(form_id)
-        except XFormInstance.DoesNotExist:
-            raise XFormNotFound(form_id)
+        """DEPRECATED"""
+        return XFormInstance.objects.get_form(form_id)
 
     @staticmethod
     def get_forms(form_ids, ordered=False):

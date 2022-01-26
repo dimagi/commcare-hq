@@ -12,13 +12,30 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.blobs.exceptions import NotFound
-from corehq.sql_db.models import PartitionedModel
+from corehq.sql_db.models import PartitionedModel, RequireDBManager
 
-from ..exceptions import AttachmentNotFound, MissingFormXml
+from ..exceptions import AttachmentNotFound, MissingFormXml, XFormNotFound
 from ..track_related import TrackRelatedChanges
 from .abstract import AbstractXFormInstance
 from .attachment import AttachmentMixin
 from .mixin import SaveStateMixin
+
+
+class XFormInstanceManager(RequireDBManager):
+
+    def get_form(self, form_id, domain=None):
+        """Get form in domain
+
+        This will get a form from any domain if the domain is not provided,
+        but that is deprecated and should be avoided.
+        """
+        try:
+            kwargs = {'form_id': form_id}
+            if domain is not None:
+                kwargs['domain'] = domain
+            return self.partitioned_get(form_id, **kwargs)
+        except self.model.DoesNotExist:
+            raise XFormNotFound(form_id)
 
 
 class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
@@ -52,6 +69,8 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
     }
     ALL_DOC_TYPES = {'XFormInstance-Deleted'} | DOC_TYPE_TO_STATE.keys()
     STATE_TO_DOC_TYPE = {v: k for k, v in DOC_TYPE_TO_STATE.items()}
+
+    objects = XFormInstanceManager()
 
     form_id = models.CharField(max_length=255, unique=True, db_index=True, default=None)
 

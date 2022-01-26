@@ -9,6 +9,7 @@ from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils.chunked import chunked
 
 from ..exceptions import CaseNotFound
+from ..models import XFormInstance
 from ..submission_process_tracker import unfinished_archive
 from ..system_action import system_action
 
@@ -32,9 +33,6 @@ class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'conten
 
 
 class FormAccessors:
-    """
-    Facade for Form DB access that proxies method calls to SQL or Couch version
-    """
 
     def __init__(self, domain=None):
         self.domain = domain
@@ -46,7 +44,8 @@ class FormAccessors:
         return FormAccessorSQL
 
     def get_form(self, form_id):
-        return self.db_accessor.get_form(form_id)
+        """DEPRECATED use XFormInstance.objects"""
+        return XFormInstance.objects.get_form(form_id, self.domain)
 
     def get_forms(self, form_ids, ordered=False):
         """
@@ -136,7 +135,6 @@ class FormAccessors:
     @contextmanager
     def _unfinished_archive(form, archive, user_id, trigger_signals=True):
         from ..change_publishers import publish_form_saved
-        from ..models import XFormInstance
         with unfinished_archive(instance=form, user_id=user_id, archive=archive) as archive_stub:
             yield archive_stub
             is_sql = isinstance(form, XFormInstance)
