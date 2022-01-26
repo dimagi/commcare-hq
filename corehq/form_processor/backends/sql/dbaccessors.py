@@ -370,6 +370,7 @@ class FormReindexAccessor(ReindexAccessor):
 
 
 class FormAccessorSQL:
+    """DEPRECATED use XFormInstance.objects"""
 
     @staticmethod
     def get_form(form_id):

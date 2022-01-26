@@ -38,6 +38,7 @@ from ..exceptions import (
     XFormSaveError,
 )
 from ..submission_process_tracker import unfinished_archive
+from ..system_action import system_action
 from ..track_related import TrackRelatedChanges
 from .abstract import AbstractXFormInstance
 from .attachment import AttachmentContent, AttachmentMixin
@@ -45,6 +46,8 @@ from .mixin import SaveStateMixin
 from .util import attach_prefetch_models, sort_with_id_list
 
 log = logging.getLogger(__name__)
+
+ARCHIVE_FORM = "archive_form"
 
 
 class XFormInstanceManager(RequireDBManager):
@@ -225,6 +228,34 @@ class XFormInstanceManager(RequireDBManager):
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
                            [case_ids, form_id, archive])
         form.state = self.model.ARCHIVED if archive else self.model.NORMAL
+
+    @staticmethod
+    def do_archive(form, archive, user_id, trigger_signals):
+        """Un/archive form
+
+        :param form: the form to be archived or unarchived.
+        :param archive: Boolean value. Archive if true else unarchive.
+        :param user_id: id of user performing the action.
+        """
+        args = [form, archive, user_id, trigger_signals]
+        args_json = [form.form_id, archive, user_id, trigger_signals]
+        system_action.submit(ARCHIVE_FORM, args, args_json, form.domain)
+
+    @system_action(ARCHIVE_FORM)
+    def _do_archive(form, archive, user_id, trigger_signals):
+        """ARCHIVE_FORM system action
+
+        This method is not meant to be called directly. It is called
+        when an ARCHIVE_FORM system action is submitted.
+
+        :param form: form to be un/archived.
+        :param archive: Boolean value. Archive if true else unarchive.
+        :param user_id: id of user performing the action.
+        """
+        unfinished = XFormInstanceManager._unfinished_archive
+        with unfinished(form, archive, user_id, trigger_signals) as archive_stub:
+            XFormInstance.objects.set_archived_state(form, archive, user_id)
+            archive_stub.archive_history_updated()
 
     @classmethod
     def publish_archive_action_to_kafka(cls, form, user_id, archive):
@@ -634,14 +665,12 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
             raise MissingFormXml(self.form_id)
 
     def archive(self, user_id=None, trigger_signals=True):
-        from ..interfaces.dbaccessors import FormAccessors
         if not self.is_archived:
-            FormAccessors.do_archive(self, True, user_id, trigger_signals)
+            type(self).objects.do_archive(self, True, user_id, trigger_signals)
 
     def unarchive(self, user_id=None, trigger_signals=True):
-        from ..interfaces.dbaccessors import FormAccessors
         if self.is_archived:
-            FormAccessors.do_archive(self, False, user_id, trigger_signals)
+            type(self).objects.do_archive(self, False, user_id, trigger_signals)
 
     def __str__(self):
         return (

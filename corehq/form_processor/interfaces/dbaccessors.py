@@ -1,27 +1,22 @@
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
-from contextlib import contextmanager
 from io import BytesIO
 
 from memoized import memoized
 
-from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils.chunked import chunked
 
 from ..exceptions import CaseNotFound
 from ..models import XFormInstance
-from ..submission_process_tracker import unfinished_archive
-from ..system_action import system_action
 
 
 CaseIndexInfo = namedtuple(
     'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
 )
 
-ARCHIVE_FORM = "archive_form"
-
 
 class FormAccessors:
+    """DEPRECATED use XFormInstance.objects"""
 
     def __init__(self, domain=None):
         self.domain = domain
@@ -86,51 +81,13 @@ class FormAccessors:
 
     @classmethod
     def do_archive(cls, form, archive, user_id, trigger_signals):
-        """Un/archive form
-
-        :param form: the form to be archived or unarchived.
-        :param archive: Boolean value. Archive if true else unarchive.
-        :param user_id: id of user performing the action.
-        """
-        args = [form, archive, user_id, trigger_signals]
-        args_json = [form.form_id, archive, user_id, trigger_signals]
-        system_action.submit(ARCHIVE_FORM, args, args_json, form.domain)
-
-    @system_action(ARCHIVE_FORM)
-    def _do_archive(form, archive, user_id, trigger_signals):
-        """ARCHIVE_FORM system action
-
-        This method is not meant to be called directly. It is called
-        when an ARCHIVE_FORM system action is submitted.
-
-        :param form: form to be un/archived.
-        :param archive: Boolean value. Archive if true else unarchive.
-        :param user_id: id of user performing the action.
-        """
-        unfinished = FormAccessors._unfinished_archive
-        with unfinished(form, archive, user_id, trigger_signals) as archive_stub:
-            db = FormAccessors(form.domain).db_accessor
-            db.set_archived_state(form, archive, user_id)
-            archive_stub.archive_history_updated()
+        """DEPRECATED use XFormInstance.objects"""
+        return XFormInstance.objects.do_archive(form, archive, user_id, trigger_signals)
 
     @classmethod
     def publish_archive_action_to_kafka(cls, form, user_id, archive):
         """DEPRECATED use XFormInstance.objects"""
         XFormInstance.objects.publish_archive_action_to_kafka(form, user_id, archive)
-
-    @staticmethod
-    @contextmanager
-    def _unfinished_archive(form, archive, user_id, trigger_signals=True):
-        from ..change_publishers import publish_form_saved
-        with unfinished_archive(instance=form, user_id=user_id, archive=archive) as archive_stub:
-            yield archive_stub
-            is_sql = isinstance(form, XFormInstance)
-            if is_sql:
-                publish_form_saved(form)
-            if trigger_signals:
-                sender = "form_processor" if is_sql else "couchforms"
-                signal = xform_archived if archive else xform_unarchived
-                signal.send(sender=sender, xform=form)
 
     def soft_delete_forms(self, form_ids, deletion_date=None, deletion_id=None):
         """DEPRECATED use XFormInstance.objects"""
