@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordResetConfirmView
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -43,6 +44,7 @@ from corehq.apps.domain.forms import (
     DomainMetadataForm,
     PrivacySecurityForm,
     ProjectSettingsForm,
+    clean_password
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
@@ -465,6 +467,12 @@ class CustomPasswordResetView(PasswordResetConfirmView):
 
     def post(self, request, *args, **kwargs):
         self.extra_context['hide_password_feedback'] = has_custom_clean_password()
+        if request.POST['new_password1'] == request.POST['new_password2']:
+            try:
+                clean_password(request.POST['new_password1'])
+            except ValidationError as e:
+                messages.error(request, _(e.message))
+                return HttpResponseRedirect(request.path_info)
         response = super().post(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)
