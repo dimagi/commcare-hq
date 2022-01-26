@@ -35,14 +35,14 @@ from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.models import TruncatingCharField
 
-from .abstract_models import (
+from ..abstract_models import (
     DEFAULT_PARENT_IDENTIFIER,
     AbstractCommCareCase,
     AbstractXFormInstance,
     IsImageMixin,
 )
-from .exceptions import AttachmentNotFound, MissingFormXml, UnknownActionType
-from .track_related import TrackRelatedChanges
+from ..exceptions import AttachmentNotFound, MissingFormXml, UnknownActionType
+from ..track_related import TrackRelatedChanges
 
 
 STANDARD_CHARFIELD_LENGTH = 255
@@ -492,7 +492,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
     @property
     @memoized
     def serialized_attachments(self):
-        from .serializers import XFormAttachmentSQLSerializer
+        from ..serializers import XFormAttachmentSQLSerializer
         return {
             att.name: XFormAttachmentSQLSerializer(att).data
             for att in self.get_attachments()
@@ -503,7 +503,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
     def form_data(self):
         """Returns the JSON representation of the form XML"""
         from couchforms import XMLSyntaxError
-        from .utils import convert_xform_to_json, adjust_datetimes
+        from ..utils import convert_xform_to_json, adjust_datetimes
         from corehq.form_processor.utils.metadata import scrub_form_meta
         xml = self.get_xml()
         try:
@@ -526,7 +526,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
 
     @property
     def metadata(self):
-        from .utils import clean_metadata
+        from ..utils import clean_metadata
         if const.TAG_META in self.form_data:
             return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
 
@@ -536,7 +536,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
         self.state |= self.DELETED
 
     def to_json(self, include_attachments=False):
-        from .serializers import XFormInstanceSerializer, lazy_serialize_form_attachments, \
+        from ..serializers import XFormInstanceSerializer, lazy_serialize_form_attachments, \
             lazy_serialize_form_history
         serializer = XFormInstanceSerializer(self)
         data = dict(serializer.data)
@@ -582,12 +582,12 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
             raise MissingFormXml(self.form_id)
 
     def archive(self, user_id=None, trigger_signals=True):
-        from .interfaces.dbaccessors import FormAccessors
+        from ..interfaces.dbaccessors import FormAccessors
         if not self.is_archived:
             FormAccessors.do_archive(self, True, user_id, trigger_signals)
 
     def unarchive(self, user_id=None, trigger_signals=True):
-        from .interfaces.dbaccessors import FormAccessors
+        from ..interfaces.dbaccessors import FormAccessors
         if self.is_archived:
             FormAccessors.do_archive(self, False, user_id, trigger_signals)
 
@@ -804,12 +804,12 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return OrderedDict(sorted(self.case_json.items()))
 
     def to_api_json(self, lite=False):
-        from .serializers import CommCareCaseAPISerializer
+        from ..serializers import CommCareCaseAPISerializer
         serializer = CommCareCaseAPISerializer(self, lite=lite)
         return serializer.data
 
     def to_json(self):
-        from .serializers import (
+        from ..serializers import (
             CommCareCaseSerializer,
             lazy_serialize_case_attachments,
             lazy_serialize_case_indices,
@@ -958,7 +958,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def serialized_attachments(self):
-        from .serializers import CaseAttachmentSerializer
+        from ..serializers import CaseAttachmentSerializer
         return {
             att.name: dict(CaseAttachmentSerializer(att).data)
             for att in self.get_attachments()
@@ -1678,7 +1678,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
         return self.location.location_id if self.location else None
 
     def to_json(self, include_location_id=True):
-        from .serializers import LedgerValueSerializer
+        from ..serializers import LedgerValueSerializer
         serializer = LedgerValueSerializer(self, include_location_id=include_location_id)
         return dict(serializer.data)
 
