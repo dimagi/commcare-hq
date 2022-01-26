@@ -80,8 +80,8 @@ hqDefine('app_manager/js/case_config_utils', function () {
             });
             return _(suggestedProperties).difference(used_properties);
         },
-        propertyDictToArray: function (required, property_dict, caseConfig) {
-            var property_array = _(property_dict).map(function (conditionalCaseUpdate, caseName) {
+        propertyDictToArray: function (required, propertyDict, caseConfig) {
+            var propertyArray = _(propertyDict).map(function (conditionalCaseUpdate, caseName) {
                 return {
                     path: conditionalCaseUpdate.question_path,
                     key: caseName,
@@ -89,27 +89,27 @@ hqDefine('app_manager/js/case_config_utils', function () {
                     save_only_if_edited: conditionalCaseUpdate.update_mode === 'edit',
                 };
             });
-            property_array = _(property_array).sortBy(function (property) {
+            propertyArray = _(propertyArray).sortBy(function (property) {
                 return caseConfig.questionScores[property.path] * 2 + (property.required ? 0 : 1);
             });
-            return required.concat(property_array);
+            return required.concat(propertyArray);
         },
-        propertyArrayToDict: function (required, property_array) {
-            var property_dict = {},
-                extra_dict = {};
-            _(property_array).each(function (case_property) {
-                var key = case_property.key;
-                var path = case_property.path;
-                var updateMode = case_property.save_only_if_edited ? 'edit' : 'always';
+        propertyArrayToDict: function (required, propertyArray) {
+            var propertyDict = {},
+                extraDict = {};
+            _(propertyArray).each(function (caseProperty) {
+                var key = caseProperty.key;
+                var path = caseProperty.path;
+                var updateMode = caseProperty.save_only_if_edited ? 'edit' : 'always';
                 if (key || path) {
-                    if (_(required).contains(key) && case_property.required) {
-                        extra_dict[key] = {question_path: path, update_mode: updateMode};
+                    if (_(required).contains(key) && caseProperty.required) {
+                        extraDict[key] = {question_path: path, update_mode: updateMode};
                     } else {
-                        property_dict[key] = {question_path: path, update_mode: updateMode};
+                        propertyDict[key] = {question_path: path, update_mode: updateMode};
                     }
                 }
             });
-            return [property_dict, extra_dict];
+            return [propertyDict, extraDict];
         },
         preloadDictToArray: function (propertyDict, caseConfig) {
             var propertyArray = _(propertyDict).map(function (path, caseName) {
