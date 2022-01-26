@@ -4,6 +4,7 @@ from collections import Counter, defaultdict
 
 from django.utils.translation import ugettext as _
 
+from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.util.dates import get_previous_month_date_range
 from custom.samveg.case_importer.exceptions import (
     CallNotInLastMonthError,
@@ -102,6 +103,7 @@ class RequiredValueValidator(BaseRowOperation):
 
         columns = set(raw_row.keys())
         required_columns = get_required_columns(columns)
+        required_columns.append(EXTERNAL_ID)
 
         for required_column in required_columns:
             if not fields_to_update.get(required_column):
