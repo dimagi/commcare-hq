@@ -92,11 +92,11 @@ class RequiredValueValidator(BaseRowOperation):
     @classmethod
     def run(cls, row_num, raw_row, fields_to_update, import_context):
         error_messages = []
-        error_messages.extend(cls._validate_required_columns(row_num, raw_row))
+        error_messages.extend(cls._validate_required_columns(row_num, raw_row, fields_to_update))
         return fields_to_update, error_messages
 
     @classmethod
-    def _validate_required_columns(cls, row_num, raw_row):
+    def _validate_required_columns(cls, row_num, raw_row, fields_to_update):
         error_messages = []
         missing_values = set()
 
@@ -104,7 +104,7 @@ class RequiredValueValidator(BaseRowOperation):
         required_columns = get_required_columns(columns)
 
         for required_column in required_columns:
-            if not raw_row.get(required_column):
+            if not fields_to_update.get(required_column):
                 missing_values.add(required_column)
         if missing_values:
             error_messages.append(
@@ -122,7 +122,7 @@ class CallValidator(BaseRowOperation):
     def run(cls, row_num, raw_row, fields_to_update, import_context):
         error_messages = []
         call_date = None
-        call_value, call_number = _get_latest_call_value_and_number(raw_row)
+        call_value, call_number = _get_latest_call_value_and_number(fields_to_update)
         if not call_value:
             error_messages.append(
                 CallValuesMissingError()
@@ -149,8 +149,8 @@ class UploadLimitValidator(BaseRowOperation):
     @classmethod
     def run(cls, row_num, raw_row, fields_to_update, import_context):
         error_messages = []
-        owner_name = raw_row.get(OWNER_NAME)
-        call_value, call_number = _get_latest_call_value_and_number(raw_row)
+        owner_name = fields_to_update.get(OWNER_NAME)
+        call_value, call_number = _get_latest_call_value_and_number(fields_to_update)
         if owner_name and call_number:
             if cls._upload_limit_reached(import_context, owner_name, call_number):
                 error_messages.append(UploadLimitReachedError())
@@ -188,13 +188,13 @@ def get_required_columns(columns):
     return REQUIRED_COLUMNS + sheet_specific_columns
 
 
-def _get_latest_call_value_and_number(raw_row):
+def _get_latest_call_value_and_number(fields_to_update):
     # A row is assumed to have call columns named, Call1 till Call6
     # return latest call's value and call number
     latest_call_value = None
     latest_call_number = None
     for i in range(1, 7):
-        if raw_row.get(f"Call{i}"):
-            latest_call_value = raw_row[f"Call{i}"]
+        if fields_to_update.get(f"Call{i}"):
+            latest_call_value = fields_to_update[f"Call{i}"]
             latest_call_number = i
     return latest_call_value, latest_call_number
