@@ -236,8 +236,7 @@ class TestDumpLoadToggles(SimpleTestCase):
             self.assertItemsEqual(self.expected_items[dump['slug']], dump['enabled_users'])
 
     def _get_mocked_toggles(self):
-        from corehq.toggles.models import generate_toggle_id
-        from corehq.toggles.models import Toggle
+        from corehq.toggles.models import Toggle, generate_toggle_id
         from corehq.toggles.shortcuts import namespaced_item
 
         mocked_toggles = {
