@@ -1,14 +1,17 @@
 import datetime
+from unittest.mock import Mock, patch
 
-from django.test import TestCase
+from django.http import Http404
+from django.test import SimpleTestCase, TestCase
 
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.app_manager.const import AMPLIFIES_YES
+from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET
 from corehq.apps.app_manager.models import Application
 from corehq.apps.data_analytics.const import NOT_SET, YES
-from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
+from corehq.apps.data_analytics.malt_generator import MALTTableGenerator, _get_malt_app_data, MaltAppData, \
+    DEFAULT_MINIMUM_USE_THRESHOLD, DEFAULT_EXPERIENCED_THRESHOLD
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
 from corehq.apps.domain.models import Domain
@@ -19,6 +22,7 @@ from corehq.const import MISSING_APP_ID
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import disable_quickcache
 
 
 @es_test
@@ -147,3 +151,41 @@ class MaltGeneratorTest(TestCase):
             'num_of_forms': 1,
             'wam': NOT_SET,
         })
+
+
+@disable_quickcache
+class TestGetMaltAppData(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestGetMaltAppData, cls).setUpClass()
+        cls.default_app_data = MaltAppData(
+            AMPLIFIES_NOT_SET,
+            AMPLIFIES_NOT_SET,
+            DEFAULT_MINIMUM_USE_THRESHOLD,
+            DEFAULT_EXPERIENCED_THRESHOLD,
+            False
+        )
+
+    def test_returns_default_app_data_if_no_app_id(self):
+        actual_app_data = _get_malt_app_data('domain', None)
+        self.assertEqual(actual_app_data, self.default_app_data)
+
+    def test_returns_default_app_data_if_get_app_raises_Http404(self):
+        with patch('corehq.apps.data_analytics.malt_generator.get_app') as mock_getapp:
+            mock_getapp.side_effect = Http404
+            actual_app_data = _get_malt_app_data('domain', 'app_id')
+        self.assertEqual(actual_app_data, self.default_app_data)
+
+    def test_returns_expected_app_data(self):
+        mock_app = Mock()
+        mock_app.amplifies_workers = True
+        mock_app.amplifies_project = False
+        mock_app.minimum_use_threshold = 1
+        mock_app.experienced_threshold = 10
+        mock_app.is_deleted.return_value = False
+
+        with patch('corehq.apps.data_analytics.malt_generator.get_app', return_value=mock_app):
+            actual_app_data = _get_malt_app_data('domain', 'app_id')
+
+        self.assertEqual(actual_app_data, MaltAppData(True, False, 1, 10, False))

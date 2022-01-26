@@ -23,6 +23,9 @@ from corehq.util.quickcache import quickcache
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+DEFAULT_MINIMUM_USE_THRESHOLD = 15
+DEFAULT_EXPERIENCED_THRESHOLD = 3
+
 MaltAppData = namedtuple('MaltAppData', 'wam pam use_threshold experienced_threshold is_app_deleted')
 
 
@@ -69,7 +72,7 @@ class MALTTableGenerator(object):
                 user_id = app_row.user_id
                 num_of_forms = app_row.doc_count
                 try:
-                    app_data = self._app_data(domain_name, app_id)
+                    app_data = _get_malt_app_data(domain_name, app_id)
                     if app_row.user_id not in users_by_id:
                         # highly unlikely, but adding a safety check for a recent refactor
                         notify_exception(None, f"A form submission for user with id {user_id} was returned by "
@@ -141,19 +144,22 @@ class MALTTableGenerator(object):
                 str(ex)
             ), exc_info=True)
 
-    @classmethod
-    @quickcache(['domain', 'app_id'])
-    def _app_data(cls, domain, app_id):
-        defaults = MaltAppData(AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, 15, 3, False)
-        if not app_id:
-            return defaults
-        try:
-            app = get_app(domain, app_id)
-        except Http404:
-            logger.debug("App not found %s" % app_id)
-            return defaults
-        return MaltAppData(getattr(app, 'amplifies_workers', AMPLIFIES_NOT_SET),
-                           getattr(app, 'amplifies_project', AMPLIFIES_NOT_SET),
-                           getattr(app, 'minimum_use_threshold', 15),
-                           getattr(app, 'experienced_threshold', 3),
-                           app.is_deleted())
+
+@quickcache(['domain', 'app_id'])
+def _get_malt_app_data(domain, app_id):
+    default_app_data = MaltAppData(
+        AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, DEFAULT_MINIMUM_USE_THRESHOLD, DEFAULT_EXPERIENCED_THRESHOLD, False
+    )
+    if not app_id:
+        return default_app_data
+    try:
+        app = get_app(domain, app_id)
+    except Http404:
+        logger.debug("App not found %s" % app_id)
+        return default_app_data
+
+    return MaltAppData(getattr(app, 'amplifies_workers', AMPLIFIES_NOT_SET),
+                       getattr(app, 'amplifies_project', AMPLIFIES_NOT_SET),
+                       getattr(app, 'minimum_use_threshold', DEFAULT_MINIMUM_USE_THRESHOLD),
+                       getattr(app, 'experienced_threshold', DEFAULT_EXPERIENCED_THRESHOLD),
+                       app.is_deleted())
