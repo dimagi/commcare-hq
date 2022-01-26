@@ -391,12 +391,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 } else {
                     hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Unchecked "Save only if edited"');
                 }
-                var updatedCaseProp = caseProperty.wrap({
-                    path: property.path(),
-                    key: property.key(),
-                    required: property.required(),
-                    save_only_if_edited: checked,
-                }, self);
+                var updatedCaseProp = caseProperty.wrap(_.extend(ko.mapping.toJS(property), {save_only_if_edited: checked}), self);
                 self.case_properties.replace(property, updatedCaseProp);
                 self.visible_case_properties.replace(property, updatedCaseProp);
                 saveButton.fire('change');
