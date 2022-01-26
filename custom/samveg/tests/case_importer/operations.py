@@ -1,8 +1,7 @@
 from datetime import datetime
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
-
-import pytz
 
 from custom.samveg.case_importer.operations import AddCustomCaseProperties
 
@@ -10,8 +9,11 @@ from custom.samveg.case_importer.operations import AddCustomCaseProperties
 class TestAddCustomCaseProperties(SimpleTestCase):
     def test_added_case_properties(self):
         fields_to_update = {}
-        fields_to_update, errors = AddCustomCaseProperties.run(1, {}, fields_to_update, {})
+        with patch('custom.samveg.case_importer.operations._get_today_date') as today_patch:
+            today_patch.return_value = datetime(2020, 1, 1).date()
+            fields_to_update, errors = AddCustomCaseProperties.run(1, {}, fields_to_update, {})
+
         self.assertEqual(
             fields_to_update['last_upload_change'],
-            str(datetime.now(pytz.timezone('Asia/Kolkata')).date())
+            '2020-01-01'
         )

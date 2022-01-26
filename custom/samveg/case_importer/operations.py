@@ -24,6 +24,9 @@ class BaseRowOperation(object):
 class AddCustomCaseProperties(BaseRowOperation):
     @classmethod
     def run(cls, row_num, raw_row, fields_to_update, import_context):
-        today = datetime.now(pytz.timezone('Asia/Kolkata')).date()
-        fields_to_update['last_upload_change'] = str(today)
+        fields_to_update['last_upload_change'] = str(_get_today_date())
         return fields_to_update, []
+
+
+def _get_today_date():
+    return datetime.now(pytz.timezone('Asia/Kolkata')).date()
