@@ -114,7 +114,6 @@ from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import CODES, NotFound, get_blob_db
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
-    FormAccessorSQL,
     doc_type_to_state,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -1028,16 +1027,16 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain.name)), 0)
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain2.name)), 1)
 
-        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 2)
-        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
+        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain.name)), 2)
+        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
         call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
 
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain.name)), 0)
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain2.name)), 1)
 
-        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 0)
-        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
+        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain.name)), 0)
+        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
     def test_hard_delete_forms_none_to_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
@@ -1050,16 +1049,16 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain.name)), 0)
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain2.name)), 1)
 
-        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 2)
-        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
+        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain.name)), 2)
+        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
         call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name, noinput=True)
 
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain.name)), 0)
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain2.name)), 1)
 
-        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 2)
-        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
+        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain.name)), 2)
+        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
     def test_hard_delete_cases(self):
         for domain_name in [self.domain.name, self.domain2.name]:

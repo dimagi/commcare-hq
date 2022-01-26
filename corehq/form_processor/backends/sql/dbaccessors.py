@@ -478,14 +478,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_deleted_form_ids_in_domain(domain):
-        result = []
-        for db_name in get_db_aliases_for_partitioned_query():
-            result.extend(
-                XFormInstance.objects.using(db_name)
-                .annotate(state_deleted=F('state').bitand(XFormInstance.DELETED))
-                .filter(domain=domain, state_deleted=XFormInstance.DELETED).values_list('form_id', flat=True)
-            )
-        return result
+        """DEPRECATED"""
+        return XFormInstance.objects.get_deleted_form_ids_in_domain(domain)
 
     @staticmethod
     def get_form_ids_in_domain_by_state(domain, state):

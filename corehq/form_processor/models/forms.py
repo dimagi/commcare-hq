@@ -3,7 +3,7 @@ from datetime import datetime
 from io import BytesIO
 
 from django.db import InternalError, models, transaction
-from django.db.models import Q
+from django.db.models import F, Q
 
 from jsonfield.fields import JSONField
 from lxml import etree
@@ -24,6 +24,7 @@ from corehq.blobs.exceptions import NotFound
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
+    get_db_aliases_for_partitioned_query,
     paginate_query_across_partitioned_databases,
     split_list_by_db_partition,
 )
@@ -176,6 +177,17 @@ class XFormInstanceManager(RequireDBManager):
             )
             results = fetchall_as_namedtuple(cursor)
             return [result.form_id for result in results]
+
+    def get_deleted_form_ids_in_domain(self, domain):
+        result = []
+        for db_name in get_db_aliases_for_partitioned_query():
+            result.extend(
+                self.using(db_name)
+                .annotate(state_deleted=F('state').bitand(XFormInstance.DELETED))
+                .filter(domain=domain, state_deleted=XFormInstance.DELETED)
+                .values_list('form_id', flat=True)
+            )
+        return result
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
