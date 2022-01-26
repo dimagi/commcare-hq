@@ -5,7 +5,6 @@ from django.db import IntegrityError
 from django.http.response import Http404
 
 from dimagi.utils.chunked import chunked
-from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -52,57 +51,9 @@ class MALTTableGenerator(object):
                 all_users = get_all_user_rows(domain.name, include_inactive=False, include_docs=True)
                 for users in chunked(all_users, 1000):
                     users_by_id = {user['id']: CouchUser.wrap_correctly(user['doc']) for user in users}
-                    try:
-                        malt_rows_to_save = self._get_malt_row_dicts(domain.name, monthspan, users_by_id)
-                    except Exception as ex:
-                        logger.error(
-                            f"Failed to get rows for domain {domain.name}. Exception is {str(ex)}", exc_info=True
-                        )
-                        continue
-
+                    malt_rows_to_save = _get_malt_row_dicts(domain.name, monthspan, users_by_id)
                     if malt_rows_to_save:
                         self._save_to_db(malt_rows_to_save, domain._id)
-
-    def _get_malt_row_dicts(self, domain_name, monthspan, users_by_id):
-        malt_row_dicts = []
-        for users in chunked(list(users_by_id), 1000):
-            apps_submitted_for = get_app_submission_breakdown_es(domain_name, monthspan, users)
-            for app_row in apps_submitted_for:
-                app_id = app_row.app_id
-                user_id = app_row.user_id
-                num_of_forms = app_row.doc_count
-                try:
-                    app_data = _get_malt_app_data(domain_name, app_id)
-                    if app_row.user_id not in users_by_id:
-                        # highly unlikely, but adding a safety check for a recent refactor
-                        notify_exception(None, f"A form submission for user with id {user_id} was returned by "
-                                               f"get_app_submission_breakdown_es but was not found in the "
-                                               f"users_by_id parameter.")
-                        continue
-                    user = users_by_id[user_id]
-                except Exception as ex:
-                    logger.error("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
-                                 (id=user_id, app_id=app_id, ex=str(ex)), exc_info=True)
-                    continue
-
-                malt_dict = {
-                    'month': monthspan.startdate,
-                    'user_id': user._id,
-                    'username': user.username,
-                    'email': user.email,
-                    'user_type': user.doc_type,
-                    'domain_name': domain_name,
-                    'num_of_forms': num_of_forms,
-                    'app_id': app_id or MISSING_APP_ID,
-                    'device_id': app_row.device_id,
-                    'wam': AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.wam, NOT_SET),
-                    'pam': AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.pam, NOT_SET),
-                    'use_threshold': app_data.use_threshold,
-                    'experienced_threshold': app_data.experienced_threshold,
-                    'is_app_deleted': app_data.is_app_deleted,
-                }
-                malt_row_dicts.append(malt_dict)
-        return malt_row_dicts
 
     @classmethod
     def _save_to_db(cls, malt_rows_to_save, domain_id):
@@ -163,3 +114,38 @@ def _get_malt_app_data(domain, app_id):
                        getattr(app, 'minimum_use_threshold', DEFAULT_MINIMUM_USE_THRESHOLD),
                        getattr(app, 'experienced_threshold', DEFAULT_EXPERIENCED_THRESHOLD),
                        app.is_deleted())
+
+
+def _build_malt_row_dict(app_row, domain_name, user, monthspan):
+    app_data = _get_malt_app_data(domain_name, app_row.app_id)
+
+    return {
+        'month': monthspan.startdate,
+        'user_id': user._id,
+        'username': user.username,
+        'email': user.email,
+        'user_type': user.doc_type,
+        'domain_name': domain_name,
+        'num_of_forms': app_row.doc_count,
+        'app_id': app_row.app_id or MISSING_APP_ID,
+        'device_id': app_row.device_id,
+        'wam': AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.wam, NOT_SET),
+        'pam': AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.pam, NOT_SET),
+        'use_threshold': app_data.use_threshold,
+        'experienced_threshold': app_data.experienced_threshold,
+        'is_app_deleted': app_data.is_app_deleted,
+    }
+
+
+def _get_malt_row_dicts(domain_name, monthspan, users_by_id):
+    """
+    Includes expensive elasticsearch query
+    """
+    malt_row_dicts = []
+    app_rows = get_app_submission_breakdown_es(domain_name, monthspan, list(users_by_id))
+    for app_row in app_rows:
+        user = users_by_id[app_row.user_id]
+        malt_row_dict = _build_malt_row_dict(app_row, domain_name, user, monthspan)
+        malt_row_dicts.append(malt_row_dict)
+
+    return malt_row_dicts

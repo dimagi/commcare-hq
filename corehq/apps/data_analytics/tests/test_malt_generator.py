@@ -7,11 +7,11 @@ from django.test import SimpleTestCase, TestCase
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET
+from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
 from corehq.apps.app_manager.models import Application
 from corehq.apps.data_analytics.const import NOT_SET, YES
 from corehq.apps.data_analytics.malt_generator import MALTTableGenerator, _get_malt_app_data, MaltAppData, \
-    DEFAULT_MINIMUM_USE_THRESHOLD, DEFAULT_EXPERIENCED_THRESHOLD
+    DEFAULT_MINIMUM_USE_THRESHOLD, DEFAULT_EXPERIENCED_THRESHOLD, _build_malt_row_dict, _get_malt_row_dicts
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
 from corehq.apps.domain.models import Domain
@@ -189,3 +189,138 @@ class TestGetMaltAppData(SimpleTestCase):
             actual_app_data = _get_malt_app_data('domain', 'app_id')
 
         self.assertEqual(actual_app_data, MaltAppData(True, False, 1, 10, False))
+
+
+class TestBuildMaltRowDict(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestBuildMaltRowDict, cls).setUpClass()
+        cls.domain = 'domain'
+        cls.monthspan = DateSpan.from_month(1, 2022)
+        cls.app_row = create_mock_app_row_for_malt_tests()
+        cls.user = create_mock_user_for_malt_tests()
+        cls.app_data = MaltAppData(
+            AMPLIFIES_NOT_SET,
+            AMPLIFIES_NOT_SET,
+            DEFAULT_MINIMUM_USE_THRESHOLD,
+            DEFAULT_EXPERIENCED_THRESHOLD,
+            False
+        )
+
+    def test_returns_expected_value_for_month(self):
+        with patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data', return_value=self.app_data):
+            actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, self.monthspan)
+
+        self.assertEqual(actual_malt_row_dict['month'], datetime.datetime(2022, 1, 1, 0, 0))
+
+    def test_app_id_set_to_missing_if_none(self):
+        custom_app_row = create_mock_app_row_for_malt_tests()
+        custom_app_row.app_id = None
+
+        with patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data', return_value=self.app_data):
+            actual_malt_row_dict = _build_malt_row_dict(custom_app_row, self.domain, self.user, self.monthspan)
+
+        self.assertEqual(actual_malt_row_dict['app_id'], '_MISSING_APP_ID')
+
+    def test_wam_and_pam_values_of_not_set_map_to_none(self):
+        custom_app_data = MaltAppData(
+            AMPLIFIES_NOT_SET,  # wam value
+            AMPLIFIES_NOT_SET,  # pam value
+            DEFAULT_MINIMUM_USE_THRESHOLD,
+            DEFAULT_EXPERIENCED_THRESHOLD,
+            False
+        )
+
+        with patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data', return_value=custom_app_data):
+            actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, self.monthspan)
+
+        self.assertEqual(actual_malt_row_dict['wam'], None)
+        self.assertEqual(actual_malt_row_dict['pam'], None)
+
+    def test_wam_and_pam_values_of_yes_map_to_true(self):
+        custom_app_data = MaltAppData(
+            AMPLIFIES_YES,  # wam value
+            AMPLIFIES_YES,  # pam value
+            DEFAULT_MINIMUM_USE_THRESHOLD,
+            DEFAULT_EXPERIENCED_THRESHOLD,
+            False
+        )
+        with patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data', return_value=custom_app_data):
+            actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, self.monthspan)
+
+        self.assertEqual(actual_malt_row_dict['wam'], True)
+        self.assertEqual(actual_malt_row_dict['pam'], True)
+
+    def test_wam_and_pam_values_of_no_map_to_false(self):
+        custom_app_data = MaltAppData(
+            AMPLIFIES_NO,  # wam value
+            AMPLIFIES_NO,  # pam value
+            DEFAULT_MINIMUM_USE_THRESHOLD,
+            DEFAULT_EXPERIENCED_THRESHOLD,
+            False
+        )
+        with patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data', return_value=custom_app_data):
+            actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, self.monthspan)
+
+        self.assertEqual(actual_malt_row_dict['wam'], False)
+        self.assertEqual(actual_malt_row_dict['pam'], False)
+
+
+class TestGetMaltRowDicts(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestGetMaltRowDicts, cls).setUpClass()
+        cls.domain = 'domain'
+        cls.monthspan = DateSpan.from_month(1, 2022)
+        cls.mock_user1 = create_mock_user_for_malt_tests('user_id_1', 'user1')
+        cls.mock_user2 = create_mock_user_for_malt_tests('user_id_2', 'user2')
+        cls.app_data = MaltAppData(
+            AMPLIFIES_NOT_SET,
+            AMPLIFIES_NOT_SET,
+            DEFAULT_MINIMUM_USE_THRESHOLD,
+            DEFAULT_EXPERIENCED_THRESHOLD,
+            False
+        )
+
+    def test_num_of_forms(self):
+        users_by_id = {'user_id_1': self.mock_user1, 'user_id_2': self.mock_user2}
+        with patch('corehq.apps.data_analytics.malt_generator.get_app_submission_breakdown_es') as mock_esquery,\
+             patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data', return_value=self.app_data):
+            mock_esquery.return_value = [
+                create_mock_nested_query_row('user_id_1', doc_count=50),
+                create_mock_nested_query_row('user_id_2', doc_count=25),
+            ]
+            malt_row_dicts = _get_malt_row_dicts(self.domain, self.monthspan, users_by_id)
+
+        user1_malt_row_dict = malt_row_dicts[0]
+        user2_malt_row_dict = malt_row_dicts[1]
+        self.assertEqual(user1_malt_row_dict['num_of_forms'], 50)
+        self.assertEqual(user2_malt_row_dict['num_of_forms'], 25)
+
+
+def create_mock_user_for_malt_tests(user_id='user_id', username='username'):
+    mock_user = Mock()
+    mock_user._id = user_id
+    mock_user.username = username
+    mock_user.email = 'email'
+    mock_user.doc_type = 'doc_type'
+    return mock_user
+
+
+def create_mock_app_row_for_malt_tests(app_id='app_id', device_id='device_id', doc_count=10):
+    mock_app_row = Mock()
+    mock_app_row.app_id = app_id
+    mock_app_row.device_id = device_id
+    mock_app_row.doc_count = doc_count
+    return mock_app_row
+
+
+def create_mock_nested_query_row(user_id, app_id='abc123', device_id='web', doc_count=10):
+    mock_nested_query_row = Mock()
+    mock_nested_query_row.app_id = app_id
+    mock_nested_query_row.device_id = device_id
+    mock_nested_query_row.user_id = user_id
+    mock_nested_query_row.doc_count = doc_count
+    return mock_nested_query_row
