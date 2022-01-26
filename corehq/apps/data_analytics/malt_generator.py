@@ -28,71 +28,27 @@ DEFAULT_EXPERIENCED_THRESHOLD = 3
 MaltAppData = namedtuple('MaltAppData', 'wam pam use_threshold experienced_threshold is_app_deleted')
 
 
-class MALTTableGenerator(object):
+def generate_malt(monthspans, domains=None):
     """
-        Populates SQL table with data for given list of monthly-datespans
-        See .models.MALTRow
+    Populates MALTRow SQL table with app submission data for a given list of months
+    :param monthspans: list of DateSpan objects
+    :param domains: list of domain ids
     """
+    domains = domains or Domain.get_all()
+    for domain in domains:
+        if isinstance(domain, str):
+            domain = Domain.get_by_name(domain)
+            if not domain:
+                continue
 
-    def __init__(self, datespan_object_list):
-        self.monthspan_list = datespan_object_list
-
-    def build_table(self, domains=None):
-        domains = domains or Domain.get_all()
-        for domain in domains:
-            if isinstance(domain, str):
-                domain = Domain.get_by_name(domain)
-                if not domain:
-                    continue
-
-            for monthspan in self.monthspan_list:
-                logger.info(f"Building MALT for {domain.name} for {monthspan}")
-                all_users = get_all_user_rows(domain.name, include_inactive=False, include_docs=True)
-                for users in chunked(all_users, 1000):
-                    users_by_id = {user['id']: CouchUser.wrap_correctly(user['doc']) for user in users}
-                    malt_rows_to_save = _get_malt_row_dicts(domain.name, monthspan, users_by_id)
-                    if malt_rows_to_save:
-                        self._save_to_db(malt_rows_to_save, domain._id)
-
-    @classmethod
-    def _save_to_db(cls, malt_rows_to_save, domain_id):
-        try:
-            MALTRow.objects.bulk_create(
-                [MALTRow(**malt_dict) for malt_dict in malt_rows_to_save]
-            )
-        except IntegrityError:
-            # no update_or_create in django-1.6
-            for malt_dict in malt_rows_to_save:
-                cls._update_or_create(malt_dict)
-        except Exception as ex:
-            logger.error("Failed to insert rows for domain with id {id}. Exception is {ex}".format(
-                         id=domain_id, ex=str(ex)), exc_info=True)
-
-    @classmethod
-    def _update_or_create(cls, malt_dict):
-        try:
-            # try update
-            unique_field_dict = {k: v
-                                 for (k, v) in malt_dict.items()
-                                 if k in MALTRow.get_unique_fields()}
-            prev_obj = MALTRow.objects.get(**unique_field_dict)
-            for k, v in malt_dict.items():
-                setattr(prev_obj, k, v)
-            prev_obj.save()
-        except MALTRow.DoesNotExist:
-            # create
-            try:
-                MALTRow(**malt_dict).save()
-            except Exception as ex:
-                logger.error("Failed to insert malt-row {}. Exception is {}".format(
-                    str(malt_dict),
-                    str(ex)
-                ), exc_info=True)
-        except Exception as ex:
-            logger.error("Failed to insert malt-row {}. Exception is {}".format(
-                str(malt_dict),
-                str(ex)
-            ), exc_info=True)
+        for monthspan in monthspans:
+            logger.info(f"Building MALT for {domain.name} for {monthspan}")
+            all_users = get_all_user_rows(domain.name, include_inactive=False, include_docs=True)
+            for users in chunked(all_users, 1000):
+                users_by_id = {user['id']: CouchUser.wrap_correctly(user['doc']) for user in users}
+                malt_rows_to_save = _get_malt_row_dicts(domain.name, monthspan, users_by_id)
+                if malt_rows_to_save:
+                    _save_to_db(malt_rows_to_save, domain._id)
 
 
 @quickcache(['domain', 'app_id'])
@@ -148,3 +104,43 @@ def _get_malt_row_dicts(domain_name, monthspan, users_by_id):
         malt_row_dicts.append(malt_row_dict)
 
     return malt_row_dicts
+
+
+def _save_to_db(malt_rows_to_save, domain_id):
+    try:
+        MALTRow.objects.bulk_create(
+            [MALTRow(**malt_dict) for malt_dict in malt_rows_to_save]
+        )
+    except IntegrityError:
+        # no update_or_create in django-1.6
+        for malt_dict in malt_rows_to_save:
+            _update_or_create(malt_dict)
+    except Exception as ex:
+        logger.error("Failed to insert rows for domain with id {id}. Exception is {ex}".format(
+                     id=domain_id, ex=str(ex)), exc_info=True)
+
+
+def _update_or_create(malt_dict):
+    try:
+        # try update
+        unique_field_dict = {k: v
+                             for (k, v) in malt_dict.items()
+                             if k in MALTRow.get_unique_fields()}
+        prev_obj = MALTRow.objects.get(**unique_field_dict)
+        for k, v in malt_dict.items():
+            setattr(prev_obj, k, v)
+        prev_obj.save()
+    except MALTRow.DoesNotExist:
+        # create
+        try:
+            MALTRow(**malt_dict).save()
+        except Exception as ex:
+            logger.error("Failed to insert malt-row {}. Exception is {}".format(
+                str(malt_dict),
+                str(ex)
+            ), exc_info=True)
+    except Exception as ex:
+        logger.error("Failed to insert malt-row {}. Exception is {}".format(
+            str(malt_dict),
+            str(ex)
+        ), exc_info=True)

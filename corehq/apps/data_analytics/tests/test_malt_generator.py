@@ -17,8 +17,8 @@ from corehq.apps.data_analytics.const import NOT_SET, YES
 from corehq.apps.data_analytics.malt_generator import (
     DEFAULT_EXPERIENCED_THRESHOLD,
     DEFAULT_MINIMUM_USE_THRESHOLD,
+    generate_malt,
     MaltAppData,
-    MALTTableGenerator,
     _build_malt_row_dict,
     _get_malt_app_data,
     _get_malt_row_dicts,
@@ -123,8 +123,7 @@ class MaltGeneratorTest(TestCase):
 
     @classmethod
     def run_malt_generation(cls):
-        generator = MALTTableGenerator([cls.malt_month])
-        generator.build_table()
+        generate_malt([cls.malt_month])
 
     def _assert_malt_row_exists(self, query_filters):
         rows = MALTRow.objects.filter(username=self.USERNAME, **query_filters)
