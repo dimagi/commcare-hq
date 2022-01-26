@@ -7,11 +7,22 @@ from django.test import SimpleTestCase, TestCase
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
+from corehq.apps.app_manager.const import (
+    AMPLIFIES_NO,
+    AMPLIFIES_NOT_SET,
+    AMPLIFIES_YES,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.apps.data_analytics.const import NOT_SET, YES
-from corehq.apps.data_analytics.malt_generator import MALTTableGenerator, _get_malt_app_data, MaltAppData, \
-    DEFAULT_MINIMUM_USE_THRESHOLD, DEFAULT_EXPERIENCED_THRESHOLD, _build_malt_row_dict, _get_malt_row_dicts
+from corehq.apps.data_analytics.malt_generator import (
+    DEFAULT_EXPERIENCED_THRESHOLD,
+    DEFAULT_MINIMUM_USE_THRESHOLD,
+    MaltAppData,
+    MALTTableGenerator,
+    _build_malt_row_dict,
+    _get_malt_app_data,
+    _get_malt_row_dicts,
+)
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
 from corehq.apps.domain.models import Domain

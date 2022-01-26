@@ -45,9 +45,8 @@ class MALTTableGenerator(object):
                 if not domain:
                     continue
 
-            logger.info("Building MALT for {}".format(domain.name))
-
             for monthspan in self.monthspan_list:
+                logger.info(f"Building MALT for {domain.name} for {monthspan}")
                 all_users = get_all_user_rows(domain.name, include_inactive=False, include_docs=True)
                 for users in chunked(all_users, 1000):
                     users_by_id = {user['id']: CouchUser.wrap_correctly(user['doc']) for user in users}
