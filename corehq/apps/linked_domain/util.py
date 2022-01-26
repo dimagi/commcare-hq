@@ -27,13 +27,15 @@ def can_user_access_release_management(user, domain, include_lite_version=True, 
     if not user or not domain:
         return False
 
-    has_access = domain_has_privilege(domain, RELEASE_MANAGEMENT) and user.is_domain_admin(domain)
-    if include_lite_version:
-        has_access |= domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT) and user.is_domain_admin(domain)
-    if include_toggle:
-        has_access |= toggles.LINKED_DOMAINS.enabled(domain)
+    is_admin = user.is_domain_admin(domain)
 
-    return has_access
+    if domain_has_privilege(domain, RELEASE_MANAGEMENT) and is_admin:
+        return True
+    if include_lite_version and domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT) and is_admin:
+        return True
+    if include_toggle and toggles.LINKED_DOMAINS.enabled(domain):
+        return True
+    return False
 
 
 def can_domain_access_release_management(domain, include_lite_version=True, include_toggle=False):
