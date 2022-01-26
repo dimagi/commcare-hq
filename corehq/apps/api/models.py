@@ -13,7 +13,7 @@ from couchforms import const
 
 from corehq.apps.api.resources import DictObject
 from corehq.form_processor.models import CommCareCaseIndex
-from corehq.form_processor.abstract_models import CaseToXMLMixin, get_index_map
+from corehq.form_processor.models.abstract import CaseToXMLMixin, get_index_map
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,

@@ -35,7 +35,7 @@ from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.models import TruncatingCharField
 
-from ..abstract_models import (
+from .abstract import (
     DEFAULT_PARENT_IDENTIFIER,
     AbstractCommCareCase,
     AbstractXFormInstance,
