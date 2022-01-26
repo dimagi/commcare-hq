@@ -1,7 +1,6 @@
 import csv
 from django.core.management.base import BaseCommand
 from corehq.blobs import get_blob_db
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.models import XFormInstance
 from corehq.util.log import with_progress_bar
 from couchforms.const import ATTACHMENT_NAME
@@ -23,10 +22,10 @@ class Command(BaseCommand):
             csv_writer.writeheader()
             for domain in domains:
                 self.stdout.write("Handling domain %s" % domain)
-                form_db = FormAccessors(domain)
                 form_ids = XFormInstance.objects.get_form_ids_in_domain(domain)
                 form_ids.extend(XFormInstance.objects.get_form_ids_in_domain(domain, 'XFormArchived'))
-                for form in with_progress_bar(form_db.iter_forms(form_ids), len(form_ids)):
+                forms = XFormInstance.objects.iter_forms(form_ids, domain)
+                for form in with_progress_bar(forms, len(form_ids)):
                     meta = form.get_attachment_meta(ATTACHMENT_NAME)
                     if not meta or not blob_db.exists(key=meta.key):
                         self.write_row(csv_writer, domain, form.is_archived, form.received_on, form.form_id)

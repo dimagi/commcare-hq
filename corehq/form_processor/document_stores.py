@@ -16,10 +16,7 @@ from corehq.form_processor.exceptions import (
     MissingFormXml,
     XFormNotFound,
 )
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstance
 
 
@@ -31,7 +28,6 @@ class FormDocumentStore(DocumentStore):
 
     def __init__(self, domain, xmlns=None):
         self.domain = domain
-        self.form_accessors = FormAccessors(domain=domain)
         self.xmlns = xmlns
 
     def get_document(self, doc_id):
@@ -52,7 +48,7 @@ class FormDocumentStore(DocumentStore):
         return iter(XFormInstance.objects.iter_form_ids_by_xmlns(self.domain, self.xmlns))
 
     def iter_documents(self, ids):
-        for wrapped_form in self.form_accessors.iter_forms(ids):
+        for wrapped_form in XFormInstance.objects.iter_forms(ids, self.domain):
             try:
                 yield self._to_json(wrapped_form)
             except (DocumentNotFoundError, MissingFormXml):

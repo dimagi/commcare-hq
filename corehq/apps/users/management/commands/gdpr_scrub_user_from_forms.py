@@ -7,7 +7,6 @@ from django.core.management.base import BaseCommand
 from lxml import etree
 
 from corehq.apps.users.models import CouchUser
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.models import XFormInstance
 
 logger = logging.getLogger(__name__)
@@ -22,7 +21,6 @@ class Command(BaseCommand):
         parser.add_argument('domain')
 
     def handle(self, username, domain, **options):
-        this_form_accessor = FormAccessors(domain=domain)
         user = CouchUser.get_by_username(username)
         if not user:
             logger.info("User {} not found.".format(username))
@@ -32,7 +30,7 @@ class Command(BaseCommand):
         input_response = input(
             "Update {} form(s) for user {} in domain {}? (y/n): ".format(len(form_ids), username, domain))
         if input_response == "y":
-            for form_data in this_form_accessor.iter_forms(form_ids):
+            for form_data in XFormInstance.objects.iter_forms(form_ids, domain):
                 form_attachment_xml_new = self.update_form_data(form_data, NEW_USERNAME)
                 XFormInstance.objects.modify_attachment_xml_and_metadata(
                     form_data, form_attachment_xml_new)

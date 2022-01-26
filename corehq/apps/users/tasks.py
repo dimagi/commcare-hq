@@ -27,10 +27,7 @@ from soil import DownloadBase
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import UserArchivedRebuild, XFormInstance
 from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
 
@@ -110,7 +107,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
     deleted_cases = deleted_cases or set()
     cases_to_rebuild = set()
 
-    for form in FormAccessors(domain).iter_forms(form_id_list):
+    for form in XFormInstance.objects.iter_forms(form_id_list, domain):
         if form.domain != domain or not form.is_normal:
             continue
 
@@ -153,7 +150,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
         # all cases touched by this form are deleted
         return True
 
-    all_forms = FormAccessors(domain).iter_forms(form_ids_to_modify)
+    all_forms = XFormInstance.objects.iter_forms(form_ids_to_modify, domain)
     return [form.form_id for form in all_forms if _is_safe_to_modify(form)]
 
 

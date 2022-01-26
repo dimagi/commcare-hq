@@ -41,10 +41,8 @@ class FormAccessors:
         return self.db_accessor.get_forms(form_ids, ordered=ordered)
 
     def iter_forms(self, form_ids):
-        for chunk in chunked(form_ids, 100):
-            chunk = list([_f for _f in chunk if _f])
-            for form in self.get_forms(chunk):
-                yield form
+        """DEPRECATED use XFormInstance.objects"""
+        yield from XFormInstance.objects.iter_forms(form_ids)
 
     def form_exists(self, form_id):
         """DEPRECATED use XFormInstance.objects"""
