@@ -238,7 +238,7 @@ class TestDumpLoadToggles(SimpleTestCase):
     def _get_mocked_toggles(self):
         from toggle.models import generate_toggle_id
         from toggle.models import Toggle
-        from toggle.shortcuts import namespaced_item
+        from corehq.toggles.shortcuts import namespaced_item
 
         mocked_toggles = {
             toggle.slug: Toggle(_id=generate_toggle_id(toggle.slug), slug=toggle.slug)

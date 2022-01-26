@@ -1,7 +1,7 @@
 from couchdbkit import ResourceNotFound
 
+from corehq.toggles.shortcuts import parse_toggle
 from toggle.models import Toggle
-from toggle.shortcuts import parse_toggle
 
 
 def move_toggles(from_toggle_id, to_toggle_id):

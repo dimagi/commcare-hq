@@ -17,8 +17,9 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.extensions import extension_point, ResultFormat
-from toggle.models import Toggle
-from toggle.shortcuts import set_toggle, toggle_enabled
+
+from .models import Toggle
+from .shortcuts import set_toggle, toggle_enabled
 
 from corehq.util.quickcache import quickcache
 

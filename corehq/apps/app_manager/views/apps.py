@@ -20,7 +20,6 @@ from django_prbac.utils import has_privilege
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
-from toggle.shortcuts import set_toggle
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -106,6 +105,7 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
+from corehq.toggles.shortcuts import set_toggle
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
