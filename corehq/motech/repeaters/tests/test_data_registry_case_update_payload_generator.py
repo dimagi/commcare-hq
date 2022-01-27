@@ -1,20 +1,31 @@
 import uuid
 from datetime import datetime
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 from xml.etree import cElementTree as ElementTree
 
-from testil import eq, assert_raises
+from testil import assert_raises, eq
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 from casexml.apps.case.xml import V2_NAMESPACE
+
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import CommCareCase, CaseTransaction
+from corehq.form_processor.models import (
+    CaseTransaction,
+    CommCareCase,
+    CommCareCaseIndex,
+)
 from corehq.motech.repeaters.exceptions import DataRegistryCaseUpdateError
-from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater, Repeater
-from corehq.motech.repeaters.repeater_generators import DataRegistryCaseUpdatePayloadGenerator, SYSTEM_FORM_XMLNS
+from corehq.motech.repeaters.models import (
+    DataRegistryCaseUpdateRepeater,
+    Repeater,
+)
+from corehq.motech.repeaters.repeater_generators import (
+    SYSTEM_FORM_XMLNS,
+    DataRegistryCaseUpdatePayloadGenerator,
+)
 
 TARGET_DOMAIN = "target_domain"
 
@@ -517,19 +528,21 @@ def _mock_case(case_id, props=None, domain=TARGET_DOMAIN, case_type="patient"):
         "existing_prop": uuid.uuid4().hex,
         "existing_blank_prop": ""
     }
-    mock_case = Mock(
+    case = CommCareCase(
         domain=domain, type=case_type, case_id=case_id,
-        external_id=None,
+        name=None, external_id=None,
         case_json=props,
-        live_indices=[
-            Mock(
-                identifier="parent_c", referenced_type="parent_type",
-                referenced_id="parent_case_id", relationship_id="child"
-            ),
-            Mock(
-                identifier="host_c", referenced_type="host_type",
-                referenced_id="host_case_id", relationship_id="extension"
-            )
-        ])
-    mock_case.name = None
-    return mock_case
+    )
+    case.cached_indices = [
+        CommCareCaseIndex(
+            domain=domain, case_id=case_id,
+            identifier="parent_c", referenced_type="parent_type",
+            referenced_id="parent_case_id", relationship_id=CommCareCaseIndex.CHILD
+        ),
+        CommCareCaseIndex(
+            domain=domain, case_id=case_id,
+            identifier="host_c", referenced_type="host_type",
+            referenced_id="host_case_id", relationship_id=CommCareCaseIndex.EXTENSION
+        )
+    ]
+    return case
