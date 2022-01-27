@@ -576,12 +576,8 @@ def _message_to_sentry_thread_topic(message):
     ... 'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@1f984e3c, '
     ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
     ... 'If this error persists please report a bug to CommCareHQ.')
-    'EntityScreen EntityScreen [
-        Detail=org.commcare.suite.model.Detail@[...],
-        selection=null
-    ] could not select case [...].
-    If this error persists please report a bug to CommCareHQ.'
-    """
+    'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCareHQ.'
+    """  # noqa: E501
     return re.sub(r'[a-f0-9-]{7,}', '[...]', message)
 
 
