@@ -11,6 +11,7 @@ from custom.samveg.case_importer.exceptions import CallValueInvalidError
 from custom.samveg.case_importer.validators import (
     CallColumnsValidator,
     CallValidator,
+    FormatValidator,
     RequiredColumnsValidator,
     RequiredValueValidator,
     UploadLimitValidator,
@@ -20,8 +21,10 @@ from custom.samveg.const import (
     CALL_VALUE_FORMAT,
     NEWBORN_WEIGHT_COLUMN,
     OWNER_NAME,
+    RCH_BENEFICIARY_IDENTIFIER,
     REQUIRED_COLUMNS,
     ROW_LIMIT_PER_OWNER_PER_CALL_TYPE,
+    SNCU_BENEFICIARY_IDENTIFIER,
 )
 
 
@@ -82,7 +85,12 @@ class TestRequiredValueValidator(SimpleTestCase, TestFileMixin):
             for row_num, raw_row in enumerate(spreadsheet.iter_row_dicts()):
                 if row_num == 0:
                     continue  # skip first row (header row)
-                fields_to_update, errors = RequiredValueValidator.run(row_num, raw_row, raw_row, {})
+                fields_to_update = raw_row.copy()
+                if RCH_BENEFICIARY_IDENTIFIER in fields_to_update:
+                    fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
+                elif SNCU_BENEFICIARY_IDENTIFIER in fields_to_update:
+                    fields_to_update['external_id'] = fields_to_update.pop(SNCU_BENEFICIARY_IDENTIFIER)
+                fields_to_update, errors = RequiredValueValidator.run(row_num, raw_row, fields_to_update, {})
                 self.assertEqual(
                     [error.title for error in errors],
                     ['Missing required column(s)']
@@ -93,24 +101,24 @@ class TestRequiredValueValidator(SimpleTestCase, TestFileMixin):
                 )
 
     def test_validate_required_values(self):
-        required_values = ['name', 'MobileNo', 'DIST_NAME', 'Health_Block', 'visit_type', 'owner_name', 'Rch_id']
+        required_values = ['name', 'MobileNo', 'DIST_NAME', 'Health_Block', 'owner_name',
+                           'external_id']
         self._assert_missing_values_for_sheet('missing_values_rch_case_upload', required_values)
 
-        required_values = ['name', 'MobileNo', 'DIST_NAME', 'Health_Block', 'visit_type',
-                           'owner_name', 'admission_id', 'newborn_weight']
+        required_values = ['name', 'MobileNo', 'DIST_NAME', 'Health_Block',
+                           'owner_name', 'newborn_weight', 'external_id']
         self._assert_missing_values_for_sheet('missing_values_sncu_case_upload', required_values)
 
 
-class TestCallValidator(SimpleTestCase, TestFileMixin):
-    file_path = ('data',)
-    root = os.path.dirname(__file__)
-
+class TestCallValidator(SimpleTestCase):
     def test_missing_call_column(self):
         raw_row = _sample_valid_rch_upload()
-        raw_row.pop('Call1')
+        fields_to_update = raw_row.copy()
+        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
+        fields_to_update.pop('Call1')
         row_num = 1
 
-        fields_to_update, errors = CallValidator.run(row_num, raw_row, raw_row, {})
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
 
         self.assertEqual(
             [error.title for error in errors],
@@ -119,10 +127,12 @@ class TestCallValidator(SimpleTestCase, TestFileMixin):
 
     def test_invalid_call_value(self):
         raw_row = _sample_valid_rch_upload()
-        raw_row['Call1'] = 'abc'
+        fields_to_update = raw_row.copy()
+        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
+        fields_to_update['Call1'] = 'abc'
         row_num = 1
 
-        fields_to_update, errors = CallValidator.run(row_num, raw_row, raw_row, {})
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
 
         self.assertEqual(
             [error.title for error in errors],
@@ -131,24 +141,28 @@ class TestCallValidator(SimpleTestCase, TestFileMixin):
 
     def test_valid_call_value_type(self):
         raw_row = _sample_valid_rch_upload()
+        fields_to_update = raw_row.copy()
+        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
         row_num = 1
 
-        fields_to_update, errors = CallValidator.run(row_num, raw_row, raw_row, {})
+        updated_fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
         self.assertFalse(
             any(isinstance(error, CallValueInvalidError) for error in errors)
         )
 
-        raw_row['Call1'] = datetime.date.today()
-        fields_to_update, errors = CallValidator.run(row_num, raw_row, raw_row, {})
+        fields_to_update['Call1'] = datetime.date.today()
+        updated_fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
         self.assertFalse(
             any(isinstance(error, CallValueInvalidError) for error in errors)
         )
 
     def test_call_value_not_in_last_month(self):
         raw_row = _sample_valid_rch_upload()
+        fields_to_update = raw_row.copy()
+        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
         row_num = 1
 
-        fields_to_update, errors = CallValidator.run(row_num, raw_row, raw_row, {})
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
 
         self.assertListEqual(
             [error.title for error in errors],
@@ -156,16 +170,32 @@ class TestCallValidator(SimpleTestCase, TestFileMixin):
         )
 
 
-class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
-    file_path = ('data',)
-    root = os.path.dirname(__file__)
-
-    def test_update_counter(self):
+class TestFormatValidator(SimpleTestCase):
+    def test_mobile_number(self):
         raw_row = _sample_valid_rch_upload()
+        fields_to_update = raw_row.copy()
+        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
+        fields_to_update['MobileNo'] = '99'
         row_num = 1
         import_context = {}
 
-        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context)
+        fields_to_update, errors = FormatValidator.run(row_num, raw_row, fields_to_update, import_context)
+
+        self.assertEqual(
+            [error.title for error in errors],
+            ['Mobile number should be 10 digits']
+        )
+
+
+class TestUploadLimitValidator(SimpleTestCase):
+    def test_update_counter(self):
+        raw_row = _sample_valid_rch_upload()
+        fields_to_update = raw_row.copy()
+        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
+        row_num = 1
+        import_context = {}
+
+        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, fields_to_update, import_context)
 
         self.assertEqual(
             import_context['counter']['watson']['Call1'],
@@ -175,11 +205,13 @@ class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
 
     def test_upload_limit(self):
         raw_row = _sample_valid_rch_upload()
+        fields_to_update = raw_row.copy()
+        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
         row_num = 1
         # initialize context to replicate limit reached
-        import_context = {'counter': {raw_row[OWNER_NAME]: {'Call1': ROW_LIMIT_PER_OWNER_PER_CALL_TYPE}}}
+        import_context = {'counter': {fields_to_update[OWNER_NAME]: {'Call1': ROW_LIMIT_PER_OWNER_PER_CALL_TYPE}}}
 
-        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, raw_row, import_context)
+        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, fields_to_update, import_context)
 
         self.assertEqual(
             [error.title for error in errors],
@@ -188,11 +220,13 @@ class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
 
     def test_missing_call_column(self):
         raw_row = _sample_valid_rch_upload()
-        raw_row.pop('Call1')
-        raw_row.pop(OWNER_NAME)
+        fields_to_update = raw_row.copy()
+        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
+        fields_to_update.pop('Call1')
+        fields_to_update.pop(OWNER_NAME)
         row_num = 1
 
-        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, raw_row, {})
+        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, fields_to_update, {})
 
         self.assertEqual(
             [error.title for error in errors],
@@ -204,8 +238,11 @@ class TestSuccessfulUpload(SimpleTestCase):
     def test_successful_upload(self):
         raw_row = _sample_valid_rch_upload()
         raw_row['Call1'] = (datetime.date.today() - relativedelta(months=1)).strftime(CALL_VALUE_FORMAT)
+        fields_to_update = raw_row.copy()
+        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
         row_num = 1
-        fields_to_update, all_errors = samveg_case_upload_row_operations(None, row_num, raw_row, raw_row, {})
+        fields_to_update, all_errors = samveg_case_upload_row_operations(None, row_num, raw_row, fields_to_update,
+                                                                         {})
         self.assertListEqual(all_errors, [])
 
 
@@ -216,7 +253,6 @@ def _sample_valid_rch_upload():
         'MobileNo': 9999999999,
         'DIST_NAME': 'USA',
         'Health_Block': 'DC',
-        'visit_type': 'investigation',
         'owner_name': 'watson',
         'Call1': '10-10-21'
     }

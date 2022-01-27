@@ -23,6 +23,10 @@ class CallValueInvalidError(CaseRowError):
     title = ugettext_noop('Latest call value not a date')
 
 
+class MobileNumberInvalidError(CaseRowError):
+    title = ugettext_noop('Mobile number should be 10 digits')
+
+
 class CallNotInLastMonthError(CaseRowError):
     title = ugettext_noop('Latest call not in last month')
 
