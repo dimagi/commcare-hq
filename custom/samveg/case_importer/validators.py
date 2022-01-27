@@ -10,6 +10,7 @@ from custom.samveg.case_importer.exceptions import (
     CallNotInLastMonthError,
     CallValueInvalidError,
     CallValuesMissingError,
+    MobileNumberInvalidError,
     OwnerNameMissingError,
     RequiredValueMissingError,
     UnexpectedFileError,
@@ -18,6 +19,7 @@ from custom.samveg.case_importer.exceptions import (
 from custom.samveg.case_importer.operations import BaseRowOperation
 from custom.samveg.const import (
     CALL_VALUE_FORMAT,
+    MOBILE_NUMBER,
     OWNER_NAME,
     RCH_BENEFICIARY_IDENTIFIER,
     RCH_REQUIRED_COLUMNS,
@@ -144,6 +146,16 @@ class CallValidator(BaseRowOperation):
             if call_date.replace(day=1) != last_month_first_day:
                 error_messages.append(CallNotInLastMonthError())
 
+        return fields_to_update, error_messages
+
+
+class FormatValidator(BaseRowOperation):
+    @classmethod
+    def run(cls, row_num, raw_row, fields_to_update, import_context):
+        error_messages = []
+        mobile_number = fields_to_update.get(MOBILE_NUMBER)
+        if mobile_number and len(str(mobile_number)) != 10:
+            error_messages.append(MobileNumberInvalidError())
         return fields_to_update, error_messages
 
 

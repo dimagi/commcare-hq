@@ -5,10 +5,11 @@ RCH_BENEFICIARY_IDENTIFIER = 'Rch_id'
 SNCU_BENEFICIARY_IDENTIFIER = 'admission_id'
 NEWBORN_WEIGHT_COLUMN = 'newborn_weight'
 OWNER_NAME = 'owner_name'
+MOBILE_NUMBER = 'MobileNo'
 
 REQUIRED_COLUMNS = [
     'name',
-    'MobileNo',
+    MOBILE_NUMBER,
     'DIST_NAME',
     'Health_Block',
     'visit_type',

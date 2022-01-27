@@ -11,6 +11,7 @@ from custom.samveg.case_importer.exceptions import CallValueInvalidError
 from custom.samveg.case_importer.validators import (
     CallColumnsValidator,
     CallValidator,
+    FormatValidator,
     RequiredColumnsValidator,
     RequiredValueValidator,
     UploadLimitValidator,
@@ -109,10 +110,7 @@ class TestRequiredValueValidator(SimpleTestCase, TestFileMixin):
         self._assert_missing_values_for_sheet('missing_values_sncu_case_upload', required_values)
 
 
-class TestCallValidator(SimpleTestCase, TestFileMixin):
-    file_path = ('data',)
-    root = os.path.dirname(__file__)
-
+class TestCallValidator(SimpleTestCase):
     def test_missing_call_column(self):
         raw_row = _sample_valid_rch_upload()
         fields_to_update = raw_row.copy()
@@ -172,10 +170,24 @@ class TestCallValidator(SimpleTestCase, TestFileMixin):
         )
 
 
-class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
-    file_path = ('data',)
-    root = os.path.dirname(__file__)
+class TestFormatValidator(SimpleTestCase):
+    def test_mobile_number(self):
+        raw_row = _sample_valid_rch_upload()
+        fields_to_update = raw_row.copy()
+        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
+        fields_to_update['MobileNo'] = '99'
+        row_num = 1
+        import_context = {}
 
+        fields_to_update, errors = FormatValidator.run(row_num, raw_row, fields_to_update, import_context)
+
+        self.assertEqual(
+            [error.title for error in errors],
+            ['Mobile number should be 10 digits']
+        )
+
+
+class TestUploadLimitValidator(SimpleTestCase):
     def test_update_counter(self):
         raw_row = _sample_valid_rch_upload()
         fields_to_update = raw_row.copy()

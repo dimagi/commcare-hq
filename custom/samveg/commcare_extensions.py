@@ -6,6 +6,7 @@ from custom.samveg.case_importer.operations import AddCustomCaseProperties
 from custom.samveg.case_importer.validators import (
     CallColumnsValidator,
     CallValidator,
+    FormatValidator,
     RequiredColumnsValidator,
     RequiredValueValidator,
     UploadLimitValidator,
@@ -20,6 +21,7 @@ sheet_level_validations = [
 row_level_validations = [
     RequiredValueValidator,
     CallValidator,
+    FormatValidator,
     UploadLimitValidator,
 ]
 
