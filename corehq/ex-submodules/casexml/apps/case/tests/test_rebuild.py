@@ -225,7 +225,7 @@ class CaseRebuildTest(TestCase):
         case = case_accessors.get_case(case_id)
         self.assertEqual(earlier, case.modified_on)
 
-        second_form = XFormInstance.objects.get_form(case.xform_ids[-1], REBUILD_TEST_DOMAIN)
+        second_form = XFormInstance.objects.get_form(case.xform_ids[-1], 'test-domain')
         second_form.archive()
         case = case_accessors.get_case(case_id)
         self.assertEqual(way_earlier, case.modified_on)
