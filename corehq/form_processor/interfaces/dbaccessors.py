@@ -7,101 +7,11 @@ from memoized import memoized
 from dimagi.utils.chunked import chunked
 
 from ..exceptions import CaseNotFound
-from ..models import XFormInstance
 
 
 CaseIndexInfo = namedtuple(
     'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
 )
-
-
-class FormAccessors:
-    """DEPRECATED use XFormInstance.objects"""
-
-    def __init__(self, domain=None):
-        self.domain = domain
-
-    @property
-    @memoized
-    def db_accessor(self):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL
-
-    def get_form(self, form_id):
-        """DEPRECATED use XFormInstance.objects"""
-        return XFormInstance.objects.get_form(form_id, self.domain)
-
-    def get_forms(self, form_ids, ordered=False):
-        """DEPRECATED use XFormInstance.objects"""
-        return self.db_accessor.get_forms(form_ids, ordered=ordered)
-
-    def iter_forms(self, form_ids):
-        """DEPRECATED use XFormInstance.objects"""
-        yield from XFormInstance.objects.iter_forms(form_ids)
-
-    def form_exists(self, form_id):
-        """DEPRECATED use XFormInstance.objects"""
-        return self.db_accessor.form_exists(form_id, domain=self.domain)
-
-    def get_all_form_ids_in_domain(self, doc_type='XFormInstance'):
-        """DEPRECATED use XFormInstance.objects"""
-        return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, doc_type)
-
-    def get_forms_by_type(self, type_, limit, recent_first=False):
-        """DEPRECATED use XFormInstance.objects"""
-        return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
-
-    def iter_form_ids_by_xmlns(self, xmlns=None):
-        """DEPRECATED use XFormInstance.objects"""
-        return self.db_accessor.iter_form_ids_by_xmlns(self.domain, xmlns)
-
-    def get_with_attachments(self, form_id):
-        """DEPRECATED use XFormInstance.objects"""
-        return self.db_accessor.get_with_attachments(form_id)
-
-    def save_new_form(self, form):
-        """DEPRECATED use XFormInstance.objects"""
-        self.db_accessor.save_new_form(form)
-
-    def update_form_problem_and_state(self, form):
-        """DEPRECATED use XFormInstance.objects"""
-        self.db_accessor.update_form_problem_and_state(form)
-
-    def get_deleted_form_ids_for_user(self, user_id):
-        """DEPRECATED use XFormInstance.objects"""
-        return self.db_accessor.get_deleted_form_ids_for_user(self.domain, user_id)
-
-    def get_form_ids_for_user(self, user_id):
-        """DEPRECATED use XFormInstance.objects"""
-        return self.db_accessor.get_form_ids_for_user(self.domain, user_id)
-
-    def get_attachment_content(self, form_id, attachment_name):
-        """DEPRECATED use XFormInstance.objects"""
-        return self.db_accessor.get_attachment_content(form_id, attachment_name)
-
-    @classmethod
-    def do_archive(cls, form, archive, user_id, trigger_signals):
-        """DEPRECATED use XFormInstance.objects"""
-        return XFormInstance.objects.do_archive(form, archive, user_id, trigger_signals)
-
-    @classmethod
-    def publish_archive_action_to_kafka(cls, form, user_id, archive):
-        """DEPRECATED use XFormInstance.objects"""
-        XFormInstance.objects.publish_archive_action_to_kafka(form, user_id, archive)
-
-    def soft_delete_forms(self, form_ids, deletion_date=None, deletion_id=None):
-        """DEPRECATED use XFormInstance.objects"""
-        return self.db_accessor.soft_delete_forms(self.domain, form_ids, deletion_date, deletion_id)
-
-    def soft_undelete_forms(self, form_ids):
-        """DEPRECATED use XFormInstance.objects"""
-        return self.db_accessor.soft_undelete_forms(self.domain, form_ids)
-
-    def modify_attachment_xml_and_metadata(self, form_data, form_attachment_new_xml, new_username):
-        """DEPRECATED use XFormInstance.objects"""
-        return self.db_accessor.modify_attachment_xml_and_metadata(form_data,
-                                                                   form_attachment_new_xml,
-                                                                   new_username)
 
 
 class AbstractCaseAccessor(metaclass=ABCMeta):

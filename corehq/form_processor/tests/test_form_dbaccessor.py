@@ -22,7 +22,6 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound, XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import (
     FormProcessorInterface,
     ProcessedForms,
@@ -393,36 +392,11 @@ class FormAccessorTestsSQL(TestCase):
 
 
 @sharded
-class FormAccessorsTests(TestCase, TestXmlMixin):
+class FormSubmissionBuilderTests(TestCase, TestXmlMixin):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
-        super(FormAccessorsTests, self).tearDown()
-
-    def test_soft_delete(self):
-        meta = TestFormMetadata(domain=DOMAIN)
-        get_simple_wrapped_form('f1', metadata=meta)
-        f2 = get_simple_wrapped_form('f2', metadata=meta)
-        f2.archive()
-        get_simple_wrapped_form('f3', metadata=meta)
-
-        accessors = FormAccessors(DOMAIN)
-
-        # delete
-        num = accessors.soft_delete_forms(['f1', 'f2'], deletion_id='123')
-        self.assertEqual(num, 2)
-
-        for form_id in ['f1', 'f2']:
-            form = accessors.get_form(form_id)
-            self.assertTrue(form.is_deleted)
-            self.assertEqual(form.deletion_id, '123')
-
-        form = accessors.get_form('f3')
-        self.assertFalse(form.is_deleted)
-
-        for form_id in ['f1', 'f2']:
-            form = FormAccessors(DOMAIN).get_form(form_id)
-            form.delete()
+        super().tearDown()
 
     def test_update_responses(self):
         formxml = FormSubmissionBuilder(
@@ -480,7 +454,7 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
             'body[2]/leg[2]/toe': '10',
         }
         errors = FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
-        form = FormAccessors(DOMAIN).get_form(xform.form_id)
+        form = XFormInstance.objects.get_form(xform.form_id)
         self.assertEqual(0, len(errors))
         self.assertEqual('fruit', form.form_data['breakfast'])
         self.assertEqual('sandwich', form.form_data['lunch'])
