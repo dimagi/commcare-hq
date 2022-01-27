@@ -110,10 +110,7 @@ class TestRequiredValueValidator(SimpleTestCase, TestFileMixin):
         self._assert_missing_values_for_sheet('missing_values_sncu_case_upload', required_values)
 
 
-class TestCallValidator(SimpleTestCase, TestFileMixin):
-    file_path = ('data',)
-    root = os.path.dirname(__file__)
-
+class TestCallValidator(SimpleTestCase):
     def test_missing_call_column(self):
         raw_row = _sample_valid_rch_upload()
         fields_to_update = raw_row.copy()
@@ -190,10 +187,7 @@ class TestFormatValidator(SimpleTestCase):
         )
 
 
-class TestUploadLimitValidator(SimpleTestCase, TestFileMixin):
-    file_path = ('data',)
-    root = os.path.dirname(__file__)
-
+class TestUploadLimitValidator(SimpleTestCase):
     def test_update_counter(self):
         raw_row = _sample_valid_rch_upload()
         fields_to_update = raw_row.copy()
