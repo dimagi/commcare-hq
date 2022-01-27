@@ -643,7 +643,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     (window.Levenshtein.get(haystack, query) <= distanceThreshold && query.length > 3) ||
                     haystack === query
                 );
-            }
+            };
 
             // First handle prefixes, which will fail fuzzy match if they're too short
             var distanceThreshold = 2;
