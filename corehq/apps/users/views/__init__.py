@@ -14,6 +14,7 @@ from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.http import (
     Http404,
     HttpResponse,
@@ -56,6 +57,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
 )
+from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.enterprise.models import EnterprisePermissions
@@ -1343,18 +1345,26 @@ def change_password(request, domain, login_id):
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
         form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
-        if form.is_valid():
-            form.save()
-            log_user_change(
-                by_domain=domain,
-                for_domain=commcare_user.domain,
-                couch_user=commcare_user,
-                changed_by_user=request.couch_user,
-                changed_via=USER_CHANGE_VIA_WEB,
-                change_messages=UserChangeMessage.password_reset()
-            )
-            json_dump['status'] = 'OK'
-            form = SetUserPasswordForm(request.project, login_id, user='')
+        input = request.POST['new_password1']
+        if input == request.POST['new_password2']:
+            try:
+                clean_password(input)
+                if form.is_valid():
+                    form.save()
+                    log_user_change(
+                        by_domain=domain,
+                        for_domain=commcare_user.domain,
+                        couch_user=commcare_user,
+                        changed_by_user=request.couch_user,
+                        changed_via=USER_CHANGE_VIA_WEB,
+                        change_messages=UserChangeMessage.password_reset()
+                    )
+                    json_dump['status'] = 'OK'
+                    form = SetUserPasswordForm(request.project, login_id, user='')
+            except ValidationError:
+                json_dump['status'] = 'weak'
+        else:
+            json_dump['status'] = 'different'
     else:
         form = SetUserPasswordForm(request.project, login_id, user=django_user)
     json_dump['formHTML'] = render_crispy_form(form)
