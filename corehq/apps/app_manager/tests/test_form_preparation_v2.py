@@ -80,6 +80,23 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         )
         self.assertXmlPartialEqual(expected, self.form.render_xform(), xpath)
 
+    def test_update_usercase_edit_update_mode(self):
+        self.form.actions.usercase_update = UpdateCaseAction(
+            update={'name': ConditionalCaseUpdate(question_path='/data/question1', update_mode='edit')})
+        self.form.actions.usercase_update.condition.type = 'always'
+
+        expected = """
+            <partial>
+              <ns0:bind xmlns:ns0="http://www.w3.org/2002/xforms" nodeset="/data/commcare_usercase/case/update/case_name"
+                relevant="count(/data/question1) &gt; 0 and instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid]/case_name != /data/question1"
+                calculate="/data/question1"/>
+            </partial>
+        """
+        xpath = './{h}head/{w3x}model/{w3x}bind[@nodeset="/data/commcare_usercase/case/update/case_name"]'.format(
+            h='{http://www.w3.org/1999/xhtml}', w3x='{http://www.w3.org/2002/xforms}'
+        )
+        self.assertXmlPartialEqual(expected, self.form.render_xform(), xpath)
+
     def test_update_parent_case(self):
         self.form.requires = 'case'
         self.form.actions.update_case = UpdateCaseAction(update={

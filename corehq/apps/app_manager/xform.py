@@ -27,7 +27,7 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_UNSCHEDULED_VISIT,
     USERCASE_ID,
 )
-from corehq.apps.app_manager.xpath import XPath
+from corehq.apps.app_manager.xpath import XPath, UsercaseXPath
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
 from corehq.toggles import DONT_INDEX_SAME_CASETYPE
 from corehq.util.view_utils import get_request
@@ -517,7 +517,10 @@ class XFormCaseBlock(object):
             resolved_path = self.xform.resolve_path(q_path)
             edit_mode_path = ''
             if isinstance(q_path, ConditionalCaseUpdate) and q_path.update_mode == UPDATE_MODE_EDIT:
-                case_value = CaseIDXPath(session_var('case_id')).case().slash(key)
+                if 'commcare_usercase' in self.path:
+                    case_value = UsercaseXPath().case().slash(key)
+                else:
+                    case_value = CaseIDXPath(session_var('case_id')).case().slash(key)
                 edit_mode_path = f' and {case_value} != {resolved_path}'
             update_block.append(make_case_elem(key))
             nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
@@ -2044,14 +2047,13 @@ class XForm(WrappedNode):
                 path, name = split_path(key)
                 updates_by_case[path][name] = value
             return updates_by_case
-
         updates_by_case = group_updates_by_case(updates)
         if '' in updates_by_case:
             # 90% use-case
             basic_updates = updates_by_case.pop('')
             if basic_updates:
                 case_block.add_case_updates(basic_updates)
-        if updates_by_case:  # TODO: invetigate if changes needed here
+        if updates_by_case:
             self.add_casedb()
 
             def make_nested_subnode(base_node, path):
