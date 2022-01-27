@@ -36,7 +36,7 @@ IGNORE_APPS = {
     'start_enterprise',  # TODO delete this along with SMSs
     'tastypie',
     'telerivet',
-    'toggle_ui',
+    'toggles',
     'sso',
     'oauth_integrations',
 }

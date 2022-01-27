@@ -18,8 +18,14 @@ from memoized import memoized
 
 from corehq.extensions import extension_point, ResultFormat
 
-from .models import Toggle
-from .shortcuts import set_toggle, toggle_enabled
+from .const import (
+    ALL_NAMESPACES,
+    ALL_RANDOM_NAMESPACES,
+    NAMESPACE_USER,
+    NAMESPACE_DOMAIN,
+    NAMESPACE_EMAIL_DOMAIN,
+    NAMESPACE_OTHER,
+)
 
 from corehq.util.quickcache import quickcache
 
@@ -179,6 +185,7 @@ class StaticToggle(object):
             return True
 
         namespaces = self.namespaces if namespace is Ellipsis else [namespace]
+        from .shortcuts import toggle_enabled
         return any([toggle_enabled(self.slug, item, namespace=n) for n in namespaces])
 
     def enabled_for_request(self, request):
@@ -200,6 +207,7 @@ class StaticToggle(object):
                )
 
     def set(self, item, enabled, namespace=None):
+        from .shortcuts import set_toggle
         if namespace == NAMESPACE_USER:
             namespace = None  # because:
             #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
@@ -217,7 +225,7 @@ class StaticToggle(object):
                 if self.enabled_for_request(request):
                     return view_func(request, *args, **kwargs)
                 if request.user.is_superuser:
-                    from corehq.apps.toggle_ui.views import ToggleEditView
+                    from corehq.toggles.views import ToggleEditView
                     toggle_url = reverse(ToggleEditView.urlname, args=[self.slug])
                     messages.warning(
                         request,
@@ -235,6 +243,7 @@ class StaticToggle(object):
         return decorator
 
     def get_enabled_domains(self):
+        from .models import Toggle
         try:
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
@@ -247,6 +256,7 @@ class StaticToggle(object):
         return list(domains)
 
     def get_enabled_users(self):
+        from .models import Toggle
         try:
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
@@ -390,6 +400,7 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
     @property
     @quickcache(vary_on=['self.slug'])
     def randomness(self):
+        from .models import Toggle
         # a bit hacky: leverage couch's dynamic properties to just tack this onto the couch toggle doc
         try:
             toggle = Toggle.get(self.slug)
@@ -431,15 +442,6 @@ class FeatureRelease(DynamicallyPredictablyRandomToggle):
             relevant_environments=relevant_environments
         )
         self.owner = owner
-
-
-# if no namespaces are specified the user namespace is assumed
-NAMESPACE_USER = 'user'
-NAMESPACE_DOMAIN = 'domain'
-NAMESPACE_EMAIL_DOMAIN = 'email_domain'
-NAMESPACE_OTHER = 'other'
-ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN]
-ALL_RANDOM_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
 def any_toggle_enabled(*toggles):

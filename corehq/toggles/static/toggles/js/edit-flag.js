@@ -1,4 +1,4 @@
-hqDefine('toggle_ui/js/edit-flag', [
+hqDefine('toggles/js/edit-flag', [
     'jquery',
     'knockout',
     'underscore',

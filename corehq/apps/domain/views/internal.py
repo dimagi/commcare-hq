@@ -43,9 +43,9 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
-from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.toggles.views import ToggleEditView
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):

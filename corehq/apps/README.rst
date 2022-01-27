@@ -99,8 +99,6 @@ reminders
    A subset of SMS/messaging, including functionality around incoming SMS keywords. "Reminders" is a leftover term from a previous iteration of the messaging framework.
 saved_reports
    Functionality to let users save a specific set of report filters and optionally run reports with those filters on a scheduled basis.
-toggle_ui
-   Framework for feature flags, which are used to limit internal features to specific domains and/or users.
 translations
    Functionality for managing application translations, including integration with Transifex, which is used by a small number of projects.
 user_importer

@@ -346,7 +346,6 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
-    'corehq.apps.toggle_ui',
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',

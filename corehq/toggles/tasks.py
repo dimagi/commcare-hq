@@ -10,7 +10,6 @@ from django.conf import settings
 
 from corehq.apps.domain.calculations import last_form_submission
 from corehq.apps.domain.models import Domain
-from corehq.apps.toggle_ui.utils import has_dimagi_user, get_subscription_info
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import get_blob_db, CODES
 from corehq.const import USER_DATETIME_FORMAT
@@ -18,6 +17,7 @@ from corehq.toggles import (
     NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN, NAMESPACE_OTHER, all_toggles
 )
 from corehq.toggles.models import Toggle
+from corehq.toggles.utils import has_dimagi_user, get_subscription_info
 from corehq.util.files import safe_filename_header, TransientTempfile
 from corehq.util.view_utils import absolute_reverse
 from couchforms.analytics import domain_has_submission_in_last_30_days

@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from corehq.apps.toggle_ui.views import (
+from corehq.toggles.views import (
     ToggleEditView,
     ToggleListView,
     set_toggle,

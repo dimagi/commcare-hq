@@ -15,9 +15,6 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.toggle_ui.models import ToggleAudit
-from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
-from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     ALL_NAMESPACES,
@@ -34,8 +31,10 @@ from corehq.toggles import (
     toggles_enabled_for_domain,
     toggles_enabled_for_user, FeatureRelease,
 )
-from corehq.toggles.models import Toggle
+from corehq.toggles.models import Toggle, ToggleAudit
 from corehq.toggles.shortcuts import parse_toggle, namespaced_item
+from corehq.toggles.tasks import generate_toggle_csv_download
+from corehq.toggles.utils import find_static_toggle
 from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_last_form_submission_received

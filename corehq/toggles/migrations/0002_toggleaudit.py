@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('toggle_ui', '0001_reconcile_commtrack_flags'),
+        ('toggles', '0001_reconcile_commtrack_flags'),
     ]
 
     operations = [

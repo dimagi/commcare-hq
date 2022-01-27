@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from corehq.apps.toggle_ui.models import ToggleAudit
+from corehq.toggles.models import ToggleAudit
 
 
 @admin.register(ToggleAudit)
