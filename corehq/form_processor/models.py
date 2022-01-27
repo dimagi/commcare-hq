@@ -1216,6 +1216,17 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     referenced_type = models.CharField(max_length=255, default=None)
     relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
 
+    def __init__(self, *args, **kwargs):
+        # HACK: We need to remove doc_type, as ElasticSearch queries write the entire
+        #  couch document to ElasticSearch, and these indices are typically constructed by
+        #  passing the entire raw elasticsearch doc to this constructor.
+        #  While this could be handled during the parsing phase, we have multiple unique
+        #  paths which both parse, so we'd need to ignore doc_type in multiple places
+        #  Ideally, this fix can be removed when 'doc_type' is no longer written to ElasticSearch
+        #  and existing docs have been re-saved.
+        kwargs.pop('doc_type', None)
+        super().__init__(*args, **kwargs)
+
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
