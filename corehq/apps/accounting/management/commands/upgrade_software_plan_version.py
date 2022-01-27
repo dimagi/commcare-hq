@@ -27,9 +27,7 @@ def upgrade_software_plan_version(old_role, new_role, limit_to_plans=None, dry_r
     """
     dry_run_tag = '[DRY_RUN]' if dry_run else ''
 
-    try:
-        Role.objects.get(slug=old_role)
-    except Role.DoesNotExist:
+    if not Role.objects.filter(slug=old_role).exists():
         raise OldRoleDoesNotExist
 
     try:
@@ -75,10 +73,10 @@ class Command(BaseCommand):
             help="A comma separated list of plan names to limit search to",
         )
         parser.add_argument('--dry-run', action='store_true', default=False)
-        parser.add_argument('--verbose', action="store_true", default=False)
+        parser.add_argument('--quiet', action="store_true", default=False)
 
     def handle(self, old_role, new_role, **kwargs):
-        logger.setLevel(logging.INFO if kwargs.get('verbose') else logging.WARNING)
+        logger.setLevel(logging.WARNING if kwargs.get('quiet') else logging.INFO)
         limit_to_plans = kwargs.get('limit_plans').split(',') if kwargs.get('limit_plans') else None
         try:
             upgraded_plans = upgrade_software_plan_version(
