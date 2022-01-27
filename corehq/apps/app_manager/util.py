@@ -709,7 +709,7 @@ def wrap_transition_from_old_update_case_action(properties_dict):
         if isinstance(first_prop_value, str):
             old_dict_values = properties_dict
             new_dict_values = {}
-            for case_property, question_path in old_dict_values:
+            for case_property, question_path in old_dict_values.items():
                 new_dict_values[case_property] = {
                     'question_path': question_path
                 }

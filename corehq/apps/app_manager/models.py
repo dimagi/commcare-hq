@@ -336,11 +336,11 @@ class FormAction(DocumentSchema):
         if 'external_id' in action_properties and action.external_id:
             yield 'external_id', action.external_id
         if 'update' in action_properties:
-            for name, smart_case_update in action.update.items():
-                yield name, smart_case_update.question_path
+            for name, conditional_case_update in action.update.items():
+                yield name, conditional_case_update.question_path
         if 'case_properties' in action_properties:
-            for name, path in action.case_properties.items():
-                yield name, path
+            for name, conditional_case_update in action.case_properties.items():
+                yield name, conditional_case_update.question_path
         if 'preload' in action_properties:
             for path, name in action.preload.items():
                 yield name, path
@@ -406,7 +406,7 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
     case_type = StringProperty()
     name_update = SchemaProperty(ConditionalCaseUpdate)
     reference_id = StringProperty()
-    case_properties = SchemaProperty(ConditionalCaseUpdate)
+    case_properties = SchemaDictProperty(ConditionalCaseUpdate)
     repeat_context = StringProperty()
     # relationship = "child" for index to a parent case (default)
     # relationship = "extension" for index to a host case
@@ -427,6 +427,8 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
             data['name_update'] = {
                 'question_path': path
             }
+        if 'case_properties' in data:
+            data['case_properties'] = wrap_transition_from_old_update_case_action(data['case_properties'])
         return super(OpenSubCaseAction, cls).wrap(data)
 
 
@@ -468,6 +470,10 @@ class FormActions(DocumentSchema):
         if 'update_case' in data and 'update' in data['update_case']:
             data['update_case']['update'] = wrap_transition_from_old_update_case_action(
                 data['update_case']['update']
+            )
+        if 'usercase_update' in data and 'update' in data['usercase_update']:
+            data['usercase_update']['update'] = wrap_transition_from_old_update_case_action(
+                data['usercase_update']['update']
             )
         return super(FormActions, cls).wrap(data)
 
