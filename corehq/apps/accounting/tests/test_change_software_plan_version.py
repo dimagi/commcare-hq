@@ -3,16 +3,16 @@ from decimal import Decimal
 from django.test import TestCase
 from django_prbac.models import Role
 
-from corehq.apps.accounting.management.commands.upgrade_software_plan_version import OldRoleDoesNotExist, \
-    upgrade_software_plan_version, NewRoleDoesNotExist
+from corehq.apps.accounting.management.commands.change_software_plan_version import OldRoleDoesNotExist, \
+    change_software_plan_version, NewRoleDoesNotExist
 from corehq.apps.accounting.models import SoftwarePlan, SoftwarePlanVersion, SoftwareProductRate
 
 
-class UpgradeSoftwarePlanVersionTest(TestCase):
+class ChangeSoftwarePlanVersionTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(UpgradeSoftwarePlanVersionTest, cls).setUpClass()
+        super(ChangeSoftwarePlanVersionTest, cls).setUpClass()
         cls.generic_product_rate = SoftwareProductRate.new_rate('product', Decimal('0.0'))
         cls.generic_product_rate.save()
         cls.old_role = Role(slug='old_role', name='old')
@@ -22,11 +22,11 @@ class UpgradeSoftwarePlanVersionTest(TestCase):
 
     def test_raises_old_role_does_not_exist(self):
         with self.assertRaises(OldRoleDoesNotExist):
-            upgrade_software_plan_version('invalid_role', 'new_role')
+            change_software_plan_version('invalid_role', 'new_role')
 
     def test_raises_new_role_does_not_exist(self):
         with self.assertRaises(NewRoleDoesNotExist):
-            upgrade_software_plan_version('old_role', 'invalid_role')
+            change_software_plan_version('old_role', 'invalid_role')
 
     def test_upgrades_successfully(self):
         plan = SoftwarePlan(name='Test Plan')
@@ -35,7 +35,7 @@ class UpgradeSoftwarePlanVersionTest(TestCase):
         old_version.save()
         self.assertEqual(old_version.version, 1)
 
-        upgrade_software_plan_version('old_role', 'new_role')
+        change_software_plan_version('old_role', 'new_role')
 
         # refetch
         plan = SoftwarePlan.objects.get(name='Test Plan')
@@ -57,7 +57,7 @@ class UpgradeSoftwarePlanVersionTest(TestCase):
         active_version = SoftwarePlanVersion(role=active_role, plan=plan, product_rate=self.generic_product_rate)
         active_version.save()
 
-        upgrade_software_plan_version('old_role', 'new_role')
+        change_software_plan_version('old_role', 'new_role')
 
         # refetch
         plan = SoftwarePlan.objects.get(name='Test Plan')
@@ -82,7 +82,7 @@ class UpgradeSoftwarePlanVersionTest(TestCase):
         old_version1.save()
         old_version2.save()
 
-        upgrade_software_plan_version('old_role', 'new_role', limit_to_plans=['Upgrade Plan'])
+        change_software_plan_version('old_role', 'new_role', limit_to_plans=['Upgrade Plan'])
 
         # refetch
         not_upgraded_plan = SoftwarePlan.objects.get(name='Do Not Upgrade Plan')
@@ -99,7 +99,7 @@ class UpgradeSoftwarePlanVersionTest(TestCase):
         old_version.save()
         self.assertEqual(old_version.version, 1)
 
-        upgrade_software_plan_version('old_role', 'new_role', dry_run=True)
+        change_software_plan_version('old_role', 'new_role', dry_run=True)
 
         # refetch
         plan = SoftwarePlan.objects.get(name='Test Plan')

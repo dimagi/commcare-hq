@@ -17,7 +17,7 @@ class NewRoleDoesNotExist(Exception):
     pass
 
 
-def upgrade_software_plan_version(old_role, new_role, limit_to_plans=None, dry_run=False):
+def change_software_plan_version(old_role, new_role, limit_to_plans=None, dry_run=False):
     """
     :param old_role: slug for role to search for
     :param new_role: slug for role that new software plan version should reference
@@ -79,7 +79,7 @@ class Command(BaseCommand):
         logger.setLevel(logging.WARNING if kwargs.get('quiet') else logging.INFO)
         limit_to_plans = kwargs.get('limit_plans').split(',') if kwargs.get('limit_plans') else None
         try:
-            upgraded_plans = upgrade_software_plan_version(
+            upgraded_plans = change_software_plan_version(
                 old_role,
                 new_role,
                 limit_to_plans=limit_to_plans,
