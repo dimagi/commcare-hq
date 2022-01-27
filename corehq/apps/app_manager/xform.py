@@ -17,6 +17,7 @@ from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
     CASE_ID,
+    UPDATE_MODE_EDIT,
     SCHEDULE_CURRENT_VISIT_NUMBER,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
     SCHEDULE_LAST_VISIT,
@@ -496,6 +497,7 @@ class XFormCaseBlock(object):
         return update_block
 
     def add_case_updates(self, updates, make_relative=False):
+        from corehq.apps.app_manager.models import ConditionalCaseUpdate
         update_block = self.update_block
         if not updates:
             return
@@ -503,25 +505,29 @@ class XFormCaseBlock(object):
         update_mapping = {}
         attachments = {}
         for key, value in updates.items():
-            value = getattr(value, "question_path", value)
+            value_str = getattr(value, "question_path", value)
             if key == 'name':
                 key = 'case_name'
-            if self.is_attachment(value):
-                attachments[key] = value
+            if self.is_attachment(value_str):
+                attachments[key] = value_str
             else:
                 update_mapping[key] = value
 
         for key, q_path in sorted(update_mapping.items()):
+            resolved_path = self.xform.resolve_path(q_path)
+            edit_mode_path = ''
+            if isinstance(q_path, ConditionalCaseUpdate) and q_path.update_mode == UPDATE_MODE_EDIT:
+                case_value = CaseIDXPath(session_var('case_id')).case().slash(key)
+                edit_mode_path = f' and {case_value} != {resolved_path}'
             update_block.append(make_case_elem(key))
             nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
-            resolved_path = self.xform.resolve_path(q_path)
             if make_relative:
                 resolved_path = relative_path(nodeset, resolved_path)
 
             self.xform.add_bind(
                 nodeset=nodeset,
                 calculate=resolved_path,
-                relevant=("count(%s) > 0" % resolved_path)
+                relevant=(f"count({resolved_path}) > 0" + edit_mode_path)
             )
 
         if attachments:
@@ -2045,7 +2051,7 @@ class XForm(WrappedNode):
             basic_updates = updates_by_case.pop('')
             if basic_updates:
                 case_block.add_case_updates(basic_updates)
-        if updates_by_case:
+        if updates_by_case:  # TODO: invetigate if changes needed here
             self.add_casedb()
 
             def make_nested_subnode(base_node, path):
