@@ -1,11 +1,19 @@
 from decimal import Decimal
 
 from django.test import TestCase
+
 from django_prbac.models import Role
 
-from corehq.apps.accounting.management.commands.change_software_plan_version import OldRoleDoesNotExist, \
-    change_software_plan_version, NewRoleDoesNotExist
-from corehq.apps.accounting.models import SoftwarePlan, SoftwarePlanVersion, SoftwareProductRate
+from corehq.apps.accounting.management.commands.change_software_plan_version import (
+    NewRoleDoesNotExist,
+    OldRoleDoesNotExist,
+    change_software_plan_version,
+)
+from corehq.apps.accounting.models import (
+    SoftwarePlan,
+    SoftwarePlanVersion,
+    SoftwareProductRate,
+)
 
 
 class ChangeSoftwarePlanVersionTest(TestCase):
