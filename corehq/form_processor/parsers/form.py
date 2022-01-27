@@ -68,7 +68,7 @@ def process_xform_xml(domain, instance_xml, attachments=None, auth_context=None)
     key is parameter name, value is
     `django.core.files.uploadedfile.UploadedFile` object.
 
-    :returns: FormProcessingResult containing the new XFormInstanceSQL
+    :returns: FormProcessingResult containing the new XFormInstance
     or raises an exception if anything goes wrong.
     """
     attachments = attachments or {}

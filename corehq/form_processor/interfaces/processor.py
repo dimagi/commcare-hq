@@ -47,8 +47,8 @@ class FormProcessorInterface(object):
     @property
     @memoized
     def xform_model(self):
-        from corehq.form_processor.models import XFormInstanceSQL
-        return XFormInstanceSQL
+        from corehq.form_processor.models import XFormInstance
+        return XFormInstance
 
     @property
     @memoized

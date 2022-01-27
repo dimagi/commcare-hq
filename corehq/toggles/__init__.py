@@ -17,8 +17,9 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.extensions import extension_point, ResultFormat
-from toggle.models import Toggle
-from toggle.shortcuts import set_toggle, toggle_enabled
+
+from .models import Toggle
+from .shortcuts import set_toggle, toggle_enabled
 
 from corehq.util.quickcache import quickcache
 
@@ -1514,17 +1515,9 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Bulk+User+Management',
     description="""
-    For mobile users, enables filtered download page, bulk deletion page, and bulk lookup page.
-    For web users, enables filtered download page.
+        For mobile users, enables bulk deletion page and bulk lookup page.
+        For web users, enables filtered download page.
     """
-)
-
-FILTERED_LOCATION_DOWNLOAD = StaticToggle(
-    'filtered_location_download',
-    "Ability to filter location download to include only a specified location and its descendants.",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Filtered+Locations+Download',
 )
 
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
@@ -2142,7 +2135,7 @@ DATA_REGISTRY = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://docs.google.com/document/d/1h1chIrRkDtnPVQzFJHuB7JbZq8S4HNQf2dBA8z_MCkg/edit",
 )
-  
+
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
     'case_import_data_dictionary_validaton',
     'USH: Validate data per data dictionary definitions during case import',

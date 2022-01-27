@@ -240,7 +240,7 @@ class RequestLog(models.Model):
     log_level = models.IntegerField(null=True)
     # payload_id is set for requests that are caused by a payload (e.g.
     # a form submission -- in which case payload_id will have the value
-    # of XFormInstanceSQL.form_id). It also uniquely identifies a Repeat
+    # of XFormInstance.form_id). It also uniquely identifies a Repeat
     # Record, so it can be used to link a Repeat Record with the
     # requests to send its payload.
     payload_id = models.CharField(max_length=126, blank=True, null=True, db_index=True)

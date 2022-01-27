@@ -350,7 +350,6 @@ HQ_APPS = (
     'corehq.preindex',
     'corehq.tabs',
     'soil',
-    'toggle',
     'phonelog',
     'pillowtop',
     'pillow_retry',
@@ -362,6 +361,7 @@ HQ_APPS = (
     'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
+    'corehq.toggles',
     'corehq.util',
     'dimagi.ext',
     'corehq.blobs',
@@ -1091,7 +1091,8 @@ DEFAULT_COMMCARE_EXTENSIONS = [
     "custom.abt.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
-    "custom.nutrition_project.commcare_extensions"
+    "custom.nutrition_project.commcare_extensions",
+    "custom.samveg.commcare_extensions",
 ]
 COMMCARE_EXTENSIONS = []
 

@@ -11,7 +11,7 @@ from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
+from corehq.form_processor.models import CommCareCase, CaseTransaction
 from corehq.motech.repeaters.exceptions import DataRegistryCaseUpdateError
 from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater, Repeater
 from corehq.motech.repeaters.repeater_generators import DataRegistryCaseUpdatePayloadGenerator, SYSTEM_FORM_XMLNS
@@ -287,7 +287,7 @@ def test_generator_update_multiple_cases_multiple_domains():
 
 
 def test_generator_required_fields():
-    intent_case = CommCareCaseSQL(
+    intent_case = CommCareCase(
         domain=SOURCE_DOMAIN,
         type="registry_case_update",
         case_json={},
@@ -490,7 +490,7 @@ class IntentCaseBuilder:
 
     def get_case(self):
         utcnow = datetime.utcnow()
-        intent_case = CommCareCaseSQL(
+        intent_case = CommCareCase(
             domain=SOURCE_DOMAIN,
             type=self.CASE_TYPE,
             case_json=self.props,

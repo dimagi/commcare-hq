@@ -3,7 +3,7 @@ from uuid import uuid4
 from django.test import TestCase
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 
 from ..const import FHIR_VERSION_4_0_1
 from ..models import (
@@ -42,7 +42,7 @@ class TestGetCaseTriggerInfo(TestCase):
         self.case_type.delete()
 
     def test_case_properties(self):
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=str(uuid4()),
             domain=DOMAIN,
             type='foo',
@@ -84,7 +84,7 @@ class TestBuildFHIRResource(TestCase):
             )
 
         cls.case_id = str(uuid4())
-        cls.case = CommCareCaseSQL(
+        cls.case = CommCareCase(
             case_id=cls.case_id,
             domain=DOMAIN,
             type='mother',

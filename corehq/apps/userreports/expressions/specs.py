@@ -31,7 +31,7 @@ from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.couch import get_db_by_doc_type
 
 from .utils import eval_statements
@@ -498,9 +498,9 @@ class RelatedDocExpressionSpec(JsonObject):
 
     def configure(self, doc_id_expression, value_expression):
         non_couch_doc_types = {
-            CommCareCaseSQL.DOC_TYPE,
+            CommCareCase.DOC_TYPE,
             LOCATION_DOC_TYPE,
-            XFormInstanceSQL.STATE_TO_DOC_TYPE[XFormInstanceSQL.NORMAL],
+            XFormInstance.STATE_TO_DOC_TYPE[XFormInstance.NORMAL],
         }
         if (self.related_doc_type not in non_couch_doc_types
                 and get_db_by_doc_type(self.related_doc_type) is None):

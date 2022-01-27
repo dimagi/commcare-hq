@@ -37,7 +37,7 @@ from corehq.apps.sms.util import get_or_create_sms_translations
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_START,
     VISIT_WINDOW_END,
@@ -3324,7 +3324,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             allow_parent_case_references=False,
         )
 
-        if value in set([field.name for field in CommCareCaseSQL._meta.fields]):
+        if value in set([field.name for field in CommCareCase._meta.fields]):
             raise ValidationError(_("Only dynamic case properties are allowed"))
 
         return value

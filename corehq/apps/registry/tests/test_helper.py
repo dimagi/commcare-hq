@@ -1,3 +1,4 @@
+from collections import Counter
 from unittest.mock import patch, Mock
 
 from django.test import SimpleTestCase, TestCase
@@ -8,7 +9,7 @@ from corehq.apps.registry.exceptions import RegistryAccessException
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.schema import RegistrySchemaBuilder
-from corehq.apps.registry.tests.utils import create_registry_for_test
+from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
@@ -89,11 +90,15 @@ class TestDataRegistryHelper(SimpleTestCase):
 
 class TestGetCaseHierarchy(TestCase):
     domain = 'data-registry-case-hierarchy'
+    invited_domain = "reg-domain2"
 
     @classmethod
     def setUpTestData(cls):
         cls.user = create_user("marg", "hairspray")
-        cls.registry = create_registry_for_test(cls.user, cls.domain)
+
+        cls.registry = create_registry_for_test(cls.user, cls.domain, invitations=[
+            Invitation(cls.invited_domain)
+        ])
         cls.registry.schema = RegistrySchemaBuilder(["grandparent", "parent", "child", "extension"]).build()
         cls.registry.save()
 
@@ -150,6 +155,21 @@ class TestGetCaseHierarchy(TestCase):
         )
         cls.cases = CaseFactory(cls.domain).create_or_update_cases([child_case, extension_case])
 
+        # create some cases in the 'invited domain'
+        cls.invited_domain_parent_id = "alternate homer"
+        cls.invited_domain_child_id = "alternate bart"
+        invited_domain_parent = CaseStructure(
+            case_id=cls.invited_domain_parent_id,
+            attrs={'create': True, 'case_type': 'parent'},
+        )
+        cls.invited_domain_cases = CaseFactory(cls.domain).create_or_update_cases([
+            CaseStructure(
+                case_id=cls.invited_domain_child_id,
+                attrs={'create': True, 'case_type': 'child'},
+                indices=[CaseIndex(invited_domain_parent, identifier='host', relationship='extension')],
+            )
+        ])
+
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
@@ -160,11 +180,43 @@ class TestGetCaseHierarchy(TestCase):
 
     @patch.object(DataRegistryHelper, '_check_user_has_access', new=Mock())
     def test_get_case_hierarchy(self):
-        cases = self.helper.get_case_hierarchy(None, CaseAccessorSQL.get_case(self.parent_case_id))
+        case = CaseAccessorSQL.get_case(self.parent_case_id)
+        cases = self.helper.get_case_hierarchy(self.domain, None, [case])
         self.assertEqual({case.case_id for case in cases}, {
             self.grand_parent_case_id_closed, self.host_case_id, self.grand_parent_case_id,
             self.parent_case_id, self.extension_case_id
         })
+
+    @patch.object(DataRegistryHelper, '_check_user_has_access', new=Mock())
+    def test_get_case_hierarchy_multiple_cases_no_duplicates(self):
+        starting_cases = [
+            CaseAccessorSQL.get_case(self.parent_case_id),
+            CaseAccessorSQL.get_case(self.extension_case_id)
+        ]
+        all_cases = self.helper.get_case_hierarchy(self.domain, None, starting_cases)
+        counter = Counter([c.case_id for c in all_cases])
+        self.assertEqual(set(counter), {
+            self.grand_parent_case_id_closed, self.host_case_id, self.grand_parent_case_id,
+            self.parent_case_id, self.extension_case_id
+        })
+        duplicates = [case_id for case_id, count in counter.items() if count > 1]
+        self.assertEqual([], duplicates)
+
+    @patch.object(DataRegistryHelper, '_check_user_has_access', new=Mock())
+    def test_get_case_hierarchy_across_domains(self):
+        starting_cases = [
+            CaseAccessorSQL.get_case(self.parent_case_id),
+            CaseAccessorSQL.get_case(self.invited_domain_child_id)
+        ]
+        all_cases = self.helper.get_multi_domain_case_hierarchy(None, starting_cases)
+        counter = Counter([c.case_id for c in all_cases])
+        self.assertEqual(set(counter), {
+            self.grand_parent_case_id_closed, self.host_case_id, self.grand_parent_case_id,
+            self.parent_case_id, self.extension_case_id,
+            self.invited_domain_child_id, self.invited_domain_parent_id
+        })
+        duplicates = [case_id for case_id, count in counter.items() if count > 1]
+        self.assertEqual([], duplicates)
 
 
 def _mock_get_granted_domain(domain):

@@ -13,7 +13,7 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 
 
 class SessionUtilsTest(TestCase):
@@ -81,7 +81,7 @@ class SessionUtilsTest(TestCase):
         self.assertTrue(data['user_data']['commcare_project'], 'cloudcare-tests')
 
     def test_load_session_data_for_commconnect_case(self):
-        user = CommCareCaseSQL(
+        user = CommCareCase(
             name='A case',
             case_id=uuid.uuid4().hex
         )

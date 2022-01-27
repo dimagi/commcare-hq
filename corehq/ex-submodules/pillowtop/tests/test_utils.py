@@ -4,7 +4,7 @@ from uuid import uuid4
 from django.test import TestCase
 
 from corehq.form_processor.document_stores import CaseDocumentStore
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.feed.interface import Change
@@ -16,7 +16,7 @@ class TestEnsureDocumentExists(TestCase):
 
     def _create_change(self):
         now = datetime.utcnow()
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=uuid4().hex,
             domain=self.domain,
             modified_on=now,

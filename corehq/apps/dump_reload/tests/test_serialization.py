@@ -7,10 +7,10 @@ class TestJSONFieldSerialization(SimpleTestCase):
 
     def test(self):
         serialized_model_with_primary_key = {
-            'model': 'form_processor.XFormInstanceSQL', 'pk': 1, 'fields': {'auth_context': '{}'}
+            'model': 'form_processor.XFormInstance', 'pk': 1, 'fields': {'auth_context': '{}'}
         }
         serialized_model_with_natural_key = {
-            'model': 'form_processor.XFormInstanceSQL', 'fields': {'auth_context': '{}'}
+            'model': 'form_processor.XFormInstance', 'fields': {'auth_context': '{}'}
         }
 
         def _test_json_field_after_serialization(serialized):

@@ -1,12 +1,10 @@
 import math
-import requests
 
 from django.conf import settings
 from django.core.management import BaseCommand
 
-from corehq.apps.analytics.utils import (
+from corehq.apps.analytics.utils.hubspot import (
     get_blocked_hubspot_domains,
-    MAX_API_RETRIES,
     get_first_conversion_status_for_emails,
 )
 from corehq.apps.es import UserES

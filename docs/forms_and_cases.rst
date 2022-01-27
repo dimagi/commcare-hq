@@ -9,21 +9,19 @@ This document provides a basic guide for how to do that.
 Models
 ------
 
-+----------------------+
-| SQL                  |
-+======================+
-| CommCareCaseSQL      |
-+----------------------+
-| CaseTransaction      |
-+----------------------+
-| CaseAttachmentSQL    |
-+----------------------+
-| CommCareCaseIndexSQL |
-+----------------------+
-| XFormInstanceSQL     |
-+----------------------+
-| XFormOperationSQL    |
-+----------------------+
++===================+
+| CommCareCase      |
++-------------------+
+| CaseTransaction   |
++-------------------+
+| CaseAttachment    |
++-------------------+
+| CommCareCaseIndex |
++-------------------+
+| XFormInstance     |
++-------------------+
+| XFormOperation    |
++-------------------+
 
 **Form Instance API**
 

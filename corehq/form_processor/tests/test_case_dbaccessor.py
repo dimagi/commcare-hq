@@ -19,11 +19,11 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
-    CaseAttachmentSQL,
+    CaseAttachment,
     CaseTransaction,
-    CommCareCaseIndexSQL,
-    CommCareCaseSQL,
-    XFormInstanceSQL,
+    CommCareCaseIndex,
+    CommCareCase,
+    XFormInstance,
 )
 from corehq.form_processor.tests.test_basics import _submit_case_block
 from corehq.form_processor.tests.utils import (
@@ -41,7 +41,7 @@ class CaseAccessorTestsSQL(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.using = router.db_for_read(CaseAttachmentSQL, **{HINT_PLPROXY: True})
+        self.using = router.db_for_read(CaseAttachment, **{HINT_PLPROXY: True})
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
@@ -53,7 +53,7 @@ class CaseAccessorTestsSQL(TestCase):
         with self.assertNumQueries(1, using=case.db):
             case = CaseAccessorSQL.get_case(case.case_id)
         self.assertIsNotNone(case)
-        self.assertIsInstance(case, CommCareCaseSQL)
+        self.assertIsInstance(case, CommCareCase)
         self.assertEqual(DOMAIN, case.domain)
         self.assertEqual('user1', case.owner_id)
 
@@ -100,20 +100,20 @@ class CaseAccessorTestsSQL(TestCase):
 
     def test_get_indices(self):
         case = _create_case()
-        index1 = CommCareCaseIndexSQL(
+        index1 = CommCareCaseIndex(
             case=case,
             identifier='parent',
             referenced_type='mother',
             referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndexSQL.CHILD
+            relationship_id=CommCareCaseIndex.CHILD
         )
         case.track_create(index1)
-        index2 = CommCareCaseIndexSQL(
+        index2 = CommCareCaseIndex(
             case=case,
             identifier='task',
             referenced_type='task',
             referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndexSQL.EXTENSION
+            relationship_id=CommCareCaseIndex.EXTENSION
         )
         case.track_create(index2)
 
@@ -157,14 +157,14 @@ class CaseAccessorTestsSQL(TestCase):
         case2 = _create_case(domain='other_domain')
         self.addCleanup(lambda: CaseAccessorSQL.hard_delete_cases('other_domain', [case2.case_id]))
 
-        case1.track_create(CommCareCaseIndexSQL(
+        case1.track_create(CommCareCaseIndex(
             case=case1,
             identifier='parent',
             referenced_type='mother',
             referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndexSQL.CHILD
+            relationship_id=CommCareCaseIndex.CHILD
         ))
-        case1.track_create(CaseAttachmentSQL(
+        case1.track_create(CaseAttachment(
             case=case1,
             attachment_id=uuid.uuid4().hex,
             name='pic.jpg',
@@ -186,7 +186,7 @@ class CaseAccessorTestsSQL(TestCase):
     def test_get_attachment_by_name(self):
         case = _create_case()
 
-        case.track_create(CaseAttachmentSQL(
+        case.track_create(CaseAttachment(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='pic.jpg',
@@ -194,7 +194,7 @@ class CaseAccessorTestsSQL(TestCase):
             blob_id='123',
             md5='123'
         ))
-        case.track_create(CaseAttachmentSQL(
+        case.track_create(CaseAttachment(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='my_doc',
@@ -217,7 +217,7 @@ class CaseAccessorTestsSQL(TestCase):
     def test_get_attachments(self):
         case = _create_case()
 
-        case.track_create(CaseAttachmentSQL(
+        case.track_create(CaseAttachment(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='pic.jpg',
@@ -225,7 +225,7 @@ class CaseAccessorTestsSQL(TestCase):
             blob_id='125',
             md5='123',
         ))
-        case.track_create(CaseAttachmentSQL(
+        case.track_create(CaseAttachment(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='doc',
@@ -360,12 +360,12 @@ class CaseAccessorTestsSQL(TestCase):
     def test_save_case_update_index(self):
         case = _create_case()
 
-        original_index = CommCareCaseIndexSQL(
+        original_index = CommCareCaseIndex(
             case=case,
             identifier='parent',
             referenced_type='mother',
             referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndexSQL.CHILD
+            relationship_id=CommCareCaseIndex.CHILD
         )
         case.track_create(original_index)
         CaseAccessorSQL.save_case(case)
@@ -374,7 +374,7 @@ class CaseAccessorTestsSQL(TestCase):
         index.identifier = 'new_identifier'  # shouldn't get saved
         index.referenced_type = 'new_type'
         index.referenced_id = uuid.uuid4().hex
-        index.relationship_id = CommCareCaseIndexSQL.EXTENSION
+        index.relationship_id = CommCareCaseIndex.EXTENSION
         case.track_update(index)
         CaseAccessorSQL.save_case(case)
 
@@ -388,12 +388,12 @@ class CaseAccessorTestsSQL(TestCase):
     def test_save_case_delete_index(self):
         case = _create_case()
 
-        case.track_create(CommCareCaseIndexSQL(
+        case.track_create(CommCareCaseIndex(
             case=case,
             identifier='parent',
             referenced_type='mother',
             referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndexSQL.CHILD
+            relationship_id=CommCareCaseIndex.CHILD
         ))
         CaseAccessorSQL.save_case(case)
 
@@ -405,7 +405,7 @@ class CaseAccessorTestsSQL(TestCase):
     def test_save_case_delete_attachment(self):
         case = _create_case()
 
-        case.track_create(CaseAttachmentSQL(
+        case.track_create(CaseAttachment(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='doc',
@@ -423,7 +423,7 @@ class CaseAccessorTestsSQL(TestCase):
     def test_save_case_update_attachment(self):
         case = _create_case()
 
-        case.track_create(CaseAttachmentSQL(
+        case.track_create(CaseAttachment(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='doc',
@@ -502,12 +502,12 @@ class CaseAccessorTestsSQL(TestCase):
         # Create case and index
         referenced_id = uuid.uuid4().hex
         case, _ = _create_case_with_index(referenced_id, identifier='task', referenced_type='task',
-                                relationship_id=CommCareCaseIndexSQL.EXTENSION)
+                                relationship_id=CommCareCaseIndex.EXTENSION)
 
         # Create irrelevant cases
         _create_case_with_index(referenced_id)
         _create_case_with_index(referenced_id, identifier='task', referenced_type='task',
-                                relationship_id=CommCareCaseIndexSQL.EXTENSION, case_is_deleted=True)
+                                relationship_id=CommCareCaseIndex.EXTENSION, case_is_deleted=True)
 
         self.assertEqual(
             CaseAccessorSQL.get_extension_case_ids(DOMAIN, [referenced_id]),
@@ -517,32 +517,32 @@ class CaseAccessorTestsSQL(TestCase):
     def test_get_indexed_case_ids(self):
         # Create case and indexes
         case = _create_case()
-        extension_index = CommCareCaseIndexSQL(
+        extension_index = CommCareCaseIndex(
             case=case,
             identifier="task",
             referenced_type="task",
             referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndexSQL.EXTENSION
+            relationship_id=CommCareCaseIndex.EXTENSION
         )
         case.track_create(extension_index)
-        child_index = CommCareCaseIndexSQL(
+        child_index = CommCareCaseIndex(
             case=case,
             identifier='parent',
             referenced_type='mother',
             referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndexSQL.CHILD
+            relationship_id=CommCareCaseIndex.CHILD
         )
         case.track_create(child_index)
         CaseAccessorSQL.save_case(case)
 
         # Create irrelevant case
         other_case = _create_case()
-        other_child_index = CommCareCaseIndexSQL(
+        other_child_index = CommCareCaseIndex(
             case=other_case,
             identifier='parent',
             referenced_type='mother',
             referenced_id=case.case_id,
-            relationship_id=CommCareCaseIndexSQL.CHILD
+            relationship_id=CommCareCaseIndex.CHILD
         )
         other_case.track_create(other_child_index)
         CaseAccessorSQL.save_case(other_case)
@@ -575,20 +575,20 @@ class CaseAccessorTestsSQL(TestCase):
         case = _create_case()
         referenced_id1 = uuid.uuid4().hex
         referenced_id2 = uuid.uuid4().hex
-        extension_index = CommCareCaseIndexSQL(
+        extension_index = CommCareCaseIndex(
             case=case,
             identifier="task",
             referenced_type="task",
             referenced_id=referenced_id1,
-            relationship_id=CommCareCaseIndexSQL.EXTENSION
+            relationship_id=CommCareCaseIndex.EXTENSION
         )
         case.track_create(extension_index)
-        child_index = CommCareCaseIndexSQL(
+        child_index = CommCareCaseIndex(
             case=case,
             identifier='parent',
             referenced_type='mother',
             referenced_id=referenced_id2,
-            relationship_id=CommCareCaseIndexSQL.CHILD
+            relationship_id=CommCareCaseIndex.CHILD
         )
         case.track_create(child_index)
         CaseAccessorSQL.save_case(case)
@@ -607,14 +607,14 @@ class CaseAccessorTestsSQL(TestCase):
                     identifier='task',
                     referenced_id=referenced_id1,
                     referenced_type='task',
-                    relationship=CommCareCaseIndexSQL.EXTENSION,
+                    relationship=CommCareCaseIndex.EXTENSION,
                 ),
                 CaseIndexInfo(
                     case_id=case.case_id,
                     identifier='parent',
                     referenced_id=referenced_id2,
                     referenced_type='mother',
-                    relationship=CommCareCaseIndexSQL.CHILD
+                    relationship=CommCareCaseIndex.CHILD
                 ),
             }
         )
@@ -740,7 +740,7 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
-    :return: CommCareCaseSQL
+    :return: CommCareCase
     """
     domain = domain or DOMAIN
     form_id = form_id or uuid.uuid4().hex
@@ -748,7 +748,7 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
     user_id = user_id or 'user1'
     utcnow = datetime.utcnow()
 
-    form = XFormInstanceSQL(
+    form = XFormInstance(
         form_id=form_id,
         xmlns='http://openrosa.org/formdesigner/form-processor',
         received_on=utcnow,
@@ -756,7 +756,7 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
         domain=domain
     )
 
-    case = CommCareCaseSQL(
+    case = CommCareCase(
         case_id=case_id,
         domain=domain,
         type=case_type or '',
@@ -775,12 +775,12 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
 
 
 def _create_case_with_index(referenced_case_id, identifier='parent', referenced_type='mother',
-                            relationship_id=CommCareCaseIndexSQL.CHILD, case_is_deleted=False,
+                            relationship_id=CommCareCaseIndex.CHILD, case_is_deleted=False,
                             case_type='child'):
     case = _create_case(case_type=case_type)
     case.deleted = case_is_deleted
 
-    index = CommCareCaseIndexSQL(
+    index = CommCareCaseIndex(
         case=case,
         identifier=identifier,
         referenced_type=referenced_type,
