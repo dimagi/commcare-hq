@@ -17,13 +17,17 @@ class NewRoleDoesNotExist(Exception):
     pass
 
 
-def change_software_plan_version(old_role, new_role, limit_to_plans=None, dry_run=False):
+def change_role_for_software_plan_version(old_role, new_role, limit_to_plans=None, dry_run=False):
     """
+    We typically do not support modifying SoftwarePlanVersions directly, and instead encourage creating a new one.
+    This command should only be used when it seems appropriate. The most typical use case would be when it is
+    desirable to delete the Role(slug=old_role) object entirely, and using this command to ensure no software
+    plan versions reference that old role.
     :param old_role: slug for role to search for
     :param new_role: slug for role that new software plan version should reference
     :param limit_to_plans: optionally limit to specific plan names
     :param dry_run: if False, will make changes to the DB
-    :return: a list of plan names that were upgraded
+    :return: a list of plan names that were modified
     """
     dry_run_tag = '[DRY_RUN]' if dry_run else ''
 
@@ -39,30 +43,21 @@ def change_software_plan_version(old_role, new_role, limit_to_plans=None, dry_ru
     if limit_to_plans:
         versions = versions.filter(plan__name__in=limit_to_plans)
 
-    upgraded_plans = set()
-    for old_version in versions:
-        new_version = SoftwarePlanVersion(
-            plan=old_version.plan,
-            product_rate=old_version.product_rate,
-            role=new_role_obj,
-        )
+    changed_plans = set()
+    for software_plan_version in versions:
         if not dry_run:
-            # need to save before setting feature rates
-            new_version.save()
-            new_version.feature_rates.set(list(old_version.feature_rates.all()))
-            new_version.save()
-            old_version.is_active = False
-            old_version.save()
+            software_plan_version.role = new_role_obj
+            software_plan_version.save()
 
-        upgraded_plans.add(new_version.plan.name)
-        logger.info(f"{dry_run_tag}Upgraded the {new_version.plan.name} software plan from {old_role} to "
-                    f"{new_role}.")
+        changed_plans.add(software_plan_version.plan.name)
+        logger.info(f"{dry_run_tag}Changed the {software_plan_version.plan.name} software plan's role from"
+                    f" {old_role} to {new_role}.")
 
-    return list(upgraded_plans)
+    return list(changed_plans)
 
 
 class Command(BaseCommand):
-    help = 'Create a new software plan version to reference a new role.'
+    help = 'Modify existing software plan versions to reference a new role. Use wisely.'
 
     def add_arguments(self, parser):
         parser.add_argument('old_role')
@@ -79,7 +74,7 @@ class Command(BaseCommand):
         logger.setLevel(logging.WARNING if kwargs.get('quiet') else logging.INFO)
         limit_to_plans = kwargs.get('limit_plans').split(',') if kwargs.get('limit_plans') else None
         try:
-            upgraded_plans = change_software_plan_version(
+            changed_plans = change_role_for_software_plan_version(
                 old_role,
                 new_role,
                 limit_to_plans=limit_to_plans,
@@ -90,5 +85,5 @@ class Command(BaseCommand):
         except NewRoleDoesNotExist:
             logger.error(f"New role slug {new_role} does not exist.")
         else:
-            formatted_plans = "\n".join(upgraded_plans)
-            logger.info(f"Successfully upgraded the following plans:\n{formatted_plans}")
+            formatted_plans = "\n".join(changed_plans)
+            logger.info(f"Successfully modified the following plans:\n{formatted_plans}")
