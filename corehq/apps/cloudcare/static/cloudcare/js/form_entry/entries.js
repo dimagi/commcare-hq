@@ -638,7 +638,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 return _.include(wordsInChoice, word);
             });
         } else if (matchType === Const.COMBOBOX_FUZZY) {
-            function isFuzzyMatch(haystack, query, distanceThreshold) {
+            var isFuzzyMatch = function (haystack, query, distanceThreshold) {
                 return (
                     (window.Levenshtein.get(haystack, query) <= distanceThreshold && query.length > 3) ||
                     haystack === query
