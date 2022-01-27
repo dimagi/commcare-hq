@@ -1,7 +1,7 @@
 import uuid
 from contextlib import contextmanager
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils.dateparse import parse_datetime
 
 from celery import states
@@ -17,6 +17,7 @@ from corehq.apps.case_importer.tasks import bulk_import_async
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper, \
     get_interned_exception
+from corehq.apps.case_importer.views import validate_column_names
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.domain.shortcuts import create_domain
@@ -29,6 +30,16 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import flag_enabled, flag_disabled
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.workbook_reading import make_worksheet
+
+
+class TestValidColumnNames(SimpleTestCase):
+    def test_validate_column_names(self):
+        invalid_column_names = set()
+        validate_column_names([1, 'name', 'foo+bar', '?', 'parent/maternal'], invalid_column_names)
+        self.assertEqual(
+            invalid_column_names,
+            {'1', 'foo+bar', '?', 'parent/maternal'}
+        )
 
 
 class ImporterTest(TestCase):
