@@ -571,11 +571,11 @@ class CaseUpdateConfig:
         index = indices[0]
         if index.referenced_id != self.index_remove_case_id:
             raise DataRegistryCaseUpdateError("Index case ID does not match for index to remove")
-        if self.index_remove_relationship and self.index_remove_relationship != index.relationship_id:
+        if self.index_remove_relationship and self.index_remove_relationship != index.relationship:
             raise DataRegistryCaseUpdateError("Index relationship does not match for index to remove")
 
         return {
-            index.identifier: (index.referenced_type, "", index.relationship_id)
+            index.identifier: (index.referenced_type, "", index.relationship)
         }
 
     @staticmethod
