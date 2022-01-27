@@ -1,12 +1,12 @@
 import uuid
 from contextlib import contextmanager
+from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 from django.utils.dateparse import parse_datetime
 
 from celery import states
 from celery.exceptions import Ignore
-from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
@@ -15,8 +15,11 @@ from corehq.apps.case_importer import exceptions
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.tasks import bulk_import_async
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
-from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper, \
-    get_interned_exception
+from corehq.apps.case_importer.util import (
+    ImporterConfig,
+    WorksheetWrapper,
+    get_interned_exception,
+)
 from corehq.apps.case_importer.views import validate_column_names
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
@@ -27,7 +30,7 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import restrict_user_by_location
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.test_utils import flag_enabled, flag_disabled
+from corehq.util.test_utils import flag_disabled, flag_enabled
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.workbook_reading import make_worksheet
 
