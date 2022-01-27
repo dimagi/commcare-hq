@@ -11,7 +11,6 @@ REQUIRED_COLUMNS = [
     'MobileNo',
     'DIST_NAME',
     'Health_Block',
-    'visit_type',
     'owner_name',
 ]
 

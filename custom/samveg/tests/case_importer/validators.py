@@ -100,11 +100,11 @@ class TestRequiredValueValidator(SimpleTestCase, TestFileMixin):
                 )
 
     def test_validate_required_values(self):
-        required_values = ['name', 'MobileNo', 'DIST_NAME', 'Health_Block', 'visit_type', 'owner_name',
+        required_values = ['name', 'MobileNo', 'DIST_NAME', 'Health_Block', 'owner_name',
                            'external_id']
         self._assert_missing_values_for_sheet('missing_values_rch_case_upload', required_values)
 
-        required_values = ['name', 'MobileNo', 'DIST_NAME', 'Health_Block', 'visit_type',
+        required_values = ['name', 'MobileNo', 'DIST_NAME', 'Health_Block',
                            'owner_name', 'newborn_weight', 'external_id']
         self._assert_missing_values_for_sheet('missing_values_sncu_case_upload', required_values)
 
@@ -241,7 +241,6 @@ def _sample_valid_rch_upload():
         'MobileNo': 9999999999,
         'DIST_NAME': 'USA',
         'Health_Block': 'DC',
-        'visit_type': 'investigation',
         'owner_name': 'watson',
         'Call1': '10-10-21'
     }
