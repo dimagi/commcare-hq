@@ -56,6 +56,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
 
     returns the UID of the resulting form.
     """
+    form_extras = form_extras or {}
     attachments = attachments or {}
     now = json_format_datetime(datetime.datetime.utcnow())
     if not isinstance(case_blocks, str):
@@ -70,7 +71,6 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
         'user_id': user_id or "",
         'device_id': device_id or "",
     })
-    form_extras = form_extras or {}
 
     result = submit_form_locally(
         instance=form_xml,
