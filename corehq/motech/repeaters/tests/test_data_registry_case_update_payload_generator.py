@@ -362,7 +362,7 @@ def _test_payload_generator(intent_case, registry_mock_cases=None,
             "source_domain": SOURCE_DOMAIN,
             "source_form_id": "form123",
             "source_username": "local_user",
-        })
+        }, device_id=f"{DataRegistryCaseUpdatePayloadGenerator.DEVICE_ID}:{SOURCE_DOMAIN}")
         form.assert_case_updates(expected_updates or {})
         if expected_indices:
             form.assert_case_index(expected_indices)
@@ -385,7 +385,7 @@ class DataRegistryUpdateForm:
         }
 
     def _get_form_value(self, name):
-        return self.formxml.find(f"{{{SYSTEM_FORM_XMLNS}}}{name}").text
+        return self.formxml.find(f"{{{DataRegistryCaseUpdatePayloadGenerator.XMLNS}}}{name}").text
 
     def assert_case_updates(self, expected_updates):
         """
@@ -405,12 +405,14 @@ class DataRegistryUpdateForm:
                 actual = self.cases[case_id].index[key]
                 eq(actual, expected)
 
-    def assert_form_props(self, expected):
+    def assert_form_props(self, expected, device_id=None):
         actual = {
             key: self._get_form_value(key)
             for key in expected
         }
         eq(actual, expected)
+        if device_id:
+            eq(self.formxml.find(".//{http://openrosa.org/jr/xforms}deviceID").text, device_id)
 
     def assert_case_create(self, expected_creates):
         for case_id, create in expected_creates.items():

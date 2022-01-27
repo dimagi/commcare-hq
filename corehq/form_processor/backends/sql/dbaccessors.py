@@ -955,6 +955,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return transactions[0] if transactions else None
 
     @staticmethod
+    def get_most_recent_form_transaction(case_id):
+        return CaseTransaction.objects.partitioned_query(case_id).filter(case_id=case_id, revoked=False).annotate(
+            type_filter=F('type').bitand(CaseTransaction.TYPE_FORM)
+        ).filter(type_filter=CaseTransaction.TYPE_FORM).order_by("-server_date").first()
+
+    @staticmethod
     def get_transactions_by_type(case_id, transaction_type):
         return list(CaseTransaction.objects.plproxy_raw(
             'SELECT * from get_case_transactions_by_type(%s, %s)',

@@ -1409,6 +1409,10 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def is_case_rebuild(self):
         return bool(self.type & self.case_rebuild_types())
 
+    @property
+    def xmlns(self):
+        return self.details.get('xmlns', None) if self.details else None
+
     @classmethod
     @memoized
     def case_rebuild_types(cls):
@@ -1498,7 +1502,8 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
                 sync_log_id=xform.last_sync_token,
                 server_date=xform.received_on,
                 type=transaction_type,
-                revoked=not xform.is_normal
+                revoked=not xform.is_normal,
+                details=FormSubmissionDetail(xmlns=xform.xmlns).to_json()
             )
 
     @classmethod
@@ -1563,6 +1568,11 @@ class CaseTransactionDetail(JsonObject):
     __hash__ = None
 
 
+class FormSubmissionDetail(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_FORM
+    xmlns = StringProperty()
+
+
 class RebuildWithReason(CaseTransactionDetail):
     _type = CaseTransaction.TYPE_REBUILD_WITH_REASON
     reason = StringProperty()
@@ -1578,7 +1588,7 @@ class UserArchivedRebuild(CaseTransactionDetail):
     user_id = StringProperty()
 
 
-class FormArchiveRebuild(CaseTransactionDetail):
+class FormArchiveRebuild(FormSubmissionDetail):
     _type = CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED
     form_id = StringProperty()
     archived = BooleanProperty()
