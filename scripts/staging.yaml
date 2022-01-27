@@ -80,5 +80,5 @@ branches:
     - smh/save-only-edit-fields-xml-changes # Steph Jan 24
     - ad/save-only-edited-form-fields-UI # Steph Jan 24
     # - ml/remove-pickles-reports # Minha Jan 24
-    - jls/combine-toggle-dirs-2 # Jenny Jan 26
+    - jls/update-web-apps-fuzzy # Jenny Jan 26
 submodules: { }
