@@ -37,12 +37,16 @@ class Command(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('-ct', '--type', dest='type', type=str)
         parser.add_argument('-cp', '--properties', dest='props', nargs='+', type=str)
+
+        # operator arguments, only one of these is permitted
         parser.add_argument('-eq', dest='equals', action='store_true')
         parser.add_argument('-neq', dest='not_equals', action='store_true')
         parser.add_argument('-gt', dest='greater_than', action='store_true')
         parser.add_argument('-lt', dest='less_than', action='store_true')
         parser.add_argument('-gteq', dest='greater_equal', action='store_true')
         parser.add_argument('-lteq', dest='less_equal', action='store_true')
+
+        parser.add_argument('--verbose', dest="verbose", action='store_true')
 
     def handle(self, *args, **kwargs):
         domain = kwargs['domain']
@@ -67,9 +71,12 @@ class Command(BaseCommand):
         operator = operator_keylist[operator_valuelist.index(True)]
         query_obj = define_query(domain, props, operator, case_type)
         type_str = f"{case_type}s in" if case_type else "All cases in"
+        query_str = query_obj.get_query() if kwargs['verbose'] else (
+            f"QUERY: {type_str} {domain} where {props[0]} {operator} {props[1]}"
+        )
 
         print("=" * 8 + " SCRIPT QUERY TEST " + "=" * 8)
-        print(f"QUERY: {type_str} {domain} where {props[0]} {operator} {props[1]}")
+        print(query_str)
         results = timeit.timeit(
             lambda: print("HITS: " + str(query_obj.run().total)),
             number=1
