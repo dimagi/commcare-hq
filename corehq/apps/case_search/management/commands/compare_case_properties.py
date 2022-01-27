@@ -18,7 +18,7 @@ def define_query(domain, props, operator, case_type=None):
             ]
         }
     }
-    if case_type:
+    if case_type is None:
         query_obj = (CaseSearchES()
             .domain(domain)
             .set_query(script))
