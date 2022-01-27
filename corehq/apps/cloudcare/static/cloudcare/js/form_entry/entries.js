@@ -640,8 +640,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         } else if (matchType === Const.COMBOBOX_FUZZY) {
             var isFuzzyMatch = function (haystack, query, distanceThreshold) {
                 return (
-                    (window.Levenshtein.get(haystack, query) <= distanceThreshold && query.length > 3) ||
-                    haystack === query
+                    haystack === query ||
+                    (query.length > 3 && window.Levenshtein.get(haystack, query) <= distanceThreshold)
                 );
             };
 
