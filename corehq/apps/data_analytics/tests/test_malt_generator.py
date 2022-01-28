@@ -169,8 +169,8 @@ class TestSaveMaltRowDictsToDB(TestCase):
 
     def test_successful_bulk_create(self):
         malt_row_dicts = [
-            create_mock_malt_row_dict({'domain': 'domain1'}),
-            create_mock_malt_row_dict({'domain': 'domain2'}),
+            create_malt_row_dict({'domain': 'domain1'}),
+            create_malt_row_dict({'domain': 'domain2'}),
         ]
         with patch('corehq.apps.data_analytics.malt_generator._update_or_create_malt_row') as mock_updateorcreate:
             _save_malt_row_dicts_to_db(malt_row_dicts)
@@ -186,7 +186,7 @@ class TestSaveMaltRowDictsToDB(TestCase):
         ran too slowly to be worth it. See TestUpdateOrCreateMaltRow to be reassured _update_or_create_malt_row
         works properly.
         """
-        malt_row_dict = create_mock_malt_row_dict({'domain': 'test-domain', 'num_of_forms': 25})
+        malt_row_dict = create_malt_row_dict({'domain': 'test-domain', 'num_of_forms': 25})
         # pre-save the object to force integrity error in bulk create
         MALTRow.objects.create(**malt_row_dict)
         with patch('corehq.apps.data_analytics.malt_generator._update_or_create_malt_row') as mock_updateorcreate:
@@ -197,25 +197,27 @@ class TestSaveMaltRowDictsToDB(TestCase):
 
 class TestUpdateOrCreateMaltRow(TestCase):
 
-    def test_successful_create(self):
-        malt_row_dict = create_mock_malt_row_dict({'domain': 'test-domain', 'num_of_forms': 25})
+    def setUp(self):
+        super().setUp()
+        self.malt_row_dict = create_malt_row_dict({'domain': 'test-domain', 'num_of_forms': 25})
 
-        _update_or_create_malt_row(malt_row_dict)
+    def test_successful_create(self):
+
+        _update_or_create_malt_row(self.malt_row_dict)
 
         rows = MALTRow.objects.filter(domain_name='test-domain')
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0].num_of_forms, 25)
 
     def test_successful_update(self):
-        malt_row_dict = create_mock_malt_row_dict({'domain': 'test-domain', 'num_of_forms': 25})
-        # pre-save the object to force integrity error in bulk create
-        MALTRow.objects.create(**malt_row_dict)
+        MALTRow.objects.create(**self.malt_row_dict)
+        rows = MALTRow.objects.filter(domain_name='test-domain')
+        self.assertEqual(rows[0].num_of_forms, 25)
+        updated_malt_row_dict = create_malt_row_dict({'domain': 'test-domain', 'num_of_forms': 50})
 
-        updated_malt_row_dict = create_mock_malt_row_dict({'domain': 'test-domain', 'num_of_forms': 50})
         _update_or_create_malt_row(updated_malt_row_dict)
 
         rows = MALTRow.objects.filter(domain_name='test-domain')
-
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0].num_of_forms, 50)
 
@@ -396,20 +398,20 @@ def create_mock_nested_query_row(user_id='user_id', app_id='abc123', device_id='
     return mock_nested_query_row
 
 
-def create_mock_malt_row_dict(mock):
+def create_malt_row_dict(data):
     return {
-        'month': mock.get('month', datetime.datetime(2022, 1, 1, 0, 0)),
-        'user_id': mock.get('user_id', 'test-user-id'),
-        'username': mock.get('username', 'test-username'),
-        'email': mock.get('email', 'test-email'),
-        'user_type': mock.get('user_type', 'test-user-type'),
-        'domain_name': mock.get('domain', 'test-domain'),
-        'num_of_forms': mock.get('num_of_forms', 0),
-        'app_id': mock.get('app_id', MISSING_APP_ID),
-        'device_id': mock.get('device_id', 'web'),
-        'wam': mock.get('wam', None),
-        'pam': mock.get('pam', None),
-        'use_threshold': mock.get('use_threshold', DEFAULT_MINIMUM_USE_THRESHOLD),
-        'experienced_threshold': mock.get('experienced_threshold', DEFAULT_EXPERIENCED_THRESHOLD),
-        'is_app_deleted': mock.get('is_app_deleted', False),
+        'month': data.get('month', datetime.datetime(2022, 1, 1, 0, 0)),
+        'user_id': data.get('user_id', 'test-user-id'),
+        'username': data.get('username', 'test-username'),
+        'email': data.get('email', 'test-email'),
+        'user_type': data.get('user_type', 'test-user-type'),
+        'domain_name': data.get('domain', 'test-domain'),
+        'num_of_forms': data.get('num_of_forms', 0),
+        'app_id': data.get('app_id', MISSING_APP_ID),
+        'device_id': data.get('device_id', 'web'),
+        'wam': data.get('wam', None),
+        'pam': data.get('pam', None),
+        'use_threshold': data.get('use_threshold', DEFAULT_MINIMUM_USE_THRESHOLD),
+        'experienced_threshold': data.get('experienced_threshold', DEFAULT_EXPERIENCED_THRESHOLD),
+        'is_app_deleted': data.get('is_app_deleted', False),
     }
