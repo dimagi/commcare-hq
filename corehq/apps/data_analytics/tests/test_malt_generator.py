@@ -245,17 +245,31 @@ class TestGetMaltAppData(SimpleTestCase):
         self.assertEqual(actual_app_data, self.default_app_data)
 
     def test_returns_expected_app_data(self):
-        mock_app = Mock()
-        mock_app.amplifies_workers = True
-        mock_app.amplifies_project = False
-        mock_app.minimum_use_threshold = 1
-        mock_app.experienced_threshold = 10
-        mock_app.is_deleted.return_value = False
+        app = Application(
+            amplifies_workers='yes',
+            amplifies_project='no',
+            minimum_use_threshold='1',
+            experienced_threshold='10',
+        )
 
-        with patch('corehq.apps.data_analytics.malt_generator.get_app', return_value=mock_app):
+        with patch('corehq.apps.data_analytics.malt_generator.get_app', return_value=app):
             actual_app_data = _get_malt_app_data('domain', 'app_id')
 
-        self.assertEqual(actual_app_data, MaltAppData(True, False, 1, 10, False))
+        self.assertEqual(actual_app_data, MaltAppData('yes', 'no', '1', '10', False))
+
+    def test_returns_expected_app_data_if_deleted(self):
+        app = Application(
+            amplifies_workers='yes',
+            amplifies_project='no',
+            minimum_use_threshold='1',
+            experienced_threshold='10',
+        )
+        app.doc_type = 'Application-Deleted'
+
+        with patch('corehq.apps.data_analytics.malt_generator.get_app', return_value=app):
+            actual_app_data = _get_malt_app_data('domain', 'app_id')
+
+        self.assertEqual(actual_app_data, MaltAppData('yes', 'no', '1', '10', True))
 
 
 class TestBuildMaltRowDict(SimpleTestCase):
