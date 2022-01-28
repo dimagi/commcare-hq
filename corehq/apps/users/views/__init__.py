@@ -1347,22 +1347,23 @@ def change_password(request, domain, login_id):
         form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
         input = request.POST['new_password1']
         if input == request.POST['new_password2']:
-            try:
-                clean_password(input)
-                if form.is_valid():
-                    form.save()
-                    log_user_change(
-                        by_domain=domain,
-                        for_domain=commcare_user.domain,
-                        couch_user=commcare_user,
-                        changed_by_user=request.couch_user,
-                        changed_via=USER_CHANGE_VIA_WEB,
-                        change_messages=UserChangeMessage.password_reset()
-                    )
-                    json_dump['status'] = 'OK'
-                    form = SetUserPasswordForm(request.project, login_id, user='')
-            except ValidationError:
-                json_dump['status'] = 'weak'
+            if form.project.strong_mobile_passwords:
+                try:
+                    clean_password(input)
+                except ValidationError:
+                    json_dump['status'] = 'weak'
+            if form.is_valid():
+                form.save()
+                log_user_change(
+                    by_domain=domain,
+                    for_domain=commcare_user.domain,
+                    couch_user=commcare_user,
+                    changed_by_user=request.couch_user,
+                    changed_via=USER_CHANGE_VIA_WEB,
+                    change_messages=UserChangeMessage.password_reset()
+                )
+                json_dump['status'] = 'OK'
+                form = SetUserPasswordForm(request.project, login_id, user='')
         else:
             json_dump['status'] = 'different'
     else:

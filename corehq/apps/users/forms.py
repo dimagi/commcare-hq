@@ -456,8 +456,8 @@ class SetUserPasswordForm(SetPasswordForm):
         if self.project.strong_mobile_passwords:
             submitButton = hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    Submit('submit', _('Reset Password'),)
-                    # data_bind="enable: passwordSufficient(), click: submitCheck")
+                    Submit('submit', _('Reset Password'),
+                           data_bind="enable: passwordSufficient(), click: submitCheck")
                 )
             )
         else:
