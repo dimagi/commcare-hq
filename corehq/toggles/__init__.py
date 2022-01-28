@@ -1255,6 +1255,7 @@ CASE_DEDUPE = StaticToggle(
     'Case deduplication feature',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
 )
 
 LEGACY_SYNC_SUPPORT = StaticToggle(
