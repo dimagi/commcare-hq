@@ -288,10 +288,12 @@ class TestBuildMaltRowDict(SimpleTestCase):
         )
 
     def test_returns_expected_value_for_month(self):
-        with patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data', return_value=self.app_data):
-            actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, self.monthspan)
+        monthspan = DateSpan.from_month(3, 2020)
 
-        self.assertEqual(actual_malt_row_dict['month'], datetime.datetime(2022, 1, 1, 0, 0))
+        with patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data', return_value=self.app_data):
+            actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, monthspan)
+
+        self.assertEqual(actual_malt_row_dict['month'], datetime.datetime(2020, 3, 1, 0, 0))
 
     def test_app_id_set_to_missing_if_none(self):
         custom_app_row = create_mock_app_row_for_malt_tests()
