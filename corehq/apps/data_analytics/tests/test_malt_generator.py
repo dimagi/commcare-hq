@@ -271,7 +271,7 @@ class TestBuildMaltRowDict(SimpleTestCase):
         super().setUp()
         self.domain = 'domain'
         self.monthspan = DateSpan.from_month(1, 2022)
-        self.app_row = create_mock_app_row_for_malt_tests()
+        self.app_row = create_mock_nested_query_row()
         self.user = create_user_for_malt_tests(is_web_user=True)
         self.app_data = create_malt_app_data()
 
@@ -291,10 +291,9 @@ class TestBuildMaltRowDict(SimpleTestCase):
         self.assertEqual(actual_malt_row_dict['month'], datetime.datetime(2020, 3, 1, 0, 0))
 
     def test_app_id_set_to_missing_if_none(self):
-        custom_app_row = create_mock_app_row_for_malt_tests()
-        custom_app_row.app_id = None
+        self.app_row.app_id = None
 
-        actual_malt_row_dict = _build_malt_row_dict(custom_app_row, self.domain, self.user, self.monthspan)
+        actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, self.monthspan)
 
         self.assertEqual(actual_malt_row_dict['app_id'], '_MISSING_APP_ID')
 
@@ -360,8 +359,8 @@ class TestGetMaltRowDicts(SimpleTestCase):
         users_by_id = {'user_id_1': self.web_user, 'user_id_2': self.mobile_user}
         with patch('corehq.apps.data_analytics.malt_generator.get_app_submission_breakdown_es') as mock_esquery:
             mock_esquery.return_value = [
-                create_mock_nested_query_row('user_id_1', doc_count=50),
-                create_mock_nested_query_row('user_id_2', doc_count=25),
+                create_mock_nested_query_row(user_id='user_id_1', doc_count=50),
+                create_mock_nested_query_row(user_id='user_id_2', doc_count=25),
             ]
             malt_row_dicts = _get_malt_row_dicts(self.domain, self.monthspan, users_by_id)
 
@@ -387,15 +386,8 @@ def create_user_for_malt_tests(is_web_user=True, user_id='user_id', username='us
     return user
 
 
-def create_mock_app_row_for_malt_tests(app_id='app_id', device_id='device_id', doc_count=10):
-    mock_app_row = Mock()
-    mock_app_row.app_id = app_id
-    mock_app_row.device_id = device_id
-    mock_app_row.doc_count = doc_count
-    return mock_app_row
-
-
-def create_mock_nested_query_row(user_id, app_id='abc123', device_id='web', doc_count=10):
+def create_mock_nested_query_row(user_id='user_id', app_id='abc123', device_id='web', doc_count=10):
+    # NestedQueryRow is the ElasticSearch class this is mocking
     mock_nested_query_row = Mock()
     mock_nested_query_row.app_id = app_id
     mock_nested_query_row.device_id = device_id
