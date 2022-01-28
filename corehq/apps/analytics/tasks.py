@@ -27,7 +27,7 @@ from corehq.apps.analytics.utils.partner_analytics import (
 )
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
-from dimagi.utils.dates import add_months, add_months_to_date
+from dimagi.utils.dates import add_months_to_date
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.accounting.models import (
@@ -906,4 +906,3 @@ def generate_partner_reports():
         task_time.seconds,
         multiprocess_mode=MPM_LIVESUM
     )
-
