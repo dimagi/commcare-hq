@@ -175,16 +175,3 @@ class AbstractCommCareCase(CaseToXMLMixin):
             )
         else:
             return None
-
-
-class AbstractSupplyInterface(metaclass=ABCMeta):
-
-    @classmethod
-    @abstractmethod
-    def get_by_location(cls, location):
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def get_or_create_by_location(cls, location):
-        raise NotImplementedError
