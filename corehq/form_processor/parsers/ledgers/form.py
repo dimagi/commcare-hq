@@ -109,7 +109,7 @@ def get_ledger_case_action_intents(xform, case_ids):
 
 def get_all_stock_report_helpers_from_form(xform):
     """
-    Given an instance of an AbstractXFormInstance, extract the ledger actions and convert
+    Given an instance of an XFormInstance, extract the ledger actions and convert
     them to StockReportHelper objects.
     """
     form_xml = xform.get_xml_element()
