@@ -32,21 +32,16 @@ def generate_malt(monthspans, domains=None):
     """
     Populates MALTRow SQL table with app submission data for a given list of months
     :param monthspans: list of DateSpan objects
-    :param domains: list of domain ids
+    :param domains: list of domain names
     """
-    domains = domains or Domain.get_all()
-    for domain in domains:
-        if isinstance(domain, str):
-            domain = Domain.get_by_name(domain)
-            if not domain:
-                continue
-
+    domain_names = domains or Domain.get_all_names()
+    for domain_name in domain_names:
         for monthspan in monthspans:
-            logger.info(f"Building MALT for {domain.name} for {monthspan}")
-            all_users = get_all_user_rows(domain.name, include_inactive=False, include_docs=True)
+            logger.info(f"Building MALT for {domain_name} for {monthspan}")
+            all_users = get_all_user_rows(domain_name, include_inactive=False, include_docs=True)
             for users in chunked(all_users, 1000):
                 users_by_id = {user['id']: CouchUser.wrap_correctly(user['doc']) for user in users}
-                malt_row_dicts = _get_malt_row_dicts(domain.name, monthspan, users_by_id)
+                malt_row_dicts = _get_malt_row_dicts(domain_name, monthspan, users_by_id)
                 if malt_row_dicts:
                     _save_malt_row_dicts_to_db(malt_row_dicts)
 
