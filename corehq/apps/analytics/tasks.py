@@ -19,8 +19,15 @@ from celery.task import periodic_task
 from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
 
+from corehq.apps.analytics.utils.partner_analytics import (
+    generate_monthly_mobile_worker_statistics,
+    generate_monthly_web_user_statistics,
+    generate_monthly_submissions_statistics,
+    send_partner_emails,
+)
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
+from dimagi.utils.dates import add_months, add_months_to_date
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.accounting.models import (
@@ -874,3 +881,29 @@ def cleanup_blocked_hubspot_contacts():
         task_time.seconds,
         multiprocess_mode=MPM_LIVESUM
     )
+
+
+@periodic_task(run_every=crontab(day_of_month='1', hour=3, minute=0), queue='background_queue', acks_late=True)
+def generate_partner_reports():
+    """
+    Generates analytics reports for partners that have requested tracking on
+    specific data points.
+    :return:
+    """
+    time_started = datetime.utcnow()
+
+    last_month = add_months_to_date(datetime.today(), -1)
+    year = last_month.year
+    month = last_month.month
+    generate_monthly_mobile_worker_statistics(year, month)
+    generate_monthly_web_user_statistics(year, month)
+    generate_monthly_submissions_statistics(year, month)
+    send_partner_emails(year, month)
+
+    task_time = datetime.utcnow() - time_started
+    metrics_gauge(
+        'commcare.analytics.runtimes.generate_partner_reports',
+        task_time.seconds,
+        multiprocess_mode=MPM_LIVESUM
+    )
+
