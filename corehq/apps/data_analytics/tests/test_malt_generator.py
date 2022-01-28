@@ -223,10 +223,9 @@ class TestUpdateOrCreateMaltRow(TestCase):
 @disable_quickcache
 class TestGetMaltAppData(SimpleTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.default_app_data = MaltAppData(
+    def setUp(self) -> None:
+        super().setUp()
+        self.default_app_data = MaltAppData(
             AMPLIFIES_NOT_SET,
             AMPLIFIES_NOT_SET,
             DEFAULT_MINIMUM_USE_THRESHOLD,
@@ -274,14 +273,13 @@ class TestGetMaltAppData(SimpleTestCase):
 
 class TestBuildMaltRowDict(SimpleTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain = 'domain'
-        cls.monthspan = DateSpan.from_month(1, 2022)
-        cls.app_row = create_mock_app_row_for_malt_tests()
-        cls.user = create_mock_user_for_malt_tests()
-        cls.app_data = MaltAppData(
+    def setUp(self):
+        super().setUp()
+        self.domain = 'domain'
+        self.monthspan = DateSpan.from_month(1, 2022)
+        self.app_row = create_mock_app_row_for_malt_tests()
+        self.user = create_mock_user_for_malt_tests()
+        self.app_data = MaltAppData(
             AMPLIFIES_NOT_SET,
             AMPLIFIES_NOT_SET,
             DEFAULT_MINIMUM_USE_THRESHOLD,
@@ -350,14 +348,13 @@ class TestBuildMaltRowDict(SimpleTestCase):
 
 class TestGetMaltRowDicts(SimpleTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain = 'domain'
-        cls.monthspan = DateSpan.from_month(1, 2022)
-        cls.mock_user1 = create_mock_user_for_malt_tests('user_id_1', 'user1')
-        cls.mock_user2 = create_mock_user_for_malt_tests('user_id_2', 'user2')
-        cls.app_data = MaltAppData(
+    def setUp(self) -> None:
+        super().setUp()
+        self.domain = 'domain'
+        self.monthspan = DateSpan.from_month(1, 2022)
+        self.mock_user1 = create_mock_user_for_malt_tests('user_id_1', 'user1')
+        self.mock_user2 = create_mock_user_for_malt_tests('user_id_2', 'user2')
+        self.app_data = MaltAppData(
             AMPLIFIES_NOT_SET,
             AMPLIFIES_NOT_SET,
             DEFAULT_MINIMUM_USE_THRESHOLD,
