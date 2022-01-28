@@ -138,23 +138,6 @@ class TestCallValidator(SimpleTestCase):
             ['Latest call value not a date']
         )
 
-    def test_valid_call_value_type(self):
-        raw_row = _sample_valid_rch_upload()
-        fields_to_update = raw_row.copy()
-        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
-        row_num = 1
-
-        updated_fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
-        self.assertFalse(
-            any(isinstance(error, CallValueInvalidError) for error in errors)
-        )
-
-        fields_to_update['Call1'] = datetime.date.today()
-        updated_fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
-        self.assertFalse(
-            any(isinstance(error, CallValueInvalidError) for error in errors)
-        )
-
     def test_call_value_not_in_last_month(self):
         raw_row = _sample_valid_rch_upload()
         fields_to_update = raw_row.copy()

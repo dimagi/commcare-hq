@@ -131,15 +131,12 @@ class CallValidator(BaseRowOperation):
                 CallValuesMissingError()
             )
         else:
-            if isinstance(call_value, datetime.date):
-                call_date = call_value
-            else:
-                try:
-                    call_date = iso_string_to_date(call_value)
-                except ValueError:
-                    error_messages.append(
-                        CallValueInvalidError()
-                    )
+            try:
+                call_date = iso_string_to_date(call_value)
+            except ValueError:
+                error_messages.append(
+                    CallValueInvalidError()
+                )
         if call_date:
             last_month_first_day, last_month_last_day = get_previous_month_date_range(datetime.date.today())
             if call_date.replace(day=1) != last_month_first_day:
