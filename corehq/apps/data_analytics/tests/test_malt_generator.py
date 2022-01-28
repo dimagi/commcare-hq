@@ -52,7 +52,7 @@ class MaltGeneratorTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(MaltGeneratorTest, cls).setUpClass()
+        super().setUpClass()
         cls.es = get_es_new()
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
@@ -67,7 +67,7 @@ class MaltGeneratorTest(TestCase):
         cls.domain.delete()
         MALTRow.objects.all().delete()
         ensure_index_deleted(XFORM_INDEX_INFO.index)
-        super(MaltGeneratorTest, cls).tearDownClass()
+        super().tearDownClass()
 
     @classmethod
     def _setup_domain_user(cls):
@@ -225,7 +225,7 @@ class TestGetMaltAppData(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestGetMaltAppData, cls).setUpClass()
+        super().setUpClass()
         cls.default_app_data = MaltAppData(
             AMPLIFIES_NOT_SET,
             AMPLIFIES_NOT_SET,
@@ -276,7 +276,7 @@ class TestBuildMaltRowDict(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestBuildMaltRowDict, cls).setUpClass()
+        super().setUpClass()
         cls.domain = 'domain'
         cls.monthspan = DateSpan.from_month(1, 2022)
         cls.app_row = create_mock_app_row_for_malt_tests()
@@ -352,7 +352,7 @@ class TestGetMaltRowDicts(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestGetMaltRowDicts, cls).setUpClass()
+        super().setUpClass()
         cls.domain = 'domain'
         cls.monthspan = DateSpan.from_month(1, 2022)
         cls.mock_user1 = create_mock_user_for_malt_tests('user_id_1', 'user1')
