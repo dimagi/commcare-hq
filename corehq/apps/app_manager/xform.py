@@ -17,6 +17,7 @@ from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
     CASE_ID,
+    UPDATE_MODE_EDIT,
     SCHEDULE_CURRENT_VISIT_NUMBER,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
     SCHEDULE_LAST_VISIT,
@@ -26,7 +27,7 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_UNSCHEDULED_VISIT,
     USERCASE_ID,
 )
-from corehq.apps.app_manager.xpath import XPath
+from corehq.apps.app_manager.xpath import XPath, UsercaseXPath
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
 from corehq.toggles import DONT_INDEX_SAME_CASETYPE
 from corehq.util.view_utils import get_request
@@ -496,6 +497,7 @@ class XFormCaseBlock(object):
         return update_block
 
     def add_case_updates(self, updates, make_relative=False):
+        from corehq.apps.app_manager.models import ConditionalCaseUpdate
         update_block = self.update_block
         if not updates:
             return
@@ -503,25 +505,32 @@ class XFormCaseBlock(object):
         update_mapping = {}
         attachments = {}
         for key, value in updates.items():
-            value = getattr(value, "question_path", value)
+            value_str = getattr(value, "question_path", value)
             if key == 'name':
                 key = 'case_name'
-            if self.is_attachment(value):
-                attachments[key] = value
+            if self.is_attachment(value_str):
+                attachments[key] = value_str
             else:
                 update_mapping[key] = value
 
         for key, q_path in sorted(update_mapping.items()):
+            resolved_path = self.xform.resolve_path(q_path)
+            edit_mode_path = ''
+            if isinstance(q_path, ConditionalCaseUpdate) and q_path.update_mode == UPDATE_MODE_EDIT:
+                if 'commcare_usercase' in self.path:
+                    case_value = UsercaseXPath().case().slash(key)
+                else:
+                    case_value = CaseIDXPath(session_var('case_id')).case().slash(key)
+                edit_mode_path = f' and {case_value} != {resolved_path}'
             update_block.append(make_case_elem(key))
             nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
-            resolved_path = self.xform.resolve_path(q_path)
             if make_relative:
                 resolved_path = relative_path(nodeset, resolved_path)
 
             self.xform.add_bind(
                 nodeset=nodeset,
                 calculate=resolved_path,
-                relevant=("count(%s) > 0" % resolved_path)
+                relevant=(f"count({resolved_path}) > 0" + edit_mode_path)
             )
 
         if attachments:
@@ -2038,7 +2047,6 @@ class XForm(WrappedNode):
                 path, name = split_path(key)
                 updates_by_case[path][name] = value
             return updates_by_case
-
         updates_by_case = group_updates_by_case(updates)
         if '' in updates_by_case:
             # 90% use-case
