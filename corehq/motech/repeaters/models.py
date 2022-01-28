@@ -87,10 +87,8 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.motech.const import (
     ALGO_AES,
     BASIC_AUTH,
@@ -607,7 +605,7 @@ class FormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
@@ -618,8 +616,8 @@ class FormRepeater(Repeater):
 
     def allowed_to_forward(self, payload):
         return (
-            payload.xmlns != DEVICE_LOG_XMLNS and
-            (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns
+            payload.xmlns != DEVICE_LOG_XMLNS
+            and (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns
             and payload.user_id not in self.user_blocklist)
         )
 
@@ -818,7 +816,7 @@ class ShortFormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     def allowed_to_forward(self, payload):
         return payload.xmlns != DEVICE_LOG_XMLNS

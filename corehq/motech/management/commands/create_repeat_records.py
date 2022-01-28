@@ -8,6 +8,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
 )
+from corehq.form_processor.models import XFormInstance
 from corehq.motech.repeaters.management.commands.find_missing_repeat_records import (
     get_repeaters_for_type_in_domain,
 )
@@ -78,8 +79,9 @@ class Command(BaseCommand):
                     except Exception:
                         logger.exception(f"Unable to fetch doc '{doc_id}'")
 
+        forms = XFormInstance.objects
         bulk_accessor = FormAccessorSQL.get_forms if options['doc_type'] == 'form' else CaseAccessorSQL.get_cases
-        single_accessor = FormAccessorSQL.get_form if options['doc_type'] == 'form' else CaseAccessorSQL.get_case
+        single_accessor = forms.get_form if options['doc_type'] == 'form' else CaseAccessorSQL.get_case
         for doc_ids in chunked(with_progress_bar(doc_ids), 100):
             for doc in doc_iterator(list(doc_ids)):
                 try:

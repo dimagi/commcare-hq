@@ -57,8 +57,9 @@ class FormAccessorTestsSQL(TestCase):
         self.using = router.db_for_read(BlobMeta, **{HINT_PLPROXY: True})
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
-        FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
+        if settings.USE_PARTITIONED_DATABASE:
+            FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
+            FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
         super(FormAccessorTestsSQL, self).tearDown()
 
     def test_get_form_by_id(self):

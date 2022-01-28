@@ -11,6 +11,7 @@ from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, LedgerAccessorSQL
+from corehq.form_processor.models import XFormInstance
 
 
 class SMSTests(TestCase):
@@ -218,7 +219,7 @@ class SMSTests(TestCase):
 
 def iter_commtrack_forms(domain_name):
     for form_id in FormAccessorSQL.iter_form_ids_by_xmlns(domain_name, COMMTRACK_REPORT_XMLNS):
-        yield FormAccessorSQL.get_form(form_id)
+        yield XFormInstance.objects.get_form(form_id)
 
 
 def _get_location_from_form(form):

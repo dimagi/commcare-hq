@@ -37,7 +37,6 @@ from corehq.form_processor.exceptions import (
 )
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor,
-    AbstractFormAccessor,
     AbstractLedgerAccessor,
     AttachmentContent,
     CaseIndexInfo,
@@ -349,7 +348,7 @@ class FormReindexAccessor(ReindexAccessor):
 
     def get_doc(self, doc_id):
         try:
-            return FormAccessorSQL.get_form(doc_id)
+            return XFormInstance.objects.get_form(doc_id, self.domain)
         except XFormNotFound:
             pass
 
@@ -374,14 +373,12 @@ class FormReindexAccessor(ReindexAccessor):
         return filters
 
 
-class FormAccessorSQL(AbstractFormAccessor):
+class FormAccessorSQL:
 
     @staticmethod
     def get_form(form_id):
-        try:
-            return XFormInstance.objects.partitioned_get(form_id)
-        except XFormInstance.DoesNotExist:
-            raise XFormNotFound(form_id)
+        """DEPRECATED"""
+        return XFormInstance.objects.get_form(form_id)
 
     @staticmethod
     def get_forms(form_ids, ordered=False):
@@ -443,7 +440,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         since the form_id can change (in the case of a deprecated form) which breaks
         the memoize hash.
         """
-        form = FormAccessorSQL.get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id)
         form.attachments_list = FormAccessorSQL.get_attachments(form_id)
         return form
 
@@ -943,7 +940,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_transactions(case_id):
-        return list(CaseTransaction.objects.partitioned_query(case_id).filter(case_id=case_id).order_by('server_date'))
+        return list(
+            CaseTransaction.objects
+            .partitioned_query(case_id)
+            .filter(case_id=case_id)
+            .order_by('server_date')
+        )
 
     @staticmethod
     def get_transaction_by_form_id(case_id, form_id):

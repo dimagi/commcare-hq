@@ -202,7 +202,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         self.assertEqual(set(form_ids), set(form.form_id for form in pre_forms))
 
         for pre_form in pre_forms:
-            post_form = self.form_accessors.get_form(pre_form.form_id)
+            post_form = XFormInstance.objects.get_form(pre_form.form_id)
             self.assertDictEqual(pre_form.to_json(), post_form.to_json())
 
     def test_load_renamed_model(self):
@@ -396,7 +396,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self.assertEqual(role2_loaded.permissions.to_list(), Permissions(edit_web_users=True).to_list())
         self.assertEqual(role2_loaded.assignable_by, [role1_loaded.get_id])
 
-
     def test_device_logs(self):
         from corehq.apps.receiverwrapper.util import submit_form_locally
         from phonelog.models import DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry
@@ -465,7 +464,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         p1 = SQLProduct.objects.create(domain=self.domain_name, product_id='test1', name='test1')
         p2 = SQLProduct.objects.create(domain=self.domain_name, product_id='test2', name='test2')
-        parchived = SQLProduct.objects.create(domain=self.domain_name, product_id='test3', name='test3', is_archived=True)
+        parchived = SQLProduct.objects.create(
+            domain=self.domain_name, product_id='test3', name='test3', is_archived=True)
 
         self._dump_and_load(expected_object_counts)
 
@@ -709,7 +709,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         SQLProduct.objects.create(domain=self.domain_name, product_id='test1', name='test1')
         expected_object_counts = Counter({LocationType: 1, SQLProduct: 1})
 
-        self._dump_and_load(expected_object_counts, load_filter='sqlproduct', expected_load_counts=Counter({SQLProduct: 1}))
+        self._dump_and_load(expected_object_counts, load_filter='sqlproduct',
+            expected_load_counts=Counter({SQLProduct: 1}))
         self.assertEqual(0, LocationType.objects.count())
 
     def test_sms_content(self):
@@ -726,7 +727,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             ]
         )
 
-        self.addCleanup(lambda: delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, schedule.schedule_id))
+        self.addCleanup(lambda: delete_alert_schedule_instances_for_schedule(
+            AlertScheduleInstance, schedule.schedule_id))
         self._dump_and_load(Counter({AlertSchedule: 1, AlertEvent: 2, SMSContent: 2}))
 
     def test_zapier_subscription(self):

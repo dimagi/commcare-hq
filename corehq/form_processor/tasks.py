@@ -42,6 +42,7 @@ def _reprocess_archive_stubs():
 def reprocess_archive_stubs():
     # Check for archive stubs
     from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+    from corehq.form_processor.models import XFormInstance
     from couchforms.models import UnfinishedArchiveStub
     stubs = UnfinishedArchiveStub.objects.filter(attempts__lt=3)
     metrics_gauge('commcare.unfinished_archive_stubs', len(stubs),
@@ -53,7 +54,7 @@ def reprocess_archive_stubs():
         if time.time() > cutoff:
             return
         try:
-            xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
+            xform = XFormInstance.objects.get_form(stub.xform_id, stub.domain)
             # If the history wasn't updated the first time around, run the whole thing again.
             if not stub.history_updated:
                 FormAccessors.do_archive(xform, stub.archive, stub.user_id, trigger_signals=True)

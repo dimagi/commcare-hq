@@ -4,7 +4,6 @@ from django.db import router
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -34,7 +33,7 @@ class SerializationTests(TestCase):
         form_xml = get_simple_form_xml(form_id)
         submit_form_locally(form_xml, domain=self.domain)
 
-        form = FormAccessorSQL().get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id)
         with self.assertNumQueries(1, using=form.db):
             # 1 query to fetch the form.xml attachment. The rest are lazy
             form_json = form.to_json(include_attachments=True)
