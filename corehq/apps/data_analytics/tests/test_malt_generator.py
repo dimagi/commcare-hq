@@ -384,7 +384,7 @@ class TestGetMaltRowDicts(SimpleTestCase):
         self.assertEqual(user1_malt_row_dict['num_of_forms'], 50)
         self.assertEqual(user2_malt_row_dict['num_of_forms'], 25)
 
-    def test_skips_if_no_submission_since_startdate(self):
+    def test_returns_empty_if_no_submission_since_startdate(self):
         self.monthspan = DateSpan.from_month(3, 2020)
         self.mock_get_last_form_submission.return_value = datetime.datetime(2020, 2, 25, 0, 0)
 
@@ -392,13 +392,21 @@ class TestGetMaltRowDicts(SimpleTestCase):
 
         self.assertFalse(malt_row_dicts)
 
-    def test_runs_if_last_submission_on_startdate(self):
+    def test_returns_results_if_last_submission_on_startdate(self):
         self.monthspan = DateSpan.from_month(3, 2020)
         self.mock_get_last_form_submission.return_value = datetime.datetime(2020, 3, 1, 0, 0)
 
         malt_row_dicts = _get_malt_row_dicts(self.domain, self.monthspan, self.users_by_id)
 
         self.assertTrue(malt_row_dicts)
+
+    def test_returns_empty_if_last_submission_returns_none(self):
+        self.monthspan = DateSpan.from_month(3, 2020)
+        self.mock_get_last_form_submission.return_value = None
+
+        malt_row_dicts = _get_malt_row_dicts(self.domain, self.monthspan, self.users_by_id)
+
+        self.assertFalse(malt_row_dicts)
 
 
 def create_malt_app_data(wam=AMPLIFIES_NOT_SET,

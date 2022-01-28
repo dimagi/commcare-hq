@@ -97,13 +97,13 @@ def _get_malt_row_dicts(domain_name, monthspan, users_by_id):
     :param users_by_id: list of dictionaries [{user_id: user_obj}, ...]
     """
     malt_row_dicts = []
-    if get_last_form_submission_received(domain_name) < monthspan.startdate:
-        return malt_row_dicts
-    app_rows = get_app_submission_breakdown_es(domain_name, monthspan, list(users_by_id))
-    for app_row in app_rows:
-        user = users_by_id[app_row.user_id]
-        malt_row_dict = _build_malt_row_dict(app_row, domain_name, user, monthspan)
-        malt_row_dicts.append(malt_row_dict)
+    last_submission_date = get_last_form_submission_received(domain_name)
+    if last_submission_date and last_submission_date >= monthspan.startdate:
+        app_rows = get_app_submission_breakdown_es(domain_name, monthspan, list(users_by_id))
+        for app_row in app_rows:
+            user = users_by_id[app_row.user_id]
+            malt_row_dict = _build_malt_row_dict(app_row, domain_name, user, monthspan)
+            malt_row_dicts.append(malt_row_dict)
 
     return malt_row_dicts
 
