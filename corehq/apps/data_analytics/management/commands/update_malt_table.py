@@ -5,6 +5,7 @@ import dateutil
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.data_analytics.malt_generator import generate_malt
+from corehq.apps.domain.models import Domain
 
 
 class Command(BaseCommand):
@@ -20,6 +21,7 @@ class Command(BaseCommand):
             metavar='month_year',
             nargs='+',
         )
+        parser.add_argument('--start-domain', dest='start_domain')
 
     def handle(self, month_years, **options):
         datespan_list = []
@@ -27,5 +29,10 @@ class Command(BaseCommand):
             month_year = dateutil.parser.parse(arg)
             datespan_list.append(DateSpan.from_month(month_year.month, month_year.year))
         print("Building Malt table... for time range {}".format(datespan_list))
-        generate_malt(datespan_list)
+        if options['start_domain']:
+            domains = Domain.get_all_names()
+            start_index = domains.index(options['start_domain'])
+            generate_malt(datespan_list, domains=domains[start_index:])
+        else:
+            generate_malt(datespan_list)
         print("Finished!")
