@@ -879,7 +879,6 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
                 continue
             result = update_case(case.domain, case_id, case_properties=properties, close=False,
                 xmlns=AUTO_UPDATE_XMLNS)
-
             rule.log_submission(result[0].form_id)
             num_related_updates += 1
 

@@ -224,7 +224,8 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
         questions = form.wrapped_xform().get_questions(
             ['en', 'es'], include_triggers=True, include_translations=True)
 
-        self.assertEqual(questions, QUESTIONS)
+        for i in range(max(len(questions), len(QUESTIONS))):
+            self.assertEqual(questions[i], QUESTIONS[i])
 
     def test_get_questions_with_repeats(self):
         """
