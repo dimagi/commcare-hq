@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.http import HttpRequest
+from django.http.request import QueryDict, MultiValueDict
 from django.utils.translation import ugettext as _
 
 import six
@@ -120,6 +121,9 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     mock_request = HttpRequest()
 
     mock_request.method = 'GET'
+    GET_data = QueryDict('', mutable=True)
+    GET_data.update(MultiValueDict(request_data['GET']))
+    request_data['GET'] = GET_data
     mock_request.GET = request_data['GET']
 
     config = ReportConfig()

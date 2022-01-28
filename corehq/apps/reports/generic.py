@@ -210,7 +210,7 @@ class GenericReportView(object):
         """
             Restoring a report from __getstate__ returned report parameters.
         """
-        logging = get_task_logger(__name__)  # logging lis likely to happen within celery.
+        #logging = get_task_logger(__name__)  # logging lis likely to happen within celery.
         self.domain = state.get('domain')
         self.context = state.get('context', {})
 
@@ -230,13 +230,8 @@ class GenericReportView(object):
         request.META = request_data.get('META', {})
         request.datespan = request_data.get('datespan')
         request.can_access_all_locations = request_data.get('can_access_all_locations')
-
-        try:
-            couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
-            request.couch_user = couch_user
-        except Exception as e:
-            logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
-                        (self.name, e))
+        couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
+        request.couch_user = couch_user
         self.request = request
         self._caching = True
         self.request_params = state.get('request_params')

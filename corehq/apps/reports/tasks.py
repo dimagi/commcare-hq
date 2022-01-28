@@ -2,6 +2,7 @@ import os
 import uuid
 import zipfile
 from datetime import datetime, timedelta
+from django.http.request import QueryDict, MultiValueDict
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -206,6 +207,10 @@ def export_all_rows_task(report_class, report_state, recipient_list=None, subjec
         get_class = temp_dict[report_class]
     else:
         get_class = report_class
+
+    GET_data = QueryDict('', mutable=True)
+    GET_data.update(MultiValueDict(report_state['request']['GET']))
+    report_state['request']['GET'] = GET_data
 
     report = object.__new__(get_class)
     report.__setstate__(report_state)
