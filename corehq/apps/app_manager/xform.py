@@ -496,7 +496,7 @@ class XFormCaseBlock(object):
         self.elem.append(update_block)
         return update_block
 
-    def add_case_updates(self, updates, make_relative=False):
+    def add_case_updates(self, updates, make_relative=False, case_id_xpath=None):
         from corehq.apps.app_manager.models import ConditionalCaseUpdate
         update_block = self.update_block
         if not updates:
@@ -520,7 +520,10 @@ class XFormCaseBlock(object):
                 if 'commcare_usercase' in self.path:
                     case_value = UsercaseXPath().case().slash(key)
                 else:
-                    case_value = CaseIDXPath(session_var('case_id')).case().slash(key)
+                    if case_id_xpath:
+                        case_value = CaseIDXPath(case_id_xpath).case().slash(key)
+                    else:
+                        case_value = CaseIDXPath(session_var('case_id')).case().slash(key)
                 edit_mode_path = f' and {case_value} != {resolved_path}'
             update_block.append(make_case_elem(key))
             nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
@@ -2052,7 +2055,7 @@ class XForm(WrappedNode):
             # 90% use-case
             basic_updates = updates_by_case.pop('')
             if basic_updates:
-                case_block.add_case_updates(basic_updates)
+                case_block.add_case_updates(basic_updates, case_id_xpath=case_id_xpath)
         if updates_by_case:
             self.add_casedb()
 
@@ -2083,7 +2086,7 @@ class XForm(WrappedNode):
                     node_path,
                     parent_path,
                     case_id_xpath=case_id_xpath)
-                parent_case_block.add_case_updates(updates)
+                parent_case_block.add_case_updates(updates)  # TODO: case_id_xpath param needed here?
                 node.append(parent_case_block.elem)
 
     def get_scheduler_case_updates(self):
