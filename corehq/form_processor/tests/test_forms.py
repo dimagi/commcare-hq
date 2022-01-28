@@ -96,7 +96,7 @@ class XFormInstanceManagerTest(TestCase):
         self.assertEqual(list(ids), [form2.form_id])
 
         ids = XFormInstance.objects.iter_form_ids_by_xmlns(DOMAIN)
-        self.assertEqual(list(ids), [form1.form_id, form2.form_id])
+        self.assertEqual(set(ids), {form1.form_id, form2.form_id})
 
     def test_save_new_form_and_get_attachments(self):
         unsaved_form = create_form_for_test(DOMAIN, save=False)
