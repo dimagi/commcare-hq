@@ -348,28 +348,57 @@ class TestGetMaltRowDicts(SimpleTestCase):
         self.web_user = create_user_for_malt_tests(is_web_user=True, user_id='user_id_1', username='user1')
         self.mobile_user = create_user_for_malt_tests(is_web_user=False, user_id='user_id_2', username='user2')
         self.app_data = create_malt_app_data()
+        self.users_by_id = {'user_id_1': self.web_user, 'user_id_2': self.mobile_user}
 
         self.patcher = patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data')
         self.mock_get_malt_app_data = self.patcher.start()
         self.mock_get_malt_app_data.return_value = self.app_data
 
+        self.patcher2 = patch('corehq.apps.data_analytics.malt_generator.get_last_form_submission_received')
+        self.mock_get_last_form_submission = self.patcher2.start()
+        self.mock_get_last_form_submission.return_value = datetime.datetime(2022, 1, 10, 0, 0)
+
+        self.patcher3 = patch('corehq.apps.data_analytics.malt_generator.get_app_submission_breakdown_es')
+        self.mock_app_submission_breakdown = self.patcher3.start()
+        self.mock_app_submission_breakdown.return_value = [
+            create_mock_nested_query_row(user_id='user_id_1'),
+            create_mock_nested_query_row(user_id='user_id_2'),
+        ]
+
     def tearDown(self):
         self.patcher.stop()
+        self.patcher2.stop()
+        self.patcher3.stop()
         super().tearDown()
 
     def test_num_of_forms(self):
-        users_by_id = {'user_id_1': self.web_user, 'user_id_2': self.mobile_user}
-        with patch('corehq.apps.data_analytics.malt_generator.get_app_submission_breakdown_es') as mock_esquery:
-            mock_esquery.return_value = [
-                create_mock_nested_query_row(user_id='user_id_1', doc_count=50),
-                create_mock_nested_query_row(user_id='user_id_2', doc_count=25),
-            ]
-            malt_row_dicts = _get_malt_row_dicts(self.domain, self.monthspan, users_by_id)
+        self.mock_app_submission_breakdown.return_value = [
+            create_mock_nested_query_row(user_id='user_id_1', doc_count=50),
+            create_mock_nested_query_row(user_id='user_id_2', doc_count=25),
+        ]
+
+        malt_row_dicts = _get_malt_row_dicts(self.domain, self.monthspan, self.users_by_id)
 
         user1_malt_row_dict = malt_row_dicts[0]
         user2_malt_row_dict = malt_row_dicts[1]
         self.assertEqual(user1_malt_row_dict['num_of_forms'], 50)
         self.assertEqual(user2_malt_row_dict['num_of_forms'], 25)
+
+    def test_skips_if_no_submission_since_startdate(self):
+        self.monthspan = DateSpan.from_month(3, 2020)
+        self.mock_get_last_form_submission.return_value = datetime.datetime(2020, 2, 25, 0, 0)
+
+        malt_row_dicts = _get_malt_row_dicts(self.domain, self.monthspan, self.users_by_id)
+
+        self.assertFalse(malt_row_dicts)
+
+    def test_runs_if_last_submission_on_startdate(self):
+        self.monthspan = DateSpan.from_month(3, 2020)
+        self.mock_get_last_form_submission.return_value = datetime.datetime(2020, 3, 1, 0, 0)
+
+        malt_row_dicts = _get_malt_row_dicts(self.domain, self.monthspan, self.users_by_id)
+
+        self.assertTrue(malt_row_dicts)
 
 
 def create_malt_app_data(wam=AMPLIFIES_NOT_SET,

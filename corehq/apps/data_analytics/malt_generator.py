@@ -4,6 +4,7 @@ from collections import namedtuple
 from django.db import IntegrityError
 from django.http.response import Http404
 
+from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
@@ -89,9 +90,15 @@ def _build_malt_row_dict(app_row, domain_name, user, monthspan):
 
 def _get_malt_row_dicts(domain_name, monthspan, users_by_id):
     """
+    Only processes domains that have had a form submission since the startdate of the month
     Includes expensive elasticsearch query
+    :param domain_name: domain name
+    :param monthspan: DateSpan of month to process
+    :param users_by_id: list of dictionaries [{user_id: user_obj}, ...]
     """
     malt_row_dicts = []
+    if get_last_form_submission_received(domain_name) < monthspan.startdate:
+        return malt_row_dicts
     app_rows = get_app_submission_breakdown_es(domain_name, monthspan, list(users_by_id))
     for app_row in app_rows:
         user = users_by_id[app_row.user_id]
