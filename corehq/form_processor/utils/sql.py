@@ -61,7 +61,7 @@ def form_adapter(form):
         form.deletion_id,
         form.server_modified_on,
     ]
-    return ObjectAdapter(fields, XFormInstance.Meta.db_table)
+    return ObjectAdapter(fields, XFormInstance._meta.db_table)
 
 
 def form_operation_adapter(operation):
