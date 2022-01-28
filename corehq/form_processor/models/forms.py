@@ -27,7 +27,8 @@ class XFormInstanceManager(RequireDBManager):
         """Get form in domain
 
         This will get a form from any domain if the domain is not provided,
-        but that is deprecated and should be avoided.
+        but a domain should be provided if possible to prevent getting
+        a form from the wrong domain.
         """
         try:
             kwargs = {'form_id': form_id}
