@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 from django.utils.translation import ugettext as _
 
 from corehq.apps.case_importer.util import EXTERNAL_ID
-from corehq.util.dates import get_previous_month_date_range
+from corehq.util.dates import get_previous_month_date_range, iso_string_to_date
 from custom.samveg.case_importer.exceptions import (
     CallNotInLastMonthError,
     CallValueInvalidError,
@@ -18,7 +18,6 @@ from custom.samveg.case_importer.exceptions import (
 )
 from custom.samveg.case_importer.operations import BaseRowOperation
 from custom.samveg.const import (
-    CALL_VALUE_FORMAT,
     MOBILE_NUMBER,
     OWNER_NAME,
     RCH_BENEFICIARY_IDENTIFIER,
@@ -136,7 +135,7 @@ class CallValidator(BaseRowOperation):
                 call_date = call_value
             else:
                 try:
-                    call_date = datetime.datetime.strptime(call_value, CALL_VALUE_FORMAT).date()
+                    call_date = iso_string_to_date(call_value)
                 except ValueError:
                     error_messages.append(
                         CallValueInvalidError()

@@ -18,7 +18,6 @@ from custom.samveg.case_importer.validators import (
 )
 from custom.samveg.commcare_extensions import samveg_case_upload_row_operations
 from custom.samveg.const import (
-    CALL_VALUE_FORMAT,
     NEWBORN_WEIGHT_COLUMN,
     OWNER_NAME,
     RCH_BENEFICIARY_IDENTIFIER,
@@ -237,7 +236,7 @@ class TestUploadLimitValidator(SimpleTestCase):
 class TestSuccessfulUpload(SimpleTestCase):
     def test_successful_upload(self):
         raw_row = _sample_valid_rch_upload()
-        raw_row['Call1'] = (datetime.date.today() - relativedelta(months=1)).strftime(CALL_VALUE_FORMAT)
+        raw_row['Call1'] = str(datetime.date.today() - relativedelta(months=1))
         fields_to_update = raw_row.copy()
         fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
         row_num = 1
@@ -254,5 +253,5 @@ def _sample_valid_rch_upload():
         'DIST_NAME': 'USA',
         'Health_Block': 'DC',
         'owner_name': 'watson',
-        'Call1': '10-10-21'
+        'Call1': '2021-10-29'
     }
