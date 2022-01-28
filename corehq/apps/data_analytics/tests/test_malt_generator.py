@@ -30,7 +30,7 @@ from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.const import MISSING_APP_ID
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -272,7 +272,7 @@ class TestBuildMaltRowDict(SimpleTestCase):
         self.domain = 'domain'
         self.monthspan = DateSpan.from_month(1, 2022)
         self.app_row = create_mock_app_row_for_malt_tests()
-        self.user = create_mock_user_for_malt_tests()
+        self.user = create_user_for_malt_tests(is_web_user=True)
         self.app_data = create_malt_app_data()
 
         self.patcher = patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data')
@@ -299,7 +299,8 @@ class TestBuildMaltRowDict(SimpleTestCase):
         self.assertEqual(actual_malt_row_dict['app_id'], '_MISSING_APP_ID')
 
     def test_wam_and_pam_values_of_not_set_map_to_none(self):
-        self.app_data = create_malt_app_data(wam=AMPLIFIES_NOT_SET, pam=AMPLIFIES_NOT_SET)
+        app_data = create_malt_app_data(wam=AMPLIFIES_NOT_SET, pam=AMPLIFIES_NOT_SET)
+        self.mock_get_malt_app_data.return_value = app_data
 
         actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, self.monthspan)
 
@@ -307,7 +308,8 @@ class TestBuildMaltRowDict(SimpleTestCase):
         self.assertEqual(actual_malt_row_dict['pam'], None)
 
     def test_wam_and_pam_values_of_yes_map_to_true(self):
-        self.app_data = create_malt_app_data(wam=AMPLIFIES_YES, pam=AMPLIFIES_YES)
+        app_data = create_malt_app_data(wam=AMPLIFIES_YES, pam=AMPLIFIES_YES)
+        self.mock_get_malt_app_data.return_value = app_data
 
         actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, self.monthspan)
 
@@ -315,12 +317,25 @@ class TestBuildMaltRowDict(SimpleTestCase):
         self.assertEqual(actual_malt_row_dict['pam'], True)
 
     def test_wam_and_pam_values_of_no_map_to_false(self):
-        self.app_data = create_malt_app_data(wam=AMPLIFIES_NO, pam=AMPLIFIES_NO)
+        app_data = create_malt_app_data(wam=AMPLIFIES_NO, pam=AMPLIFIES_NO)
+        self.mock_get_malt_app_data.return_value = app_data
 
         actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, self.monthspan)
 
         self.assertEqual(actual_malt_row_dict['wam'], False)
         self.assertEqual(actual_malt_row_dict['pam'], False)
+
+    def test_user_type_for_web_user(self):
+        actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, self.monthspan)
+
+        self.assertEqual(actual_malt_row_dict['user_type'], 'WebUser')
+
+    def test_user_type_for_mobile_user(self):
+        self.user = create_user_for_malt_tests(is_web_user=False)
+
+        actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, self.monthspan)
+
+        self.assertEqual(actual_malt_row_dict['user_type'], 'CommCareUser')
 
 
 class TestGetMaltRowDicts(SimpleTestCase):
@@ -329,8 +344,8 @@ class TestGetMaltRowDicts(SimpleTestCase):
         super().setUp()
         self.domain = 'domain'
         self.monthspan = DateSpan.from_month(1, 2022)
-        self.mock_user1 = create_mock_user_for_malt_tests('user_id_1', 'user1')
-        self.mock_user2 = create_mock_user_for_malt_tests('user_id_2', 'user2')
+        self.web_user = create_user_for_malt_tests(is_web_user=True, user_id='user_id_1', username='user1')
+        self.mobile_user = create_user_for_malt_tests(is_web_user=False, user_id='user_id_2', username='user2')
         self.app_data = create_malt_app_data()
 
         self.patcher = patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data')
@@ -342,7 +357,7 @@ class TestGetMaltRowDicts(SimpleTestCase):
         super().tearDown()
 
     def test_num_of_forms(self):
-        users_by_id = {'user_id_1': self.mock_user1, 'user_id_2': self.mock_user2}
+        users_by_id = {'user_id_1': self.web_user, 'user_id_2': self.mobile_user}
         with patch('corehq.apps.data_analytics.malt_generator.get_app_submission_breakdown_es') as mock_esquery:
             mock_esquery.return_value = [
                 create_mock_nested_query_row('user_id_1', doc_count=50),
@@ -364,13 +379,12 @@ def create_malt_app_data(wam=AMPLIFIES_NOT_SET,
     return MaltAppData(wam, pam, use_threshold, experienced_threshold, is_app_deleted)
 
 
-def create_mock_user_for_malt_tests(user_id='user_id', username='username'):
-    mock_user = Mock()
-    mock_user._id = user_id
-    mock_user.username = username
-    mock_user.email = 'email'
-    mock_user.doc_type = 'doc_type'
-    return mock_user
+def create_user_for_malt_tests(is_web_user=True, user_id='user_id', username='username'):
+    user = WebUser() if is_web_user else CommCareUser()
+    user._id = user_id
+    user.username = username
+    user.email = 'email'
+    return user
 
 
 def create_mock_app_row_for_malt_tests(app_id='app_id', device_id='device_id', doc_count=10):
