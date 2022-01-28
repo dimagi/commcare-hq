@@ -71,21 +71,18 @@ def do_reindex(hq_index_name, reset):
     print("Starting pillow preindex %s" % hq_index_name)
     reindex_commands = get_reindex_commands(hq_index_name)
     for factory_or_func in reindex_commands:
-        try:
-            is_factory = issubclass(factory_or_func, ReindexerFactory)
-        except TypeError:  # TypeError: issubclass() arg 1 must be a class
-            factory_or_func()
-        else:
-            if is_factory:
-                kwargs = {}
-                reindex_args = ReindexerFactory.resumable_reindexer_args
-                if reset \
-                        and factory_or_func.arg_contributors \
-                        and reindex_args in factory_or_func.arg_contributors:
-                    kwargs["reset"] = True
-                factory_or_func(**kwargs).build().reindex()
-            else:
+        if isinstance(factory_or_func, type):
+            if not issubclass(factory_or_func, ReindexerFactory):
                 raise ValueError(f"expected ReindexerFactory, got: {factory_or_func!r}")
+            kwargs = {}
+            reindex_args = ReindexerFactory.resumable_reindexer_args
+            if reset \
+                    and factory_or_func.arg_contributors \
+                    and reindex_args in factory_or_func.arg_contributors:
+                kwargs["reset"] = True
+            factory_or_func(**kwargs).build().reindex()
+        else:
+            factory_or_func()
     print("Pillow preindex finished %s" % hq_index_name)
 
 
