@@ -272,7 +272,11 @@
                                 "type": "always"
                             },
                             "update": {
-                                "birthdate": "/data/birthdate"
+                                "birthdate": {
+                                  "doc_type": "SmartCaseUpdate",
+                                  "question_path": "/data/birthdate",
+                                  "update_mode": "always"
+                                }
                             }
                         },
                         "update_referral": {
@@ -365,7 +369,11 @@
                                 "type": "always"
                             },
                             "update": {
-                                "favorite_food": "/data/favorite_food"
+                                "favorite_food": {
+                                  "doc_type": "SmartCaseUpdate",
+                                  "question_path": "/data/favorite_food",
+                                  "update_mode": "always"
+                                }
                             }
                         },
                         "update_referral": {
