@@ -144,17 +144,14 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return OrderedDict(sorted(self.case_json.items()))
 
     def get_properties_in_api_format(self):
-        return dict(list(self.dynamic_case_properties().items()) + list({
+        return {
+            **self.case_json,
             "external_id": self.external_id,
             "owner_id": self.owner_id,
-            # renamed
-            "case_name": self.name,
-            # renamed
-            "case_type": self.type,
-            # renamed
+            "case_name": self.name,  # renamed
+            "case_type": self.type,  # renamed
             "date_opened": self.opened_on,
-            # all custom properties go here
-        }.items()))
+        }
 
     def to_api_json(self, lite=False):
         from ..serializers import CommCareCaseAPISerializer
@@ -169,18 +166,16 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
             lazy_serialize_case_transactions,
             lazy_serialize_case_xform_ids,
         )
-
-        def union(*dicts):
-            return {k: v for d in dicts for k, v in d.items()}
-
         serializer = CommCareCaseSerializer(self)
-        return union(self.case_json, serializer.data, {
+        return {
+            **self.case_json,
+            **serializer.data,
             'indices': lazy_serialize_case_indices(self),
             'actions': lazy_serialize_case_transactions(self),
             'xform_ids': lazy_serialize_case_xform_ids(self),
             'case_attachments': lazy_serialize_case_attachments(self),
             'backend_id': 'sql',
-        })
+        }
 
     def dumps(self, pretty=False):
         indent = 4 if pretty else None
