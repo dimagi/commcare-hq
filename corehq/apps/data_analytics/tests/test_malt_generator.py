@@ -13,7 +13,6 @@ from corehq.apps.app_manager.const import (
     AMPLIFIES_YES,
 )
 from corehq.apps.app_manager.models import Application
-from corehq.apps.data_analytics.const import NOT_SET, YES
 from corehq.apps.data_analytics.malt_generator import (
     DEFAULT_EXPERIENCED_THRESHOLD,
     DEFAULT_MINIMUM_USE_THRESHOLD,
@@ -29,7 +28,6 @@ from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.const import MISSING_APP_ID
 from corehq.elastic import get_es_new
@@ -40,15 +38,13 @@ from corehq.util.test_utils import disable_quickcache
 
 @es_test
 class MaltGeneratorTest(TestCase):
+    """
+    This serves as the end to end test for malt generation and should only test the happy path
+    """
 
     DOMAIN_NAME = "test"
     USERNAME = "malt-user"
     DEVICE_ID = "my_phone"
-    UNKNOWN_ID = "UNKNOWN_ID"
-
-    correct_date = datetime.datetime.now()
-    out_of_range_date = correct_date - datetime.timedelta(days=32)
-    malt_month = DateSpan.from_month(correct_date.month, correct_date.year)
 
     @classmethod
     def setUpClass(cls):
@@ -56,113 +52,62 @@ class MaltGeneratorTest(TestCase):
         cls.es = get_es_new()
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
-        cls._setup_domain_user()
-        cls._setup_apps()
-        cls._setup_forms()
-        cls.es.indices.refresh(XFORM_INDEX_INFO.index)
-        cls.run_malt_generation()
+        cls._setup_domain()
+        cls._setup_user()
+        cls._setup_app()
 
     @classmethod
     def tearDownClass(cls):
+        cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
-        MALTRow.objects.all().delete()
-        ensure_index_deleted(XFORM_INDEX_INFO.index)
         super().tearDownClass()
 
     @classmethod
-    def _setup_domain_user(cls):
+    def _setup_domain(cls):
         cls.domain = Domain(name=cls.DOMAIN_NAME)
         cls.domain.save()
+
+    @classmethod
+    def _setup_user(cls):
         cls.user = CommCareUser.create(cls.DOMAIN_NAME, cls.USERNAME, '*****', None, None)
         cls.user.save()
-        cls.user_id = cls.user._id
 
     @classmethod
-    def _setup_apps(cls):
-        cls.non_wam_app = Application.new_app(cls.DOMAIN_NAME, "app 1")
-        cls.wam_app = Application.new_app(cls.DOMAIN_NAME, "app 2")
-        cls.wam_app.amplifies_workers = AMPLIFIES_YES
-        cls.non_wam_app.save()
-        cls.wam_app.save()
-        cls.non_wam_app_id = cls.non_wam_app._id
-        cls.wam_app_id = cls.wam_app._id
+    def _setup_app(cls):
+        cls.app = Application.new_app(cls.DOMAIN_NAME, "app 1")
+        cls.app.amplifies_workers = AMPLIFIES_YES
+        cls.app.save()
+        cls.app_id = cls.app._id
 
-    @classmethod
-    def _setup_forms(cls):
-        def _save_form_data(app_id, received_on=cls.correct_date, device_id=cls.DEVICE_ID):
-            save_to_es_analytics_db(
-                domain=cls.DOMAIN_NAME,
-                received_on=received_on,
-                device_id=device_id,
-                user_id=cls.user_id,
-                app_id=app_id,
-            )
+    def _save_form_data(self, app_id, received_on):
+        save_to_es_analytics_db(
+            domain=self.DOMAIN_NAME,
+            received_on=received_on,
+            device_id=self.DEVICE_ID,
+            user_id=self.user._id,
+            app_id=app_id,
+        )
 
-        def _save_multiple_forms(app_ids, received_on):
-            for app_id in app_ids:
-                _save_form_data(app_id, received_on=received_on)
+    def test_successful_malt_generation(self):
+        self._save_form_data(self.app_id, datetime.datetime(2019, 12, 31))
+        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 1))
+        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 31))
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        self.addCleanup(ensure_index_deleted, XFORM_INDEX_INFO.index)
 
-        out_of_range_form_apps = [
-            cls.non_wam_app_id,
-            cls.wam_app_id,
-        ]
-        in_range_form_apps = [
-            # should be included in MALT
-            cls.non_wam_app_id,
-            cls.non_wam_app_id,
-            cls.non_wam_app_id,
-            cls.wam_app_id,
-            cls.wam_app_id,
-            # should be included in MALT
-            '',
-        ]
+        monthspan = DateSpan.from_month(1, 2020)
+        generate_malt([monthspan], domains=[self.domain.name])
 
-        _save_multiple_forms(out_of_range_form_apps, cls.out_of_range_date)
-        _save_multiple_forms(in_range_form_apps, cls.correct_date)
-
-        # should be included in MALT
-        _save_form_data(cls.non_wam_app_id, device_id=COMMCONNECT_DEVICE_ID)
-
-    @classmethod
-    def run_malt_generation(cls):
-        generate_malt([cls.malt_month])
-
-    def _assert_malt_row_exists(self, query_filters):
-        rows = MALTRow.objects.filter(username=self.USERNAME, **query_filters)
-        self.assertEqual(rows.count(), 1)
-
-    def test_wam_yes_malt_counts(self):
-        # 2 forms for WAM.YES app
-        self._assert_malt_row_exists({
-            'app_id': self.wam_app_id,
-            'num_of_forms': 2,
-            'wam': YES,
-        })
-
-    def test_wam_not_set_malt_counts(self):
-        # 3 forms from self.DEVICE_ID for WAM not-set app
-        self._assert_malt_row_exists({
-            'app_id': self.non_wam_app_id,
-            'num_of_forms': 3,
-            'wam': NOT_SET,
-            'device_id': self.DEVICE_ID,
-        })
-
-        # 1 form from COMMONCONNECT_DEVICE_ID for WAM not-set app
-        self._assert_malt_row_exists({
-            'app_id': self.non_wam_app_id,
-            'num_of_forms': 1,
-            'wam': NOT_SET,
-            'device_id': COMMCONNECT_DEVICE_ID,
-        })
-
-    def test_missing_app_id_is_included(self):
-        # apps with MISSING_APP_ID should be included in MALT
-        self._assert_malt_row_exists({
-            'app_id': MISSING_APP_ID,
-            'num_of_forms': 1,
-            'wam': NOT_SET,
-        })
+        rows = MALTRow.objects.filter(
+            user_id=self.user._id,
+            app_id=self.app_id,
+            device_id=self.DEVICE_ID,
+            month=monthspan.startdate
+        )
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].num_of_forms, 2)
+        self.assertEqual(rows[0].wam, True)
+        self.assertFalse(MALTRow.objects.filter(month=DateSpan.from_month(12, 2019).startdate).exists())
 
 
 class TestSaveMaltRowDictsToDB(TestCase):
@@ -297,7 +242,7 @@ class TestBuildMaltRowDict(SimpleTestCase):
 
         actual_malt_row_dict = _build_malt_row_dict(self.app_row, self.domain, self.user, self.monthspan)
 
-        self.assertEqual(actual_malt_row_dict['app_id'], '_MISSING_APP_ID')
+        self.assertEqual(actual_malt_row_dict['app_id'], MISSING_APP_ID)
 
     def test_wam_and_pam_values_of_not_set_map_to_none(self):
         app_data = create_malt_app_data(wam=AMPLIFIES_NOT_SET, pam=AMPLIFIES_NOT_SET)
