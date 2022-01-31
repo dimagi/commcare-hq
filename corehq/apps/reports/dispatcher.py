@@ -182,6 +182,9 @@ class ReportDispatcher(View):
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
                 return {
+                    # Use lambda to avoid executing all *_response properties.
+                    # Use properties instead of strings so that IDEs see these
+                    # as usage, and make them easier to find.
                     'async': lambda: report.async_response,
                     'deprecate': lambda: report.deprecate_response,
                     'excel': lambda: report.excel_response,
