@@ -212,7 +212,11 @@
                             },
                             "doc_type": "UpdateCaseAction",
                             "update": {
-                                "owner_id": "/data/owner_id"
+                                "owner_id": {
+                                  "doc_type": "SmartCaseUpdate",
+                                  "question_path": "/data/owner_id",
+                                  "update_mode": "always"
+                                }
                             }
                         },
                         "update_referral": {
