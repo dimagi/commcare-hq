@@ -12,17 +12,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='ToggleAudit',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', models.DateTimeField(auto_now=True)),
-                ('slug', models.TextField()),
-                ('username', models.CharField(help_text='Username of user making change', max_length=256)),
-                ('action', models.CharField(choices=[('add', 'add'), ('remove', 'remove'), ('random', 'random')], max_length=12)),
-                ('namespace', models.CharField(choices=[('user', 'user'), ('domain', 'domain'), ('other', 'other')], max_length=12, null=True)),
-                ('item', models.TextField(null=True)),
-                ('randomness', models.DecimalField(decimal_places=5, max_digits=6, null=True)),
-            ],
+        migrations.AlterModelTable(
+            name="toggleaudit",
+            table="toggles_toggleaudit",
         ),
     ]

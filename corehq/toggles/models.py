@@ -128,6 +128,9 @@ class ToggleAudit(models.Model):
 
     objects = ToggleAuditManager()
 
+    class Meta:
+        db_table = "toggle_ui_toggleaudit"
+
 
 def parse_item(namespaced_item):
     if ":" not in namespaced_item:
