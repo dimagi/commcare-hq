@@ -9,8 +9,10 @@ from jsonfield.fields import JSONEncoder
 from psycopg2.extensions import adapt
 
 from corehq.form_processor.models import (
-    CommCareCase_DB_TABLE, CaseAttachment_DB_TABLE,
-    CommCareCaseIndex_DB_TABLE, CaseTransaction_DB_TABLE,
+    CommCareCase,
+    CaseAttachment,
+    CommCareCaseIndex,
+    CaseTransaction,
     XFormInstance,
     LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE,
     XFormOperation,
@@ -98,7 +100,7 @@ def case_adapter(case):
         case.deleted_on,
         case.deletion_id,
     ]
-    return ObjectAdapter(fields, CommCareCase_DB_TABLE)
+    return ObjectAdapter(fields, CommCareCase._meta.db_table)
 
 
 def case_attachment_adapter(attachment):
@@ -114,7 +116,7 @@ def case_attachment_adapter(attachment):
         json.dumps(attachment.properties, cls=JSONEncoder),
         attachment.blob_bucket,
     ]
-    return ObjectAdapter(fields, CaseAttachment_DB_TABLE)
+    return ObjectAdapter(fields, CaseAttachment._meta.db_table)
 
 
 def case_index_adapter(index):
@@ -127,7 +129,7 @@ def case_index_adapter(index):
         index.relationship_id,
         index.case_id,
     ]
-    return ObjectAdapter(fields, CommCareCaseIndex_DB_TABLE)
+    return ObjectAdapter(fields, CommCareCaseIndex._meta.db_table)
 
 
 def case_transaction_adapter(transaction):
@@ -142,7 +144,7 @@ def case_transaction_adapter(transaction):
         json.dumps(transaction.details, cls=JSONEncoder),
         transaction.sync_log_id,
     ]
-    return ObjectAdapter(fields, CaseTransaction_DB_TABLE)
+    return ObjectAdapter(fields, CaseTransaction._meta.db_table)
 
 
 def ledger_value_adapter(ledger_value):

@@ -1,2 +1,0 @@
-
-DEFAULT_PARENT_IDENTIFIER = 'parent'
