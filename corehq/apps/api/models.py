@@ -12,8 +12,7 @@ from django.http import HttpResponse
 from couchforms import const
 
 from corehq.apps.api.resources import DictObject
-from corehq.form_processor.models import CommCareCaseIndex
-from corehq.form_processor.models.abstract import CaseToXMLMixin, get_index_map
+from corehq.form_processor.models import CaseToXMLMixin, CommCareCaseIndex, get_index_map
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstance
 
