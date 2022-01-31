@@ -216,10 +216,8 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             self._load(stream, expected_object_counts)
 
         domain = "d47de5734d2c4670a8c294b51788075f"
-        form_patch = mock.patch.object(self.form_accessors, "domain", domain)
-        case_patch = mock.patch.object(self.case_accessors, "domain", domain)
-        with form_patch, case_patch:
-            form_ids = self.form_accessors.get_all_form_ids_in_domain('XFormInstance')
+        with mock.patch.object(self.case_accessors, "domain", domain):
+            form_ids = XFormInstance.objects.get_form_ids_in_domain(domain, 'XFormInstance')
             self.assertEqual(set(form_ids), {
                 '580987967edf45169574193f844e97dc',
                 '56e8ba18e6ab407c862309f421930a7c',
