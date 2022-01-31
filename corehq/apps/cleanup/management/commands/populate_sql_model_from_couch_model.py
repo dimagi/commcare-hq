@@ -208,7 +208,7 @@ class PopulateSQLCommand(BaseCommand):
         skip_verify = options.get("skip_verify", False)
 
         if not log_path:
-            date = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
+            date = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S.%f')
             command_name = self.__class__.__module__.split('.')[-1]
             log_path = f"{command_name}_{date}.log"
 
