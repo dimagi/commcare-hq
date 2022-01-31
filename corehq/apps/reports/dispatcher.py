@@ -149,10 +149,9 @@ class ReportDispatcher(View):
         *args,
         **kwargs,
     ) -> HttpResponse:
+
         domain = domain or getattr(request, 'domain', None)
-
         redirect_slug = self._redirect_slug(report_slug)
-
         if redirect_slug and render_as == 'email':
             # todo saved reports should probably change the slug to the redirected slug. this seems like a hack.
             raise Http404
@@ -163,11 +162,8 @@ class ReportDispatcher(View):
             new_args.append(redirect_slug)
             return HttpResponseRedirect(reverse(self.name(), args=new_args))
 
-        report_kwargs = kwargs.copy()
-
         class_name = self.get_report_class_name(domain, report_slug)
         report_class = to_function(class_name) if class_name else None
-
         permissions_check = permissions_check or self.permissions_check
         if (
             report_class
@@ -176,6 +172,7 @@ class ReportDispatcher(View):
             and report_class.allow_access(request)
         ):
             try:
+                report_kwargs = kwargs.copy()
                 report = report_class(request, domain=domain, **report_kwargs)
                 report.rendered_as = render_as
                 report.decorator_dispatcher(
