@@ -5,6 +5,7 @@ from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.es import GroupES
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.elastic import get_es_new
@@ -15,6 +16,7 @@ from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
+@es_test
 class GroupPillowTest(TestCase):
 
     def setUp(self):
