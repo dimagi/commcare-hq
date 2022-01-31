@@ -48,7 +48,7 @@ class TestMigrationCommand(TestCase):
         delete_all_repeaters()
         return super().tearDownClass()
 
-    def test_case_repeater_docs_are_migrated(self):
+    def test_repeater_docs_are_migrated(self):
         call_command('migrate_caserepeater')
         self._assert_repeaters_equality(SQLCaseRepeater, "CaseRepeater")
         call_command('migrate_formrepeater')
