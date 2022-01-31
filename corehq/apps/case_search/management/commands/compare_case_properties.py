@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.es.case_search import CaseSearchES
-import timeit
+import time
 import json
 
 
@@ -24,12 +24,16 @@ def run_baseline_query(query_obj):
 
 def run_test_queries(query_obj, repeats):
     results = []
+    tooks = []
     hits = query_obj.run().total
     print("Running test queries...")
     for _ in range(repeats):
-        results.append(timeit.timeit(query_obj.run, number=1))
+        t1 = time.time()
+        tooks.append(query_obj.run().raw['took'])
+        t2 = time.time()
+        results.append(t2 - t1)
     print("Done!")
-    return results, hits
+    return results, tooks, hits
 
 
 def define_baseline_query(domain, case_type=None):
@@ -120,9 +124,9 @@ class Command(BaseCommand):
 
         # Define, run, and analyze the test query
         test_query_obj = define_test_query(domain, case_type, props, operator)
-        test_results, hits = run_test_queries(test_query_obj, repeats=repeats)
-        raw_took_str = f"TOOK: {query_obj.run().raw['took']}"
+        test_results, took_results, hits = run_test_queries(test_query_obj, repeats=repeats)
         min_value, max_value, avg_value = get_stats(test_results)
+        min_took, max_took, avg_took = get_stats(took_results)
 
         type_str = f"{case_type}s in" if case_type else "All cases in"
         query_str = query_obj.raw_query if kwargs['verbose'] else (
@@ -141,6 +145,6 @@ class Command(BaseCommand):
         print(query_str)
         print(f"BASELINE: {baseline_amt} cases")
         print(f"MATCHED: {hits} cases")
-        print(raw_took_str)
-        print(f"MIN RUNTIME: {min_value} | MAX RUNTIME: {max_value} | AVG RUNTIME: {avg_value}")
+        print(f"MIN TOOK: {min_took} ms | MAX TOOK: {max_took} ms | AVG TOOK: {avg_took} ms")
+        print(f"MIN RUNTIME: {(min_value * 1000):.4g} ms | MAX RUNTIME: {(max_value * 1000):.4g} ms | AVG RUNTIME: {(avg_value * 1000):.4g} ms")
         return None
