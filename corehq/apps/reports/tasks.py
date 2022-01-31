@@ -173,9 +173,11 @@ def export_all_rows_task(report_class, report_state, recipient_list=None, subjec
     from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer, CaseListReport
     from corehq.apps.reports.standard.cases.duplicate_cases import DuplicateCasesExplorer
     from corehq.apps.reports.commtrack.maps import StockStatusMapReport
+    from corehq.apps.reports.commtrack import CurrentStockStatusReport
     from corehq.apps.reports.commtrack.standard import SimplifiedInventoryReport, InventoryReport
     from corehq.apps.smsbillables.interface import SMSBillablesInterface, SMSGatewayFeeCriteriaInterface
     from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
+    from corehq.apps.hqadmin.reports import DeviceLogSoftAssertReport
 
     #for testing
     temp_dict = {
@@ -187,13 +189,15 @@ def export_all_rows_task(report_class, report_state, recipient_list=None, subjec
         SMSGatewayFeeCriteriaInterface.slug: SMSGatewayFeeCriteriaInterface,
         WorkerActivityReport.slug: WorkerActivityReport,
 
+        DeviceLogSoftAssertReport.slug: DeviceLogSoftAssertReport,
         EnterpriseSMSBillablesReport.slug: EnterpriseSMSBillablesReport,  # untested (SMSDetailedReport)
-        CaseListExplorer.slug: CaseListExplorer,  # untested, idk if this is it
-        CaseListReport.slug: CaseListReport,  # idk if this is called in ever, it might just be a base
-        DuplicateCasesExplorer.slug: DuplicateCasesExplorer,  # untested, idk if this is it
-        StockStatusMapReport.slug: StockStatusMapReport,  # untested, idk if this is it (Stock Status by product)
-        SimplifiedInventoryReport.slug: SimplifiedInventoryReport,  # untested, idk if called (Inventory by loc)
-        InventoryReport.slug: InventoryReport,  # untested, idk if this is called in ever (Aggregate inventory)
+        CaseListExplorer.slug: CaseListExplorer,  # untested
+        #CaseListReport.slug: CaseListReport,  # this might just be a base
+        DuplicateCasesExplorer.slug: DuplicateCasesExplorer,  # untested
+        CurrentStockStatusReport.slug: CurrentStockStatusReport,
+        #StockStatusMapReport.slug: StockStatusMapReport,  # might need for email
+        #SimplifiedInventoryReport.slug: SimplifiedInventoryReport,  # might need for email
+        #InventoryReport.slug: InventoryReport,  # not used for excel, might need for email
     }
 
     #Reforming datespan object
