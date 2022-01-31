@@ -116,6 +116,7 @@ toposort
 tropo-webapi-python
 turn-python
 twilio
+typing_extensions
 werkzeug
 xlrd
 xlwt
