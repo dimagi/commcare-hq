@@ -51,14 +51,14 @@ def get_number_of_submissions(domain, year, month):
 def get_number_of_web_users(domain, year, month):
     date_start, date_end = get_start_and_end_dates_of_month(year, month)
     users_existing_in_domain = set(
-        doc['base_username'].split('@')[0]
+        doc['base_username']
         for doc in UserES().domain(domain)
         .web_users()
         .created(lte=date_end)
         .run().hits
     )
     users_who_accepted_invites = set(
-        email.split('@')[0]
+        email
         for email in Invitation.objects.filter(
             domain=domain,
             is_accepted=True,
