@@ -115,9 +115,8 @@ class ReportDispatcher(View):
         return self.slug_aliases.get(slug)
 
     @datespan_default
-    def dispatch(self, request, domain=None, report_slug=None, render_as=None,
+    def dispatch(self, request, domain=None, report_slug=None, render_as='view',
                  permissions_check=None, *args, **kwargs):
-        render_as = render_as or 'view'
         domain = domain or getattr(request, 'domain', None)
 
         redirect_slug = self._redirect_slug(report_slug)
