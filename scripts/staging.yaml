@@ -79,4 +79,5 @@ branches:
     - jls/update-web-apps-fuzzy # Jenny Jan 26
     - ml/reject-weak-password-backend # Minha Jan 28
     - mk/fix-markdown-check # MK Jan 31
+    - jm/ipython-8.0.1  # Joel Jan 31
 submodules: { }
