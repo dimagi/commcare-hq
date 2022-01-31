@@ -2,6 +2,7 @@ import os
 import uuid
 import zipfile
 from datetime import datetime, timedelta
+from django.http.request import QueryDict, MultiValueDict
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -10,6 +11,7 @@ from text_unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
@@ -158,9 +160,59 @@ def apps_update_calculated_properties():
         send_to_elasticsearch('apps', doc, es_merge_update=True)
 
 
-@task(serializer='pickle', ignore_result=True)
-def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject=None):
-    report = object.__new__(ReportClass)
+@task(ignore_result=True)
+def export_all_rows_task(report_class, report_state, recipient_list=None, subject=None):
+    #will move imports to the top
+    from corehq.apps.reports.standard.monitoring import (
+        WorkerActivityReport,
+        DailyFormStatsReport,
+        CaseActivityReport,
+    )
+    from corehq.apps.reports.standard.deployments import ApplicationStatusReport
+    from phonelog.reports import DeviceLogDetailsReport
+    from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer, CaseListReport
+    from corehq.apps.reports.standard.cases.duplicate_cases import DuplicateCasesExplorer
+    from corehq.apps.reports.commtrack.maps import StockStatusMapReport
+    from corehq.apps.reports.commtrack.standard import SimplifiedInventoryReport, InventoryReport
+    from corehq.apps.smsbillables.interface import SMSBillablesInterface, SMSGatewayFeeCriteriaInterface
+    from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
+
+    #for testing
+    temp_dict = {
+        ApplicationStatusReport.slug: ApplicationStatusReport,
+        CaseActivityReport.slug: CaseActivityReport,
+        DailyFormStatsReport.slug: DailyFormStatsReport,
+        DeviceLogDetailsReport.slug: DeviceLogDetailsReport,
+        SMSBillablesInterface.slug: SMSBillablesInterface,
+        SMSGatewayFeeCriteriaInterface.slug: SMSGatewayFeeCriteriaInterface,
+        WorkerActivityReport.slug: WorkerActivityReport,
+
+        EnterpriseSMSBillablesReport.slug: EnterpriseSMSBillablesReport,  # untested (SMSDetailedReport)
+        CaseListExplorer.slug: CaseListExplorer,  # untested, idk if this is it
+        CaseListReport.slug: CaseListReport,  # idk if this is called in ever, it might just be a base
+        DuplicateCasesExplorer.slug: DuplicateCasesExplorer,  # untested, idk if this is it
+        StockStatusMapReport.slug: StockStatusMapReport,  # untested, idk if this is it (Stock Status by product)
+        SimplifiedInventoryReport.slug: SimplifiedInventoryReport,  # untested, idk if called (Inventory by loc)
+        InventoryReport.slug: InventoryReport,  # untested, idk if this is called in ever (Aggregate inventory)
+    }
+
+    #Reforming datespan object
+    if 'startdate' and 'enddate' in report_state['request_params']:
+        start_date = datetime.strptime(str(report_state['request_params']['startdate']), '%Y-%m-%d %H:%M:%S')
+        end_date = datetime.strptime(str(report_state['request_params']['enddate']), '%Y-%m-%d %H:%M:%S')
+        report_state['request']['datespan'] = DateSpan(start_date, end_date)
+
+    #for testing - will remove
+    if report_class in temp_dict:
+        get_class = temp_dict[report_class]
+    else:
+        get_class = report_class
+
+    GET_data = QueryDict('', mutable=True)
+    GET_data.update(MultiValueDict(report_state['request']['GET']))
+    report_state['request']['GET'] = GET_data
+
+    report = object.__new__(get_class)
     report.__setstate__(report_state)
     report.rendered_as = 'export'
 
@@ -178,14 +230,13 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
-        _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject=subject)
+        _send_email(report, hash_id, recipient=recipient, subject=subject)
         logger.info(f'Sent {report.name} with hash {hash_id} to {recipient}')
 
 
-def _send_email(user, report, hash_id, recipient, subject=None):
+def _send_email(report, hash_id, recipient, subject=None):
     link = absolute_reverse("export_report", args=[report.domain, str(hash_id),
                                                    report.export_format])
-
     send_report_download_email(report.name, recipient, link, subject)
 
 
@@ -208,7 +259,7 @@ def _store_excel_in_blobdb(report_class, file, domain, report_slug):
     return key
 
 
-@task(serializer='pickle')
+@task
 def build_form_multimedia_zipfile(
         domain,
         export_id,
@@ -219,28 +270,10 @@ def build_form_multimedia_zipfile(
     from corehq.apps.export.models import FormExportInstance
     from corehq.apps.export.export import get_export_query
     export = FormExportInstance.get(export_id)
-    es_query = get_export_query(export, es_filters)
+    es_query = get_export_query(export, es_filters, are_filters_es_formatted=True)
     form_ids = get_form_ids_with_multimedia(es_query)
     _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id,
                                       build_form_multimedia_zipfile)
-
-
-# ToDo: Remove post build_form_multimedia_zipfile rollout
-@task(serializer='pickle')
-def build_form_multimedia_zip(
-        domain,
-        export_id,
-        datespan,
-        user_types,
-        download_id,
-        owner_id,
-):
-    from corehq.apps.export.models import FormExportInstance
-    export = FormExportInstance.get(export_id)
-    form_ids = get_form_ids_having_multimedia(
-        domain, export.app_id, export.xmlns, datespan, user_types
-    )
-    _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id, build_form_multimedia_zip)
 
 
 def _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id, task_name):
@@ -316,7 +349,7 @@ def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
                         attachment['name']),
                         zipfile.ZIP_STORED
                     )
-                DownloadBase.set_progress(build_form_multimedia_zip, form_number, num_forms)
+                DownloadBase.set_progress(build_form_multimedia_zipfile, form_number, num_forms)
 
 
 def _save_and_expose_zip(f, zip_name, domain, download_id, owner_id):
