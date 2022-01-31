@@ -10,7 +10,8 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.es import CaseES, FormES, UserES, AppES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import (
@@ -90,7 +91,7 @@ def find_missing_form_repeat_records_for_domain(domain, startdate, enddate, shou
     total_missing_count = total_count = 0
     form_repeaters_in_domain = get_form_repeaters_in_domain(domain)
     form_ids = [f['_id'] for f in get_form_ids_in_domain_between_dates(domain, startdate, enddate)]
-    forms = FormAccessors(domain).get_forms(form_ids)
+    forms = XFormInstance.objects.get_forms(form_ids, domain)
     for form in forms:
         missing_count, successful_count = find_missing_form_repeat_records_for_form(
             form, domain, form_repeaters_in_domain, enddate, should_create

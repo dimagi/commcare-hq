@@ -119,7 +119,7 @@ class FormProcessorSQL(object):
                 if processed_forms.deprecated:
                     FormAccessorSQL.update_form(processed_forms.deprecated, publish_changes=False)
 
-                FormAccessorSQL.save_new_form(processed_forms.submitted)
+                XFormInstance.objects.save_new_form(processed_forms.submitted)
                 if cases:
                     for case in cases:
                         CaseAccessorSQL.save_case(case)
@@ -274,7 +274,7 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, lock=True, save=True):
-        assert save or not lock, f"refusing to lock when not saving"
+        assert save or not lock, "refusing to lock when not saving"
         if lock:
             # only record metric if locking since otherwise it has been
             # (most likley) recorded elsewhere

@@ -137,7 +137,6 @@ from corehq.blobs import CODES, NotFound, get_blob_db, models
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
-    FormAccessors,
     LedgerAccessors,
 )
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -1275,7 +1274,7 @@ def case_forms(request, domain, case_id):
         return HttpResponseBadRequest()
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
-    forms = FormAccessors(domain).get_forms(slice, ordered=True)
+    forms = XFormInstance.objects.get_forms(slice, domain, ordered=True)
     timezone = get_timezone_for_user(request.couch_user, domain)
     return json_response([
         form_to_json(domain, form, timezone) for form in forms
