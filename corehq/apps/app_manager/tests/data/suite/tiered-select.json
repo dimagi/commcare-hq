@@ -378,7 +378,11 @@
                                 "type": "always"
                             },
                             "update": {
-                                "color": "/data/color"
+                                "color": {
+                                  "doc_type": "SmartCaseUpdate",
+                                  "question_path": "/data/color",
+                                  "update_mode": "always"
+                                }
                             }
                         },
                         "update_referral": {
