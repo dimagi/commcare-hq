@@ -9,12 +9,13 @@ from jsonfield.fields import JSONEncoder
 from psycopg2.extensions import adapt
 
 from corehq.form_processor.models import (
-    CommCareCase,
     CaseAttachment,
+    CommCareCase,
     CommCareCaseIndex,
     CaseTransaction,
+    LedgerTransaction,
+    LedgerValue,
     XFormInstance,
-    LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE,
     XFormOperation,
 )
 
@@ -159,7 +160,7 @@ def ledger_value_adapter(ledger_value):
         ledger_value.last_modified_form_id,
         ledger_value.domain,
     ]
-    return ObjectAdapter(fields, LedgerValue_DB_TABLE)
+    return ObjectAdapter(fields, LedgerValue._meta.db_table)
 
 
 def ledger_transaction_adapter(ledger_transaction):
@@ -176,7 +177,7 @@ def ledger_transaction_adapter(ledger_transaction):
         ledger_transaction.delta,
         ledger_transaction.updated_balance,
     ]
-    return ObjectAdapter(fields, LedgerTransaction_DB_TABLE)
+    return ObjectAdapter(fields, LedgerTransaction._meta.db_table)
 
 
 class ObjectAdapter(object):
