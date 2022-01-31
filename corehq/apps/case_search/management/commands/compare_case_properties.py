@@ -1,17 +1,18 @@
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.es.case_search import CaseSearchES
 import timeit
-import heapq
 import json
 
 
 # Returns min, max, average of test suite results list
 def get_stats(results_list):
     n = len(results_list)
-    min = heapq.heappop(heapq.heapify(results_list))
-    max = heapq.heappop(heapq._heapify_max(results_list))
-    avg = sum(min) / n
-    return min, max, avg
+    if n == 1:
+        return results_list[0], results_list[0], results_list[0]
+    min_value = min(results_list)
+    max_value = max(results_list)
+    avg_value = sum(results_list) / n
+    return min_value, max_value, avg_value
 
 
 def run_baseline_query(query_obj):
@@ -23,11 +24,12 @@ def run_baseline_query(query_obj):
 
 def run_test_queries(query_obj, repeats):
     results = []
+    hits = query_obj.run().total
     print("Running test queries...")
     for _ in range(repeats):
-        results.append(results=timeit.timeit(query_obj.run))
+        results.append(timeit.timeit(query_obj.run, number=1))
     print("Done!")
-    return results
+    return results, hits
 
 
 def define_baseline_query(domain, case_type=None):
@@ -41,7 +43,7 @@ def define_baseline_query(domain, case_type=None):
     return query_obj
 
 
-def append_baseline_query(query_obj, props, operator):
+def define_test_query(domain, case_type, props, operator):
     script = {
         "bool": {
             "must": [
@@ -56,7 +58,15 @@ def append_baseline_query(query_obj, props, operator):
             ]
         }
     }
-    query_obj.set_query(script)
+    if case_type is None:
+        query_obj = (CaseSearchES()
+            .domain(domain)
+            .set_query(script))
+    else:
+        query_obj = (CaseSearchES()
+            .domain(domain)
+            .case_type(case_type)
+            .set_query(script))
     return query_obj
 
 
@@ -67,7 +77,7 @@ class Command(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('-ct', '--type', dest='type')
         parser.add_argument('-cp', '--properties', dest='props', nargs=2)
-        parser.add_argument('-n', dest='n', default=1)
+        parser.add_argument('-n', dest='n', default=1, type=int)
 
         # operator arguments, only one of these is permitted
         parser.add_argument('-eq', dest='equals', action='store_true')
@@ -78,7 +88,6 @@ class Command(BaseCommand):
         parser.add_argument('-lte', dest='less_equal', action='store_true')
 
         parser.add_argument('--verbose', dest="verbose", action='store_true')
-        parser.add_argument('--analyze', dest="analyze", action='store_true')
         parser.add_argument('--profile', dest="profile", action='store_true')
 
     def handle(self, *args, **kwargs):
@@ -104,22 +113,23 @@ class Command(BaseCommand):
 
         operator = operator_keylist[operator_valuelist.index(True)]
 
-        # Need need to get baseline amount of cases that are being against for context
-        # Define and run query with only domain and case_type specified
+        # Need need to get baseline amount of cases that are being queriied against for context
+        # Define and run query with only domain and case_type defined
         query_obj = define_baseline_query(domain, case_type)
         baseline_amt = run_baseline_query(query_obj)
 
         # Define, run, and analyze the test query
-        query_obj = append_baseline_query(query_obj, props, operator)
-        test_results = run_test_queries(query_obj, repeats=repeats)
-        min, max, avg = get_stats(test_results)
+        test_query_obj = define_test_query(domain, case_type, props, operator)
+        test_results, hits = run_test_queries(test_query_obj, repeats=repeats)
+        raw_took_str = f"TOOK: {query_obj.run().raw['took']}"
+        min_value, max_value, avg_value = get_stats(test_results)
 
         type_str = f"{case_type}s in" if case_type else "All cases in"
-        query_str = query_obj.get_query() if kwargs['verbose'] else (
+        query_str = query_obj.raw_query if kwargs['verbose'] else (
             f"QUERY: {type_str} {domain} where {props[0]} {operator} {props[1]}"
         )
 
-        # if 'profile' flag is invoked, print out profiled results
+        # if 'profile' flag is invoked, print out query profile
         if kwargs['profile']:
             query_obj.enable_profiling()
             profiled_hits = query_obj.run().raw
@@ -130,5 +140,7 @@ class Command(BaseCommand):
         print("=" * 8 + " SCRIPT QUERY TEST " + "=" * 8)
         print(query_str)
         print(f"BASELINE: {baseline_amt} cases")
-        print(f"MIN RUNTIME: {min} | MAX RUNTIME: {max} | AVG RUNTIME: {avg}")
+        print(f"MATCHED: {hits} cases")
+        print(raw_took_str)
+        print(f"MIN RUNTIME: {min_value} | MAX RUNTIME: {max_value} | AVG RUNTIME: {avg_value}")
         return None
