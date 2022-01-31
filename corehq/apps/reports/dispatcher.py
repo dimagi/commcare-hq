@@ -141,7 +141,6 @@ class ReportDispatcher(View):
             'export',
             'filters',
             'json',
-            'mobile',
             'partial',
             'print',
             'view',
@@ -190,7 +189,6 @@ class ReportDispatcher(View):
                     'export': lambda: report.export_response,
                     'filters': lambda: report.filters_response,
                     'json': lambda: report.json_response,
-                    'mobile': lambda: report.mobile_response,  # TODO: Where is this defined?
                     'partial': lambda: report.partial_response,
                     'print': lambda: report.print_response,
                     'view': lambda: report.view_response,
