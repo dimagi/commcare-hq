@@ -263,7 +263,7 @@ class SQLDhis2Repeater(SQLFormRepeater, SQLDhis2Instance):
         app_label = 'repeaters'
 
     include_app_id_param = OptionValue(default=False)
-    dhis2_config = OptionValue(schema=Dhis2Config)
+    dhis2_config = OptionValue()
 
     friendly_name = _("Forward Forms to DHIS2 as Anonymous Events")
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
@@ -337,7 +337,7 @@ class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
     friendly_name = _("Forward Cases as DHIS2 Tracked Entities")
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
 
-    dhis2_entity_config = OptionValue(schema=Dhis2EntityConfig)
+    dhis2_entity_config = OptionValue()
 
     _has_config = True
 
