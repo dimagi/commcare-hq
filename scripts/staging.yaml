@@ -80,4 +80,5 @@ branches:
     - ml/reject-weak-password-backend # Minha Jan 28
     - mk/fix-markdown-check # MK Jan 31
     - jm/ipython-8.0.1  # Joel Jan 31
+    - jls/drop-case-search-limit # Jenny Jan 31
 submodules: { }
