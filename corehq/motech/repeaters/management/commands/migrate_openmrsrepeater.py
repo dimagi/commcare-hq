@@ -27,7 +27,7 @@ class Command(RepeaterMigrationHelper):
                 "location_id": doc.get("location_id"),
                 "openmrs_config": doc.get("openmrs_config"),
                 "atom_feed_enabled": doc.get("atom_feed_enabled"),
-                "atom_feed_status": doc.get('atom_feed_enabled'),
+                "atom_feed_status": doc.get('atom_feed_status'),
                 "format": doc.get("format"),
                 "version": doc.get("version"),
                 "white_listed_case_types": doc.get("white_listed_case_types"),
