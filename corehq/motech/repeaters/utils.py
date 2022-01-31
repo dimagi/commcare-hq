@@ -30,6 +30,10 @@ class RepeaterMigrationHelper(PopulateSQLCommand):
         return []
 
     @classmethod
+    def _get_schema_props(cls):
+        return []
+
+    @classmethod
     def get_sql_options_obj(cls, doc):
         return {
             "options": {
@@ -57,7 +61,7 @@ class RepeaterMigrationHelper(PopulateSQLCommand):
         for prop in string_props:
             diff_results.append(cls.diff_value(prop, couch.get(prop), getattr(sql, prop)))
 
-        return [diff for diff in diff_results if diff]
+        return diff_results
 
     @classmethod
     def get_common_sql_attr_obj(cls, doc):
@@ -76,6 +80,10 @@ class RepeaterMigrationHelper(PopulateSQLCommand):
 
         for prop in cls._get_string_props():
             diff_results.append(cls.diff_value(prop, couch.get(prop), getattr(sql, prop)))
+
+        for prop in cls._get_schema_props():
+            if couch.get(prop) != getattr(sql, prop):
+                return f"{prop}: couch value != sql value {sql!r}"
 
         diff_results = [diff for diff in diff_results if diff]
         return '\n'.join(diff_results) if diff_results else None
