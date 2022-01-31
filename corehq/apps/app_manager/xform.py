@@ -524,7 +524,7 @@ class XFormCaseBlock(object):
                         case_value = CaseIDXPath(case_id_xpath).case().slash(key)
                     else:
                         case_value = CaseIDXPath(session_var('case_id')).case().slash(key)
-                self.add_casedb()
+                self.xform.add_casedb()
                 edit_mode_path = f' and {case_value} != {resolved_path}'
             update_block.append(make_case_elem(key))
             nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
