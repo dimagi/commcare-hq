@@ -20,6 +20,10 @@ class Command(RepeaterMigrationHelper):
     def _get_list_props(cls):
         return ['white_listed_case_types', 'black_listed_users']
 
+    @classmethod
+    def _get_schema_props(cls):
+        return ['dhis2_entity_config']
+
     def get_sql_options_obj(self, doc):
         return {
             "options": {

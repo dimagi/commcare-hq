@@ -16,6 +16,10 @@ class Command(RepeaterMigrationHelper):
     def _get_string_props(cls):
         return ['format']
 
+    @classmethod
+    def _get_schema_props(cls):
+        return ['dhis2_config']
+
     def get_sql_options_obj(self, doc):
         return {
             "options": {

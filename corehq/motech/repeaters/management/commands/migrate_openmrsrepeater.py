@@ -14,11 +14,15 @@ class Command(RepeaterMigrationHelper):
 
     @classmethod
     def _get_string_props(cls):
-        return ["format", "version", "location_id"]
+        return ["format", "version", "location_id", "atom_feed_enabled"]
 
     @classmethod
     def _get_list_props(cls):
         return ['white_listed_case_types', 'black_listed_users']
+
+    @classmethod
+    def _get_schema_props(cls):
+        return ["openmrs_config", "atom_feed_status"]
 
     def get_sql_options_obj(self, doc):
         return {

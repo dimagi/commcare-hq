@@ -14,6 +14,10 @@ class Command(RepeaterMigrationHelper):
     def sql_class(cls):
         return SQLCaseExpressionRepeater
 
+    @classmethod
+    def _get_string_props(cls):
+        return ["configured_filter", "configured_expression"]
+
     def get_sql_options_obj(self, doc):
         return {
             "options": {
