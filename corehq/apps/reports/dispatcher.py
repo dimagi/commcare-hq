@@ -182,16 +182,19 @@ class ReportDispatcher(View):
                 report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
-                # grep help:
-                # return report.json_response
-                # return report.async_response
-                # return report.filters_response
-                # return report.export_response
-                # return report.mobile_response
-                # return report.email_response
-                # return report.partial_response
-                # return report.print_response
-                return getattr(report, '%s_response' % render_as)
+                return {
+                    'async': lambda: report.async_response,
+                    'deprecate': lambda: report.deprecate_response,
+                    'excel': lambda: report.excel_response,
+                    'email': lambda: report.email_response,
+                    'export': lambda: report.export_response,
+                    'filters': lambda: report.filters_response,
+                    'json': lambda: report.json_response,
+                    'mobile': lambda: report.mobile_response,  # TODO: Where is this defined?
+                    'partial': lambda: report.partial_response,
+                    'print': lambda: report.print_response,
+                    'view': lambda: report.view_response,
+                }[render_as]()
             except BadRequestError as e:
                 return HttpResponseBadRequest(e)
         else:
