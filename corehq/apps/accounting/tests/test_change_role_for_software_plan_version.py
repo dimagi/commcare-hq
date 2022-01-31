@@ -72,34 +72,6 @@ class ChangeRoleForSoftwarePlanVersionTest(TestCase):
         self.assertEqual(plan.get_version().version, 2)
         self.assertEqual(plan.get_version().role.slug, 'active_role')
 
-    def test_limit_to_plans(self):
-        plan_to_change = SoftwarePlan(name='Plan To Change')
-        plan_to_change.save()
-        plan_to_ignore = SoftwarePlan(name='Plan To Ignore')
-        plan_to_ignore.save()
-        version_to_change = SoftwarePlanVersion(
-            role=self.old_role,
-            plan=plan_to_change,
-            product_rate=self.generic_product_rate,
-        )
-        version_to_ignore = SoftwarePlanVersion(
-            role=self.old_role,
-            plan=plan_to_ignore,
-            product_rate=self.generic_product_rate,
-        )
-        version_to_change.save()
-        version_to_ignore.save()
-
-        change_role_for_software_plan_version('old_role', 'new_role', limit_to_plans=['Plan To Change'])
-
-        # refetch
-        ignored_plan = SoftwarePlan.objects.get(name='Plan To Ignore')
-        changed_plan = SoftwarePlan.objects.get(name='Plan To Change')
-        self.assertEqual(ignored_plan.get_version().version, 1)
-        self.assertEqual(ignored_plan.get_version().role.slug, 'old_role')
-        self.assertEqual(changed_plan.get_version().version, 1)
-        self.assertEqual(changed_plan.get_version().role.slug, 'new_role')
-
     def test_dry_run(self):
         plan = SoftwarePlan(name='Test Plan')
         plan.save()
