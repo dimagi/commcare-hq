@@ -10,7 +10,7 @@ REFERENCED_ID = 'referenced_id'
 IDENTIFIER = 'identifier'
 
 # Maximum number of results to pull from ElasticSearch
-CASE_SEARCH_MAX_RESULTS = 500
+CASE_SEARCH_MAX_RESULTS = 50
 
 # Added to each case response when case searches are performed
 RELEVANCE_SCORE = "commcare_search_score"
