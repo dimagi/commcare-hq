@@ -146,5 +146,8 @@ class Command(BaseCommand):
         print(f"BASELINE: {baseline_amt} cases")
         print(f"MATCHED: {hits} cases")
         print(f"MIN TOOK: {min_took} ms | MAX TOOK: {max_took} ms | AVG TOOK: {avg_took} ms")
-        print(f"MIN RUNTIME: {(min_value * 1000):.4g} ms | MAX RUNTIME: {(max_value * 1000):.4g} ms | AVG RUNTIME: {(avg_value * 1000):.4g} ms")
+        print(
+            f"MIN RUNTIME: {(min_value * 1000):.4g} ms | MAX RUNTIME: {(max_value * 1000):.4g} ms | "
+            + f"AVG RUNTIME: {(avg_value * 1000):.4g} ms"
+        )
         return None
