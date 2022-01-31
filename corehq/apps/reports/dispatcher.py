@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -8,8 +7,6 @@ from django.views.generic.base import View
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 
-from corehq.apps.domain.utils import get_custom_domain_module
-from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 
@@ -21,12 +18,12 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     track_domain_request,
 )
-from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.models import AnonymousCouchUser
 from corehq.util.quickcache import quickcache
 
+from .exceptions import BadRequestError
 from .lookup import ReportLookup
 
 datespan_default = datespan_in_request(
