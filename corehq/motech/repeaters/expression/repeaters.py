@@ -67,8 +67,8 @@ class SQLBaseExpressionRepeater(SQLRepeater):
         app_label = 'repeaters'
         proxy = True
 
-    configured_filter = OptionValue()
-    configured_expression = OptionValue()
+    configured_filter = OptionValue(default=dict)
+    configured_expression = OptionValue(default=dict)
     payload_generator_classes = (ExpressionPayloadGenerator,)
 
     @property
