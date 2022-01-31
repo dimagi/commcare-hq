@@ -91,5 +91,27 @@ class TestMigrationCommand(TestCase):
         self.assertCountEqual(sql_ids, couch_ids)
         self.assertEqual(sql_ids, couch_ids)
 
+    def test_equality_of_config_attrs(self):
+        call_command('migrate_dhis2repeater')
+        call_command('migrate_openmrsrepeater')
+        call_command('migrate_caseexpressionrepeater')
+        dhsi2_objects = self._get_repeater_objects('Dhis2Repeater')
+        openmrs_objects = self._get_repeater_objects('OpenmrsRepeater')
+        caseexpression_objects = self._get_repeater_objects('CaseExpressionRepeater')
+
+        for obj in dhsi2_objects:
+            sql_obj = SQLDhis2Repeater.objects.get(repeater_id=obj._id)
+            self.assertEqual(sql_obj.dhis2_config, obj.dhis2_config.to_json())
+
+        for obj in openmrs_objects:
+            sql_obj = SQLOpenmrsRepeater.objects.get(repeater_id=obj._id)
+            self.assertEqual(sql_obj.openmrs_config, obj.openmrs_config.to_json())
+            self.assertEqual(sql_obj.atom_feed_status, obj.atom_feed_status)
+
+        for obj in caseexpression_objects:
+            sql_obj = SQLCaseExpressionRepeater.objects.get(repeater_id=obj._id)
+            self.assertEqual(sql_obj.configured_filter, obj.configured_filter)
+            self.assertEqual(sql_obj.configured_expression, obj.configured_expression)
+
     def _get_repeater_objects(self, repeater_type):
         return [r for r in self.couch_repeaters if r.doc_type == repeater_type]
