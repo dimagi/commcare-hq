@@ -1,4 +1,11 @@
-from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
+from typing import Callable, Optional
+
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
@@ -25,6 +32,12 @@ from corehq.util.quickcache import quickcache
 
 from .exceptions import BadRequestError
 from .lookup import ReportLookup
+
+try:
+    from typing import Literal  # Py 3.8+
+except ImportError:
+    from typing_extensions import Literal  # For environments still on Py 3.6
+
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -115,8 +128,28 @@ class ReportDispatcher(View):
         return self.slug_aliases.get(slug)
 
     @datespan_default
-    def dispatch(self, request, domain=None, report_slug=None, render_as='view',
-                 permissions_check=None, *args, **kwargs):
+    def dispatch(
+        self,
+        request,
+        domain: Optional[str] = None,
+        report_slug: Optional[str] = None,
+        render_as: Literal[
+            'async',
+            'deprecate',
+            'email',
+            'excel',
+            'export',
+            'filters',
+            'json',
+            'mobile',
+            'partial',
+            'print',
+            'view',
+        ] = 'view',
+        permissions_check: Optional[Callable] = None,
+        *args,
+        **kwargs,
+    ) -> HttpResponse:
         domain = domain or getattr(request, 'domain', None)
 
         redirect_slug = self._redirect_slug(report_slug)
