@@ -1071,15 +1071,6 @@ MOBILE_UCR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-MOBILE_UCR_LINKED_DOMAIN = StaticToggle(
-    'mobile_ucr_linked_domain',
-    'Mobile UCR: Configure viewing user configurable reports on the mobile when using linked domains.',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Mobile UCR: Configure viewing user configurable reports on the mobile when using linked domains. '
-                'NOTE: This won\'t work without developer intervention'
-)
-
 API_THROTTLE_WHITELIST = StaticToggle(
     'api_throttle_whitelist',
     ('API throttle whitelist'),
