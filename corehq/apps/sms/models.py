@@ -26,7 +26,7 @@ from corehq.apps.sms.mixin import (
     apply_leniency,
 )
 from corehq.apps.users.models import CouchUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
@@ -149,7 +149,7 @@ class Log(models.Model):
     @property
     def recipient(self):
         if self.couch_recipient_doc_type == 'CommCareCase':
-            return CaseAccessors(self.domain).get_case(self.couch_recipient)
+            return CommCareCase.objects.get_case(self.couch_recipient, self.domain)
         else:
             return CouchUser.get_by_user_id(self.couch_recipient)
 
@@ -658,8 +658,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @property
     def owner(self):
         if self.owner_doc_type == 'CommCareCase':
-            from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-            return CaseAccessors(self.domain).get_case(self.owner_id)
+            return CommCareCase.objects.get_case(self.owner_id, self.domain)
         elif self.owner_doc_type == 'CommCareUser':
             from corehq.apps.users.models import CommCareUser
             return CommCareUser.get(self.owner_id)

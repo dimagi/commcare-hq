@@ -12,7 +12,7 @@ from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling import util
 from corehq.messaging.scheduling.exceptions import UnknownRecipientType
@@ -69,7 +69,7 @@ class ScheduleInstance(PartitionedModel):
     def recipient(self):
         if self.recipient_type == self.RECIPIENT_TYPE_CASE:
             try:
-                case = CaseAccessors(self.domain).get_case(self.recipient_id)
+                case = CommCareCase.objects.get_case(self.recipient_id, self.domain)
             except CaseNotFound:
                 return None
 
@@ -562,7 +562,7 @@ class CaseScheduleInstanceMixin(object):
     @memoized
     def case(self):
         try:
-            return CaseAccessors(self.domain).get_case(self.case_id)
+            return CommCareCase.objects.get_case(self.case_id, self.domain)
         except CaseNotFound:
             return None
 

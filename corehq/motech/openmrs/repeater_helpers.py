@@ -14,7 +14,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.auth import BasicAuthManager
 from corehq.motech.openmrs.const import (
     ADDRESS_PROPERTIES,
@@ -368,7 +368,7 @@ def generate_identifier(requests, identifier_type):
 
 
 def find_or_create_patient(requests, domain, info, openmrs_config):
-    case = CaseAccessors(domain).get_case(info.case_id)
+    case = CommCareCase.objects.get_case(info.case_id, domain)
     patient_finder = PatientFinder.wrap(openmrs_config.case_config.patient_finder)
     if patient_finder is None:
         return

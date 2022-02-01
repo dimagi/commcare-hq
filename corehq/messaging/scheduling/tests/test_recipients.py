@@ -21,7 +21,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.apps.users.util import normalize_username
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
@@ -713,7 +713,7 @@ class SchedulingRecipientTest(TestCase):
         with self.create_usercase(user3) as case:
             # If the user has no number, the user case's number is used
             update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(0, only_count_two_way=True)
             self.assertIsNotNone(user3.memoized_usercase)
@@ -739,7 +739,7 @@ class SchedulingRecipientTest(TestCase):
 
             with override_settings(USE_PHONE_ENTRIES=False):
                 update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '23456'})
-                case = CaseAccessors(self.domain).get_case(case.case_id)
+                case = CommCareCase.objects.get_case(case.case_id, self.domain)
 
                 self.assertPhoneEntryCount(1)
                 self.assertPhoneEntryCount(1, only_count_two_way=True)
@@ -768,7 +768,7 @@ class SchedulingRecipientTest(TestCase):
             with change_context_manager:
                 update_case(self.domain, case.case_id,
                     case_properties={'contact_phone_number': '12345678', 'contact_phone_number_is_verified': '1'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(1, only_count_two_way=True)
             self.assertIsNotNone(user3.memoized_usercase)
@@ -813,7 +813,7 @@ class SchedulingRecipientTest(TestCase):
             with self.create_usercase(user3) as case:
                 # If the user has no number, the user case's number is used
                 update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
-                case = CaseAccessors(self.domain).get_case(case.case_id)
+                case = CommCareCase.objects.get_case(case.case_id, self.domain)
                 self.assertPhoneEntryCount(0)
                 self.assertIsNotNone(user3.memoized_usercase)
                 self.assertEqual(Content.get_two_way_entry_or_phone_number(user3), '12345678')

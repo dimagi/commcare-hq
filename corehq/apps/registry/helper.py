@@ -5,6 +5,7 @@ from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessExce
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.timer import TimingContext
 
 
@@ -52,9 +53,7 @@ class DataRegistryHelper:
             See ``corehq.apps.registry.models.RegistryAuditHelper.data_accessed``
         :return:
         """
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-
-        case = CaseAccessorSQL.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id)
         self.check_data_access(couch_user, [case.type], case.domain)
         self.log_data_access(couch_user.get_django_user(), case.domain, accessing_object, filters={
             "case_type": case.type,

@@ -35,7 +35,7 @@ from corehq.apps.sms.tasks import (
     handle_outgoing,
 )
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
@@ -852,7 +852,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
     def __test_contact_level_backend(self, contact):
         # Test sending to verified number with a contact-level backend owned by the domain
         update_case(self.domain, contact.case_id, case_properties={'contact_backend_id': 'BACKEND'})
-        contact = CaseAccessors(self.domain).get_case(contact.case_id)
+        contact = CommCareCase.objects.get_case(contact.case_id, self.domain)
         verified_number = contact.get_phone_number()
         self.assertTrue(verified_number is not None)
         self.assertEqual(verified_number.backend_id, 'BACKEND')

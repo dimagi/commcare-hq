@@ -7,7 +7,7 @@ import csv
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.users.util import cached_owner_id_to_display
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
 class Command(BaseCommand):
@@ -20,7 +20,7 @@ class Command(BaseCommand):
 
     def handle(self, domain, case_id, **options):
         case_accessor = CaseAccessors(domain=domain)
-        case = case_accessor.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, domain)
         if not case.is_deleted and input('\n'.join([
             'Case {} is not already deleted. Are you sure you want to delete it? (y/N)'.format(case_id)
         ])).lower() != 'y':

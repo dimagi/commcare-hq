@@ -20,7 +20,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.toggles import CASE_API_V0_6
 from corehq.util.view_utils import reverse
 
@@ -98,7 +98,7 @@ def case_api(request, domain, case_id=None):
 
 def _handle_individual_get(request, case_id):
     try:
-        case = CaseAccessors(request.domain).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, request.domain)
         if case.domain != request.domain:
             raise CaseNotFound()
     except CaseNotFound:

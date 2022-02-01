@@ -5,7 +5,7 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import get_case_history
 
 from corehq.apps.es.tests.utils import es_test
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.mappings import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted, reset_es_index
 from corehq.util.tests.test_utils import disable_quickcache
@@ -57,7 +57,7 @@ class TestCaseHistory(TestCase):
                     },
                 }),
         )
-        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain)
         history = get_case_history(case)
         self.assertEqual(history[0]['prop_1'], "val1")
         self.assertEqual(history[1]['prop_2'], "val1")

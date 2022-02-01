@@ -54,14 +54,14 @@ class SqlUpdateStrategyTest(TestCase):
         with freeze_time("2018-10-11"):
             self._save(new_old_xform, case, new_old_trans)
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertTrue(update_strategy.reconcile_transactions_if_necessary())
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
 
         CaseAccessorSQL.save_case(case)
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
@@ -75,7 +75,7 @@ class SqlUpdateStrategyTest(TestCase):
             new_old_trans = self._create_case_transaction(case, new_old_xform)
             self._save(new_old_xform, case, new_old_trans)
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
 
@@ -98,7 +98,7 @@ class SqlUpdateStrategyTest(TestCase):
             rebuild_transaction = CaseTransaction.rebuild_transaction(case, rebuild_detail)
             self._save(new_rebuild_xform, case, rebuild_transaction)
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
 
@@ -113,7 +113,7 @@ class SqlUpdateStrategyTest(TestCase):
 
         self.assertTrue(case.check_transaction_order())
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertRaises(ReconciliationError, update_strategy.reconcile_transactions)
 
@@ -135,14 +135,14 @@ class SqlUpdateStrategyTest(TestCase):
             new_old_trans = self._create_case_transaction(case, new_old_xform)
             self._save(new_old_xform, case, new_old_trans)
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertTrue(update_strategy.reconcile_transactions_if_necessary())
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
 
         CaseAccessorSQL.save_case(case)
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
@@ -191,7 +191,7 @@ class SqlUpdateStrategyTest(TestCase):
         trans = self._create_case_transaction(case, form, utcnow, action_types=[128])
         self._save(form, case, trans)
 
-        return CaseAccessorSQL.get_case(case_id)
+        return CommCareCase.objects.get_case(case_id)
 
     def _save(self, form, case, transaction):
         # disable publish to Kafka to avoid intermittent errors caused by

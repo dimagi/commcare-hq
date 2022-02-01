@@ -17,9 +17,8 @@ from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.blobs import get_blob_db
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, XFormQuestionValueIterator
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.form_processor.utils import get_simple_form_xml
 from corehq.util.dates import coerce_to_datetime
@@ -44,7 +43,7 @@ class FundamentalBaseTests(TestCase):
     def setUp(self):
         super(FundamentalBaseTests, self).setUp()
         self.interface = FormProcessorInterface()
-        self.casedb = CaseAccessors(DOMAIN)
+        self.casedb = CommCareCase.objects
         self.formdb = XFormInstance.objects
 
 
@@ -108,7 +107,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             xmlns=xmlns
         )
 
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, DOMAIN)
         self.assertIsNotNone(case)
         self.assertEqual(case.case_id, case_id)
         self.assertEqual(case.owner_id, 'owner1')
@@ -144,7 +143,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
                 'dynamic': '123'
             }
         )
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, DOMAIN)
         self.assertEqual(case.name, case_name)
 
     def test_update_case(self):
@@ -165,7 +164,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             }
         )
 
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, DOMAIN)
         self.assertEqual(case.owner_id, 'owner2')
         self.assertEqual(case.name, 'update_case')
         self.assertEqual(coerce_to_datetime(case.opened_on), coerce_to_datetime(opened_on))
@@ -191,7 +190,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             False, case_id, user_id='user2', date_modified=modified_on, close=True
         )
 
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, DOMAIN)
         self.assertEqual(case.owner_id, 'owner1')
         self.assertEqual(case.modified_on, modified_on)
         self.assertEqual(case.modified_by, 'user2')
@@ -215,7 +214,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             False, case_id, user_id='user2', date_modified=modified_on, update={}
         )
 
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, DOMAIN)
         self.assertEqual(case.dynamic_case_properties(), {'dynamic': '123'})
 
     def test_case_with_index(self):
@@ -234,7 +233,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             }
         )
 
-        case = self.casedb.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id, DOMAIN)
         self.assertEqual(len(case.indices), 1)
         index = case.indices[0]
         self.assertEqual(index.identifier, 'mom')
@@ -257,7 +256,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             }
         )
 
-        case = self.casedb.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id, DOMAIN)
         self.assertEqual(case.indices[0].identifier, 'mom')
 
         _submit_case_block(
@@ -265,7 +264,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
                 'mom': ('other_mother', mother_case_id)
             }
         )
-        case = self.casedb.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id, DOMAIN)
         self.assertEqual(case.indices[0].referenced_type, 'other_mother')
 
     def test_delete_index(self):
@@ -283,7 +282,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             }
         )
 
-        case = self.casedb.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id, DOMAIN)
         self.assertEqual(len(case.indices), 1)
 
         _submit_case_block(
@@ -291,7 +290,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
                 'mom': ('mother', '')
             }
         )
-        case = self.casedb.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id, DOMAIN)
         self.assertEqual(len(case.indices), 1)
         self.assertEqual(case.indices[0].referenced_id, '')
 

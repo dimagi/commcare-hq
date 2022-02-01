@@ -1,7 +1,6 @@
 from django.test import TestCase
 from casexml.apps.case.tests.test_const import CLOSE_DATE, MODIFY_DATE, ORIGINAL_DATE, UPDATE_DATE
 from casexml.apps.case.tests.util import bootstrap_case_from_xml
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.tests.utils import sharded
@@ -32,7 +31,7 @@ class CaseFromXFormTest(TestCase):
 
         xform2, case = bootstrap_case_from_xml(self, "update.xml", original_case.case_id)
         # fetch the case from the DB to ensure it is property wrapped
-        case = CaseAccessors(case.domain).get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, case.domain)
         self.assertEqual(False, case.closed)
 
         self._check_transactions(case, [xform1, xform2])

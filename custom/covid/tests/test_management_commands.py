@@ -14,6 +14,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
@@ -93,15 +94,15 @@ class CaseCommandsTest(TestCase):
             True, lab_result_case_id, user_id=user_id, case_type='lab_result',
             update={"username": new_mobile_worker.raw_username, "hq_user_id": None}
         )
-        checkin_case = self.case_accessor.get_case(checkin_case_id)
+        checkin_case = CommCareCase.objects.get_case(checkin_case_id, self.domain)
         self.assertEqual('', checkin_case.get_case_property('hq_user_id'))
         self.assertEqual(checkin_case.case_json["username"], 'mobile_worker')
 
         call_command('add_hq_user_id_to_case', self.domain, 'checkin')
 
-        checkin_case = self.case_accessor.get_case(checkin_case_id)
-        checkin_case_no_username = self.case_accessor.get_case(checkin_case_no_username_id)
-        lab_result_case = self.case_accessor.get_case(lab_result_case_id)
+        checkin_case = CommCareCase.objects.get_case(checkin_case_id, self.domain)
+        checkin_case_no_username = CommCareCase.objects.get_case(checkin_case_no_username_id, self.domain)
+        lab_result_case = CommCareCase.objects.get_case(lab_result_case_id, self.domain)
         self.assertEqual(checkin_case.get_case_property('hq_user_id'), user_id)
         self.assertEqual(checkin_case_no_username.case_json['hq_user_id'], '')
         self.assertEqual(lab_result_case.case_json['hq_user_id'], '')
@@ -118,7 +119,7 @@ class CaseCommandsTest(TestCase):
             index={'patient': ('patient', patient_case_id, 'child')}
         )
 
-        lab_result_case = self.case_accessor.get_case(lab_result_case_id)
+        lab_result_case = CommCareCase.objects.get_case(lab_result_case_id, self.domain)
         self.assertEqual(lab_result_case.indices[0].referenced_type, 'patient')
         self.assertEqual(lab_result_case.indices[0].relationship, 'child')
 
@@ -130,11 +131,11 @@ class CaseCommandsTest(TestCase):
 
         call_command('update_case_index_relationship', self.domain, 'lab_result')
 
-        lab_result_case = self.case_accessor.get_case(lab_result_case_id)
+        lab_result_case = CommCareCase.objects.get_case(lab_result_case_id, self.domain)
         self.assertEqual(lab_result_case.indices[0].relationship, 'extension')
         self.assertEqual(lab_result_case.get_case_property('owner_id'), '-')
 
-        quoted_lab_result_case = self.case_accessor.get_case(quoted_lab_result_case_id)
+        quoted_lab_result_case = CommCareCase.objects.get_case(quoted_lab_result_case_id, self.domain)
         self.assertEqual(quoted_lab_result_case.indices[0].referenced_type, 'patient')
         self.assertEqual(quoted_lab_result_case.indices[0].relationship, 'extension')
         self.assertEqual(quoted_lab_result_case.get_case_property('owner_id'), '-')
@@ -173,17 +174,17 @@ class CaseCommandsTest(TestCase):
             index={'patient': ('patient', patient_case_id, 'child')}, update={"has_index_case": 'no'},
         )
 
-        traveler_case = self.case_accessor.get_case(traveler_case_id)
+        traveler_case = CommCareCase.objects.get_case(traveler_case_id, self.domain)
         self.assertEqual(traveler_case.indices[0].referenced_type, 'patient')
         self.assertEqual(traveler_case.indices[0].relationship, 'child')
 
         call_command('update_case_index_relationship', self.domain, 'contact', '--location=traveler_loc_id')
 
-        traveler_case = self.case_accessor.get_case(traveler_case_id)
+        traveler_case = CommCareCase.objects.get_case(traveler_case_id, self.domain)
         self.assertEqual(traveler_case.indices[0].relationship, 'child')
-        non_traveler_case = self.case_accessor.get_case(non_traveler_case_id)
+        non_traveler_case = CommCareCase.objects.get_case(non_traveler_case_id, self.domain)
         self.assertEqual(non_traveler_case.indices[0].relationship, 'extension')
-        excluded_case = self.case_accessor.get_case(excluded_case_id)
+        excluded_case = CommCareCase.objects.get_case(excluded_case_id, self.domain)
         self.assertEqual(excluded_case.indices[0].relationship, 'child')
 
     def test_update_case_index_relationship_with_inactive_location(self):
@@ -211,16 +212,16 @@ class CaseCommandsTest(TestCase):
             index={'patient': ('patient', patient_case_id, 'child')}
         )
 
-        inactive_case = self.case_accessor.get_case(inactive_case_id)
+        inactive_case = CommCareCase.objects.get_case(inactive_case_id, self.domain)
         self.assertEqual(inactive_case.indices[0].referenced_type, 'patient')
         self.assertEqual(inactive_case.indices[0].relationship, 'child')
 
         call_command('update_case_index_relationship', self.domain, 'contact',
                      '--inactive-location=inactive_loc_id')
 
-        inactive_case = self.case_accessor.get_case(inactive_case_id)
+        inactive_case = CommCareCase.objects.get_case(inactive_case_id, self.domain)
         self.assertEqual(inactive_case.indices[0].relationship, 'extension')
-        non_traveler_case = self.case_accessor.get_case(other_case_id)
+        non_traveler_case = CommCareCase.objects.get_case(other_case_id, self.domain)
         self.assertEqual(non_traveler_case.indices[0].relationship, 'child')
 
     def test_update_owner_ids(self):
@@ -258,14 +259,14 @@ class CaseCommandsTest(TestCase):
             case_type='investigation',
         )
 
-        investigation_case = self.case_accessor.get_case(investigation_case_id)
+        investigation_case = CommCareCase.objects.get_case(investigation_case_id, self.domain)
         self.assertEqual(investigation_case.get_case_property('owner_id'), 'test-parent-location')
 
         call_command('update_owner_ids', self.domain, 'investigation')
 
-        improper_investigation_case = self.case_accessor.get_case(improper_investigation_case_id)
+        improper_investigation_case = CommCareCase.objects.get_case(improper_investigation_case_id, self.domain)
         self.assertEqual(improper_investigation_case.get_case_property('owner_id'), 'fake-test-location')
-        investigation_case = self.case_accessor.get_case(investigation_case_id)
+        investigation_case = CommCareCase.objects.get_case(investigation_case_id, self.domain)
         self.assertEqual(investigation_case.get_case_property('owner_id'), 'test-child-location')
 
     def test_add_primary_assignment_cases(self):
@@ -281,7 +282,10 @@ class CaseCommandsTest(TestCase):
         call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
         assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
         self.assertEqual(len(assignment_cases), 1)
-        self.assertEqual(self.case_accessor.get_case(assignment_cases[0]).indices[0].relationship, 'extension')
+        self.assertEqual(
+            CommCareCase.objects.get_case(assignment_cases[0], self.domain).indices[0].relationship,
+            'extension',
+        )
 
     def test_add_temp_assignment_cases(self):
         self.create_active_location('active-location')
@@ -296,7 +300,10 @@ class CaseCommandsTest(TestCase):
         call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
         assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
         self.assertEqual(len(assignment_cases), 1)
-        self.assertEqual(self.case_accessor.get_case(assignment_cases[0]).indices[0].relationship, 'extension')
+        self.assertEqual(
+            CommCareCase.objects.get_case(assignment_cases[0], self.domain).indices[0].relationship,
+            'extension',
+        )
 
     def test_add_primary_and_temp_assingment_cases(self):
         self.create_active_location('active-location')
@@ -314,7 +321,10 @@ class CaseCommandsTest(TestCase):
         call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
         assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
         self.assertEqual(len(assignment_cases), 2)
-        self.assertEqual(self.case_accessor.get_case(assignment_cases[0]).indices[0].relationship, 'extension')
+        self.assertEqual(
+            CommCareCase.objects.get_case(assignment_cases[0], self.domain).indices[0].relationship,
+            'extension',
+        )
 
     def test_add_assignment_cases_invalid_assigned_to_ids(self):
         self.create_active_location('active-location')
@@ -357,8 +367,8 @@ class CaseCommandsTest(TestCase):
 
         call_command('clear_owner_ids', self.domain, 'patient')
 
-        patient1_case = self.case_accessor.get_case(patient1_case_id)
-        patient2_case = self.case_accessor.get_case(patient2_case_id)
+        patient1_case = CommCareCase.objects.get_case(patient1_case_id, self.domain)
+        patient2_case = CommCareCase.objects.get_case(patient2_case_id, self.domain)
 
         self.assertEqual(patient1_case.get_case_property('owner_id'), '-')
         self.assertEqual(patient2_case.get_case_property('owner_id'), '-')

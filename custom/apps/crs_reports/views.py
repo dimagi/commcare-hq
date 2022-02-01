@@ -5,8 +5,7 @@ from corehq.apps.reports.dispatcher import QuestionTemplateDispatcher
 from corehq.apps.reports.views import require_case_view_permission
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from django.template.loader import get_template
 from django.http import HttpResponse, Http404
 from custom.apps.crs_reports import MOTHER_POSTPARTUM_VISIT_FORM_XMLNS, BABY_POSTPARTUM_VISIT_FORM_XMLNS
@@ -62,7 +61,7 @@ def get_questions_with_answers(forms, domain, report_slug):
 
 
 def get_dict_to_report(domain, case_id, report_slug):
-    case = CaseAccessorSQL.get_case(case_id)
+    case = CommCareCase.objects.get_case(case_id)
     if case.domain != domain:
         raise Http404
     baby_case = [c for c in case.get_subcases() if c.type == 'baby']

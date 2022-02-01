@@ -468,8 +468,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @classmethod
     def get_obj_by_id(cls, case_id):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_case(case_id)
+        return cls.objects.get_case(case_id)
 
     @memoized
     def get_parent(self, identifier=None, relationship=None):
@@ -696,9 +695,8 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
 
         :return: referenced case
         """
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         if self.referenced_id:
-            return CaseAccessorSQL.get_case(self.referenced_id)
+            return CommCareCase.objects.get_case(self.referenced_id, self.domain)
         else:
             return None
 

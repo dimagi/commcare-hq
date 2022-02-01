@@ -21,7 +21,7 @@ from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import UserArchivedRebuild, XFormInstance
+from corehq.form_processor.models import CommCareCase, UserArchivedRebuild, XFormInstance
 
 
 class RetireUserTestCase(TestCase):
@@ -200,7 +200,7 @@ class RetireUserTestCase(TestCase):
         remove_indices_from_deleted_cases(self.domain, [parent_id])
 
         # check that the index is removed via a new form
-        child = CaseAccessors(self.domain).get_case(child_id)
+        child = CommCareCase.objects.get_case(child_id, self.domain)
         self.assertEqual(1, len(child.indices))
         self.assertTrue(child.indices[0].is_deleted)
         self.assertEqual(2, len(child.xform_ids))
@@ -327,7 +327,7 @@ class RetireUserTestCase(TestCase):
         for form_id in usercase.xform_ids:
             self.assertTrue(XFormInstance.objects.get_form(form_id, self.domain).is_deleted)
 
-        self.assertTrue(CaseAccessors(self.domain).get_case(usercase_id).is_deleted)
+        self.assertTrue(CommCareCase.objects.get_case(usercase_id, self.domain).is_deleted)
 
     def test_forms_touching_live_case_not_deleted(self):
         case_id = uuid.uuid4().hex

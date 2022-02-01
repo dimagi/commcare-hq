@@ -17,7 +17,7 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 from .utils import APIResourceTest
 
@@ -191,7 +191,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
                 update={cls.field_name: val},
             ).as_xml()
             post_case_blocks([case_block], {'domain': cls.domain.name})
-            cls.cases.append(CaseAccessors(cls.domain.name).get_case(id))
+            cls.cases.append(CommCareCase.objects.get_case(id, cls.domain.name))
 
         cls.report_columns = [
             {

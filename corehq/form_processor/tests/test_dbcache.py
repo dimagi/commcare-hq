@@ -4,8 +4,8 @@ from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import sharded
 
 
@@ -58,7 +58,7 @@ class CaseDbCacheTest(TestCase):
             self.assertFalse(cache.in_cache(id))
 
         for id in case_ids:
-            cache.set(id, CaseAccessors('dbcache-test').get_case(id))
+            cache.set(id, CommCareCase.objects.get_case(id, 'dbcache-test'))
 
         for i, id in enumerate(case_ids):
             self.assertTrue(cache.in_cache(id))

@@ -16,6 +16,8 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.models import CouchUser
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CommCareCase
 from corehq.toggles import IS_CONTRACTOR
 from corehq.util.quickcache import quickcache
 
@@ -194,11 +196,9 @@ def clean_text(text):
 
 
 def get_contact(domain, contact_id):
-    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-    from corehq.form_processor.exceptions import CaseNotFound
     contact = None
     try:
-        contact = CaseAccessors(domain).get_case(contact_id)
+        contact = CommCareCase.objects.get_case(contact_id, domain)
     except (ResourceNotFound, CaseNotFound):
         pass
 
@@ -275,11 +275,8 @@ def set_domain_default_backend_to_test_backend(domain):
 
 @quickcache(['domain', 'case_id'], timeout=60 * 60)
 def is_case_contact_active(domain, case_id):
-    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-    from corehq.form_processor.exceptions import CaseNotFound
-
     try:
-        case = CaseAccessors(domain).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, domain)
     except (ResourceNotFound, CaseNotFound):
         return False
 

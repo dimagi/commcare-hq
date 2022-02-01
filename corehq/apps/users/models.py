@@ -81,6 +81,7 @@ from corehq.apps.users.util import (
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.form_processor.models import CommCareCase
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
 from corehq.util.quickcache import quickcache
@@ -2225,7 +2226,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         try:
             from corehq.apps.commtrack.util import location_map_case_id
-            return CaseAccessors(self.domain).get_case(location_map_case_id(self))
+            return CommCareCase.objects.get_case(location_map_case_id(self, self.domain))
         except CaseNotFound:
             return None
 

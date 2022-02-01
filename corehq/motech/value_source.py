@@ -11,6 +11,7 @@ from couchforms.const import TAG_FORM, TAG_META
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_INTEGER,
@@ -500,11 +501,10 @@ class SupercaseValueSource(ValueSource):
                 and (not self.relationship or idx.relationship == self.relationship)
             )
 
-        case_accessor = CaseAccessors(info.domain)
-        case = case_accessor.get_case(info.case_id)
+        case = CommCareCase.objects.get_case(info.case_id, info.domain)
         for index in case.live_indices:
             if filter_index(index):
-                supercase = case_accessor.get_case(index.referenced_id)
+                supercase = CommCareCase.objects.get_case(index.referenced_id, info.domain)
                 yield get_case_trigger_info_for_case(
                     supercase,
                     [self.supercase_value_source],
