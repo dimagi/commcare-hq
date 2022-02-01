@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 
 from google.oauth2.credentials import Credentials
 
-from corehq.apps.oauth.models.gsuite import GoogleApiToken
+from corehq.apps.oauth.models import GoogleApiToken
 from corehq.apps.oauth.utils import get_token, chunkify_data, load_credentials, stringify_credentials
 
 

@@ -10,7 +10,7 @@ from corehq.apps.oauth.utils import get_token, load_credentials, stringify_crede
 
 from corehq.apps.oauth.views.google import redirect_oauth_view, call_back_view
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.oauth.models.gsuite import GoogleApiToken
+from corehq.apps.oauth.models import GoogleApiToken
 
 
 class TestViews(TestCase):
