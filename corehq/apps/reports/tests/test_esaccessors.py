@@ -58,7 +58,7 @@ from corehq.blobs.mixin import BlobMetaRef
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
+from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
@@ -1034,7 +1034,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
             closed_on=None,
             modified_on=None):
 
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=uuid.uuid4().hex,
             domain=domain or self.domain,
             owner_id=owner_id or self.owner_id,
@@ -1251,8 +1251,8 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         self.assertEqual({'t1'}, get_case_types_for_domain_es(self.domain))
 
         # simulate a save
-        from casexml.apps.case.signals import case_post_save
-        case_post_save.send(self, case=CommCareCaseSQL(domain=self.domain, type='t2'))
+        from corehq.form_processor.signals import sql_case_post_save
+        sql_case_post_save.send(self, case=CommCareCase(domain=self.domain, type='t2'))
 
         self.assertEqual({'t1', 't2'}, get_case_types_for_domain_es(self.domain))
 

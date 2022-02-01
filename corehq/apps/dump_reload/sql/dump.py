@@ -25,12 +25,12 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('locations.SQLLocation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('blobs.BlobMeta', SimpleFilter('domain')),
 
-    FilteredModelIteratorBuilder('form_processor.XFormInstanceSQL', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.XFormOperationSQL', SimpleFilter('form__domain')),
+    FilteredModelIteratorBuilder('form_processor.XFormInstance', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain')),
 
-    FilteredModelIteratorBuilder('form_processor.CommCareCaseSQL', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.CommCareCaseIndexSQL', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseAttachmentSQL', SimpleFilter('case__domain')),
+    FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('form_processor.CommCareCaseIndex', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('form_processor.CaseAttachment', SimpleFilter('case__domain')),
     FilteredModelIteratorBuilder('form_processor.CaseTransaction', SimpleFilter('case__domain')),
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain')),

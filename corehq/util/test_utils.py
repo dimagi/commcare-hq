@@ -526,7 +526,7 @@ def patch_foreign_value_caches():
     TransactionTestCase._post_teardown = post_teardown
 
 
-def get_form_ready_to_save(metadata, is_db_test=False):
+def get_form_ready_to_save(metadata, is_db_test=False, form_id=None):
     from corehq.form_processor.parsers.form import process_xform_xml
     from corehq.form_processor.utils import get_simple_form_xml, convert_xform_to_json
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -534,7 +534,7 @@ def get_form_ready_to_save(metadata, is_db_test=False):
 
     assert metadata is not None
     metadata.domain = metadata.domain or uuid.uuid4().hex
-    form_id = uuid.uuid4().hex
+    form_id = form_id or uuid.uuid4().hex
     form_xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
 
     if is_db_test:
@@ -583,7 +583,6 @@ def _create_case(domain, **kwargs):
 
 def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None,
         drop_signals=True, owner_id=None, user_id=None, index=None):
-    from casexml.apps.case.signals import case_post_save
     from corehq.form_processor.signals import sql_case_post_save
 
     kwargs = {
@@ -605,7 +604,7 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
 
     if drop_signals:
         # this avoids having to deal with all the reminders code bootstrap
-        with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
+        with drop_connected_signals(sql_case_post_save):
             form, cases = _create_case(domain, **kwargs)
     else:
         form, cases = _create_case(domain, **kwargs)

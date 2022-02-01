@@ -35,6 +35,8 @@ from corehq.apps.analytics.utils import (
     analytics_enabled_for_email,
     get_instance_string,
     get_meta,
+)
+from corehq.apps.analytics.utils.hubspot import (
     get_blocked_hubspot_domains,
     hubspot_enabled_for_user,
     hubspot_enabled_for_email,

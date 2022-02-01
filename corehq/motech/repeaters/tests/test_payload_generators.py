@@ -13,7 +13,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils.xform import FormSubmissionBuilder
 from corehq.motech.repeater_helpers import (
@@ -84,7 +84,7 @@ class TestSqlDataTypes(TestCase):
             ),
         )
         submit_form_locally(builder.as_xml_string(), cls.domain)
-        cls.form = FormAccessors(cls.domain).get_form(cls.form_id)
+        cls.form = XFormInstance.objects.get_form(cls.form_id, cls.domain)
 
         form_json_gen = FormRepeaterJsonPayloadGenerator(None)
         cls.form_json_payload_info = cls.get_payload_info(form_json_gen)

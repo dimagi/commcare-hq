@@ -5,7 +5,7 @@ from django.test import SimpleTestCase
 
 from casexml.apps.case.fixtures import CaseDBFixture
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 
 
 class TestFixtures(TestXmlMixin, SimpleTestCase):
@@ -15,7 +15,7 @@ class TestFixtures(TestXmlMixin, SimpleTestCase):
     domain = 'winterfell'
 
     def create_case(self):
-        return CommCareCaseSQL(
+        return CommCareCase(
             case_id='redwoman',
             domain=self.domain,
             opened_on=datetime.datetime(2016, 5, 31),

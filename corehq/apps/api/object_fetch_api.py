@@ -1,3 +1,4 @@
+import urllib.parse
 from wsgiref.util import FileWrapper
 
 from django.http import (
@@ -9,10 +10,6 @@ from django.http import (
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import View
-
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
 
 from dimagi.utils.django.cached_object import (
     IMAGE_SIZE_ORDERING,
@@ -96,17 +93,14 @@ class CaseAttachmentAPI(View):
                         r.write('Resolution: %d x %d<br>' % (meta['width'], meta['height']))
                         r.write('Filesize: %d<br>' % meta['content_length'])
 
-                        url_params = six.moves.urllib.parse.urlencode({
+                        url_params = urllib.parse.urlencode({
                             "img": '1',
                             "size": fsize,
                             "max_size": max_filesize,
                             "max_image_width": max_width,
                             "max_image_height": max_height
                         })
-                        r.write('<img src="%(attach_url)s?%(params)s">' % {
-                                "attach_url": url_base,
-                                "params": url_params
-                        })
+                        r.write(f'<img src="{url_base}?{url_params}">')
                     else:
                         r.write('Not available')
                     r.write('</li>')
@@ -158,7 +152,8 @@ class FormAttachmentAPI(View):
         )
 
 
-def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
+def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0,
+                     width_limit=0, height_limit=0, fixed_size=None):
     """
     Return (metadata, stream) information of best matching image attachment.
 

@@ -648,7 +648,7 @@ class SchedulingRecipientTest(TestCase):
                 self.domain,
                 'person',
                 owner_id=self.city_location.location_id,
-                update={'recipient': 'fake@mail.com'}
+                update={'recipient': 'fake@mail.com', 'language_code': 'en', 'time_zone': 'sast'}
         ) as case:
             instance = CaseTimedScheduleInstance(
                 domain=self.domain,
@@ -657,7 +657,10 @@ class SchedulingRecipientTest(TestCase):
                 recipient_id='recipient'
             )
             self.assertEqual(instance.recipient.get_email(), 'fake@mail.com')
+            self.assertEqual(instance.recipient.get_language_code(), 'en')
+            self.assertEqual(instance.recipient.get_time_zone(), 'sast')
 
+        # test that cases without the properties don't fail
         with create_case(
                 self.domain,
                 'person',
@@ -670,6 +673,8 @@ class SchedulingRecipientTest(TestCase):
                 recipient_id='recipient'
             )
             self.assertIsNone(instance.recipient.get_email())
+            self.assertIsNone(instance.recipient.get_language_code())
+            self.assertIsNone(instance.recipient.get_time_zone())
 
     def create_usercase(self, user):
         create_case_kwargs = {

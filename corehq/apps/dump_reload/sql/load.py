@@ -100,6 +100,7 @@ class SqlDataLoader(DataLoader):
         line = line.strip()
         if line:
             obj = json.loads(line)
+            update_model_name(obj)
             if self.filter_object(obj):
                 return obj
         return None
@@ -251,3 +252,17 @@ class LoadStat:
     def update(self, stat: 'LoadStat'):
         assert self.db_alias == stat.db_alias
         self.model_counter += stat.model_counter
+
+
+def update_model_name(obj):
+    name = obj["model"]
+    obj["model"] = RENAMED_MODELS.get(name, name)
+
+
+RENAMED_MODELS = {
+    "form_processor.xforminstancesql": "form_processor.xforminstance",
+    "form_processor.xformoperationsql": "form_processor.xformoperation",
+    "form_processor.commcarecasesql": "form_processor.commcarecase",
+    "form_processor.commcarecaseindexsql": "form_processor.commcarecaseindex",
+    "form_processor.caseattachmentsql": "form_processor.caseattachment",
+}

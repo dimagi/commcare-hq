@@ -24,6 +24,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -81,7 +82,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
     def testSubmitBadAttachmentType(self):
         res = self.client.post(self.url, {
-                "xml_submission_file": "this isn't a file"
+            "xml_submission_file": "this isn't a file"
         })
         self.assertEqual(400, res.status_code)
         #self.assertIn("xml_submission_file", res.content)
@@ -119,7 +120,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
                 self.assertIn(ResponseNature.SUBMIT_SUCCESS.encode('utf-8'), res.content)
 
             form_id = 'ad38211be256653bceac8e2156475664'
-            form = FormAccessors(self.domain.name).get_form(form_id)
+            form = XFormInstance.objects.get_form(form_id, self.domain.name)
             self.assertTrue(form.is_normal)
             self.assertTrue(form.initial_processing_complete)
             stubs = UnfinishedSubmissionStub.objects.filter(
@@ -201,7 +202,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         ).all()
         self.assertEqual(1, len(stubs))
 
-        form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
+        form = XFormInstance.objects.get_form(FORM_WITH_CASE_ID, self.domain)
         self.assertTrue(form.is_error)
         self.assertTrue(form.initial_processing_complete)
 
@@ -216,7 +217,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             self.assertEqual(201, res.status_code)
             self.assertIn(ResponseNature.SUBMIT_ERROR, res.content.decode('utf-8'))
 
-        form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
+        form = XFormInstance.objects.get_form(FORM_WITH_CASE_ID, self.domain)
         self.assertTrue(form.is_error)
         self.assertFalse(form.initial_processing_complete)
 
@@ -290,7 +291,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         ).all()
         self.assertEqual(1, len(stubs))
 
-        form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
+        form = XFormInstance.objects.get_form(FORM_WITH_CASE_ID, self.domain)
         self.assertFalse(form.is_error)
         self.assertTrue(form.initial_processing_complete)
 
@@ -305,7 +306,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         ).all()
         self.assertEqual(1, len(stubs))
 
-        old_form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
+        old_form = XFormInstance.objects.get_form(FORM_WITH_CASE_ID, self.domain)
         self.assertTrue(old_form.is_error)
         self.assertTrue(old_form.initial_processing_complete)
         expected_problem_message = f'{type(error).__name__}: {error}'
@@ -313,7 +314,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         _, resp = self._submit('form_with_case.xml')
         self.assertEqual(resp.status_code, 201)
-        new_form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
+        new_form = XFormInstance.objects.get_form(FORM_WITH_CASE_ID, self.domain)
         self.assertTrue(new_form.is_normal)
 
         old_form.refresh_from_db()  # can't fetch by form_id since form_id changed
@@ -326,7 +327,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         self.assertEqual(201, res.status_code)
         self.assertIn("   √   ".encode('utf-8'), res.content)
 
-        form = FormAccessors(self.domain.name).get_form(FORM_WITH_CASE_ID)
+        form = XFormInstance.objects.get_form(FORM_WITH_CASE_ID, self.domain.name)
         form_attachment_meta = form.get_attachment_meta('form.xml')
         blobdb = get_blob_db()
         with patch.object(blobdb.metadb, 'delete'):
@@ -334,8 +335,8 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         file, res = self._submit('form_with_case.xml')
         self.assertEqual(res.status_code, 201)
-        form = FormAccessors(self.domain.name).get_form(FORM_WITH_CASE_ID)
-        deprecated_form = FormAccessors(self.domain.name).get_form(form.deprecated_form_id)
+        form = XFormInstance.objects.get_form(FORM_WITH_CASE_ID, self.domain.name)
+        deprecated_form = XFormInstance.objects.get_form(form.deprecated_form_id, self.domain.name)
         self.assertTrue(deprecated_form.is_deprecated)
 
         case = CaseAccessors(self.domain.name).get_case('ad38211be256653bceac8e2156475667')

@@ -34,12 +34,12 @@ from corehq.toggles import (
     toggles_enabled_for_domain,
     toggles_enabled_for_user, FeatureRelease,
 )
+from corehq.toggles.models import Toggle
+from corehq.toggles.shortcuts import parse_toggle, namespaced_item
 from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_last_form_submission_received
 from soil import DownloadBase
-from toggle.models import Toggle
-from toggle.shortcuts import parse_toggle, namespaced_item
 
 NOT_FOUND = "Not Found"
 

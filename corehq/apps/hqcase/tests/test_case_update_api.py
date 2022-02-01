@@ -10,10 +10,8 @@ from casexml.apps.case.mock import CaseBlock
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import Permissions, UserRole, WebUser
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -40,7 +38,7 @@ class TestCaseAPI(TestCase):
         )
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
         cls.case_accessor = CaseAccessors(cls.domain)
-        cls.form_accessor = FormAccessors(cls.domain)
+        cls.form_accessor = XFormInstance.objects
 
     def setUp(self):
         self.client.login(username='netflix', password='password')
