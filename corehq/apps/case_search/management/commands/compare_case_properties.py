@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.es.case_search import CaseSearchES
+from corehq.util.markup import SimpleTableWriter, TableRowFormatter, CSVRowFormatter
 import time
 import json
 
@@ -16,8 +17,8 @@ def get_stats(results_list):
 
 
 def run_baseline_query(query_obj):
-    print("Running baseline query...")
-    result = query_obj.run().total
+    print("\nRunning baseline query...")
+    result = query_obj.count()
     print("Done!")
     return result
 
@@ -32,7 +33,7 @@ def run_test_queries(query_obj, repeats):
         tooks.append(query_obj.run().raw['took'])
         t2 = time.time()
         results.append(t2 - t1)
-    print("Done!")
+    print("Done!\n")
     return results, tooks, hits
 
 
@@ -44,6 +45,7 @@ def define_baseline_query(domain, case_type=None):
         query_obj = (CaseSearchES()
             .domain(domain)
             .case_type(case_type))
+    query_obj.size(10)
     return query_obj
 
 
@@ -62,15 +64,8 @@ def define_test_query(domain, case_type, props, operator):
             ]
         }
     }
-    if case_type is None:
-        query_obj = (CaseSearchES()
-            .domain(domain)
-            .set_query(script))
-    else:
-        query_obj = (CaseSearchES()
-            .domain(domain)
-            .case_type(case_type)
-            .set_query(script))
+    query_obj = define_baseline_query(domain, case_type)
+    query_obj.set_query(script)
     return query_obj
 
 
@@ -78,21 +73,23 @@ class Command(BaseCommand):
     help = "Run test queries for perfomance benchmarks for comparison script queries."
 
     def add_arguments(self, parser):
-        parser.add_argument('domain')
-        parser.add_argument('-ct', '--type', dest='type')
-        parser.add_argument('-cp', '--properties', dest='props', nargs=2)
-        parser.add_argument('-n', dest='n', default=1, type=int)
+        parser.add_argument('domain', help='define domain to query against')
+        parser.add_argument('-ct', '--type', dest='type', help='define case type to query against')
+        parser.add_argument('-cp', '--properties', dest='props', nargs=2,
+            help='define case properties to compare')
+        parser.add_argument('-n', dest='n', default=1, type=int, help='set number of query attempts')
 
         # operator arguments, only one of these is permitted
-        parser.add_argument('-eq', dest='equals', action='store_true')
-        parser.add_argument('-neq', dest='not_equals', action='store_true')
-        parser.add_argument('-gt', dest='greater_than', action='store_true')
-        parser.add_argument('-lt', dest='less_than', action='store_true')
-        parser.add_argument('-gte', dest='greater_equal', action='store_true')
-        parser.add_argument('-lte', dest='less_equal', action='store_true')
+        parser.add_argument('-eq', dest='equals', action='store_true', help='set operator to ==')
+        parser.add_argument('-neq', dest='not_equals', action='store_true', help='set operator to !=')
+        parser.add_argument('-gt', dest='greater_than', action='store_true', help='set operator to >')
+        parser.add_argument('-lt', dest='less_than', action='store_true', help='set operator to <')
+        parser.add_argument('-gte', dest='greater_equal', action='store_true', help='set operator to >=')
+        parser.add_argument('-lte', dest='less_equal', action='store_true', help='set operator to <=')
 
-        parser.add_argument('--verbose', dest="verbose", action='store_true')
-        parser.add_argument('--profile', dest="profile", action='store_true')
+        parser.add_argument('--verbose', dest="verbose", action='store_true', help='print out raw ES query')
+        parser.add_argument('--profile', dest="profile", action='store_true', help='print out query profile')
+        parser.add_argument('--csv', dest='csv', action='store_true', help='change table row format to csv')
 
     def handle(self, *args, **kwargs):
         domain = kwargs['domain']
@@ -140,14 +137,31 @@ class Command(BaseCommand):
             print("=" * 8 + "PROFILED QUERY RESULTS " + "=" * 8)
             print(json.dumps(profiled_hits.get('profile', {}), indent=2))
 
+        row_formatter = CSVRowFormatter() if kwargs['csv'] else TableRowFormatter([8, 12, 12, 12])
+        writer = SimpleTableWriter(
+            self.stdout,
+            row_formatter
+        )
+
         # print out results
         print("=" * 8 + " SCRIPT QUERY TEST " + "=" * 8)
         print(query_str)
         print(f"BASELINE: {baseline_amt} cases")
-        print(f"MATCHED: {hits} cases")
-        print(f"MIN TOOK: {min_took} ms | MAX TOOK: {max_took} ms | AVG TOOK: {avg_took} ms")
-        print(
-            f"MIN RUNTIME: {(min_value * 1000):.4g} ms | MAX RUNTIME: {(max_value * 1000):.4g} ms | "
-            + f"AVG RUNTIME: {(avg_value * 1000):.4g} ms"
-        )
+        print(f"MATCHED: {hits} cases" + "\n")
+        print("=" * 22 + " RESULTS " + "=" * 22)
+        writer.write_headers(['', 'MIN', 'MAX', 'AVG'])
+        writer.write_rows([
+            [
+                'TOOK',
+                f"{min_took} ms",
+                f"{max_took} ms",
+                f"{avg_took} ms"
+            ],
+            [
+                'RUNTIME',
+                f"{(min_value * 1000):.4g} ms",
+                f"{(max_value * 1000):.4g} ms",
+                f"{(avg_value * 1000):.4g} ms"
+            ]
+        ])
         return None
