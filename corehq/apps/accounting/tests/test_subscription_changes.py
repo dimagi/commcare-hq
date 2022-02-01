@@ -394,7 +394,7 @@ class DeactivateScheduleTest(TransactionTestCase):
                     call(
                         broadcast.schedule_id,
                         broadcast.recipients,
-                        start_date=json_format_date(broadcast.start_date)
+                        start_date_iso_string=json_format_date(broadcast.start_date)
                     )
                     for broadcast in (self.domain_1_sms_schedules[0], self.domain_1_survey_schedules[0])
                 ],
@@ -437,7 +437,11 @@ class DeactivateScheduleTest(TransactionTestCase):
             _deactivate_schedules(self.domain_obj_1, survey_only=True)
 
             b = self.domain_1_survey_schedules[0]
-            p1.assert_called_once_with(b.schedule_id, b.recipients, start_date=json_format_date(b.start_date))
+            p1.assert_called_once_with(
+                b.schedule_id,
+                b.recipients,
+                start_date_iso_string=json_format_date(b.start_date)
+            )
 
             b = self.domain_1_survey_schedules[1]
             p2.assert_called_once_with(b.schedule_id, b.recipients)
