@@ -1,4 +1,4 @@
-SAMVEG_DOMAINS = ["samveg", "samveg-quick"]
+SAMVEG_DOMAINS = ["samveg", "samveg-quick", "test-samveg-quick"]
 
 
 RCH_BENEFICIARY_IDENTIFIER = 'Rch_id'
