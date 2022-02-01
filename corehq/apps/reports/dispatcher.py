@@ -1,5 +1,11 @@
-from django.conf import settings
-from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
+from typing import Callable, Optional
+
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
@@ -8,8 +14,6 @@ from django.views.generic.base import View
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 
-from corehq.apps.domain.utils import get_custom_domain_module
-from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 
@@ -21,13 +25,19 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     track_domain_request,
 )
-from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.models import AnonymousCouchUser
 from corehq.util.quickcache import quickcache
 
+from .exceptions import BadRequestError
 from .lookup import ReportLookup
+
+try:
+    from typing import Literal  # Py 3.8+
+except ImportError:
+    from typing_extensions import Literal  # For environments still on Py 3.6
+
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -118,13 +128,30 @@ class ReportDispatcher(View):
         return self.slug_aliases.get(slug)
 
     @datespan_default
-    def dispatch(self, request, domain=None, report_slug=None, render_as=None,
-                 permissions_check=None, *args, **kwargs):
-        render_as = render_as or 'view'
+    def dispatch(
+        self,
+        request,
+        domain: Optional[str] = None,
+        report_slug: Optional[str] = None,
+        render_as: Literal[
+            'async',
+            'deprecate',
+            'email',
+            'excel',
+            'export',
+            'filters',
+            'json',
+            'partial',
+            'print',
+            'view',
+        ] = 'view',
+        permissions_check: Optional[Callable] = None,
+        *args,
+        **kwargs,
+    ) -> HttpResponse:
+
         domain = domain or getattr(request, 'domain', None)
-
         redirect_slug = self._redirect_slug(report_slug)
-
         if redirect_slug and render_as == 'email':
             # todo saved reports should probably change the slug to the redirected slug. this seems like a hack.
             raise Http404
@@ -135,11 +162,8 @@ class ReportDispatcher(View):
             new_args.append(redirect_slug)
             return HttpResponseRedirect(reverse(self.name(), args=new_args))
 
-        report_kwargs = kwargs.copy()
-
         class_name = self.get_report_class_name(domain, report_slug)
         report_class = to_function(class_name) if class_name else None
-
         permissions_check = permissions_check or self.permissions_check
         if (
             report_class
@@ -147,22 +171,28 @@ class ReportDispatcher(View):
             and self.toggles_enabled(report_class, request)
             and report_class.allow_access(request)
         ):
+            report_kwargs = kwargs.copy()
             try:
                 report = report_class(request, domain=domain, **report_kwargs)
                 report.rendered_as = render_as
                 report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
-                # grep help:
-                # return report.json_response
-                # return report.async_response
-                # return report.filters_response
-                # return report.export_response
-                # return report.mobile_response
-                # return report.email_response
-                # return report.partial_response
-                # return report.print_response
-                return getattr(report, '%s_response' % render_as)
+                return {
+                    # Use lambda to avoid executing all *_response properties.
+                    # Use properties instead of strings so that IDEs see these
+                    # as usage, and make them easier to find.
+                    'async': lambda: report.async_response,
+                    'deprecate': lambda: report.deprecate_response,
+                    'excel': lambda: report.excel_response,
+                    'email': lambda: report.email_response,
+                    'export': lambda: report.export_response,
+                    'filters': lambda: report.filters_response,
+                    'json': lambda: report.json_response,
+                    'partial': lambda: report.partial_response,
+                    'print': lambda: report.print_response,
+                    'view': lambda: report.view_response,
+                }[render_as]()
             except BadRequestError as e:
                 return HttpResponseBadRequest(e)
         else:
