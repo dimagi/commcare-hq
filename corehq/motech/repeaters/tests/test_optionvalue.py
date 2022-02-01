@@ -1,8 +1,7 @@
 import attr
-from couchdbkit.ext.django.schema import DocumentSchema, IntegerProperty
 from testil import assert_raises, eq
 
-from ..models import OptionValue
+from corehq.motech.repeaters.optionvalue import OptionSchema, OptionValue
 
 
 def test_basic_option_value():
@@ -55,8 +54,29 @@ def test_option_with_callable_default():
 def test_schema_passed_in_option():
     order = FoodOptions()
     order.packaged_water = WaterBottle({"qty": 2})
-    isinstance(order.options['packaged_water'], WaterBottle)
-    eq(order.options['packaged_water'].qty, 2)
+    eq(order.options["packaged_water"], {"qty": 2})
+
+
+def test_schema_default_value():
+    order = FoodOptions()
+    eq(order.packaged_water, WaterBottle({}))
+    eq(order.packaged_water.qty, "1")
+    eq(order.packaged_water, WaterBottle({"qty": "1"}))
+
+
+def test_schema_with_default():
+    with assert_raises(ValueError):
+        OptionValue(schema=WaterBottle, default={})
+
+
+def test_schema_value_equality():
+    order = FoodOptions()
+    order.packaged_water = WaterBottle({"qty": 2})
+    water = order.packaged_water
+    eq(water.qty, 2)
+    water.qty = 3
+    eq(order.packaged_water.qty, 3)
+    eq(order.packaged_water, water)
 
 
 def test_raises_on_invalid_schema():
@@ -65,8 +85,8 @@ def test_raises_on_invalid_schema():
         order.packaged_water = {"somedict": "hola"}
 
 
-class WaterBottle(DocumentSchema):
-    qty = IntegerProperty(default="1")
+class WaterBottle(OptionSchema):
+    qty = OptionValue(default="1")
 
 
 @attr.s
