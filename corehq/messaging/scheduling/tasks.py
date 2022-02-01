@@ -299,7 +299,7 @@ def refresh_alert_schedule_instances(schedule_id, recipients):
     :param recipients: a list of (recipient_type, recipient_id) tuples; the
     recipient type should be one of the values checked in ScheduleInstance.recipient
     """
-    with CriticalSection(['refresh-alert-schedule-instances-for-%s' % schedule_id.hex], timeout=5 * 60):
+    with CriticalSection(['refresh-alert-schedule-instances-for-%s' % schedule_id], timeout=5 * 60):
         schedule = AlertSchedule.objects.get(schedule_id=schedule_id)
         AlertScheduleInstanceRefresher(
             schedule,
