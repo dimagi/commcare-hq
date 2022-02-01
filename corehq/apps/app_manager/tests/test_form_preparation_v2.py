@@ -71,7 +71,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         expected = """
             <partial>
               <ns0:bind xmlns:ns0="http://www.w3.org/2002/xforms" nodeset="/data/case/update/question1"
-                relevant="count(/data/question1) &gt; 0 and instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/question1 != /data/question1"
+                relevant="count(/data/question1) &gt; 0 and instance('casedb')/casedb/case[@case_id=/data/case/@case_id]/question1 != /data/question1"
                 calculate="/data/question1"/>
             </partial>
         """
@@ -317,7 +317,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         expected = """
             <partial>
               <ns0:bind xmlns:ns0="http://www.w3.org/2002/xforms" nodeset="/data/case_load_1/case/update/question1"
-                relevant="count(/data/question1) &gt; 0 and instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_load_1]/question1 != /data/question1"
+                relevant="count(/data/question1) &gt; 0 and instance('casedb')/casedb/case[@case_id=/data/case_load_1/case/@case_id]/question1 != /data/question1"
                 calculate="/data/question1"/>
             </partial>
         """
