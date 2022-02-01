@@ -10,6 +10,7 @@ from jsonfield import JSONField as jsonfield_JSONField
 
 from dimagi.utils.logging import notify_exception
 from corehq.toggles import BLOCKED_EMAIL_DOMAIN_RECIPIENTS
+from corehq.util.metrics import metrics_counter
 
 AwsMeta = namedtuple('AwsMeta', 'notification_type main_type sub_type '
                                 'email reason headers timestamp '
@@ -300,6 +301,10 @@ class ForeignValue:
     def get_value(self):
         def get_value(fk_id):
             try:
+                metrics_counter(
+                    "commcare.foreignvalue.get_value.cachemiss",
+                    tags={"key": self.fk_path},
+                )
                 return manager.filter(pk=fk_id).values_list('value', flat=True)[0]
             except IndexError:
                 return None
@@ -326,6 +331,10 @@ class ForeignValue:
     def get_related(self):
         def get_related(value):
             try:
+                metrics_counter(
+                    "commcare.foreignvalue.get_related.cachemiss",
+                    tags={"key": self.fk_path},
+                )
                 return manager.get_or_create(value=value)[0]
             except model.MultipleObjectsReturned:
                 notify_exception(None, f"{model} multiple objects returned. "
@@ -336,6 +345,11 @@ class ForeignValue:
         if self.cache_size:
             get_related = lru_cache(self.cache_size)(get_related)
         return get_related
+
+    @cached_property
+    def fk_path(self):
+        meta = self.fk.model._meta
+        return f"{meta.app_label}.{meta.object_name}.{self.fk.name}"
 
     @staticmethod
     def get_names(cls):

@@ -219,7 +219,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
         """Update open_ids and deleted_ids with related case_ids
 
         TODO store referenced case (parent) deleted and closed status in
-        CommCareCaseIndexSQL to reduce number of related indices fetched
+        CommCareCaseIndex to reduce number of related indices fetched
         and avoid this extra query per related query.
         """
         case_ids = {case_id

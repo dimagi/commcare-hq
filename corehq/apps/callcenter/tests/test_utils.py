@@ -40,10 +40,8 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import ensure_index_deleted
@@ -284,7 +282,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
         self.assertEqual(1, len(case.xform_ids))
 
     def _check_update_matches(self, case, expected_update):
-        last_form = FormAccessors(TEST_DOMAIN).get_form(case.xform_ids[-1])
+        last_form = XFormInstance.objects.get_form(case.xform_ids[-1], TEST_DOMAIN)
         case_update = get_case_updates(last_form)[0]
         self.assertDictEqual(case_update.update_block, expected_update)
 

@@ -14,7 +14,7 @@ from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import reset_es_index
@@ -43,7 +43,7 @@ class TestCommCareCaseResource(APIResourceTest):
                 kwargs['owner_id'] = owner_id
             if case_id:
                 kwargs['case_id'] = case_id
-            backend_case = CommCareCaseSQL(
+            backend_case = CommCareCase(
                 domain=self.domain.name,
                 modified_on=modify_date,
                 server_modified_on=modify_date,

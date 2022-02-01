@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-15 20:15+0000\n"
+"POT-Creation-Date: 2022-01-26 20:12+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Michelle B. Sultan <msultan@dimagi.com>, 2021\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -188,14 +188,6 @@ msgstr ""
 msgid "Invalid Project Selected"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/case_config_utils.js:65
-msgid ""
-"Something went wrong refreshing your form properties. Please refresh the "
-"page and try again"
-msgstr ""
-"Ocurrió un error al actualizar las propiedades de su formulario. Por favor "
-"actualice la página e intente de nuevo "
-
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:118
 msgid "Mobile UCR Options"
 msgstr ""
@@ -217,7 +209,7 @@ msgid "Lookup Table Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:129
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:92
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50381
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50798
 msgid "Lookup Table"
@@ -534,40 +526,40 @@ msgstr ""
 msgid "Select parent"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:85
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:86
 msgid "Raw"
 msgstr "Sin procesar"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:88
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:89
 msgid "User Data"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:94
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:95
 msgid "User Properties"
 msgstr "Propiedades del Usuario"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:99
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:100
 msgid "Case Index"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:333
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:348
 msgid "Load / Update / Close a case"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:336
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:351
 msgid "Automatic Case Selection"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:339
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:354
 msgid "Load Case From Fixture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:347
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:362
 msgid "Open a Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js:71
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:525
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:523
 msgid "Property updated by two questions"
 msgstr "Propiedad actualizada por dos preguntas"
 
@@ -577,7 +569,7 @@ msgid "Reserved word: "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js:75
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:529
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:527
 msgid "Inside the wrong repeat!"
 msgstr "¡Dentro de la repetición equivocada!"
 
@@ -598,7 +590,7 @@ msgstr "Tiene configuraciones de caso sin cambio"
 msgid "You have unchanged user properties settings"
 msgstr "Tiene configuraciones de propiedades sin cambio"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:534
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:532
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La propiedad utiliza un prefijo<strong> no reconocido"
 
@@ -687,27 +679,27 @@ msgstr "Eliminar"
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:109
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:110
 msgid "Case type is required."
 msgstr "Se requiere un tipo de caso."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:116
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:117
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 "Los tipos de casos solo pueden incluir los caracteres a-z, 0-9, '-' y '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:121
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:122
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 "'usuario-commcare' es un tipo de caso reservado. Por favor cambie el tipo de "
 "caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:167
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:171
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:168
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:172
 msgid "Go back to case list"
 msgstr "Regresar a la lista de casos"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:168
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:169
 msgid "Proceed with registered case"
 msgstr "Continuar con el caso registrado"
 
@@ -1614,7 +1606,7 @@ msgstr "Agregue Expresión"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:45965
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:48707
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:49977
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:765
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:781
 #: corehq/apps/export/static/export/js/models.js:357
 #: corehq/apps/export/static/export/js/models.js:359
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:298
@@ -2853,24 +2845,24 @@ msgstr ""
 msgid "Not a valid number"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:422
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:534
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:440
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:550
 msgid "Please choose an item"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:586
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:602
 msgid "Combobox"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:658
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:674
 msgid "Not a valid choice"
 msgstr "Opción no válida"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:920
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:936
 msgid "Map layer not configured."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:927
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:943
 msgid "Could not load map. Please try again later."
 msgstr ""
 
@@ -3022,11 +3014,6 @@ msgid ""
 "Geocoder privilege"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:236
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:65
-msgid "Clear"
-msgstr "Borrar"
-
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:41
 msgid "Delete incomplete form?"
 msgstr "¿Desea borrar el formulario incompleto?"
@@ -3119,10 +3106,8 @@ msgstr ""
 "datos. Por favor, intente otra vez más tarde."
 
 #: corehq/apps/custom_data_fields/static/custom_data_fields/js/custom_data_fields.js:112
-#, fuzzy
-#| msgid "Edit Role: "
 msgid "Edit Profile"
-msgstr "Editar Rol:"
+msgstr ""
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:25
 msgid "No Name"
@@ -3141,16 +3126,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:76
-#, fuzzy
-#| msgid "value"
 msgid "valid value"
-msgstr "valor"
+msgstr ""
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:76
-#, fuzzy
-#| msgid "Question"
 msgid "description"
-msgstr "Pregunta"
+msgstr ""
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:124
 msgid "You have unsaved changes to your data dictionary."
@@ -3255,15 +3236,15 @@ msgstr "Comprar Créditos"
 msgid "Select a Timezone..."
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/internal_settings.js:79
+#: corehq/apps/domain/static/domain/js/internal_settings.js:78
 msgid "Available Countries"
 msgstr "Países disponibles"
 
-#: corehq/apps/domain/static/domain/js/internal_settings.js:80
+#: corehq/apps/domain/static/domain/js/internal_settings.js:79
 msgid "Active Countries"
 msgstr "Países Activos"
 
-#: corehq/apps/domain/static/domain/js/internal_settings.js:81
+#: corehq/apps/domain/static/domain/js/internal_settings.js:80
 msgid "Search Countries..."
 msgstr "Buscar Países..."
 
@@ -3433,10 +3414,8 @@ msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
 #: corehq/apps/groups/static/groups/js/group_members.js:18
-#, fuzzy
-#| msgid "Group Information"
 msgid "Edit Group Information"
-msgstr "Información de Grupo"
+msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js:51
 msgid "The following changes will not be saved: "
@@ -3484,21 +3463,25 @@ msgstr ""
 msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:65
+msgid "Clear"
+msgstr "Borrar"
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:70
 #: corehq/apps/registry/static/registry/js/registry_logs.js:19
 #: corehq/apps/reports/static/reports/js/filters/main.js:76
 msgid "Show All Dates"
 msgstr "Mostrar Todas las Fechas"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:163
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:208
 msgid "Could not authenticate, please log in and try again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:180
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:225
 msgid "There was a problem, please refresh and try again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:185
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:230
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:49
 msgid "Done"
 msgstr "Listo"
@@ -3528,28 +3511,25 @@ msgstr "Eliminado"
 msgid "There was an error deleting"
 msgstr "Ocurrió un error al borrar"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:70
-msgid "Add All"
-msgstr "Agregar Todos"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:75
-msgid "Remove All"
-msgstr "Eliminar Todos"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:153
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:173
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:58
 msgid "Items"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:154
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:174
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:59
 msgid "Selected items"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:155
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:175
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:60
 msgid "Search items"
 msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:72
+msgid "Add All"
+msgstr "Agregar Todos"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:77
+msgid "Remove All"
+msgstr "Eliminar Todos"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js:18
 msgid "Your password is too weak! Try adding numbers or symbols."
@@ -3585,16 +3565,12 @@ msgid "Edit"
 msgstr "Editar"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:45
-#, fuzzy
-#| msgid "Add Image"
 msgid "Add Item"
-msgstr "Agregar Imagen"
+msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:90
-#, fuzzy
-#| msgid "Click <strong>Edit</strong> below to add mappings"
 msgid "Click <strong>Edit</strong> to Add Values"
-msgstr "Haga clic en<strong>Editar</strong> abajo para agregar mapeos"
+msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:172
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:180
@@ -3680,41 +3656,53 @@ msgid "Error updating."
 msgstr ""
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:183
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:334
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:336
 msgid "Report successfully linked."
 msgstr ""
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:186
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:191
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:206
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:273
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:338
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:343
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:275
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:340
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:345
 msgid ""
 "Something unexpected happened.\n"
 "Please try again, or report an issue if the problem persists."
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:253
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:254
 msgid "All project spaces"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:254
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:255
 msgid "Project spaces to push to"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:255
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:256
 msgid "Search project spaces"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:369
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:374
 msgid "Unable to link project spaces. <%- error %>"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:375
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:380
 msgid ""
 "Unable to link project spaces.\n"
 "Please try again, or report an issue if the problem persists."
+msgstr ""
+
+#: corehq/apps/locations/static/locations/js/filtered_download.js:27
+msgid "Download <%- count %> Location"
+msgstr ""
+
+#: corehq/apps/locations/static/locations/js/filtered_download.js:27
+msgid "Download <%- count %> Locations"
+msgstr ""
+
+#: corehq/apps/locations/static/locations/js/filtered_download.js:48
+msgid "Error determining number of matching locations"
 msgstr ""
 
 #: corehq/apps/locations/static/locations/js/location.js:33
@@ -3778,15 +3766,21 @@ msgstr "Por favor especifique un nombre de proyecto."
 msgid "Please specify."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:38
+#: corehq/apps/registration/static/registration/js/password.js:53
+msgid ""
+"<i class='fa fa-warning'></i>This password is automatically generated. "
+"Please copy it or create your own. It will not be shown again."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/password.js:57
 msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr "¡Su contraseña es muy débil! ¡Intente agregar números o simbolos!"
 
-#: corehq/apps/registration/static/registration/js/password.js:40
+#: corehq/apps/registration/static/registration/js/password.js:59
 msgid "Your password is almost strong enough! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:42
+#: corehq/apps/registration/static/registration/js/password.js:61
 msgid "Good Job! Your password is strong!"
 msgstr "¡Bien Hecho! ¡Su contraseña es segura!"
 
@@ -3874,31 +3868,31 @@ msgstr ""
 msgid "label-info-light"
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js:9
+#: corehq/apps/reminders/static/reminders/js/keywords_list.js:8
 msgid "Keywords"
 msgstr "Palabras Clave"
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js:10
+#: corehq/apps/reminders/static/reminders/js/keywords_list.js:9
 msgid "Keywords to copy"
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js:11
+#: corehq/apps/reminders/static/reminders/js/keywords_list.js:10
 msgid "Search keywords"
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js:15
+#: corehq/apps/reminders/static/reminders/js/keywords_list.js:14
 msgid "Linked Project Spaces"
+msgstr ""
+
+#: corehq/apps/reminders/static/reminders/js/keywords_list.js:15
+#: corehq/apps/userreports/static/userreports/js/configure_report.js:38
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js:11
+msgid "Projects to copy to"
 msgstr ""
 
 #: corehq/apps/reminders/static/reminders/js/keywords_list.js:16
 #: corehq/apps/userreports/static/userreports/js/configure_report.js:39
 #: corehq/apps/userreports/static/userreports/js/edit_report_config.js:12
-msgid "Projects to copy to"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/keywords_list.js:17
-#: corehq/apps/userreports/static/userreports/js/configure_report.js:40
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js:13
 msgid "Search projects"
 msgstr ""
 
@@ -3952,20 +3946,20 @@ msgstr ""
 msgid "Select a value"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:120
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:125
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:28
 msgid "Select a language..."
 msgstr "Seleccionar un idioma..."
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:135
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:139
 msgid "Available Reports"
 msgstr "Reportes Disponibles"
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:136
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:140
 msgid "Included Reports"
 msgstr "Reportes Incluidos"
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:137
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:141
 msgid "Search Reports..."
 msgstr "Buscar Reportes..."
 
@@ -4295,8 +4289,8 @@ msgstr ""
 msgid "deactivated"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/configure_report.js:38
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js:11
+#: corehq/apps/userreports/static/userreports/js/configure_report.js:37
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js:10
 msgid "Linked projects"
 msgstr ""
 
@@ -4312,19 +4306,19 @@ msgstr "Cambio de contraseña exitoso"
 msgid "Password was not changed "
 msgstr "No se cambió de contraseña"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:91
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:90
 msgid "Available Groups"
 msgstr "Grupos Disponibles"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:92
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:91
 msgid "Groups with this User"
 msgstr "Grupos con este Usuario"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:93
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:92
 msgid "Search Group..."
 msgstr "Buscar Grupo..."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:104
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:103
 msgid "Group membership has changed."
 msgstr "La membresía del grupo ha cambiado."
 
@@ -4336,15 +4330,15 @@ msgstr ""
 msgid "Show Deactivated Mobile Workers"
 msgstr "Mostrar Usuarios Móviles Desactivados"
 
-#: corehq/apps/users/static/users/js/filtered_download.js:34
+#: corehq/apps/users/static/users/js/filtered_download.js:36
 msgid "Download <%- count %> user"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/filtered_download.js:34
+#: corehq/apps/users/static/users/js/filtered_download.js:36
 msgid "Download <%- count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/filtered_download.js:59
+#: corehq/apps/users/static/users/js/filtered_download.js:64
 msgid "Error determining number of matching users"
 msgstr ""
 
@@ -4794,9 +4788,3 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js:125
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "Edit Mapping for "
-#~ msgstr "Editar Mapeo para"
-
-#~ msgid "Add Key &rarr; Value Mapping"
-#~ msgstr "Agregar Clave &rarr; Mapeo de Valor"

@@ -12,17 +12,13 @@ from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_decode
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
-from django.views.decorators.debug import sensitive_post_parameters
-from django.views.generic import View
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
-from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import json_response
-from toggle.models import Toggle
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -54,8 +50,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
-from custom.openclinica.forms import OpenClinicaSettingsForm
-from custom.openclinica.models import OpenClinicaSettings
+from corehq.toggles.models import Toggle
 
 
 class BaseProjectSettingsView(BaseDomainView):
@@ -259,38 +254,6 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
-class EditOpenClinicaSettingsView(BaseProjectSettingsView):
-    template_name = 'domain/admin/openclinica_settings.html'
-    urlname = 'oc_settings'
-    page_title = ugettext_lazy('OpenClinica settings')
-
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def openclinica_settings_form(self):
-        oc_settings = OpenClinicaSettings.for_domain(self.domain_object.name)
-        initial = dict(oc_settings.study) if oc_settings else {}
-        if self.request.method == 'POST':
-            return OpenClinicaSettingsForm(self.request.POST, initial=initial)
-        return OpenClinicaSettingsForm(initial=initial)
-
-    @property
-    def page_context(self):
-        return {'openclinica_settings_form': self.openclinica_settings_form}
-
-    @method_decorator(sensitive_post_parameters('username', 'password'))
-    def post(self, request, *args, **kwargs):
-        if self.openclinica_settings_form.is_valid():
-            if self.openclinica_settings_form.save(self.domain_object):
-                messages.success(request, _('OpenClinica settings successfully updated'))
-            else:
-                messages.error(request, _('An error occurred. Please try again.'))
-        return self.get(request, *args, **kwargs)
-
-
 @location_safe
 def logo(request, domain):
     logo = Domain.get_by_name(domain).get_custom_logo()
@@ -323,6 +286,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
             "ga_opt_out": self.domain_object.ga_opt_out,
             "restrict_mobile_access": self.domain_object.restrict_mobile_access,
+            "disable_mobile_login_lockout": self.domain_object.disable_mobile_login_lockout,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,

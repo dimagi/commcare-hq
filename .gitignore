@@ -57,7 +57,7 @@ ptop*.json
 /coverage-report
 
 # pyenv
-/.python-version
+.python-version
 
 # Sphinx
 docs/_build

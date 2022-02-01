@@ -70,14 +70,6 @@ def test_extract_criteria_config(self, case_type, data_registry, custom_related_
         ))
 
 
-def test_extract_criteria_config_legacy():
-    config = extract_search_request_config(_make_request_dict({
-        CASE_SEARCH_CASE_TYPE_KEY: "type",
-        "commcare_registry": "reg1",
-    }))
-    eq(config, CaseSearchRequestConfig(criteria={}, case_types=["type"], data_registry="reg1"))
-
-
 def _make_request_dict(params):
     """All values must be a list to match what we get from Django during a request.
     """

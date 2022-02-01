@@ -1,6 +1,6 @@
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.locations.models import SQLLocation
-from corehq.form_processor.abstract_models import AbstractSupplyInterface
+from corehq.form_processor.models.abstract import AbstractSupplyInterface
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 
 

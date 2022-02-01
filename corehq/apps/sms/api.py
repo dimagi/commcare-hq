@@ -520,7 +520,7 @@ def process_sms_registration(msg):
                         domain=domain_obj.name,
                         cleaned_phone_number=cleaned_phone_number,
                         send_welcome_sms=domain_obj.enable_registration_welcome_sms_for_mobile_worker,
-                        admin_alert_emails=domain_obj.sms_worker_registration_alert_emails,
+                        admin_alert_emails=list(domain_obj.sms_worker_registration_alert_emails),
                     )
                 elif domain_obj.sms_case_registration_enabled:
                     register_sms_contact(

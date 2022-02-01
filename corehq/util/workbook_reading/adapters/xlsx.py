@@ -45,15 +45,8 @@ class _XLSXWorksheetAdaptor(object):
         self._worksheet = openpyxl_worksheet
 
     def _make_cell_value(self, cell):
-        if isinstance(cell.value, datetime):
-            if cell._value == 0 and from_excel(0) == datetime(1899, 12, 30, 0, 0):
-                # openpyxl has a bug that treats '12:00:00 AM'
-                # as 0 seconds from the 'Windows Epoch' of 1899-12-30
-                return time(0, 0)
-            elif cell.value.time() == time(0, 0):
-                return cell.value.date()
-            else:
-                return cell.value
+        if isinstance(cell.value, datetime) and cell.value.time() == time(0, 0):
+            return cell.value.date()
         return cell.value
 
     @property

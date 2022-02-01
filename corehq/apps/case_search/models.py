@@ -23,14 +23,11 @@ CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_REGISTRY_ID_KEY: "data_registry",
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: "custom_related_case_property"
 }
-LEGACY_CONFIG_KEYS = {
-    CASE_SEARCH_REGISTRY_ID_KEY: "commcare_registry"
-}
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     'owner_id',
     'include_closed',   # backwards compatibility for deprecated functionality to include closed cases
-) + tuple(CONFIG_KEYS_MAPPING.values()) + tuple(LEGACY_CONFIG_KEYS.values())
+) + tuple(CONFIG_KEYS_MAPPING.values())
 
 
 def _flatten_singleton_list(value):
@@ -64,17 +61,8 @@ class CaseSearchRequestConfig:
 def extract_search_request_config(request_dict):
     params = dict(request_dict.lists())
 
-    def _get_value(key):
-        val = None
-        try:
-            val = params.pop(key)
-        except KeyError:
-            if key in LEGACY_CONFIG_KEYS:
-                val = params.pop(LEGACY_CONFIG_KEYS[key], None)
-        return val
-
     kwargs_from_params = {
-        config_name: _get_value(param_name)
+        config_name: params.pop(param_name, None)
         for param_name, config_name in CONFIG_KEYS_MAPPING.items()
     }
     return CaseSearchRequestConfig(criteria=params, **kwargs_from_params)

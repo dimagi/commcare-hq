@@ -4,8 +4,7 @@ COVID: Available Actions
 
 The following actions can be used in messaging in projects using the ``covid`` custom module.
 """
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
-from casexml.apps.case.models import CommCareCase
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.cases import case_type
 from corehq.apps.data_interfaces.models import CaseRuleActionResult, AUTO_UPDATE_XMLNS
 from corehq.apps.hqcase.utils import update_case

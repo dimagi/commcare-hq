@@ -3,7 +3,7 @@ from casexml.apps.case.tests.test_const import CLOSE_DATE, MODIFY_DATE, ORIGINAL
 from casexml.apps.case.tests.util import bootstrap_case_from_xml
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
+from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.tests.utils import sharded
 from corehq.util.dates import coerce_to_datetime
 
@@ -71,7 +71,7 @@ class CaseFromXFormTest(TestCase):
         self.assertEqual(CLOSE_DATE, case.modified_on)
 
     def _check_static_properties(self, case):
-        self.assertEqual(CommCareCaseSQL, type(case))
+        self.assertEqual(CommCareCase, type(case))
         self.assertEqual("test_case_type", case.type)
         self.assertEqual("test case name", case.name)
         self.assertEqual("someuser", case.user_id)
