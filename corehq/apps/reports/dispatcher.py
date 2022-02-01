@@ -171,8 +171,8 @@ class ReportDispatcher(View):
             and self.toggles_enabled(report_class, request)
             and report_class.allow_access(request)
         ):
+            report_kwargs = kwargs.copy()
             try:
-                report_kwargs = kwargs.copy()
                 report = report_class(request, domain=domain, **report_kwargs)
                 report.rendered_as = render_as
                 report.decorator_dispatcher(
