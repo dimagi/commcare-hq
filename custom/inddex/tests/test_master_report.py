@@ -14,11 +14,9 @@ from dimagi.utils.dates import DateSpan
 import custom.inddex.reports.r4_nutrient_stats
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.fixtures.dbaccessors import (
-    count_fixture_items,
-    get_fixture_data_types,
-)
+from corehq.apps.fixtures.dbaccessors import get_fixture_data_types
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import require_db_context
 
 from ..example_data.data import (
@@ -53,9 +51,9 @@ def get_expected_report(filename):
 
 def _overwrite_report(filename, actual_report):
     """For use when making changes - force overwrites test data"""
-    accessor = CaseAccessors(DOMAIN)
-    case_ids = accessor.get_case_ids_in_domain()
-    external_ids_by_case_id = {c.case_id: c.external_id for c in accessor.get_cases(case_ids)}
+    case_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain()
+    external_ids_by_case_id = {c.case_id: c.external_id
+        for c in CommCareCase.objects.get_cases(case_ids)}
     rows = [[
         external_ids_by_case_id[val] if val in external_ids_by_case_id else val
         for val in row
@@ -65,7 +63,6 @@ def _overwrite_report(filename, actual_report):
         writer = csv.writer(f)
         writer.writerow(actual_report.headers)
         writer.writerows(rows)
-
 
 
 @require_db_context
@@ -94,9 +91,8 @@ def get_food_data(*args, **kwargs):
 
 @memoized
 def _get_case_ids_by_external_id():
-    accessor = CaseAccessors(DOMAIN)
-    case_ids = accessor.get_case_ids_in_domain()
-    return {c.external_id: c.case_id for c in accessor.get_cases(case_ids)}
+    case_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain()
+    return {c.external_id: c.case_id for c in CommCareCase.objects.get_cases(case_ids)}
 
 
 def sort_rows(rows):
@@ -110,9 +106,8 @@ def food_names(rows):
 
 class TestSetupUtils(TestCase):
     def test_cases_created(self):
-        accessor = CaseAccessors(DOMAIN)
-        case_ids = accessor.get_case_ids_in_domain()
-        cases = list(accessor.get_cases(case_ids))
+        case_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain()
+        cases = CommCareCase.objects.get_cases(case_ids)
 
         self.assertEqual(len(cases), 18)
         self.assertTrue(all(
