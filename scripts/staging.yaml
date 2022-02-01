@@ -69,10 +69,6 @@ branches:
     - jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/datums  # sravan Dec 21
-    - mk/samveg/custom-case-upload-followup # MK Jan 27
-    - mk/samveg/automate-visit-type # MK Jan 27
-    - mk/samveg/validate-mobile-no # MK Jan 27
-    - mk/case-upload-fix-cols-check # MK Jan 19
     - cs/SC-1551-hourly-scheduled-reports+mk/support-multibar-reports # Charl Jan 12
     - cs/SC-1551-hourly-scheduled-reports # Charl Jan 12
     - mk/support-multibar-reports # MK Dec 14
@@ -81,4 +77,7 @@ branches:
     - ad/save-only-edited-form-fields-UI # Steph Jan 24
     # - ml/remove-pickles-reports # Minha Jan 24
     - jls/update-web-apps-fuzzy # Jenny Jan 26
+    - ml/reject-weak-password-backend # Minha Jan 28
+    - mk/fix-markdown-check # MK Jan 31
+    - jls/drop-case-search-limit # Jenny Jan 31
 submodules: { }

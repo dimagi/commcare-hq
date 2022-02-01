@@ -16,7 +16,7 @@ def reindex_sql_forms_in_domain(domain):
             print('Reindexing doc_ids: {}'.format(','.join(doc_ids)))
             reindexer.doc_processor.process_bulk_docs([
                 reindexer.reindex_accessor.doc_to_json(form)
-                for form in FormAccessorSQL.get_forms(list(doc_ids))
+                for form in XFormInstance.objects.get_forms(list(doc_ids))
             ])
 
 

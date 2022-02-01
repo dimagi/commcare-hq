@@ -14,7 +14,7 @@ from django.conf import settings
 from django.db import InternalError, transaction, router, DatabaseError
 from django.db.models import F, Q
 from django.db.models.expressions import Value
-from django.db.models.functions import Concat, Greatest
+from django.db.models.functions import Concat
 
 import csiphash
 from ddtrace import tracer
@@ -33,8 +33,8 @@ from corehq.form_processor.exceptions import (
     LedgerValueNotFound,
     MissingFormXml,
     XFormNotFound,
-    XFormSaveError,
 )
+from corehq.form_processor.models.util import sort_with_id_list as _sort_with_id_list
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor,
     AbstractLedgerAccessor,
@@ -382,67 +382,23 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_forms(form_ids, ordered=False):
-        assert isinstance(form_ids, list)
-        if not form_ids:
-            return []
-        forms = list(XFormInstance.objects.plproxy_raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
-        if ordered:
-            _sort_with_id_list(forms, form_ids, 'form_id')
-
-        return forms
+        """DEPRECATED"""
+        return XFormInstance.objects.get_forms(form_ids, ordered)
 
     @staticmethod
     def get_attachments(form_id):
-        return get_blob_db().metadb.get_for_parent(form_id)
-
-    @staticmethod
-    def iter_forms_by_last_modified(start_datetime, end_datetime):
-        '''
-        Returns all forms that have been modified within a time range. The start date is
-        exclusive while the end date is inclusive (start_datetime, end_datetime].
-
-        NOTE: This does not include archived forms
-
-        :param start_datetime: The start date of which modified forms must be greater than
-        :param end_datetime: The end date of which modified forms must be less than or equal to
-
-        :returns: An iterator of XFormInstance objects
-        '''
-        from corehq.sql_db.util import paginate_query_across_partitioned_databases
-
-        annotate = {
-            'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
-        }
-
-        return paginate_query_across_partitioned_databases(
-            XFormInstance,
-            Q(last_modified__gt=start_datetime, last_modified__lte=end_datetime),
-            annotate=annotate,
-            load_source='forms_by_last_modified'
-        )
+        """DEPRECATED"""
+        return XFormInstance.objects.get_attachments(form_id)
 
     @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):
-        from corehq.sql_db.util import paginate_query_across_partitioned_databases
-
-        q_expr = Q(domain=domain) & Q(state=XFormInstance.NORMAL)
-        if xmlns:
-            q_expr &= Q(xmlns=xmlns)
-
-        for form_id in paginate_query_across_partitioned_databases(
-                XFormInstance, q_expr, values=['form_id'], load_source='formids_by_xmlns'):
-            yield form_id[0]
+        """DEPRECATED"""
+        return XFormInstance.objects.iter_form_ids_by_xmlns(domain, xmlns)
 
     @staticmethod
     def get_with_attachments(form_id):
-        """
-        It's necessary to store these on the form rather than use a memoized property
-        since the form_id can change (in the case of a deprecated form) which breaks
-        the memoize hash.
-        """
-        form = XFormInstance.objects.get_form(form_id)
-        form.attachments_list = FormAccessorSQL.get_attachments(form_id)
-        return form
+        """DEPRECATED"""
+        return XFormInstance.objects.get_with_attachments(form_id)
 
     @staticmethod
     def get_attachment_by_name(form_id, attachment_name):
@@ -597,33 +553,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def save_new_form(form):
-        """
-        Save a previously unsaved form
-        """
-        if form.is_saved():
-            raise XFormSaveError('form already saved')
-        logging.debug('Saving new form: %s', form)
-
-        operations = form.get_tracked_models_to_create(XFormOperation)
-        for operation in operations:
-            if operation.is_saved():
-                raise XFormSaveError(
-                    'XFormOperation {} has already been saved'.format(operation.id)
-                )
-            operation.form_id = form.form_id
-
-        try:
-            with form.attachment_writer() as attachment_writer, \
-                    transaction.atomic(using=form.db, savepoint=False):
-                transaction.on_commit(attachment_writer.commit, using=form.db)
-                form.save()
-                attachment_writer.write()
-                for operation in operations:
-                    operation.save()
-        except InternalError as e:
-            raise XFormSaveError(e)
-
-        form.clear_tracked_models()
+        """DEPRECATED"""
+        XFormInstance.objects.save_new_form(form)
 
     @staticmethod
     def update_form(form, publish_changes=True):
@@ -1483,22 +1414,6 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             )
             for trans in resultset:
                 yield trans
-
-
-def _sort_with_id_list(object_list, id_list, id_property):
-    """Sort object list in the same order as given list of ids
-
-    SQL does not necessarily return the rows in any particular order so
-    we need to order them ourselves.
-
-    NOTE: this does not return the sorted list. It sorts `object_list`
-    in place using Python's built-in `list.sort`.
-    """
-    def key(obj):
-        return index_map[getattr(obj, id_property)]
-
-    index_map = {id_: index for index, id_ in enumerate(id_list)}
-    object_list.sort(key=key)
 
 
 def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, cached_attrib_name):

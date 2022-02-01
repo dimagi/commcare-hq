@@ -14,10 +14,8 @@ from couchforms import const
 from corehq.apps.api.resources import DictObject
 from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.models.abstract import CaseToXMLMixin, get_index_map
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
@@ -229,7 +227,7 @@ class ESCase(DictObject, CaseToXMLMixin):
 
     def get_forms(self):
         from corehq.apps.api.util import form_to_es_form
-        forms = FormAccessors(self.domain).get_forms(self.xform_ids)
+        forms = XFormInstance.objects.get_forms(self.xform_ids, self.domain)
         return list(filter(None, [form_to_es_form(form) for form in forms]))
 
     @property

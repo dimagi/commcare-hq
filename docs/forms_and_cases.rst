@@ -87,13 +87,13 @@ name in order to know which DB needs to be queried.
 **Forms**
 
 - XFormInstance.objects.get_form(form_id, domain)
-- FormAccessors(domain).get_forms(form_ids)
+- XFormInstance.objects.get_forms(form_ids, domain)
 - FormAccessors(domain).iter_forms(form_ids)
-- FormAccessors(domain).save_new_form(form)
+- XFormInstance.objects.save_new_form(form)
 
   - only for new forms
 
-- FormAccessors(domain).get_with_attachments(form)
+- XFormInstance.objects.get_with_attachments(form, domain)
 
   - Preload attachments to avoid having to the the DB again
 

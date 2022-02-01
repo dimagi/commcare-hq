@@ -48,11 +48,7 @@ class FormAccessors:
         return XFormInstance.objects.get_form(form_id, self.domain)
 
     def get_forms(self, form_ids, ordered=False):
-        """
-        :param form_ids: list of form_ids to fetch
-        :type ordered:   True if the list of returned forms should have the same order
-                         as the list of form_ids passed in
-        """
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.get_forms(form_ids, ordered=ordered)
 
     def iter_forms(self, form_ids):
@@ -70,19 +66,16 @@ class FormAccessors:
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
 
-    def iter_forms_by_last_modified(self, start_datetime, end_datetime):
-        return self.db_accessor.iter_forms_by_last_modified(
-            start_datetime,
-            end_datetime,
-        )
-
     def iter_form_ids_by_xmlns(self, xmlns=None):
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.iter_form_ids_by_xmlns(self.domain, xmlns)
 
     def get_with_attachments(self, form_id):
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.get_with_attachments(form_id)
 
     def save_new_form(self, form):
+        """DEPRECATED use XFormInstance.objects"""
         self.db_accessor.save_new_form(form)
 
     def update_form_problem_and_state(self, form):

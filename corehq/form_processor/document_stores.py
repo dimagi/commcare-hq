@@ -49,7 +49,7 @@ class FormDocumentStore(DocumentStore):
             return form.to_json()
 
     def iter_document_ids(self):
-        return iter(self.form_accessors.iter_form_ids_by_xmlns(self.xmlns))
+        return iter(XFormInstance.objects.iter_form_ids_by_xmlns(self.domain, self.xmlns))
 
     def iter_documents(self, ids):
         for wrapped_form in self.form_accessors.iter_forms(ids):
