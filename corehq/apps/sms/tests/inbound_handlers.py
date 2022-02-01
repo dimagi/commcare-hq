@@ -6,7 +6,7 @@ from unittest.mock import patch
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.reminders.models import RECIPIENT_OWNER, RECIPIENT_USER_GROUP
 from corehq.apps.sms.api import incoming
-from corehq.apps.sms.messages import *
+from corehq.apps.sms.messages import *  # noqa: F403
 from corehq.apps.sms.models import WORKFLOW_KEYWORD
 from corehq.apps.sms.tests.util import TouchformsTestCase, time_parser
 from corehq.form_processor.models import CommCareCase

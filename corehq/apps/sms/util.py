@@ -98,7 +98,8 @@ def format_message_list(message_list):
                 message_start = message_start[0:extra_space-3] + "..."
         return message_start + question
     """
-    # Some gateways (yo) allow a longer message to be sent and handle splitting it up on their end, so for now just join all messages together
+    # Some gateways (yo) allow a longer message to be sent and handle splitting
+    # it up on their end, so for now just join all messages together
     return " ".join(message_list)
 
 
@@ -131,16 +132,18 @@ def register_sms_contact(domain, case_type, case_name, user_id,
     return case_id
 
 
-def update_contact(domain, case_id, user_id, contact_phone_number=None, contact_phone_number_is_verified=None, contact_backend_id=None, language_code=None, time_zone=None):
+def update_contact(domain, case_id, user_id, contact_phone_number=None,
+        contact_phone_number_is_verified=None, contact_backend_id=None,
+        language_code=None, time_zone=None):
     context = {
-        "case_id" : case_id,
-        "date_modified" : json_format_datetime(datetime.datetime.utcnow()),
-        "user_id" : user_id,
-        "contact_phone_number" : contact_phone_number,
-        "contact_phone_number_is_verified" : contact_phone_number_is_verified,
-        "contact_backend_id" : contact_backend_id,
-        "language_code" : language_code,
-        "time_zone" : time_zone
+        "case_id": case_id,
+        "date_modified": json_format_datetime(datetime.datetime.utcnow()),
+        "user_id": user_id,
+        "contact_phone_number": contact_phone_number,
+        "contact_phone_number_is_verified": contact_phone_number_is_verified,
+        "contact_backend_id": contact_backend_id,
+        "language_code": language_code,
+        "time_zone": time_zone
     }
     submit_case_block_from_template(domain, "sms/xml/update_contact.xml", context, user_id=user_id)
 
@@ -251,7 +254,7 @@ def get_backend_name(backend_id):
     from corehq.apps.sms.models import SQLMobileBackend
     try:
         return SQLMobileBackend.load(backend_id, is_couch_id=True).name
-    except:
+    except Exception:
         return None
 
 

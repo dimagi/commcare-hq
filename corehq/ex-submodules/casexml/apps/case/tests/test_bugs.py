@@ -254,7 +254,8 @@ class TestCaseHierarchy(TestCase):
         [case] = factory.create_or_update_case(CaseStructure(
             case_id='infinite-recursion',
             attrs={'case_type': 'bug', 'create': True},
-            indices=[CaseIndex(CaseStructure(case_id='infinite-recursion', attrs={'create': True}), related_type='bug')],
+            indices=[CaseIndex(CaseStructure(
+                case_id='infinite-recursion', attrs={'create': True}), related_type='bug')],
             walk_related=False
         ))
 

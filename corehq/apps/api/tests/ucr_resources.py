@@ -1,6 +1,7 @@
 import base64
 import json
 import uuid
+from urllib.parse import parse_qs, urlparse
 
 from django.http import QueryDict
 from django.urls import reverse
@@ -338,7 +339,6 @@ class TestConfigurableReportDataResource(APIResourceTest):
         single_endpoint = self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"})
 
         def _get_query_params(url):
-            from six.moves.urllib.parse import parse_qs, urlparse
             return parse_qs(urlparse(url).query)
 
         self.assertEqual(next.split('?')[0], single_endpoint.split('?')[0])
@@ -372,7 +372,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
 
         wrong_domain = Domain.get_or_create_with_name(wrong_domain_name, is_active=True)
         self.addCleanup(wrong_domain.delete)
-        user_in_wrong_domain = WebUser.create(
+        WebUser.create(
             wrong_domain_name, user_in_wrong_domain_name, user_in_wrong_domain_password, None, None
         )
 

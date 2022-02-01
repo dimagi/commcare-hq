@@ -125,9 +125,9 @@ class ScheduleInstance(PartitionedModel):
     @staticmethod
     def recipient_is_an_individual_contact(recipient):
         return (
-            isinstance(recipient, (CommCareUser, WebUser)) or
-            is_commcarecase(recipient) or
-            isinstance(recipient, EmailAddressRecipient)
+            isinstance(recipient, (CommCareUser, WebUser))
+            or is_commcarecase(recipient)
+            or isinstance(recipient, EmailAddressRecipient)
         )
 
     @property
@@ -209,8 +209,8 @@ class ScheduleInstance(PartitionedModel):
         elif isinstance(recipient, SQLLocation):
             location = recipient
             if (
-                self.recipient_type == self.RECIPIENT_TYPE_LOCATION and
-                self.memoized_schedule.include_descendant_locations
+                self.recipient_type == self.RECIPIENT_TYPE_LOCATION
+                and self.memoized_schedule.include_descendant_locations
             ):
                 # Only include descendant locations when the recipient_type
                 # is RECIPIENT_TYPE_LOCATION. This is because we only do this
@@ -333,7 +333,7 @@ class ScheduleInstance(PartitionedModel):
             if lock.acquire(blocking=False):
                 try:
                     content.send(recipient, logged_event)
-                except:
+                except:  # noqa: E722
                     error = sys.exc_info()[1]
                     # Release the lock if an error happened so that we can try sending
                     # to this recipient again later.

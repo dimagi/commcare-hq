@@ -188,7 +188,7 @@ def check_duplicate_case_match(case, external_id):
             f'Unable to match {case_str} with OpenMRS patient "{external_id}": '
             f'Multiple cases already exist with external_id="{external_id}".'
         )
-    else: # error == LookupErrors.NotFound:
+    else:  # error == LookupErrors.NotFound:
         return
     raise DuplicateCaseMatch(message)
 

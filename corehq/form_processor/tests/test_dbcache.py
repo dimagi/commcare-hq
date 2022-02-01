@@ -22,12 +22,11 @@ class CaseDbCacheTest(TestCase):
     def testDomainCheck(self):
         id = uuid.uuid4().hex
         post_case_blocks([
-                CaseBlock.deprecated_init(
-                    create=True, case_id=id,
-                    user_id='some-user'
-                ).as_xml()
-            ], {'domain': 'good-domain'}
-        )
+            CaseBlock.deprecated_init(
+                create=True, case_id=id,
+                user_id='some-user'
+            ).as_xml()
+        ], {'domain': 'good-domain'})
         bad_cache = self.interface.casedb_cache(domain='bad-domain')
         try:
             bad_cache.get(id)
@@ -36,7 +35,7 @@ class CaseDbCacheTest(TestCase):
             pass
         good_cache = self.interface.casedb_cache(domain='good-domain')
         case = good_cache.get(id)
-        self.assertEqual('some-user', case.user_id) # just sanity check it's the right thing
+        self.assertEqual('some-user', case.user_id)  # just sanity check it's the right thing
 
     def testGetPopulatesCache(self):
         case_ids = _make_some_cases(3)
