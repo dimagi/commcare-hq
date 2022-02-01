@@ -2,7 +2,7 @@ from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
-from corehq.apps.oauth.models.gsuite import GoogleApiToken
+from corehq.apps.oauth.models import GoogleApiToken
 from corehq.apps.oauth.utils import (
     stringify_credentials,
     load_credentials,
