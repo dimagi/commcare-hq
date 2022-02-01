@@ -80,7 +80,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             instance = request.FILES[MAGIC_PROPERTY].read()
             xform = convert_xform_to_json(instance)
             meta = xform.get("meta", {})
-        except:
+        except Exception:
             meta = {}
 
         metrics_counter('commcare.corrupt_multimedia_submissions', tags={
