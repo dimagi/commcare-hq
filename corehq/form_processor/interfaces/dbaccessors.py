@@ -3,10 +3,9 @@ from collections import namedtuple
 from io import BytesIO
 
 from memoized import memoized
+from corehq.form_processor.models import CommCareCase
 
 from dimagi.utils.chunked import chunked
-
-from ..exceptions import CaseNotFound
 
 
 CaseIndexInfo = namedtuple(
@@ -29,12 +28,8 @@ class CaseAccessors(object):
         return CaseAccessorSQL
 
     def get_case(self, case_id):
-        if not case_id:
-            raise CaseNotFound
-        case = self.db_accessor.get_case(case_id)
-        if case.domain != self.domain:
-            raise CaseNotFound(case_id)
-        return case
+        """DEPRECATED use CommCareCase.objects"""
+        return CommCareCase.objects.get_case(case_id, self.domain)
 
     def get_cases(self, case_ids, ordered=False, prefetched_indices=None):
         return self.db_accessor.get_cases(

@@ -411,10 +411,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_case(case_id):
-        try:
-            return CommCareCase.objects.partitioned_get(case_id)
-        except CommCareCase.DoesNotExist:
-            raise CaseNotFound(case_id)
+        """DEPRECATED"""
+        return CommCareCase.objects.get_case(case_id)
 
     @staticmethod
     def get_cases(case_ids, ordered=False, prefetched_indices=None):

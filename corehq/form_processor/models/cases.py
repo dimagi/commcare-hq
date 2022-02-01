@@ -20,10 +20,10 @@ from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.util import get_content_md5
-from corehq.sql_db.models import PartitionedModel
+from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.util.json import CommCareJSONEncoder
 
-from ..exceptions import AttachmentNotFound, UnknownActionType
+from ..exceptions import AttachmentNotFound, CaseNotFound, UnknownActionType
 from ..track_related import TrackRelatedChanges
 from .attachment import AttachmentMixin
 from .forms import XFormInstance
@@ -34,11 +34,26 @@ DEFAULT_PARENT_IDENTIFIER = 'parent'
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
 
 
+class CommCareCaseManager(RequireDBManager):
+
+    def get_case(self, case_id, domain=None):
+        if not case_id:
+            raise CaseNotFound(case_id)
+        kwargs = {"case_id": case_id}
+        if domain is not None:
+            kwargs["domain"] = domain
+        try:
+            return self.partitioned_get(case_id, **kwargs)
+        except CommCareCase.DoesNotExist:
+            raise CaseNotFound(case_id)
+
+
 class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
                    AttachmentMixin, CaseToXMLMixin, TrackRelatedChanges,
                    MessagingCaseContactMixin):
     DOC_TYPE = 'CommCareCase'
     partition_attr = 'case_id'
+    objects = CommCareCaseManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255, default=None)
