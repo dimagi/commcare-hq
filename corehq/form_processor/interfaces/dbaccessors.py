@@ -32,6 +32,7 @@ class CaseAccessors(object):
         return CommCareCase.objects.get_case(case_id, self.domain)
 
     def get_cases(self, case_ids, ordered=False, prefetched_indices=None):
+        """DEPRECATED use CommCareCase.objects"""
         return self.db_accessor.get_cases(
             case_ids, ordered=ordered, prefetched_indices=prefetched_indices)
 
