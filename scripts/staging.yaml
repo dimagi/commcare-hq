@@ -80,6 +80,4 @@ branches:
     - ml/reject-weak-password-backend # Minha Jan 28
     - mk/fix-markdown-check # MK Jan 31
     - jls/drop-case-search-limit # Jenny Jan 31
-    - mjr/broadcast-message-params # Matt Feb 1
-    - mjr/fix-broadcast-message-queuing # Matt Feb 1
 submodules: { }
