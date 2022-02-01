@@ -392,7 +392,7 @@ class BroadcastListView(BaseMessagingSectionView):
         refresh_timed_schedule_instances.delay(
             broadcast.schedule_id,
             broadcast.recipients,
-            start_date=json_format_date(broadcast.start_date)
+            start_date_iso_string=json_format_date(broadcast.start_date)
         )
 
         return JsonResponse({
@@ -498,7 +498,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                 refresh_timed_schedule_instances.delay(
                     schedule.schedule_id.hex,
                     broadcast.recipients,
-                    start_date=json_format_date(broadcast.start_date)
+                    start_date_iso_string=json_format_date(broadcast.start_date)
                 )
             else:
                 raise TypeError("Expected AlertSchedule or TimedSchedule")
