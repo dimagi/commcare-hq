@@ -10,6 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
 from requests import RequestException
 from urllib3.exceptions import HTTPError
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import (

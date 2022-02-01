@@ -10,7 +10,7 @@ from dimagi.ext.couchdbkit import BooleanProperty, StringProperty
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import XFormInstance
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.repeaters.models import CaseRepeater, OptionValue, SQLCaseRepeater
