@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from unittest.mock import patch
 
-from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.models import ConditionalCaseUpdate
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.domain.shortcuts import create_user
@@ -54,8 +54,8 @@ class ReportBuilderDBTest(TestCase):
         form.source = get_simple_xform()
         cls.form = form
         factory.form_requires_case(form, case_type=cls.case_type, update={
-            'first_name': '/data/first_name',
-            'last_name': '/data/last_name',
+            'first_name': ConditionalCaseUpdate(question_path='/data/first_name'),
+            'last_name': ConditionalCaseUpdate(question_path='/data/last_name'),
         })
         cls.app = factory.app
         cls.app.save()
