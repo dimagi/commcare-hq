@@ -225,12 +225,11 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @memoized
     def get_subcases(self, index_identifier=None):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         subcase_ids = [
             ix.referenced_id for ix in self.reverse_indices
             if (index_identifier is None or ix.identifier == index_identifier)
         ]
-        return list(CaseAccessorSQL.get_cases(subcase_ids))
+        return type(self).objects.get_cases(subcase_ids, self.domain)
 
     def get_reverse_index_map(self):
         return self.get_index_map(True)

@@ -27,7 +27,9 @@ class Command(BaseCommand):
             sys.exit(0)
         dependent_case_ids = get_entire_case_network(domain, [case_id])
 
-        cases_to_delete = [case for case in case_accessor.get_cases(dependent_case_ids) if not case.is_deleted]
+        cases_to_delete = [case
+            for case in CommCareCase.objects.get_cases(dependent_case_ids, domain)
+            if not case.is_deleted]
         if cases_to_delete:
             with open(options['filename'], 'w') as csvfile:
                 writer = csv.writer(csvfile)

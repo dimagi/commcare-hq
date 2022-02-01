@@ -10,8 +10,7 @@ from dimagi.ext.couchdbkit import BooleanProperty, StringProperty
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.repeater_generators import (
@@ -144,7 +143,7 @@ class FHIRRepeater(CaseRepeater):
 
 def _get_cases_by_id(domain, case_blocks):
     case_ids = [case_block['@case_id'] for case_block in case_blocks]
-    cases = CaseAccessors(domain).get_cases(case_ids, ordered=True)
+    cases = CommCareCase.objects.get_cases(case_ids, domain, ordered=True)
     return {c.case_id: c for c in cases}
 
 

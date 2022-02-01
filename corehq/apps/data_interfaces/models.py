@@ -1036,7 +1036,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     def _update_cases(self, domain, rule, duplicate_case_ids):
         """Updates all the duplicate cases according to the rule
         """
-        duplicate_cases = CaseAccessors(domain).get_cases(list(duplicate_case_ids))
+        duplicate_cases = CommCareCase.objects.get_cases(list(duplicate_case_ids), domain)
         case_updates = self._get_case_updates(duplicate_cases)
         for case_update_batch in chunked(case_updates, 100):
             result = bulk_update_cases(

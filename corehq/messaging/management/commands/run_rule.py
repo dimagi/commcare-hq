@@ -1,5 +1,6 @@
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.tasks import get_sync_key
 from corehq.util.log import with_progress_bar
@@ -39,5 +40,5 @@ class Command(BaseCommand):
         for case_id_chunk in with_progress_bar(case_id_chunks):
             case_id_chunk = list(case_id_chunk)
             with CriticalSection([get_sync_key(case_id) for case_id in case_id_chunk], timeout=5 * 60):
-                for case in CaseAccessors(rule.domain).get_cases(case_id_chunk):
+                for case in CommCareCase.objects.get_cases(case_id_chunk, rule.domain):
                     rule.run_rule(case, utcnow())

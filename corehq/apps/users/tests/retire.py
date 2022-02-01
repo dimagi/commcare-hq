@@ -96,7 +96,7 @@ class RetireUserTestCase(TestCase):
         xform = submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
 
         self.commcare_user.retire(self.domain, deleted_by=None)
-        cases = CaseAccessors(self.domain).get_cases(case_ids)
+        cases = CommCareCase.objects.get_cases(case_ids, self.domain)
         self.assertTrue(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
         form = XFormInstance.objects.get_form(xform.form_id, self.domain)
@@ -121,7 +121,7 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(user_history.changed_by, self.other_user.get_id)
         self.assertEqual(user_history.changed_via, "Test")
 
-        cases = CaseAccessors(self.domain).get_cases(case_ids)
+        cases = CommCareCase.objects.get_cases(case_ids, self.domain)
         self.assertFalse(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
         form = XFormInstance.objects.get_form(xform.form_id, self.domain)
