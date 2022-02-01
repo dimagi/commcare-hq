@@ -17,7 +17,6 @@ Things to keep in mind:
 * `report API <report_api>`_
 
 
-* `Fluff`_ (legacy)
 * `sqlagg`_
 * `couchdbkit-aggregate`_ (legacy)
 

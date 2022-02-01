@@ -282,7 +282,7 @@ class PreFilter(BaseFilter):
         return self.default_value()
 
     def default_value(self, request_user=None):
-        from corehq.apps.userreports.expressions.getters import transform_from_datatype
+        from corehq.apps.userreports.expressions.getters import transform_for_datatype
         if self.pre_value is None:
             return {
                 'operator': self.pre_operator or 'is',
@@ -290,19 +290,19 @@ class PreFilter(BaseFilter):
             }
         elif isinstance(self.pre_value, list) and self.datatype != 'array':
             # We are assuming that `auto_value` is a list of items of type `datatype`. See
-            # `transform_from_datatype()` for list of recognised data types.
+            # `transform_for_datatype()` for list of recognised data types.
             #
             # If `auto_value` is a list, and `datatype` == "array", we assume that the user meant the data type to
             # refer to `auto_value` itself (handled by the `else` clause below) and not the data type of the items
             # inside it. (i.e. We assume that `auto_value` is not an array of arrays.)
             return {
                 'operator': self.pre_operator or 'in',
-                'operand': [transform_from_datatype(self.datatype)(v) for v in self.pre_value],
+                'operand': [transform_for_datatype(self.datatype)(v) for v in self.pre_value],
             }
         else:
             return {
                 'operator': self.pre_operator or '=',
-                'operand': transform_from_datatype(self.datatype)(self.pre_value),
+                'operand': transform_for_datatype(self.datatype)(self.pre_value),
             }
 
 
@@ -330,10 +330,10 @@ class ChoiceListFilter(BaseFilter):
         self.choice_provider = StaticChoiceProvider(self.choices)
 
     def value(self, **kwargs):
-        from corehq.apps.userreports.expressions.getters import transform_from_datatype
+        from corehq.apps.userreports.expressions.getters import transform_for_datatype
         from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
         raw_value = kwargs[self.name]
-        choice = transform_from_datatype(self.datatype)(raw_value) if raw_value != SHOW_ALL_CHOICE else raw_value
+        choice = transform_for_datatype(self.datatype)(raw_value) if raw_value != SHOW_ALL_CHOICE else raw_value
         choice_values = [c.value for c in self.choices]
         if choice not in choice_values:
             raise FilterValueException(_('Choice "{choice}" not found in choices: {choices}')
@@ -389,12 +389,12 @@ class DynamicChoiceListFilter(BaseFilter):
             ]
 
     def value(self, **kwargs):
-        from corehq.apps.userreports.expressions.getters import transform_from_datatype
+        from corehq.apps.userreports.expressions.getters import transform_for_datatype
         selection = kwargs.get(self.name, "")
         user = kwargs.get(REQUEST_USER_KEY, None)
         if selection:
             choices = selection if isinstance(selection, list) else [selection]
-            typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
+            typed_choices = [transform_for_datatype(self.datatype)(c) for c in choices]
             return self.choice_provider.get_sorted_choices_for_values(typed_choices, user)
         return self.default_value(user)
 

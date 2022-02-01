@@ -3,7 +3,7 @@ from datetime import datetime
 import uuid
 
 from django.test import TestCase
-from mock import patch, Mock, MagicMock
+from unittest.mock import patch, Mock, MagicMock
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.handlers.form_session import form_session_handler

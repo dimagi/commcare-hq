@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from datetime import datetime, timedelta
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.phone.models import SimplifiedSyncLog
 from casexml.apps.phone.tests.utils import (

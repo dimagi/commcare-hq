@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.test.utils import override_settings
 
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 from testil import eq
 
 from corehq.apps.sms.tests.data_generator import get_test_sms_fields

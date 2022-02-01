@@ -349,7 +349,7 @@
               </div>
               </div>
             {% endif %}
-            {% if request|toggle_enabled:"RESTRICT_MOBILE_ACCESS" %}
+            {% if request.project.restrict_mobile_access %}
             {# BEGIN MOBILE permission #}
             <div class="form-group">
               <label class="col-sm-4 control-label">

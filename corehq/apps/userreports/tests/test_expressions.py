@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from django.test import SimpleTestCase, TestCase
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 from simpleeval import InvalidExpression
 from testil import Config
 
@@ -25,7 +25,8 @@ from corehq.apps.userreports.expressions.specs import (
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.util.test_utils import (
     create_and_save_a_case,
     create_and_save_a_form,
@@ -1132,7 +1133,7 @@ class TestFormsExpressionSpec(TestCase):
         cls.domain = uuid.uuid4().hex
         factory = CaseFactory(domain=cls.domain)
         [cls.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
-        cls.forms = [f.to_json() for f in FormAccessors(cls.domain).get_forms(cls.case.xform_ids)]
+        cls.forms = [f.to_json() for f in XFormInstance.objects.get_forms(cls.case.xform_ids, cls.domain)]
         #  redundant case to create extra forms that shouldn't be in the results for cls.case
         [cls.case_b] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
 

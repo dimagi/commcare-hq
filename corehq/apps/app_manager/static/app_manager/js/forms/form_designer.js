@@ -1,4 +1,4 @@
-/* globals hqDefine, hqImport, define, require, WS4Redis, django */
+/* globals define, require, WS4Redis */
 hqDefine("app_manager/js/forms/form_designer", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
         appcues = hqImport('analytix/js/appcues'),
@@ -170,7 +170,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 hqImport('analytix/js/kissmetrix').track.event('Entered the Form Builder');
 
                 hqImport('app_manager/js/app_manager').setPrependedPageTitle("\u270E ", true);
-                hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Edit Form"));
+                hqImport('app_manager/js/app_manager').setAppendedPageTitle(gettext("Edit Form"));
 
                 if (initialPageData('form_uses_cases')) {
                     // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?

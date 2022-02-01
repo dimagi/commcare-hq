@@ -26,8 +26,8 @@ from corehq.apps.userreports.util import get_table_name
 from corehq.blobs.models import BlobMeta
 from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.form_processor.models import (
-    CommCareCaseIndexSQL,
-    CommCareCaseSQL,
+    CommCareCaseIndex,
+    CommCareCase,
     LedgerTransaction,
     LedgerValue,
 )
@@ -242,7 +242,7 @@ class Command(BaseCommand):
             self._print_value('case_type', type_, CaseES().domain(self.domain).case_type(type_).count())
             db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
             results = (
-                CommCareCaseSQL.objects.using(db_name).filter(domain=self.domain, closed=True, type=type_)
+                CommCareCase.objects.using(db_name).filter(domain=self.domain, closed=True, type=type_)
                 .annotate(lifespan=F('closed_on') - F('opened_on'))
                 .annotate(avg_lifespan=Avg('lifespan'))
                 .values('avg_lifespan', flat=True)
@@ -273,8 +273,8 @@ class Command(BaseCommand):
 
     def _case_to_case_index_ratio(self):
         db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
-        case_query = CommCareCaseSQL.objects.using(db_name).filter(domain=self.domain)
-        index_query = CommCareCaseIndexSQL.objects.using(db_name).filter(domain=self.domain)
+        case_query = CommCareCase.objects.using(db_name).filter(domain=self.domain)
+        index_query = CommCareCaseIndex.objects.using(db_name).filter(domain=self.domain)
         case_count = estimate_row_count(case_query, db_name)
         case_index_count = estimate_row_count(index_query, db_name)
         self._print_value('Ratio of cases to case indices: 1 : ', case_index_count / case_count)

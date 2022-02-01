@@ -3,31 +3,32 @@ import uuid
 from xml.etree import cElementTree as ElementTree
 import datetime
 from casexml.apps.case.mock import CaseBlock, CaseBlockError, IndexAttrs, ChildIndexAttrs
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.tests.util import deprecated_check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.form_processor.models import CommCareCaseIndex, CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 
 
 class IndexSimpleTest(SimpleTestCase):
 
     def setUp(self):
-        self.i1 = CommCareCaseIndex(
-            identifier='i1',
-            referenced_type='t1',
-            referenced_id='id1'
-        )
-        self.i2 = CommCareCaseIndex(
-            identifier='i2',
-            referenced_type='t2',
-            referenced_id='id2'
-        )
-        self.case = CommCareCase(indices=[self.i1, self.i2])
+        i1 = {
+            'identifier': 'i1',
+            'referenced_type': 't1',
+            'referenced_id': 'id1',
+        }
+        i2 = {
+            'identifier': 'i2',
+            'referenced_type': 't2',
+            'referenced_id': 'id2',
+        }
+        self.i1 = CommCareCaseIndex(**i1)
+        self.i2 = CommCareCaseIndex(**i2)
+        self.case = CommCareCase(indices=[i1, i2])
 
     def testHasIndex(self):
         self.assertEqual(True, self.case.has_index('i1'))
@@ -39,19 +40,6 @@ class IndexSimpleTest(SimpleTestCase):
         self.assertEqual(self.i2, self.case.get_index('i2'))
         self.assertEqual(None, self.case.get_index('i3'))
         self.assertEqual(None, self.case.get_index('id1'))
-
-    def testGetIndexByRef(self):
-        self.assertEqual(self.i1, self.case.get_index_by_ref_id('id1'))
-        self.assertEqual(self.i2, self.case.get_index_by_ref_id('id2'))
-        self.assertEqual(None, self.case.get_index_by_ref_id('id3'))
-        self.assertEqual(None, self.case.get_index_by_ref_id('i1'))
-
-    def testRemoveIndexByRef(self):
-        self.assertEqual(2, len(self.case.indices))
-        self.case.remove_index_by_ref_id('id1')
-        self.assertEqual(1, len(self.case.indices))
-        self.assertRaises(ValueError, self.case.remove_index_by_ref_id, 'id3')
-        self.assertRaises(ValueError, self.case.remove_index_by_ref_id, 'i2')
 
 
 @sharded

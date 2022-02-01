@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.standard.monitoring import WorkerActivityReport

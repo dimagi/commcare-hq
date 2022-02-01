@@ -22,7 +22,7 @@ from corehq.apps.users.dbaccessors import (
     get_web_user_count,
 )
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.couch import get_document_class_by_doc_type
 from corehq.util.markup import (
     CSVRowFormatter,
@@ -102,7 +102,7 @@ def _get_couchdb_counts(domain):
 def _get_sql_counts(domain):
     counter = Counter()
     for model_class, builder in get_model_iterator_builders_to_dump(domain, [], []):
-        if model_class in (User, XFormInstanceSQL, CommCareCaseSQL):
+        if model_class in (User, XFormInstance, CommCareCase):
             continue  # User is very slow, others we want to break out
         for queryset in builder.querysets():
             counter[get_model_label(model_class)] += queryset.count()

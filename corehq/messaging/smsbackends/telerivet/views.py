@@ -66,7 +66,7 @@ def message_status(request, message_id):
         backend = SQLTelerivetBackend.by_webhook_secret(request_secret)
 
     if backend is None:
-        return HttpResponseForbidden()
+        return HttpResponseForbidden('Invalid secret')
 
     try:
         sms = SMS.objects.get(couch_id=message_id)

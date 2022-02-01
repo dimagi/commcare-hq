@@ -4,15 +4,20 @@ from typing import Callable, Optional
 
 from django.conf import settings
 from django.utils.translation import gettext as _
-from requests import HTTPError
 
+from requests import HTTPError
 from requests.structures import CaseInsensitiveDict
 
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.auth import AuthManager, BasicAuthManager
-from corehq.motech.const import REQUEST_TIMEOUT
+from corehq.motech.const import (
+    REQUEST_DELETE,
+    REQUEST_POST,
+    REQUEST_PUT,
+    REQUEST_TIMEOUT,
+)
 from corehq.motech.models import RequestLog, RequestLogEntry
 from corehq.motech.utils import (
     get_endpoint_url,
@@ -120,7 +125,7 @@ class Requests(object):
         self._session = None
 
     def __enter__(self):
-        self._session = self.auth_manager.get_session()
+        self._session = self.auth_manager.get_session(self.domain_name)
         return self
 
     def __exit__(self, *args):
@@ -132,13 +137,12 @@ class Requests(object):
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
-        validate_user_input_url_for_repeaters(url, domain=self.domain_name, src='sent_attempt')
         if self._session:
             response = self._session.request(method, url, *args, **kwargs)
         else:
             # Mimics the behaviour of requests.api.request()
-            with self.auth_manager.get_session() as session:
-                response = session.request(method, url, *args, **kwargs)
+            with self:
+                response = self._session.request(method, url, *args, **kwargs)
         if raise_for_status:
             response.raise_for_status()
         return response
@@ -239,12 +243,8 @@ def parse_request_exception(err):
     return err_request, err_response
 
 
-def simple_post(domain, url, data, *, headers, auth_manager, verify,
-                notify_addresses=None, payload_id=None):
-    """
-    POST with a cleaner API, and return the actual HTTPResponse object, so
-    that error codes can be interpreted.
-    """
+def simple_request(domain, url, data, *, headers, auth_manager, verify,
+                   method="POST", notify_addresses=None, payload_id=None):
     if isinstance(data, str):
         # Encode as UTF-8, otherwise requests will send data containing
         # non-ASCII characters as 'data:application/octet-stream;base64,...'
@@ -262,8 +262,19 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
         notify_addresses=notify_addresses,
         payload_id=payload_id,
     )
+
+    request_methods = {
+        REQUEST_DELETE: requests.delete,
+        REQUEST_POST: requests.post,
+        REQUEST_PUT: requests.put,
+    }
     try:
-        response = requests.post(None, data=data, headers=default_headers)
+        request_method = request_methods[method]
+    except KeyError:
+        raise ValueError(f"Method must be one of {', '.join(request_methods.keys())}")
+
+    try:
+        response = request_method(None, data=data, headers=default_headers)
     except Exception as err:
         requests.notify_error(str(err))
         raise
@@ -271,6 +282,25 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
         message = f'HTTP status code {response.status_code}: {response.text}'
         requests.notify_error(message)
     return response
+
+
+def simple_post(domain, url, data, *, headers, auth_manager, verify,
+                notify_addresses=None, payload_id=None):
+    """
+    POST with a cleaner API, and return the actual HTTPResponse object, so
+    that error codes can be interpreted.
+    """
+    return simple_request(
+        domain,
+        url,
+        data,
+        headers=headers,
+        auth_manager=auth_manager,
+        verify=verify,
+        notify_addresses=notify_addresses,
+        payload_id=payload_id,
+        method="POST",
+    )
 
 
 def json_or_http_error(response):

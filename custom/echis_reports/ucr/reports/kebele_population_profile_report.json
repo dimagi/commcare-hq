@@ -37,7 +37,8 @@
 
    ],
    "aggregation_columns":[
-      "health_post_id"
+      "health_post_id",
+      "health_post_name"
       
    ],
  
@@ -45,7 +46,23 @@
 
    ],
    "columns":[
-      
+      {
+         "comment":null,
+         "field":"health_post_name",
+         "sortable":false,
+         "description":null,
+         "format":"default",
+         "css_class":null,
+         "visible":true,
+         "aggregation":"simple",
+         "column_id":"health_post_name",
+         "width":null,
+         "transform":{
+         },
+         "calculate_total":false,
+         "type":"field",
+         "display":"Health Post Name"
+      },
       {
          "comment":null,
          "field":"health_post_id",

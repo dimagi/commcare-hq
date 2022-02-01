@@ -4,7 +4,7 @@ from django.db import DEFAULT_DB_ALIAS
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase
 
-import mock
+from unittest import mock
 from decorator import contextmanager
 from testil import eq
 

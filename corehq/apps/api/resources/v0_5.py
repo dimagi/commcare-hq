@@ -73,7 +73,7 @@ from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
 )
-from corehq.apps.userreports.util import get_configurable_and_static_reports
+from corehq.apps.userreports.util import get_configurable_and_static_reports, get_report_config_or_not_found
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
@@ -603,7 +603,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         else:
             return ""
 
-    def _get_report_data(self, report_config, domain, start, limit, get_params):
+    def _get_report_data(self, report_config, domain, start, limit, get_params, couch_user):
         report = ConfigurableReportDataSource.from_spec(report_config, include_prefilters=True)
 
         string_type_params = [
@@ -613,7 +613,8 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         ]
         filter_values = get_filter_values(
             report_config.ui_filters,
-            query_dict_to_dict(get_params, domain, string_type_params)
+            query_dict_to_dict(get_params, domain, string_type_params),
+            couch_user,
         )
         report.set_filter_values(filter_values)
 
@@ -640,7 +641,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
 
         report_config = self._get_report_configuration(pk, domain)
         page, columns, total_records = self._get_report_data(
-            report_config, domain, start, limit, bundle.request.GET)
+            report_config, domain, start, limit, bundle.request.GET, bundle.request.couch_user)
 
         return ConfigurableReportData(
             data=page,
@@ -670,7 +671,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
             if report_config_id_is_static(id_):
                 return StaticReportConfiguration.by_id(id_, domain=domain)
             else:
-                return get_document_or_not_found(ReportConfiguration, domain, id_)
+                return get_report_config_or_not_found(domain, id_)
         except DocumentNotFound:
             raise NotFound
 

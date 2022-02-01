@@ -26,9 +26,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '--only_errored',
-            default=False,
-            type=bool,
-            choices=[True, False],
+            action="store_true",
             help="Will try to process batches that have been errored"
         )
         parser.add_argument(
@@ -36,6 +34,11 @@ class Command(BaseCommand):
             default=1000,
             type=int,
             help="Number of documents to query from couch"
+        )
+        parser.add_argument(
+            '--cancelled',
+            action="store_true",
+            help="Will start cancelled batches"
         )
 
     def handle(self, **options):
@@ -50,6 +53,11 @@ class Command(BaseCommand):
                     batches = util.get_errored_keys(5)
                     if not batches:
                         print("No errored keys present")
+                        return
+                elif options['cancelled']:
+                    batches = util.get_cancelled_keys(5)
+                    if not batches:
+                        print("No cancelled keys present")
                         return
                 else:
                     batches = util.generate_batches(workers, batch_by)

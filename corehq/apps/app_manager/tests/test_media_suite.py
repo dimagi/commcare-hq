@@ -6,7 +6,7 @@ from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 
 from lxml import etree
-from mock import patch
+from unittest.mock import patch
 
 import commcare_translations
 from corehq.apps.app_manager import id_strings

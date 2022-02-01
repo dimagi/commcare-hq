@@ -3,7 +3,7 @@ from corehq.messaging.smsbackends.airtel_tcl.exceptions import AirtelTCLError, I
 from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from datetime import datetime
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 
 class AirtelTCLBackendTest(TestCase):

@@ -1,6 +1,6 @@
 from django.test import TestCase
 from freezegun import freeze_time
-from mock import patch
+from unittest.mock import patch
 from testil import eq
 from corehq.util.soft_assert.core import SoftAssert
 
@@ -11,7 +11,7 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
-    CommCareCaseSQL,
+    CommCareCase,
     CaseTransaction,
     RebuildWithReason,
 )
@@ -151,7 +151,7 @@ class SqlUpdateStrategyTest(TestCase):
         """
         Create the models directly so that these tests aren't dependent on any
         other apps.
-        :return: XFormInstanceSQL
+        :return: XFormInstance
         """
         user_id = user_id or 'mr_wednesday'
         received_on = received_on or datetime.utcnow()
@@ -176,7 +176,7 @@ class SqlUpdateStrategyTest(TestCase):
         user_id = user_id or 'mr_wednesday'
         utcnow = datetime.utcnow()
 
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=case_id,
             domain=self.DOMAIN,
             type=case_type or '',

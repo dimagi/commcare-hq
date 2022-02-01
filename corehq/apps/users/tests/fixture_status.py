@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.test import TestCase
 
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names

@@ -6,8 +6,16 @@ from corehq.apps.linked_domain.applications import get_downstream_app_id
 from corehq.apps.linked_domain.exceptions import (
     DomainLinkError,
     MultipleDownstreamAppsError,
+    MultipleDownstreamKeywordsError,
 )
 from corehq.apps.sms.models import Keyword
+
+
+def get_downstream_keyword(downstream_domain, upstream_keyword_id):
+    keywords = Keyword.objects.filter(domain=downstream_domain, upstream_id=str(upstream_keyword_id))
+    if len(keywords) > 1:
+        raise MultipleDownstreamKeywordsError
+    return keywords[0] if keywords else None
 
 
 def create_linked_keyword(domain_link, keyword_id):

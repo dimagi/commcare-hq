@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from botocore.response import StreamingBody
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import (
@@ -144,6 +144,7 @@ class ExportViewTest(ViewTestCase):
     def tearDown(self):
         delete_all_export_instances()
 
+    @patch("couchforms.analytics.get_form_count_breakdown_for_domain", lambda *a: {})
     def test_create_form_export(self):
         resp = self.client.get(
             reverse(CreateNewCustomFormExportView.urlname, args=[self.domain.name]),

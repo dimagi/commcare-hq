@@ -18,6 +18,7 @@ MODEL_OTP_SETTINGS = 'otp_settings'
 MODEL_HMAC_CALLOUT_SETTINGS = 'hmac_callout_settings'
 MODEL_KEYWORD = 'keyword'
 MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS = 'tableau_server_and_visualizations'
+MODEL_AUTO_UPDATE_RULES = 'auto_update_rules'
 
 INDIVIDUAL_DATA_MODELS = [
     (MODEL_APP, ugettext_lazy('Application')),
@@ -31,6 +32,7 @@ DOMAIN_LEVEL_DATA_MODELS = [
     (MODEL_LOCATION_DATA, ugettext_lazy('Custom Location Data Fields')),
     (MODEL_ROLES, ugettext_lazy('User Roles')),
     (MODEL_PREVIEWS, ugettext_lazy('Feature Previews')),
+    (MODEL_AUTO_UPDATE_RULES, ugettext_lazy('Automatic Update Rules'))
 ]
 
 SUPERUSER_DATA_MODELS = [

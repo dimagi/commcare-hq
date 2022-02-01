@@ -1,5 +1,6 @@
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, doc_type_to_state
 from corehq.form_processor.change_publishers import change_meta_from_sql_form
+from corehq.form_processor.models import XFormInstance
 from corehq.util.pagination import paginate_function, ArgsListProvider
 from pillowtop.feed.interface import Change
 from pillowtop.reindexer.change_providers.interface import ChangeProvider
@@ -16,7 +17,7 @@ class SqlDomainXFormChangeProvider(ChangeProvider):
             return
 
         for form_id_chunk in self._iter_form_id_chunks():
-            for form in FormAccessorSQL.get_forms(form_id_chunk):
+            for form in XFormInstance.objects.get_forms(form_id_chunk):
                 yield Change(
                     id=form.form_id,
                     sequence_id=None,

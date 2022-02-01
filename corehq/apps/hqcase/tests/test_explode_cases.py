@@ -13,7 +13,7 @@ from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from casexml.apps.stock.mock import Balance, Entry
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqcase.tasks import explode_cases, topological_sort_cases
+from corehq.apps.hqcase.tasks import explode_cases, topological_sort_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -197,8 +197,8 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
     def test_case_graph(self):
         cases = self.device.restore().cases
         self.assertEqual(
-            ['host', 'parent_host', 'extension', 'child'],
-            topological_sort_cases(cases)
+            ['child', 'extension', 'parent_host', 'host'],
+            topological_sort_case_blocks(cases)
         )
 
     def test_child_extensions(self):

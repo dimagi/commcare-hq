@@ -6,7 +6,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 
 from corehq.motech.utils import pformat_json
-from toggle.shortcuts import find_domains_with_toggle_enabled
+from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
 from corehq.motech.dhis2.models import (
@@ -81,7 +81,10 @@ def send_dataset(
     .. _DHIS2 API docs: https://docs.dhis2.org/master/en/developer/html/webapi_data_values.html
 
     """
-    payload_id = dataset_map.ucr_id  # Allows us to filter Remote API Logs
+    # payload_id lets us filter API logs, and uniquely identifies the
+    # dataset map, to help AEs and administrators link an API log back
+    # to a dataset map.
+    payload_id = f'dhis2/map/{dataset_map.pk}/'
     response_log_url = reverse(
         'motech_log_list_view',
         args=[dataset_map.domain],

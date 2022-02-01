@@ -93,7 +93,7 @@ def get_download_context(download_id, message=None, require_result=False):
         # so I think our best choice is to match off the name, even though that's hacky
         exception_name = (task.result.__class__.__name__
                           if isinstance(task.result, Exception) else None)
-        raise TaskFailedError(task_status.error, exception_name=exception_name)
+        raise TaskFailedError([task_status.error], exception_name=exception_name)
     if require_result:
         is_ready = task_status.success() and task_status.result is not None
     else:

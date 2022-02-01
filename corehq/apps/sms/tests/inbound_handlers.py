@@ -1,7 +1,7 @@
 import contextlib
 from datetime import time
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.reminders.models import RECIPIENT_OWNER, RECIPIENT_USER_GROUP

@@ -5,7 +5,7 @@ from collections import Counter
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,

@@ -49,6 +49,7 @@ class ReportDispatcher(View):
 
         It's also intended that you make the appropriate permissions checks in the permissions_check method
         and decorate the dispatch method with the appropriate permissions decorators.
+        You may also override GenericReportView.allow_access in individual report classes
 
         ReportDispatcher expects to serve a report that is a subclass of GenericReportView.
     """
@@ -137,16 +138,17 @@ class ReportDispatcher(View):
         report_kwargs = kwargs.copy()
 
         class_name = self.get_report_class_name(domain, report_slug)
-        cls = to_function(class_name) if class_name else None
+        report_class = to_function(class_name) if class_name else None
 
         permissions_check = permissions_check or self.permissions_check
         if (
-            cls
+            report_class
             and permissions_check(class_name, request, domain=domain)
-            and self.toggles_enabled(cls, request)
+            and self.toggles_enabled(report_class, request)
+            and report_class.allow_access(request)
         ):
             try:
-                report = cls(request, domain=domain, **report_kwargs)
+                report = report_class(request, domain=domain, **report_kwargs)
                 report.rendered_as = render_as
                 report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
@@ -206,6 +208,7 @@ class ReportDispatcher(View):
                 if (
                     dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True)
                     and cls.toggles_enabled(report, request)
+                    and report.allow_access(request)
                     and (show_in_navigation or show_in_dropdown)
                 ):
                     report_contexts.append({

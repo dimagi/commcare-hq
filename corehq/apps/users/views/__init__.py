@@ -1,6 +1,7 @@
 import json
 from collections import defaultdict
 from datetime import datetime
+from django.conf import settings
 
 import langcodes
 import six.moves.urllib.error
@@ -86,6 +87,7 @@ from corehq.apps.users.decorators import (
     require_can_view_roles,
     require_permission_to_edit_user,
 )
+from corehq.apps.users.exceptions import MissingRoleException
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
@@ -259,7 +261,7 @@ class BaseEditUserView(BaseUserSettingsView):
 
         if role is None:
             if isinstance(self.editable_user, WebUser):
-                raise ValueError("WebUser is always expected to have a role")
+                raise MissingRoleException()
             return None
         else:
             return role.get_qualified_id()
@@ -374,7 +376,14 @@ class EditWebUserView(BaseEditUserView):
                                   request=self.request)
 
         if self.can_change_user_roles:
-            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
+            try:
+                existing_role = self.existing_role
+            except MissingRoleException:
+                existing_role = None
+                messages.error(self.request, _("""
+                    This user has no role. Please assign this user a role and save.
+                """))
+            form.load_roles(current_role=existing_role, role_choices=self.user_role_choices)
         else:
             del form.fields['role']
 
@@ -382,7 +391,12 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
+        role_choices = get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
+        try:
+            self.existing_role
+        except MissingRoleException:
+            role_choices = [('none', _('(none)'))] + role_choices
+        return role_choices
 
     @property
     @memoized
@@ -544,6 +558,7 @@ class ListWebUsersView(BaseRoleAccessView):
     page_title = ugettext_lazy("Web Users")
     urlname = 'web_users'
 
+
     @property
     @memoized
     def role_labels(self):
@@ -580,6 +595,7 @@ class ListWebUsersView(BaseRoleAccessView):
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'bulk_download_url': bulk_download_url,
+            'from_address': settings.DEFAULT_FROM_EMAIL
         }
 
 

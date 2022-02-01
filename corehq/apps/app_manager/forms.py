@@ -89,8 +89,8 @@ class CopyApplicationForm(forms.Form):
     def clean(self):
         domain = self.cleaned_data.get('domain')
         if self.cleaned_data.get('linked'):
-            if not toggles.LINKED_DOMAINS.enabled(domain):
-                raise forms.ValidationError("The target project space does not have linked apps enabled.")
+            if not domain_has_privilege(domain, RELEASE_MANAGEMENT) and not toggles.LINKED_DOMAINS.enabled(domain):
+                raise forms.ValidationError("The target project space does not have this feature enabled.")
             link = DomainLink.objects.filter(linked_domain=domain)
             if link and link[0].master_domain != self.from_domain:
                 raise forms.ValidationError(

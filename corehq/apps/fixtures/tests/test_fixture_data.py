@@ -406,8 +406,7 @@ class TestFixtureOrdering(TestCase):
 
     def test_fixture_order(self):
         (fixture,) = call_fixture_generator(self.user.to_ota_restore_user())
-        rows = fixture.getchildren()[0].getchildren()
-        actual_names = [row.getchildren()[0].text for row in rows]
+        actual_names = [row[0].text for row in fixture[0]]
         self.assertEqual(
             ["Targaryen", "Stark", "Lannister", "Tyrell", "Tully", "Martell", "Baratheon"],
             actual_names

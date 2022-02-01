@@ -1,13 +1,11 @@
 import uuid
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase
 import os
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.view_helpers import get_case_hierarchy, case_hierarchy_context
 from casexml.apps.case.util import post_case_blocks
-from casexml.apps.case.xml import V2, V1
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.exceptions import CaseNotFound
@@ -17,14 +15,6 @@ from corehq.form_processor.tests.utils import (
     sharded,
 )
 from corehq.util.test_utils import TestFileMixin, softer_assert
-
-
-class SimpleCaseBugTests(SimpleTestCase):
-
-    def test_generate_xml_with_no_date_modified(self):
-        # before this test was added both of these calls failed
-        for version in (V1, V2):
-            CommCareCase(_id='test').to_xml(version)
 
 
 @sharded
@@ -326,7 +316,7 @@ class TestCaseHierarchy(TestCase):
         ).as_text()
         submit_case_blocks(case_block, 'test-transactions', form_id=form_id)
         with self.assertRaises(CaseNotFound):
-            CaseAccessors().get_case(case_id2)
+            CaseAccessors('domain_name').get_case(case_id2)
 
         # form with same ID submitted but now has a new case transaction
         new_case_block = CaseBlock.deprecated_init(
@@ -335,7 +325,7 @@ class TestCaseHierarchy(TestCase):
             case_type='t1',
         ).as_text()
         submit_case_blocks([case_block, new_case_block], 'test-transactions', form_id=form_id)
-        case2 = CaseAccessors().get_case(case_id2)
+        case2 = CaseAccessors('test-transactions').get_case(case_id2)
         self.assertEqual([form_id], case2.xform_ids)
         self.assertEqual('t1', case2.type)
 

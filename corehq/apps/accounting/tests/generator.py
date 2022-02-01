@@ -7,7 +7,7 @@ from decimal import Decimal
 from django.apps import apps
 from django.conf import settings
 
-import mock
+from unittest import mock
 from nose.tools import nottest
 
 from dimagi.utils.data import generator as data_gen

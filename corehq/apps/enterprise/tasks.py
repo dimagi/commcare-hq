@@ -41,7 +41,7 @@ def email_enterprise_report(domain, slug, couch_user):
     body = "The enterprise report you requested for the account {} is ready.<br>" \
            "You can download the data at the following link: {}<br><br>" \
            "Please remember that this link will only be active for 24 hours.".format(account.name, link)
-    send_html_email_async(subject, couch_user.username, body)
+    send_html_email_async(subject, couch_user.get_email(), body)
 
 
 @task

@@ -98,6 +98,7 @@ pro_v1 = standard_v1 + [
     privileges.TEMPLATED_INTENTS,
     privileges.CASE_SHARING_GROUPS,
     privileges.CHILD_CASES,
+    privileges.LITE_RELEASE_MANAGEMENT,
 ]
 
 
@@ -124,7 +125,6 @@ advanced_v0 = pro_v1 + [
 enterprise_v0 = advanced_v0 + [
     privileges.GEOCODER,
     privileges.DEFAULT_EXPORT_SETTINGS,
-    privileges.LINKED_PROJECTS,
 ]
 
 enterprise_v1 = enterprise_v0 + [

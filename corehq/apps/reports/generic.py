@@ -722,6 +722,15 @@ class GenericReportView(object):
         return absolute_reverse(cls.dispatcher.name(), args=url_args + [cls.slug])
 
     @classmethod
+    def allow_access(cls, request):
+        """
+        Override to add additional constraints on report access on top of
+        what's provided by the dispatcher. For feature flags, see the toggles
+        attribute
+        """
+        return True
+
+    @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return True
 
