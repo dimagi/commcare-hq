@@ -7,6 +7,9 @@
 </legend>
 
 <div data-bind="with: search">
+  <div class="alert alert-info" data-bind="hidden: isEnabled">
+    {% trans "Add at least one search property to active case search for this case list" %}
+  </div>
   <form>
     <div class="panel panel-appmanager">
       <div class="panel-heading">
@@ -39,7 +42,7 @@
         </p>
       </div>
     </div>
-    <div class="panel panel-appmanager">
+    <div class="panel panel-appmanager" data-bind="visible: isEnabled">
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">{% trans "Default Search Filters" %}</h4>
       </div>
@@ -86,7 +89,7 @@
         </p>
       </div>
     </div>
-    <div class="panel panel-appmanager">
+    <div class="panel panel-appmanager" data-bind="visible: isEnabled">
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">{% trans "Search and Claim Options" %}</h4>
       </div>

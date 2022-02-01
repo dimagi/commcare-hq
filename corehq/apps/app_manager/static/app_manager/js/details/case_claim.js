@@ -429,6 +429,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return self.commonProperties().indexOf(prop) !== -1;
         };
 
+        self.isEnabled = ko.computed(() => {
+            return self._getProperties().length > 0;
+        });
+
         self.serialize = function () {
             return _.extend({
                 properties: self._getProperties(),
