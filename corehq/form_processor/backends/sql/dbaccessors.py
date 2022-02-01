@@ -32,7 +32,6 @@ from corehq.form_processor.exceptions import (
 )
 from corehq.form_processor.models.util import sort_with_id_list as _sort_with_id_list
 from corehq.form_processor.interfaces.dbaccessors import (
-    AbstractCaseAccessor,
     AbstractLedgerAccessor,
     CaseIndexInfo,
 )
@@ -408,7 +407,7 @@ class CaseReindexAccessor(ReindexAccessor):
         return filters
 
 
-class CaseAccessorSQL(AbstractCaseAccessor):
+class CaseAccessorSQL:
 
     @staticmethod
     def get_case(case_id):
