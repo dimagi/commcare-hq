@@ -75,4 +75,4 @@ class FoodOptions:
     dish = OptionValue()
     food_option = OptionValue(default="veg", choices=["veg", "non-veg"])
     condiments = OptionValue(default=list)
-    packaged_water = OptionValue(obj_schema=WaterBottle)
+    packaged_water = OptionValue(schema=WaterBottle)
