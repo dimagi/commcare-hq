@@ -2,7 +2,7 @@ import os
 import uuid
 import zipfile
 from datetime import datetime, timedelta
-from django.http.request import QueryDict, MultiValueDict
+from django.http.request import QueryDict
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -170,11 +170,9 @@ def export_all_rows_task(report_class, report_state, recipient_list=None, subjec
     )
     from corehq.apps.reports.standard.deployments import ApplicationStatusReport
     from phonelog.reports import DeviceLogDetailsReport
-    from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer, CaseListReport
+    from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
     from corehq.apps.reports.standard.cases.duplicate_cases import DuplicateCasesExplorer
-    from corehq.apps.reports.commtrack.maps import StockStatusMapReport
     from corehq.apps.reports.commtrack import CurrentStockStatusReport
-    from corehq.apps.reports.commtrack.standard import SimplifiedInventoryReport, InventoryReport
     from corehq.apps.smsbillables.interface import SMSBillablesInterface, SMSGatewayFeeCriteriaInterface
     from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
     from corehq.apps.hqadmin.reports import DeviceLogSoftAssertReport
@@ -188,16 +186,11 @@ def export_all_rows_task(report_class, report_state, recipient_list=None, subjec
         SMSBillablesInterface.slug: SMSBillablesInterface,
         SMSGatewayFeeCriteriaInterface.slug: SMSGatewayFeeCriteriaInterface,
         WorkerActivityReport.slug: WorkerActivityReport,
-
         DeviceLogSoftAssertReport.slug: DeviceLogSoftAssertReport,
-        EnterpriseSMSBillablesReport.slug: EnterpriseSMSBillablesReport,  # untested (SMSDetailedReport)
-        CaseListExplorer.slug: CaseListExplorer,  # untested
-        #CaseListReport.slug: CaseListReport,  # this might just be a base
-        DuplicateCasesExplorer.slug: DuplicateCasesExplorer,  # untested
+        EnterpriseSMSBillablesReport.slug: EnterpriseSMSBillablesReport,
+        CaseListExplorer.slug: CaseListExplorer,
+        DuplicateCasesExplorer.slug: DuplicateCasesExplorer,
         CurrentStockStatusReport.slug: CurrentStockStatusReport,
-        #StockStatusMapReport.slug: StockStatusMapReport,  # might need for email
-        #SimplifiedInventoryReport.slug: SimplifiedInventoryReport,  # might need for email
-        #InventoryReport.slug: InventoryReport,  # not used for excel, might need for email
     }
 
     #Reforming datespan object
@@ -213,7 +206,7 @@ def export_all_rows_task(report_class, report_state, recipient_list=None, subjec
         get_class = report_class
 
     GET_data = QueryDict('', mutable=True)
-    GET_data.update(MultiValueDict(report_state['request']['GET']))
+    GET_data.update(report_state['request']['GET'])
     report_state['request']['GET'] = GET_data
 
     report = object.__new__(get_class)

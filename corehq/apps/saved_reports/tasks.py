@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.http import HttpRequest
-from django.http.request import QueryDict, MultiValueDict
+from django.http.request import QueryDict
 from django.utils.translation import ugettext as _
 
 import six
@@ -120,13 +120,15 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     couch_user = CouchUser.get_by_user_id(user_id)
     mock_request = HttpRequest()
 
-    mock_request.method = 'GET'
     GET_data = QueryDict('', mutable=True)
-    GET_data.update(MultiValueDict(request_data['GET']))
+    GET_data.update(request_data['GET'])
     request_data['GET'] = GET_data
+
+    mock_request.method = 'GET'
     mock_request.GET = request_data['GET']
 
     config = ReportConfig()
+
     # see ReportConfig.query_string()
     object.__setattr__(config, '_id', 'dummy')
     config.name = _("Emailed report")
