@@ -520,7 +520,7 @@ class XFormCaseBlock(object):
                 if 'commcare_usercase' in self.path:
                     case_value = UsercaseXPath().case().slash(key)
                 else:
-                    case_id_xpath = f"{self.path}case/@case_id"
+                    case_id_xpath = self.xform.resolve_path(f"{self.path}case/@case_id")
                     case_value = CaseIDXPath(case_id_xpath).case().slash(key)
                 self.xform.add_casedb()
                 edit_mode_path = f' and {case_value} != {resolved_path}'
