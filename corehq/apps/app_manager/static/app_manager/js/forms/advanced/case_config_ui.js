@@ -1,4 +1,8 @@
-hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
+hqDefine('app_manager/js/forms/advanced/case_config_ui', [
+    'hqwebapp/js/toggles',
+], function (
+    toggles
+) {
     'use strict';
 
     $(function () {
@@ -40,6 +44,8 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             self.commtrack = params.commtrack_enabled;
             self.programs = params.commtrack_programs;
             self.isShadowForm = params.isShadowForm;
+
+            self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
             self.setPropertiesMap = function (propertiesMap) {
                 self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -297,6 +303,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 action.visible_case_properties = ko.computed(function () {
                     return action.case_properties();
                 });
+                action.saveOnlyEditedFormFieldsEnabled = caseConfig.saveOnlyEditedFormFieldsEnabled;
 
                 _(preload).each(function (p) {
                     action.preload.push(casePreloadProperty.wrap(p, action));
@@ -341,6 +348,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 action.visible_case_properties = ko.computed(function () {
                     return action.case_properties();
                 });
+                action.caseConfig.saveOnlyEditedFormFieldsEnabled = caseConfig.saveOnlyEditedFormFieldsEnabled;
 
                 return action;
             }));

@@ -1,4 +1,8 @@
-hqDefine('app_manager/js/forms/case_config_ui', function () {
+hqDefine('app_manager/js/forms/case_config_ui', [
+    'hqwebapp/js/toggles',
+], function (
+    toggles
+) {
     "use strict";
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
@@ -36,6 +40,8 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.valid_index_names = params.valid_index_names;
             self.moduleCaseTypes = params.moduleCaseTypes;
             self.allowUsercase = params.allowUsercase;
+
+            self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
             self.setPropertiesMap = function (propertiesMap) {
                 self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -305,6 +311,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             self.hasPrivilege = hasPrivilege;
             self.caseConfig = caseConfig;
+            self.saveOnlyEditedFormFieldsEnabled = caseConfig.saveOnlyEditedFormFieldsEnabled;
 
             // link self.case_name to corresponding path observable in case_properties for convenience
             try {
