@@ -10,10 +10,7 @@ from django.core.management.base import BaseCommand
 from dimagi.utils.chunked import chunked
 
 from corehq.form_processor.models import CommCareCaseIndex
-from corehq.form_processor.utils.sql import (
-    fetchall_as_namedtuple,
-    fetchone_as_namedtuple,
-)
+from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 IDENTIFIER_INDEX_NAME = 'form_processor_commcarecaseindexsql_identifier'
@@ -96,7 +93,7 @@ def _index_exists(db, index_name):
         sql = "SELECT to_regclass('{}') IS NOT NULL as index_exists".format(index_name)
         log_sql(sql)
         cursor.execute(sql)
-        return fetchone_as_namedtuple(cursor).index_exists
+        return cursor.fetchone()[0]
 
 
 def _drop_index(db, index_name):
