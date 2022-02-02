@@ -430,7 +430,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
         self.isEnabled = ko.computed(() => {
-            return self._getProperties().length > 0;
+            // match logic in corehq.apps.app_manager.util.module_offers_search
+            return self._getProperties().length > 0 || self._getDefaultProperties().length > 0;
         });
 
         self.serialize = function () {
