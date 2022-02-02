@@ -173,15 +173,17 @@ NON_GLOBAL_USER_API_LIST = (
 USER_API_LIST = GLOBAL_USER_API_LIST + NON_GLOBAL_USER_API_LIST
 
 
-def get_global_api_url_patterns(resources):
+def _get_global_api_url_patterns(resources):
     api = CommCareHqApi(api_name='global')
     for resource in resources:
         api.register(resource())
-        yield url(r'^', include(api.urls))
+    return url(r'^', include(api.urls))
 
 
-admin_urlpatterns = list(get_global_api_url_patterns(ADMIN_API_LIST)) + \
-                    list(get_global_api_url_patterns(GLOBAL_USER_API_LIST))
+admin_urlpatterns = [
+    _get_global_api_url_patterns(ADMIN_API_LIST),
+    _get_global_api_url_patterns(GLOBAL_USER_API_LIST),
+]
 
 
 VERSIONED_USER_API_LIST = (
