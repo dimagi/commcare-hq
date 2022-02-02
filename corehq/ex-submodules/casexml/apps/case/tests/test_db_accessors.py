@@ -148,35 +148,3 @@ class TestExtensionCaseIds(TestCase):
         )
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id, host_2_id])
         self.assertItemsEqual(returned_cases, [extension_id, extension_2_id])
-
-
-@sharded
-class TestIndexedCaseIds(TestCase):
-
-    def setUp(self):
-        super(TestIndexedCaseIds, self).setUp()
-        self.domain = 'domain'
-        self.factory = CaseFactory(self.domain)
-
-    def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases()
-        FormProcessorTestUtils.delete_all_xforms()
-        super(TestIndexedCaseIds, self).tearDown()
-
-    def test_indexed_case_ids_returns_extensions(self):
-        """ When getting indices, also return extensions """
-        host_id = uuid.uuid4().hex
-        extension_id = uuid.uuid4().hex
-        host = CaseStructure(case_id=host_id, attrs={'create': True})
-
-        self.factory.create_or_update_case(
-            CaseStructure(
-                case_id=extension_id,
-                indices=[
-                    CaseIndex(host, relationship=CASE_INDEX_EXTENSION)
-                ],
-                attrs={'create': True}
-            )
-        )
-        returned_cases = CaseAccessors(self.domain).get_indexed_case_ids([extension_id])
-        self.assertItemsEqual(returned_cases, [host_id])

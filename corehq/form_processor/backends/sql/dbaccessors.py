@@ -439,22 +439,6 @@ class CaseAccessorSQL:
         return CommCareCaseIndex.objects.get_all_reverse_indices_info(domain, case_ids)
 
     @staticmethod
-    def get_indexed_case_ids(domain, case_ids):
-        """
-        Given a base list of case ids, gets all ids of cases they reference (parent and host cases)
-        """
-        if not case_ids:
-            return []
-
-        with CommCareCaseIndex.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT referenced_id FROM get_multiple_cases_indices(%s, %s)',
-                [domain, list(case_ids)]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.referenced_id for result in results]
-
-    @staticmethod
     def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
         assert isinstance(case_ids, list)
         assert case_types is None or isinstance(case_types, list)

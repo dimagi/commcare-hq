@@ -96,9 +96,6 @@ class CaseAccessors(object):
         return self.db_accessor.get_extension_case_ids(
             self.domain, case_ids, exclude_for_case_type=exclude_for_case_type)
 
-    def get_indexed_case_ids(self, case_ids):
-        return self.db_accessor.get_indexed_case_ids(self.domain, case_ids)
-
     def get_last_modified_dates(self, case_ids):
         return self.db_accessor.get_last_modified_dates(self.domain, case_ids)
 
