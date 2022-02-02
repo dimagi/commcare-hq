@@ -37,7 +37,7 @@ IGNORE_APPS = {
     'telerivet',
     'toggle_ui',
     'sso',
-    'oauth',
+    'oauth_integrations',
 }
 
 IGNORE_MODELS = {
