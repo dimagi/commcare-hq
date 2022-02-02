@@ -267,13 +267,10 @@ class XFormInstanceManager(RequireDBManager):
         from ..change_publishers import publish_form_saved
         with unfinished_archive(instance=form, user_id=user_id, archive=archive) as archive_stub:
             yield archive_stub
-            is_sql = isinstance(form, XFormInstance)
-            if is_sql:
-                publish_form_saved(form)
+            publish_form_saved(form)
             if trigger_signals:
-                sender = "form_processor" if is_sql else "couchforms"
                 signal = xform_archived if archive else xform_unarchived
-                signal.send(sender=sender, xform=form)
+                signal.send(sender="form_processor", xform=form)
 
     @staticmethod
     def save_new_form(form):
