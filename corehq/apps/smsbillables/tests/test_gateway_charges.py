@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.sms.api import create_billable_for_sms
 from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee

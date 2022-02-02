@@ -15,7 +15,6 @@ from tastypie.exceptions import BadRequest
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.api.query_adapters import GroupQuerySetAdapter
 from corehq.apps.api.resources.pagination import DoesNothingPaginatorCompat
-from couchforms.models import doc_types
 
 from corehq.apps.api.es import ElasticAPIQuerySet, FormESView, es_query_from_get_params
 from corehq.apps.api.fields import (
@@ -65,8 +64,6 @@ from no_exceptions.exceptions import Http400
 # so as a hack until this can be remedied, there is a global that
 # can be set to provide a mock.
 MOCK_XFORM_ES = None
-
-xform_doc_types = doc_types()
 
 
 class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainSpecificResourceMixin):

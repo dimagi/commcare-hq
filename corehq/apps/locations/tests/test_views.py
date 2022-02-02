@@ -4,7 +4,7 @@ from django.contrib.messages import get_messages
 from django.test import Client, TestCase
 from django.urls import reverse
 
-import mock
+from unittest import mock
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.exceptions import LocationConsistencyError

@@ -95,6 +95,10 @@ def get_hmac_callout_settings(domain_link):
     return _do_simple_request('linked_domain:hmac_callout_settings', domain_link)
 
 
+def get_auto_update_rules(domain_link):
+    return _do_simple_request('linked_domain:auto_update_rules', domain_link)
+
+
 def get_remote_linkable_ucr(domain_link):
     from corehq.apps.linked_domain.ucr import get_linked_reports_in_domain
     all_remote_reports = _do_simple_request('linked_domain:linkable_ucr', domain_link).get('reports', [])

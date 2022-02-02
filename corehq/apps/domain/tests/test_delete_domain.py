@@ -9,10 +9,10 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from dateutil.relativedelta import relativedelta
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
-from casexml.apps.phone.models import OwnershipCleanlinessFlag, SyncLogSQL
+from casexml.apps.phone.models import SyncLogSQL
 from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.apps.accounting.models import (
@@ -52,7 +52,7 @@ from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseRuleAction,
@@ -121,7 +121,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
@@ -309,7 +309,7 @@ class TestDeleteDomain(TestCase):
         self._test_case_deletion()
 
     def test_form_deletion(self):
-        form_states = [state_tuple[0] for state_tuple in XFormInstanceSQL.STATES]
+        form_states = [state_tuple[0] for state_tuple in XFormInstance.STATES]
 
         for domain_name in [self.domain.name, self.domain2.name]:
             for form_state in form_states:
@@ -545,12 +545,14 @@ class TestDeleteDomain(TestCase):
         self._assert_queryset_count([
             CaseType.objects.filter(domain=domain_name),
             CaseProperty.objects.filter(case_type__domain=domain_name),
+            CasePropertyAllowedValue.objects.filter(case_property__case_type__domain=domain_name),
         ], count)
 
     def test_data_dictionary(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             case_type = CaseType.objects.create(domain=domain_name, name='case_type')
-            CaseProperty.objects.create(case_type=case_type, name='case_property')
+            prop = CaseProperty.objects.create(case_type=case_type, name='case_property', data_type='select')
+            CasePropertyAllowedValue.objects.create(case_property=prop, allowed_value="True")
             self._assert_data_dictionary_counts(domain_name, 1)
 
         self.domain.delete()
@@ -701,13 +703,11 @@ class TestDeleteDomain(TestCase):
 
     def _assert_phone_counts(self, domain_name, count):
         self._assert_queryset_count([
-            OwnershipCleanlinessFlag.objects.filter(domain=domain_name),
             SyncLogSQL.objects.filter(domain=domain_name)
         ], count)
 
     def test_phone_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            OwnershipCleanlinessFlag.objects.create(domain=domain_name)
             SyncLogSQL.objects.create(
                 domain=domain_name,
                 doc={},
@@ -1023,7 +1023,7 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
     def test_hard_delete_forms(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             create_form_for_test(domain_name)
-            create_form_for_test(domain_name, state=XFormInstanceSQL.ARCHIVED)
+            create_form_for_test(domain_name, state=XFormInstance.ARCHIVED)
             self.assertEqual(len(FormAccessors(domain_name).get_all_form_ids_in_domain()), 1)
 
         self.domain.delete()
@@ -1045,7 +1045,7 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
     def test_hard_delete_forms_none_to_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             create_form_for_test(domain_name)
-            create_form_for_test(domain_name, state=XFormInstanceSQL.ARCHIVED)
+            create_form_for_test(domain_name, state=XFormInstance.ARCHIVED)
             self.assertEqual(len(FormAccessors(domain_name).get_all_form_ids_in_domain()), 1)
 
         self.domain.delete()

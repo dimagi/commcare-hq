@@ -43,6 +43,10 @@ class InvalidCustomFieldNameException(ImporterError):
     pass
 
 
+class CustomImporterError(ImporterError):
+    """Raised for errors returned by extensions for file being imported"""
+
+
 class CaseRowErrorList(Exception):
     def __init__(self, errors=None):
         self.error_list = errors if errors else []
@@ -57,8 +61,12 @@ class CaseRowError(Exception):
     title = ""
     message = ""
 
-    def __init__(self, column_name=None):
+    def __init__(self, column_name=None, message=None, sample=None):
         self.column_name = column_name
+        if message:
+            self.message = message
+        if sample:
+            self.sample = sample
         super(CaseRowError, self).__init__(self.message)
 
 
@@ -90,9 +98,15 @@ class InvalidParentId(CaseRowError):
 class InvalidDate(CaseRowError):
     title = ugettext_noop('Invalid Date')
     message = ugettext_lazy(
-        "Date fields were specified that caused an error during "
-        "conversion. This is likely caused by a value from Excel having "
-        "the wrong type or not being formatted properly."
+        'Required format: YYYY-MM-DD (e.g. "2021-12-31")'
+    )
+
+
+class InvalidSelectValue(CaseRowError):
+    title = ugettext_noop('Unexpected multiple choice value')
+    message = ugettext_lazy(
+        "Multiple choice values were specified that are not listed "
+        "in the valid values defined in the property's data dictionary."
     )
 
 
@@ -159,3 +173,8 @@ class CaseNameTooLong(CaseRowError):
 class ExternalIdTooLong(CaseRowError):
     title = ugettext_noop('External ID Too Long')
     message = ugettext_lazy(f"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters")
+
+
+class UnexpectedError(CaseRowError):
+    title = ugettext_noop('Unexpected error')
+    message = ugettext_lazy('Could not process case. If this persists, Please report an issue to CommCareHQ')

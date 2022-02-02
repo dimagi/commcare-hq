@@ -5,22 +5,8 @@ from corehq.apps.es.aggregations import TermsAggregation
 from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.util.quickcache import quickcache
 
-from dimagi.utils.parsing import json_format_datetime
 from corehq.util.couch import stale_ok
 from corehq.util.dates import iso_string_to_datetime
-from couchforms.models import XFormInstance, doc_types
-
-
-def update_analytics_indexes():
-    """
-    Mostly for testing; wait until analytics data sources are up to date
-    so that calls to analytics functions return up-to-date
-    """
-    from corehq.apps.app_manager.models import Application
-    XFormInstance.get_db().view('couchforms/all_submissions_by_domain', limit=1).all()
-    XFormInstance.get_db().view('all_forms/view', limit=1).all()
-    XFormInstance.get_db().view('exports_forms_by_xform/view', limit=1).all()
-    Application.get_db().view('exports_forms_by_app/view', limit=1).all()
 
 
 def domain_has_submission_in_last_30_days(domain):
@@ -146,7 +132,8 @@ def get_form_analytics_metadata(domain, app_id, xmlns):
         stale=stale_ok(),
         group=True
     ).one()
-    form_count = get_form_count_for_domain_app_xmlns(domain, app_id, xmlns)
+    form_counts = get_form_count_breakdown_for_domain(domain)
+    form_count = form_counts.get((domain, app_id, xmlns))
     if view_results:
         result = view_results['value']
         result['submissions'] = form_count
@@ -196,16 +183,3 @@ def get_form_count_breakdown_for_domain(domain):
             xmlns = sub_bucket.key
             form_counts[(domain, app_id, xmlns)] = sub_bucket.doc_count
     return form_counts
-
-
-def get_form_count_for_domain_app_xmlns(domain, app_id, xmlns):
-    row = XFormInstance.get_db().view(
-        'exports_forms_by_xform/view',
-        startkey=[domain, app_id, xmlns],
-        endkey=[domain, app_id, xmlns, {}],
-        group=True,
-    ).one()
-    if row:
-        return row['value']
-    else:
-        return 0

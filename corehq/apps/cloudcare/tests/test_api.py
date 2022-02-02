@@ -3,7 +3,7 @@ import json
 from django.test import TestCase
 from django.urls import reverse
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.cloudcare.views import ReadableQuestions
 from corehq.apps.domain.shortcuts import create_domain

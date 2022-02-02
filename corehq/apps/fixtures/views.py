@@ -559,8 +559,7 @@ def _get_fixture_upload_args_from_request(request, domain):
             replace = False
         user_email = None
         if toggles.SUPPORT.enabled(request.couch_user.username):
-            user_email = request.couch_user.email if request.couch_user.email is not None \
-                else request.couch_user.username
+            user_email = request.couch_user.get_email()
     except Exception:
         raise FixtureAPIRequestError(
             "Invalid post request."

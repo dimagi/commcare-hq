@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_lazy
 from django.views.generic import View
 
 import pytz
+from memoized import memoized
 
 from couchexport.models import Format
 from dimagi.utils.web import get_url_base, json_response
@@ -18,7 +19,11 @@ from soil.progress import get_task_status
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.decorators import LoginAndDomainMixin, api_auth
+from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
+    api_auth,
+    login_and_domain_required,
+)
 from corehq.apps.export.const import (
     CASE_EXPORT,
     FORM_EXPORT,
@@ -48,7 +53,6 @@ from corehq.blobs.exceptions import NotFound
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
-from memoized import memoized
 
 
 def get_timezone(domain, couch_user):
@@ -306,6 +310,7 @@ class DashboardFeedPaywall(BaseProjectDataView):
 
 
 @location_safe
+@method_decorator(login_and_domain_required, name='dispatch')
 class DataFileDownloadList(BaseProjectDataView):
     urlname = 'download_data_files'
     template_name = 'export/download_data_files.html'

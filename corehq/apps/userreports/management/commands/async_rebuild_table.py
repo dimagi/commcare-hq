@@ -8,7 +8,7 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
 )
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.argparse_types import date_type
 
 FakeChange = namedtuple('FakeChange', ['id', 'document'])
@@ -98,7 +98,7 @@ class Command(BaseCommand):
     def _get_ids(self, db, start_date):
         if self.referenced_type == CASE_DOC_TYPE:
             cases = (
-                CommCareCaseSQL.objects
+                CommCareCase.objects
                 .using(db)
                 .filter(domain=self.domain, type=self.case_type_or_xmlns)
             )
@@ -107,7 +107,7 @@ class Command(BaseCommand):
             return cases.values_list('case_id', flat=True)
         elif self.referenced_type == XFORM_DOC_TYPE:
             forms = (
-                XFormInstanceSQL.objects
+                XFormInstance.objects
                 .using(db)
                 .filter(domain=self.domain, xmlns=self.case_type_or_xmlns)
             )

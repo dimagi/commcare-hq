@@ -9,11 +9,11 @@ from jsonfield.fields import JSONEncoder
 from psycopg2.extensions import adapt
 
 from corehq.form_processor.models import (
-    CommCareCaseSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE,
-    CommCareCaseIndexSQL_DB_TABLE, CaseTransaction_DB_TABLE,
-    XFormInstanceSQL_DB_TABLE,
+    CommCareCase_DB_TABLE, CaseAttachment_DB_TABLE,
+    CommCareCaseIndex_DB_TABLE, CaseTransaction_DB_TABLE,
+    XFormInstance,
     LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE,
-    XFormOperationSQL_DB_TABLE,
+    XFormOperation,
 )
 
 
@@ -61,7 +61,7 @@ def form_adapter(form):
         form.deletion_id,
         form.server_modified_on,
     ]
-    return ObjectAdapter(fields, XFormInstanceSQL_DB_TABLE)
+    return ObjectAdapter(fields, XFormInstance._meta.db_table)
 
 
 def form_operation_adapter(operation):
@@ -72,7 +72,7 @@ def form_operation_adapter(operation):
         operation.date,
         operation.form_id,
     ]
-    return ObjectAdapter(fields, XFormOperationSQL_DB_TABLE)
+    return ObjectAdapter(fields, XFormOperation._meta.db_table)
 
 
 def case_adapter(case):
@@ -98,7 +98,7 @@ def case_adapter(case):
         case.deleted_on,
         case.deletion_id,
     ]
-    return ObjectAdapter(fields, CommCareCaseSQL_DB_TABLE)
+    return ObjectAdapter(fields, CommCareCase_DB_TABLE)
 
 
 def case_attachment_adapter(attachment):
@@ -114,7 +114,7 @@ def case_attachment_adapter(attachment):
         json.dumps(attachment.properties, cls=JSONEncoder),
         attachment.blob_bucket,
     ]
-    return ObjectAdapter(fields, CaseAttachmentSQL_DB_TABLE)
+    return ObjectAdapter(fields, CaseAttachment_DB_TABLE)
 
 
 def case_index_adapter(index):
@@ -127,7 +127,7 @@ def case_index_adapter(index):
         index.relationship_id,
         index.case_id,
     ]
-    return ObjectAdapter(fields, CommCareCaseIndexSQL_DB_TABLE)
+    return ObjectAdapter(fields, CommCareCaseIndex_DB_TABLE)
 
 
 def case_transaction_adapter(transaction):

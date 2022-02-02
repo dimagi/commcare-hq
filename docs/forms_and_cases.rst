@@ -8,28 +8,22 @@ This document provides a basic guide for how to do that.
 
 Models
 ------
-In the codebase there are now two models for form and case data.
 
-+------------------------+----------------------+
-| Couch                  | SQL                  |
-+========================+======================+
-| CommCareCase           | CommCareCaseSQL      |
-+------------------------+----------------------+
-| CommCareCaseAction     | CaseTransaction      |
-+------------------------+----------------------+
-| CommCareCaseAttachment | CaseAttachmentSQL    |
-+------------------------+----------------------+
-| CommCareCaseIndex      | CommCareCaseIndexSQL |
-+------------------------+----------------------+
-| XFormInstance          | XFormInstanceSQL     |
-+------------------------+----------------------+
-| XFormOperation         | XFormOperationSQL    |
-+------------------------+----------------------+
++===================+
+| CommCareCase      |
++-------------------+
+| CaseTransaction   |
++-------------------+
+| CaseAttachment    |
++-------------------+
+| CommCareCaseIndex |
++-------------------+
+| XFormInstance     |
++-------------------+
+| XFormOperation    |
++-------------------+
 
-Some of these models define a common interface that allows you to perform the same operations
-irrespective of the type. Some examples are shown below:
-
-**Form Instance**
+**Form Instance API**
 
 +------------------------------------+--------------------------------------------------+
 | Property / method                  | Description                                      |
@@ -64,7 +58,7 @@ irrespective of the type. Some examples are shown below:
 +------------------------------------+--------------------------------------------------+
 
 
-**Case**
+**Case API**
 
 +--------------------------------+---------------------------------------+
 | Property / method              | Description                           |
@@ -92,14 +86,14 @@ name in order to know which DB needs to be queried.
 
 **Forms**
 
-- FormAccessors(domain).get_form(form_id)
-- FormAccessors(domain).get_forms(form_ids)
+- XFormInstance.objects.get_form(form_id, domain)
+- XFormInstance.objects.get_forms(form_ids, domain)
 - FormAccessors(domain).iter_forms(form_ids)
-- FormAccessors(domain).save_new_form(form)
+- XFormInstance.objects.save_new_form(form)
 
   - only for new forms
 
-- FormAccessors(domain).get_with_attachments(form)
+- XFormInstance.objects.get_with_attachments(form, domain)
 
   - Preload attachments to avoid having to the the DB again
 

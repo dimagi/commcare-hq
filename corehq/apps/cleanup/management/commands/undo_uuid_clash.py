@@ -23,8 +23,8 @@ from corehq.form_processor.models import (
     CaseTransaction,
     LedgerTransaction,
     RebuildWithReason,
-    XFormInstanceSQL,
-    XFormOperationSQL,
+    XFormInstance,
+    XFormOperation,
 )
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
@@ -39,7 +39,7 @@ def get_forms_to_reprocess(form_ids):
     for dbname, forms_by_db in split_list_by_db_partition(form_ids):
         edited_forms.update({
             form.form_id: form for form in
-            XFormInstanceSQL.objects.using(dbname)
+            XFormInstance.objects.using(dbname)
                 .filter(form_id__in=forms_by_db)
                 .exclude(deprecated_form_id__isnull=True)
         })
@@ -48,7 +48,7 @@ def get_forms_to_reprocess(form_ids):
         form.deprecated_form_id for form in edited_forms.values()
     }
     for dbname, forms_by_db in split_list_by_db_partition(deprecated_form_ids):
-        deprecated_forms = XFormInstanceSQL.objects.using(dbname).filter(form_id__in=forms_by_db)
+        deprecated_forms = XFormInstance.objects.using(dbname).filter(form_id__in=forms_by_db)
         for deprecated_form in deprecated_forms:
             live_form = edited_forms[deprecated_form.orig_id]
             if deprecated_form.xmlns != live_form.xmlns:
@@ -71,7 +71,7 @@ def undo_form_edits(form_tuples, logger):
         )
 
         deprecated_form.form_id = new_id_in_same_dbalias(deprecated_form.form_id)
-        deprecated_form.state = XFormInstanceSQL.NORMAL
+        deprecated_form.state = XFormInstance.NORMAL
         deprecated_form.orig_id = None
         deprecated_form.edited_on = None
 
@@ -84,9 +84,9 @@ def undo_form_edits(form_tuples, logger):
         )
 
         for form in (live_form, deprecated_form):
-            form.track_create(XFormOperationSQL(
+            form.track_create(XFormOperation(
                 user_id='system',
-                operation=XFormOperationSQL.UUID_DATA_FIX,
+                operation=XFormOperation.UUID_DATA_FIX,
                 date=operation_date)
             )
             FormAccessorSQL.update_form(form)
@@ -207,8 +207,8 @@ class Command(BaseCommand):
                 dbs = [db] if db else get_db_aliases_for_partitioned_query()
                 for dbname in dbs:
                     form_ids_to_check.update(
-                        XFormInstanceSQL.objects.using(dbname)
-                        .filter(domain=domain, state=XFormInstanceSQL.DEPRECATED)
+                        XFormInstance.objects.using(dbname)
+                        .filter(domain=domain, state=XFormInstance.DEPRECATED)
                         .values_list('orig_id', flat=True)
                     )
 

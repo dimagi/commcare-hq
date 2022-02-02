@@ -32,10 +32,10 @@ def get_editable_role_choices(domain, couch_user, allow_admin_role):
         ]
     elif allow_admin_role:
         roles = [StaticRole.domain_admin(domain)] + roles
-    return [
+    return sorted([
         (role.get_qualified_id(), role.name or _('(No Name)'))
         for role in roles
-    ]
+    ], key=lambda c: c[1].lower())
 
 
 class BulkUploadResponseWrapper(object):

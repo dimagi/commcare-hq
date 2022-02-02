@@ -134,7 +134,7 @@ class TestProcessRepeater(TestCase):
     def test_send_request_fails(self):
         # If send_request() should be retried with the same repeat
         # record, process_repeater() should exit
-        with patch('corehq.motech.repeaters.models.simple_post') as post_mock, \
+        with patch('corehq.motech.repeaters.models.simple_request') as post_mock, \
                 patch('corehq.motech.repeaters.tasks.metrics_counter'), \
                 form_context(PAYLOAD_IDS):
             post_mock.return_value = Mock(status_code=400, reason='Bad request')

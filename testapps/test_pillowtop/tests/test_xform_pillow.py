@@ -5,7 +5,7 @@ from django.test import override_settings
 from django.test.testcases import SimpleTestCase, TestCase
 
 from couchdbkit import ResourceConflict
-from mock import patch
+from unittest.mock import patch
 
 from dimagi.utils.parsing import string_to_utc_datetime
 from pillow_retry.models import PillowError

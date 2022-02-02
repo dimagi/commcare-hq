@@ -88,7 +88,7 @@ hqDefine('registration/js/new_user.ko', [
         self.fullName = ko.observable(defaults.full_name)
             .extend({
                 required: {
-                    message: django.gettext("Please enter your name."),
+                    message: gettext("Please enter your name."),
                     params: true,
                 },
             });
@@ -97,7 +97,7 @@ hqDefine('registration/js/new_user.ko', [
         self.email = ko.observable()
             .extend({
                 required: {
-                    message: django.gettext("Please specify an email."),
+                    message: gettext("Please specify an email."),
                     params: true,
                 },
             })
@@ -148,7 +148,7 @@ hqDefine('registration/js/new_user.ko', [
             self.email(defaults.email);
         }
         self.isEmailValidating = ko.observable(false);
-        self.validatingEmailMsg = ko.observable(django.gettext("Checking email..."));
+        self.validatingEmailMsg = ko.observable(gettext("Checking email..."));
         self.emailDelayed.isValidating.subscribe(function (isValidating) {
             self.isEmailValidating(isValidating && self.email.isValid());
             module.resetEmailFeedback(isValidating);
@@ -158,7 +158,7 @@ hqDefine('registration/js/new_user.ko', [
         self.password = ko.observable(defaults.password)
             .extend({
                 required: {
-                    message: django.gettext("Please specify a password."),
+                    message: gettext("Please specify a password."),
                     params: true,
                 },
             });
@@ -178,7 +178,7 @@ hqDefine('registration/js/new_user.ko', [
         self.projectName = ko.observable(defaults.project_name)
             .extend({
                 required: {
-                    message: django.gettext("Please specify a project name."),
+                    message: gettext("Please specify a project name."),
                     params: true,
                 },
             });
@@ -195,7 +195,7 @@ hqDefine('registration/js/new_user.ko', [
         self.personaOther = ko.observable()
             .extend({
                 required: {
-                    message: django.gettext("Please specify."),
+                    message: gettext("Please specify."),
                     params: true,
                 },
             });

@@ -3,6 +3,7 @@ import re
 import sys
 from collections import Counter
 
+import simplejson
 from django.conf import settings
 
 from memoized import memoized
@@ -113,3 +114,13 @@ def clear_domain_names(*domain_names):
     for domain_names in domain_names:
         for domain in iter_all_domains_and_deleted_domains_with_name(domain_names):
             domain.delete()
+
+
+def get_serializable_wire_invoice_general_credit(general_credit):
+    if general_credit > 0:
+        return [{
+            'type': 'General Credits',
+            'amount': simplejson.dumps(general_credit, use_decimal=True)
+        }]
+
+    return []

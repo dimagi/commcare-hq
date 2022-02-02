@@ -2,7 +2,7 @@ import doctest
 
 from django.test import SimpleTestCase
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import corehq.apps.app_manager.app_schemas.case_properties
 from corehq.apps.app_manager.app_schemas.case_properties import (

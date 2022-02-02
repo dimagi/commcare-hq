@@ -12,7 +12,7 @@
       <!-- ko if: lang -->
       <span class="btn btn-xs btn-info btn-langcode-preprocessed" data-bind="text: lang, visible: !value()"></span>
       <!-- /ko -->
-      <span data-bind="text: value, attr: {'class': containerClass + ' ' + readOnlyClass + ' text'}"></span>
+      <span data-bind="text: value, visible: value, attr: {'class': containerClass + ' ' + readOnlyClass + ' text'}"></span>
       <span class="placeholder text-muted" data-bind="text: placeholder, css: containerClass, visible: !value()"></span>
       <span class="inline-edit-icon" data-bind="css: containerClass, visible: !disallow_edit"><i class="fa fa-pencil"></i></span>
     </div>

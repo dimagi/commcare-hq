@@ -364,7 +364,7 @@ class OutboundDailyCounter(object):
         return True
 
 
-@no_result_task(serializer='pickle', queue="sms_queue", acks_late=True)
+@no_result_task(queue="sms_queue", acks_late=True)
 def process_sms(queued_sms_pk):
     """
     queued_sms_pk - pk of a QueuedSMS entry
@@ -457,14 +457,15 @@ def send_to_sms_queue(queued_sms):
     process_sms.apply_async([queued_sms.pk])
 
 
-@no_result_task(serializer='pickle', queue='background_queue', default_retry_delay=60 * 60,
+@no_result_task(queue='background_queue', default_retry_delay=60 * 60,
                 max_retries=23, bind=True)
-def store_billable(self, msg):
+def store_billable(self, msg_couch_id):
     """
     Creates billable in db that contains price of the message
     default_retry_delay/max_retries are set based on twilio support numbers:
     Most messages will have a price within 2 hours of delivery, all within 24 hours max
     """
+    msg = SMS.objects.get(couch_id=msg_couch_id)
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
 
@@ -488,7 +489,7 @@ def store_billable(self, msg):
             self.retry(exc=e)
 
 
-@no_result_task(serializer='pickle', queue='background_queue', acks_late=True)
+@no_result_task(queue='background_queue', acks_late=True)
 def delete_phone_numbers_for_owners(owner_ids):
     for p in PhoneNumber.objects.filter(owner_id__in=owner_ids):
         # Clear cache and delete
@@ -500,17 +501,7 @@ def clear_case_caches(case):
     is_case_contact_active.clear(case.domain, case.case_id)
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
-                default_retry_delay=5 * 60, max_retries=10, bind=True)
-def sync_case_phone_number(self, case):
-    try:
-        clear_case_caches(case)
-        _sync_case_phone_number(case)
-    except Exception as e:
-        self.retry(exc=e)
-
-
-def _sync_case_phone_number(contact_case):
+def sync_case_phone_number(contact_case):
     phone_info = contact_case.get_phone_info()
 
     with CriticalSection([contact_case.phone_sync_key], timeout=5 * 60):
@@ -565,7 +556,7 @@ def _sync_case_phone_number(contact_case):
         phone_number.save()
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_user_phone_numbers(self, couch_user_id):
     if not settings.USE_PHONE_ENTRIES:
@@ -610,9 +601,10 @@ def _sync_user_phone_numbers(couch_user_id):
                     pass
 
 
-@no_result_task(serializer='pickle', queue='background_queue', acks_late=True,
+@no_result_task(queue='background_queue', acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
-def publish_sms_change(self, sms):
+def publish_sms_change(self, sms_id):
+    sms = SMS.objects.get(sms_id)
     try:
         publish_sms_saved(sms)
     except Exception as e:

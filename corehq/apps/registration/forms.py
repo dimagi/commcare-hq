@@ -11,7 +11,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
 
-from captcha.fields import CaptchaField
+from captcha.fields import ReCaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
@@ -367,7 +367,7 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
         )
     )
     if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
-        captcha = CaptchaField(label=_("Type the letters in the box"))
+        captcha = ReCaptchaField(label="")
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(
         required=False,

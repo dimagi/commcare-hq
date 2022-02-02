@@ -14,6 +14,7 @@ from dimagi.utils.logging import notify_exception
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -25,6 +26,7 @@ from corehq.apps.reminders.forms import NO_RESPONSE, KeywordForm
 from corehq.apps.reminders.util import get_combined_id, split_combined_id
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.privileges import RELEASE_MANAGEMENT
 
 
 class AddStructuredKeywordView(BaseMessagingSectionView):
@@ -286,6 +288,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             for domain_link in get_linked_domains(self.domain)
         ]
         context['linkable_keywords'] = self._linkable_keywords()
+        context['has_release_management_privilege'] = domain_has_privilege(self.domain, RELEASE_MANAGEMENT)
         return context
 
     def _linkable_keywords(self):

@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
-from mock import patch
+from unittest.mock import patch
 
 from django.urls import reverse
 from django.utils.http import urlencode

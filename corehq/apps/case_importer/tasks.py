@@ -13,11 +13,11 @@ from .exceptions import ImporterError
 from .tracking.analytics import get_case_upload_files_total_bytes
 from .tracking.case_upload_tracker import CaseUpload
 from .tracking.task_status import make_task_status_success
-from .util import get_importer_error_message, exit_celery_with_error_message
+from .util import get_importer_error_message, exit_celery_with_error_message, ImporterConfig
 
 
-@task(serializer='pickle', queue='case_import_queue')
-def bulk_import_async(config, domain, excel_id):
+@task(queue='case_import_queue')
+def bulk_import_async(config_dict, domain, excel_id):
     case_upload = CaseUpload.get(excel_id)
     # case_upload.trigger_upload fires off this task right before saving the CaseUploadRecord
     # because CaseUploadRecord needs to be saved with the task id firing off the task creates.
@@ -25,6 +25,7 @@ def bulk_import_async(config, domain, excel_id):
     # which causes unpredictable/undesirable error behavior
     case_upload.wait_for_case_upload_record()
     result_stored = False
+    config = ImporterConfig.from_json(config_dict)
     try:
         case_upload.check_file()
         with case_upload.get_spreadsheet() as spreadsheet:
@@ -42,7 +43,7 @@ def bulk_import_async(config, domain, excel_id):
             store_failed_task_result.delay(excel_id)
 
 
-@task(serializer='pickle', queue='case_import_queue')
+@task(queue='case_import_queue')
 def store_failed_task_result(upload_id):
     case_upload = CaseUpload.get(upload_id)
     case_upload.store_failed_task_result()

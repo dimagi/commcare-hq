@@ -1,6 +1,6 @@
 from django.db import models, migrations
 import jsonfield.fields
-import corehq.form_processor.abstract_models
+import corehq.form_processor.models.abstract
 
 
 class Migration(migrations.Migration):
@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
             ],
             options={
             },
-            bases=(models.Model, corehq.form_processor.abstract_models.AbstractCommCareCase),
+            bases=(models.Model, corehq.form_processor.models.abstract.AbstractCommCareCase),
         ),
         migrations.AlterIndexTogether(
             name='commcarecasesql',

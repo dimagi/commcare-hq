@@ -22,9 +22,7 @@ class DomainCaseRuleRunAdmin(admin.ModelAdmin):
         'dbs_completed',
     ]
 
-    search_fields = [
-        'domain', 'case_type', 'status'
-    ]
+    search_fields = ['domain', 'case_type', 'status']
 
     ordering = ['-started_on']
 

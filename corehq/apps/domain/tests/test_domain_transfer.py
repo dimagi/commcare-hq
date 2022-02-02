@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq import toggles
 from corehq.apps.domain.exceptions import InactiveTransferDomainException

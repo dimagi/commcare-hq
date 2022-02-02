@@ -1,12 +1,12 @@
 import uuid
 from contextlib import contextmanager
+from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils.dateparse import parse_datetime
 
 from celery import states
 from celery.exceptions import Ignore
-from mock import patch
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
@@ -15,8 +15,12 @@ from corehq.apps.case_importer import exceptions
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.tasks import bulk_import_async
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
-from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper, \
-    get_interned_exception
+from corehq.apps.case_importer.util import (
+    ImporterConfig,
+    WorksheetWrapper,
+    get_interned_exception,
+)
+from corehq.apps.case_importer.views import validate_column_names
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.domain.shortcuts import create_domain
@@ -26,9 +30,19 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import restrict_user_by_location
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.test_utils import flag_enabled, flag_disabled
+from corehq.util.test_utils import flag_disabled, flag_enabled
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.workbook_reading import make_worksheet
+
+
+class TestValidColumnNames(SimpleTestCase):
+    def test_validate_column_names(self):
+        invalid_column_names = set()
+        validate_column_names([1, 'name', 'foo+bar', '?', 'parent/maternal'], invalid_column_names)
+        self.assertEqual(
+            invalid_column_names,
+            {'1', 'foo+bar', '?', 'parent/maternal'}
+        )
 
 
 class ImporterTest(TestCase):
@@ -83,7 +97,7 @@ class ImporterTest(TestCase):
         # by using a made up upload_id, we ensure it's not referencing any real file
         case_upload = CaseUploadRecord(upload_id=str(uuid.uuid4()), task_id=str(uuid.uuid4()))
         case_upload.save()
-        res = bulk_import_async.delay(self._config(['anything']), self.domain, case_upload.upload_id)
+        res = bulk_import_async.delay(self._config(['anything']).to_json(), self.domain, case_upload.upload_id)
         self.assertIsInstance(res.result, Ignore)
         update_state.assert_called_with(
             state=states.FAILURE,
@@ -572,6 +586,35 @@ class ImporterTest(TestCase):
         # Without the flag enabled, all the rows should be imported.
         res = self.import_mock_file(file_rows)
         self.assertEqual(2, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(0, res['failed_count'])
+        self.assertFalse(res['errors'])
+
+    def test_select_validity_checking(self):
+        setup_data_dictionary(self.domain, self.default_case_type,
+                              [('mc', 'select'), ('d1', 'date')], {'mc': ['True', 'False']})
+        file_rows = [
+            ['case_id', 'd1', 'mc'],
+            ['', '2022-04-01', 'True'],
+            ['', '1965-03-30', 'false'],
+            ['', '1944-06-15', ''],
+        ]
+
+        # With validity checking enabled, the bad choice on row 3
+        # should case that row to fail to import and should be
+        # flagged as invalid. The blank one should be valid.
+        with flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION'):
+            res = self.import_mock_file(file_rows)
+        self.assertEqual(2, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(1, res['failed_count'])
+        self.assertTrue(res['errors'])
+        error_message = exceptions.InvalidSelectValue.title
+        self.assertEqual(res['errors'][error_message]['mc']['rows'], [3])
+
+        # Without the flag enabled, all the rows should be imported.
+        res = self.import_mock_file(file_rows)
+        self.assertEqual(3, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertEqual(0, res['failed_count'])
         self.assertFalse(res['errors'])

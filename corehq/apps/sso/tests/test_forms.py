@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from mock import patch
+from unittest.mock import patch
 
 from django import forms
 from django.test import TestCase

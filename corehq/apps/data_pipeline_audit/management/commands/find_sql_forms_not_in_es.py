@@ -17,7 +17,7 @@ from corehq.util.argparse_types import date_type
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.es import FormES
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 
 
 class Command(BaseCommand):
@@ -62,14 +62,14 @@ def iter_form_ids_by_last_modified(start_datetime, end_datetime):
     }
 
     return paginate_query_across_partitioned_databases(
-        XFormInstanceSQL,
-        (Q(last_modified__gt=start_datetime, last_modified__lt=end_datetime) &
-         Q(state=F('state').bitand(XFormInstanceSQL.DELETED) +
-            F('state').bitand(XFormInstanceSQL.DEPRECATED) +
-            F('state').bitand(XFormInstanceSQL.DUPLICATE) +
-            F('state').bitand(XFormInstanceSQL.ERROR) +
-            F('state').bitand(XFormInstanceSQL.SUBMISSION_ERROR_LOG) +
-            F('state'))),
+        XFormInstance,
+        (Q(last_modified__gt=start_datetime, last_modified__lt=end_datetime)
+         & Q(state=F('state').bitand(XFormInstance.DELETED)
+             + F('state').bitand(XFormInstance.DEPRECATED)
+             + F('state').bitand(XFormInstance.DUPLICATE)
+             + F('state').bitand(XFormInstance.ERROR)
+             + F('state').bitand(XFormInstance.SUBMISSION_ERROR_LOG)
+             + F('state'))),
         annotate=annotate,
         values=['form_id'],
         load_source='find_sql_forms_not_in_es'
