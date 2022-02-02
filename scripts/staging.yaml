@@ -71,7 +71,6 @@ branches:
     - mk/support-multibar-reports # MK Dec 14
     - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - smh/save-only-edited-form-fields # Steph Jan 24
-    - ad/save-only-edited-form-fields-UI # Steph Jan 24
     - ml/remove-pickles-reports # Minha Jan 24
     - jls/update-web-apps-fuzzy # Jenny Jan 26
     - ml/reject-weak-password-backend # Minha Jan 28
