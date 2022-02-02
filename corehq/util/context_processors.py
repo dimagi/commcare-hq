@@ -270,5 +270,5 @@ def get_demo(request):
 
 def status_page(request):
     return{
-        'show_status_page': settings.SERVER_ENVIRONMENT == 'staging',  # eventually production
+        'show_status_page': settings.SERVER_ENVIRONMENT == 'prod'
     }
