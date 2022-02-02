@@ -68,9 +68,6 @@ branches:
     - jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/datums  # sravan Dec 21
-    - mk/support-multibar-reports # MK Dec 14
-    - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - smh/save-only-edited-form-fields # Steph Jan 24
     - ml/remove-pickles-reports # Minha Jan 24
     - jls/update-web-apps-fuzzy # Jenny Jan 26
     - ml/reject-weak-password-backend # Minha Jan 28
@@ -78,4 +75,8 @@ branches:
     - do/compare-case-properties # Dominic Feb 2
     - ml/remove-pickles-user-importer # Minha Feb 2
     - gh/revert-openpyxl-upgrade # Graham Feb 2
+    - smh/save-only-edited-form-fields+mk/2-different-branches
+    - smh/save-only-edited-form-fields # Steph Jan 24
+    - mk/support-multibar-reports # MK Dec 14
+    - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
 submodules: { }
