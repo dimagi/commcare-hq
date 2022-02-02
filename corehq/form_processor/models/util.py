@@ -1,4 +1,16 @@
+from collections import namedtuple
 from itertools import groupby
+
+
+def fetchall_as_namedtuple(cursor):
+    "Return all rows from a cursor as a namedtuple generator"
+    Result = _namedtuple_from_cursor(cursor)
+    return (Result(*row) for row in cursor)
+
+
+def _namedtuple_from_cursor(cursor):
+    desc = cursor.description
+    return namedtuple('Result', [col[0] for col in desc])
 
 
 def sort_with_id_list(object_list, id_list, id_property):
