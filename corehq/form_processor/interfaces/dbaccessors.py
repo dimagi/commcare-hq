@@ -5,8 +5,6 @@ from io import BytesIO
 from memoized import memoized
 from corehq.form_processor.models import CommCareCase
 
-from dimagi.utils.chunked import chunked
-
 
 CaseIndexInfo = namedtuple(
     'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
@@ -37,10 +35,8 @@ class CaseAccessors(object):
             case_ids, ordered=ordered, prefetched_indices=prefetched_indices)
 
     def iter_cases(self, case_ids):
-        for chunk in chunked(case_ids, 100):
-            chunk = list([_f for _f in chunk if _f])
-            for case in self.get_cases(chunk):
-                yield case
+        """DEPRECATED use CommCareCase.objects"""
+        yield from CommCareCase.objects.iter_cases(case_ids)
 
     def get_case_ids_that_exist(self, case_ids):
         return self.db_accessor.get_case_ids_that_exist(self.domain, case_ids)

@@ -13,6 +13,7 @@ from jsonobject import JsonObject, StringProperty
 from jsonobject.properties import BooleanProperty
 from memoized import memoized
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -74,6 +75,14 @@ class CommCareCaseManager(RequireDBManager):
                 cases_by_id, prefetched_indices, 'case_id', 'cached_indices')
 
         return cases
+
+    def iter_cases(self, case_ids, domain=None):
+        """
+        :param case_ids: case ids iterable.
+        :param domain: See the same parameter of `get_cases`.
+        """
+        for chunk in chunked((x for x in case_ids if x), 100, list):
+            yield from self.get_cases(chunk, domain)
 
 
 class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
