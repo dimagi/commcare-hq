@@ -36,7 +36,7 @@ class TestCaseAPI(TestCase):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
         role = UserRole.create(
-            cls.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            cls.domain, 'edit-data', permissions=Permissions(edit_data=True, access_api=True)
         )
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
         cls.case_accessor = CaseAccessors(cls.domain)
