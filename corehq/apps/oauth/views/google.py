@@ -1,6 +1,8 @@
 from django.conf import settings
+from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.utils.translation import ugettext as _
 
 from corehq.apps.oauth.models import GoogleApiToken
 from corehq.apps.oauth.utils import (
@@ -78,7 +80,7 @@ def call_back_view(request, domain):
             token.save()
 
     except InvalidLoginException:
-        print("Hello There")
+        messages.error(request, _("Something went wrong when trying to sign you in to Google. Please try again."))
 
     #replace with google sheet view
     return HttpResponseRedirect("placeholder.com")
