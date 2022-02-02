@@ -270,5 +270,5 @@ def get_demo(request):
 
 def status_page(request):
     return{
-        'show_status_page': settings.SERVER_ENVIRONMENT == 'production'
+        'show_status_page': settings.IS_SAAS_ENVIRONMENT
     }
