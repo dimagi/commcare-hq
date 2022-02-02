@@ -10,7 +10,6 @@ from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
 from requests import RequestException
 from urllib3.exceptions import HTTPError
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import (
@@ -282,7 +281,7 @@ class SQLDhis2Repeater(SQLFormRepeater, SQLDhis2Instance):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
@@ -349,7 +348,7 @@ class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):

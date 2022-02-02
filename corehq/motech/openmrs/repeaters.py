@@ -22,7 +22,7 @@ from dimagi.ext.couchdbkit import (
 )
 
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstance
 from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT, XMLNS_OPENMRS
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
@@ -278,7 +278,7 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
