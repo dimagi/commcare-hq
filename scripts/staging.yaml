@@ -63,7 +63,6 @@ branches:
     - ml/remove-pickles-phonelog # Minha Oct 7
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
-    - rp/status-embed # Rynhard Nov 9
     - es/mobile-auth # Simon Nov 23
     - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
     - jm/elastic-modernize-mappings  # Joel Dec 3
@@ -78,4 +77,5 @@ branches:
     - jls/update-web-apps-fuzzy # Jenny Jan 26
     - ml/reject-weak-password-backend # Minha Jan 28
     - jls/drop-case-search-limit # Jenny Jan 31
+    - rp/status-embed-staging-branch # Rynhard Feb 2
 submodules: { }
