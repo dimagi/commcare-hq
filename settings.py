@@ -2079,17 +2079,9 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 # https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
 
-# These are config settings for the google oauth handshake to get a user token\
-# This is the Google Cloud Platform secret settings config file
-GOOGLE_OATH_CONFIG = {"web":
-        {"client_id": "699334824903-fsomonub18fa0en5c7t0ao01l0fhduil.apps.googleusercontent.com",
-        "project_id": "manifest-ivy-331810",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url":
-        "https://www.googleapis.com/oauth2/v1/certs",
-        "client_secret":
-        "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"}}
+# Config settings for the google oauth handshake to get a user token
+# Google Cloud Platform secret settings config file
+GOOGLE_OATH_CONFIG = {}
 # Scopes to give read/write access to the code that generates the spreadsheets
 GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
