@@ -5,6 +5,7 @@ import re
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from functools import cmp_to_key, partial
+from wsgiref.util import FileWrapper
 
 from django.conf import settings
 from django.contrib import messages
@@ -18,6 +19,7 @@ from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
     JsonResponse,
+    StreamingHttpResponse,
 )
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -134,7 +136,7 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
 )
 from corehq.blobs import CODES, NotFound, get_blob_db, models
-from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     LedgerAccessors,
@@ -1856,6 +1858,32 @@ class FormDataView(BaseProjectReportSectionView):
             "form_received_on": self.xform_instance.received_on,
         })
         return page_context
+
+
+@require_form_view_permission
+@location_safe
+@login_and_domain_required
+def view_form_attachment(request, domain, instance_id, attachment_id):
+    # Open form attachment in browser
+    return get_form_attachment_response(request, domain, instance_id, attachment_id)
+
+
+def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+    if not instance_id or not attachment_id:
+        raise Http404
+
+    # this raises a PermissionDenied error if necessary
+    safely_get_form(request, domain, instance_id)
+
+    try:
+        content = FormAccessors(domain).get_attachment_content(instance_id, attachment_id)
+    except AttachmentNotFound:
+        raise Http404
+
+    return StreamingHttpResponse(
+        streaming_content=FileWrapper(content.content_stream),
+        content_type=content.content_type
+    )
 
 
 @location_safe

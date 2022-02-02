@@ -20,13 +20,12 @@ from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.views import (
     can_view_attachments,
+    get_form_attachment_response,
     require_form_view_permission,
-    safely_get_form,
 )
-from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
-    FormAccessors,
     get_cached_case_attachment,
 )
 
@@ -129,27 +128,11 @@ class CaseAttachmentAPI(View):
                                      content_type=mime_type)
 
 
+@require_form_view_permission
 @location_safe
-class FormAttachmentAPI(View):
-
-    @method_decorator(api_auth)
-    @method_decorator(require_form_view_permission)
-    def get(self, request, domain, form_id=None, attachment_id=None):
-        if not form_id or not attachment_id:
-            raise Http404
-
-        # this raises a PermissionDenied error if necessary
-        safely_get_form(request, domain, form_id)
-
-        try:
-            content = FormAccessors(domain).get_attachment_content(form_id, attachment_id)
-        except AttachmentNotFound:
-            raise Http404
-
-        return StreamingHttpResponse(
-            streaming_content=FileWrapper(content.content_stream),
-            content_type=content.content_type
-        )
+@api_auth
+def view_form_attachment(request, domain, instance_id, attachment_id):
+    return get_form_attachment_response(request, domain, instance_id, attachment_id)
 
 
 def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0,
