@@ -28,7 +28,7 @@ from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCase, UserArchivedRebuild, XFormInstance
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex, UserArchivedRebuild, XFormInstance
 from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
 
 logger = get_task_logger(__name__)
@@ -188,7 +188,8 @@ def _remove_indices_from_deleted_cases_task(domain, case_ids):
 def remove_indices_from_deleted_cases(domain, case_ids):
     from corehq.apps.hqcase.utils import submit_case_blocks
     deleted_ids = set(case_ids)
-    indexes_referencing_deleted_cases = CaseAccessors(domain).get_all_reverse_indices_info(list(case_ids))
+    indexes_referencing_deleted_cases = \
+        CommCareCaseIndex.objects.get_all_reverse_indices_info(domain, list(case_ids))
     case_updates = [
         CaseBlock.deprecated_init(
             case_id=index_info.case_id,

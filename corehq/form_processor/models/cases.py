@@ -710,6 +710,30 @@ class CommCareCaseIndexManager(RequireDBManager):
 
         return [_set_referenced_id(index) for index in indices]
 
+    def get_all_reverse_indices_info(self, domain, case_ids):
+        assert isinstance(case_ids, list), type(case_ids)
+        if not case_ids:
+            return []
+
+        indexes = self.plproxy_raw(
+            'SELECT * FROM get_all_reverse_indices(%s, %s)',
+            [domain, case_ids]
+        )
+        return [
+            CaseIndexInfo(
+                case_id=index.case_id,
+                identifier=index.identifier,
+                referenced_id=index.referenced_id,
+                referenced_type=index.referenced_type,
+                relationship=index.relationship_id
+            ) for index in indexes
+        ]
+
+
+CaseIndexInfo = namedtuple(
+    'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
+)
+
 
 class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'

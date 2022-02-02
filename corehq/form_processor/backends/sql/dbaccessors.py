@@ -31,10 +31,7 @@ from corehq.form_processor.exceptions import (
     XFormNotFound,
 )
 from corehq.form_processor.models.util import attach_prefetch_models as _attach_prefetch_models
-from corehq.form_processor.interfaces.dbaccessors import (
-    AbstractLedgerAccessor,
-    CaseIndexInfo,
-)
+from corehq.form_processor.interfaces.dbaccessors import AbstractLedgerAccessor
 from corehq.form_processor.models import (
     AttachmentContent,
     CaseAttachment,
@@ -438,23 +435,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
-        assert isinstance(case_ids, list)
-        if not case_ids:
-            return []
-
-        indexes = CommCareCaseIndex.objects.plproxy_raw(
-            'SELECT * FROM get_all_reverse_indices(%s, %s)',
-            [domain, case_ids]
-        )
-        return [
-            CaseIndexInfo(
-                case_id=index.case_id,
-                identifier=index.identifier,
-                referenced_id=index.referenced_id,
-                referenced_type=index.referenced_type,
-                relationship=index.relationship_id
-            ) for index in indexes
-        ]
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCaseIndex.objects.get_all_reverse_indices_info(domain, case_ids)
 
     @staticmethod
     def get_indexed_case_ids(domain, case_ids):

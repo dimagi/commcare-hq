@@ -15,6 +15,7 @@ from corehq.form_processor.models import (
     CommCareCaseIndex,
     XFormInstance,
 )
+from corehq.form_processor.models.cases import CaseIndexInfo
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 
@@ -136,6 +137,56 @@ class TestCommCareCaseIndexManager(BaseCaseManagerTest):
         _create_case_with_index(referenced_case_id, case_is_deleted=True)
         indices = CommCareCaseIndex.objects.get_reverse_indices(DOMAIN, referenced_case_id)
         self.assertEqual([index], indices)
+
+    def test_get_all_reverse_indices_info(self):
+        from ..backends.sql.dbaccessors import CaseAccessorSQL
+        # Create case and indexes
+        case = _create_case()
+        referenced_id1 = uuid.uuid4().hex
+        referenced_id2 = uuid.uuid4().hex
+        extension_index = CommCareCaseIndex(
+            case=case,
+            identifier="task",
+            referenced_type="task",
+            referenced_id=referenced_id1,
+            relationship_id=CommCareCaseIndex.EXTENSION
+        )
+        case.track_create(extension_index)
+        child_index = CommCareCaseIndex(
+            case=case,
+            identifier='parent',
+            referenced_type='mother',
+            referenced_id=referenced_id2,
+            relationship_id=CommCareCaseIndex.CHILD
+        )
+        case.track_create(child_index)
+        CaseAccessorSQL.save_case(case)
+
+        # Create irrelevant case and index
+        _create_case_with_index(case.case_id)
+
+        # create index on deleted case
+        _create_case_with_index(referenced_id1, case_is_deleted=True)
+
+        self.assertEqual(
+            set(CommCareCaseIndex.objects.get_all_reverse_indices_info(DOMAIN, [referenced_id1, referenced_id2])),
+            {
+                CaseIndexInfo(
+                    case_id=case.case_id,
+                    identifier='task',
+                    referenced_id=referenced_id1,
+                    referenced_type='task',
+                    relationship=CommCareCaseIndex.EXTENSION,
+                ),
+                CaseIndexInfo(
+                    case_id=case.case_id,
+                    identifier='parent',
+                    referenced_id=referenced_id2,
+                    referenced_type='mother',
+                    relationship=CommCareCaseIndex.CHILD
+                ),
+            }
+        )
 
 
 def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', closed=False, case_id=None):
