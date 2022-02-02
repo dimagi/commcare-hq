@@ -2173,7 +2173,7 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
 
 SUPPORT_EXPANDED_COLUMN_IN_REPORTS = StaticToggle(
     'support_expanded_column_in_reports',
-    'Support count per choice column to show up in multibar graph in reports',
+    'Support count per choice column to show up in multibar graph in reports and mobile UCR tables',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
