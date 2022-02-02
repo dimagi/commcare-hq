@@ -113,5 +113,12 @@ class TestMigrationCommand(TestCase):
             self.assertEqual(sql_obj.configured_filter, obj.configured_filter)
             self.assertEqual(sql_obj.configured_expression, obj.configured_expression)
 
+    def test_migrate_all_repeaters_command(self):
+        call_command('migrate_all_repeaters')
+        self.assertEqual(SQLRepeater.objects.count(), len(self.couch_repeaters))
+        sql_ids = set(SQLRepeater.objects.all().values_list('repeater_id', flat=True))
+        couch_ids = {r._id for r in self.couch_repeaters}
+        self.assertEqual(sql_ids, couch_ids)
+
     def _get_repeater_objects(self, repeater_type):
         return [r for r in self.couch_repeaters if r.doc_type == repeater_type]
