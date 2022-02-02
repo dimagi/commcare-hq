@@ -123,7 +123,8 @@ def api_url_patterns():
     # match v0.6/case/ AND v0.6/case/e0ad6c2e-514c-4c2b-85a7-da35bbeb1ff1/ trailing slash optional
     yield url(r'v0\.6/case(?:/(?P<case_id>[\w-]+))?/?$', case_api, name='case_api')
     yield from versioned_apis(API_LIST)
-    yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
+    yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(),
+              name="api_case_attachment")
     yield url(r'^form/attachment/(?P<instance_id>[\w\-:]+)/(?P<attachment_id>.*)$', view_form_attachment,
               name="api_form_attachment")
 
