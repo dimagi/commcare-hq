@@ -1,16 +1,20 @@
 from collections import namedtuple
+from functools import lru_cache
 from itertools import groupby
+
+from corehq.util.metrics import metrics_counter
 
 
 def fetchall_as_namedtuple(cursor):
     "Return all rows from a cursor as a namedtuple generator"
-    Result = _namedtuple_from_cursor(cursor)
+    Result = _get_result_tuple(tuple(col[0] for col in cursor.description))
     return (Result(*row) for row in cursor)
 
 
-def _namedtuple_from_cursor(cursor):
-    desc = cursor.description
-    return namedtuple('Result', [col[0] for col in desc])
+@lru_cache
+def _get_result_tuple(names):
+    metrics_counter("commcare.lru.result_tuple.cachemiss")
+    return namedtuple('Result', names)
 
 
 def sort_with_id_list(object_list, id_list, id_property):
