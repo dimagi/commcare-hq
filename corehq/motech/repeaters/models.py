@@ -328,12 +328,9 @@ class SQLCaseRepeater(SQLRepeater):
     Record that cases should be repeated to a new url
 
     """
-    FORMAT_OPTIONS = ['case_json', 'case_xml']
-
     version = OptionValue(choices=LEGAL_VERSIONS, default=V2)
     white_listed_case_types = OptionValue(default=list)
     black_listed_users = OptionValue(default=list)
-    format = OptionValue(choices=FORMAT_OPTIONS)
 
     class Meta:
         proxy = True
@@ -502,9 +499,6 @@ class SQLShortFormRepeater(SQLRepeater):
     Record that form id & case ids should be repeated to a new url
 
     """
-    FORMAT_OPTIONS = ['short_form_json']
-
-    format = OptionValue(choices=FORMAT_OPTIONS)
     version = OptionValue(choices=LEGAL_VERSIONS, default=V2)
 
     class Meta:
@@ -534,9 +528,6 @@ class SQLShortFormRepeater(SQLRepeater):
 
 
 class SQLAppStructureRepeater(SQLRepeater):
-    FORMAT_OPTIONS = ['app_structure_xml']
-
-    format = OptionValue(choices=FORMAT_OPTIONS)
 
     class Meta:
         proxy = True
@@ -555,10 +546,6 @@ class SQLAppStructureRepeater(SQLRepeater):
 
 class SQLUserRepeater(SQLRepeater):
 
-    FORMAT_OPTIONS = ['']
-
-    format = OptionValue(choices=FORMAT_OPTIONS)
-
     class Meta:
         proxy = True
 
@@ -576,10 +563,6 @@ class SQLUserRepeater(SQLRepeater):
 
 
 class SQLLocationRepeater(SQLRepeater):
-
-    FORMAT_OPTIONS = ['']
-
-    format = OptionValue(choices=FORMAT_OPTIONS)
 
     class Meta:
         proxy = True
@@ -960,11 +943,8 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
 
 class SQLFormRepeater(SQLRepeater):
 
-    FORMAT_OPTIONS = ['form_json', 'form_xml']
-
     include_app_id_param = OptionValue(default=True)
     white_listed_form_xmlns = OptionValue(default=list)
-    format = OptionValue(choices=FORMAT_OPTIONS)
 
     class Meta:
         proxy = True
