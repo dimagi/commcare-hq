@@ -27,6 +27,7 @@ from corehq.apps.analytics.utils.partner_analytics import (
     ACCESS_ODATA,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import WebUser, Invitation
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import (
@@ -65,6 +66,7 @@ def _get_fake_number_of_submissions(domain, _year, _month):
     }[domain]
 
 
+@es_test
 class TestPartnerAnalyticsDataUtils(TestCase):
 
     @classmethod
