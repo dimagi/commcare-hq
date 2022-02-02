@@ -947,7 +947,6 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     def _migration_get_fields(cls):
         return [
             "domain",
-            "version",
             'is_paused',
             'repeater_type',
             "connection_settings",
