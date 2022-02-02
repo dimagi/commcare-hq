@@ -28,13 +28,20 @@ from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 
 from .models import ScheduledReportLog
+from .exceptions import ReportNotFound
 
 
 def send_delayed_report(report_id):
     """
     Sends a scheduled report, via celery background task.
     """
-    domain = ReportNotification.get(report_id).domain
+    try:
+        report = ReportNotification.get(report_id)
+    except ResourceNotFound:
+        raise ReportNotFound
+
+    domain = report.domain
+
     if (
         settings.SERVER_ENVIRONMENT == 'production'
         and any(re.match(pattern, domain) for pattern in settings.THROTTLE_SCHED_REPORTS_PATTERNS)
@@ -89,7 +96,7 @@ def queue_scheduled_reports():
     for report_id in create_records_for_scheduled_reports():
         try:
             send_delayed_report(report_id)
-        except ResourceNotFound:
+        except ReportNotFound:
             # swallow the exception. If the report was deleted, it won't show up on future runs anyway
             pass
 
