@@ -269,6 +269,6 @@ def get_demo(request):
 
 
 def status_page(request):
-    return{
+    return {
         'show_status_page': settings.IS_SAAS_ENVIRONMENT
     }
