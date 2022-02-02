@@ -8,6 +8,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.db import models
 from django.db.models import F
 from django.db.transaction import atomic
+from django.forms import CharField, IntegerField
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
@@ -1044,3 +1045,17 @@ class DomainAuditRecordEntry(models.Model):
         # update_fields prevents the possibility of a race condition
         # https://stackoverflow.com/a/1599090
         obj.save(update_fields=[property_to_update])
+
+
+class ProjectLimitType():
+    LIVE_GOOGLE_SHEETS = 'lgs'
+
+    CHOICES = (
+        (LIVE_GOOGLE_SHEETS, "Live Google Sheets"),
+    )
+
+
+class ProjectLimit(models.Model):
+    domain = CharField(max_length=256, db_index=True, unique=True)
+    limit_type = CharField(max_length=5, choices=ProjectLimitType.CHOICES)
+    limit_value = IntegerField
