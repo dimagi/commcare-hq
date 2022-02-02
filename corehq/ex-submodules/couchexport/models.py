@@ -46,7 +46,6 @@ class Format(object):
                    CDISC_ODM: {'mimetype': 'application/cdisc-odm+xml',
                                'extension': 'xml',
                                'download': True},
-
     }
 
     VALID_FORMATS = list(FORMAT_DICT)
@@ -63,3 +62,18 @@ class Format(object):
         if format not in cls.VALID_FORMATS:
             raise URLError("Unsupported export format: %s!" % format)
         return cls(format, **cls.FORMAT_DICT[format])
+
+
+class IntegrationFormat(object):
+    LIVE_GOOGLE_SHEETS = "live_google_sheets"
+
+    VALID_FORMATS = [
+        LIVE_GOOGLE_SHEETS,
+    ]
+
+    @classmethod
+    def is_integration_format(cls, format):
+        format = format.lower()
+        if format in cls.VALID_FORMATS:
+            return True
+        return False
