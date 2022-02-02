@@ -417,10 +417,6 @@ class CaseAccessorSQL:
         return CommCareCase.objects.get_cases(case_ids, ordered, prefetched_indices)
 
     @staticmethod
-    def case_exists(case_id):
-        return CommCareCase.objects.partitioned_query(case_id).filter(case_id=case_id).exists()
-
-    @staticmethod
     def get_case_ids_that_exist(domain, case_ids):
         result = []
         for db_name, case_ids_chunk in split_list_by_db_partition(case_ids):

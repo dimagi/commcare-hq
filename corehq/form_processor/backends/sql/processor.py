@@ -344,7 +344,3 @@ class FormProcessorSQL(object):
             return None, None
 
         return case, None
-
-    @staticmethod
-    def case_exists(case_id):
-        return CaseAccessorSQL.case_exists(case_id)
