@@ -222,13 +222,10 @@ class TestBuildMaltRowDict(SimpleTestCase):
         self.user = create_user_for_malt_tests(is_web_user=True)
         self.app_data = create_malt_app_data()
 
-        self.patcher = patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data')
-        self.mock_get_malt_app_data = self.patcher.start()
+        app_data_patcher = patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data')
+        self.mock_get_malt_app_data = app_data_patcher.start()
         self.mock_get_malt_app_data.return_value = self.app_data
-
-    def tearDown(self):
-        self.patcher.stop()
-        super().tearDown()
+        self.addCleanup(app_data_patcher.stop)
 
     def test_returns_expected_value_for_month(self):
         monthspan = DateSpan.from_month(3, 2020)
@@ -295,26 +292,23 @@ class TestGetMaltRowDicts(SimpleTestCase):
         self.app_data = create_malt_app_data()
         self.users_by_id = {'user_id_1': self.web_user, 'user_id_2': self.mobile_user}
 
-        self.patcher = patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data')
-        self.mock_get_malt_app_data = self.patcher.start()
+        app_data_patcher = patch('corehq.apps.data_analytics.malt_generator._get_malt_app_data')
+        self.mock_get_malt_app_data = app_data_patcher.start()
         self.mock_get_malt_app_data.return_value = self.app_data
+        self.addCleanup(app_data_patcher.stop)
 
-        self.patcher2 = patch('corehq.apps.data_analytics.malt_generator.get_last_form_submission_received')
-        self.mock_get_last_form_submission = self.patcher2.start()
+        last_form_patcher = patch('corehq.apps.data_analytics.malt_generator.get_last_form_submission_received')
+        self.mock_get_last_form_submission = last_form_patcher.start()
         self.mock_get_last_form_submission.return_value = datetime.datetime(2022, 1, 10, 0, 0)
+        self.addCleanup(last_form_patcher.stop)
 
-        self.patcher3 = patch('corehq.apps.data_analytics.malt_generator.get_app_submission_breakdown_es')
-        self.mock_app_submission_breakdown = self.patcher3.start()
+        breakdown_es_patcher = patch('corehq.apps.data_analytics.malt_generator.get_app_submission_breakdown_es')
+        self.mock_app_submission_breakdown = breakdown_es_patcher.start()
         self.mock_app_submission_breakdown.return_value = [
             create_mock_nested_query_row(user_id='user_id_1'),
             create_mock_nested_query_row(user_id='user_id_2'),
         ]
-
-    def tearDown(self):
-        self.patcher.stop()
-        self.patcher2.stop()
-        self.patcher3.stop()
-        super().tearDown()
+        self.addCleanup(breakdown_es_patcher.stop)
 
     def test_num_of_forms(self):
         self.mock_app_submission_breakdown.return_value = [
