@@ -247,8 +247,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def reverse_indices(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_reverse_indices(self.domain, self.case_id)
+        return CommCareCaseIndex.objects.get_reverse_indices(self.domain, self.case_id)
 
     @memoized
     def get_subcases(self, index_identifier=None):
@@ -699,6 +698,18 @@ class CommCareCaseIndexManager(RequireDBManager):
         query = self.partitioned_query(case_id)
         return list(query.filter(case_id=case_id, domain=domain))
 
+    def get_reverse_indices(self, domain, case_id):
+        indices = list(self.plproxy_raw(
+            'SELECT * FROM get_case_indices_reverse(%s, %s)', [domain, case_id]
+        ))
+
+        def _set_referenced_id(index):
+            # see corehq/couchapps/case_indices/views/related/map.js
+            index.referenced_id = index.case_id
+            return index
+
+        return [_set_referenced_id(index) for index in indices]
+
 
 class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
@@ -751,7 +762,7 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
         """
         For a 'forward' index this is the case that the the index points to.
         For a 'reverse' index this is the case that owns the index.
-        See ``CaseAccessorSQL.get_reverse_indices``
+        See ``CommCareCaseIndex.objects.get_reverse_indices``
 
         :return: referenced case
         """

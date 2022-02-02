@@ -129,6 +129,14 @@ class TestCommCareCaseIndexManager(BaseCaseManagerTest):
         indices.sort(key=lambda x: x.identifier)  # "parent" comes before "task"
         self.assertEqual([index1, index2], indices)
 
+    def test_get_reverse_indices(self):
+        referenced_case_id = uuid.uuid4().hex
+        case, index = _create_case_with_index(referenced_case_id)
+        index.referenced_id = index.case_id  # see CommCareCaseIndex.objects.get_reverse_indices
+        _create_case_with_index(referenced_case_id, case_is_deleted=True)
+        indices = CommCareCaseIndex.objects.get_reverse_indices(DOMAIN, referenced_case_id)
+        self.assertEqual([index], indices)
+
 
 def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', closed=False, case_id=None):
     """Create case and related models directly (not via form processor)
@@ -159,6 +167,24 @@ def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', c
     case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
     FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
     return case
+
+
+def _create_case_with_index(referenced_case_id, identifier='parent', referenced_type='mother',
+                            relationship_id=CommCareCaseIndex.CHILD, case_is_deleted=False,
+                            case_type='child'):
+    from ..backends.sql.dbaccessors import CaseAccessorSQL
+    case = _create_case(case_type=case_type)
+    case.deleted = case_is_deleted
+    index = CommCareCaseIndex(
+        case=case,
+        identifier=identifier,
+        referenced_type=referenced_type,
+        referenced_id=referenced_case_id,
+        relationship_id=relationship_id
+    )
+    case.track_create(index)
+    CaseAccessorSQL.save_case(case)
+    return case, index
 
 
 def _create_case_transactions(case):
