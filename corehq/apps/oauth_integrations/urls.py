@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from corehq.apps.oauth.views.google import (
+from corehq.apps.oauth_integrations.views.google import (
     redirect_oauth_view,
     call_back_view
 )

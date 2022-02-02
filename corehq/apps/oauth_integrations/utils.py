@@ -9,7 +9,7 @@ from google.oauth2.credentials import Credentials
 from corehq.util.couch import get_document_or_404
 
 from corehq.apps.export.esaccessors import get_case_export_base_query
-from corehq.apps.oauth.models import GoogleApiToken
+from corehq.apps.oauth_integrations.models import GoogleApiToken
 
 from googleapiclient.discovery import build
 
