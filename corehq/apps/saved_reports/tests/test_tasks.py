@@ -2,8 +2,8 @@ from unittest.mock import patch
 from django.test import SimpleTestCase, TestCase
 from freezegun import freeze_time
 import datetime
-from couchdbkit import ResourceNotFound
 
+from ..exceptions import ReportNotFound
 from ..models import ScheduledReportLog
 from ..tasks import purge_old_scheduled_report_logs, queue_scheduled_reports
 from .. import tasks
@@ -47,7 +47,7 @@ class QueueScheduledReportsTests(SimpleTestCase):
     @patch.object(tasks, 'create_records_for_scheduled_reports')
     def test_resource_not_found_does_not_stop_sending(self, mock_get_ids, mock_send):
         mock_get_ids.return_value = ['a', 'b', 'c']  # Expect to send these 3 reports
-        mock_send.side_effect = ResourceNotFound  # ...and have all of them throw ResourceNotFound
+        mock_send.side_effect = ReportNotFound  # ...and have all of them throw ReportNotFound
 
         queue_scheduled_reports()
 
