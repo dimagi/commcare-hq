@@ -74,6 +74,16 @@ class CaseAccessorTestsSQL(TestCase):
         result = CommCareCase.objects.iter_cases(case_ids, DOMAIN)
         self.assertEqual({r.case_id for r in result}, {case1.case_id, case2.case_id})
 
+    def test_get_case_ids_that_exist(self):
+        case1 = _create_case()
+        case2 = _create_case()
+
+        case_ids = CommCareCase.objects.get_case_ids_that_exist(
+            DOMAIN,
+            ['missing_case', case1.case_id, case2.case_id]
+        )
+        self.assertItemsEqual(case_ids, [case1.case_id, case2.case_id])
+
 
 def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', closed=False, case_id=None):
     """Create case and related models directly (not via form processor)

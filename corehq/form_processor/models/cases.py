@@ -22,6 +22,7 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.util import get_content_md5
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
+from corehq.sql_db.util import split_list_by_db_partition
 from corehq.util.json import CommCareJSONEncoder
 
 from ..exceptions import AttachmentNotFound, CaseNotFound, UnknownActionType
@@ -83,6 +84,15 @@ class CommCareCaseManager(RequireDBManager):
         """
         for chunk in chunked((x for x in case_ids if x), 100, list):
             yield from self.get_cases(chunk, domain)
+
+    def get_case_ids_that_exist(self, domain, case_ids):
+        result = []
+        for db_name, case_ids_chunk in split_list_by_db_partition(case_ids):
+            result.extend(CommCareCase.objects
+                          .using(db_name)
+                          .filter(domain=domain, case_id__in=case_ids_chunk)
+                          .values_list('case_id', flat=True))
+        return result
 
 
 class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,

@@ -418,13 +418,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_case_ids_that_exist(domain, case_ids):
-        result = []
-        for db_name, case_ids_chunk in split_list_by_db_partition(case_ids):
-            result.extend(CommCareCase.objects
-                          .using(db_name)
-                          .filter(domain=domain, case_id__in=case_ids_chunk)
-                          .values_list('case_id', flat=True))
-        return result
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_case_ids_that_exist(domain, case_ids)
 
     @staticmethod
     def get_case_xform_ids(case_id):
