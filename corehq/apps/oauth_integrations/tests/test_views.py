@@ -6,11 +6,11 @@ from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User
 
 from google.oauth2.credentials import Credentials
-from corehq.apps.oauth.utils import get_token, load_credentials, stringify_credentials
+from corehq.apps.oauth_integrations.utils import get_token, load_credentials, stringify_credentials
 
-from corehq.apps.oauth.views.google import redirect_oauth_view, call_back_view
+from corehq.apps.oauth_integrations.views.google import redirect_oauth_view, call_back_view
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.oauth.models import GoogleApiToken
+from corehq.apps.oauth_integrations.models import GoogleApiToken
 
 
 class TestViews(TestCase):

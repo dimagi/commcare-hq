@@ -4,8 +4,8 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from corehq.apps.oauth.models import GoogleApiToken
-from corehq.apps.oauth.utils import (
+from corehq.apps.oauth_integrations.models import GoogleApiToken
+from corehq.apps.oauth_integrations.utils import (
     stringify_credentials,
     load_credentials,
     get_token,
