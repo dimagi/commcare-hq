@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime
 
+import attr
+
 from django.conf import settings
 from django.test import TestCase
 
@@ -84,6 +86,16 @@ class CaseAccessorTestsSQL(TestCase):
         )
         self.assertItemsEqual(case_ids, [case1.case_id, case2.case_id])
 
+    def test_get_case_xform_ids(self):
+        form_id = uuid.uuid4().hex
+        case = _create_case(form_id=form_id)
+        form_ids = _create_case_transactions(case)
+
+        self.assertEqual(
+            {form_id} | form_ids,
+            set(CommCareCase.objects.get_case_xform_ids(case.case_id))
+        )
+
 
 def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', closed=False, case_id=None):
     """Create case and related models directly (not via form processor)
@@ -114,3 +126,33 @@ def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', c
     case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
     FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
     return case
+
+
+def _create_case_transactions(case):
+    from ..backends.sql.dbaccessors import CaseAccessorSQL
+    TX = CaseTransaction
+    traces = [
+        CaseTransactionTrace(TX.TYPE_FORM | TX.TYPE_CASE_CREATE | TX.TYPE_LEDGER),
+        CaseTransactionTrace(TX.TYPE_FORM | TX.TYPE_LEDGER),
+        CaseTransactionTrace(TX.TYPE_FORM | TX.TYPE_CASE_CLOSE),
+        CaseTransactionTrace(TX.TYPE_FORM, revoked=True, include=False),  # excluded because revoked
+        CaseTransactionTrace(TX.TYPE_REBUILD_FORM_ARCHIVED, include=False),  # excluded based on type
+    ]
+    for trace in traces:
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=trace.form_id,
+            server_date=datetime.utcnow(),
+            type=trace.type,
+            revoked=trace.revoked,
+        ))
+    CaseAccessorSQL.save_case(case)
+    return {t.form_id for t in traces if t.include}
+
+
+@attr.s
+class CaseTransactionTrace:
+    type = attr.ib()
+    revoked = attr.ib(default=False)
+    include = attr.ib(default=True)
+    form_id = attr.ib(factory=lambda: uuid.uuid4().hex)

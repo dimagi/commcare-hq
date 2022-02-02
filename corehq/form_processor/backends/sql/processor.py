@@ -323,7 +323,7 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def get_case_forms(case_id):
-        xform_ids = CaseAccessorSQL.get_case_xform_ids(case_id)
+        xform_ids = CommCareCase.objects.get_case_xform_ids(case_id)
         return XFormInstance.objects.get_forms_with_attachments_meta(xform_ids)
 
     @staticmethod

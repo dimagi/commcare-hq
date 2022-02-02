@@ -423,13 +423,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_case_xform_ids(case_id):
-        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT form_id FROM get_case_transactions_by_type(%s, %s)',
-                [case_id, CaseTransaction.TYPE_FORM]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.form_id for result in results]
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_case_xform_ids(case_id)
 
     @staticmethod
     def get_indices(domain, case_id):

@@ -44,6 +44,7 @@ class CaseAccessors(object):
         return self.db_accessor.get_case_ids_that_exist(self.domain, case_ids)
 
     def get_case_xform_ids(self, case_id):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_case_xform_ids(case_id)
 
     def get_case_ids_in_domain(self, type=None):

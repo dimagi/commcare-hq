@@ -94,6 +94,14 @@ class CommCareCaseManager(RequireDBManager):
                           .values_list('case_id', flat=True))
         return result
 
+    def get_case_xform_ids(self, case_id):
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT form_id FROM get_case_transactions_by_type(%s, %s)',
+                [case_id, CaseTransaction.TYPE_FORM]
+            )
+            return [row[0] for row in cursor]
+
 
 class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
                    AttachmentMixin, CaseToXMLMixin, TrackRelatedChanges,

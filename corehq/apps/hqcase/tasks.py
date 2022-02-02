@@ -17,7 +17,7 @@ from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
 @task
@@ -134,7 +134,7 @@ def delete_exploded_cases(domain, explosion_id, task=None):
             ledger_accessor.delete_ledger_transactions_for_form([id], form_id)
         num_deleted_ledger_entries += ledger_accessor.delete_ledger_values(id)
 
-        new_form_ids = set(case_accessor.get_case_xform_ids(id)) - deleted_form_ids
+        new_form_ids = set(CommCareCase.objects.get_case_xform_ids(id)) - deleted_form_ids
         XFormInstance.objects.soft_delete_forms(domain, list(new_form_ids))
         deleted_form_ids |= new_form_ids
 
