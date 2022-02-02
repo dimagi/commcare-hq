@@ -72,12 +72,12 @@ branches:
     - cs/SC-1551-hourly-scheduled-reports+mk/support-multibar-reports # Charl Jan 12
     - cs/SC-1551-hourly-scheduled-reports # Charl Jan 12
     - mk/support-multibar-reports # MK Dec 14
+    - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - smh/save-only-edited-form-fields # Steph Jan 24
     - smh/save-only-edit-fields-xml-changes # Steph Jan 24
     - ad/save-only-edited-form-fields-UI # Steph Jan 24
     - ml/remove-pickles-reports # Minha Jan 24
     - jls/update-web-apps-fuzzy # Jenny Jan 26
     - ml/reject-weak-password-backend # Minha Jan 28
-    - mk/fix-markdown-check # MK Jan 31
     - jls/drop-case-search-limit # Jenny Jan 31
 submodules: { }
