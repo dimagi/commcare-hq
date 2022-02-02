@@ -75,7 +75,6 @@ branches:
     - jls/update-web-apps-fuzzy # Jenny Jan 26
     - ml/reject-weak-password-backend # Minha Jan 28
     - jls/drop-case-search-limit # Jenny Jan 31
-    - rp/status-embed-staging-branch # Rynhard Feb 2
     - do/compare-case-properties # Dominic Feb 2
     - ml/remove-pickles-user-importer # Minha Feb 2
     - gh/revert-openpyxl-upgrade # Graham Feb 2
