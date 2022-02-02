@@ -78,4 +78,5 @@ branches:
     - rp/status-embed-staging-branch # Rynhard Feb 2
     - do/compare-case-properties # Dominic Feb 2
     - ml/remove-pickles-user-importer # Minha Feb 2
+    - gh/revert-openpyxl-upgrade # Graham Feb 2
 submodules: { }
