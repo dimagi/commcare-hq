@@ -74,7 +74,6 @@ branches:
     - jls/drop-case-search-limit # Jenny Jan 31
     - do/compare-case-properties # Dominic Feb 2
     - ml/remove-pickles-user-importer # Minha Feb 2
-    - gh/revert-openpyxl-upgrade # Graham Feb 2
     - smh/save-only-edited-form-fields+mk/2-different-branches
     - smh/save-only-edited-form-fields # Steph Jan 24
     - mk/support-multibar-reports # MK Dec 14
