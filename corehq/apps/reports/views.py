@@ -1876,7 +1876,7 @@ def get_form_attachment_response(request, domain, instance_id=None, attachment_i
     safely_get_form(request, domain, instance_id)
 
     try:
-        content = FormAccessors(domain).get_attachment_content(instance_id, attachment_id)
+        content = XFormInstance.objects.get_attachment_content(instance_id, attachment_id)
     except AttachmentNotFound:
         raise Http404
 

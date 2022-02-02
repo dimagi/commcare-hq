@@ -28,6 +28,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     get_cached_case_attachment,
 )
+from corehq.form_processor.models import XFormInstance
 
 
 class CaseAttachmentAPI(View):

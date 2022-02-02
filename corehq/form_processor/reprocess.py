@@ -6,7 +6,7 @@ from casexml.apps.case.exceptions import IllegalCaseId, InvalidCaseIndex, CaseVa
 from casexml.apps.case.exceptions import UsesReferrals
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, PostSaveError
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
@@ -152,7 +152,7 @@ def reprocess_form(form, save=True, lock_form=True):
                 for case in cases:
                     CaseAccessorSQL.save_case(case)
                 LedgerAccessorSQL.save_ledger_values(ledgers)
-                FormAccessorSQL.update_form_problem_and_state(form)
+                XFormInstance.objects.update_form_problem_and_state(form)
                 FormProcessorSQL.publish_changes_to_kafka(ProcessedForms(form, None), cases, stock_result)
 
             # rebuild cases and ledgers that were affected

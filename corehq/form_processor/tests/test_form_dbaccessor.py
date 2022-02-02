@@ -51,6 +51,7 @@ DOMAIN = 'test-form-accessor'
 
 @sharded
 class FormAccessorTestsSQL(TestCase):
+    """DEPRECATED tests have moved to .test_forms"""
 
     def setUp(self):
         super().setUp()
