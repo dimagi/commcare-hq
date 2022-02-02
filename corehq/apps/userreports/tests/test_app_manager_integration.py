@@ -9,7 +9,7 @@ from corehq.apps.app_manager.models import ConditionalCaseUpdate
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.apps.userreports.app_manager.helpers import (
     get_case_data_sources,
     get_form_data_sources,
@@ -108,7 +108,7 @@ class AppManagerDataSourceConfigTest(TestCase):
         modified_on = datetime(2014, 11, 12, 15, 37, 49)
         opened_on = datetime(2014, 11, 11, 23, 34, 34, 25)
         parent_id = 'fake-parent-id'
-        sample_doc = CommCareCaseSQL(
+        sample_doc = CommCareCase(
             case_id='some-doc-id',
             modified_on=modified_on,
             opened_on=opened_on,

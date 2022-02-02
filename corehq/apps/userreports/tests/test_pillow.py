@@ -8,11 +8,11 @@ from unittest import mock
 from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.pillow_utils import rebuild_table
+from corehq.form_processor.signals import sql_case_post_save
 from pillow_retry.models import PillowError
 
 from corehq.apps.userreports.data_source_providers import (
@@ -45,7 +45,7 @@ from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.pillows.case import get_case_pillow
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import softer_assert, flaky_slow
 
 
 def setup_module():
@@ -731,6 +731,7 @@ class AsyncIndicatorTest(TestCase):
         self.config.validations = []
         self.config.save()
 
+    @flaky_slow
     def test_async_save_success(self):
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         for i in range(3):
@@ -911,7 +912,7 @@ class IndicatorConfigFilterTest(SimpleTestCase):
 
 def _save_sql_case(doc):
     system_props = ['_id', '_rev', 'opened_on', 'owner_id', 'doc_type', 'domain', 'type']
-    with drop_connected_signals(case_post_save):
+    with drop_connected_signals(sql_case_post_save):
         form, cases = post_case_blocks(
             [
                 CaseBlock.deprecated_init(

@@ -243,7 +243,7 @@ def _get_datums_matched_to_source(target_frame_elements, source_datums):
                 # see RemoteRequestSuiteTest.test_form_linking_to_registry_module
                 match = _find_best_match(next_datum, unused_source_datums)
                 if match:
-                    target_datum.source_id = match.source_id
+                    target_datum = target_datum.clone_to_match(match.source_id)
             yield target_datum
         elif not isinstance(target_datum, WorkflowSessionMeta) or not target_datum.requires_selection:
             yield target_datum

@@ -12,11 +12,10 @@ from django.http import HttpResponse
 from couchforms import const
 
 from corehq.apps.api.resources import DictObject
-from corehq.form_processor.abstract_models import CaseToXMLMixin
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCaseIndex
+from corehq.form_processor.models.abstract import CaseToXMLMixin, get_index_map
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
@@ -196,11 +195,9 @@ class ESCase(DictObject, CaseToXMLMixin):
 
     @property
     def indices(self):
-        from casexml.apps.case.sharedmodels import CommCareCaseIndex
-        return [CommCareCaseIndex.wrap(index) for index in self._data['indices'] if index["referenced_id"]]
+        return [CommCareCaseIndex(**index) for index in self._data['indices'] if index["referenced_id"]]
 
     def get_index_map(self):
-        from corehq.form_processor.abstract_models import get_index_map
         return get_index_map(self.indices)
 
     def get_properties_in_api_format(self):
@@ -230,7 +227,7 @@ class ESCase(DictObject, CaseToXMLMixin):
 
     def get_forms(self):
         from corehq.apps.api.util import form_to_es_form
-        forms = FormAccessors(self.domain).get_forms(self.xform_ids)
+        forms = XFormInstance.objects.get_forms(self.xform_ids, self.domain)
         return list(filter(None, [form_to_es_form(form) for form in forms]))
 
     @property
@@ -247,8 +244,8 @@ class ESCase(DictObject, CaseToXMLMixin):
         from corehq.apps.api.util import case_to_es_case
         accessor = CaseAccessors(self.domain)
         return {
-            index['identifier']: case_to_es_case(accessor.get_case(index['referenced_id']))
-            for index in self.indices if index['referenced_id']
+            index.identifier: case_to_es_case(accessor.get_case(index.referenced_id))
+            for index in self.indices if index.referenced_id
         }
 
     @property

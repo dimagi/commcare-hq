@@ -6,7 +6,8 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.apps.change_feed import topics
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import sharded
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
@@ -16,7 +17,7 @@ class TestHardDelete(TestCase):
 
     def setUp(self):
         self.casedb = CaseAccessors(TEST_DOMAIN_NAME)
-        self.formdb = FormAccessors(TEST_DOMAIN_NAME)
+        self.formdb = XFormInstance.objects
 
     def test_simple_delete(self):
         factory = CaseFactory()

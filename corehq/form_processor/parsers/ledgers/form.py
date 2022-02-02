@@ -8,9 +8,7 @@ from django.utils.translation import ugettext as _
 
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import IllegalCaseId
-from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xform import is_device_report
-from casexml.apps.case.xml.parser import AbstractAction
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
@@ -27,19 +25,10 @@ class LedgerFormat(object):
     PER_ENTRY = object()
 
 
-class CaseActionIntent(namedtuple('CaseActionIntent',
-                                  ['case_id', 'form_id', 'is_deprecation', 'action_type', 'form'])):
-
-    def get_couch_action(self):
-        assert self.action_type == CASE_ACTION_COMMTRACK
-        return CommCareCaseAction.from_parsed_action(
-            date=self.form.received_on,
-            user_id=self.form.metadata.userID,
-            xformdoc=self.form,
-            action=AbstractAction(self.action_type),
-        )
-
-
+CaseActionIntent = namedtuple(
+    'CaseActionIntent',
+    ['case_id', 'form_id', 'is_deprecation', 'action_type', 'form'],
+)
 StockFormActions = namedtuple('StockFormActions', ['stock_report_helpers', 'case_action_intents'])
 LedgerInstruction = namedtuple(
     'LedgerInstruction',

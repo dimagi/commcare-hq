@@ -16,7 +16,6 @@ from memoized import memoized
 from toposort import toposort_flatten
 
 from casexml.apps.case import const
-from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.change_publishers import publish_synclog_saved
 from casexml.apps.phone.checksum import CaseStateHash, Checksum
 from casexml.apps.phone.exceptions import (
@@ -39,7 +38,6 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.couch import LooselyEqualDocumentSchema
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.models import Domain
@@ -236,34 +234,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
         return self._couch_user.fixture_status(UserFixtureType.LOCATION)
 
 
-class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
-    """
-    Represents the state of a case on a phone.
-    """
-
-    case_id = StringProperty()
-    type = StringProperty()
-    indices = SchemaListProperty(CommCareCaseIndex)
-
-    @classmethod
-    def from_case(cls, case):
-        if isinstance(case, dict):
-            return cls.wrap({
-                'case_id': case['_id'],
-                'type': case['type'],
-                'indices': case['indices'],
-            })
-
-        return cls(
-            case_id=case.case_id,
-            type=case.type,
-            indices=case.indices,
-        )
-
-    def __repr__(self):
-        return "case state: %s (%s)" % (self.case_id, self.indices)
-
-
 class SyncLogAssertionError(AssertionError):
 
     def __init__(self, case_id, *args, **kwargs):
@@ -363,16 +333,6 @@ class AbstractSyncLog(SafeSaveDocument):
         raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
             type(other_sync_log), cls,
         ))
-
-    # anything prefixed with 'tests_only' is only used in tests
-    def tests_only_get_cases_on_phone(self):
-        raise NotImplementedError()
-
-    def test_only_clear_cases_on_phone(self):
-        raise NotImplementedError()
-
-    def test_only_get_dependent_cases_on_phone(self):
-        raise NotImplementedError()
 
 
 def save_synclog_to_sql(synclog_json_object):
@@ -1061,17 +1021,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if dependent_case_id in self.dependent_case_ids_on_phone:
                 # this will be a no-op if the case cannot be purged due to dependencies
                 self.purge(dependent_case_id)
-
-    def tests_only_get_cases_on_phone(self):
-        # hack - just for tests
-        return [CaseState(case_id=id) for id in self.case_ids_on_phone]
-
-    def test_only_clear_cases_on_phone(self):
-        self.case_ids_on_phone = set()
-
-    def test_only_get_dependent_cases_on_phone(self):
-        # hack - just for tests
-        return [CaseState(case_id=id) for id in self.dependent_case_ids_on_phone]
 
 
 def _domain_has_legacy_toggle_set():

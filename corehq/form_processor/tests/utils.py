@@ -3,7 +3,6 @@ from datetime import datetime
 from unittest.mock import patch
 from uuid import uuid4
 
-from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.test import TestCase, TransactionTestCase
 from django.utils.decorators import classproperty
@@ -11,19 +10,17 @@ from nose.plugins.attrib import attr
 from nose.tools import nottest
 from unittest import skipIf, skipUnless
 
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor,
-    iter_all_rows, FormAccessorSQL)
+    iter_all_rows)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import ProcessedForms
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
+from corehq.form_processor.models import XFormInstance, CommCareCase, CaseTransaction, Attachment
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only
-from dimagi.utils.couch.database import safe_delete
 
 from .json2xml import convert_form_to_xml
 
@@ -42,16 +39,10 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_cases(cls, domain=None):
-        logger.debug("Deleting all Couch cases for domain %s", domain)
-        assert CommCareCase.get_db().dbname.startswith('test_')
-        cls._delete_all(CommCareCase.get_db(), ['CommCareCase', 'CommCareCase-Deleted'], domain)
-        FormProcessorTestUtils.delete_all_sql_cases(domain)
-
-    @classmethod
-    @unit_testing_only
-    def delete_all_sql_cases(cls, domain=None):
         logger.debug("Deleting all SQL cases for domain %s", domain)
-        cls._delete_all_sql_sharded_models(CommCareCaseSQL, domain)
+        cls._delete_all_sql_sharded_models(CommCareCase, domain)
+
+    delete_all_sql_cases = delete_all_cases
 
     @staticmethod
     @unit_testing_only
@@ -82,7 +73,7 @@ class FormProcessorTestUtils(object):
             params["domain"] = domain
         for db in get_db_aliases_for_partitioned_query():
             BlobMeta.objects.using(db).filter(**params).delete()
-        cls._delete_all_sql_sharded_models(XFormInstanceSQL, domain)
+        cls._delete_all_sql_sharded_models(XFormInstance, domain)
 
     delete_all_sql_forms = delete_all_xforms
 
@@ -102,37 +93,6 @@ class FormProcessorTestUtils(object):
             if domain:
                 query = query.filter(domain=domain)
             query.delete()
-
-    @staticmethod
-    @unit_testing_only
-    def _delete_all(db, doc_types, domain=None):
-        for doc_type in doc_types:
-            if domain:
-                view = 'by_domain_doc_type_date/view'
-                view_kwargs = {
-                    'startkey': [domain, doc_type],
-                    'endkey': [domain, doc_type, {}],
-                }
-            else:
-                view = 'all_docs/by_doc_type'
-                view_kwargs = {
-                    'startkey': [doc_type],
-                    'endkey': [doc_type, {}],
-                }
-            FormProcessorTestUtils._delete_all_from_view(db, view, view_kwargs)
-
-    @staticmethod
-    def _delete_all_from_view(db, view, view_kwargs=None):
-        view_kwargs = view_kwargs or {}
-        deleted = set()
-        for row in db.view(view, reduce=False, **view_kwargs):
-            doc_id = row['id']
-            if doc_id not in deleted:
-                try:
-                    safe_delete(db, doc_id)
-                    deleted.add(doc_id)
-                except ResourceNotFound:
-                    pass
 
 
 def sharded(cls):
@@ -268,7 +228,7 @@ def create_form_for_test(
     case_id=None,
     attachments=None,
     save=True,
-    state=XFormInstanceSQL.NORMAL,
+    state=XFormInstance.NORMAL,
     received_on=None,
     user_id=None,
     edited_on=None,
@@ -300,7 +260,7 @@ def create_form_for_test(
     if user_id is None:
         user_id = 'user1'
 
-    form = XFormInstanceSQL(
+    form = XFormInstance(
         form_id=form_id,
         received_on=utcnow,
         user_id=user_id,
@@ -321,7 +281,7 @@ def create_form_for_test(
 
     cases = []
     if case_id:
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=case_id,
             domain=domain,
             type='',
@@ -336,13 +296,13 @@ def create_form_for_test(
 
     if save:
         FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
-        form = FormAccessorSQL.get_form(form.form_id)
+        form = XFormInstance.objects.get_form(form.form_id)
 
     return form
 
 
-def create_case(case) -> CommCareCaseSQL:
-    form = XFormInstanceSQL(
+def create_case(case) -> CommCareCase:
+    form = XFormInstance(
         form_id=uuid4().hex,
         xmlns='http://commcarehq.org/formdesigner/form-processor',
         received_on=case.server_modified_on,
@@ -362,7 +322,7 @@ def create_case(case) -> CommCareCaseSQL:
     return CaseAccessorSQL.get_case(case.case_id)
 
 
-def create_case_with_index(case, index) -> CommCareCaseSQL:
+def create_case_with_index(case, index) -> CommCareCase:
     case = create_case(case)
     index.case = case
     case.track_create(index)
