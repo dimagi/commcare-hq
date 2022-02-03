@@ -4,7 +4,7 @@ from itertools import chain
 from django.test import TestCase, override_settings
 
 from faker import Faker
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 from pillowtop.es_utils import initialize_index_and_mapping

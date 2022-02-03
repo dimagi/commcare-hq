@@ -16,6 +16,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater, RepeatRecord
+from corehq.motech.repeaters.repeater_generators import DataRegistryCaseUpdatePayloadGenerator
 from corehq.motech.repeaters.tests.test_data_registry_case_update_payload_generator import IntentCaseBuilder, \
     DataRegistryUpdateForm
 from corehq.util.test_utils import flag_enabled
@@ -115,7 +116,8 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
         repeat_records = self.repeat_records(self.domain).all()
         self.assertEqual(len(repeat_records), 1)
         payload = repeat_records[0].get_payload()
-        form = DataRegistryUpdateForm(payload, cases[0])
+        host_case = cases[1]
+        form = DataRegistryUpdateForm(payload, host_case)
         form.assert_case_updates({
             self.target_case_id_1: {"new_prop": "new_val_case1"},
             self.target_case_id_2: {"new_prop": "new_val_case2"}
@@ -123,6 +125,25 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
 
         url = self.repeater.get_url(repeat_records[0])
         self.assertEqual(url, f"case-repeater-url/{self.target_domain}/")
+
+        # check that the synchronous attempt of the repeat record happened
+        self.assertEqual(1, len(repeat_records[0].attempts))
+
+    def test_prevention_of_update_chaining(self):
+        builder = (
+            IntentCaseBuilder(self.registry_slug)
+            .target_case(self.target_domain, self.target_case_id_1)
+            .case_properties(new_prop="new_val_case1")
+        )
+        case = CaseStructure(
+            attrs={"create": True, "case_type": "registry_case_update", "update": builder.props},
+        )
+        CaseFactory(self.domain).create_or_update_case(case, user_id=self.mobile_user.get_id, form_extras={
+            # pretend this form came from a repeater in another domain
+            'xmlns': DataRegistryCaseUpdatePayloadGenerator.XMLNS
+        })
+        repeat_records = self.repeat_records(self.domain).all()
+        self.assertEqual(len(repeat_records), 0)
 
     @classmethod
     def repeat_records(cls, domain_name):

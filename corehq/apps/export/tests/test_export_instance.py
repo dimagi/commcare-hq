@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from django.test import SimpleTestCase, TestCase
 
-import mock
+from unittest import mock
 
 from couchexport.models import Format
 

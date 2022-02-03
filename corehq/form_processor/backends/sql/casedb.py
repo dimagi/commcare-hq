@@ -2,11 +2,11 @@ from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 
 
 class CaseDbCacheSQL(AbstractCaseDbCache):
-    case_model_classes = (CommCareCaseSQL,)
+    case_model_classes = (CommCareCase,)
     case_update_strategy = SqlCaseUpdateStrategy
 
     def __init__(self, *args, **kw):

@@ -4,7 +4,7 @@ from uuid import UUID
 from django.forms import model_to_dict
 from django.test import TestCase
 
-import mock
+from unittest import mock
 
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 

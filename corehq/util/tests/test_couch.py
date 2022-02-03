@@ -5,7 +5,7 @@ from django.test import TestCase, SimpleTestCase
 from corehq.apps.groups.dbaccessors import refresh_group_views
 from corehq.apps.groups.models import Group
 from jsonobject.exceptions import WrappingAttributeError
-from mock import Mock
+from unittest.mock import Mock
 from corehq.util.exceptions import DocumentClassNotFound
 
 from ..couch import (get_document_or_404, IterDB, iter_update, IterUpdateError,
@@ -244,11 +244,9 @@ class IterDBTest(TestCase):
 class DocumentClassLookupTest(SimpleTestCase):
 
     def test_a_few_important_ones(self):
-        from casexml.apps.case.models import CommCareCase
         from corehq.apps.users.models import CommCareUser, WebUser
         from corehq.apps.fixtures.models import FixtureDataType
         test_cases = [
-            ('CommCareCase', CommCareCase),
             ('CommCareUser', CommCareUser),
             ('WebUser', WebUser),
             ('FixtureDataType', FixtureDataType),

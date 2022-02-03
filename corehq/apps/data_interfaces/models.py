@@ -37,13 +37,13 @@ from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
 from corehq.apps.hqcase.utils import bulk_update_cases, update_case
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.models.abstract import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
+from corehq.form_processor.models import CommCareCaseIndex, CommCareCase
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
@@ -230,10 +230,10 @@ class AutomaticUpdateRule(models.Model):
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
 
         if db:
-            return paginate_query(db, CommCareCaseSQL, q_expression, load_source='auto_update_rule')
+            return paginate_query(db, CommCareCase, q_expression, load_source='auto_update_rule')
         else:
             return paginate_query_across_partitioned_databases(
-                CommCareCaseSQL, q_expression, load_source='auto_update_rule'
+                CommCareCase, q_expression, load_source='auto_update_rule'
             )
 
     @classmethod
@@ -322,7 +322,7 @@ class AutomaticUpdateRule(models.Model):
         if not self.active:
             raise self.RuleError("Attempted to call run_rule on an inactive rule")
 
-        if not isinstance(case, CommCareCaseSQL) or case.domain != self.domain:
+        if not isinstance(case, CommCareCase) or case.domain != self.domain:
             raise self.RuleError("Invalid case given")
 
         if self.criteria_match(case, now):
@@ -645,15 +645,11 @@ class CustomMatchDefinition(CaseRuleCriteriaDefinition):
 
 
 class ClosedParentDefinition(CaseRuleCriteriaDefinition):
-    # This matches up to the identifier attribute in a CommCareCaseIndex
-    # (couch backend) or CommCareCaseIndexSQL (postgres backend) record.
+    # This matches up to the identifier attribute of CommCareCaseIndex.
     identifier = models.CharField(max_length=126, default=DEFAULT_PARENT_IDENTIFIER)
 
-    # This matches up to the CommCareCaseIndexSQL.relationship_id field.
-    # The framework will automatically convert it to the string used in
-    # the CommCareCaseIndex (couch backend) model for domains that use
-    # the couch backend.
-    relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndexSQL.CHILD)
+    # This matches up to the CommCareCaseIndex.relationship_id field.
+    relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndex.CHILD)
 
     def matches(self, case, now):
         relationship = self.relationship_id
@@ -716,18 +712,21 @@ class CaseRuleActionResult(object):
         if not isinstance(value, int):
             raise ValueError("Expected int")
 
-    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0, num_related_closes=0, num_creates=0):
+    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0,
+                 num_related_closes=0, num_creates=0, num_errors=0):
         self._validate_int(num_updates)
         self._validate_int(num_closes)
         self._validate_int(num_related_updates)
         self._validate_int(num_related_closes)
         self._validate_int(num_creates)
+        self._validate_int(num_errors)
 
         self.num_updates = num_updates
         self.num_closes = num_closes
         self.num_related_updates = num_related_updates
         self.num_related_closes = num_related_closes
         self.num_creates = num_creates
+        self.num_errors = num_errors
 
     def add_result(self, result):
         self.num_updates += result.num_updates
@@ -735,6 +734,7 @@ class CaseRuleActionResult(object):
         self.num_related_updates += result.num_related_updates
         self.num_related_closes += result.num_related_closes
         self.num_creates += result.num_creates
+        self.num_errors += result.num_errors
 
     @property
     def total_updates(self):
@@ -1437,7 +1437,7 @@ class CaseRuleSubmission(models.Model):
     # The timestamp that this record was created on
     created_on = models.DateTimeField(db_index=True)
 
-    # Reference to XFormInstanceSQL.form_id
+    # Reference to XFormInstance.form_id
     form_id = models.CharField(max_length=255, unique=True, db_index=True)
 
     # A shortcut to keep track of which forms get archived
@@ -1510,6 +1510,7 @@ class DomainCaseRuleRun(models.Model):
     STATUS_RUNNING = 'R'
     STATUS_FINISHED = 'F'
     STATUS_HALTED = 'H'
+    STATUS_HAD_ERRORS = 'E'
 
     domain = models.CharField(max_length=126)
     case_type = models.CharField(max_length=255, null=True)
@@ -1523,6 +1524,7 @@ class DomainCaseRuleRun(models.Model):
     num_related_updates = models.IntegerField(default=0)
     num_related_closes = models.IntegerField(default=0)
     num_creates = models.IntegerField(default=0)
+    num_errors = models.IntegerField(default=0)
 
     dbs_completed = JSONField(default=list)
 
@@ -1532,12 +1534,9 @@ class DomainCaseRuleRun(models.Model):
         )
 
     @classmethod
-    def done(cls, run_id, status, cases_checked, result, db=None):
+    def done(cls, run_id, cases_checked, result, db=None, halted=False):
         if not isinstance(result, CaseRuleActionResult):
             raise TypeError("Expected an instance of CaseRuleActionResult")
-
-        if status not in (cls.STATUS_HALTED, cls.STATUS_FINISHED):
-            raise ValueError("Expected STATUS_HALTED or STATUS_FINISHED")
 
         with CriticalSection(['update-domain-case-rule-run-%s' % run_id]):
             run = cls.objects.get(pk=run_id)
@@ -1548,6 +1547,7 @@ class DomainCaseRuleRun(models.Model):
             run.num_related_updates += result.num_related_updates
             run.num_related_closes += result.num_related_closes
             run.num_creates += result.num_creates
+            run.num_errors += result.num_errors
 
             if db:
                 run.dbs_completed.append(db)
@@ -1558,10 +1558,11 @@ class DomainCaseRuleRun(models.Model):
             else:
                 run.finished_on = datetime.utcnow()
 
-            if status == cls.STATUS_HALTED:
-                run.status = status
-            elif status == cls.STATUS_FINISHED and run.status != cls.STATUS_HALTED and run.finished_on:
-                run.status = status
-
+            if halted or run.status == cls.STATUS_HALTED:
+                run.status = cls.STATUS_HALTED
+            elif run.num_errors > 0:
+                run.status = cls.STATUS_HAD_ERRORS
+            elif run.finished_on:
+                run.status = cls.STATUS_FINISHED
             run.save()
             return run

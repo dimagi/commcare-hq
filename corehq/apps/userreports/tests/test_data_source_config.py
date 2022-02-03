@@ -4,7 +4,7 @@ import time
 from django.test import SimpleTestCase, TestCase
 
 from jsonobject.exceptions import BadValueError
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import DataSourceConfiguration

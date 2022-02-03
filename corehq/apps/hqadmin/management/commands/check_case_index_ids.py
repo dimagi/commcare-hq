@@ -8,10 +8,8 @@ from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.users.util import cached_owner_id_to_display
 from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 
 
 class Command(BaseCommand):
@@ -84,7 +82,7 @@ class Command(BaseCommand):
                             cached_owner_id_to_display(case['opened_by']),
                         ]
                         if debug:
-                            form = FormAccessors(domain=domain).get_form(form_id)
+                            form = XFormInstance.objects.get_form(form_id, domain=domain)
                             app_version_info = get_app_version_info(
                                 domain,
                                 form.build_id,

@@ -1,6 +1,6 @@
 from django.test.testcases import TestCase
-from mock import patch
-from corehq.form_processor.models import CommCareCaseSQL
+from unittest.mock import patch
+from corehq.form_processor.models import CommCareCase
 from datetime import datetime
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeater_helpers import get_relevant_case_updates_from_form_json
@@ -63,7 +63,7 @@ class TestRepeaterHelpers(TestCase):
 
 
 def create_commcare_case(data):
-    cccsql = CommCareCaseSQL(
+    cccsql = CommCareCase(
         case_id=data['case_id'],
         domain=data['domain'],
         type=data['type'],

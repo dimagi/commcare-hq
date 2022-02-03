@@ -19,10 +19,12 @@
         <div class="col-sm-9 col-md-10 controls">
           <select multiple class="form-control"
                   data-bind="selectedOptions: modelsToPush,
-                             multiselectProperties: {
-                                 selectableHeaderTitle: '{% trans_html_attr "All content" %}',
-                                 selectedHeaderTitle: '{% trans_html_attr "Content to push" %}',
-                                 searchItemTitle: '{% trans_html_attr "Search content" %}',
+                             multiselect: {
+                                 properties: {
+                                    selectableHeaderTitle: '{% trans_html_attr "All content" %}',
+                                    selectedHeaderTitle: '{% trans_html_attr "Content to push" %}',
+                                    searchItemTitle: '{% trans_html_attr "Search content" %}',
+                                 }
                             }">
             {% for model in view_data.view_models_to_push %}
               <option value="{% html_attr model %}" {% if not model.is_linkable %} disabled {% endif %}>
@@ -38,7 +40,7 @@
         </label>
         <div class="col-sm-9 col-md-10 controls">
           <select multiple class="form-control"
-                  data-bind="selectedOptions: domainsToPush, multiselectProperties: multiselectProperties">
+                  data-bind="selectedOptions: domainsToPush, multiselect: domainMultiselect">
           </select>
         </div>
       </div>

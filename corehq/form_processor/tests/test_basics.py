@@ -4,7 +4,7 @@ from io import BytesIO
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import deprecated_check_user_has_case
@@ -13,6 +13,7 @@ from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.blobs import get_blob_db
@@ -97,11 +98,13 @@ class FundamentalCaseTests(FundamentalBaseTests):
     def test_create_case(self):
         case_id = uuid.uuid4().hex
         modified_on = datetime.utcnow()
+        xmlns = 'http://commcare.org/test_xmlns'
         _submit_case_block(
             True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
             case_name='create_case', date_modified=modified_on, date_opened=modified_on, update={
                 'dynamic': '123'
-            }
+            },
+            xmlns=xmlns
         )
 
         case = self.casedb.get_case(case_id)
@@ -119,6 +122,10 @@ class FundamentalCaseTests(FundamentalBaseTests):
         self.assertIsNone(case.closed_on)
         self.assertIsNone(case.closed_by)
         self.assertEqual(case.dynamic_case_properties()['dynamic'], '123')
+
+        transactions = case.get_form_transactions()
+        self.assertEqual(1, len(transactions))
+        self.assertEqual(transactions[0].xmlns, xmlns)
 
     def test_create_case_unicode_name(self):
         """
@@ -457,7 +464,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             _submit_case_block(True, uuid.uuid4().hex, user_id='user2', update={})
 
 
-def _submit_case_block(create, case_id, **kwargs):
+def _submit_case_block(create, case_id, xmlns=SYSTEM_FORM_XMLNS, **kwargs):
     domain = kwargs.pop('domain', DOMAIN)
     return post_case_blocks(
         [
@@ -466,7 +473,9 @@ def _submit_case_block(create, case_id, **kwargs):
                 case_id=case_id,
                 **kwargs
             ).as_xml()
-        ], domain=domain
+        ],
+        domain=domain,
+        form_extras={'xmlns': xmlns}
     )
 
 

@@ -150,6 +150,17 @@
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 has no reports.
               {% endblocktrans %}
+            {% case "smart links missing endpoint" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses smart links but does not have a session endpoint id.
+              {% endblocktrans %}
+            {% case "smart links select parent first" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses both smart links and Parent Child Selection. These two
+                features are not compatible.
+              {% endblocktrans %}
             {% case "circular case hierarchy" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 The case hierarchy for <a href="{{ module_url }}">{{ module_name }}</a> contains a circular reference.

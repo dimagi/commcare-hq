@@ -479,3 +479,16 @@ def safe_strftime(val, fmt):
     return safe_val.strftime(fmt
                              .replace("%Y", str(val.year))
                              .replace("%y", str(val.year)[-2:]))
+
+
+def get_start_and_end_dates_of_month(year, month):
+    """
+    Returns two Dates that represent the first day and the last day of a given
+    month and year.
+    :param year: integer value for year
+    :param month: integer value for month (1-12)
+    :return: start_date, end_date (Dates)
+    """
+    date_start = datetime.date(year, month, 1)
+    date_end = add_months_to_date(date_start, 1) - datetime.timedelta(days=1)
+    return date_start, date_end

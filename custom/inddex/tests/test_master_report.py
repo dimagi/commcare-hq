@@ -7,7 +7,7 @@ from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
 
 from memoized import memoized
-from mock import patch
+from unittest.mock import patch
 
 from dimagi.utils.dates import DateSpan
 

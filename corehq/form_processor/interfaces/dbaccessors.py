@@ -1,15 +1,16 @@
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
-
 from contextlib import contextmanager
 from io import BytesIO
 
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.submission_process_tracker import unfinished_archive
-from couchforms.signals import xform_archived, xform_unarchived
-from dimagi.utils.chunked import chunked
 from memoized import memoized
 
+from couchforms.signals import xform_archived, xform_unarchived
+from dimagi.utils.chunked import chunked
+
+from ..exceptions import CaseNotFound
+from ..models import XFormInstance
+from ..submission_process_tracker import unfinished_archive
 from ..system_action import system_action
 
 
@@ -31,100 +32,7 @@ class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'conten
             return stream.read()
 
 
-class AbstractFormAccessor(metaclass=ABCMeta):
-    """
-    Contract for common methods expected on FormAccessor(SQL/Couch). All methods
-    should be static or classmethods.
-    """
-    @staticmethod
-    @abstractmethod
-    def form_exists(form_id, domain=None):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_form(form_id):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_forms(form_ids, ordered=False):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_form_ids_for_user(domain, form_ids):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_deleted_form_ids_for_user(domain, user_id):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_form_ids_in_domain_by_type(domain, type_):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_forms_by_type(domain, type_, limit, recent_first=False):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def iter_forms_by_last_modified(start_datetime, end_datetime):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def iter_form_ids_by_xmlns(domain, xmlns=None):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_with_attachments(form_id):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_attachment_content(form_id, attachment_name):
-        """
-        :param attachment_id:
-        :return: AttachmentContent object
-        """
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def save_new_form(form):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def update_form_problem_and_state(form):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def set_archived_state(form, archive, user_id):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def soft_undelete_forms(domain, form_ids):
-        raise NotImplementedError
-
-
-class FormAccessors(object):
-    """
-    Facade for Form DB access that proxies method calls to SQL or Couch version
-    """
+class FormAccessors:
 
     def __init__(self, domain=None):
         self.domain = domain
@@ -136,14 +44,11 @@ class FormAccessors(object):
         return FormAccessorSQL
 
     def get_form(self, form_id):
-        return self.db_accessor.get_form(form_id)
+        """DEPRECATED use XFormInstance.objects"""
+        return XFormInstance.objects.get_form(form_id, self.domain)
 
     def get_forms(self, form_ids, ordered=False):
-        """
-        :param form_ids: list of form_ids to fetch
-        :type ordered:   True if the list of returned forms should have the same order
-                         as the list of form_ids passed in
-        """
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.get_forms(form_ids, ordered=ordered)
 
     def iter_forms(self, form_ids):
@@ -161,19 +66,16 @@ class FormAccessors(object):
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
 
-    def iter_forms_by_last_modified(self, start_datetime, end_datetime):
-        return self.db_accessor.iter_forms_by_last_modified(
-            start_datetime,
-            end_datetime,
-        )
-
     def iter_form_ids_by_xmlns(self, xmlns=None):
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.iter_form_ids_by_xmlns(self.domain, xmlns)
 
     def get_with_attachments(self, form_id):
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.get_with_attachments(form_id)
 
     def save_new_form(self, form):
+        """DEPRECATED use XFormInstance.objects"""
         self.db_accessor.save_new_form(form)
 
     def update_form_problem_and_state(self, form):
@@ -226,10 +128,9 @@ class FormAccessors(object):
     @contextmanager
     def _unfinished_archive(form, archive, user_id, trigger_signals=True):
         from ..change_publishers import publish_form_saved
-        from ..models import XFormInstanceSQL
         with unfinished_archive(instance=form, user_id=user_id, archive=archive) as archive_stub:
             yield archive_stub
-            is_sql = isinstance(form, XFormInstanceSQL)
+            is_sql = isinstance(form, XFormInstance)
             if is_sql:
                 publish_form_saved(form)
             if trigger_signals:
@@ -307,11 +208,6 @@ class AbstractCaseAccessor(metaclass=ABCMeta):
     @staticmethod
     @abstractmethod
     def get_related_indices(case_ids, exclude_indices):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
         raise NotImplementedError
 
     @staticmethod
@@ -461,9 +357,6 @@ class CaseAccessors(object):
         since sync date/log id
         """
         return self.db_accessor.get_modified_case_ids(self, case_ids, sync_log)
-
-    def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
-        return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)
 
     def get_extension_case_ids(self, case_ids, exclude_for_case_type=None):
         return self.db_accessor.get_extension_case_ids(
@@ -628,5 +521,6 @@ class LedgerAccessors(object):
     def get_case_ledger_state(self, case_id, ensure_form_id=False):
         return self.db_accessor.get_current_ledger_state([case_id], ensure_form_id=ensure_form_id)[case_id]
 
-    def get_ledger_values_for_cases(self, case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
+    def get_ledger_values_for_cases(self,
+            case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
         return self.db_accessor.get_ledger_values_for_cases(case_ids, section_ids, entry_ids, date_start, date_end)

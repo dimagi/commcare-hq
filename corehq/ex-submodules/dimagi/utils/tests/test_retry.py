@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from mock import patch
+from unittest.mock import patch
 from testil import assert_raises, eq
 
 from corehq.util.test_utils import timelimit

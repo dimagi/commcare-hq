@@ -1,8 +1,6 @@
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 
-from casexml.apps.case.models import CommCareCase
-
 from corehq.apps.api.es import CaseESView, ElasticAPIQuerySet, es_query_from_get_params
 from corehq.apps.api.models import ESCase
 from corehq.apps.api.resources import (
@@ -77,7 +75,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        object_class = CommCareCase
+        object_class = ESCase
         resource_name = 'case'
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']

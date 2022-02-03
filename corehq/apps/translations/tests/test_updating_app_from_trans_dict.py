@@ -2,7 +2,7 @@ from io import BytesIO
 
 from django.test import SimpleTestCase
 
-import mock
+from unittest import mock
 
 from couchexport.export import export_raw
 

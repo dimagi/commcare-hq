@@ -91,6 +91,11 @@ class DomainLink(models.Model):
 
     @classmethod
     def link_domains(cls, linked_domain, master_domain, remote_details=None):
+        """
+        With the GAing of linked projects in the form of ERM/MRM, this will become an internal method in favor
+        of the link_domains method in linked_domain/views.py to allow for proper validation of domain and user
+        privileges before creating any links
+        """
         existing_links = cls.all_objects.filter(linked_domain=linked_domain)
         active_links_with_other_domains = [
             domain_link for domain_link in existing_links

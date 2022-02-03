@@ -24,10 +24,10 @@ from corehq import toggles
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import StockProcessingError
 from corehq.form_processor.models import (
-    CaseAttachmentSQL,
+    CaseAttachment,
     CaseTransaction,
-    CommCareCaseIndexSQL,
-    CommCareCaseSQL,
+    CommCareCaseIndex,
+    CommCareCase,
     RebuildWithReason,
     STANDARD_CHARFIELD_LENGTH,
 )
@@ -66,7 +66,7 @@ def _convert_type_check_length(property_name, value):
 
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
-    case_implementation_class = CommCareCaseSQL
+    case_implementation_class = CommCareCase
 
     def apply_action_intents(self, primary_intent, deprecation_intent=None):
         # for now we only allow commtrack actions to be processed this way so just assert that's the case
@@ -196,7 +196,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             else:
                 # no id, no index
                 if index_update.referenced_id:
-                    index = CommCareCaseIndexSQL(
+                    index = CommCareCaseIndex(
                         domain=self.case.domain,
                         case=self.case,
                         identifier=index_update.identifier,
@@ -228,7 +228,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                         form_attachment, att.attachment_src)
                     self.case.track_update(existing_attachment)
                 else:
-                    new_attachment = CaseAttachmentSQL.new(att.identifier)
+                    new_attachment = CaseAttachment.new(att.identifier)
                     new_attachment.from_form_attachment(
                         form_attachment, att.attachment_src)
                     new_attachment.case = self.case
@@ -293,11 +293,11 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
         self._delete_old_related_models(
             original_indices,
-            self.case.get_live_tracked_models(CommCareCaseIndexSQL)
+            self.case.get_live_tracked_models(CommCareCaseIndex)
         )
         self._delete_old_related_models(
             original_attachments,
-            self.case.get_live_tracked_models(CaseAttachmentSQL),
+            self.case.get_live_tracked_models(CaseAttachment),
             key="name",
         )
 

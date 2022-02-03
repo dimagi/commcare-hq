@@ -3,12 +3,12 @@ import uuid
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
-from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex
+from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex, CaseFactory
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.utils import get_restore_config, MockDevice
 from corehq.apps.domain.models import Domain
@@ -18,6 +18,7 @@ from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -28,7 +29,6 @@ from casexml.apps.phone.models import (
     AbstractSyncLog,
     get_properly_wrapped_sync_log,
     LOG_FORMAT_LIVEQUERY,
-    LOG_FORMAT_SIMPLIFIED,
 )
 from casexml.apps.phone.restore import (
     CachedResponse,
@@ -37,7 +37,6 @@ from casexml.apps.phone.restore import (
     RestoreCacheSettings,
 )
 from casexml.apps.case.xml import V2, V1
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
 USERNAME = "syncguy"
 OTHER_USERNAME = "ferrel"
@@ -473,6 +472,42 @@ class SyncTokenUpdateTest(BaseSyncTest):
                                       referenced_id=parent_id)
         self._testUpdate(self.device.last_sync.log._id,
             {child_id: [index_ref]}, {parent_id: []})
+
+    def test_index_case_not_on_device(self):
+        """
+        When using case search it is possible to create a child case of a case that is not
+        on the device. In this instance the next sync should pull down the full parent case.
+
+        To make this work correctly the synclog must not include the parent case ID after the
+        child case is created.
+        """
+        case_not_on_device = CaseFactory(domain=self.project.name).create_case()
+
+        # ensure the case is not synced to the device
+        self.device.sync()
+        self.assertEqual(self.device.last_sync.log.case_ids_on_phone, set())
+
+        # create child case of case that is not on the device
+        child_id = uuid.uuid4().hex
+        self.device.post_changes([
+            CaseStructure(
+                case_id=child_id,
+                attrs={'create': True},
+                indices=[CaseIndex(
+                    CaseStructure(case_id=case_not_on_device.case_id, attrs={
+                        'create': False,
+                    }),
+                    relationship=CHILD_RELATIONSHIP,
+                    related_type=PARENT_TYPE,
+                    identifier=PARENT_TYPE,
+                )],
+                walk_related=False
+            )
+        ])
+        index_ref = CommCareCaseIndex(identifier=PARENT_TYPE,
+                                      referenced_type=PARENT_TYPE,
+                                      referenced_id=case_not_on_device.case_id)
+        self._testUpdate(self.device.last_sync.log._id, {child_id: [index_ref]})
 
     def test_closed_case_not_in_next_sync(self):
         # create a case
@@ -1866,11 +1901,10 @@ class SyncTokenReprocessingTest(BaseSyncTest):
         case_id = "should_have"
         self.device.post_changes(case_id=case_id, create=True)
         sync_log = self.device.last_sync.get_log()
-        cases_on_phone = sync_log.tests_only_get_cases_on_phone()
-        self.assertEqual({case_id}, {c.case_id for c in cases_on_phone})
+        self.assertEqual({case_id}, sync_log.case_ids_on_phone)
 
         # manually delete it and then try to update
-        sync_log.test_only_clear_cases_on_phone()
+        sync_log.case_ids_on_phone = set()
         sync_log.save()
 
         self.device.post_changes(CaseBlock.deprecated_init(

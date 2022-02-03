@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 
 from couchdbkit import BadValueError
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.models import (

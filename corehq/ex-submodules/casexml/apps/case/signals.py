@@ -9,16 +9,13 @@ def rebuild_form_cases(sender, xform, *args, **kwargs):
 
     domain = xform.domain
     case_ids = get_case_ids_from_form(xform)
-    detail = FormArchiveRebuild(form_id=xform.form_id, archived=xform.is_archived)
+    detail = FormArchiveRebuild(xmlns=xform.xmlns, form_id=xform.form_id, archived=xform.is_archived)
     for case_id in case_ids:
         rebuild_case_from_forms(domain, case_id, detail)
 
 
 xform_archived.connect(rebuild_form_cases)
 xform_unarchived.connect(rebuild_form_cases)
-
-# any time a case is saved
-case_post_save = Signal(providing_args=["case"])
 
 # only when one or more cases are updated as the result of an xform submission
 # the contract of this signal is that you should modify the form and cases in

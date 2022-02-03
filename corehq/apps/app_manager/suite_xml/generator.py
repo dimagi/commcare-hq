@@ -61,28 +61,22 @@ class SuiteGenerator(object):
         self.suite = Suite(version=self.app.version, descriptor=self.descriptor)
         self.build_profile_id = build_profile_id
 
-    def _add_sections(self, contributors):
-        elements = {}
-        for contributor in contributors:
-            section = contributor.section_name
-            section_elements = contributor.get_section_elements()
-            elements[section] = section_elements
-            getattr(self.suite, section).extend(section_elements)
-        return elements
+    def add_section(self, contributor_cls):
+        contributor = contributor_cls(self.suite, self.app, self.modules, self.build_profile_id)
+        section = contributor.section_name
+        section_elements = contributor.get_section_elements()
+        getattr(self.suite, section).extend(section_elements)
+        return section_elements
 
     def generate_suite(self):
         # Note: the order in which things happen in this function matters
 
-        basic_elements = self._add_sections([
-            FormResourceContributor(self.suite, self.app, self.modules, self.build_profile_id),
-            LocaleResourceContributor(self.suite, self.app, self.modules, self.build_profile_id),
-            DetailContributor(self.suite, self.app, self.modules, self.build_profile_id),
-        ])
+        self.add_section(FormResourceContributor)
+        self.add_section(LocaleResourceContributor)
+        detail_section_elements = self.add_section(DetailContributor)
 
         if self.app.supports_practice_users and self.app.get_practice_user(self.build_profile_id):
-            self._add_sections([
-                PracticeUserRestoreContributor(self.suite, self.app, self.modules, self.build_profile_id)
-            ])
+            self.add_section(PracticeUserRestoreContributor)
 
         # by module
         entries = EntriesContributor(self.suite, self.app, self.modules, self.build_profile_id)
@@ -104,12 +98,9 @@ class SuiteGenerator(object):
         if training_menu:
             self.suite.menus.append(training_menu)
 
-        self._add_sections([
-            FixtureContributor(self.suite, self.app, self.modules),
-            SchedulerFixtureContributor(self.suite, self.app, self.modules),
-        ])
+        self.add_section(FixtureContributor)
+        self.add_section(SchedulerFixtureContributor)
 
-        detail_section_elements = basic_elements[DetailContributor.section_name]
         RemoteRequestsHelper(self.suite, self.app, self.modules).update_suite(detail_section_elements)
 
         if self.app.supports_session_endpoints:

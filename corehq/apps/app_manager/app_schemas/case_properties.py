@@ -1,6 +1,5 @@
 import logging
 from collections import defaultdict, deque, namedtuple
-from itertools import chain
 
 from memoized import memoized
 
@@ -270,12 +269,13 @@ class ParentCasePropertyBuilder(object):
 
     """
     def __init__(self, domain, apps, defaults=(), include_parent_properties=True,
-                 exclude_invalid_properties=False):
+                 exclude_invalid_properties=False, exclude_deprecated_properties=True):
         self.domain = domain
         self.apps = apps
         self.defaults = defaults
         self.include_parent_properties = include_parent_properties
         self.exclude_invalid_properties = exclude_invalid_properties
+        self.exclude_deprecated_properties = exclude_deprecated_properties
 
     @classmethod
     def for_app(cls, app, defaults=(), include_parent_properties=True,
@@ -290,13 +290,14 @@ class ParentCasePropertyBuilder(object):
                    exclude_invalid_properties=exclude_invalid_properties)
 
     @classmethod
-    def for_domain(cls, domain, include_parent_properties=True):
+    def for_domain(cls, domain, include_parent_properties=True, exclude_deprecated_properties=True):
         apps = get_apps_in_domain(domain, include_remote=False)
         return cls(domain,
                    apps,
                    defaults=('name',),
                    include_parent_properties=include_parent_properties,
-                   exclude_invalid_properties=False)
+                   exclude_invalid_properties=False,
+                   exclude_deprecated_properties=exclude_deprecated_properties)
 
     @memoized
     def _get_relevant_forms(self):
@@ -398,7 +399,8 @@ class ParentCasePropertyBuilder(object):
         _zip_update(case_properties_by_case_type, get_per_type_defaults(self.domain))
 
         if toggles.DATA_DICTIONARY.enabled(self.domain):
-            _zip_update(case_properties_by_case_type, get_data_dict_props_by_case_type(self.domain))
+            _zip_update(case_properties_by_case_type,
+                        get_data_dict_props_by_case_type(self.domain, self.exclude_deprecated_properties))
 
         for case_properties in case_properties_by_case_type.values():
             case_properties.update(self.defaults)
@@ -489,8 +491,9 @@ def get_all_case_properties(app, exclude_invalid_properties=True):
     )
 
 
-def get_all_case_properties_for_case_type(domain, case_type):
-    return all_case_properties_by_domain(domain).get(case_type, [])
+def get_all_case_properties_for_case_type(domain, case_type, exclude_deprecated_properties=True):
+    return all_case_properties_by_domain(
+        domain, exclude_deprecated_properties=exclude_deprecated_properties).get(case_type, [])
 
 
 @quickcache(vary_on=['app.get_id'])
@@ -504,9 +507,10 @@ def get_usercase_properties(app):
     return {USERCASE_TYPE: []}
 
 
-def all_case_properties_by_domain(domain, include_parent_properties=True):
+def all_case_properties_by_domain(domain, include_parent_properties=True, exclude_deprecated_properties=True):
     builder = ParentCasePropertyBuilder.for_domain(
-        domain, include_parent_properties=include_parent_properties)
+        domain, include_parent_properties=include_parent_properties,
+        exclude_deprecated_properties=exclude_deprecated_properties)
     return {
         case_type: sorted(properties)
         for case_type, properties in builder.get_properties_by_case_type().items()

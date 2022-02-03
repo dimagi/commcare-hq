@@ -32,6 +32,10 @@ def is_active_downstream_domain(domain):
     return DomainLink.objects.filter(linked_domain=domain).exists()
 
 
+def get_active_domain_link(upstream_domain, downstream_domain):
+    return DomainLink.objects.filter(master_domain=upstream_domain, linked_domain=downstream_domain).first()
+
+
 @quickcache(['domain'], timeout=60 * 60)
 def get_linked_domains(domain, include_deleted=False):
     """
