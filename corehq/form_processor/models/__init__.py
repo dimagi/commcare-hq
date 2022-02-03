@@ -4,55 +4,42 @@ import mimetypes
 import os
 import uuid
 from collections import OrderedDict, namedtuple
-from contextlib import contextmanager
 from datetime import datetime
-from io import BytesIO
 
 from django.db import models
 
-import attr
 from jsonfield.fields import JSONField
 from jsonobject import JsonObject, StringProperty
 from jsonobject.properties import BooleanProperty
-from lxml import etree
 from memoized import memoized
-from PIL import Image
 
-from couchforms import const
-from couchforms.jsonobject_extensions import GeoPointProperty
-from dimagi.ext import jsonobject
 from dimagi.utils.couch import RedisLockableMixIn
-from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import CODES, get_blob_db
-from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import BadName, NotFound
-from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import get_content_md5
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
-from corehq.form_processor.exceptions import MissingFormXml, UnknownActionType
-from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.models import TruncatingCharField
 
-from .abstract_models import (
+from .abstract import (
+    DEFAULT_PARENT_IDENTIFIER,
     AbstractCommCareCase,
-    AbstractXFormInstance,
-    IsImageMixin,
 )
-from .exceptions import AttachmentNotFound
+from ..exceptions import AttachmentNotFound, UnknownActionType
+from ..track_related import TrackRelatedChanges
+from .attachment import Attachment, AttachmentContent, AttachmentMixin  # noqa: F401
+from .forms import XFormInstance, XFormOperation  # noqa: F401
+from .mixin import IsImageMixin, SaveStateMixin
+
 
 STANDARD_CHARFIELD_LENGTH = 255
 
-XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
-XFormOperationSQL_DB_TABLE = 'form_processor_xformoperationsql'
-
-CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
-CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
-CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
+CommCareCase_DB_TABLE = 'form_processor_commcarecasesql'
+CommCareCaseIndex_DB_TABLE = 'form_processor_commcarecaseindexsql'
+CaseAttachment_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 LedgerTransaction_DB_TABLE = 'form_processor_ledgertransaction'
@@ -60,653 +47,9 @@ LedgerTransaction_DB_TABLE = 'form_processor_ledgertransaction'
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
 
 
-@attr.s
-class Attachment(IsImageMixin):
-    """Unsaved form attachment
-
-    This class implements the subset of the `BlobMeta` interface needed
-    when handling attachments before they are saved.
-    """
-
-    name = attr.ib()
-    raw_content = attr.ib(repr=False)
-    content_type = attr.ib()
-    properties = attr.ib(default=None)
-
-    def __attrs_post_init__(self):
-        """This is necessary for case attachments
-
-        DO NOT USE `self.key` OR `self.properties`; they are only
-        referenced when creating case attachments, which are slated for
-        removal. The `properties` calculation should be moved back into
-        `write()` when case attachments are removed.
-        """
-        self.key = uuid.uuid4().hex
-        if self.properties is None:
-            self.properties = {}
-            if self.is_image:
-                try:
-                    img_size = Image.open(self.open()).size
-                    self.properties.update(width=img_size[0], height=img_size[1])
-                except IOError:
-                    self.content_type = 'application/octet-stream'
-
-    def has_size(self):
-        if not hasattr(self.raw_content, 'size'):
-            return False
-
-        return self.raw_content.size is not None
-
-    @property
-    @memoized
-    def content_length(self):
-        """This is necessary for case attachments
-
-        DO NOT USE THIS. It is only referenced when creating case
-        attachments, which are slated for removal.
-        """
-        if isinstance(self.raw_content, bytes):
-            return len(self.raw_content)
-        if isinstance(self.raw_content, str):
-            return len(self.raw_content.encode('utf-8'))
-        pos = self.raw_content.tell()
-        try:
-            self.raw_content.seek(0, os.SEEK_END)
-            return self.raw_content.tell()
-        finally:
-            self.raw_content.seek(pos)
-
-    @property
-    @memoized
-    def content(self):
-        """Get content bytes
-
-        This is not part of the `BlobMeta` interface. Avoid this method
-        for large attachments because it reads the entire attachment
-        content into memory.
-        """
-        if hasattr(self.raw_content, 'read'):
-            if hasattr(self.raw_content, 'seek'):
-                self.raw_content.seek(0)
-            data = self.raw_content.read()
-        else:
-            data = self.raw_content
-
-        if isinstance(data, str):
-            data = data.encode("utf-8")
-        return data
-
-    def open(self):
-        """Get a file-like object with attachment content
-
-        This is the preferred way to read attachment content.
-
-        If the underlying raw content is a django `File` object this
-        will call `raw_content.open()`, which changes the state of the
-        underlying file object and will affect other concurrent readers
-        (it is not safe to use this for multiple concurrent reads).
-        """
-        if isinstance(self.raw_content, (bytes, str)):
-            return BytesIO(self.content)
-        fileobj = self.raw_content.open()
-
-        # TODO remove when Django 1 is no longer supported
-        if fileobj is None:
-            assert not isinstance(self.raw_content, BlobMeta), repr(self)
-            # work around Django 1.11 bug, fixed in 2.0
-            # https://github.com/django/django/blob/1.11.15/django/core/files/base.py#L131-L137
-            # https://github.com/django/django/blob/2.0/django/core/files/base.py#L128
-            return self.raw_content
-
-        return fileobj
-
-    @memoized
-    def content_md5(self):
-        """Get RFC-1864-compliant Content-MD5 header value"""
-        return get_content_md5(self.open())
-
-    @property
-    def type_code(self):
-        return CODES.form_xml if self.name == "form.xml" else CODES.form_attachment
-
-    def write(self, blob_db, xform):
-        """Save attachment
-
-        This is not part of the `BlobMeta` interface.
-
-        This will create an orphaned blob if the xform is not saved.
-        If this is called in a SQL transaction and the transaction is
-        rolled back, then there will be no record of the blob (blob
-        metadata will be lost), but the blob content will continue to
-        use space in the blob db unless something like `AtomicBlobs` is
-        used to clean up on rollback.
-
-        :param blob_db: Blob db where content will be written.
-        :param xform: The XForm instance associated with this attachment.
-        :returns: `BlobMeta` object.
-        """
-        return blob_db.put(
-            self.open(),
-            key=self.key,
-            domain=xform.domain,
-            parent_id=xform.form_id,
-            type_code=self.type_code,
-            name=self.name,
-            content_type=self.content_type,
-            properties=self.properties,
-        )
-
-
-class SaveStateMixin(object):
-
-    def is_saved(self):
-        return bool(self._get_pk_val())
-
-
-class AttachmentMixin(SaveStateMixin):
-    """Mixin for models that have attachments
-
-    This class has some features that are not used by all subclasses.
-    For example cases never have unsaved attachments, and therefore never
-    write attachments.
-    """
-
-    @property
-    def attachments_list(self):
-        try:
-            rval = self._attachments_list
-        except AttributeError:
-            rval = self._attachments_list = []
-        return rval
-
-    @attachments_list.setter
-    def attachments_list(self, value):
-        assert not hasattr(self, "_attachments_list"), self._attachments_list
-        self._attachments_list = value
-
-    def copy_attachments(self, xform):
-        """Copy attachments from the given xform"""
-        existing_names = {a.name for a in self.attachments_list}
-        self.attachments_list.extend(
-            Attachment(meta.name, meta, meta.content_type, meta.properties)
-            for meta in xform.attachments.values()
-            if meta.name not in existing_names
-        )
-
-    def has_unsaved_attachments(self):
-        """Return true if this form has unsaved attachments else false"""
-        return any(isinstance(a, Attachment) for a in self.attachments_list)
-
-    def attachment_writer(self):
-        """Context manager for atomically writing attachments
-
-        Usage:
-            with form.attachment_writer() as write_attachments, \\
-                    transaction.atomic(using=form.db, savepoint=False):
-                form.save()
-                write_attachments()
-                ...
-        """
-        if all(isinstance(a, BlobMeta) for a in self.attachments_list):
-            # do nothing if all attachments have already been written
-            class NoopWriter():
-                def write(self):
-                    pass
-
-                def commit(self):
-                    pass
-
-            @contextmanager
-            def noop_context():
-                yield NoopWriter()
-
-            return noop_context()
-
-        class Writer():
-            def __init__(self, form, blob_db):
-                self.form = form
-                self.blob_db = blob_db
-
-            def write(self):
-                self.saved_attachments = [
-                    attachment.write(self.blob_db, self.form)
-                    for attachment in self.form.attachments_list
-                ]
-
-            def commit(self):
-                self.form._attachments_list = self.saved_attachments
-
-        @contextmanager
-        def atomic_attachments():
-            unsaved = self.attachments_list
-            assert all(isinstance(a, Attachment) for a in unsaved), unsaved
-            with AtomicBlobs(get_blob_db()) as blob_db:
-                yield Writer(self, blob_db)
-
-        return atomic_attachments()
-
-    def get_attachments(self):
-        attachments = getattr(self, '_attachments_list', None)
-        if attachments is not None:
-            return attachments
-
-        if self.is_saved():
-            return self._get_attachments_from_db()
-        return []
-
-    def get_attachment(self, attachment_name):
-        """Read attachment content
-
-        Avoid this method because it reads the entire attachment into
-        memory at once.
-        """
-        attachment = self.get_attachment_meta(attachment_name)
-        with attachment.open() as content:
-            return content.read()
-
-    def get_attachment_meta(self, attachment_name):
-        def _get_attachment_from_list(attachments):
-            for attachment in attachments:
-                if attachment.name == attachment_name:
-                    return attachment
-            raise AttachmentNotFound(self.get_id, attachment_name)
-
-        attachments = getattr(self, '_attachments_list', None)
-        if attachments is not None:
-            return _get_attachment_from_list(attachments)
-
-        if self.is_saved():
-            return self._get_attachment_from_db(attachment_name)
-        raise AttachmentNotFound(self.get_id, attachment_name)
-
-    def _get_attachment_from_db(self, attachment_name):
-        raise NotImplementedError
-
-    def _get_attachments_from_db(self):
-        raise NotImplementedError
-
-
-class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
-                       AbstractXFormInstance, TrackRelatedChanges):
-    partition_attr = 'form_id'
-
-    # states should be powers of 2
-    NORMAL = 1
-    ARCHIVED = 2
-    DEPRECATED = 4
-    DUPLICATE = 8
-    ERROR = 16
-    SUBMISSION_ERROR_LOG = 32
-    DELETED = 64
-    STATES = (
-        (NORMAL, 'normal'),
-        (ARCHIVED, 'archived'),
-        (DEPRECATED, 'deprecated'),
-        (DUPLICATE, 'duplicate'),
-        (ERROR, 'error'),
-        (SUBMISSION_ERROR_LOG, 'submission_error'),
-        (DELETED, 'deleted'),
-    )
-    DOC_TYPE_TO_STATE = {
-        "XFormInstance": NORMAL,
-        "XFormError": ERROR,
-        "XFormDuplicate": DUPLICATE,
-        "XFormDeprecated": DEPRECATED,
-        "XFormArchived": ARCHIVED,
-        "SubmissionErrorLog": SUBMISSION_ERROR_LOG
-    }
-    ALL_DOC_TYPES = {'XFormInstance-Deleted'} | DOC_TYPE_TO_STATE.keys()
-    STATE_TO_DOC_TYPE = {v: k for k, v in DOC_TYPE_TO_STATE.items()}
-
-    form_id = models.CharField(max_length=255, unique=True, db_index=True, default=None)
-
-    domain = models.CharField(max_length=255, default=None)
-    app_id = models.CharField(max_length=255, null=True)
-    xmlns = models.CharField(max_length=255, default=None)
-    user_id = models.CharField(max_length=255, null=True)
-
-    # When a form is deprecated, the existing form receives a new id and its original id is stored in orig_id
-    orig_id = models.CharField(max_length=255, null=True)
-
-    # When a form is deprecated, the new form gets a reference to the deprecated form
-    deprecated_form_id = models.CharField(max_length=255, null=True)
-
-    server_modified_on = models.DateTimeField(db_index=True, auto_now=True, null=True)
-
-    # The time at which the server has received the form
-    received_on = models.DateTimeField(db_index=True)
-
-    # Stores the datetime of when a form was deprecated
-    edited_on = models.DateTimeField(null=True)
-
-    deleted_on = models.DateTimeField(null=True)
-    deletion_id = models.CharField(max_length=255, null=True)
-
-    auth_context = JSONField(default=dict)
-    openrosa_headers = JSONField(default=dict)
-
-    # Used to tag forms that were forcefully submitted
-    # without a touchforms session completing normally
-    partial_submission = models.BooleanField(default=False)
-    submit_ip = models.CharField(max_length=255, null=True)
-    last_sync_token = models.CharField(max_length=255, null=True)
-    problem = models.TextField(null=True)
-    date_header = models.DateTimeField(null=True)
-    build_id = models.CharField(max_length=255, null=True)
-    state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
-    initial_processing_complete = models.BooleanField(default=False)
-
-    # for compatability with corehq.blobs.mixin.DeferredBlobMixin interface
-    persistent_blobs = None
-
-    # form meta properties
-    time_end = models.DateTimeField(null=True, blank=True)
-    time_start = models.DateTimeField(null=True, blank=True)
-    commcare_version = models.CharField(max_length=8, blank=True, null=True)
-    app_version = models.PositiveIntegerField(null=True, blank=True)
-
-    def __init__(self, *args, **kwargs):
-        super(XFormInstanceSQL, self).__init__(*args, **kwargs)
-        # keep track to avoid refetching to check whether value is updated
-        self.__original_form_id = self.form_id
-
-    def form_id_updated(self):
-        return self.__original_form_id != self.form_id
-
-    @property
-    def original_form_id(self):
-        """Form ID before it was updated"""
-        return self.__original_form_id
-
-    @property
-    @memoized
-    def original_operations(self):
-        """
-        Returns operations based on self.__original_form_id, useful
-            to lookup correct attachments while modifying self.form_id
-        """
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_form_operations(self.__original_form_id)
-
-    def natural_key(self):
-        # necessary for dumping models from a sharded DB so that we exclude the
-        # SQL 'id' field which won't be unique across all the DB's
-        return self.form_id
-
-    @classmethod
-    def get_obj_id(cls, obj):
-        return obj.form_id
-
-    @classmethod
-    def get_obj_by_id(cls, form_id):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_form(form_id)
-
-    @property
-    def get_id(self):
-        return self.form_id
-
-    @property
-    def is_normal(self):
-        return self.state == self.NORMAL
-
-    @property
-    def is_archived(self):
-        return self.state == self.ARCHIVED
-
-    @property
-    def is_deprecated(self):
-        return self.state == self.DEPRECATED
-
-    @property
-    def is_duplicate(self):
-        return self.state == self.DUPLICATE
-
-    @property
-    def is_error(self):
-        return self.state == self.ERROR
-
-    @property
-    def is_submission_error_log(self):
-        return self.state == self.SUBMISSION_ERROR_LOG
-
-    @property
-    def is_deleted(self):
-        # deleting a form adds the deleted state to the current state
-        # in order to support restoring the pre-deleted state.
-        return self.state & self.DELETED == self.DELETED
-
-    @property
-    def doc_type(self):
-        """Comparability with couch forms"""
-        if self.is_deleted:
-            return 'XFormInstance' + DELETED_SUFFIX
-        return self.STATE_TO_DOC_TYPE.get(self.state, 'XFormInstance')
-
-    @property
-    @memoized
-    def attachments(self):
-        from couchforms.const import ATTACHMENT_NAME
-        return {att.name: att for att in self.get_attachments() if att.name != ATTACHMENT_NAME}
-
-    @property
-    @memoized
-    def serialized_attachments(self):
-        from .serializers import XFormAttachmentSQLSerializer
-        return {
-            att.name: XFormAttachmentSQLSerializer(att).data
-            for att in self.get_attachments()
-        }
-
-    @property
-    @memoized
-    def form_data(self):
-        """Returns the JSON representation of the form XML"""
-        from couchforms import XMLSyntaxError
-        from .utils import convert_xform_to_json, adjust_datetimes
-        from corehq.form_processor.utils.metadata import scrub_form_meta
-        xml = self.get_xml()
-        try:
-            form_json = convert_xform_to_json(xml)
-        except XMLSyntaxError:
-            return {}
-        adjust_datetimes(form_json)
-
-        scrub_form_meta(self.form_id, form_json)
-        return form_json
-
-    @property
-    @memoized
-    def history(self):
-        """:returns: List of XFormOperationSQL objects"""
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        operations = FormAccessorSQL.get_form_operations(self.form_id) if self.is_saved() else []
-        operations += self.get_tracked_models_to_create(XFormOperationSQL)
-        return operations
-
-    @property
-    def metadata(self):
-        from .utils import clean_metadata
-        if const.TAG_META in self.form_data:
-            return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
-
-    def soft_delete(self):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.soft_delete_forms(self.domain, [self.form_id])
-        self.state |= self.DELETED
-
-    def to_json(self, include_attachments=False):
-        from .serializers import XFormInstanceSQLSerializer, lazy_serialize_form_attachments, \
-            lazy_serialize_form_history
-        serializer = XFormInstanceSQLSerializer(self)
-        data = dict(serializer.data)
-        if include_attachments:
-            data['external_blobs'] = lazy_serialize_form_attachments(self)
-        data['history'] = lazy_serialize_form_history(self)
-        data['backend_id'] = 'sql'
-        return data
-
-    def _get_attachment_from_db(self, attachment_name):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_attachment_by_name(self.form_id, attachment_name)
-
-    def _get_attachments_from_db(self):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_attachments(self.form_id)
-
-    def get_xml_element(self):
-        xml = self.get_xml()
-        if not xml:
-            return None
-        return etree.fromstring(xml)
-
-    def get_data(self, path):
-        """
-        Evaluates an xpath expression like: path/to/node and returns the value
-        of that element, or None if there is no value.
-        :param path: xpath like expression
-        """
-        return safe_index({'form': self.form_data}, path.split("/"))
-
-    @memoized
-    def get_xml(self):
-        try:
-            return self.get_attachment('form.xml')
-        except (NotFound, AttachmentNotFound):
-            raise MissingFormXml(self.form_id)
-
-    def xml_md5(self):
-        try:
-            return self.get_attachment_meta('form.xml').content_md5()
-        except (NotFound, AttachmentNotFound):
-            raise MissingFormXml(self.form_id)
-
-    def archive(self, user_id=None, trigger_signals=True):
-        from .interfaces.dbaccessors import FormAccessors
-        if not self.is_archived:
-            FormAccessors.do_archive(self, True, user_id, trigger_signals)
-
-    def unarchive(self, user_id=None, trigger_signals=True):
-        from .interfaces.dbaccessors import FormAccessors
-        if self.is_archived:
-            FormAccessors.do_archive(self, False, user_id, trigger_signals)
-
-    def __str__(self):
-        return (
-            "{f.doc_type}("
-            "form_id='{f.form_id}', "
-            "domain='{f.domain}', "
-            "xmlns='{f.xmlns}', "
-            ")"
-        ).format(f=self)
-
-    class Meta(object):
-        db_table = XFormInstanceSQL_DB_TABLE
-        app_label = "form_processor"
-        index_together = [
-            ('domain', 'state'),
-            ('domain', 'user_id'),
-        ]
-        indexes = [
-            models.Index(fields=['xmlns'])
-        ]
-
-
-class DeprecatedXFormAttachmentSQL(models.Model):
-    """Deprecated: moved to BlobMeta
-
-    This class exists so Django does not delete its table when making
-    new migrations. It should not be referenced anywhere.
-    """
-    form_id = models.CharField(max_length=255)
-    attachment_id = models.UUIDField(unique=True, db_index=True)
-    content_type = models.CharField(max_length=255, null=True)
-    content_length = models.IntegerField(null=True)
-    blob_id = models.CharField(max_length=255, default=None)
-    blob_bucket = models.CharField(max_length=255, null=True, default=None)
-    name = models.CharField(max_length=255, default=None)
-    md5 = models.CharField(max_length=255, default=None)
-    properties = JSONField(default=dict)
-
-    class Meta(object):
-        db_table = "form_processor_xformattachmentsql"
-        app_label = "form_processor"
-        index_together = [
-            ("form_id", "name"),
-        ]
-
-
-class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
-    partition_attr = 'form_id'
-
-    ARCHIVE = 'archive'
-    UNARCHIVE = 'unarchive'
-    EDIT = 'edit'
-    UUID_DATA_FIX = 'uuid_data_fix'
-    GDPR_SCRUB = 'gdpr_scrub'
-
-    form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
-    user_id = models.CharField(max_length=255, null=True)
-    operation = models.CharField(max_length=255, default=None)
-    date = models.DateTimeField(null=False)
-
-    def natural_key(self):
-        # necessary for dumping models from a sharded DB so that we exclude the
-        # SQL 'id' field which won't be unique across all the DB's
-        return self.form, self.user_id, self.date
-
-    @property
-    def user(self):
-        return self.user_id
-
-    class Meta(object):
-        app_label = "form_processor"
-        db_table = XFormOperationSQL_DB_TABLE
-
-
-class XFormPhoneMetadata(jsonobject.JsonObject):
-    """
-    Metadata of an xform, from a meta block structured like:
-
-        <Meta>
-            <timeStart />
-            <timeEnd />
-            <instanceID />
-            <userID />
-            <deviceID />
-            <username />
-
-            <!-- CommCare extension -->
-            <appVersion />
-            <location />
-        </Meta>
-
-    See spec: https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaMetaDataSchema
-
-    username is not part of the spec but included for convenience
-    """
-
-    timeStart = jsonobject.DateTimeProperty()
-    timeEnd = jsonobject.DateTimeProperty()
-    instanceID = jsonobject.StringProperty()
-    userID = jsonobject.StringProperty()
-    deviceID = jsonobject.StringProperty()
-    username = jsonobject.StringProperty()
-    appVersion = jsonobject.StringProperty()
-    location = GeoPointProperty()
-
-    @property
-    def commcare_version(self):
-        from corehq.apps.receiverwrapper.util import get_commcare_version_from_appversion_text
-        from distutils.version import LooseVersion
-        version_text = get_commcare_version_from_appversion_text(self.appVersion)
-        if version_text:
-            return LooseVersion(version_text)
-
-
-class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
-                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
-                      MessagingCaseContactMixin):
+class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
+                   AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
+                   MessagingCaseContactMixin):
     DOC_TYPE = 'CommCareCase'
     partition_attr = 'case_id'
 
@@ -804,13 +147,13 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return OrderedDict(sorted(self.case_json.items()))
 
     def to_api_json(self, lite=False):
-        from .serializers import CommCareCaseSQLAPISerializer
-        serializer = CommCareCaseSQLAPISerializer(self, lite=lite)
+        from ..serializers import CommCareCaseAPISerializer
+        serializer = CommCareCaseAPISerializer(self, lite=lite)
         return serializer.data
 
     def to_json(self):
-        from .serializers import (
-            CommCareCaseSQLSerializer,
+        from ..serializers import (
+            CommCareCaseSerializer,
             lazy_serialize_case_attachments,
             lazy_serialize_case_indices,
             lazy_serialize_case_transactions,
@@ -820,7 +163,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         def union(*dicts):
             return {k: v for d in dicts for k, v in d.items()}
 
-        serializer = CommCareCaseSQLSerializer(self)
+        serializer = CommCareCaseSerializer(self)
         return union(self.case_json, serializer.data, {
             'indices': lazy_serialize_case_indices(self),
             'actions': lazy_serialize_case_transactions(self),
@@ -872,9 +215,9 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         whose state is being mutated.
 
         :param value: A list of dicts that will be used to construct
-        `CommCareCaseIndexSQL` objects.
+        `CommCareCaseIndex` objects.
         """
-        self.cached_indices = [CommCareCaseIndexSQL(**x) for x in value]
+        self.cached_indices = [CommCareCaseIndex(**x) for x in value]
 
     @property
     def indices(self):
@@ -882,11 +225,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
         to_delete = [
             (to_delete.id, to_delete.identifier)
-            for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndexSQL)
+            for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndex)
         ]
         indices = [index for index in indices if (index.id, index.identifier) not in to_delete]
 
-        indices += self.get_tracked_models_to_create(CommCareCaseIndexSQL)
+        indices += self.get_tracked_models_to_create(CommCareCaseIndex)
 
         return indices
 
@@ -958,11 +301,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def serialized_attachments(self):
-        from .serializers import CaseAttachmentSQLSerializer
+        from ..serializers import CaseAttachmentSerializer
         return {
-            att.name: dict(CaseAttachmentSQLSerializer(att).data)
+            att.name: dict(CaseAttachmentSerializer(att).data)
             for att in self.get_attachments()
-            }
+        }
 
     @memoized
     def get_closing_transactions(self):
@@ -982,7 +325,10 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             transactions = CaseAccessorSQL.get_transactions_by_type(self.case_id, transaction_type)
         else:
             transactions = []
-        transactions += [t for t in self.get_tracked_models_to_create(CaseTransaction) if (t.type & transaction_type) == transaction_type]
+        transactions += [
+            t for t in self.get_tracked_models_to_create(CaseTransaction)
+            if (t.type & transaction_type) == transaction_type
+        ]
         return transactions
 
     def modified_since_sync(self, sync_log):
@@ -1053,13 +399,13 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         """
         result = self.get_parent(
             identifier=DEFAULT_PARENT_IDENTIFIER,
-            relationship=CommCareCaseIndexSQL.CHILD
+            relationship=CommCareCaseIndex.CHILD
         )
         return result[0] if result else None
 
     @property
     def host(self):
-        result = self.get_parent(relationship=CommCareCaseIndexSQL.EXTENSION)
+        result = self.get_parent(relationship=CommCareCaseIndex.EXTENSION)
         return result[0] if result else None
 
     def __str__(self):
@@ -1080,10 +426,10 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             ["domain", "type"],
         ]
         app_label = "form_processor"
-        db_table = CommCareCaseSQL_DB_TABLE
+        db_table = CommCareCase_DB_TABLE
 
 
-class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
+class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
     """Case attachment
 
     Case attachments reference form attachments, and therefore this
@@ -1099,7 +445,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
     partition_attr = 'case_id'
 
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False,
+        'CommCareCase', to_field='case_id', db_index=False,
         related_name="attachment_set", related_query_name="attachment",
         on_delete=models.CASCADE,
     )
@@ -1111,7 +457,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
     blob_id = models.CharField(max_length=255, default=None)
     blob_bucket = models.CharField(max_length=255, null=True, default="")
 
-    # DEPRECATED - use CaseAttachmentSQL.content_md5() instead
+    # DEPRECATED - use CaseAttachment.content_md5() instead
     md5 = models.CharField(max_length=255, default="")
 
     @property
@@ -1162,7 +508,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
     def __str__(self):
         return str(
-            "CaseAttachmentSQL("
+            "CaseAttachment("
             "attachment_id='{a.attachment_id}', "
             "case_id='{a.case_id}', "
             "name='{a.name}', "
@@ -1186,13 +532,13 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
     class Meta(object):
         app_label = "form_processor"
-        db_table = CaseAttachmentSQL_DB_TABLE
+        db_table = CaseAttachment_DB_TABLE
         index_together = [
             ["case", "name"],
         ]
 
 
-class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
+class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
 
     # relationship_ids should be powers of 2
@@ -1206,7 +552,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False,
+        'CommCareCase', to_field='case_id', db_index=False,
         related_name="index_set", related_query_name="index",
         on_delete=models.CASCADE,
     )
@@ -1215,6 +561,17 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     referenced_id = models.CharField(max_length=255, default=None)
     referenced_type = models.CharField(max_length=255, default=None)
     relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
+
+    def __init__(self, *args, **kwargs):
+        # HACK: We need to remove doc_type, as ElasticSearch queries write the entire
+        #  couch document to ElasticSearch, and these indices are typically constructed by
+        #  passing the entire raw elasticsearch doc to this constructor.
+        #  While this could be handled during the parsing phase, we have multiple unique
+        #  paths which both parse, so we'd need to ignore doc_type in multiple places
+        #  Ideally, this fix can be removed when 'doc_type' is no longer written to ElasticSearch
+        #  and existing docs have been re-saved.
+        kwargs.pop('doc_type', None)
+        super().__init__(*args, **kwargs)
 
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
@@ -1250,7 +607,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         self.relationship_id = self.RELATIONSHIP_MAP[relationship]
 
     def __eq__(self, other):
-        return isinstance(other, CommCareCaseIndexSQL) and (
+        return isinstance(other, CommCareCaseIndex) and (
             self.case_id == other.case_id
             and self.identifier == other.identifier
             and self.referenced_id == other.referenced_id
@@ -1278,7 +635,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             ["domain", "referenced_id"],
         ]
         unique_together = ('case', 'identifier')
-        db_table = CommCareCaseIndexSQL_DB_TABLE
+        db_table = CommCareCaseIndex_DB_TABLE
         app_label = "form_processor"
 
 
@@ -1323,7 +680,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         TYPE_LEDGER,
     )
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False,
+        'CommCareCase', to_field='case_id', db_index=False,
         related_name="transaction_set", related_query_name="transaction",
         on_delete=models.CASCADE,
     )
@@ -1373,12 +730,11 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @property
     def form(self):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         if not self.form_id:
             return None
         form = getattr(self, 'cached_form', None)
         if not form:
-            self.cached_form = FormAccessorSQL.get_form(self.form_id)
+            self.cached_form = XFormInstance.objects.get_form(self.form_id)
         return self.cached_form
 
     @property
@@ -1409,6 +765,10 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def is_case_rebuild(self):
         return bool(self.type & self.case_rebuild_types())
 
+    @property
+    def xmlns(self):
+        return self.details.get('xmlns', None) if self.details else None
+
     @classmethod
     @memoized
     def case_rebuild_types(cls):
@@ -1435,9 +795,9 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             return False
 
         return (
-            self.case_id == other.case_id and
-            self.type == other.type and
-            self.form_id == other.form_id
+            self.case_id == other.case_id
+            and self.type == other.type
+            and self.form_id == other.form_id
         )
 
     def __hash__(self):
@@ -1498,7 +858,8 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
                 sync_log_id=xform.last_sync_token,
                 server_date=xform.received_on,
                 type=transaction_type,
-                revoked=not xform.is_normal
+                revoked=not xform.is_normal,
+                details=FormSubmissionDetail(xmlns=xform.xmlns).to_json()
             )
 
     @classmethod
@@ -1563,6 +924,11 @@ class CaseTransactionDetail(JsonObject):
     __hash__ = None
 
 
+class FormSubmissionDetail(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_FORM
+    xmlns = StringProperty()
+
+
 class RebuildWithReason(CaseTransactionDetail):
     _type = CaseTransaction.TYPE_REBUILD_WITH_REASON
     reason = StringProperty()
@@ -1578,7 +944,7 @@ class UserArchivedRebuild(CaseTransactionDetail):
     user_id = StringProperty()
 
 
-class FormArchiveRebuild(CaseTransactionDetail):
+class FormArchiveRebuild(FormSubmissionDetail):
     _type = CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED
     form_id = StringProperty()
     archived = BooleanProperty()
@@ -1602,7 +968,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
 
     domain = models.CharField(max_length=255, null=False, default=None)
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False, on_delete=models.CASCADE
+        'CommCareCase', to_field='case_id', db_index=False, on_delete=models.CASCADE
     )
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
@@ -1665,7 +1031,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
         return self.location.location_id if self.location else None
 
     def to_json(self, include_location_id=True):
-        from .serializers import LedgerValueSerializer
+        from ..serializers import LedgerValueSerializer
         serializer = LedgerValueSerializer(self, include_location_id=include_location_id)
         return dict(serializer.data)
 
@@ -1697,7 +1063,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     report_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False, on_delete=models.CASCADE
+        'CommCareCase', to_field='case_id', db_index=False, on_delete=models.CASCADE
     )
     entry_id = models.CharField(max_length=100, default=None)
     section_id = models.CharField(max_length=100, default=None)

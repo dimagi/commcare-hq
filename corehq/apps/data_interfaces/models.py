@@ -37,13 +37,10 @@ from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
 from corehq.apps.hqcase.utils import bulk_update_cases, update_case
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.models.abstract import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
-from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseIndex, CommCareCase, XFormInstance
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
@@ -134,8 +131,8 @@ class AutomaticUpdateRule(models.Model):
             if isinstance(definition, ClosedParentDefinition):
                 return True
             elif (
-                isinstance(definition, MatchPropertyDefinition) and
-                property_references_parent(definition.property_name)
+                isinstance(definition, MatchPropertyDefinition)
+                and property_references_parent(definition.property_name)
             ):
                 return True
 
@@ -146,14 +143,14 @@ class AutomaticUpdateRule(models.Model):
                     if property_references_parent(property_definition.name):
                         return True
                     if (
-                        property_definition.value_type == UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY and
-                        property_references_parent(property_definition.value)
+                        property_definition.value_type == UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY
+                        and property_references_parent(property_definition.value)
                     ):
                         return True
             elif isinstance(definition, CreateScheduleInstanceActionDefinition):
                 if (
-                    property_references_parent(definition.reset_case_property_name) or
-                    property_references_parent(definition.start_date_case_property)
+                    property_references_parent(definition.reset_case_property_name)
+                    or property_references_parent(definition.start_date_case_property)
                 ):
                     return True
 
@@ -230,10 +227,10 @@ class AutomaticUpdateRule(models.Model):
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
 
         if db:
-            return paginate_query(db, CommCareCaseSQL, q_expression, load_source='auto_update_rule')
+            return paginate_query(db, CommCareCase, q_expression, load_source='auto_update_rule')
         else:
             return paginate_query_across_partitioned_databases(
-                CommCareCaseSQL, q_expression, load_source='auto_update_rule'
+                CommCareCase, q_expression, load_source='auto_update_rule'
             )
 
     @classmethod
@@ -322,7 +319,7 @@ class AutomaticUpdateRule(models.Model):
         if not self.active:
             raise self.RuleError("Attempted to call run_rule on an inactive rule")
 
-        if not isinstance(case, CommCareCaseSQL) or case.domain != self.domain:
+        if not isinstance(case, CommCareCase) or case.domain != self.domain:
             raise self.RuleError("Invalid case given")
 
         if self.criteria_match(case, now):
@@ -460,6 +457,7 @@ class AutomaticUpdateRule(models.Model):
             data[field] = getattr(self, field)
         data['id'] = self.id
         return data
+
 
 class CaseRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
@@ -638,18 +636,18 @@ class CustomMatchDefinition(CaseRuleCriteriaDefinition):
         custom_function_path = settings.AVAILABLE_CUSTOM_RULE_CRITERIA[self.name]
         try:
             custom_function = to_function(custom_function_path)
-        except:
+        except:  # noqa: E722
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, now)
 
 
 class ClosedParentDefinition(CaseRuleCriteriaDefinition):
-    # This matches up to the identifier attribute of CommCareCaseIndexSQL.
+    # This matches up to the identifier attribute of CommCareCaseIndex.
     identifier = models.CharField(max_length=126, default=DEFAULT_PARENT_IDENTIFIER)
 
-    # This matches up to the CommCareCaseIndexSQL.relationship_id field.
-    relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndexSQL.CHILD)
+    # This matches up to the CommCareCaseIndex.relationship_id field.
+    relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndex.CHILD)
 
     def matches(self, case, now):
         relationship = self.relationship_id
@@ -739,11 +737,11 @@ class CaseRuleActionResult(object):
     @property
     def total_updates(self):
         return (
-            self.num_updates +
-            self.num_closes +
-            self.num_related_updates +
-            self.num_related_closes +
-            self.num_creates
+            self.num_updates
+            + self.num_closes
+            + self.num_related_updates
+            + self.num_related_closes
+            + self.num_creates
         )
 
 
@@ -908,6 +906,7 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
             num_related_updates=num_related_updates,
         )
 
+
 class CustomActionDefinition(CaseRuleActionDefinition):
     name = models.CharField(max_length=126)
 
@@ -918,7 +917,7 @@ class CustomActionDefinition(CaseRuleActionDefinition):
         custom_function_path = settings.AVAILABLE_CUSTOM_RULE_ACTIONS[self.name]
         try:
             custom_function = to_function(custom_function_path)
-        except:
+        except:  # noqa: E722
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, rule)
@@ -1201,7 +1200,8 @@ class VisitSchedulerIntegrationHelper(object):
             return visit_due_date + timedelta(days=visit.starts)
         elif self.scheduler_module_info.window_position == VISIT_WINDOW_END:
             if not isinstance(visit.expires, int):
-                raise self.VisitSchedulerIntegrationException("Cannot schedule end date of visit that does not expire")
+                raise self.VisitSchedulerIntegrationException(
+                    "Cannot schedule end date of visit that does not expire")
 
             return visit_due_date + timedelta(days=visit.expires)
         elif self.scheduler_module_info.window_position == VISIT_WINDOW_DUE_DATE:
@@ -1213,7 +1213,7 @@ class VisitSchedulerIntegrationHelper(object):
         phase_num = self.case.get_case_property('current_schedule_phase')
         try:
             return int(phase_num)
-        except:
+        except:  # noqa: E722
             return None
 
     def get_visit(self, form):
@@ -1437,7 +1437,7 @@ class CaseRuleSubmission(models.Model):
     # The timestamp that this record was created on
     created_on = models.DateTimeField(db_index=True)
 
-    # Reference to XFormInstanceSQL.form_id
+    # Reference to XFormInstance.form_id
     form_id = models.CharField(max_length=255, unique=True, db_index=True)
 
     # A shortcut to keep track of which forms get archived
@@ -1489,7 +1489,7 @@ class CaseRuleUndoer(object):
 
         for form_id_chunk in form_id_chunks:
             archived_form_ids = []
-            for form in FormAccessors(self.domain).iter_forms(form_id_chunk):
+            for form in XFormInstance.objects.iter_forms(form_id_chunk, self.domain):
                 result['processed'] += 1
 
                 if not form.is_normal or any([u.creates_case() for u in get_case_updates(form)]):

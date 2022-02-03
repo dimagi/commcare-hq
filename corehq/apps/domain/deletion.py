@@ -21,10 +21,8 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.elastic import ESError
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
@@ -178,13 +176,12 @@ def _delete_all_cases(domain_name):
 
 def _delete_all_forms(domain_name):
     logger.info('Deleting forms...')
-    form_accessor = FormAccessors(domain_name)
     form_ids = list(itertools.chain(*[
-        form_accessor.get_all_form_ids_in_domain(doc_type=doc_type)
+        XFormInstance.objects.get_form_ids_in_domain(domain_name, doc_type)
         for doc_type in doc_type_to_state
     ]))
     for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
-        form_accessor.soft_delete_forms(list(form_id_chunk))
+        XFormInstance.objects.soft_delete_forms(domain_name, list(form_id_chunk))
     logger.info('Deleting forms complete.')
 
 
@@ -275,8 +272,8 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('sms', _delete_domain_backends, ['SQLMobileBackend']),
     CustomDeletion('users', _delete_web_user_membership, []),
     CustomDeletion('accounting', _terminate_subscriptions, ['Subscription']),
-    CustomDeletion('form_processor', _delete_all_cases, ['CommCareCaseSQL']),
-    CustomDeletion('form_processor', _delete_all_forms, ['XFormInstanceSQL']),
+    CustomDeletion('form_processor', _delete_all_cases, ['CommCareCase']),
+    CustomDeletion('form_processor', _delete_all_forms, ['XFormInstance']),
     ModelDeletion('aggregate_ucrs', 'AggregateTableDefinition', 'domain', [
         'PrimaryColumn', 'SecondaryColumn', 'SecondaryTableDefinition', 'TimeAggregationDefinition',
     ]),

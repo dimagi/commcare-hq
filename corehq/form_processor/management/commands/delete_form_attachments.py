@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from corehq.blobs import get_blob_db
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 
 
 class Command(BaseCommand):
@@ -15,14 +15,13 @@ class Command(BaseCommand):
         parser.add_argument('--dry-run', action='store_true')
 
     def handle(self, domain, xmlns, app_id, dry_run, xform_ids, **options):
-        accessor = FormAccessors(domain)
         if xform_ids:
             form_ids = xform_ids.split(',')
         else:
-            form_ids = accessor.iter_form_ids_by_xmlns(xmlns)
+            form_ids = XFormInstance.objects.iter_form_ids_by_xmlns(domain, xmlns)
         attachments_to_delete = []
         for form_id in form_ids:
-            form = accessor.get_with_attachments(form_id)
+            form = XFormInstance.objects.get_with_attachments(form_id, domain)
             if form.domain != domain or form.xmlns != xmlns or form.app_id != app_id:
                 continue
             print(f'{form_id}\t{",".join(form.attachments) or "No attachments to delete"}')

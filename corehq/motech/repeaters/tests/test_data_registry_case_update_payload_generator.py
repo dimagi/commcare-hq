@@ -1,20 +1,31 @@
 import uuid
 from datetime import datetime
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 from xml.etree import cElementTree as ElementTree
 
-from testil import eq, assert_raises
+from testil import assert_raises, eq
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 from casexml.apps.case.xml import V2_NAMESPACE
+
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
+from corehq.form_processor.models import (
+    CaseTransaction,
+    CommCareCase,
+    CommCareCaseIndex,
+)
 from corehq.motech.repeaters.exceptions import DataRegistryCaseUpdateError
-from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater, Repeater
-from corehq.motech.repeaters.repeater_generators import DataRegistryCaseUpdatePayloadGenerator, SYSTEM_FORM_XMLNS
+from corehq.motech.repeaters.models import (
+    DataRegistryCaseUpdateRepeater,
+    Repeater,
+)
+from corehq.motech.repeaters.repeater_generators import (
+    SYSTEM_FORM_XMLNS,
+    DataRegistryCaseUpdatePayloadGenerator,
+)
 
 TARGET_DOMAIN = "target_domain"
 
@@ -178,23 +189,37 @@ def test_generator_update_create_index_bad_relationship():
 
 
 def test_generator_update_remove_index_bad_relationship():
-    builder = IntentCaseBuilder().remove_index("case2", "cousin")
+    builder = IntentCaseBuilder().remove_index("case2", "parent", relationship="cousin")
     msg = "Index relationships must be either 'child' or 'extension'"
     with assert_raises(DataRegistryCaseUpdateError, msg=msg):
         _test_payload_generator(intent_case=builder.get_case())
 
 
 def test_generator_update_remove_index():
-    builder = IntentCaseBuilder().remove_index("parent_case_id", "child")
+    builder = IntentCaseBuilder().remove_index("parent_case_id", "parent_c")
 
     _test_payload_generator(intent_case=builder.get_case(), expected_indices={
-        "1": {"parent": IndexAttrs("parent_type", None, "child")}})
+        "1": {"parent_c": IndexAttrs("parent_type", None, "child")}})
+
+
+def test_generator_update_remove_index_extension():
+    builder = IntentCaseBuilder().remove_index("host_case_id", "host_c")
+
+    _test_payload_generator(intent_case=builder.get_case(), expected_indices={
+        "1": {"host_c": IndexAttrs("host_type", None, "extension")}})
+
+
+def test_generator_update_remove_index_check_relationship():
+    builder = IntentCaseBuilder().remove_index("parent_case_id", "parent_c", relationship="extension")
+    msg = "Index relationship does not match for index to remove"
+    with assert_raises(DataRegistryCaseUpdateError, msg=msg):
+        _test_payload_generator(intent_case=builder.get_case())
 
 
 def test_generator_update_create_and_remove_index():
     builder = IntentCaseBuilder() \
         .create_index("case2", "host_type", "extension") \
-        .remove_index("parent_case_id", "child")
+        .remove_index("parent_case_id", "parent_c")
 
     def _get_case(case_id):
         assert case_id == "case2"
@@ -204,7 +229,7 @@ def test_generator_update_create_and_remove_index():
         _test_payload_generator(intent_case=builder.get_case(), expected_indices={
             "1": {
                 "host": IndexAttrs("host_type", "case2", "extension"),
-                "parent": IndexAttrs("parent_type", None, "child")
+                "parent_c": IndexAttrs("parent_type", None, "child")
             }})
 
 
@@ -273,7 +298,7 @@ def test_generator_update_multiple_cases_multiple_domains():
 
 
 def test_generator_required_fields():
-    intent_case = CommCareCaseSQL(
+    intent_case = CommCareCase(
         domain=SOURCE_DOMAIN,
         type="registry_case_update",
         case_json={},
@@ -337,7 +362,7 @@ def _test_payload_generator(intent_case, registry_mock_cases=None,
             "source_domain": SOURCE_DOMAIN,
             "source_form_id": "form123",
             "source_username": "local_user",
-        })
+        }, device_id=f"{DataRegistryCaseUpdatePayloadGenerator.DEVICE_ID}:{SOURCE_DOMAIN}")
         form.assert_case_updates(expected_updates or {})
         if expected_indices:
             form.assert_case_index(expected_indices)
@@ -360,7 +385,7 @@ class DataRegistryUpdateForm:
         }
 
     def _get_form_value(self, name):
-        return self.formxml.find(f"{{{SYSTEM_FORM_XMLNS}}}{name}").text
+        return self.formxml.find(f"{{{DataRegistryCaseUpdatePayloadGenerator.XMLNS}}}{name}").text
 
     def assert_case_updates(self, expected_updates):
         """
@@ -380,12 +405,14 @@ class DataRegistryUpdateForm:
                 actual = self.cases[case_id].index[key]
                 eq(actual, expected)
 
-    def assert_form_props(self, expected):
+    def assert_form_props(self, expected, device_id=None):
         actual = {
             key: self._get_form_value(key)
             for key in expected
         }
         eq(actual, expected)
+        if device_id:
+            eq(self.formxml.find(".//{http://openrosa.org/jr/xforms}deviceID").text, device_id)
 
     def assert_case_create(self, expected_creates):
         for case_id, create in expected_creates.items():
@@ -439,9 +466,10 @@ class IntentCaseBuilder:
         })
         return self
 
-    def remove_index(self, case_id, relationship):
+    def remove_index(self, case_id, identifier, relationship=None):
         self.props.update({
             "target_index_remove_case_id": case_id,
+            "target_index_remove_identifier": identifier,
             "target_index_remove_relationship": relationship,
         })
         return self
@@ -473,7 +501,7 @@ class IntentCaseBuilder:
 
     def get_case(self):
         utcnow = datetime.utcnow()
-        intent_case = CommCareCaseSQL(
+        intent_case = CommCareCase(
             domain=SOURCE_DOMAIN,
             type=self.CASE_TYPE,
             case_json=self.props,
@@ -502,15 +530,21 @@ def _mock_case(case_id, props=None, domain=TARGET_DOMAIN, case_type="patient"):
         "existing_prop": uuid.uuid4().hex,
         "existing_blank_prop": ""
     }
-    mock_case = Mock(
+    case = CommCareCase(
         domain=domain, type=case_type, case_id=case_id,
-        external_id=None,
+        name=None, external_id=None,
         case_json=props,
-        live_indices=[
-            Mock(
-                identifier="parent", referenced_type="parent_type",
-                referenced_id="parent_case_id", relationship_id="child"
-            )
-        ])
-    mock_case.name = None
-    return mock_case
+    )
+    case.cached_indices = [
+        CommCareCaseIndex(
+            domain=domain, case_id=case_id,
+            identifier="parent_c", referenced_type="parent_type",
+            referenced_id="parent_case_id", relationship_id=CommCareCaseIndex.CHILD
+        ),
+        CommCareCaseIndex(
+            domain=domain, case_id=case_id,
+            identifier="host_c", referenced_type="host_type",
+            referenced_id="host_case_id", relationship_id=CommCareCaseIndex.EXTENSION
+        )
+    ]
+    return case

@@ -9,7 +9,7 @@ from ws4redis.context_processors import default
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.models import BillingAccount, SubscriptionType
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.utils import is_hubspot_js_allowed_for_request
+from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_request
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 
 COMMCARE = 'commcare'
@@ -266,3 +266,9 @@ def get_demo(request):
             'is_demo_visible': True,
         })
     return context
+
+
+def status_page(request):
+    return {
+        'show_status_page': settings.IS_SAAS_ENVIRONMENT
+    }

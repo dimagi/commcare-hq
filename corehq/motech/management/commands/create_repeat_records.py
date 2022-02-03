@@ -4,15 +4,14 @@ import re
 from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    FormAccessorSQL,
-)
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.motech.repeaters.management.commands.find_missing_repeat_records import (
     get_repeaters_for_type_in_domain,
 )
 from corehq.motech.repeaters.models import Repeater, get_all_repeater_types
 from corehq.util.log import with_progress_bar
+from dimagi.utils.chunked import chunked
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -66,11 +65,30 @@ class Command(BaseCommand):
                     by_domain[doc.domain] = repeaters
                 return by_domain[doc.domain]
 
-        accessor = FormAccessorSQL.get_form if options['doc_type'] == 'form' else CaseAccessorSQL.get_case
-        for doc_id in with_progress_bar(doc_ids):
+        def doc_iterator(doc_ids):
             try:
-                form_or_case = accessor(doc_id)
-                for repeater in _get_repeaters(form_or_case):
-                    repeater.register(form_or_case)
+                yield from bulk_accessor(doc_ids)
             except Exception:
-                logger.exception(f"Unable to process doc '{doc_id}")
+                logger.exception("Unable to fetch bulk docs, falling back to individual fetches")
+                for doc_id in doc_ids:
+                    try:
+                        yield single_accessor(doc_id)
+                    except Exception:
+                        logger.exception(f"Unable to fetch doc '{doc_id}'")
+
+        forms = XFormInstance.objects
+        bulk_accessor = forms.get_forms if options['doc_type'] == 'form' else CaseAccessorSQL.get_cases
+        single_accessor = forms.get_form if options['doc_type'] == 'form' else CaseAccessorSQL.get_case
+        for doc_ids in chunked(with_progress_bar(doc_ids), 100):
+            for doc in doc_iterator(list(doc_ids)):
+                try:
+                    repeaters = _get_repeaters(doc)
+                except Exception:
+                    logger.exception(f"Unable to fetch repeaters for doc '{doc.get_id}'")
+                    continue
+
+                for repeater in repeaters:
+                    try:
+                        repeater.register(doc)
+                    except Exception:
+                        logger.exception(f"Unable to create records for doc '{doc.get_id}'")

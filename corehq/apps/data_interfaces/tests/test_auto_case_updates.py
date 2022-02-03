@@ -25,10 +25,8 @@ from corehq.apps.data_interfaces.models import (
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.tests.locks import reentrant_redis_locks
@@ -823,7 +821,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertEqual(CaseRuleSubmission.objects.filter(domain=self.domain, archived=True).count(), 2)
 
             form_ids = CaseRuleSubmission.objects.filter(domain=self.domain).values_list('form_id', flat=True)
-            for form in FormAccessors(self.domain).iter_forms(form_ids):
+            for form in XFormInstance.objects.iter_forms(form_ids, self.domain):
                 self.assertTrue(form.is_archived)
 
     @override_settings(
@@ -947,8 +945,8 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         rule1 = _create_empty_rule(self.domain, case_type='person-1')
         rule2 = _create_empty_rule(self.domain, case_type='person-1')
         rule3 = _create_empty_rule(self.domain, case_type='person-2')
-        rule4 = _create_empty_rule(self.domain, case_type='person-2', active=False)
-        rule5 = _create_empty_rule(self.domain, case_type='person-3', deleted=True)
+        _create_empty_rule(self.domain, case_type='person-2', active=False)
+        _create_empty_rule(self.domain, case_type='person-3', deleted=True)
 
         rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
@@ -981,7 +979,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         rule3.server_modified_boundary = 30
         rule3.save()
 
-        rule4 = _create_empty_rule(self.domain, case_type='person-2')
+        _create_empty_rule(self.domain, case_type='person-2')
 
         rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)

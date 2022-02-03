@@ -22,8 +22,8 @@ from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.models import XFormInstance
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -133,7 +133,7 @@ def get_user_id_from_form(form_id):
     user_id = cache.get(key)
     if not user_id:
         try:
-            user_id = FormAccessorSQL.get_form(form_id).user_id
+            user_id = XFormInstance.objects.get_form(form_id).user_id
         except XFormNotFound:
             return None
         cache.set(key, user_id, 12 * 60 * 60)

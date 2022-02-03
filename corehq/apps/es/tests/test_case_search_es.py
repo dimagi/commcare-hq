@@ -39,7 +39,7 @@ from corehq.apps.es.case_search import (
 )
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT, get_es_new
-from corehq.form_processor.models import CommCareCaseIndexSQL
+from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import (
@@ -294,13 +294,13 @@ class TestCaseSearchHitConversions(SimpleTestCase):
         self.assertEqual(case.type, 'mother')
         self.assertEqual(case.user_id, '29383d6a335847f985aeeeca94031f82')
         self.assertEqual(case.indices, [
-            CommCareCaseIndexSQL(
+            CommCareCaseIndex(
                 case_id=case.case_id,
                 domain='healsec',
                 identifier='host',
                 referenced_type='person',
                 referenced_id='abc123',
-                relationship_id=CommCareCaseIndexSQL.EXTENSION,
+                relationship_id=CommCareCaseIndex.EXTENSION,
             )
         ])
         self.assertEqual(case.case_json, {

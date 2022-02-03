@@ -9,6 +9,7 @@ from corehq.apps.dump_reload.util import get_model_label
 IGNORE_APPS = {
     'aaa',
     'accounting',
+    'analytics',
     'admin',
     'auditcare',
     'captcha',

@@ -56,13 +56,14 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
 
     returns the UID of the resulting form.
     """
+    form_extras = form_extras or {}
     attachments = attachments or {}
     now = json_format_datetime(datetime.datetime.utcnow())
     if not isinstance(case_blocks, str):
         case_blocks = ''.join(case_blocks)
     form_id = form_id or uuid.uuid4().hex
     form_xml = render_to_string('hqcase/xml/case_block.xml', {
-        'xmlns': xmlns or SYSTEM_FORM_XMLNS,
+        'xmlns': xmlns or form_extras.pop('xmlns', SYSTEM_FORM_XMLNS),
         'case_block': case_blocks,
         'time': now,
         'uid': form_id,
@@ -70,7 +71,6 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
         'user_id': user_id or "",
         'device_id': device_id or "",
     })
-    form_extras = form_extras or {}
 
     result = submit_form_locally(
         instance=form_xml,

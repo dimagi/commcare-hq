@@ -245,7 +245,7 @@ kombu==4.2.2.post1
     # via -r base-requirements.in
 laboratory==0.2.0
     # via -r base-requirements.in
-lxml==4.6.3
+lxml==4.7.1
     # via
     #   -r base-requirements.in
     #   eulxml
@@ -277,7 +277,7 @@ phonenumberslite==8.12.10
     # via -r base-requirements.in
 pickle5==0.0.11
     # via -r base-requirements.in
-pillow==8.3.2
+pillow==9.0.0
     # via
     #   -r base-requirements.in
     #   reportlab

@@ -779,7 +779,7 @@ class SoftwarePlan(models.Model):
         choices=SoftwarePlanVisibility.CHOICES,
     )
     last_modified = models.DateTimeField(auto_now=True)
-    is_customer_software_plan = models.BooleanField(default=False)
+    is_customer_software_plan = models.BooleanField(default=False)  # can plan be used in customer billing account
     max_domains = models.IntegerField(blank=True, null=True)
     is_annual_plan = models.BooleanField(default=False)
 

@@ -18,7 +18,7 @@ from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseIndexSQL
+from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -206,7 +206,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 identifier=new_index_identifier,
             )],
         ))
-        new_index_ref = CommCareCaseIndexSQL(
+        new_index_ref = CommCareCaseIndex(
             identifier=new_index_identifier,
             referenced_type=PARENT_TYPE,
             referenced_id=new_case_id,
@@ -253,9 +253,9 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 ),
             ],
         ))
-        parent_ref_1 = CommCareCaseIndexSQL(
+        parent_ref_1 = CommCareCaseIndex(
             identifier=index_id_1, referenced_type=PARENT_TYPE, referenced_id=parent_id_1)
-        parent_ref_2 = CommCareCaseIndexSQL(
+        parent_ref_2 = CommCareCaseIndex(
             identifier=index_id_2, referenced_type=PARENT_TYPE, referenced_id=parent_id_2)
         self._testUpdate(self.device.last_sync.log.get_id, {parent_id_1: [], parent_id_2: [],
                                                 child_id: [parent_ref_1, parent_ref_2]})
@@ -284,7 +284,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 identifier=index_id,
             )],
         ))
-        parent_ref = CommCareCaseIndexSQL(
+        parent_ref = CommCareCaseIndex(
             identifier=index_id,
             referenced_type=PARENT_TYPE,
             referenced_id=parent_id,
@@ -312,7 +312,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 )],
             )
         ])
-        index_ref = CommCareCaseIndexSQL(identifier=index_id,
+        index_ref = CommCareCaseIndex(identifier=index_id,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
 
@@ -346,7 +346,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 )],
             )
         ])
-        index_ref = CommCareCaseIndexSQL(identifier=index_id,
+        index_ref = CommCareCaseIndex(identifier=index_id,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
         # should be there
@@ -467,7 +467,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 )],
             )
         ])
-        index_ref = CommCareCaseIndexSQL(identifier=PARENT_TYPE,
+        index_ref = CommCareCaseIndex(identifier=PARENT_TYPE,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
         self._testUpdate(self.device.last_sync.log._id,
@@ -504,7 +504,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 walk_related=False
             )
         ])
-        index_ref = CommCareCaseIndexSQL(identifier=PARENT_TYPE,
+        index_ref = CommCareCaseIndex(identifier=PARENT_TYPE,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=case_not_on_device.case_id)
         self._testUpdate(self.device.last_sync.log._id, {child_id: [index_ref]})
@@ -710,11 +710,11 @@ class SyncTokenUpdateTest(BaseSyncTest):
             )],
             attrs={'create': True}
         )
-        parent_ref = CommCareCaseIndexSQL(
+        parent_ref = CommCareCaseIndex(
             identifier=PARENT_TYPE,
             referenced_type=PARENT_TYPE,
             referenced_id=parent.case_id)
-        grandparent_ref = CommCareCaseIndexSQL(
+        grandparent_ref = CommCareCaseIndex(
             identifier=PARENT_TYPE,
             referenced_type=PARENT_TYPE,
             referenced_id=grandparent.case_id)
@@ -1615,7 +1615,7 @@ class MultiUserSyncTest(BaseSyncTest):
                 )],
             )
         ])
-        index_ref = CommCareCaseIndexSQL(identifier=PARENT_TYPE,
+        index_ref = CommCareCaseIndex(identifier=PARENT_TYPE,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
 
@@ -1656,8 +1656,8 @@ class MultiUserSyncTest(BaseSyncTest):
                 ],
             )
         ])
-        mom_ref = CommCareCaseIndexSQL(identifier='mom', referenced_type='mom', referenced_id=mom_id)
-        dad_ref = CommCareCaseIndexSQL(identifier='dad', referenced_type='dad', referenced_id=dad_id)
+        mom_ref = CommCareCaseIndex(identifier='mom', referenced_type='mom', referenced_id=mom_id)
+        dad_ref = CommCareCaseIndex(identifier='dad', referenced_type='dad', referenced_id=dad_id)
         # sanity check that we are in the right state
         self._testUpdate(self.guy.last_sync.log._id, {
             child_id: [mom_ref, dad_ref],
@@ -1680,7 +1680,7 @@ class MultiUserSyncTest(BaseSyncTest):
                 ]
             )
         )
-        new_mom_ref = CommCareCaseIndexSQL(identifier='mom', referenced_type='mom', referenced_id=new_mom_id)
+        new_mom_ref = CommCareCaseIndex(identifier='mom', referenced_type='mom', referenced_id=new_mom_id)
         self._testUpdate(self.guy.sync().log._id, {
             child_id: [new_mom_ref, dad_ref],
             mom_id: [],

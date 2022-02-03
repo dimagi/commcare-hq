@@ -16,7 +16,8 @@ from casexml.apps.phone.models import SimplifiedSyncLog
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import TestFileMixin, trap_extra_setup, flag_enabled
@@ -42,7 +43,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
 
     def setUp(self):
         super(BaseCaseMultimediaTest, self).setUp()
-        self.formdb = FormAccessors()
+        self.formdb = XFormInstance.objects
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
 
@@ -65,8 +66,13 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
             dict_attachments - A key-value dict where the key is the name and the value is a Stream of the
             attachment
         """
-        attachment_block = ''.join([self._singleAttachBlock(x) for x in new_attachments] + [self._singleAttachRemoveBlock(x) for x in removes])
-        dict_attachments = dict((MEDIA_FILES[attach_name], self._attachmentFileStream(attach_name)) for attach_name in new_attachments)
+        attachment_block = ''.join(
+            [self._singleAttachBlock(x) for x in new_attachments]
+            + [self._singleAttachRemoveBlock(x) for x in removes])
+        dict_attachments = {
+            MEDIA_FILES[attach_name]: self._attachmentFileStream(attach_name)
+            for attach_name in new_attachments
+        }
         return attachment_block, dict_attachments
 
     def _singleAttachBlock(self, key):

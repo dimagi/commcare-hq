@@ -2,14 +2,18 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.const import WORKFLOW_FORM, REGISTRY_WORKFLOW_LOAD_CASE
+from corehq.apps.app_manager.const import (
+    REGISTRY_WORKFLOW_LOAD_CASE,
+    WORKFLOW_FORM,
+    WORKFLOW_PREVIOUS,
+)
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
     CaseSearchProperty,
     DetailColumn,
-    FormLink,
     DetailTab,
+    FormLink,
     Itemset,
     Module,
     OpenCaseAction,
@@ -19,7 +23,8 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
-    patch_get_xform_resource_overrides, get_simple_form,
+    get_simple_form,
+    patch_get_xform_resource_overrides,
 )
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
@@ -212,6 +217,61 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         </partial>"""
         self.assertXmlPartialEqual(
             expected,
+            suite,
+            "./entry[2]/stack/create"
+        )
+
+    def test_workflow_registry_module_previous_screen_after_case_list_form(self):
+        factory = AppFactory(DOMAIN, "App with DR", build_version='2.53.0')
+        m0, f0 = factory.new_basic_module("new case", "case")
+        factory.form_opens_case(f0, "case")
+
+        m1, f1 = factory.new_basic_module("update case", "case")
+        factory.form_requires_case(f1, "case")
+
+        m1.case_details.long.columns.append(
+            DetailColumn.wrap(dict(
+                header={"en": "name"},
+                model="case",
+                format="plain",
+                field="whatever",
+            ))
+        )
+
+        m1.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+            data_registry="myregistry",
+            data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE,
+        )
+
+        m1.case_list_form.form_id = f0.get_unique_id()
+        m1.case_list_form.label = {'en': 'New Case'}
+
+        f1.post_form_workflow = WORKFLOW_PREVIOUS
+        app = Application.wrap(factory.app.to_json())
+        app._id = "123"
+        suite = app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <create>
+                <command value="'m1'"/>
+                <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+                  <data key="case_type" ref="'case'"/>
+                  <data key="x_commcare_data_registry" ref="'myregistry'"/>
+                  <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+                </query>
+                <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+                <query id="registry" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+                  <data key="x_commcare_data_registry" ref="'myregistry'"/>
+                  <data key="case_type" ref="'case'"/>
+                  <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+                </query>
+              </create>
+            </partial>
+            """,
             suite,
             "./entry[2]/stack/create"
         )

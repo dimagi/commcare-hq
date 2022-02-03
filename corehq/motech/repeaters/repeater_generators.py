@@ -384,6 +384,7 @@ class CaseUpdateConfig:
         "index_create_relationship": "target_index_create_relationship",
         # index remove
         "index_remove_case_id": "target_index_remove_case_id",
+        "index_remove_identifier": "target_index_remove_identifier",
         "index_remove_relationship": "target_index_remove_relationship",
         # copy from other case
         "copy_domain": "target_copy_properties_from_case_domain",
@@ -413,6 +414,7 @@ class CaseUpdateConfig:
     index_create_case_type = attr.ib()
     index_create_relationship = attr.ib()
     index_remove_case_id = attr.ib()
+    index_remove_identifier = attr.ib()
     index_remove_relationship = attr.ib()
     copy_domain = attr.ib()
     copy_case_id = attr.ib()
@@ -434,10 +436,6 @@ class CaseUpdateConfig:
         config = CaseUpdateConfig(**kwargs)
         config.validate()
         return config
-
-    @property
-    def index_remove_identifier(self):
-        return "parent" if self.index_remove_relationship == "child" else "host"
 
     @property
     def index_create_identifier(self):
@@ -563,16 +561,21 @@ class CaseUpdateConfig:
         return index_spec
 
     def get_remove_case_index(self, target_case):
-        identifier = "parent" if self.index_remove_relationship == "child" else "host"
-        indices = [index for index in target_case.live_indices if index.identifier == identifier]
+        indices = [
+            index for index in target_case.live_indices
+            if index.identifier == self.index_remove_identifier
+        ]
         if not indices:
             return {}
         assert len(indices) == 1
         index = indices[0]
         if index.referenced_id != self.index_remove_case_id:
             raise DataRegistryCaseUpdateError("Index case ID does not match for index to remove")
+        if self.index_remove_relationship and self.index_remove_relationship != index.relationship:
+            raise DataRegistryCaseUpdateError("Index relationship does not match for index to remove")
+
         return {
-            identifier: (index.referenced_type, "", self.index_remove_relationship)
+            index.identifier: (index.referenced_type, "", index.relationship)
         }
 
     @staticmethod
@@ -596,6 +599,8 @@ class CaseUpdateConfig:
 
 
 class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
+    DEVICE_ID = 'DataRegistryCaseUpdateRepeater'
+    XMLNS = 'http://commcarehq.org/data_registry_case_update'
 
     def get_headers(self):
         headers = super().get_headers()
@@ -607,13 +612,13 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         submitting_user = CouchUser.get_by_user_id(payload_doc.user_id)
         case_blocks = self._get_case_blocks(repeat_record, configs, submitting_user)
         return render_to_string('hqcase/xml/case_block.xml', {
-            'xmlns': SYSTEM_FORM_XMLNS,
+            'xmlns': self.XMLNS,
             'case_block': " ".join(case_blocks),
             'time': json_format_datetime(datetime.utcnow()),
             'uid': str(uuid4()),
             'username': self.submission_username(),
             'user_id': self.submission_user_id(),
-            'device_id': "DataRegistryCaseUpdateRepeater",
+            'device_id': f"{self.DEVICE_ID}:{payload_doc.domain}",
             'form_data': {
                 "source_domain": payload_doc.domain,
                 "source_form_id": payload_doc.get_form_transactions()[-1].form_id,

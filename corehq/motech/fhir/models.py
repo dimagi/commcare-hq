@@ -45,7 +45,7 @@ from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import (
     IMPORT_FREQUENCY_CHOICES,
     IMPORT_FREQUENCY_DAILY,
@@ -214,7 +214,7 @@ class FHIRResourceProperty(models.Model):
 
 
 def build_fhir_resource(
-    case: CommCareCaseSQL,
+    case: CommCareCase,
     fhir_version: str = FHIR_VERSION_4_0_1,
 ) -> Optional[dict]:
     """
@@ -266,7 +266,7 @@ def _build_fhir_resource(
 
 
 def get_case_trigger_info(
-    case: CommCareCaseSQL,
+    case: CommCareCase,
     resource_type: FHIRResourceType,
     case_block: Optional[dict] = None,
     form_question_values: Optional[dict] = None,

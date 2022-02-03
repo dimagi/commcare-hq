@@ -3,8 +3,8 @@ from unittest import mock
 from corehq.apps.linked_domain.local_accessors import get_enabled_toggles
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_toggles
-from toggle.shortcuts import set_toggle
 from corehq.toggles import NAMESPACE_DOMAIN, StaticToggle, TAG_INTERNAL
+from corehq.toggles.shortcuts import set_toggle
 
 TEST_TOGGLE = StaticToggle(
     'test_toggle',

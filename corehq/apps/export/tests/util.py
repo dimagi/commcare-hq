@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 from corehq.apps.export.export import get_export_file
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.util.files import TransientTempfile
 
@@ -21,7 +21,7 @@ def new_case(domain=DOMAIN, user_id=DEFAULT_USER, owner_id=DEFAULT_USER,
     kwargs.setdefault("case_id", uuid.uuid4().hex)
     kwargs.setdefault("modified_on", datetime.utcnow())
     kwargs.setdefault("server_modified_on", datetime.utcnow())
-    return CommCareCaseSQL(
+    return CommCareCase(
         domain=domain,
         user_id=user_id,
         owner_id=owner_id,

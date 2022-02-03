@@ -25,7 +25,6 @@ from corehq.util.quickcache import quickcache
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
 SYSTEM_USER_ID = 'system'
 DEMO_USER_ID = 'demo_user'
-JAVA_ADMIN_USERNAME = 'admin'
 WEIRD_USER_IDS = [
     'commtrack-system',    # internal HQ/commtrack system forms
     DEMO_USER_ID,           # demo mode

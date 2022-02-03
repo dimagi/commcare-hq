@@ -32,10 +32,8 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.util.test_utils import unit_testing_only
 
@@ -262,7 +260,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         self.assertEqual(case.get_case_property(prop), value)
 
     def get_last_form_submission(self):
-        result = FormAccessors(self.domain).get_forms_by_type('XFormInstance', 1, recent_first=True)
+        result = XFormInstance.objects.get_forms_by_type(self.domain, 'XFormInstance', 1, recent_first=True)
         return result[0] if len(result) > 0 else None
 
     def assertNoNewSubmission(self, last_submission):

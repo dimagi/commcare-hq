@@ -11,7 +11,6 @@ from corehq.apps.domain.dbaccessors import iter_domains
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
-    FormAccessorSQL,
     LedgerAccessorSQL,
 )
 from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
@@ -23,8 +22,8 @@ from corehq.form_processor.models import (
     CaseTransaction,
     LedgerTransaction,
     RebuildWithReason,
-    XFormInstanceSQL,
-    XFormOperationSQL,
+    XFormInstance,
+    XFormOperation,
 )
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
@@ -39,7 +38,7 @@ def get_forms_to_reprocess(form_ids):
     for dbname, forms_by_db in split_list_by_db_partition(form_ids):
         edited_forms.update({
             form.form_id: form for form in
-            XFormInstanceSQL.objects.using(dbname)
+            XFormInstance.objects.using(dbname)
                 .filter(form_id__in=forms_by_db)
                 .exclude(deprecated_form_id__isnull=True)
         })
@@ -48,7 +47,7 @@ def get_forms_to_reprocess(form_ids):
         form.deprecated_form_id for form in edited_forms.values()
     }
     for dbname, forms_by_db in split_list_by_db_partition(deprecated_form_ids):
-        deprecated_forms = XFormInstanceSQL.objects.using(dbname).filter(form_id__in=forms_by_db)
+        deprecated_forms = XFormInstance.objects.using(dbname).filter(form_id__in=forms_by_db)
         for deprecated_form in deprecated_forms:
             live_form = edited_forms[deprecated_form.orig_id]
             if deprecated_form.xmlns != live_form.xmlns:
@@ -71,7 +70,7 @@ def undo_form_edits(form_tuples, logger):
         )
 
         deprecated_form.form_id = new_id_in_same_dbalias(deprecated_form.form_id)
-        deprecated_form.state = XFormInstanceSQL.NORMAL
+        deprecated_form.state = XFormInstance.NORMAL
         deprecated_form.orig_id = None
         deprecated_form.edited_on = None
 
@@ -84,12 +83,12 @@ def undo_form_edits(form_tuples, logger):
         )
 
         for form in (live_form, deprecated_form):
-            form.track_create(XFormOperationSQL(
+            form.track_create(XFormOperation(
                 user_id='system',
-                operation=XFormOperationSQL.UUID_DATA_FIX,
+                operation=XFormOperation.UUID_DATA_FIX,
                 date=operation_date)
             )
-            FormAccessorSQL.update_form(form)
+            XFormInstance.objects.update_form(form)
 
         logger.log('Form edit undone: {}, {}({})'.format(
             live_form.form_id, deprecated_form.form_id, deprecated_form.original_form_id
@@ -97,7 +96,7 @@ def undo_form_edits(form_tuples, logger):
         cases_to_rebuild[live_form.domain].update(affected_cases)
         ledgers_to_rebuild[live_form.domain].update(affected_ledgers)
         logger.log('Cases to rebuild: {}'.format(','.join(affected_cases)))
-        logger.log('Ledgers to rebuild: {}'.format(','.join([l.as_id() for l in affected_ledgers])))
+        logger.log('Ledgers to rebuild: {}'.format(','.join([line.as_id() for line in affected_ledgers])))
 
     return cases_to_rebuild, ledgers_to_rebuild
 
@@ -154,11 +153,11 @@ def update_case_transactions_for_form(case_cache, live_case_updates, deprecated_
 
 
 def rebuild_cases(cases_to_rebuild_by_domain, logger):
-        detail = RebuildWithReason(reason='undo UUID clash')
-        for domain, case_ids in cases_to_rebuild_by_domain.items():
-            for case_id in case_ids:
-                FormProcessorSQL.hard_rebuild_case(domain, case_id, detail)
-                logger.log('Case %s rebuilt' % case_id)
+    detail = RebuildWithReason(reason='undo UUID clash')
+    for domain, case_ids in cases_to_rebuild_by_domain.items():
+        for case_id in case_ids:
+            FormProcessorSQL.hard_rebuild_case(domain, case_id, detail)
+            logger.log('Case %s rebuilt' % case_id)
 
 
 def rebuild_ledgers(ledgers_to_rebuild_by_domain, logger):
@@ -207,8 +206,8 @@ class Command(BaseCommand):
                 dbs = [db] if db else get_db_aliases_for_partitioned_query()
                 for dbname in dbs:
                     form_ids_to_check.update(
-                        XFormInstanceSQL.objects.using(dbname)
-                        .filter(domain=domain, state=XFormInstanceSQL.DEPRECATED)
+                        XFormInstance.objects.using(dbname)
+                        .filter(domain=domain, state=XFormInstance.DEPRECATED)
                         .values_list('orig_id', flat=True)
                     )
 
