@@ -30,7 +30,7 @@ from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
 
 from .data.repeaters import repeater_test_data
 
-DOMAIN = 'test-domain'
+DOMAIN = 'r-test'
 
 
 class TestMigrationCommand(TestCase):
@@ -127,44 +127,53 @@ class TestMigrationCommand(TestCase):
         return [r for r in self.couch_repeaters if r.doc_type == repeater_type]
 
 
+class RepeaterSyncTestsBase(TestCase):
 
-class TestSQLCaseRepeater(RepeaterSyncTestsBase):
+    def setUp(self):
+        self.url = "http://example.com"
+        self.conn = ConnectionSettings.objects.create(id=1, domain=DOMAIN, name=self.url, url=self.url)
+        return super().setUp()
 
-    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+    def tearDown(self):
+        delete_all_repeaters()
+        return super().tearDown()
+
+    def _assert_common_attrs_are_equal(self, sql_repeater, couch_repeater):
         self.assertEqual(sql_repeater.domain, couch_repeater.domain)
         self.assertEqual(sql_repeater.repeater_id, couch_repeater._id)
         self.assertEqual(sql_repeater.format, couch_repeater.format)
         self.assertEqual(sql_repeater.is_paused, couch_repeater.paused)
-        self.assertEqual(sql_repeater.white_listed_case_types, couch_repeater.white_listed_case_types)
-        self.assertEqual(sql_repeater.black_listed_users, couch_repeater.black_listed_users)
         self.assertEqual(sql_repeater.connection_settings.id, couch_repeater.connection_settings_id)
 
+    def get_couch_objects(self, couch_cls):
+        return [couch_cls.wrap(r) for r in repeater_test_data if r['doc_type'] == couch_cls.__name__]
+
+    def get_sql_objects(self, sql_cls):
+        return [sql_cls(**r) for r in repeater_test_data if r['doc_type'] == sql_cls._repeater_type]
+
+
+class TestSQLCaseRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+        self.assertEqual(sql_repeater.white_listed_case_types, couch_repeater.white_listed_case_types)
+        self.assertEqual(sql_repeater.black_listed_users, couch_repeater.black_listed_users)
+
     def test_repeaters_are_synced_to_sql(self):
-        couch_repeater = CaseRepeater(
-            domain=DOMAIN,
-            connection_settings_id=self.conn.id,
-            format='case_json',
-            paused=True,
-        )
-        couch_repeater.save()
-        self.addCleanup(couch_repeater.delete)
-        sql_repeater = SQLCaseRepeater.objects.get(repeater_id=couch_repeater._id)
-        self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+        for couch_repeater in self.get_couch_objects(CaseRepeater):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = SQLCaseRepeater.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
 
     def test_repeaters_are_synced_to_couch(self):
-        repeater_domain = 'repeater-domain'
-        sql_repeater = SQLCaseRepeater.objects.create(
-            domain=repeater_domain,
-            connection_settings=self.conn,
-            format='case_json',
-            white_listed_case_types=['case'],
-            black_listed_users=[]
-        )
-        couch_repeater_dict = CaseRepeater.get_db().get(sql_repeater.repeater_id)
-        self.assertIsNotNone(couch_repeater_dict)
-        couch_repeater = CaseRepeater.wrap(couch_repeater_dict)
-        self.addCleanup(couch_repeater.delete)
-        self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+        for sql_repeater in self.get_sql_objects(SQLCaseRepeater):
+            sql_repeater.save()
+            couch_repeater_dict = CaseRepeater.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = CaseRepeater.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
 
     def test_save_with_no_connection_settings(self):
         repeater = CaseRepeater(
