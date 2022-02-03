@@ -285,7 +285,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertTrue(xform.is_normal)
         self.assertEqual(0, len(xform.history))
 
-        tmp = 'corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.set_archived_state'
+        tmp = 'corehq.form_processor.models.XFormInstance.objects.set_archived_state'
         with mock.patch(tmp) as mock_operation_sql:
             try:
                 mock_operation_sql.side_effect = Exception
@@ -343,7 +343,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         # Archive the form successfully
         xform.archive(user_id='librarian')
 
-        tmp = 'corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.set_archived_state'
+        tmp = 'corehq.form_processor.models.XFormInstance.objects.set_archived_state'
         with mock.patch(tmp) as mock_operation_sql:
             try:
                 mock_operation_sql.side_effect = Exception

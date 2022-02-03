@@ -30,7 +30,7 @@ from .abstract import (
 )
 from ..exceptions import AttachmentNotFound, UnknownActionType
 from ..track_related import TrackRelatedChanges
-from .attachment import Attachment, AttachmentMixin  # noqa: F401
+from .attachment import Attachment, AttachmentContent, AttachmentMixin  # noqa: F401
 from .forms import XFormInstance, XFormOperation  # noqa: F401
 from .mixin import IsImageMixin, SaveStateMixin
 

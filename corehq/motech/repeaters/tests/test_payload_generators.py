@@ -12,7 +12,6 @@ from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils.xform import FormSubmissionBuilder
@@ -48,7 +47,7 @@ class TestSqlDataTypes(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        FormAccessorSQL.hard_delete_forms(SQL_DOMAIN, [cls.form_id])
+        XFormInstance.objects.hard_delete_forms(SQL_DOMAIN, [cls.form_id])
         cls.domain_obj.delete()
         super().tearDownClass()
 

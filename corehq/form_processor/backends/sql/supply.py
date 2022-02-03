@@ -1,10 +1,9 @@
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.locations.models import SQLLocation
-from corehq.form_processor.models.abstract import AbstractSupplyInterface
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 
 
-class SupplyPointSQL(AbstractSupplyInterface):
+class SupplyPointSQL:
 
     @classmethod
     def get_or_create_by_location(cls, location):

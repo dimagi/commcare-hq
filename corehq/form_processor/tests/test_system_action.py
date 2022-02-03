@@ -7,7 +7,7 @@ from testil import eq
 from corehq.apps.receiverwrapper.util import submit_form_locally
 
 from ..exceptions import XFormNotFound
-from ..interfaces.dbaccessors import ARCHIVE_FORM
+from ..models.forms import ARCHIVE_FORM
 from ..interfaces.processor import HARD_DELETE_CASE_AND_FORMS
 from ..models import XFormInstance
 from ..system_action import SYSTEM_ACTION_XMLNS, UnauthorizedSystemAction

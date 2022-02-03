@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.utils.xform import (
     FormSubmissionBuilder,
     TestFormMetadata,
@@ -160,4 +160,4 @@ def form_context(form_ids):
     try:
         yield
     finally:
-        FormAccessorSQL.hard_delete_forms(DOMAIN, form_ids)
+        XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids)

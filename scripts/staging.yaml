@@ -62,22 +62,20 @@ branches:
     - smh/remove-extra-spinner-icons # Steph Oct 6
     - ml/remove-pickles-phonelog # Minha Oct 7
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
-    - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
-    - rp/status-embed # Rynhard Nov 9
+    # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
     - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
     - jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/datums  # sravan Dec 21
-    - cs/SC-1551-hourly-scheduled-reports+mk/support-multibar-reports # Charl Jan 12
-    - cs/SC-1551-hourly-scheduled-reports # Charl Jan 12
-    - mk/support-multibar-reports # MK Dec 14
-    - smh/save-only-edited-form-fields # Steph Jan 24
-    - smh/save-only-edit-fields-xml-changes # Steph Jan 24
-    - ad/save-only-edited-form-fields-UI # Steph Jan 24
-    # - ml/remove-pickles-reports # Minha Jan 24
+    - ml/remove-pickles-reports # Minha Jan 24
     - jls/update-web-apps-fuzzy # Jenny Jan 26
     - ml/reject-weak-password-backend # Minha Jan 28
-    - mk/fix-markdown-check # MK Jan 31
     - jls/drop-case-search-limit # Jenny Jan 31
+    - do/compare-case-properties # Dominic Feb 2
+    - ml/remove-pickles-user-importer # Minha Feb 2
+    - smh/save-only-edited-form-fields+mk/2-different-branches
+    - smh/save-only-edited-form-fields # Steph Jan 24
+    - mk/support-multibar-reports # MK Dec 14
+    - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
 submodules: { }

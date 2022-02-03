@@ -88,7 +88,7 @@ name in order to know which DB needs to be queried.
 
 - XFormInstance.objects.get_form(form_id, domain)
 - XFormInstance.objects.get_forms(form_ids, domain)
-- FormAccessors(domain).iter_forms(form_ids)
+- XFormInstance.objects.iter_forms(form_ids, domain)
 - XFormInstance.objects.save_new_form(form)
 
   - only for new forms
@@ -110,7 +110,6 @@ name in order to know which DB needs to be queried.
 
 For more details see:
 
-* :code:`corehq.form_processor.interfaces.dbaccessors.FormAccessors`
 * :code:`corehq.form_processor.interfaces.dbaccessors.CaseAccessors`
 * :code:`corehq.form_processor.interfaces.dbaccessors.LedgerAccessors`
 
