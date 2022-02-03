@@ -42,9 +42,10 @@ class MALTRow(models.Model):
     use_threshold = models.PositiveSmallIntegerField(default=DEFAULT_PERFORMANCE_THRESHOLD)
     experienced_threshold = models.PositiveSmallIntegerField(default=DEFAULT_EXPERIENCED_THRESHOLD)
 
-    # this is an inclusive date representing the end of the window when the malt was last run.
-    # See ./malt_generator.py for implementation details.
-    last_run_enddate = models.DateField(default=None, blank=True, null=True)
+    # represents the end date for the window of form submissions used to last calculate the MALTRow
+    # min value is the start of the relevant month, max value is the end of the relevant month
+    # useful to determine if the malt should be run again
+    last_run_end_date = models.DateTimeField(default=None, blank=True, null=True)
 
     class Meta(object):
         unique_together = ('month', 'domain_name', 'user_id', 'app_id', 'device_id')

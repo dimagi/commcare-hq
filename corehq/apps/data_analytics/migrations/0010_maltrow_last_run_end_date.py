@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='maltrow',
-            name='last_run_enddate',
-            field=models.DateField(blank=True, default=None, null=True),
+            name='last_run_end_date',
+            field=models.DateTimeField(blank=True, default=None, null=True),
         ),
     ]
