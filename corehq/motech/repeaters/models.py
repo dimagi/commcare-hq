@@ -934,10 +934,12 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
 
     @classmethod
     def _migration_get_fields(cls):
+        # common attrs for all repeaters
         return [
             "domain",
-            'is_paused',
-            'repeater_type',
+            "is_paused",
+            "repeater_type",
+            "format",
             "connection_settings",
             "request_method",
         ]
