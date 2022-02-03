@@ -10,6 +10,7 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
+    CaseAttachment,
     CaseTransaction,
     CommCareCase,
     CommCareCaseIndex,
@@ -122,6 +123,38 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         CaseAccessorSQL.save_case(bambi)
         cases = CommCareCase.objects.get_reverse_indexed_cases(DOMAIN, referenced_case_ids, is_closed=True)
         self.assertEqual([c.case_id for c in cases], [bambi.case_id])
+
+    def test_hard_delete_cases(self):
+        from ..backends.sql.dbaccessors import CaseAccessorSQL
+        case1 = _create_case()
+        case2 = _create_case(domain='other_domain')
+        self.addCleanup(lambda: CommCareCase.objects.hard_delete_cases('other_domain', [case2.case_id]))
+
+        case1.track_create(CommCareCaseIndex(
+            case=case1,
+            identifier='parent',
+            referenced_type='mother',
+            referenced_id=uuid.uuid4().hex,
+            relationship_id=CommCareCaseIndex.CHILD
+        ))
+        case1.track_create(CaseAttachment(
+            case=case1,
+            attachment_id=uuid.uuid4().hex,
+            name='pic.jpg',
+            content_type='image/jpeg',
+            blob_id='122',
+            md5='123',
+        ))
+        CaseAccessorSQL.save_case(case1)
+
+        num_deleted = CommCareCase.objects.hard_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
+        self.assertEqual(1, num_deleted)
+        with self.assertRaises(CaseNotFound):
+            CommCareCase.objects.get_case(case1.case_id)
+
+        self.assertEqual([], CommCareCaseIndex.objects.get_indices(case1.domain, case1.case_id))
+        self.assertEqual([], CaseAccessorSQL.get_attachments(case1.case_id))
+        self.assertEqual([], CaseAccessorSQL.get_transactions(case1.case_id))
 
 
 @sharded

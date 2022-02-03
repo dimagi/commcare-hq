@@ -122,6 +122,16 @@ class CommCareCaseManager(RequireDBManager):
             attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
         return cases
 
+    def hard_delete_cases(self, domain, case_ids):
+        """Permanently delete cases in domain
+
+        :returns: Number of deleted cases.
+        """
+        assert isinstance(case_ids, list), type(case_ids)
+        with self.model.get_plproxy_cursor() as cursor:
+            cursor.execute('SELECT hard_delete_cases(%s, %s)', [domain, case_ids])
+            return sum(row[0] for row in cursor)
+
 
 class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
                    AttachmentMixin, CaseToXMLMixin, TrackRelatedChanges,

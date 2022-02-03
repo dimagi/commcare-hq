@@ -448,11 +448,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def hard_delete_cases(domain, case_ids):
-        assert isinstance(case_ids, list)
-        with CommCareCase.get_plproxy_cursor() as cursor:
-            cursor.execute('SELECT hard_delete_cases(%s, %s) as deleted_count', [domain, case_ids])
-            results = fetchall_as_namedtuple(cursor)
-            return sum([result.deleted_count for result in results])
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.hard_delete_cases(domain, case_ids)
 
     @staticmethod
     def get_attachment_by_name(case_id, attachment_name):

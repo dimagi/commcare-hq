@@ -43,7 +43,7 @@ def _with_case(domain, case_type, last_modified, **kwargs):
     try:
         yield case
     finally:
-        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
+        CommCareCase.objects.hard_delete_cases(domain, [case.case_id])
 
 
 def _save_case(domain, case):
