@@ -128,6 +128,7 @@ class RemoteRequestFactory(object):
         xpaths.update(datum.ref for datum in self._remote_request_query_datums)
         xpaths.add(self.module.search_config.get_relevant())
         xpaths.add(self.module.search_config.search_filter)
+        xpaths.add(self.module.search_config.blacklisted_owner_ids_expression)
         xpaths.update(prop.default_value for prop in self.module.search_config.properties)
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
