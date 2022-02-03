@@ -2,6 +2,8 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from corehq.motech.dhis2.repeaters import (
+    Dhis2EntityRepeater,
+    Dhis2Repeater,
     SQLDhis2EntityRepeater,
     SQLDhis2Repeater,
 )
@@ -9,10 +11,17 @@ from corehq.motech.fhir.repeaters import SQLFHIRRepeater
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from corehq.motech.repeaters.expression.repeaters import (
+    CaseExpressionRepeater,
     SQLCaseExpressionRepeater,
 )
 from corehq.motech.repeaters.models import (
+    AppStructureRepeater,
     CaseRepeater,
+    CreateCaseRepeater,
+    DataRegistryCaseUpdateRepeater,
+    FormRepeater,
+    LocationRepeater,
+    ReferCaseRepeater,
     Repeater,
     SQLAppStructureRepeater,
     SQLCaseRepeater,
@@ -25,8 +34,11 @@ from corehq.motech.repeaters.models import (
     SQLShortFormRepeater,
     SQLUpdateCaseRepeater,
     SQLUserRepeater,
+    ShortFormRepeater,
+    UpdateCaseRepeater,
+    UserRepeater,
 )
-from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater, SQLOpenmrsRepeater
 
 from .data.repeaters import repeater_test_data
 
@@ -189,3 +201,420 @@ class TestSQLCaseRepeater(RepeaterSyncTestsBase):
         self.assertEqual(num_case_repeaters, 1)
         num_repeaters = SQLRepeater.objects.filter(repeater_id=repeater._id).count()
         self.assertEqual(num_repeaters, 1)
+
+
+class TestSQLFormRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+        self.assertEqual(sql_repeater.include_app_id_param, couch_repeater.include_app_id_param)
+        self.assertEqual(sql_repeater.white_listed_form_xmlns, couch_repeater.white_listed_form_xmlns)
+
+    @property
+    def couch_cls(cls):
+        return FormRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLFormRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestSQLCreateCaseRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+
+    @property
+    def couch_cls(cls):
+        return CreateCaseRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLCreateCaseRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestSQLUpdateCaseRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+
+    @property
+    def couch_cls(cls):
+        return UpdateCaseRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLUpdateCaseRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestSQLReferCaseRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+
+    @property
+    def couch_cls(cls):
+        return ReferCaseRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLReferCaseRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestSQLDataRegistryRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+
+    @property
+    def couch_cls(cls):
+        return DataRegistryCaseUpdateRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLDataRegistryCaseUpdateRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestSQLShortFormRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+        self.assertEqual(sql_repeater.version, couch_repeater.version)
+
+    @property
+    def couch_cls(cls):
+        return ShortFormRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLShortFormRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestSQLAppStructureRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+
+    @property
+    def couch_cls(cls):
+        return AppStructureRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLAppStructureRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestUserRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+
+    @property
+    def couch_cls(cls):
+        return UserRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLUserRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestSQLLocationRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+
+    @property
+    def couch_cls(cls):
+        return LocationRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLLocationRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestSQLDhis2Repeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+        self.assertEqual(sql_repeater.dhis2_config, couch_repeater.dhis2_config.to_json())
+        self.assertEqual(sql_repeater.dhis2_version, couch_repeater.dhis2_version)
+        # Todo: How to handle datetimes in OptionValue
+        # self.assertEqual(
+        #   sql_repeater.dhis2_version_last_modified,
+        #   couch_repeater.dhis2_version_last_modified.isoformat()
+        # )
+        self.assertEqual(sql_repeater.include_app_id_param, couch_repeater.include_app_id_param)
+        self.assertEqual(sql_repeater.white_listed_form_xmlns, couch_repeater.white_listed_form_xmlns)
+
+    @property
+    def couch_cls(cls):
+        return Dhis2Repeater
+
+    @property
+    def sql_cls(cls):
+        return SQLDhis2Repeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestSQLDhis2EntityRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+        # Todo: Figure out why this is failing
+        # self.assertEqual(sql_repeater.dhis2_entity_config, couch_repeater.dhis2_entity_config.to_json())
+        self.assertEqual(sql_repeater.dhis2_version, couch_repeater.dhis2_version)
+        # Todo: How to handle datetimes in OptionValue
+        #self.assertEqual(sql_repeater.dhis2_version_last_modified, couch_repeater.dhis2_version_last_modified)
+        self.assertEqual(sql_repeater.white_listed_case_types, couch_repeater.white_listed_case_types)
+        self.assertEqual(sql_repeater.black_listed_users, couch_repeater.black_listed_users)
+
+    @property
+    def couch_cls(cls):
+        return Dhis2EntityRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLDhis2EntityRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestSQLOpenmrsRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+        self.assertEqual(sql_repeater.location_id, couch_repeater.location_id)
+        self.assertEqual(sql_repeater.atom_feed_enabled, couch_repeater.atom_feed_enabled)
+        self.assertEqual(sql_repeater.atom_feed_status, couch_repeater.atom_feed_status)
+        # self.assertEqual(sql_repeater.openmrs_config, couch_repeater.openmrs_config.to_json())
+        self.assertEqual(sql_repeater.white_listed_case_types, couch_repeater.white_listed_case_types)
+        self.assertEqual(sql_repeater.black_listed_users, couch_repeater.black_listed_users)
+
+    @property
+    def couch_cls(cls):
+        return OpenmrsRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLOpenmrsRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestSQLCaseExpressionRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+        self.assertEqual(sql_repeater.configured_filter, couch_repeater.configured_filter)
+        self.assertEqual(sql_repeater.configured_expression, couch_repeater.configured_expression)
+
+    @property
+    def couch_cls(cls):
+        return CaseExpressionRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLCaseExpressionRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
