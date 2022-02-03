@@ -436,7 +436,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
     for c in report_config.report_columns:
         if c.visible:
             if c.type == 'expanded' and support_expanded_col:
-                for expanded_column in report_config.report.get_expanded_columns():
+                for expanded_column in report_config.get_expanded_columns(c):
                     detail_fields.append(_column_to_field(expanded_column))
             elif c.type != 'expanded':
                 detail_fields.append(_column_to_field(c))
