@@ -40,7 +40,6 @@ from ..exceptions import (
 from ..submission_process_tracker import unfinished_archive
 from ..system_action import system_action
 from ..track_related import TrackRelatedChanges
-from .abstract import AbstractXFormInstance
 from .attachment import AttachmentContent, AttachmentMixin
 from .mixin import SaveStateMixin
 from .util import attach_prefetch_models, sort_with_id_list
@@ -268,13 +267,10 @@ class XFormInstanceManager(RequireDBManager):
         from ..change_publishers import publish_form_saved
         with unfinished_archive(instance=form, user_id=user_id, archive=archive) as archive_stub:
             yield archive_stub
-            is_sql = isinstance(form, XFormInstance)
-            if is_sql:
-                publish_form_saved(form)
+            publish_form_saved(form)
             if trigger_signals:
-                sender = "form_processor" if is_sql else "couchforms"
                 signal = xform_archived if archive else xform_unarchived
-                signal.send(sender=sender, xform=form)
+                signal.send(sender="form_processor", xform=form)
 
     @staticmethod
     def save_new_form(form):
@@ -413,8 +409,8 @@ class XFormOperationManager(RequireDBManager):
         return list(self.partitioned_query(form_id).filter(form_id=form_id).order_by('date'))
 
 
-class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
-                    AbstractXFormInstance, TrackRelatedChanges):
+class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
+                    AttachmentMixin, TrackRelatedChanges):
     partition_attr = 'form_id'
 
     # states should be powers of 2
@@ -615,6 +611,25 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
         from ..utils import clean_metadata
         if const.TAG_META in self.form_data:
             return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
+
+    @property
+    def type(self):
+        return self.form_data.get(const.TAG_TYPE, "")
+
+    @property
+    def name(self):
+        return self.form_data.get(const.TAG_NAME, "")
+
+    @memoized
+    def get_sync_token(self):
+        from casexml.apps.phone.exceptions import MissingSyncLog
+        from casexml.apps.phone.models import get_properly_wrapped_sync_log
+        if self.last_sync_token:
+            try:
+                return get_properly_wrapped_sync_log(self.last_sync_token)
+            except MissingSyncLog:
+                pass
+        return None
 
     def soft_delete(self):
         type(self).objects.soft_delete_forms(self.domain, [self.form_id])
