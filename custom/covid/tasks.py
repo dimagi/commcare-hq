@@ -20,8 +20,8 @@ from django.conf import settings
 
 RATE_LIMIT = getattr(settings, 'USH_PRIME_RESTORE_RATE_LIMIT', 100)
 
-# Include users that have synced in the last 48 hours
-SYNC_WINDOW_HOURS = 48
+# Include users that have synced in the last 72 hours
+SYNC_WINDOW_HOURS = 72
 
 # Exclude users that have synced in the last 8 hours
 SYNC_CUTOFF_HOURS = 8

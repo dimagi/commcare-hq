@@ -20,7 +20,7 @@ from testapps.test_pillowtop.utils import process_pillow_changes
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.xform import transform_xform_for_elasticsearch
@@ -67,7 +67,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
             create_form_for_test(domain=cls.domain, app_id=cls.app_id_1, xmlns=cls.xmlns_1, save=False),
             create_form_for_test(domain=cls.domain, app_id=cls.app_id_2, xmlns=cls.xmlns_2, save=False),
         ]
-        cls.error_forms = [create_form_for_test(domain=cls.domain, state=XFormInstanceSQL.ERROR, save=False)]
+        cls.error_forms = [create_form_for_test(domain=cls.domain, state=XFormInstance.ERROR, save=False)]
         cls.all_forms = cls.forms + cls.error_forms
         for form in cls.all_forms:
             elastic_form = transform_xform_for_elasticsearch(form.to_json())

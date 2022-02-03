@@ -7,7 +7,8 @@ from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tasks import reprocess_archive_stubs
 from corehq.apps.change_feed import topics
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.util.context_managers import drop_connected_signals, catch_signal
 from couchforms.signals import xform_archived, xform_unarchived
 
@@ -25,7 +26,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
     def setUp(self):
         super(TestFormArchiving, self).setUp()
         self.casedb = CaseAccessors('test-domain')
-        self.formdb = FormAccessors('test-domain')
+        self.formdb = XFormInstance.objects
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
@@ -284,7 +285,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertTrue(xform.is_normal)
         self.assertEqual(0, len(xform.history))
 
-        tmp = 'corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.set_archived_state'
+        tmp = 'corehq.form_processor.models.XFormInstance.objects.set_archived_state'
         with mock.patch(tmp) as mock_operation_sql:
             try:
                 mock_operation_sql.side_effect = Exception
@@ -342,7 +343,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         # Archive the form successfully
         xform.archive(user_id='librarian')
 
-        tmp = 'corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.set_archived_state'
+        tmp = 'corehq.form_processor.models.XFormInstance.objects.set_archived_state'
         with mock.patch(tmp) as mock_operation_sql:
             try:
                 mock_operation_sql.side_effect = Exception

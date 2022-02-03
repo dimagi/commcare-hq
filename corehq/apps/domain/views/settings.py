@@ -19,7 +19,6 @@ from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from dimagi.utils.web import json_response
-from toggle.models import Toggle
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -51,6 +50,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.toggles.models import Toggle
 
 
 class BaseProjectSettingsView(BaseDomainView):

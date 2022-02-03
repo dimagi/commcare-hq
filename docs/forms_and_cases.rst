@@ -9,21 +9,19 @@ This document provides a basic guide for how to do that.
 Models
 ------
 
-+----------------------+
-| SQL                  |
-+======================+
-| CommCareCaseSQL      |
-+----------------------+
-| CaseTransaction      |
-+----------------------+
-| CaseAttachmentSQL    |
-+----------------------+
-| CommCareCaseIndexSQL |
-+----------------------+
-| XFormInstanceSQL     |
-+----------------------+
-| XFormOperationSQL    |
-+----------------------+
++===================+
+| CommCareCase      |
++-------------------+
+| CaseTransaction   |
++-------------------+
+| CaseAttachment    |
++-------------------+
+| CommCareCaseIndex |
++-------------------+
+| XFormInstance     |
++-------------------+
+| XFormOperation    |
++-------------------+
 
 **Form Instance API**
 
@@ -88,14 +86,14 @@ name in order to know which DB needs to be queried.
 
 **Forms**
 
-- FormAccessors(domain).get_form(form_id)
-- FormAccessors(domain).get_forms(form_ids)
-- FormAccessors(domain).iter_forms(form_ids)
-- FormAccessors(domain).save_new_form(form)
+- XFormInstance.objects.get_form(form_id, domain)
+- XFormInstance.objects.get_forms(form_ids, domain)
+- XFormInstance.objects.iter_forms(form_ids, domain)
+- XFormInstance.objects.save_new_form(form)
 
   - only for new forms
 
-- FormAccessors(domain).get_with_attachments(form)
+- XFormInstance.objects.get_with_attachments(form, domain)
 
   - Preload attachments to avoid having to the the DB again
 

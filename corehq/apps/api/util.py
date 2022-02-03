@@ -55,9 +55,9 @@ def form_to_es_form(xform_instance, include_attachments=False):
     # included for Couch domains
     from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter
     from corehq.apps.api.models import ESXFormInstance
-    from corehq.form_processor.models import XFormInstanceSQL
+    from corehq.form_processor.models import XFormInstance
 
-    if include_attachments and isinstance(xform_instance, XFormInstanceSQL):
+    if include_attachments and isinstance(xform_instance, XFormInstance):
         json_form = xform_instance.to_json(include_attachments=True)
     else:
         json_form = xform_instance.to_json()

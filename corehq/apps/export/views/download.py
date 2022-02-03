@@ -381,7 +381,7 @@ def poll_custom_export_download(request, domain):
                          'exception_name': e.exception_name})
 
             return JsonResponse({
-                'error': _("Download task failed to start."),
+                'error': _("Failed to download export."),
             })
 
     if context.get('is_ready', False):

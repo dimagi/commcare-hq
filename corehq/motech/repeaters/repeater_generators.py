@@ -571,11 +571,11 @@ class CaseUpdateConfig:
         index = indices[0]
         if index.referenced_id != self.index_remove_case_id:
             raise DataRegistryCaseUpdateError("Index case ID does not match for index to remove")
-        if self.index_remove_relationship and self.index_remove_relationship != index.relationship_id:
+        if self.index_remove_relationship and self.index_remove_relationship != index.relationship:
             raise DataRegistryCaseUpdateError("Index relationship does not match for index to remove")
 
         return {
-            index.identifier: (index.referenced_type, "", index.relationship_id)
+            index.identifier: (index.referenced_type, "", index.relationship)
         }
 
     @staticmethod
@@ -599,6 +599,8 @@ class CaseUpdateConfig:
 
 
 class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
+    DEVICE_ID = 'DataRegistryCaseUpdateRepeater'
+    XMLNS = 'http://commcarehq.org/data_registry_case_update'
 
     def get_headers(self):
         headers = super().get_headers()
@@ -610,13 +612,13 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         submitting_user = CouchUser.get_by_user_id(payload_doc.user_id)
         case_blocks = self._get_case_blocks(repeat_record, configs, submitting_user)
         return render_to_string('hqcase/xml/case_block.xml', {
-            'xmlns': SYSTEM_FORM_XMLNS,
+            'xmlns': self.XMLNS,
             'case_block': " ".join(case_blocks),
             'time': json_format_datetime(datetime.utcnow()),
             'uid': str(uuid4()),
             'username': self.submission_username(),
             'user_id': self.submission_user_id(),
-            'device_id': "DataRegistryCaseUpdateRepeater",
+            'device_id': f"{self.DEVICE_ID}:{payload_doc.domain}",
             'form_data': {
                 "source_domain": payload_doc.domain,
                 "source_form_id": payload_doc.get_form_transactions()[-1].form_id,

@@ -32,36 +32,31 @@ class MaltAnalyticsTest(SimpleTestCase):
 
 @generate_cases([
     ([
-         # differentiate by username
-         ('app', 'device', 'userid', 'username0', 1),
-         ('app', 'device', 'userid', 'username1', 2),
-     ],),
-    ([
          # differentiate by userid
-         ('app', 'device', 'userid0', 'username', 1),
-         ('app', 'device', 'userid1', 'username', 2),
+         ('app', 'device', 'userid0', 1),
+         ('app', 'device', 'userid1', 2),
      ],),
     ([
          # differentiate by device
-         ('app', 'device0', 'userid', 'username', 1),
-         ('app', 'device1', 'userid', 'username', 2),
+         ('app', 'device0', 'userid', 1),
+         ('app', 'device1', 'userid', 2),
      ],),
     ([
          # differentiate by app
-         ('app0', 'device', 'userid', 'username', 1),
-         ('app1', 'device', 'userid', 'username', 2),
+         ('app0', 'device', 'userid', 1),
+         ('app1', 'device', 'userid', 2),
      ],),
 ], MaltAnalyticsTest)
 def test_app_submission_breakdown(self, combination_count_list):
     """
-    The breakdown of this report is (app, device, userid, username): count
+    The breakdown of this report is (app, device, userid): count
     """
     domain = 'test-data-analytics'
     received = datetime(2016, 3, 24)
     month = DateSpan.from_month(3, 2016)
-    for app, device, userid, username, count in combination_count_list:
+    for app, device, userid, count in combination_count_list:
         for i in range(count):
-            save_to_es_analytics_db(domain, received, app, device, userid, username)
+            save_to_es_analytics_db(domain, received, app, device, userid, 'test-user')
 
     self.es.indices.refresh(XFORM_INDEX_INFO.index)
     data_back = get_app_submission_breakdown_es(domain, month)

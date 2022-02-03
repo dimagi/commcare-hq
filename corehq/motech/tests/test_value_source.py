@@ -8,7 +8,7 @@ import attr
 from schema import Use
 
 import corehq.motech.value_source
-from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
+from corehq.form_processor.models import CommCareCaseIndex, CommCareCase
 from corehq.form_processor.tests.utils import (
     create_case,
     create_case_with_index,
@@ -438,7 +438,7 @@ class TestSubcaseValueSourceSetExternalValue(TestCase):
             'server_modified_on': now,
         }
         self.host_case_id = uuid4().hex
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=self.host_case_id,
             domain=self.domain,
             type='person',
@@ -447,7 +447,7 @@ class TestSubcaseValueSourceSetExternalValue(TestCase):
         )
         self.host_case = create_case(case)
 
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=uuid4().hex,
             domain=self.domain,
             type='person_name',
@@ -458,16 +458,16 @@ class TestSubcaseValueSourceSetExternalValue(TestCase):
             },
             **case_kwargs,
         )
-        index = CommCareCaseIndexSQL(
+        index = CommCareCaseIndex(
             domain=self.domain,
             identifier='host',
             referenced_type='person',
             referenced_id=self.host_case_id,
-            relationship_id=CommCareCaseIndexSQL.EXTENSION,
+            relationship_id=CommCareCaseIndex.EXTENSION,
         )
         self.ext_case_1 = create_case_with_index(case, index)
 
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=uuid4().hex,
             domain=self.domain,
             type='person_name',
@@ -477,12 +477,12 @@ class TestSubcaseValueSourceSetExternalValue(TestCase):
             },
             **case_kwargs,
         )
-        index = CommCareCaseIndexSQL(
+        index = CommCareCaseIndex(
             domain=self.domain,
             identifier='host',
             referenced_type='person',
             referenced_id=self.host_case_id,
-            relationship_id=CommCareCaseIndexSQL.EXTENSION,
+            relationship_id=CommCareCaseIndex.EXTENSION,
         )
         self.ext_case_2 = create_case_with_index(case, index)
 
@@ -533,7 +533,7 @@ class TestSupercaseValueSourceSetExternalValue(TestCase):
         yesterday = now - timedelta(days=1)
         owner_id = uuid4().hex
         self.parent_case_id = uuid4().hex
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=self.parent_case_id,
             domain=self.domain,
             type='person',
@@ -544,7 +544,7 @@ class TestSupercaseValueSourceSetExternalValue(TestCase):
         )
         self.parent_case = create_case(case)
 
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=uuid4().hex,
             domain=self.domain,
             type='temperature',
@@ -555,16 +555,16 @@ class TestSupercaseValueSourceSetExternalValue(TestCase):
             modified_on=yesterday,
             server_modified_on=yesterday,
         )
-        index = CommCareCaseIndexSQL(
+        index = CommCareCaseIndex(
             domain=self.domain,
             identifier='parent',
             referenced_type='person',
             referenced_id=self.parent_case_id,
-            relationship_id=CommCareCaseIndexSQL.CHILD,
+            relationship_id=CommCareCaseIndex.CHILD,
         )
         self.child_case_1 = create_case_with_index(case, index)
 
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=uuid4().hex,
             domain=self.domain,
             type='temperature',
@@ -575,12 +575,12 @@ class TestSupercaseValueSourceSetExternalValue(TestCase):
             modified_on=now,
             server_modified_on=now,
         )
-        index = CommCareCaseIndexSQL(
+        index = CommCareCaseIndex(
             domain=self.domain,
             identifier='parent',
             referenced_type='person',
             referenced_id=self.parent_case_id,
-            relationship_id=CommCareCaseIndexSQL.CHILD,
+            relationship_id=CommCareCaseIndex.CHILD,
         )
         self.child_case_2 = create_case_with_index(case, index)
 

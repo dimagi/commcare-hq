@@ -6,6 +6,8 @@ from casexml.apps.phone.exceptions import MissingSyncLog
 from memoized import memoized
 from couchforms import const
 
+from .mixin import CaseToXMLMixin
+
 
 DEFAULT_PARENT_IDENTIFIER = 'parent'
 
@@ -134,20 +136,6 @@ def get_index_map(indices):
             "relationship": index.relationship,
         }) for index in indices
     ])
-
-
-class CaseToXMLMixin(object):
-    def to_xml(self, version, include_case_on_closed=False):
-        from lxml import etree as ElementTree
-        from casexml.apps.phone.xml import get_case_element
-        if self.closed:
-            if include_case_on_closed:
-                elem = get_case_element(self, ('create', 'update', 'close'), version)
-            else:
-                elem = get_case_element(self, ('close'), version)
-        else:
-            elem = get_case_element(self, ('create', 'update'), version)
-        return ElementTree.tostring(elem, encoding='utf-8')
 
 
 class AbstractCommCareCase(CaseToXMLMixin):
@@ -319,12 +307,3 @@ class AbstractSupplyInterface(metaclass=ABCMeta):
     @abstractmethod
     def get_or_create_by_location(cls, location):
         raise NotImplementedError
-
-
-class IsImageMixin(object):
-
-    @property
-    def is_image(self):
-        if self.content_type is None:
-            return None
-        return True if self.content_type.startswith('image/') else False

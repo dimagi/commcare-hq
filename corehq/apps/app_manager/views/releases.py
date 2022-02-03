@@ -289,7 +289,7 @@ def save_copy(request, domain, app_id):
     """
     Saves a copy of the app to a new doc.
     """
-    track_built_app_on_hubspot.delay(request.couch_user)
+    track_built_app_on_hubspot.delay(request.couch_user.get_id)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     try:

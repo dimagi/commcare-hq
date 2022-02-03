@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 
 from casexml.apps.case.xform import get_case_ids_from_form
 
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.change_publishers import publish_form_saved
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -26,8 +26,9 @@ class Command(BaseCommand):
         errored_form_ids = set()
         with open(form_ids_file, 'r') as f:
             lines = f.readlines()
-            form_ids = [l.strip() for l in lines]
+            form_ids = [line.strip() for line in lines]
 
+        get_form = XFormInstance.objects.get_form
         for form_id in with_progress_bar(form_ids):
             try:
                 form = get_form(form_id)
@@ -60,7 +61,3 @@ def rebuild_case_changes(form, rebuild_reason=None):
                 print("{}, {}".format(domain, case_id), file=f)
 
     return len(case_ids)
-
-
-def get_form(form_id):
-    return FormAccessorSQL.get_form(form_id)

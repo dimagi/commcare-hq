@@ -8,10 +8,8 @@ from corehq.apps.data_pipeline_audit.management.commands.compare_doc_ids import 
     compare_xforms,
 )
 from corehq.apps.hqcase.utils import resave_case
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.utils.xform import resave_form
 from corehq.util.log import with_progress_bar
 
@@ -55,9 +53,9 @@ def perform_resave_on_xforms(domain, start_date, end_date, no_input):
         if ok != "ok":
             print("No changes made")
             return
-    form_accessor = FormAccessors(domain)
+    get_forms = XFormInstance.objects.get_forms
     for xform_ids in chunked(with_progress_bar(xform_ids_missing_in_es), 100):
-        xforms = form_accessor.get_forms(list(xform_ids))
+        xforms = get_forms(list(xform_ids), domain)
         found_xform_ids = set()
 
         for xform in xforms:

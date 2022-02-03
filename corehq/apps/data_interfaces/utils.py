@@ -13,10 +13,8 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 
 
@@ -78,7 +76,7 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
     if task:
         DownloadBase.set_progress(task, 0, len(form_ids))
 
-    for xform in FormAccessors(domain).iter_forms(form_ids):
+    for xform in XFormInstance.objects.iter_forms(form_ids, domain):
         missing_forms.discard(xform.form_id)
 
         if xform.domain != domain:
@@ -122,8 +120,8 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
 
 def property_references_parent(case_property):
     return isinstance(case_property, str) and (
-        case_property.startswith("parent/") or
-        case_property.startswith("host/")
+        case_property.startswith("parent/")
+        or case_property.startswith("host/")
     )
 
 
