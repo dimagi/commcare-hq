@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 
@@ -449,7 +449,14 @@ def _handle_schedule_instance(instance, save_function):
             save_function(instance)
             return False
 
-        instance.handle_current_event()
+        try:
+            instance.handle_current_event()
+        except Exception:
+            instance.attempts += 1
+            instance.last_attempt = datetime.utcnow()
+            instance.next_event_due += timedelta(hours=instance.attempts)
+            save_function(instance)
+            raise
         instance.check_active_flag_against_schedule()
         save_function(instance)
         return True
