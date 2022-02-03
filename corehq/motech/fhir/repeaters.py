@@ -147,7 +147,7 @@ class SQLFHIRRepeater(SQLCaseRepeater):
         proxy = True
         app_label = 'repeaters'
 
-    include_app_id_param = OptionValue(default=False)
+    include_app_id_param = False
     fhir_version = OptionValue(default=FHIR_VERSION_4_0_1)
     patient_registration_enabled = OptionValue(default=True)
     patient_search_enabled = OptionValue(default=False)
@@ -253,6 +253,14 @@ class SQLFHIRRepeater(SQLCaseRepeater):
     @classmethod
     def _migration_get_couch_model_class(cls):
         return FHIRRepeater
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return super()._migration_get_fields() + [
+            "fhir_version",
+            "patient_registration_enabled",
+            "patient_search_enabled"
+        ]
 
 
 def _get_cases_by_id(domain, case_blocks):

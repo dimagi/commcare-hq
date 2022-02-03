@@ -262,7 +262,7 @@ class SQLDhis2Repeater(SQLFormRepeater, SQLDhis2Instance):
         proxy = True
         app_label = 'repeaters'
 
-    include_app_id_param = OptionValue(default=False)
+    include_app_id_param = False
     dhis2_config = OptionValue(default=dict)
 
     friendly_name = _("Forward Forms to DHIS2 as Anonymous Events")
@@ -327,13 +327,17 @@ class SQLDhis2Repeater(SQLFormRepeater, SQLDhis2Instance):
     def _migration_get_couch_model_class(cls):
         return Dhis2Repeater
 
+    @classmethod
+    def _migration_get_fields(cls):
+        return super()._migration_get_fields() + ["dhis2_config", "dhis2_version", "dhis2_version_last_modified"]
+
 
 class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
     class Meta():
         proxy = True
         app_label = 'repeaters'
 
-    include_app_id_param = OptionValue(default=False)
+    include_app_id_param = False
     friendly_name = _("Forward Cases as DHIS2 Tracked Entities")
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
 
@@ -390,6 +394,14 @@ class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
                 details="".join(tb_lines)
             )
             raise
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return super()._migration_get_fields() + [
+            "dhis2_entity_config",
+            "dhis2_version",
+            "dhis2_version_last_modified"
+        ]
 
 
 def get_api_version(dhis2_version):

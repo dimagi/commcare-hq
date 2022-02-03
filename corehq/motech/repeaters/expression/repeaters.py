@@ -97,6 +97,10 @@ class SQLBaseExpressionRepeater(SQLRepeater):
             self.parsed_expression,
         )
 
+    @classmethod
+    def _migration_get_fields(cls):
+        return super()._migration_get_fields() + ["configured_filter", "configured_expression"]
+
 
 class SQLCaseExpressionRepeater(SQLBaseExpressionRepeater):
 
