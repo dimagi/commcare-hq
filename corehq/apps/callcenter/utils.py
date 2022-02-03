@@ -1,15 +1,12 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
 
-from django.conf import settings
-
 import attr
 import pytz
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
-from corehq.elastic import ESError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.util.quickcache import quickcache

@@ -43,7 +43,8 @@ class Command(CaseUpdateCommand):
                 case_blocks.append(self.case_block(case, user_id_of_mobile_worker))
             else:
                 skip_count += 1
-        print(f"{len(case_blocks)} to update in {domain}, {skip_count} cases have skipped due to unknown username.")
+        print(f"{len(case_blocks)} to update in {domain}, {skip_count} "
+              "cases have skipped due to unknown username.")
 
         total = 0
         for chunk in chunked(case_blocks, BATCH_SIZE):

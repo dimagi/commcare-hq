@@ -257,7 +257,8 @@ class ExplodeLedgersTest(BaseSyncTest):
         case_ids = self.case_accessor.get_case_ids_in_domain()
         cases = CommCareCase.objects.iter_cases(case_ids, self.project.name)
         for case in cases:
-            ledger_values = {l.entry_id: l for l in self.ledger_accessor.get_ledger_values_for_case(case.case_id)}
+            ledger_values = {v.entry_id: v
+                for v in self.ledger_accessor.get_ledger_values_for_case(case.case_id)}
 
             if case.case_id == 'case2' or case.get_case_property('cc_exploded_from') == 'case2':
                 self.assertEqual(len(ledger_values), 0)
