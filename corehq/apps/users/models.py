@@ -2226,7 +2226,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         try:
             from corehq.apps.commtrack.util import location_map_case_id
-            return CommCareCase.objects.get_case(location_map_case_id(self, self.domain))
+            return CommCareCase.objects.get_case(location_map_case_id(self), self.domain)
         except CaseNotFound:
             return None
 
