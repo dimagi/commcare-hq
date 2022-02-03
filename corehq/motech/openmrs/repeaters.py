@@ -217,6 +217,19 @@ class OpenmrsRepeater(CaseRepeater):
             return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
         return response
 
+    @classmethod
+    def _migration_get_fields(cls):
+        return super()._migration_get_fields() + [
+            "location_id",
+            "atom_feed_enabled",
+            "atom_feed_status",
+            "openmrs_config",
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLOpenmrsRepeater
+
 
 class SQLOpenmrsRepeater(SQLCaseRepeater):
     """
@@ -356,6 +369,19 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
             requests.notify_exception(str(err))
             return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
         return response
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return super()._migration_get_fields() + [
+            "location_id",
+            "atom_feed_enabled",
+            "atom_feed_status",
+            "openmrs_config",
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return OpenmrsRepeater
 
 
 def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos):

@@ -423,6 +423,10 @@ class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
             "dhis2_version_last_modified"
         ]
 
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return Dhis2EntityRepeater
+
 
 def get_api_version(dhis2_version):
     """
