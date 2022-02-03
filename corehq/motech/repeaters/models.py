@@ -328,6 +328,73 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         return []
 
 
+class SQLFormRepeater(SQLRepeater):
+
+    include_app_id_param = OptionValue(default=True)
+    white_listed_form_xmlns = OptionValue(default=list)
+
+    class Meta:
+        proxy = True
+
+    friendly_name = _("Forward Forms")
+
+    payload_generator_classes = (FormRepeaterXMLPayloadGenerator, FormRepeaterJsonPayloadGenerator)
+
+    @memoized
+    def payload_doc(self, repeat_record):
+        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+
+    @property
+    def form_class_name(self):
+        """
+        FormRepeater and its subclasses use the same form for editing
+        """
+        return 'FormRepeater'
+
+    def allowed_to_forward(self, payload):
+        return (
+            payload.xmlns != DEVICE_LOG_XMLNS
+            and (
+                not self.white_listed_form_xmlns
+                or payload.xmlns in self.white_listed_form_xmlns
+            )
+        )
+
+    def get_url(self, repeat_record):
+        url = super(FormRepeater, self).get_url(repeat_record)
+        if not self.include_app_id_param:
+            return url
+        else:
+            # adapted from http://stackoverflow.com/a/2506477/10840
+            url_parts = list(urlparse(url))
+            query = parse_qsl(url_parts[4])
+            try:
+                query.append(("app_id", self.payload_doc(repeat_record).app_id))
+            except (XFormNotFound, ResourceNotFound):
+                return None
+            url_parts[4] = urlencode(query)
+            return urlunparse(url_parts)
+
+    def get_headers(self, repeat_record):
+        headers = super(FormRepeater, self).get_headers(repeat_record)
+        headers.update({
+            "received-on": json_format_datetime(self.payload_doc(repeat_record).received_on)
+        })
+        return headers
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return FormRepeater
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "include_app_id_param",
+            "white_listed_form_xmlns"
+        ]
+
+
 class SQLCaseRepeater(SQLRepeater):
     """
     Record that cases should be repeated to a new url
@@ -947,73 +1014,6 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     @classmethod
     def _migration_get_sql_model_class(cls):
         return SQLRepeater
-
-
-class SQLFormRepeater(SQLRepeater):
-
-    include_app_id_param = OptionValue(default=True)
-    white_listed_form_xmlns = OptionValue(default=list)
-
-    class Meta:
-        proxy = True
-
-    friendly_name = _("Forward Forms")
-
-    payload_generator_classes = (FormRepeaterXMLPayloadGenerator, FormRepeaterJsonPayloadGenerator)
-
-    @memoized
-    def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
-
-    @property
-    def form_class_name(self):
-        """
-        FormRepeater and its subclasses use the same form for editing
-        """
-        return 'FormRepeater'
-
-    def allowed_to_forward(self, payload):
-        return (
-            payload.xmlns != DEVICE_LOG_XMLNS
-            and (
-                not self.white_listed_form_xmlns
-                or payload.xmlns in self.white_listed_form_xmlns
-            )
-        )
-
-    def get_url(self, repeat_record):
-        url = super(FormRepeater, self).get_url(repeat_record)
-        if not self.include_app_id_param:
-            return url
-        else:
-            # adapted from http://stackoverflow.com/a/2506477/10840
-            url_parts = list(urlparse(url))
-            query = parse_qsl(url_parts[4])
-            try:
-                query.append(("app_id", self.payload_doc(repeat_record).app_id))
-            except (XFormNotFound, ResourceNotFound):
-                return None
-            url_parts[4] = urlencode(query)
-            return urlunparse(url_parts)
-
-    def get_headers(self, repeat_record):
-        headers = super(FormRepeater, self).get_headers(repeat_record)
-        headers.update({
-            "received-on": json_format_datetime(self.payload_doc(repeat_record).received_on)
-        })
-        return headers
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return FormRepeater
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "domain",
-            "include_app_id_param",
-            "white_listed_form_xmlns"
-        ]
 
 
 class FormRepeater(Repeater):
