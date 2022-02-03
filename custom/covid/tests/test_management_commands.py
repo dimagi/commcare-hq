@@ -4,15 +4,19 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.app_manager.util import enable_usercase
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import (
+    case_search_es_setup,
+    case_search_es_teardown,
+    es_test,
+)
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
@@ -28,7 +32,6 @@ class CaseCommandsTest(TestCase):
         cls.domain_obj = create_domain(cls.domain)
         enable_usercase(cls.domain)
 
-        cls.factory = CaseFactory(domain=cls.domain)
         cls.case_accessor = CaseAccessors(cls.domain)
 
         cls.mobile_worker = CommCareUser.create(cls.domain, "username", "p@ssword123", None, None)
@@ -362,3 +365,49 @@ class CaseCommandsTest(TestCase):
 
         self.assertEqual(patient1_case.get_case_property('owner_id'), '-')
         self.assertEqual(patient2_case.get_case_property('owner_id'), '-')
+
+
+@es_test
+class TestUpdateAllActivityCompleteDate(TestCase):
+    domain = 'all_activity_complete_date'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.case_accessor = CaseAccessors(cls.domain)
+
+        cls.bad_case_id = str(uuid.uuid4())
+        cls.good_case_id = str(uuid.uuid4())
+        case_search_es_setup(cls.domain, [
+            CaseBlock(
+                case_id=cls.bad_case_id,
+                case_type='patient',
+                case_name="bad_case",
+                owner_id='owner1',
+                create=True,
+                update={"all_activity_complete_date": "date(today())"},
+            ),
+            CaseBlock(
+                case_id=cls.good_case_id,
+                case_type='patient',
+                case_name="bad_case",
+                owner_id='owner1',
+                create=True,
+                update={"all_activity_complete_date": "original_value"},
+            ),
+        ])
+
+    @classmethod
+    def tearDownClass(cls):
+        case_search_es_teardown()
+        super().tearDownClass()
+
+    def test(self):
+        call_command('update_all_activity_complete_date', self.domain)
+
+        bad_case = self.case_accessor.get_case(self.bad_case_id)
+        self.assertEqual(bad_case.get_case_property('all_activity_complete_date'), '2022-02-02')
+
+        good_case = self.case_accessor.get_case(self.good_case_id)
+        self.assertEqual(good_case.get_case_property('all_activity_complete_date'), 'original_value')
+        self.assertEqual(len(good_case.transactions), 1)
