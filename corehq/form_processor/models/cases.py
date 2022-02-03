@@ -8,6 +8,7 @@ from datetime import datetime
 
 from django.db import models
 
+from ddtrace import tracer
 from jsonfield.fields import JSONField
 from jsonobject import JsonObject, StringProperty
 from jsonobject.properties import BooleanProperty
@@ -348,8 +349,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return transactions
 
     def check_transaction_order(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.check_transaction_order_for_case(self.case_id)
+        return CaseTransaction.objects.check_order_for_case(self.case_id)
 
     @property
     def actions(self):
@@ -855,8 +855,27 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
         app_label = "form_processor"
 
 
+class CaseTransactionManager(RequireDBManager):
+
+    @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
+    def check_order_for_case(self, case_id):
+        """ Returns whether the order of transactions needs to be reconciled by client_date
+
+        True if the order is fine, False if the order is bad
+        """
+        if not case_id:
+            return False
+        model = self.model
+        with model.get_cursor_for_partition_value(case_id) as cursor:
+            cursor.execute(
+                'SELECT compare_server_client_case_transaction_order(%s, %s)',
+                [case_id, model.case_rebuild_types() | model.TYPE_CASE_CREATE])
+            return cursor.fetchone()[0]
+
+
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
+    objects = CaseTransactionManager()
 
     # types should be powers of 2
     TYPE_FORM = 1

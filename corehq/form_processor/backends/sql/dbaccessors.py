@@ -16,7 +16,6 @@ from django.db.models.expressions import Value
 from django.db.models.functions import Concat
 
 import csiphash
-from ddtrace import tracer
 
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.chunked import chunked
@@ -443,21 +442,9 @@ class CaseAccessorSQL:
         return CommCareCase.objects.get_reverse_indexed_cases(domain, case_ids, case_types, is_closed)
 
     @staticmethod
-    @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
     def check_transaction_order_for_case(case_id):
-        """ Returns whether the order of transactions needs to be reconciled by client_date
-
-        True if the order is fine, False if the order is bad
-        """
-        if not case_id:
-            return False
-
-        with CaseTransaction.get_cursor_for_partition_value(case_id) as cursor:
-            cursor.execute(
-                'SELECT compare_server_client_case_transaction_order(%s, %s)',
-                [case_id, CaseTransaction.case_rebuild_types() | CaseTransaction.TYPE_CASE_CREATE])
-            result = cursor.fetchone()[0]
-            return result
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.check_order_for_case(case_id)
 
     @staticmethod
     def hard_delete_cases(domain, case_ids):
