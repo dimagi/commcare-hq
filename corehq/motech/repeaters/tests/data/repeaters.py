@@ -71,7 +71,7 @@ repeater_test_data = [
     {
         "doc_type": "ShortFormRepeater",
         "domain": "rtest",
-        "version": None,
+        "version": '1.0',
         "base_doc": "Repeater",
         "type": "ShortFormRepeater",
         "connection_settings_id": 1,
@@ -81,7 +81,7 @@ repeater_test_data = [
     {
         "doc_type": "ShortFormRepeater",
         "domain": "rtest_a",
-        "version": None,
+        "version": '1.0',
         "base_doc": "Repeater",
         "type": "ShortFormRepeater",
         "connection_settings_id": 1,
