@@ -250,6 +250,11 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     domain = models.CharField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
     format = models.CharField(max_length=64, null=True)
+    request_method = models.CharField(
+        choices=list(zip(REQUEST_METHODS, REQUEST_METHODS)),
+        default=REQUEST_POST,
+        max_length=16,
+    )
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
@@ -934,6 +939,7 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
             'is_paused',
             'repeater_type',
             "connection_settings",
+            "request_method",
         ]
 
     @classmethod
