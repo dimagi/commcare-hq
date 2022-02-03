@@ -1,9 +1,755 @@
+"""
+Elastic Client Adapters
+-----------------------
+
+This library encapsulates the CommCare HQ Elasticsearch client adapters. It
+implements a high-level Elasticsearch client protocol necessary to accomplish
+all interactions with the backend Elasticsearch cluster. Client adapters are
+split into two usage patterns, the "Management Adapter" and "Document Adapters".
+
+.. toctree::
+
+    Management Adapter
+    Document Adapters
+    Code Documentation
+
+Management Adapter
+''''''''''''''''''
+
+There is only one management adapter, ``ElasticManageAdapter``. This adapter is
+used for performing all cluster management tasks such as creating and updating
+indices and their mappings, changing index settings, changing cluster settings,
+etc.  This functionality is split into a separate class for a few reasons:
+
+1. The management adapter is responsible for low-level Elastic operations which
+   document adapters should never be performing because the scope of a document
+   adapter does not extend beyond a single index.
+2. Future versions of Elasticsearch implement security features which limit the
+   kinds of operations a connection can be used for. The separation in these
+   client adapter classes is designed to fit into that model.
+
+The management adapter does not need any special parameters to work with, and
+can be instantiated and used directly:
+
+.. code-block:: python
+
+    adapter = ElasticManageAdapter()
+    adapter.index_create("books")
+    mapping = {"properties": {
+        "author": {"type": "text"},
+        "title": {"type": "text"},
+        "published": {"type": "date"},
+    }}
+    adapter.index_put_mapping("books", "book", mapping)
+    adapter.index_refresh("books")
+    adapter.index_delete("books")
+
+
+Document Adapters
+'''''''''''''''''
+
+Document adapters are created on a per-index basis and include specific
+properties and functionality necessary for maitaining a single type of "model"
+document in a single index.  Each index in Elasticsearch needs to have a
+cooresponding ``ElasticDocumentAdapter`` subclass which defines how the Python
+model is applied to that specific index.  At the very least, a document adapter
+must define the following:
+
+- An ``index`` attribute whose value is the name of the Elastic index used by
+  the adapter.
+- A ``type`` attribute whose value is the name is the Elastic ``_type`` for
+  documents used by the adapter.
+- a ``transform()`` classmethod which can convert a Python model object into the
+  JSON-serializable format for writing into the adapter's index.
+
+A simple example of a document model and its cooresponding adapter:
+
+.. code-block:: python
+
+    class Book:
+
+        def __init__(self, isbn, author, title, published):
+            self.isbn = isbn
+            self.author = author
+            self.title = title
+            self.published = published
+
+
+    class ElasticBook(ElasticDocumentAdapter):
+
+        index = "books"
+        type = "book"
+        mapping = {"properties": {
+            "author": {"type": "text"},
+            "title": {"type": "text"},
+            "published": {"type": "date"},
+        }}
+
+        @classmethod
+        def transform(cls, book):
+            source = {
+                "author": book.author,
+                "title": book.title,
+                "published": book.published,
+            }
+            return book.isbn, source
+
+Using this adapter in practice might look as follows:
+
+.. code-block:: python
+
+    adapter = ElasticBook()
+    new_book = Book("978-1491946008", "Luciano Ramalho",
+                    "Fluent Python: Clear, Concise, and Effective Programming",
+                    datetime.datetime(2015, 2, 10))
+    adapter.upsert(new_book)
+    read_again = adapter.fetch("978-0345391803")
+
+
+Code Documentation
+''''''''''''''''''
+"""
+import json
+import logging
+from collections import defaultdict
+
 from django.conf import settings
+
 from memoized import memoized
 
-from corehq.util.es.elasticsearch import Elasticsearch
+from dimagi.utils.chunked import chunked
 
+from corehq.util.es.elasticsearch import (
+    Elasticsearch,
+    ElasticsearchException,
+    NotFoundError,
+    bulk,
+)
+from corehq.util.metrics import metrics_counter
+
+from .const import SCROLL_KEEPALIVE, SCROLL_SIZE
+from .exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 from .utils import ElasticJSONSerializer
+
+log = logging.getLogger(__name__)
+
+
+class ElasticClientAdapter:
+    """Base adapter that includes methods common to all adapters."""
+
+    def __init__(self, for_export=False):
+        self._es = get_client(for_export=for_export)
+
+    def info(self):
+        """Return the Elasticsearch server info."""
+        return self._es.info()
+
+    def ping(self):
+        """Ping the Elasticsearch service."""
+        return self._es.ping()
+
+
+class ElasticManageAdapter(ElasticClientAdapter):
+
+    def __init__(self):
+        # set explicitly because management clients are never for exports
+        super().__init__(for_export=False)
+
+    def index_exists(self, index):
+        """Check if ``index`` refers to a valid index identifier (index name or
+        alias).
+
+        :param name: ``str`` index name or alias
+        :returns: ``bool``"""
+        self._validate_single_index(index)
+        try:
+            if self._es.indices.get(index, feature="_aliases",
+                                    expand_wildcards="none"):
+                return True
+        except NotFoundError:
+            pass
+        return False
+
+    def get_indices(self, full_info=False):
+        """Return the cluster index information.
+
+        :param full_info: ``boolean`` whether to return the full index info
+                          (default ``False``)
+        :returns: ``dict``"""
+        feature = "" if full_info else "_aliases,_settings"
+        return self._es.indices.get("_all", feature=feature)
+
+    def get_aliases(self):
+        """Return the cluster aliases information.
+
+        :returns: ``dict``"""
+        aliases = defaultdict(set)
+        for index, alias_info in self._es.indices.get_aliases().items():
+            for alias in alias_info.get("aliases", {}):
+                aliases[alias].add(index)
+        return aliases
+
+    def cluster_health(self, index=None):
+        """Return the Elasticsearch cluster health."""
+        if index is not None:
+            self._validate_single_index(index)
+        return self._es.cluster.health(index)
+
+    def cluster_routing_enable(self, enable):
+        """Enable or disable cluster routing.
+
+        :param enable: ``bool`` whether to enable or disable routing"""
+        value = "all" if enable else "none"
+        self._cluster_put_settings({"cluster.routing.allocation.enable": value})
+
+    def _cluster_put_settings(self, settings, transient=True, is_flat=True):
+        set_type = "transient" if transient else "persistent"
+        self._es.cluster.put_settings({set_type: settings}, flat_settings=is_flat)
+
+    def get_node_info(self, node_id, metric):
+        """Return a specific metric from the node info for an Elasticsearch node.
+
+        :param node_id: ``string`` ID of the node
+        :param metric: ``string`` name of the metric to fetch
+        :returns: deserialized JSON (``dict``, ``list``, ``str``, etc)"""
+        return self._es.nodes.info(node_id, metric)["nodes"][node_id][metric]
+
+    def get_task(self, task_id):
+        """Return the details for an active task
+
+        :param task_id: ``string`` ID of the task
+        :returns: ``dict`` of task details
+        :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)"""
+        # NOTE: elasticsearch5 python library doesn't support `task_id` as a
+        # kwarg for the `tasks.list()` method, and uses `tasks.get()` for that
+        # instead.
+        return self._parse_task_result(self._es.tasks.list(task_id=task_id,
+                                                           detailed=True))
+
+    @staticmethod
+    def _parse_task_result(result, *, _return_one=True):
+        """Parse the ``tasks.list()`` output and return a dictionary of task
+        details.
+
+        :param result: Elasticsearch ``/_tasks`` response
+        :param _return_one: ``bool`` (default ``True``) verify that there is
+                            only one task result and return the details for that
+                            task only.  Setting to ``False`` changes the return
+                            value, returning a dictionary of one or more tasks,
+                            keyed by their ``task_id`` (used for tests).
+        :returns: ``dict``
+        :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)"""
+        tasks = {}
+        for node_name, info in result.get("nodes", {}).items():
+            for task_id, details in info.get("tasks", {}).items():
+                tasks[task_id] = details
+        if tasks:
+            if not _return_one:
+                return tasks
+            if len(tasks) == 1:
+                return list(tasks.values()).pop()
+        try:
+            failures = result["node_failures"]
+            failure = failures.pop()
+            if not failures and failure["type"] == "failed_node_exception":
+                cause = failure["caused_by"]
+                if cause["type"] == "resource_not_found_exception":
+                    raise TaskMissing(cause)
+        except (KeyError, IndexError):
+            # unexpected result format
+            pass
+        raise TaskError(result)
+
+    def index_create(self, index, settings=None):
+        """Create a new index.
+
+        :param index: ``str`` index name
+        :param settings: ``dict`` of index settings"""
+        self._validate_single_index(index)
+        self._es.indices.create(index, settings)
+
+    def index_delete(self, index):
+        """Delete an existing index.
+
+        :param index: ``str`` index name"""
+        self._validate_single_index(index)
+        self._es.indices.delete(index)
+
+    def indices_refresh(self, indices):
+        """Refresh a list of indices.
+
+        :param indices: iterable of index names or aliases"""
+        for index in indices:
+            self._validate_single_index(index)
+        self._es.indices.refresh(",".join(indices), expand_wildcards="none")
+
+    def index_refresh(self, index):
+        """Convenience method for refreshing a single index."""
+        self.indices_refresh([index])
+
+    def index_put_alias(self, index, name):
+        """Assign an alias to an existing index. This uses the
+        ``Elasticsearch.update_aliases()`` method to perform both 'remove' and
+        'add' actions simultaneously, which is atomic on the server-side. This
+        ensures that the alias is **only** assigned to one index at a time, and
+        that (if present) an existing alias does not vanish momentarily.
+
+        :param index: ``str`` name of the index to be aliased
+        :param name: ``str`` name of the alias to assign to ``index``
+        """
+        self._validate_single_index(index)
+        self._validate_single_index(name)
+        # remove the alias (if assigned) and (re)assign it in one atomic operation
+        self._es.indices.update_aliases({"actions": [
+            {"remove": {"index": "_all", "alias": name}},
+            {"add": {"index": index, "alias": name}},
+        ]})
+
+    def index_set_replicas(self, index, replicas):
+        """Set the number of replicas for an index.
+
+        :param index: ``str`` index for which to change the replicas
+        :param replicas: ``int`` number of replicas"""
+        self._validate_single_index(index)
+        settings = {"index.number_of_replicas": replicas}
+        self._es.indices.put_settings(settings, index)
+
+    def index_put_mapping(self, index, type_, mapping):
+        """Update the mapping for a doc type on an index.
+
+        :param index: ``str`` index where the mapping should be updated
+        :param type_: ``str`` doc type to update on the index
+        :param mapping: ``dict`` mapping for the provided doc type"""
+        self._validate_single_index(index)
+        return self._es.indices.put_mapping(type_, {type_: mapping}, index,
+                                            expand_wildcards="none")
+
+    @staticmethod
+    def _validate_single_index(index):
+        """Verify that the provided index is a valid, single index
+
+        - is non-zero
+        - is not ``_all``
+        - does not contain commas (``,``)
+        - does not contain wildcards (i.e. asterisks, ``*``).
+
+        See <https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-get-index.html#get-index-api-path-params>  # noqa: E501
+
+        :param index: index name or alias"""
+        if not index:
+            raise ValueError(f"invalid index: {index}")
+        elif index == "_all":
+            raise ValueError("refusing to operate on all indices")
+        elif "," in index:
+            raise ValueError(f"refusing to operate on multiple indices: {index}")
+        elif "*" in index:
+            raise ValueError(f"refusing to operate with index wildcards: {index}")
+
+    def reindex(self):
+        """Initiate a reindex operation"""
+        raise NotImplementedError("TODO")
+
+
+class ElasticDocumentAdapter(ElasticClientAdapter):
+    """Base for subclassing document-specific adapters."""
+
+    index = None  # set by subclass
+    type = None  # set by subclass
+
+    @property
+    def query(self):
+        return self.query_class(self)
+
+    @classmethod
+    def transform(cls, doc):
+        """Transform a Python model object into the json-serializable (``dict``)
+        format suitable for indexing in Elasticsearch.
+
+        :param doc: document (instance of a model)
+        :returns: ``tuple`` of ``(doc_id, source_dict)`` suitable for being
+                  indexed/updated/deleted in Elasticsearch"""
+        raise NotImplementedError(f"{cls.__name__} is abstract")
+
+    @classmethod
+    def transform_full(cls, doc):
+        """Return the full transformed document (including the ``_id`` key,
+        if present) as it would be returned by an adapter ``search`` result."""
+        _id, source = cls.transform(doc)
+        if _id is not None:
+            source["_id"] = _id
+        return source
+
+    def exists(self, doc_id):
+        """Check if a document exists for the provided ``doc_id``
+
+        :param doc_id: ID of the document to be checked
+        :returns: ``bool``"""
+        return self._es.exists(self.index, self.type, doc_id)
+
+    def fetch(self, doc_id, source_includes=[]):
+        """Return the document for the provided ``doc_id``
+
+        :param doc_id: ID of the document to be fetched
+        :param source_includes: A list of fields to extract and return
+        :returns: ``dict``"""
+        kw = {"_source_include": source_includes} if source_includes else {}
+        doc = self._es.get_source(self.index, self.type, doc_id, **kw)
+        # TODO: standardize all result collections returned by this class.
+        doc["_id"] = doc_id
+        return doc
+
+    def count(self, query):
+        """Return the number of documents matched by the ``query``
+
+        :param query: ``dict`` query body
+        :returns: ``int``"""
+        query = self._prepare_count_query(query)
+        return self._es.count(self.index, self.type, query).get("count")
+
+    def _prepare_count_query(self, query):
+        """TODO: move this logic to the calling class (the low-level adapter
+        should not be performing this type of manipulation)."""
+        # pagination params are not required and not supported in ES count API
+        query = query.copy()
+        for extra in ["size", "sort", "from", "to", "_source"]:
+            query.pop(extra, None)
+        return query
+
+    def fetch_many(self, doc_ids):
+        """Return multiple docs for the provided ``doc_ids``
+
+        :param doc_ids: iterable of document IDs
+        :returns: ``dict``"""
+        docs = []
+        results = self._mget({"ids": doc_ids})
+        # TODO: check for shard failures
+        for doc_result in results["docs"]:
+            if "error" in doc_result:
+                raise ESError(doc_result["error"].get("reason", "multi-get error"))
+            if doc_result["found"]:
+                # TODO: standardize all result collections returned by this class.
+                self._fix_hit(doc_result)
+                docs.append(doc_result["_source"])
+        return docs
+
+    def iter_fetch(self, doc_ids, chunk_size=100):
+        """Return a generator which pulls queries documents in chunks.
+
+        :param doc_ids: iterable of document IDs
+        :param chunk_size: ``int`` number of documents to fetch per query
+        :yields: ``dict`` documents"""
+        # TODO: standardize all result collections returned by this class.
+        for ids_chunk in chunked(doc_ids, chunk_size):
+            yield from self.fetch_many(ids_chunk)
+
+    def _mget(self, query):
+        """Perform an ``mget`` request and return the results.
+
+        :param query: ``dict`` mget query"""
+        return self._es.mget(query, self.index, self.type, _source=True)
+
+    def search(self, query, **kw):
+        """Perform a query (search) and return the results.
+
+        :param query: ``dict`` search query to execute
+        :param **kw: extra parameters passed directly to the
+                     underlying ``elasticsearch.Elasticsearch.search()`` method.
+        :returns: ``dict``
+        """
+        # TODO: standardize all result collections returned by this class.
+        try:
+            result = self._search(query, **kw)
+            self._fix_hits_in_results(result)
+            self._report_and_fail_on_shard_failures(result)
+        except ElasticsearchException as exc:
+            raise ESError(exc)
+        return result
+
+    def _search(self, query, **kw):
+        """Perform a "low-level" search and return the raw results."""
+        return self._es.search(self.index, self.type, query, **kw)
+
+    def scroll(self, query, **kw):
+        """Perfrom a scrolling search, yielding each doc until the entire context
+        is exhausted.
+
+        :param query: ``dict`` raw search query.
+        :param **kw: Additional scroll keyword arguments. Valid options:
+                     ``size``: ``int`` scroll size (number of documents per
+                     "scroll" page)
+                     ``scroll``: ``str`` time value specifying how long the
+                     Elastic cluster should keep the search context alive.
+        :yields: ``dict`` documents
+        """
+        # TODO: ^this docstring formatting is awful, find a better way
+        # TODO: standardize all result collections returned by this class.
+        valid_kw = {"size", "scroll"}
+        if not set(kw).issubset(valid_kw):
+            raise ValueError(f"invalid keyword args: {set(kw) - valid_kw}")
+        try:
+            for result in self._scroll(query, **kw):
+                self._report_and_fail_on_shard_failures(result)
+                self._fix_hits_in_results(result)
+                for hit in result["hits"]["hits"]:
+                    yield hit
+        except ElasticsearchException as e:
+            raise ESError(e)
+
+    def _scroll(self, query={}, scroll=SCROLL_KEEPALIVE, **kwargs):
+        """Perform one or more scroll requests to completely exhaust a scrolling
+        search context.
+
+        :param query: ``dict`` search query to execute
+        :param scroll: ``str`` duration to keep scroll context alive
+        :param **kwargs: extra parameters passed directly to the underlying
+                         ``elasticsearch.Elasticsearch.search()`` method.
+        :yields: ``dict``s of Elasticsearch results
+
+        Providing a query with `size` specified as well as the `size` keyword
+        argument is ambiguous, and Elastic docs do not say what happens when
+        `size` is provided both as a GET parameter _as well as_ part of the
+        query body. Real-world observations show that the GET parameter wins,
+        but to avoid ambiguity, specifying both in this function will raise a
+        ValueError.
+
+        Read before using:
+        - Scroll queries are not designed for real-time user requests.
+        - Using aggregations with scroll queries may yield non-aggregated
+          results.
+        - The most efficient way to perform a scroll request is to sort by
+          `_doc`.
+        - Scroll request results reflect the state of the index at the time the
+          initial `search` is requested. Changes to the index after that time
+          will not be reflected for the duration of the search context.
+        - Open scroll search contexts can keep old index segments alive longer,
+          which may require more disk space and file descriptor limits.
+        - An Elasticsearch cluster has a limited number of allowed concurrent
+          search contexts. Versions 2.4 and 5.6 do not specify what the default
+          maximum limit is, or how to configure it. Version 7.14 specifies the
+          default is 500 concurrent search contexts.
+        - See: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-scroll.html
+        """
+        query = query.copy()
+        query.setdefault("sort", "_doc")  # configure for efficiency if able
+        # validate size
+        size_qy = query.get("size")
+        size_kw = kwargs.get("size")
+        if size_kw is None and size_qy is None:
+            # Set a large scroll size if one is not already configured.
+            # Observations on Elastic v2.4 show default (when not specified)
+            # scroll size of 10.
+            kwargs["size"] = SCROLL_SIZE
+        elif not (size_kw is None or size_qy is None):
+            raise ValueError(f"size cannot be specified in both query and keyword "
+                             f"arguments (query: {size_qy}, kw: {size_kw})")
+        results = self._search(query, scroll=scroll, **kwargs)
+        scroll_id = results.get("_scroll_id")
+        if scroll_id is None:
+            return
+        try:
+            yield results
+            while True:
+                # Failure to add the `scroll` parameter here will cause the
+                # scroll context to terminate immediately after this request,
+                # resulting in this method fetching a maximum `size * 2`
+                # documents.
+                # see: https://stackoverflow.com/a/63911571
+                results = self._es.scroll(scroll_id, scroll=scroll)
+                scroll_id = results.get("_scroll_id")
+                yield results
+                if scroll_id is None or not results["hits"]["hits"]:
+                    break
+        finally:
+            if scroll_id:
+                self._es.clear_scroll(body={"scroll_id": [scroll_id]}, ignore=(404,))
+
+    def upsert(self, doc, refresh=False, **kw):
+        """Index (send) a new document in (to) Elasticsearch
+
+        :param doc: the (Python model) document to index
+        :param refresh: ``bool`` refresh the effected shards to make this
+                        operation visible to search
+        :param **kw: extra parameters passed directly to the underlying
+                     ``elasticsearch.Elasticsearch.index()`` method.
+        """
+        doc_id, source = self.transform(doc)
+        self._verify_doc_id(doc_id)
+        self._es.index(self.index, self.type, source, doc_id,
+                       refresh=self._refresh_value(refresh), **kw)
+
+    def update(self, doc, refresh=False, **kw):
+        """Update an existing document in Elasticsearch
+
+        :param doc: the (Python model) document to be updated
+        :param refresh: ``bool`` refresh the effected shards to make this
+                        operation visible to search
+        :param **kw: extra parameters passed directly to the underlying
+                     ``elasticsearch.Elasticsearch.update()`` method.
+        """
+        doc_id, source = self.transform(doc)
+        # NOTE: future implementations may wish to get a return value here (e.g.
+        # when using the `fields` kwarg), but the current implementation never
+        # uses this functionality, so this method does not return anything.
+        self._es.update(self.index, self.type, doc_id, {"doc": source},
+                        refresh=self._refresh_value(refresh), **kw)
+
+    def delete(self, doc_id, refresh=False):
+        """Delete an existing document from Elasticsearch
+
+        :param doc_id: ID of the document to delete
+        :param refresh: ``bool`` refresh the effected shards to make this
+                        operation visible to search"""
+        self._es.delete(self.index, self.type, doc_id,
+                        refresh=self._refresh_value(refresh))
+
+    @staticmethod
+    def _refresh_value(refresh):
+        """Translate a boolean refresh value into a string value expected by
+        Elasticsearch.
+
+        :param refresh: ``bool``
+        :returns: ``'true'`` or ``'false'``"""
+        # valid Elasticsearch values are ["true", "false", "wait_for"]
+        if refresh not in {True, False}:
+            raise ValueError(f"Invalid 'refresh' value, expected bool, got {refresh!r}")
+        return "true" if refresh else "false"
+
+    def bulk_index(self, docs, refresh=False, **kw):
+        """Use the Elasticsearch library's ``bulk`` helper function to index
+        documents en masse.
+
+        :param docs: iterable of (Python model) documents to index
+        :param refresh: ``bool`` refresh the effected shards to make this
+                        operation visible to search
+        :param **kw: extra parameters passed directly to the underlying
+                     ``elasticsearch.helpers.bulk()`` function."""
+        action_template = {
+            "_op_type": "index",
+            "_index": self.index,
+            "_type": self.type,
+        }
+        actions = []
+        for doc in docs:
+            doc_id, source = self.transform(doc)
+            self._verify_doc_id(doc_id)
+            actions.append({
+                "_id": doc_id,
+                "_source": source,
+                **action_template,
+            })
+        return self._bulk(actions, refresh, **kw)
+
+    def bulk_delete(self, doc_ids, refresh=False, **kw):
+        """Use the Elasticsearch library's ``bulk`` helper function to delete
+        documents en masse.
+
+        :param doc_ids: iterable of document IDs to be deleted
+        :param refresh: ``bool`` refresh the effected shards to make this
+                        operation visible to search
+        :param **kw: extra parameters passed directly to the underlying
+                     ``elasticsearch.helpers.bulk()`` function."""
+        action_template = {
+            "_op_type": "delete",
+            "_index": self.index,
+            "_type": self.type,
+        }
+        actions = []
+        for doc_id in doc_ids:
+            actions.append({"_id": doc_id, **action_template})
+        return self._bulk(actions, refresh, **kw)
+
+    def bulk(self, actions, refresh=False, **kw):
+        """Use the Elasticsearch library's ``bulk`` helper function to execute
+        bulk operations.
+
+        **DEPRECATED**: ``ElasticDocumentAdapter.bulk()`` is deprecated.
+                        Use ``bulk_index`` and ``bulk_delete`` instead.
+
+        :param actions: iterable containing the actions to be executed
+        :param refresh: ``bool`` refresh the effected shards to make this
+                        operation visible to search
+        :param **kw: extra parameters passed directly to the underlying
+                     ``elasticsearch.helpers.bulk()`` function."""
+        return self._bulk(self._iter_id_stripped_actions(actions), refresh, **kw)
+
+    def _bulk(self, actions, refresh, **kw):
+        """Use the Elasticsearch library's ``bulk`` helper function to execute
+        bulk operations.
+
+        :param actions: iterable containing the actions to be executed
+        :param refresh: ``str`` refresh the effected shards to make this
+                        operation visible to search
+        :param **kw: extra parameters passed directly to the underlying
+                     ``elasticsearch.helpers.bulk()`` function."""
+        return bulk(self._es, actions, refresh=self._refresh_value(refresh), **kw)
+
+    @staticmethod
+    def _verify_doc_id(doc_id):
+        """Checks whether or not the provided ``doc_id`` is a valid value to
+        use as the ``_id`` for an Elasticsearch document.
+
+        :param doc_id: value to check
+        :raises: ``ValueError``"""
+        if not (isinstance(doc_id, str) and doc_id):
+            raise ValueError(f"invalid Elastic _id value: {doc_id!r}")
+
+    @staticmethod
+    def _iter_id_stripped_actions(actions):
+        """Iterate over bulk ``actions`` iterable, yielding actions where the
+        the ``action["_source"]["_id"]`` item (if present) is removed without
+        mutating the original dicts.
+
+        :param actions: iterable of ``dict`` objects"""
+        for action in actions:
+            src = action.get("_source", {})
+            if "_id" in src:
+                action = {k: action[k] for k in action if k != "_source"}
+                action["_source"] = {k: src[k] for k in src if k != "_id"}
+            yield action
+
+    @staticmethod
+    def _fix_hit(hit):
+        """Modify the ``hit`` dict that is passed to this method.
+
+        :param hit: ``dict`` Elasticsearch result
+        :returns: ``None``"""
+        # TODO: standardize all result collections returned by this class.
+        if "_source" in hit:
+            hit["_source"]["_id"] = hit["_id"]
+
+    def _fix_hits_in_results(self, results):
+        """Munge the ``results`` dict, conditionally modifying it.
+
+        :param results: ``dict`` of Elasticsearch result hits (or possibly
+                        something else)
+        :returns: ``None``"""
+        # TODO: standardize all result collections returned by this class.
+        try:
+            hits = results["hits"]["hits"]
+        except KeyError:
+            return
+        for hit in hits:
+            self._fix_hit(hit)
+
+    @staticmethod
+    def _report_and_fail_on_shard_failures(result):
+        """
+        Raise an ESShardFailure if there are shard failures in a search result
+        (JSON) and report to datadog.
+        The ``commcare.es.partial_results`` metric counts 1 per ES request with
+        any shard failure.
+        """
+        if not isinstance(result, dict):
+            return
+        if result.get("_shards", {}).get("failed"):
+            metrics_counter("commcare.es.partial_results")
+            # Example message:
+            #   "_shards: {"successful": 4, "failed": 1, "total": 5}"
+            shard_info = json.dumps(result["_shards"])
+            raise ESShardFailure(f"_shards: {shard_info}")
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} index={self.index!r}, type={self.type!r}>"
 
 
 def get_client(for_export=False):

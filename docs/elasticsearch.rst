@@ -182,4 +182,8 @@ then it's definitely worth fixing.)
 
 ----
 
+.. include:: ../corehq/apps/es/README.rst
+
+----
+
 .. include:: es_query.rst
