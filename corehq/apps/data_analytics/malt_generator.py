@@ -1,3 +1,4 @@
+import datetime
 import logging
 from collections import namedtuple
 
@@ -38,13 +39,38 @@ def generate_malt(monthspans, domains=None):
     domain_names = domains or Domain.get_all_names()
     for domain_name in domain_names:
         for monthspan in monthspans:
-            logger.info(f"Building MALT for {domain_name} for {monthspan}")
-            all_users = get_all_user_rows(domain_name, include_inactive=False, include_docs=True)
-            for users in chunked(all_users, 1000):
-                users_by_id = {user['id']: CouchUser.wrap_correctly(user['doc']) for user in users}
-                malt_row_dicts = _get_malt_row_dicts(domain_name, monthspan, users_by_id)
-                if malt_row_dicts:
-                    _save_malt_row_dicts_to_db(malt_row_dicts)
+            if _should_update_malt(domain_name, monthspan):
+                # use this date to populate last_run_date for all MALTRows with this domain and month
+                run_date = datetime.datetime.utcnow()
+                logger.info(f"Building MALT for {domain_name} for {monthspan} up to {run_date}")
+                all_users = get_all_user_rows(domain_name, include_inactive=False, include_docs=True)
+                for users in chunked(all_users, 1000):
+                    users_by_id = {user['id']: CouchUser.wrap_correctly(user['doc']) for user in users}
+                    malt_row_dicts = _get_malt_row_dicts(domain_name, monthspan, users_by_id, run_date)
+                    if malt_row_dicts:
+                        _save_malt_row_dicts_to_db(malt_row_dicts)
+
+
+def _should_update_malt(domain_name, monthspan):
+    """
+    Only attempt to update a MALTRow if:
+    - there's a valid last_submission_date
+    - that last submission date is greater than or equal to the end date for the previous malt run
+    """
+    last_submission_date = get_last_form_submission_received(domain_name)
+    last_run_date = _get_last_run_date_for_malt(domain_name, monthspan)
+    return last_submission_date and last_submission_date >= last_run_date
+
+
+def _get_last_run_date_for_malt(domain_name, monthspan):
+    """
+    Checks for existing MALTRows for this domain and monthspan
+    If a row does not exist, or the last_run_date on that row is None, return the start date of the month
+    """
+    rows = MALTRow.objects.filter(domain_name=domain_name, month=monthspan.startdate)
+    if rows and rows[0].last_run_date:
+        return rows[0].last_run_date
+    return monthspan.startdate
 
 
 @quickcache(['domain', 'app_id'])
@@ -67,7 +93,7 @@ def _get_malt_app_data(domain, app_id):
                        app.is_deleted())
 
 
-def _build_malt_row_dict(app_row, domain_name, user, monthspan):
+def _build_malt_row_dict(app_row, domain_name, user, monthspan, run_date):
     app_data = _get_malt_app_data(domain_name, app_row.app_id)
 
     return {
@@ -85,10 +111,11 @@ def _build_malt_row_dict(app_row, domain_name, user, monthspan):
         'use_threshold': app_data.use_threshold,
         'experienced_threshold': app_data.experienced_threshold,
         'is_app_deleted': app_data.is_app_deleted,
+        'last_run_date': run_date,
     }
 
 
-def _get_malt_row_dicts(domain_name, monthspan, users_by_id):
+def _get_malt_row_dicts(domain_name, monthspan, users_by_id, run_date):
     """
     Only processes domains that have had a form submission since the startdate of the month
     Includes expensive elasticsearch query
@@ -97,13 +124,11 @@ def _get_malt_row_dicts(domain_name, monthspan, users_by_id):
     :param users_by_id: list of dictionaries [{user_id: user_obj}, ...]
     """
     malt_row_dicts = []
-    last_submission_date = get_last_form_submission_received(domain_name)
-    if last_submission_date and last_submission_date >= monthspan.startdate:
-        app_rows = get_app_submission_breakdown_es(domain_name, monthspan, list(users_by_id))
-        for app_row in app_rows:
-            user = users_by_id[app_row.user_id]
-            malt_row_dict = _build_malt_row_dict(app_row, domain_name, user, monthspan)
-            malt_row_dicts.append(malt_row_dict)
+    app_rows = get_app_submission_breakdown_es(domain_name, monthspan, list(users_by_id))
+    for app_row in app_rows:
+        user = users_by_id[app_row.user_id]
+        malt_row_dict = _build_malt_row_dict(app_row, domain_name, user, monthspan, run_date)
+        malt_row_dicts.append(malt_row_dict)
 
     return malt_row_dicts
 
