@@ -107,6 +107,7 @@ class CaseAccessors(object):
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
 
     def get_reverse_indexed_cases(self, case_ids, case_types=None, is_closed=None):
+        warn("DEPRECATED use CommCareCaseIndex.objects", DeprecationWarning)
         return self.db_accessor.get_reverse_indexed_cases(self.domain, case_ids, case_types, is_closed)
 
     def get_attachment_content(self, case_id, attachment_id):

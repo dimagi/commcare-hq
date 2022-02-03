@@ -30,7 +30,6 @@ from corehq.form_processor.exceptions import (
     MissingFormXml,
     XFormNotFound,
 )
-from corehq.form_processor.models.util import attach_prefetch_models as _attach_prefetch_models
 from corehq.form_processor.interfaces.dbaccessors import AbstractLedgerAccessor
 from corehq.form_processor.models import (
     AttachmentContent,
@@ -440,23 +439,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
-        assert isinstance(case_ids, list)
-        assert case_types is None or isinstance(case_types, list)
-        if not case_ids:
-            return []
-
-        cases = list(CommCareCase.objects.plproxy_raw(
-            'SELECT * FROM get_reverse_indexed_cases_3(%s, %s, %s, %s)',
-            [domain, case_ids, case_types, is_closed])
-        )
-        cases_by_id = {case.case_id: case for case in cases}
-        if cases_by_id:
-            indices = list(CommCareCaseIndex.objects.plproxy_raw(
-                'SELECT * FROM get_multiple_cases_indices(%s, %s)',
-                [domain, list(cases_by_id)])
-            )
-            _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
-        return cases
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_reverse_indexed_cases(domain, case_ids, case_types, is_closed)
 
     @staticmethod
     @tracer.wrap("form_processor.sql.check_transaction_order_for_case")

@@ -9,7 +9,6 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
@@ -101,8 +100,8 @@ def search_view(request, domain, fhir_version_name, resource_type):
         return JsonResponse(status=400,
                             data={'message': f"Resource type {resource_type} not available on {domain}"})
 
-    cases = CaseAccessors(domain).get_reverse_indexed_cases(
-        [patient_case_id], case_types=case_types_for_resource_type, is_closed=False)
+    cases = CommCareCase.objects.get_reverse_indexed_cases(
+        domain, [patient_case_id], case_types=case_types_for_resource_type, is_closed=False)
     response = {
         'resourceType': "Bundle",
         "type": "searchset",

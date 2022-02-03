@@ -102,6 +102,25 @@ class CommCareCaseManager(RequireDBManager):
             )
             return [row[0] for row in cursor]
 
+    def get_reverse_indexed_cases(self, domain, case_ids, case_types=None, is_closed=None):
+        assert isinstance(case_ids, list), type(case_ids)
+        assert case_types is None or isinstance(case_types, list), case_types
+        if not case_ids:
+            return []
+
+        cases = list(self.plproxy_raw(
+            'SELECT * FROM get_reverse_indexed_cases_3(%s, %s, %s, %s)',
+            [domain, case_ids, case_types, is_closed])
+        )
+        cases_by_id = {case.case_id: case for case in cases}
+        if cases_by_id:
+            indices = list(CommCareCaseIndex.objects.plproxy_raw(
+                'SELECT * FROM get_multiple_cases_indices(%s, %s)',
+                [domain, list(cases_by_id)])
+            )
+            attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
+        return cases
+
 
 class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
                    AttachmentMixin, CaseToXMLMixin, TrackRelatedChanges,

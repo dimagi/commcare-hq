@@ -101,6 +101,28 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
             set(CommCareCase.objects.get_case_xform_ids(case.case_id))
         )
 
+    def test_get_reverse_indexed_cases(self):
+        from ..backends.sql.dbaccessors import CaseAccessorSQL
+        referenced_case_ids = [uuid.uuid4().hex, uuid.uuid4().hex]
+        _create_case_with_index(uuid.uuid4().hex, case_is_deleted=True)  # case shouldn't be included in results
+        bambi, bambi_ix = _create_case_with_index(referenced_case_ids[0], case_type='bambino')
+        child, child_ix = _create_case_with_index(referenced_case_ids[1], case_type='child')
+        expected_case_ids = {bambi.case_id, child.case_id}
+        expected_indices = {bambi_ix, child_ix}
+
+        cases = CommCareCase.objects.get_reverse_indexed_cases(DOMAIN, referenced_case_ids)
+        self.assertEqual({c.case_id for c in cases}, expected_case_ids)
+        self.assertEqual({ix for case in cases for ix in case.indices}, expected_indices)
+
+        cases = CommCareCase.objects.get_reverse_indexed_cases(
+            DOMAIN, referenced_case_ids, case_types=['child'], is_closed=False)
+        self.assertEqual([c.case_id for c in cases], [child.case_id])
+
+        bambi.closed = True
+        CaseAccessorSQL.save_case(bambi)
+        cases = CommCareCase.objects.get_reverse_indexed_cases(DOMAIN, referenced_case_ids, is_closed=True)
+        self.assertEqual([c.case_id for c in cases], [bambi.case_id])
+
 
 @sharded
 class TestCommCareCaseIndexManager(BaseCaseManagerTest):
