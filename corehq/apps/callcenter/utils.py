@@ -11,6 +11,7 @@ from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
 from corehq.elastic import ESError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 
@@ -110,7 +111,7 @@ def get_call_center_cases(domain_name, case_type, user=None):
     else:
         case_ids = case_accessor.get_open_case_ids_in_domain_by_type(case_type=case_type)
 
-    for case in case_accessor.iter_cases(case_ids):
+    for case in CommCareCase.objects.iter_cases(case_ids, domain_name):
         cc_case = CallCenterCase.from_case(case)
         if cc_case:
             all_cases.append(cc_case)

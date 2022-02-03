@@ -16,7 +16,6 @@ from corehq.form_processor.exceptions import (
     MissingFormXml,
     XFormNotFound,
 )
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
@@ -59,7 +58,6 @@ class CaseDocumentStore(DocumentStore):
 
     def __init__(self, domain, case_type=None):
         self.domain = domain
-        self.case_accessors = CaseAccessors(domain=domain)
         self.case_type = case_type
 
     def get_document(self, doc_id):
@@ -73,7 +71,7 @@ class CaseDocumentStore(DocumentStore):
         return iter_all_ids(accessor)
 
     def iter_documents(self, ids):
-        for wrapped_case in self.case_accessors.iter_cases(ids):
+        for wrapped_case in CommCareCase.objects.iter_cases(ids, self.domain):
             yield wrapped_case.to_json()
 
 

@@ -123,7 +123,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
@@ -587,7 +587,7 @@ class ChatOverSMSView(BaseMessagingSectionView):
 
 def get_case_contact_info(domain_obj, case_ids):
     data = {}
-    for case in CaseAccessors(domain_obj.name).iter_cases(case_ids):
+    for case in CommCareCase.objects.iter_cases(case_ids, domain_obj.name):
         if domain_obj.custom_case_username:
             name = case.get_case_property(domain_obj.custom_case_username)
         else:

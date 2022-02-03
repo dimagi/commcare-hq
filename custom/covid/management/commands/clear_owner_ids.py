@@ -3,7 +3,7 @@ from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
 BATCH_SIZE = 100
@@ -23,14 +23,13 @@ class Command(CaseUpdateCommand):
 
     def update_cases(self, domain, case_type, user_id):
         case_ids = self.find_case_ids_by_type(domain, case_type)
-        accessor = CaseAccessors(domain)
         case_blocks = []
 
         print(f"Found {len(case_ids)} {case_type} cases in {domain}. Proceeding...")
 
         total_cases_updated = 0
         count_already_blank = 0
-        for case in accessor.iter_cases(case_ids):
+        for case in CommCareCase.objects.iter_cases(case_ids, domain):
             if case.get_case_property('owner_id') != '-':
                 case_blocks.append(self.case_block(case))
             else:

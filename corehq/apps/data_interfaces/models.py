@@ -39,7 +39,6 @@ from corehq.apps.hqcase.utils import bulk_update_cases, update_case
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseIndex, CommCareCase, XFormInstance
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
@@ -236,7 +235,7 @@ class AutomaticUpdateRule(models.Model):
     @classmethod
     def _iter_cases_from_es(cls, domain, case_type, boundary_date=None):
         case_ids = list(cls._get_case_ids_from_es(domain, case_type, boundary_date))
-        return CaseAccessors(domain).iter_cases(case_ids)
+        return CommCareCase.objects.iter_cases(case_ids, domain)
 
     @classmethod
     def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
