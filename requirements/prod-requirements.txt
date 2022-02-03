@@ -21,7 +21,9 @@ babel==2.9.1
 backcall==0.2.0
     # via ipython
 billiard==3.5.0.4
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   celery
 black==22.1.0
     # via ipython
 boto3==1.17.85
@@ -473,6 +475,7 @@ simplejson==3.17.2
 six==1.15.0
     # via
     #   -r base-requirements.in
+    #   asttokens
     #   django-braces
     #   django-compressor
     #   django-oauth-toolkit
