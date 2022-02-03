@@ -325,7 +325,14 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
 
     @classmethod
     def _migration_get_fields(cls):
-        return []
+        # all common fields that would be synced to couch
+        # connection_settings_id, paused is handelled in sync logic
+        # No need to sync repeater_type in couch
+        return [
+            "domain",
+            "format",
+            "request_method",
+        ]
 
 
 class SQLFormRepeater(SQLRepeater):
