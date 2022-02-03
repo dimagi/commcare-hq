@@ -22,6 +22,7 @@ class Command(BaseCommand):
         parser.add_argument('--username', type=str, default=None)
         parser.add_argument('--and-linked', action='store_true', default=False)
         parser.add_argument('--output-file', type=str, default=None)
+        parser.add_argument('--throttle-secs', type=float, default=0)
 
     def handle(self, domain, **options):
         domains = {domain}
@@ -39,7 +40,14 @@ class Command(BaseCommand):
         for domain in sorted(domains):
             bad_case_ids = _get_bad_case_ids(domain)
             print(f"Updating {len(bad_case_ids)} cases on {domain}")
-            update_cases(domain, _correct_bad_property, bad_case_ids, user_id, DEVICE_ID)
+            update_cases(
+                domain=domain,
+                update_fn=_correct_bad_property,
+                case_ids=bad_case_ids,
+                user_id=user_id,
+                device_id=DEVICE_ID,
+                throttle_secs=options['throttle_secs'],
+            )
 
 
 def _get_bad_case_ids(domain):

@@ -1,3 +1,4 @@
+import time
 from xml.etree import cElementTree as ElementTree
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -6,11 +7,17 @@ from .utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 
 
 class CaseBulkDB:
+    """
+    Context manager to facilitate making case changes in chunks.
 
-    def __init__(self, domain, user_id, device_id):
+    Can optionally wait between each chunk to throttle the form submission rate.
+    """
+
+    def __init__(self, domain, user_id, device_id, throttle_secs=None):
         self.domain = domain
         self.user_id = user_id
         self.device_id = device_id
+        self.throttle_secs = throttle_secs or 0
 
     def __enter__(self):
         self.to_save = []
@@ -23,6 +30,8 @@ class CaseBulkDB:
         self.to_save.append(case_block)
         if len(self.to_save) >= CASEBLOCK_CHUNKSIZE:
             self.commit()
+            if self.throttle_secs:
+                time.sleep(self.throttle_secs)
 
     def commit(self):
         if self.to_save:
@@ -34,7 +43,7 @@ class CaseBulkDB:
             self.to_save = []
 
 
-def update_cases(domain, update_fn, case_ids, user_id, device_id):
+def update_cases(domain, update_fn, case_ids, user_id, device_id, throttle_secs=None):
     """
     Perform a large number of case updates in chunks
 
@@ -42,7 +51,7 @@ def update_cases(domain, update_fn, case_ids, user_id, device_id):
     if an update is to be performed, or None to skip the case.
     """
     accessor = CaseAccessors(domain)
-    with CaseBulkDB(domain, user_id, device_id) as bulk_db:
+    with CaseBulkDB(domain, user_id, device_id, throttle_secs) as bulk_db:
         for case in accessor.iter_cases(case_ids):
             case_block = update_fn(case)
             if case_block:
