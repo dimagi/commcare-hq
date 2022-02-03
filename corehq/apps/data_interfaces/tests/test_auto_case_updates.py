@@ -24,7 +24,6 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
@@ -47,7 +46,7 @@ def _with_case(domain, case_type, last_modified, **kwargs):
 
 
 def _save_case(domain, case):
-    CaseAccessorSQL.save_case(case)
+    case.save(with_tracked_models=True)
 
 
 def _update_case(domain, case_id, server_modified_on, last_visit_date=None):

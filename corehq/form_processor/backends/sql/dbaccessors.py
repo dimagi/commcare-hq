@@ -10,7 +10,7 @@ from uuid import UUID
 from warnings import warn
 
 from django.conf import settings
-from django.db import InternalError, transaction, router, DatabaseError
+from django.db import InternalError, transaction, router
 from django.db.models import F, Q
 from django.db.models.expressions import Value
 from django.db.models.functions import Concat
@@ -23,7 +23,6 @@ from dimagi.utils.chunked import chunked
 from corehq.form_processor.exceptions import (
     AttachmentNotFound,
     CaseNotFound,
-    CaseSaveError,
     LedgerSaveError,
     LedgerValueNotFound,
     MissingFormXml,
@@ -539,46 +538,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def save_case(case):
-        transactions_to_save = case.get_live_tracked_models(CaseTransaction)
-
-        indices_to_save_or_update = case.get_live_tracked_models(CommCareCaseIndex)
-        index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndex)]
-
-        attachments_to_save = case.get_tracked_models_to_create(CaseAttachment)
-        attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachment)]
-        for attachment in attachments_to_save:
-            if attachment.is_saved():
-                raise CaseSaveError(
-                    """Updating attachments is not supported.
-                    case id={}, attachment id={}""".format(
-                        case.case_id, attachment.attachment_id
-                    )
-                )
-
-        try:
-            with transaction.atomic(using=case.db, savepoint=False):
-                case.save()
-                for case_transaction in transactions_to_save:
-                    case_transaction.save()
-
-                for index in indices_to_save_or_update:
-                    index.domain = case.domain  # ensure domain is set on indices
-                    update_fields = None
-                    if index.is_saved():
-                        # prevent changing identifier
-                        update_fields = ['referenced_id', 'referenced_type', 'relationship_id']
-                    index.save(update_fields=update_fields)
-
-                CommCareCaseIndex.objects.using(case.db).filter(id__in=index_ids_to_delete).delete()
-
-                for attachment in attachments_to_save:
-                    attachment.save()
-
-                CaseAttachment.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
-
-                case.clear_tracked_models()
-        except DatabaseError as e:
-            raise CaseSaveError(e)
+        warn("DEPRECATED", DeprecationWarning)
+        return case.save(with_tracked_models=True)
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):

@@ -6,7 +6,7 @@ import uuid
 from collections import OrderedDict, namedtuple
 from datetime import datetime
 
-from django.db import models
+from django.db import DatabaseError, models, transaction
 
 from ddtrace import tracer
 from jsonfield.fields import JSONField
@@ -26,7 +26,7 @@ from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.sql_db.util import split_list_by_db_partition
 from corehq.util.json import CommCareJSONEncoder
 
-from ..exceptions import AttachmentNotFound, CaseNotFound, UnknownActionType
+from ..exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError, UnknownActionType
 from ..track_related import TrackRelatedChanges
 from .attachment import AttachmentMixin
 from .forms import XFormInstance
@@ -580,6 +580,52 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     def host(self):
         result = self.get_parent(relationship=CommCareCaseIndex.EXTENSION)
         return result[0] if result else None
+
+    def save(self, *args, with_tracked_models=False, **kw):
+        """Save case, optionally with tracked models
+
+        grep note: was `CaseAccessorSQL.save_case(case)`
+        """
+        if not with_tracked_models:
+            super().save(*args, **kw)
+            return
+
+        transactions_to_save = self.get_live_tracked_models(CaseTransaction)
+        indices_to_save_or_update = self.get_live_tracked_models(CommCareCaseIndex)
+        index_ids_to_delete = [index.id for index in self.get_tracked_models_to_delete(CommCareCaseIndex)]
+        attachments_to_save = self.get_tracked_models_to_create(CaseAttachment)
+        attachment_ids_to_delete = [att.id for att in self.get_tracked_models_to_delete(CaseAttachment)]
+        for attachment in attachments_to_save:
+            if attachment.is_saved():
+                raise CaseSaveError(
+                    f"Updating attachments is not supported. case id={self.case_id}, "
+                    f"attachment id={attachment.attachment_id}"
+                )
+
+        try:
+            with transaction.atomic(using=self.db, savepoint=False):
+                super().save(*args, **kw)
+                for case_transaction in transactions_to_save:
+                    case_transaction.save()
+
+                for index in indices_to_save_or_update:
+                    index.domain = self.domain  # ensure domain is set on indices
+                    update_fields = None
+                    if index.is_saved():
+                        # prevent changing identifier
+                        update_fields = ['referenced_id', 'referenced_type', 'relationship_id']
+                    index.save(update_fields=update_fields)
+
+                CommCareCaseIndex.objects.using(self.db).filter(id__in=index_ids_to_delete).delete()
+
+                for attachment in attachments_to_save:
+                    attachment.save()
+
+                CaseAttachment.objects.using(self.db).filter(id__in=attachment_ids_to_delete).delete()
+
+                self.clear_tracked_models()
+        except DatabaseError as e:
+            raise CaseSaveError(e)
 
     def __str__(self):
         return (

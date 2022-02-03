@@ -123,7 +123,7 @@ class FormProcessorSQL(object):
                 XFormInstance.objects.save_new_form(processed_forms.submitted)
                 if cases:
                     for case in cases:
-                        CaseAccessorSQL.save_case(case)
+                        case.save(with_tracked_models=True)
 
                 if stock_result:
                     ledgers_to_save = stock_result.models_to_save
@@ -135,7 +135,7 @@ class FormProcessorSQL(object):
                 if sort_submissions:
                     for case in cases:
                         if SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary():
-                            CaseAccessorSQL.save_case(case)
+                            case.save(with_tracked_models=True)
         except DatabaseError:
             for model in all_models:
                 setattr(model, model._meta.pk.attname, None)
@@ -296,7 +296,7 @@ class FormProcessorSQL(object):
 
             case.server_modified_on = rebuild_transaction.server_date
             if save:
-                CaseAccessorSQL.save_case(case)
+                case.save(with_tracked_models=True)
                 publish_case_saved(case)
             return case
         finally:

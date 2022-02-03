@@ -150,7 +150,7 @@ def reprocess_form(form, save=True, lock_form=True):
 
             if save:
                 for case in cases:
-                    CaseAccessorSQL.save_case(case)
+                    case.save(with_tracked_models=True)
                 LedgerAccessorSQL.save_ledger_values(ledgers)
                 XFormInstance.objects.update_form_problem_and_state(form)
                 FormProcessorSQL.publish_changes_to_kafka(ProcessedForms(form, None), cases, stock_result)

@@ -7,7 +7,7 @@ from django.conf import settings
 from django.test import TestCase
 
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.exceptions import CaseNotFound, CaseSaveError
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
     CaseAttachment,
@@ -103,7 +103,6 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         )
 
     def test_get_reverse_indexed_cases(self):
-        from ..backends.sql.dbaccessors import CaseAccessorSQL
         referenced_case_ids = [uuid.uuid4().hex, uuid.uuid4().hex]
         _create_case_with_index(uuid.uuid4().hex, case_is_deleted=True)  # case shouldn't be included in results
         bambi, bambi_ix = _create_case_with_index(referenced_case_ids[0], case_type='bambino')
@@ -120,9 +119,96 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         self.assertEqual([c.case_id for c in cases], [child.case_id])
 
         bambi.closed = True
-        CaseAccessorSQL.save_case(bambi)
+        bambi.save(with_tracked_models=True)
         cases = CommCareCase.objects.get_reverse_indexed_cases(DOMAIN, referenced_case_ids, is_closed=True)
         self.assertEqual([c.case_id for c in cases], [bambi.case_id])
+
+    def test_save_case_update_index(self):
+        case = _create_case()
+
+        original_index = CommCareCaseIndex(
+            case=case,
+            identifier='parent',
+            referenced_type='mother',
+            referenced_id=uuid.uuid4().hex,
+            relationship_id=CommCareCaseIndex.CHILD
+        )
+        case.track_create(original_index)
+        case.save(with_tracked_models=True)
+
+        [index] = CommCareCaseIndex.objects.get_indices(case.domain, case.case_id)
+        index.identifier = 'new_identifier'  # shouldn't get saved
+        index.referenced_type = 'new_type'
+        index.referenced_id = uuid.uuid4().hex
+        index.relationship_id = CommCareCaseIndex.EXTENSION
+        case.track_update(index)
+        case.save(with_tracked_models=True)
+
+        [updated_index] = CommCareCaseIndex.objects.get_indices(case.domain, case.case_id)
+        self.assertEqual(updated_index.id, index.id)
+        self.assertEqual(updated_index.identifier, original_index.identifier)
+        self.assertEqual(updated_index.referenced_type, index.referenced_type)
+        self.assertEqual(updated_index.referenced_id, index.referenced_id)
+        self.assertEqual(updated_index.relationship_id, index.relationship_id)
+
+    def test_save_case_delete_index(self):
+        case = _create_case()
+
+        case.track_create(CommCareCaseIndex(
+            case=case,
+            identifier='parent',
+            referenced_type='mother',
+            referenced_id=uuid.uuid4().hex,
+            relationship_id=CommCareCaseIndex.CHILD
+        ))
+        case.save(with_tracked_models=True)
+
+        [index] = CommCareCaseIndex.objects.get_indices(case.domain, case.case_id)
+        case.track_delete(index)
+        case.save(with_tracked_models=True)
+        self.assertEqual([], CommCareCaseIndex.objects.get_indices(case.domain, case.case_id))
+
+    def test_save_case_delete_attachment(self):
+        from ..backends.sql.dbaccessors import CaseAccessorSQL
+        case = _create_case()
+
+        case.track_create(CaseAttachment(
+            case=case,
+            attachment_id=uuid.uuid4().hex,
+            name='doc',
+            content_type='text/xml',
+            blob_id='127',
+            md5='123',
+        ))
+        case.save(with_tracked_models=True)
+
+        [attachment] = CaseAccessorSQL.get_attachments(case.case_id)
+        case.track_delete(attachment)
+        case.save(with_tracked_models=True)
+        self.assertEqual([], CaseAccessorSQL.get_attachments(case.case_id))
+
+    def test_save_case_update_attachment(self):
+        from ..backends.sql.dbaccessors import CaseAccessorSQL
+        case = _create_case()
+
+        case.track_create(CaseAttachment(
+            case=case,
+            attachment_id=uuid.uuid4().hex,
+            name='doc',
+            content_type='text/xml',
+            blob_id='128',
+            md5='123',
+        ))
+        case.save(with_tracked_models=True)
+
+        [attachment] = CaseAccessorSQL.get_attachments(case.case_id)
+        attachment.name = 'new_name'
+
+        # hack to call the sql function with an already saved attachment
+        case.track_create(attachment)
+
+        with self.assertRaises(CaseSaveError):
+            case.save(with_tracked_models=True)
 
     def test_hard_delete_cases(self):
         from ..backends.sql.dbaccessors import CaseAccessorSQL
@@ -145,7 +231,7 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
             blob_id='122',
             md5='123',
         ))
-        CaseAccessorSQL.save_case(case1)
+        case1.save(with_tracked_models=True)
 
         num_deleted = CommCareCase.objects.hard_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
         self.assertEqual(1, num_deleted)
@@ -161,7 +247,6 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
 class TestCommCareCaseIndexManager(BaseCaseManagerTest):
 
     def test_get_indices(self):
-        from ..backends.sql.dbaccessors import CaseAccessorSQL
         case = _create_case()
         index1 = CommCareCaseIndex(
             case=case,
@@ -179,7 +264,7 @@ class TestCommCareCaseIndexManager(BaseCaseManagerTest):
             relationship_id=CommCareCaseIndex.EXTENSION
         )
         case.track_create(index2)
-        CaseAccessorSQL.save_case(case)
+        case.save(with_tracked_models=True)
 
         indices = CommCareCaseIndex.objects.get_indices(case.domain, case.case_id)
         indices.sort(key=lambda x: x.identifier)  # "parent" comes before "task"
@@ -194,7 +279,6 @@ class TestCommCareCaseIndexManager(BaseCaseManagerTest):
         self.assertEqual([index], indices)
 
     def test_get_all_reverse_indices_info(self):
-        from ..backends.sql.dbaccessors import CaseAccessorSQL
         # Create case and indexes
         case = _create_case()
         referenced_id1 = uuid.uuid4().hex
@@ -215,7 +299,7 @@ class TestCommCareCaseIndexManager(BaseCaseManagerTest):
             relationship_id=CommCareCaseIndex.CHILD
         )
         case.track_create(child_index)
-        CaseAccessorSQL.save_case(case)
+        case.save(with_tracked_models=True)
 
         # Create irrelevant case and index
         _create_case_with_index(case.case_id)
@@ -278,7 +362,6 @@ def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', c
 def _create_case_with_index(referenced_case_id, identifier='parent', referenced_type='mother',
                             relationship_id=CommCareCaseIndex.CHILD, case_is_deleted=False,
                             case_type='child'):
-    from ..backends.sql.dbaccessors import CaseAccessorSQL
     case = _create_case(case_type=case_type)
     case.deleted = case_is_deleted
     index = CommCareCaseIndex(
@@ -289,12 +372,11 @@ def _create_case_with_index(referenced_case_id, identifier='parent', referenced_
         relationship_id=relationship_id
     )
     case.track_create(index)
-    CaseAccessorSQL.save_case(case)
+    case.save(with_tracked_models=True)
     return case, index
 
 
 def _create_case_transactions(case):
-    from ..backends.sql.dbaccessors import CaseAccessorSQL
     TX = CaseTransaction
     traces = [
         CaseTransactionTrace(TX.TYPE_FORM | TX.TYPE_CASE_CREATE | TX.TYPE_LEDGER),
@@ -311,7 +393,7 @@ def _create_case_transactions(case):
             type=trace.type,
             revoked=trace.revoked,
         ))
-    CaseAccessorSQL.save_case(case)
+    case.save(with_tracked_models=True)
     return {t.form_id for t in traces if t.include}
 
 
