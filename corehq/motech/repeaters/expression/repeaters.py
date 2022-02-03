@@ -98,6 +98,10 @@ class SQLBaseExpressionRepeater(SQLRepeater):
         )
 
     @classmethod
+    def _migration_get_couch_model_class(cls):
+        return BaseExpressionRepeater
+
+    @classmethod
     def _migration_get_fields(cls):
         return super()._migration_get_fields() + ["configured_filter", "configured_expression"]
 
@@ -113,3 +117,7 @@ class SQLCaseExpressionRepeater(SQLBaseExpressionRepeater):
     @memoized
     def payload_doc(self, repeat_record):
         return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id).to_json()
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return CaseExpressionRepeater
