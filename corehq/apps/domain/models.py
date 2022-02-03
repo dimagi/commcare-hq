@@ -1056,6 +1056,6 @@ class ProjectLimitType():
 
 
 class ProjectLimit(models.Model):
-    domain = CharField(max_length=256, db_index=True, unique=True)
-    limit_type = CharField(max_length=5, choices=ProjectLimitType.CHOICES)
-    limit_value = IntegerField
+    domain = models.CharField(max_length=256, db_index=True, unique=True)
+    limit_type = models.CharField(max_length=5, choices=ProjectLimitType.CHOICES)
+    limit_value = models.IntegerField

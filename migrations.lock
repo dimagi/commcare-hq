@@ -147,6 +147,9 @@ blobs
  0009_delete_blobexpiration
  0010_auto_20191023_0938
  0011_blobmeta_compressed
+captcha
+ 0001_initial
+ 0002_delete_captchastore
 case_importer
  0001_initial
  0002_auto_20161206_1937
@@ -298,6 +301,7 @@ domain
  0007_auto_20200924_1753
  0008_use_livequery
  0009_restrict_mob_access_from_FF
+ 0010_projectlimit
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
