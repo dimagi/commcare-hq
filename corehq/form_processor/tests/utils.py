@@ -319,7 +319,7 @@ def create_case(case) -> CommCareCase:
         case.track_create(transaction)
         processed_forms = ProcessedForms(form, [])
         FormProcessorSQL.save_processed_models(processed_forms, [case])
-    return CommCareCase.objects(case.case_id)
+    return CommCareCase.objects.get_case(case.case_id)
 
 
 def create_case_with_index(case, index) -> CommCareCase:
