@@ -95,9 +95,9 @@ class TestViews(TestCase):
         return super().tearDown()
 
     def setUp_mocks(self):
-        get_url_from_google_patcher = patch('corehq.apps.oauth.views.google.get_url_from_google')
-        refresh_credentials_patcher = patch('corehq.apps.oauth.views.google.refresh_credentials')
-        get_token_patcher = patch('corehq.apps.oauth.views.google.get_token_from_google')
+        get_url_from_google_patcher = patch('corehq.apps.oauth_integrations.views.google.get_url_from_google')
+        refresh_credentials_patcher = patch('corehq.apps.oauth_integrations.views.google.refresh_credentials')
+        get_token_patcher = patch('corehq.apps.oauth_integrations.views.google.get_token_from_google')
 
         self.mocked_get_url = get_url_from_google_patcher.start()
         self.mocked_refresh_credentials = refresh_credentials_patcher.start()
