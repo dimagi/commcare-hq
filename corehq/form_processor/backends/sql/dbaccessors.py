@@ -21,7 +21,6 @@ from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.chunked import chunked
 
 from corehq.form_processor.exceptions import (
-    AttachmentNotFound,
     CaseNotFound,
     LedgerSaveError,
     LedgerValueNotFound,
@@ -452,13 +451,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_attachment_by_name(case_id, attachment_name):
-        try:
-            return CaseAttachment.objects.plproxy_raw(
-                'select * from get_case_attachment_by_name(%s, %s)',
-                [case_id, attachment_name]
-            )[0]
-        except IndexError:
-            raise AttachmentNotFound(case_id, attachment_name)
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseAttachment.objects.get_attachment_by_name(case_id, attachment_name)
 
     @staticmethod
     def get_attachment_content(case_id, attachment_name):

@@ -343,8 +343,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return None
 
     def _get_attachment_from_db(self, name):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachment_by_name(self.case_id, name)
+        return CaseAttachment.objects.get_attachment_by_name(self.case_id, name)
 
     def _get_attachments_from_db(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -658,6 +657,18 @@ def get_index_map(indices):
     ])
 
 
+class CaseAttachmentManager(RequireDBManager):
+
+    def get_attachment_by_name(self, case_id, name):
+        try:
+            return self.plproxy_raw(
+                'select * from get_case_attachment_by_name(%s, %s)',
+                [case_id, name]
+            )[0]
+        except IndexError:
+            raise AttachmentNotFound(case_id, name)
+
+
 class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
     """Case attachment
 
@@ -672,6 +683,7 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
     for sharding locality with other data from the same case.
     """
     partition_attr = 'case_id'
+    objects = CaseAttachmentManager()
 
     case = models.ForeignKey(
         'CommCareCase', to_field='case_id', db_index=False,

@@ -4,10 +4,11 @@ from datetime import datetime
 import attr
 
 from django.conf import settings
+from django.db import router
 from django.test import TestCase
 
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.exceptions import CaseNotFound, CaseSaveError
+from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
     CaseAttachment,
@@ -18,6 +19,7 @@ from corehq.form_processor.models import (
 )
 from corehq.form_processor.models.cases import CaseIndexInfo
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
+from corehq.sql_db.routers import HINT_PLPROXY
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 
 DOMAIN = 'test-case-accessor'
@@ -241,6 +243,45 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         self.assertEqual([], CommCareCaseIndex.objects.get_indices(case1.domain, case1.case_id))
         self.assertEqual([], CaseAccessorSQL.get_attachments(case1.case_id))
         self.assertEqual([], CaseAccessorSQL.get_transactions(case1.case_id))
+
+
+@sharded
+class TestCaseAttachmentManager(BaseCaseManagerTest):
+
+    def setUp(self):
+        super().setUp()
+        self.using = router.db_for_read(CaseAttachment, **{HINT_PLPROXY: True})
+
+    def test_get_attachment_by_name(self):
+        case = _create_case()
+
+        case.track_create(CaseAttachment(
+            case=case,
+            attachment_id=uuid.uuid4().hex,
+            name='pic.jpg',
+            content_type='image/jpeg',
+            blob_id='123',
+            md5='123'
+        ))
+        case.track_create(CaseAttachment(
+            case=case,
+            attachment_id=uuid.uuid4().hex,
+            name='my_doc',
+            content_type='text/xml',
+            blob_id='124',
+            md5='123'
+        ))
+        case.save(with_tracked_models=True)
+
+        with self.assertRaises(AttachmentNotFound):
+            CaseAttachment.objects.get_attachment_by_name(case.case_id, 'missing')
+
+        with self.assertNumQueries(1, using=self.using):
+            attachment_meta = CaseAttachment.objects.get_attachment_by_name(case.case_id, 'pic.jpg')
+
+        self.assertEqual(case.case_id, attachment_meta.case_id)
+        self.assertEqual('pic.jpg', attachment_meta.name)
+        self.assertEqual('image/jpeg', attachment_meta.content_type)
 
 
 @sharded
