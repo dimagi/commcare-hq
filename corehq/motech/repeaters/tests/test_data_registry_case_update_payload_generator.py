@@ -10,7 +10,6 @@ from casexml.apps.case.xml import V2_NAMESPACE
 
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import (
     CaseTransaction,
@@ -23,7 +22,6 @@ from corehq.motech.repeaters.models import (
     Repeater,
 )
 from corehq.motech.repeaters.repeater_generators import (
-    SYSTEM_FORM_XMLNS,
     DataRegistryCaseUpdatePayloadGenerator,
 )
 
@@ -74,11 +72,11 @@ def test_generator_create_case():
 def test_generator_create_case_with_index():
     builder = IntentCaseBuilder().create_case("123").create_index("case2", "parent_type", "child")
 
-    def _get_case(case_id):
+    def _get_case(case_id, domain=None):
         assert case_id == "case2"
         return Mock(domain=TARGET_DOMAIN, type="parent_type")
 
-    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+    with patch.object(CommCareCase.objects, 'get_case', new=_get_case):
         _test_payload_generator(
             intent_case=builder.get_case(), registry_mock_cases={},
             expected_creates={"1": {"case_type": "patient", "owner_id": "123"}},
@@ -128,11 +126,11 @@ def test_generator_create_close():
 def test_generator_update_create_index_to_parent():
     builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
-    def _get_case(case_id):
+    def _get_case(case_id, domain=None):
         assert case_id == "case2"
         return Mock(domain=TARGET_DOMAIN, type="parent_type")
 
-    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+    with patch.object(CommCareCase.objects, 'get_case', new=_get_case):
         _test_payload_generator(intent_case=builder.get_case(), expected_indices={
             "1": {"parent": IndexAttrs("parent_type", "case2", "child")}})
 
@@ -140,11 +138,11 @@ def test_generator_update_create_index_to_parent():
 def test_generator_update_create_index_to_host():
     builder = IntentCaseBuilder().create_index("case2", "parent_type", "extension")
 
-    def _get_case(case_id):
+    def _get_case(case_id, domain=None):
         assert case_id == "case2"
         return Mock(domain=TARGET_DOMAIN, type="parent_type")
 
-    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+    with patch.object(CommCareCase.objects, 'get_case', new=_get_case):
         _test_payload_generator(intent_case=builder.get_case(), expected_indices={
             "1": {"host": IndexAttrs("parent_type", "case2", "extension")}})
 
@@ -153,31 +151,31 @@ def test_generator_update_create_index_not_found():
     builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
     with assert_raises(DataRegistryCaseUpdateError, msg="Index case not found: case2"):
-        with patch.object(CaseAccessorSQL, 'get_case', side_effect=CaseNotFound):
+        with patch.object(CommCareCase.objects, 'get_case', side_effect=CaseNotFound):
             _test_payload_generator(intent_case=builder.get_case())
 
 
 def test_generator_update_create_index_domain_mismatch():
     builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
-    def _get_case(case_id):
+    def _get_case(case_id, domain=None):
         assert case_id == "case2"
         return Mock(domain="not target", type="parent_type")
 
     with assert_raises(DataRegistryCaseUpdateError, msg="Index case not found: case2"):
-        with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+        with patch.object(CommCareCase.objects, 'get_case', new=_get_case):
             _test_payload_generator(intent_case=builder.get_case())
 
 
 def test_generator_update_create_index_case_type_mismatch():
     builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
-    def _get_case(case_id):
+    def _get_case(case_id, domain=None):
         assert case_id == "case2"
         return Mock(domain=TARGET_DOMAIN, type="not parent")
 
     with assert_raises(DataRegistryCaseUpdateError, msg="Index case type does not match"):
-        with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+        with patch.object(CommCareCase.objects, 'get_case', new=_get_case):
             _test_payload_generator(intent_case=builder.get_case())
 
 
@@ -221,11 +219,11 @@ def test_generator_update_create_and_remove_index():
         .create_index("case2", "host_type", "extension") \
         .remove_index("parent_case_id", "parent_c")
 
-    def _get_case(case_id):
+    def _get_case(case_id, domain=None):
         assert case_id == "case2"
         return Mock(domain=TARGET_DOMAIN, type="host_type")
 
-    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+    with patch.object(CommCareCase.objects, 'get_case', new=_get_case):
         _test_payload_generator(intent_case=builder.get_case(), expected_indices={
             "1": {
                 "host": IndexAttrs("host_type", "case2", "extension"),
@@ -238,11 +236,11 @@ def test_generator_update_create_and_remove_same_index():
         .create_index("case2", "new_parent_type", "child") \
         .remove_index("parent_case_id", "child")
 
-    def _get_case(case_id):
+    def _get_case(case_id, domain=None):
         assert case_id == "case2"
         return Mock(domain=TARGET_DOMAIN, type="new_parent_type")
 
-    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+    with patch.object(CommCareCase.objects, 'get_case', new=_get_case):
         _test_payload_generator(intent_case=builder.get_case(), expected_indices={
             "1": {
                 "parent": IndexAttrs("new_parent_type", "case2", "child")
@@ -265,14 +263,14 @@ def test_generator_update_multiple_cases():
     )
     main_case_builder.set_subcases([subcase1, subcase2])
 
-    def _get_case(case_id):
+    def _get_case(case_id, domain=None):
         return Mock(domain=TARGET_DOMAIN, type="parent", case_id=case_id)
 
     registry_cases = _mock_registry()
     registry_cases["sub1"] = _mock_case("sub1")
     registry_cases["sub2"] = _mock_case("sub2")
 
-    with patch.object(CaseAccessorSQL, 'get_case', new=_get_case):
+    with patch.object(CommCareCase.objects, 'get_case', new=_get_case):
         _test_payload_generator(
             intent_case=main_case_builder.get_case(),
             registry_mock_cases=registry_cases,
