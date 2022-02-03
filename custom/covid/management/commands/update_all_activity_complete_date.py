@@ -8,6 +8,7 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.hqcase.bulk import update_cases
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.users.util import SYSTEM_USER_ID, username_to_user_id
+from corehq.util.log import with_progress_bar
 
 DEVICE_ID = __name__
 
@@ -37,13 +38,13 @@ class Command(BaseCommand):
         else:
             user_id = SYSTEM_USER_ID
 
-        for domain in sorted(domains):
+        for i, domain in enumerate(sorted(domains), start=1):
             bad_case_ids = _get_bad_case_ids(domain)
-            print(f"Updating {len(bad_case_ids)} cases on {domain}")
+            print(f"Updating {len(bad_case_ids)} cases on {domain} ({i}/{len(domains)})")
             update_cases(
                 domain=domain,
                 update_fn=_correct_bad_property,
-                case_ids=bad_case_ids,
+                case_ids=with_progress_bar(bad_case_ids),
                 user_id=user_id,
                 device_id=DEVICE_ID,
                 throttle_secs=options['throttle_secs'],
