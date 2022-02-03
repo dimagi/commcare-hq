@@ -12,7 +12,9 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
-from corehq.motech.const import (
+from corehq.motech.const import (  # noqa: F401
+    COMMCARE_DATA_TYPE_DECIMAL,
+    COMMCARE_DATA_TYPE_INTEGER,
     COMMCARE_DATA_TYPE_TEXT,
     COMMCARE_DATA_TYPES_AND_UNKNOWN,
     DATA_TYPE_UNKNOWN,
