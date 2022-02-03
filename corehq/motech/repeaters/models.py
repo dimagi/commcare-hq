@@ -1072,14 +1072,7 @@ class FormRepeater(Repeater):
 
     @classmethod
     def _migration_get_fields(cls):
-        return [
-            "domain",
-            'is_paused',
-            "connection_settings",
-            "repeater_type",
-            "include_app_id_param",
-            "white_listed_form_xmlns"
-        ]
+        return super()._migration_get_fields() + ["include_app_id_param", "white_listed_form_xmlns"]
 
     @classmethod
     def _migration_get_sql_model_class(cls):
@@ -1136,16 +1129,7 @@ class CaseRepeater(Repeater):
 
     @classmethod
     def _migration_get_fields(cls):
-        return [
-            "domain",
-            "version",
-            'is_paused',
-            "connection_settings",
-            "format",
-            "white_listed_case_types",
-            "black_listed_users",
-            "repeater_type",
-        ]
+        return super()._migration_get_fields() + ["version", "white_listed_case_types", "black_listed_users"]
 
     @classmethod
     def _migration_get_sql_model_class(cls):
@@ -1313,6 +1297,10 @@ class ShortFormRepeater(Repeater):
     @classmethod
     def _migration_get_sql_model_class(cls):
         return SQLShortFormRepeater
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return super()._migration_get_fields() + ["version"]
 
 
 class AppStructureRepeater(Repeater):

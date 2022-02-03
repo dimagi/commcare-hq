@@ -149,6 +149,18 @@ class Dhis2EntityRepeater(CaseRepeater, Dhis2Instance):
             )
             raise
 
+    @classmethod
+    def _migration_get_fields(cls):
+        return super()._migration_get_fields() + [
+            "dhis2_entity_config",
+            "dhis2_version",
+            "dhis2_version_last_modified"
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLDhis2EntityRepeater
+
 
 class Dhis2Repeater(FormRepeater, Dhis2Instance):
     class Meta(object):
@@ -214,6 +226,14 @@ class Dhis2Repeater(FormRepeater, Dhis2Instance):
                     requests.notify_error(f"Error sending Events to {self}: {err}")
                     raise
         return True
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLDhis2Repeater
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return super()._migration_get_fields() + ["dhis2_config", "dhis2_version", "dhis2_version_last_modified"]
 
 
 class SQLDhis2Instance(object):

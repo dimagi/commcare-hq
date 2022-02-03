@@ -51,6 +51,14 @@ class BaseExpressionRepeater(Repeater):
             self.parsed_expression,
         )
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLBaseExpressionRepeater
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return super()._migration_get_fields() + ["configured_filter", "configured_expression"]
+
 
 class CaseExpressionRepeater(BaseExpressionRepeater):
     friendly_name = _("Configurable Case Repeater")
@@ -58,6 +66,10 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
     @memoized
     def payload_doc(self, repeat_record):
         return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id).to_json()
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLCaseExpressionRepeater
 
 
 class SQLBaseExpressionRepeater(SQLRepeater):

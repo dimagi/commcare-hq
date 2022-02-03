@@ -141,6 +141,18 @@ class FHIRRepeater(CaseRepeater):
             ))
         return case_trigger_info_list, resource_types_by_case_type
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLFHIRRepeater
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return super()._migration_get_fields() + [
+            "fhir_version",
+            "patient_registration_enabled",
+            "patient_search_enabled"
+        ]
+
 
 class SQLFHIRRepeater(SQLCaseRepeater):
     class Meta:
