@@ -406,7 +406,7 @@ class TestUpdateAllActivityCompleteDate(TestCase):
         call_command('update_all_activity_complete_date', self.domain)
 
         bad_case = self.case_accessor.get_case(self.bad_case_id)
-        self.assertEqual(bad_case.get_case_property('all_activity_complete_date'), '2022-02-02')
+        self.assertEqual(bad_case.get_case_property('all_activity_complete_date'), '')
 
         good_case = self.case_accessor.get_case(self.good_case_id)
         self.assertEqual(good_case.get_case_property('all_activity_complete_date'), 'original_value')

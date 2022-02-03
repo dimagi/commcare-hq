@@ -16,7 +16,7 @@ DEVICE_ID = __name__
 class Command(BaseCommand):
     help = ("One-off script created 2022-02-03. A bunch of cases had the "
             "property all_activity_complete_date inadvertently set to the string "
-            "'date(today())' rather than '2022-02-02'.  This corrects that.")
+            "'date(today())' rather than a date. This blanks that out.")
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
@@ -65,5 +65,5 @@ def _correct_bad_property(case):
         return CaseBlock(
             create=False,
             case_id=case.case_id,
-            update={"all_activity_complete_date": "2022-02-02"},
+            update={"all_activity_complete_date": ""},
         )
