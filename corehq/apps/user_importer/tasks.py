@@ -22,6 +22,8 @@ def import_users_and_groups(self, domain, user_specs, group_specs, upload_user_i
                             task_id=None):
     from corehq.apps.user_importer.importer import create_or_update_commcare_users_and_groups, \
         create_or_update_groups, create_or_update_web_users
+    if task_id is None:
+        task_id = self.request.id
     DownloadBase.set_progress(self, 0, 100, task_id)
 
     total = len(user_specs) + len(group_specs)
