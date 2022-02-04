@@ -29,7 +29,6 @@ from corehq.form_processor.exceptions import (
 )
 from corehq.form_processor.interfaces.dbaccessors import AbstractLedgerAccessor
 from corehq.form_processor.models import (
-    AttachmentContent,
     CaseAttachment,
     CaseTransaction,
     CommCareCaseIndex,
@@ -456,8 +455,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_attachment_content(case_id, attachment_name):
-        meta = CaseAccessorSQL.get_attachment_by_name(case_id, attachment_name)
-        return AttachmentContent(meta.content_type, meta.open())
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseAttachment.get_content(case_id, attachment_name)
 
     @staticmethod
     def get_attachments(case_id):

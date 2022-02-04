@@ -28,7 +28,7 @@ from corehq.util.json import CommCareJSONEncoder
 
 from ..exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError, UnknownActionType
 from ..track_related import TrackRelatedChanges
-from .attachment import AttachmentMixin
+from .attachment import AttachmentContent, AttachmentMixin
 from .forms import XFormInstance
 from .mixin import CaseToXMLMixin, IsImageMixin, SaveStateMixin
 from .util import attach_prefetch_models, sort_with_id_list
@@ -746,6 +746,11 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
     @classmethod
     def new(cls, name):
         return cls(name=name, attachment_id=uuid.uuid4())
+
+    @classmethod
+    def get_content(cls, case_id, name):
+        att = cls.objects.get_attachment_by_name(case_id, name)
+        return AttachmentContent(att.content_type, att.open())
 
     def __str__(self):
         return str(
