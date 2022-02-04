@@ -543,12 +543,11 @@ class FindPatientTest(SimpleTestCase):
             'form_configs': [],
         })
 
-        with mock.patch('corehq.motech.openmrs.repeater_helpers.CaseAccessors') as CaseAccessorsPatch, \
+        with mock.patch.object(CommCareCase.objects, 'get_case'), \
                 mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch, \
                 mock.patch('corehq.motech.openmrs.repeater_helpers.save_match_ids'):
             requests = mock.Mock()
             info = mock.Mock(case_id='123')
-            CaseAccessorsPatch.return_value = mock.Mock(get_case=mock.Mock())
             create_patient_patch.return_value = None
 
             find_or_create_patient(requests, DOMAIN, info, openmrs_config)

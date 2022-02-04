@@ -17,7 +17,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
-from corehq.form_processor.models.abstract import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.jsonpath import Cmp, WhereNot

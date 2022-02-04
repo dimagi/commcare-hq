@@ -7,7 +7,7 @@ from unittest.mock import patch
 from casexml.apps.case.const import CASE_ACTION_UPDATE
 from casexml.apps.phone.models import IndexTree, SimplifiedSyncLog
 
-from corehq.form_processor.models import CaseAction, CommCareCase
+from corehq.form_processor.models.cases import CaseAction, CommCareCase
 from corehq.form_processor.tests.utils import create_form_for_test, sharded
 
 

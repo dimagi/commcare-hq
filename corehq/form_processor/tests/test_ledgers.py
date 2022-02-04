@@ -7,9 +7,8 @@ from casexml.apps.case.mock import CaseFactory, CaseBlock
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import LedgerTransaction
+from corehq.form_processor.models import CommCareCase, LedgerTransaction
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 
@@ -165,7 +164,7 @@ class LedgerTests(TestCase):
         )
 
         self._assert_ledger_state(100)
-        case = CaseAccessors(DOMAIN).get_case(self.case.case_id)
+        case = CommCareCase.objects.get_case(self.case.case_id, DOMAIN)
         self.assertEqual("1", case.dynamic_case_properties()['a'])
         transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
         self.assertEqual(2, len(transactions))

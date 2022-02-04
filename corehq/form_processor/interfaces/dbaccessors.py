@@ -3,140 +3,14 @@ from collections import namedtuple
 from io import BytesIO
 
 from memoized import memoized
+from corehq.form_processor.models import CommCareCase
 
 from dimagi.utils.chunked import chunked
-
-from ..exceptions import CaseNotFound
 
 
 CaseIndexInfo = namedtuple(
     'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
 )
-
-
-class AbstractCaseAccessor(metaclass=ABCMeta):
-    """
-    Contract for common methods expected on CaseAccessor(SQL/Couch). All methods
-    should be static or classmethods.
-    """
-    @staticmethod
-    @abstractmethod
-    def get_case(case_id):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_cases(case_ids, ordered=False, prefetched_indices=None):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def case_exists(case_id):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_case_ids_that_exist(domain, case_ids):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_case_xform_ids(case_id):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_case_ids_in_domain(domain, type=None):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_case_ids_in_domain_by_owners(domain, owner_ids):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_open_case_ids_for_owner(domain, owner_id):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_closed_case_ids_for_owner(domain, owner_id):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_related_indices(case_ids, exclude_indices):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_extension_case_ids(domain, case_ids, include_closed, exclude_for_case_type=None):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_indexed_case_ids(domain, case_ids):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_last_modified_dates(domain, case_ids):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_all_reverse_indices_info(domain, case_ids):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_attachment_content(case_id, attachment_id):
-        """
-        :param attachment_id:
-        :return: AttachmentContent object
-        """
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_cases_by_external_id(domain, external_id, case_type=None):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def soft_undelete_cases(domain, case_ids):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_deleted_case_ids_by_owner(domain, owner_id):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def get_case_owner_ids(domain):
-        raise NotImplementedError
 
 
 class CaseAccessors(object):
@@ -154,12 +28,8 @@ class CaseAccessors(object):
         return CaseAccessorSQL
 
     def get_case(self, case_id):
-        if not case_id:
-            raise CaseNotFound
-        case = self.db_accessor.get_case(case_id)
-        if case.domain != self.domain:
-            raise CaseNotFound(case_id)
-        return case
+        """DEPRECATED use CommCareCase.objects"""
+        return CommCareCase.objects.get_case(case_id, self.domain)
 
     def get_cases(self, case_ids, ordered=False, prefetched_indices=None):
         return self.db_accessor.get_cases(

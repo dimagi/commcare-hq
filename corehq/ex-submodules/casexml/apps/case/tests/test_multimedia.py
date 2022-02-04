@@ -16,8 +16,7 @@ from casexml.apps.phone.models import SimplifiedSyncLog
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import TestFileMixin, trap_extra_setup, flag_enabled
@@ -124,7 +123,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
             orig_attachment.seek(0)
             self.assertEqual(hashlib.md5(fileback).hexdigest(), hashlib.md5(orig_attachment.read()).hexdigest())
 
-        case = CaseAccessors(TEST_DOMAIN_NAME).get_case(case.case_id)  # re-fetch case
+        case = CommCareCase.objects.get_case(case.case_id, TEST_DOMAIN_NAME)  # re-fetch case
         return form, case
 
     def _doCreateCaseWithMultimedia(self, attachments=['fruity_file']):
@@ -216,7 +215,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self._validateOTARestore(case.domain, case.case_id, restore_attachments)
 
     def _validateOTARestore(self, domain, case_id, restore_attachments):
-        case_xml = CaseAccessors(domain).get_case(case_id).to_xml(V2)
+        case_xml = CommCareCase.objects.get_case(case_id, domain).to_xml(V2)
         root_node = lxml.etree.fromstring(case_xml)
         attaches = root_node.find('{http://commcarehq.org/case/transaction/v2}attachment')
         self.assertEqual(len(restore_attachments), len(attaches))

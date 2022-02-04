@@ -20,6 +20,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.const import OPENROSA_VERSION_3
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.motech.repeaters.exceptions import ReferralError, DataRegistryCaseUpdateError
 from dimagi.utils.parsing import json_format_datetime
@@ -548,7 +549,7 @@ class CaseUpdateConfig:
                 return index_spec
 
         try:
-            index_case = CaseAccessors(self.domain).get_case(self.index_create_case_id)
+            index_case = CommCareCase.objects.get_case(self.index_create_case_id, self.domain)
         except CaseNotFound:
             raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
