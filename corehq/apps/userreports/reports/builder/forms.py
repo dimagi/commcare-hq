@@ -92,7 +92,7 @@ from corehq.toggles import (
     SHOW_IDS_IN_REPORT_BUILDER,
     DATA_REGISTRY
 )
-
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 STATIC_CASE_PROPS = [
     "closed",
@@ -1340,7 +1340,10 @@ class ConfigureNewReportBase(forms.Form):
         if not self.ds_builder.uses_managed_data_source:
             return
 
-        data_source_config = get_ucr_datasource_config_by_id(data_source_config_id)
+        data_source_config = get_ucr_datasource_config_by_id(data_source_config_id, allow_deleted=True)
+        if data_source_config.is_deleted:
+            # undelete the temp data source
+            data_source_config.doc_type = data_source_config.doc_type.replace(DELETED_SUFFIX, '')
 
         filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
         # The data source needs indicators for all possible calculations, not just the ones currently in use
