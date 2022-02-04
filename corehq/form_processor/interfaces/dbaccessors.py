@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 from io import BytesIO
+from warnings import warn
 
 from memoized import memoized
 from corehq.form_processor.models import CommCareCase
@@ -26,16 +27,16 @@ class CaseAccessors(object):
         return CaseAccessorSQL
 
     def get_case(self, case_id):
-        """DEPRECATED use CommCareCase.objects"""
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return CommCareCase.objects.get_case(case_id, self.domain)
 
     def get_cases(self, case_ids, ordered=False, prefetched_indices=None):
-        """DEPRECATED use CommCareCase.objects"""
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_cases(
             case_ids, ordered=ordered, prefetched_indices=prefetched_indices)
 
     def iter_cases(self, case_ids):
-        """DEPRECATED use CommCareCase.objects"""
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         yield from CommCareCase.objects.iter_cases(case_ids)
 
     def get_case_ids_that_exist(self, case_ids):

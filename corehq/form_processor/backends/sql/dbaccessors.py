@@ -7,6 +7,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import namedtuple
 from datetime import datetime
 from uuid import UUID
+from warnings import warn
 
 from django.conf import settings
 from django.db import InternalError, transaction, router, DatabaseError
@@ -407,12 +408,12 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_case(case_id):
-        """DEPRECATED"""
+        warn("DEPRECATED", DeprecationWarning)
         return CommCareCase.objects.get_case(case_id)
 
     @staticmethod
     def get_cases(case_ids, ordered=False, prefetched_indices=None):
-        """DEPRECATED"""
+        warn("DEPRECATED", DeprecationWarning)
         return CommCareCase.objects.get_cases(case_ids, ordered, prefetched_indices)
 
     @staticmethod
