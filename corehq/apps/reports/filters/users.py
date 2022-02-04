@@ -8,6 +8,7 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from memoized import memoized
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
@@ -348,7 +349,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
-        q = user_es.UserES().domain(domain, allow_enterprise=True)
+        q = cls._base_user_es_query(domain, request_user)
         q = customize_user_query(request_user, domain, q)
         if (
             ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs)
@@ -436,6 +437,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             )
         return q.filter(id_filter)
 
+    @classmethod
+    def _base_user_es_query(cls, domain, request_user):
+        return user_es.UserES().domain(domain, allow_enterprise=True)
+
     @staticmethod
     def _verify_users_are_accessible(domain, request_user, user_ids):
         # This function would be very slow if called with many user ids
@@ -461,11 +466,64 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         }
 
 
-class AffectedUserFilter(ExpandedMobileWorkerFilter):
+class EnterpriseUsersUtils(EmwfUtils):
+
+    def user_tuple(self, user):
+        user_dict = util._report_user_dict(user)
+        uid = "u__%s" % user_dict['user_id']
+        is_active = False
+        report_username = user_dict['username_in_report']
+        if user['doc_type'] == 'WebUser':
+            name = f"{report_username} [Web User]"
+        elif user_dict['is_active']:
+            is_active = True
+            name = f"{report_username} [Active Mobile Worker in '{user['domain']}']"
+        else:
+            name = f"{report_username} [Deactivated Mobile Worker in '{user['domain']}']"
+        return uid, name, is_active
+
+
+class EnterpriseUserFilter(ExpandedMobileWorkerFilter):
+    """User filter for use with enterprise reports. The filter will
+    give access to all users across the enterprise provided the current
+    domain is the 'source' domain the current user is has no location restrictions
+    """
+
+    options_url = "enterprise_user_options"
+
+    def get_default_selections(self):
+        return [
+            ('t__0', _("[Active Mobile Workers]")),
+            ('t__5', _("[Deactivated Mobile Workers]")),
+            ('t__6', _("[Web Users]"))
+        ]
+
+    @property
+    @memoized
+    def utils(self):
+        return EnterpriseUsersUtils(self.domain)
+
+    @property
+    def filter_context(self):
+        context = super().filter_context
+        # this filter doesn't support locations
+        context.pop('search_help_inline', None)
+        return context
+
+    @classmethod
+    def _base_user_es_query(cls, domain, request_user):
+        if not request_user.has_permission(domain, 'access_all_locations'):
+            return super()._base_user_es_query(domain, request_user)
+
+        domains = list(set(EnterprisePermissions.get_domains(domain)) | {domain})
+        return user_es.UserES().domains(domains)
+
+
+class AffectedUserFilter(EnterpriseUserFilter):
     label = _("Affected User(s)")
 
 
-class ChangedByUserFilter(ExpandedMobileWorkerFilter):
+class ChangedByUserFilter(EnterpriseUserFilter):
     slug = "changed_by_user"
     label = ugettext_lazy("Modified by User(s)")
 

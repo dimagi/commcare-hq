@@ -17,13 +17,13 @@ from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import (
     NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_EMAIL_DOMAIN, NAMESPACE_OTHER, all_toggles
 )
+from corehq.toggles.models import Toggle
 from corehq.util.files import safe_filename_header, TransientTempfile
 from corehq.util.view_utils import absolute_reverse
 from couchforms.analytics import domain_has_submission_in_last_30_days
 from dimagi.utils.django.email import send_HTML_email
 from soil import DownloadBase
 from soil.util import expose_blob_download
-from toggle.models import Toggle
 
 
 @task(bind=True)

@@ -17,14 +17,15 @@ from corehq.apps.locations.document_store import LocationDocumentStore
 from corehq.apps.sms.document_stores import SMSDocumentStore
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
-    FormAccessorSQL,
-    LedgerAccessorSQL)
+    LedgerAccessorSQL,
+)
 from corehq.form_processor.document_stores import (
     CaseDocumentStore,
     DocStoreLoadTracker,
     FormDocumentStore,
     LedgerV2DocumentStore,
 )
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import sharded
 from corehq.util.exceptions import DatabaseNotFound
 from corehq.util.test_utils import generate_cases
@@ -101,7 +102,7 @@ def case_form_data():
     try:
         yield form_ids, case_ids
     finally:
-        FormAccessorSQL.hard_delete_forms('domain', form_ids)
+        XFormInstance.objects.hard_delete_forms('domain', form_ids)
         CaseAccessorSQL.hard_delete_cases('domain', case_ids)
 
 

@@ -619,6 +619,11 @@ class AdvancedOpenCaseAction(AdvancedAction):
         return super(AdvancedOpenCaseAction, cls).wrap(data)
 
 
+class ArbitraryDatum(DocumentSchema):
+    datum_id = StringProperty(default=None)
+    datum_function = StringProperty(default=None)
+
+
 class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
 
@@ -2630,6 +2635,7 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
+    arbitrary_datums = SchemaListProperty(ArbitraryDatum)
     schedule = SchemaProperty(FormSchedule, default=None)
 
     @classmethod
@@ -4302,10 +4308,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @absolute_url_property
     def ota_restore_url(self):
         return reverse('app_aware_restore', args=[self.domain, self._id])
-
-    @absolute_url_property
-    def form_record_url(self):
-        return '/a/%s/api/custom/pact_formdata/v1/' % self.domain
 
     @absolute_url_property
     def hq_profile_url(self):

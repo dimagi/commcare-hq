@@ -435,12 +435,14 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         self._test_cursor_response(ids_and_dates[6:], previous_content=content)
 
     def _test_cursor_response(self, expected, previous_content=None, extra_params=None):
-        params = {}
         if previous_content:
-            params = previous_content["meta"]["next"]
-        if extra_params:
-            params = f'?{urlencode(extra_params)}'
-        url = f'{self.list_endpoint}{params}'
+            url = previous_content["meta"]["next"]
+            assert not extra_params, "extra_params not allowed with previous_content"
+        else:
+            url = self.list_endpoint
+            if extra_params:
+                url = f'{url}?{urlencode(extra_params)}'
+
         response = self._auth_get_resource(url)
         self.assertEqual(response.status_code, 200, response.content)
         content = json.loads(response.content)

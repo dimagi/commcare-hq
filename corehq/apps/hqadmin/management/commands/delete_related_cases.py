@@ -6,10 +6,8 @@ import csv
 
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.users.util import cached_owner_id_to_display
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 
 
 class Command(BaseCommand):
@@ -44,7 +42,7 @@ class Command(BaseCommand):
                 print(headers)
 
                 for case in cases_to_delete:
-                    form = FormAccessors(domain=domain).get_form(case.xform_ids[0])
+                    form = XFormInstance.objects.get_form(case.xform_ids[0], domain=domain)
                     app_version_info = get_app_version_info(
                         domain,
                         form.build_id,

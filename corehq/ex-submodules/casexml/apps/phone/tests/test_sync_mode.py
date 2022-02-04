@@ -18,6 +18,7 @@ from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -28,7 +29,6 @@ from casexml.apps.phone.models import (
     AbstractSyncLog,
     get_properly_wrapped_sync_log,
     LOG_FORMAT_LIVEQUERY,
-    LOG_FORMAT_SIMPLIFIED,
 )
 from casexml.apps.phone.restore import (
     CachedResponse,
@@ -37,7 +37,6 @@ from casexml.apps.phone.restore import (
     RestoreCacheSettings,
 )
 from casexml.apps.case.xml import V2, V1
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
 USERNAME = "syncguy"
 OTHER_USERNAME = "ferrel"
@@ -1902,11 +1901,10 @@ class SyncTokenReprocessingTest(BaseSyncTest):
         case_id = "should_have"
         self.device.post_changes(case_id=case_id, create=True)
         sync_log = self.device.last_sync.get_log()
-        cases_on_phone = sync_log.tests_only_get_cases_on_phone()
-        self.assertEqual({case_id}, {c.case_id for c in cases_on_phone})
+        self.assertEqual({case_id}, sync_log.case_ids_on_phone)
 
         # manually delete it and then try to update
-        sync_log.test_only_clear_cases_on_phone()
+        sync_log.case_ids_on_phone = set()
         sync_log.save()
 
         self.device.post_changes(CaseBlock.deprecated_init(

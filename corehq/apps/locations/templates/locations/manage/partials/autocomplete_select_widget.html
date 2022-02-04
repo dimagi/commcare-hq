@@ -4,6 +4,7 @@
   {% if attrs.disabled %}
         disabled="disabled"
   {% endif %}
+        attrs="{{ attrs }}"
         data-placeholder="{% html_attr placeholder %}"
         data-multiselect="{% html_attr multiselect %}"
         data-query-url="{% html_attr query_url %}"

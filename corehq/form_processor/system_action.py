@@ -1,7 +1,5 @@
 import logging
 
-from corehq.form_processor.models import XFormInstanceSQL
-
 log = logging.getLogger(__name__)
 
 
@@ -55,14 +53,13 @@ SYSTEM_ACTION_XMLNS = "http://commcarehq.org/system/action"
 
 
 def handle_system_action(form, auth_context):
+    from .models import XFormInstance
     if auth_context is not SystemActionContext:
         raise UnauthorizedSystemAction(repr(form))
     # put form in archived state so it does not appear in exports
     assert form.xmlns == SYSTEM_ACTION_XMLNS, repr(form)
-    if isinstance(form, XFormInstanceSQL):
-        form.state = XFormInstanceSQL.ARCHIVED
-    else:
-        form.doc_type = "XFormArchived"
+    assert isinstance(form, XFormInstance), form
+    form.state = XFormInstance.ARCHIVED
 
 
 def do_system_action(name, args):

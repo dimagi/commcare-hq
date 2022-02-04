@@ -12,7 +12,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL, FormReindexAccessor, CaseReindexAccessor,
     LedgerAccessorSQL, LedgerReindexAccessor
 )
-from corehq.form_processor.models import LedgerValue, CommCareCaseSQL
+from corehq.form_processor.models import LedgerValue, CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test, sharded
 
 
@@ -188,7 +188,7 @@ def _create_ledger(domain, entry_id, balance, case_id=None, section_id='stock'):
     utcnow = datetime.utcnow()
 
     case_id = case_id or uuid.uuid4().hex
-    case = CommCareCaseSQL(
+    case = CommCareCase(
         case_id=case_id,
         domain=domain,
         type='',

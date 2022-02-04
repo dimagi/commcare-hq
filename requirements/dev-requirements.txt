@@ -12,6 +12,8 @@ amqp==2.6.1
     # via kombu
 architect==0.5.6
     # via -r base-requirements.in
+asttokens==2.0.5
+    # via stack-data
 attrs==18.2.0
     # via
     #   -r base-requirements.in
@@ -23,16 +25,16 @@ backcall==0.2.0
 beautifulsoup4==4.10.0
     # via -r test-requirements.in
 billiard==3.5.0.4
-    # via
-    #   -r base-requirements.in
-    #   celery
+    # via -r base-requirements.in
+black==22.1.0
+    # via ipython
 boto3==1.17.85
     # via -r base-requirements.in
 botocore==1.20.85
     # via
     #   boto3
     #   s3transfer
-https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
+celery @ https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
     # via
     #   -r base-requirements.in
     #   django-celery-results
@@ -48,8 +50,9 @@ chardet==3.0.4
     # via
     #   ghdiff
     #   requests
-click==7.1.2
+click==8.0.3
     # via
+    #   black
     #   git-build-branch
     #   pip-tools
 cloudant==2.14.0
@@ -84,7 +87,6 @@ decorator==4.0.11
     #   datadog
     #   ipython
     #   jsonpath-ng
-    #   traitlets
 defusedxml==0.7.1
     # via -r base-requirements.in
 deprecated==1.2.10
@@ -93,7 +95,7 @@ diff-match-patch==20200713
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==2.2.24
+django==2.2.25
     # via
     #   -r base-requirements.in
     #   django-angular
@@ -144,7 +146,7 @@ django-formtools==2.1
     #   django-two-factor-auth
 django-logentry-admin==1.0.6
     # via -r base-requirements.in
-https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
+django-nose @ https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
     # via -r test-requirements.in
 django-oauth-toolkit==1.5.0
     # via -r base-requirements.in
@@ -203,6 +205,8 @@ ethiopian-date-converter==0.1.5
     # via -r base-requirements.in
 eulxml==1.1.3
     # via -r base-requirements.in
+executing==0.8.2
+    # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
 faker==5.0.2
@@ -251,17 +255,15 @@ imagesize==1.2.0
     # via sphinx
 intervaltree==3.1.0
     # via ddtrace
-ipython==7.16.1
+ipython==8.0.1
     # via -r dev-requirements.in
-ipython-genutils==0.2.0
-    # via traitlets
 iso8601==0.1.13
     # via -r base-requirements.in
 isodate==0.6.0
     # via python3-saml
 jdcal==1.4.1
     # via openpyxl
-jedi==0.17.2
+jedi==0.18.1
     # via ipython
 jinja2==2.11.3
     # via
@@ -284,7 +286,7 @@ jsonobject==0.9.10
     #   jsonobject-couchdbkit
 jsonobject-couchdbkit==1.0.1
     # via -r base-requirements.in
-https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
+jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
 jsonschema==3.2.0
     # via -r base-requirements.in
@@ -293,12 +295,10 @@ jwcrypto==0.8
 kafka-python==1.4.7
     # via -r base-requirements.in
 kombu==4.2.2.post1
-    # via
-    #   -r base-requirements.in
-    #   celery
+    # via -r base-requirements.in
 laboratory==0.2.0
     # via -r base-requirements.in
-lxml==4.6.3
+lxml==4.7.1
     # via
     #   -r base-requirements.in
     #   eulxml
@@ -312,8 +312,12 @@ markupsafe==1.1.1
     # via
     #   jinja2
     #   mako
+matplotlib-inline==0.1.3
+    # via ipython
 mccabe==0.6.1
     # via flake8
+mypy-extensions==0.4.3
+    # via black
 nose==1.3.7
     # via
     #   -r test-requirements.in
@@ -332,8 +336,10 @@ openpyxl==3.0.6
     #   commcaretranslationchecker
 packaging==20.4
     # via sphinx
-parso==0.7.1
+parso==0.8.3
     # via jedi
+pathspec==0.9.0
+    # via black
 pep517==0.10.0
     # via pip-tools
 pexpect==4.8.0
@@ -344,12 +350,14 @@ pickle5==0.0.11
     # via -r base-requirements.in
 pickleshare==0.7.5
     # via ipython
-pillow==8.3.2
+pillow==9.0.0
     # via
     #   -r base-requirements.in
     #   reportlab
-pip-tools==6.2.0
+pip-tools==6.4.0
     # via -r test-requirements.in
+platformdirs==2.4.1
+    # via black
 ply==3.11
     # via
     #   eulxml
@@ -358,7 +366,7 @@ polib==1.1.0
     # via -r base-requirements.in
 prometheus-client==0.7.1
     # via -r base-requirements.in
-prompt-toolkit==3.0.7
+prompt-toolkit==3.0.26
     # via ipython
 protobuf==3.13.0
     # via ddtrace
@@ -370,8 +378,10 @@ psycopg2==2.8.6
     # via
     #   -r base-requirements.in
     #   sqlalchemy-postgres-copy
-ptyprocess==0.6.0
+ptyprocess==0.7.0
     # via pexpect
+pure-eval==0.2.2
+    # via stack-data
 py-kissmetrics==1.1.0
     # via -r base-requirements.in
 pycodestyle==2.7.0
@@ -431,7 +441,6 @@ pytz==2020.1
     # via
     #   -r base-requirements.in
     #   babel
-    #   celery
     #   django
     #   twilio
 pyyaml==5.4.1
@@ -456,7 +465,7 @@ redis==3.5.3
     #   django-redis
     #   django-redis-sessions
     #   django-websocket-redis
-reportlab==3.5.53
+reportlab==3.5.55
     # via -r base-requirements.in
 requests==2.25.1
     # via
@@ -492,7 +501,7 @@ sh==1.14.2
     # via
     #   -r base-requirements.in
     #   git-build-branch
-git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
 simplejson==3.17.2
     # via
@@ -501,6 +510,7 @@ simplejson==3.17.2
 six==1.15.0
     # via
     #   -r base-requirements.in
+    #   asttokens
     #   django-braces
     #   django-compressor
     #   django-oauth-toolkit
@@ -529,7 +539,6 @@ six==1.15.0
     #   requests-mock
     #   sqlalchemy-postgres-copy
     #   tenacity
-    #   traitlets
     #   transifex-client
     #   twilio
 smmap==4.0.0
@@ -576,6 +585,8 @@ sqlalchemy-postgres-copy==0.5.0
     # via -r test-requirements.in
 sqlparse==0.3.1
     # via django
+stack-data==0.1.4
+    # via ipython
 stripe==2.54.0
     # via -r base-requirements.in
 suds-py3==1.4.4.1
@@ -593,10 +604,14 @@ tinys3==0.1.12
     # via -r base-requirements.in
 toml==0.10.2
     # via pep517
+tomli==2.0.0
+    # via black
 toposort==1.7
     # via -r base-requirements.in
-traitlets==4.3.3
-    # via ipython
+traitlets==5.1.1
+    # via
+    #   ipython
+    #   matplotlib-inline
 transifex-client==0.14.3
     # via -r dev-requirements.in
 tropo-webapi-python==0.1.3
@@ -605,6 +620,8 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==6.5.1
     # via -r base-requirements.in
+typing-extensions==4.0.1
+    # via black
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
@@ -646,7 +663,7 @@ zope.interface==5.4.0
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==21.2.4
+pip==21.3.1
     # via pip-tools
 setuptools==50.3.0
     # via

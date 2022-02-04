@@ -16,11 +16,8 @@ from corehq.form_processor.exceptions import (
     MissingFormXml,
     XFormNotFound,
 )
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstance
 
 
 class UnexpectedBackend(Exception):
@@ -31,28 +28,27 @@ class FormDocumentStore(DocumentStore):
 
     def __init__(self, domain, xmlns=None):
         self.domain = domain
-        self.form_accessors = FormAccessors(domain=domain)
         self.xmlns = xmlns
 
     def get_document(self, doc_id):
         try:
-            form = self.form_accessors.get_form(doc_id)
+            form = XFormInstance.objects.get_form(doc_id, self.domain)
             return self._to_json(form)
         except (XFormNotFound, BlobError) as e:
             raise DocumentNotFoundError(e)
 
     @staticmethod
     def _to_json(form):
-        if isinstance(form, XFormInstanceSQL):
+        if isinstance(form, XFormInstance):
             return form.to_json(include_attachments=True)
         else:
             return form.to_json()
 
     def iter_document_ids(self):
-        return iter(self.form_accessors.iter_form_ids_by_xmlns(self.xmlns))
+        return iter(XFormInstance.objects.iter_form_ids_by_xmlns(self.domain, self.xmlns))
 
     def iter_documents(self, ids):
-        for wrapped_form in self.form_accessors.iter_forms(ids):
+        for wrapped_form in XFormInstance.objects.iter_forms(ids, self.domain):
             try:
                 yield self._to_json(wrapped_form)
             except (DocumentNotFoundError, MissingFormXml):

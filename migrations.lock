@@ -86,6 +86,8 @@ admin
 aggregate_ucrs
  0001_initial_squashed_0008_auto_20180625_1105 (8 squashed migrations)
  0002_auto_20180827_1148
+analytics
+ 0001_initial
 api
  0001_initial
  0002_alter_permissions
@@ -433,6 +435,7 @@ form_processor
  0090_auto_20190523_0833
  0091_auto_20190603_2023
  0092_auto_20200924_1753
+ 0093_rename_models (5 squashed migrations)
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -673,6 +676,7 @@ scheduling_partitioned
  0005_timed_schedule_instance_schedule_revision
  0006_unique_indexes
  0007_index_cleanup
+ 0008_track_attempts
 sessions
  0001_initial
 sites
@@ -828,6 +832,7 @@ sql_accessors
  0063_get_ledger_values_for_cases_2
  0064_remove_get_case_models_functions
  0065_get_ledger_values_for_cases_3
+ 0066_drop_unused_function
 sql_proxy_accessors
  0001_initial
  0002_add_sync_functions
@@ -877,6 +882,7 @@ sql_proxy_accessors
  0046_get_ledger_values_for_cases_2
  0047_remove_get_case_models_functions
  0048_get_ledger_values_for_cases_3
+ 0049_drop_unused_function
 sql_proxy_standby_accessors
  0001_initial
 sso

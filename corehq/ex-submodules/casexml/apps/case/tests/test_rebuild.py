@@ -8,8 +8,8 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks, primary_actions
 from corehq.apps.change_feed import topics
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.models import RebuildWithReason
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import RebuildWithReason, XFormInstance
 from corehq.form_processor.tests.utils import sharded
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
@@ -82,7 +82,7 @@ class CaseRebuildTest(TestCase):
         self.assertFalse(case.is_deleted)
         self.assertEqual(1, len(case.actions))
         [form_id] = case.xform_ids
-        form = FormAccessors(REBUILD_TEST_DOMAIN).get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id, REBUILD_TEST_DOMAIN)
 
         form.archive()
         case = case_accessors.get_case(case_id)
@@ -137,8 +137,8 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(f3, close.form_id)
 
         # todo: should this be the behavior for archiving the create form?
-        form_acessors = FormAccessors(REBUILD_TEST_DOMAIN)
-        f1_doc = form_acessors.get_form(f1)
+        get_form = XFormInstance.objects.get_form
+        f1_doc = get_form(f1)
         with capture_kafka_changes_context(topics.CASE_SQL) as change_context:
             f1_doc.archive()
 
@@ -160,14 +160,14 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.get_case_property('p5'), 'p5-3')  # no change
 
         def _reset(form_id):
-            form_doc = form_acessors.get_form(form_id)
+            form_doc = get_form(form_id)
             form_doc.unarchive()
             case = case_accessors.get_case(case_id)
             _check_initial_state(case)
 
         _reset(f1)
 
-        f2_doc = form_acessors.get_form(f2)
+        f2_doc = get_form(f2)
         f2_doc.archive()
         case = case_accessors.get_case(case_id)
 
@@ -186,7 +186,7 @@ class CaseRebuildTest(TestCase):
 
         _reset(f2)
 
-        f3_doc = form_acessors.get_form(f3)
+        f3_doc = get_form(f3)
         f3_doc.archive()
         case = case_accessors.get_case(case_id)
 
@@ -225,7 +225,7 @@ class CaseRebuildTest(TestCase):
         case = case_accessors.get_case(case_id)
         self.assertEqual(earlier, case.modified_on)
 
-        second_form = FormAccessors(REBUILD_TEST_DOMAIN).get_form(case.xform_ids[-1])
+        second_form = XFormInstance.objects.get_form(case.xform_ids[-1], 'test-domain')
         second_form.archive()
         case = case_accessors.get_case(case_id)
         self.assertEqual(way_earlier, case.modified_on)
@@ -244,7 +244,7 @@ class CaseRebuildTest(TestCase):
         case_accessors.soft_delete_cases([case_id])
 
         [f1, f2, f3] = case.xform_ids
-        f2_doc = FormAccessors(REBUILD_TEST_DOMAIN).get_form(f2)
+        f2_doc = XFormInstance.objects.get_form(f2, REBUILD_TEST_DOMAIN)
         f2_doc.archive()
         case = case_accessors.get_case(case_id)
         self.assertTrue(case.is_deleted)

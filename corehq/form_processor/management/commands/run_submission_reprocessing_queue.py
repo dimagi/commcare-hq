@@ -3,7 +3,7 @@ from time import sleep
 
 from django.core.management import BaseCommand
 from django.db import connection
-from django.db.models import F
+from django.db.models import F, Count
 
 from corehq.sql_db.util import handle_connection_failure
 from couchforms.models import UnfinishedSubmissionStub
@@ -17,9 +17,13 @@ BATCH_SIZE = 1000
 
 
 def _record_datadog_metrics():
-    count = UnfinishedSubmissionStub.objects.count()
-    metrics_gauge('commcare.submission_reprocessing.queue_size', count,
-        multiprocess_mode=MPM_MAX)
+    counts_by_domain = UnfinishedSubmissionStub.objects.values('domain').annotate(count=Count('domain'))
+    for row in counts_by_domain:
+        tags = {'domain': row['domain']}
+        metrics_gauge(
+            'commcare.submission_reprocessing.queue_size', row['count'],
+            tags=tags, multiprocess_mode=MPM_MAX
+        )
 
 
 class SubmissionReprocessingEnqueuingOperation(BaseCommand):

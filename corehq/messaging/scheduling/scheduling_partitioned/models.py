@@ -10,7 +10,7 @@ from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.apps.users.util import format_username
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.models.abstract import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
@@ -45,6 +45,8 @@ class ScheduleInstance(PartitionedModel):
     schedule_iteration_num = models.IntegerField()
     next_event_due = models.DateTimeField()
     active = models.BooleanField()
+    attempts = models.IntegerField(default=0)
+    last_atempt = models.DateTimeField(null=True)
 
     RECIPIENT_TYPE_CASE = 'CommCareCase'
     RECIPIENT_TYPE_MOBILE_WORKER = 'CommCareUser'
@@ -526,7 +528,8 @@ class TimedScheduleInstance(AbstractTimedScheduleInstance):
 
 @attr.s
 class EmailAddressRecipient(object):
-    email_address = attr.ib()
+    case = attr.ib()
+    email_property = attr.ib()
 
     @property
     def doc_type(self):
@@ -534,13 +537,16 @@ class EmailAddressRecipient(object):
 
     @property
     def get_id(self):
-        return self.email_address
+        return self.get_email()
 
     def get_email(self):
-        return self.email_address
+        return self.case.get_case_property(self.email_property)
 
     def get_language_code(self):
-        return None
+        return self.case.get_language_code()
+
+    def get_time_zone(self):
+        return self.case.get_time_zone()
 
 
 class CaseScheduleInstanceMixin(object):
@@ -632,8 +638,7 @@ class CaseScheduleInstanceMixin(object):
             full_username = format_username(username, self.domain)
             return CommCareUser.get_by_username(full_username)
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL:
-            email = self.case.get_case_property(self.recipient_id)
-            return EmailAddressRecipient(email)
+            return EmailAddressRecipient(self.case, self.recipient_id)
         else:
             return super(CaseScheduleInstanceMixin, self).recipient
 

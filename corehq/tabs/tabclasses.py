@@ -1378,7 +1378,7 @@ class ProjectUsersTab(UITab):
                      'urlname': 'commcare_users_lookup'},
                     {'title': _('Edit User Fields'),
                      'urlname': 'user_fields_view'},
-                    {'title': _('Filter and Download Users'),
+                    {'title': _('Filter and Download Mobile Workers'),
                      'urlname': 'filter_and_download_commcare_users'},
                     {'title': _(
                         ConfirmBillingAccountForExtraUsersView.page_title),
@@ -1746,13 +1746,6 @@ class ProjectSettingsTab(UITab):
             'title': _(EditMyProjectSettingsView.page_title),
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
-
-        if toggles.OPENCLINICA.enabled(self.domain):
-            from corehq.apps.domain.views.settings import EditOpenClinicaSettingsView
-            project_info.append({
-                'title': _(EditOpenClinicaSettingsView.page_title),
-                'url': reverse(EditOpenClinicaSettingsView.urlname, args=[self.domain])
-            })
 
         items.append((_('Project Information'), project_info))
 

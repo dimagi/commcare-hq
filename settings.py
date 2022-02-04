@@ -349,9 +349,7 @@ HQ_APPS = (
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
-    'custom.openclinica',
     'soil',
-    'toggle',
     'phonelog',
     'pillowtop',
     'pillow_retry',
@@ -363,6 +361,7 @@ HQ_APPS = (
     'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
+    'corehq.toggles',
     'corehq.util',
     'dimagi.ext',
     'corehq.blobs',
@@ -371,8 +370,6 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'pact',
-
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.ucla',
@@ -1094,7 +1091,8 @@ DEFAULT_COMMCARE_EXTENSIONS = [
     "custom.abt.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
-    "custom.nutrition_project.commcare_extensions"
+    "custom.nutrition_project.commcare_extensions",
+    "custom.samveg.commcare_extensions",
 ]
 COMMCARE_EXTENSIONS = []
 
@@ -1220,6 +1218,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
+                'corehq.util.context_processors.status_page',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1553,10 +1552,8 @@ COUCHDB_APPS = [
     'registration',
     'crs_reports',
     'grapevine',
-    'openclinica',
 
     # custom reports
-    'pact',
     'accounting',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
@@ -1919,7 +1916,6 @@ COUCH_CACHE_BACKENDS = [
 # Custom fully indexed domains for ReportCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
-    'pact',
     'commtrack-public-demo',
     'crs-remind',
 ]
@@ -1930,7 +1926,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 # Adding a domain will not automatically index that domain's existing forms
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
-    'pact',
 ]
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -1946,7 +1941,6 @@ CUSTOM_MODULES = [
 
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
-    'pact': 'pact',
 
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',

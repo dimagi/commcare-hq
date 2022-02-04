@@ -1,4 +1,3 @@
-import itertools
 import os
 from datetime import datetime
 from distutils.version import LooseVersion
@@ -418,9 +417,6 @@ def registry_case(request, domain, app_id):
     case_ids = request_dict.getlist("case_id")
     case_types = request_dict.getlist("case_type")
     registry = request_dict.get(CASE_SEARCH_REGISTRY_ID_KEY)
-    if not registry:
-        # legacy name
-        registry = request_dict.get("commcare_registry")
 
     missing = [
         name
@@ -456,10 +452,7 @@ def registry_case(request, domain, app_id):
         if case.type not in case_types:
             return HttpResponseNotFound(f"Case '{case.case_id}' not found")
 
-    all_cases = list(itertools.chain.from_iterable(
-        helper.get_case_hierarchy(request.couch_user, case)
-        for case in cases
-    ))
+    all_cases = helper.get_multi_domain_case_hierarchy(request.couch_user, cases)
     for case in all_cases:
         case.case_json[COMMCARE_PROJECT] = case.domain
     return HttpResponse(CaseDBFixture(all_cases).fixture, content_type="text/xml; charset=utf-8")
