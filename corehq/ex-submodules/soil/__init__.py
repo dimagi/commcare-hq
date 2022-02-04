@@ -162,8 +162,8 @@ class DownloadBase(object):
         }
 
     @classmethod
-    def set_progress(cls, task, current, total, task_id=None):
-        set_task_progress(task, current, total, task_id)
+    def set_progress(cls, task, current, total):
+        set_task_progress(task, current, total)
 
     @classmethod
     def create(cls, payload, **kwargs):

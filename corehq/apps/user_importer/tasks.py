@@ -18,62 +18,17 @@ USER_UPLOAD_CHUNK_SIZE = 1000
 
 
 @task(bind=True)
-def import_users_and_groups(self, domain, user_specs, group_specs, upload_user_id, upload_record_id, is_web_upload,
-                            task_id=None):
-    from corehq.apps.user_importer.importer import create_or_update_commcare_users_and_groups, \
-        create_or_update_groups, create_or_update_web_users
-    if task_id is None:
-        task_id = self.request.id
-    DownloadBase.set_progress(self, 0, 100, task_id)
-
-    total = len(user_specs) + len(group_specs)
-    DownloadBase.set_progress(self, 0, total, task_id)
-
-    group_memoizer, group_results = create_or_update_groups(domain, group_specs)
-
-    DownloadBase.set_progress(self, len(group_specs), total, task_id)
-
-    def _update_progress(value, start=0):
-        DownloadBase.set_progress(self, start + value, total, task_id)
-
-    upload_user = WebUser.get_by_user_id(upload_user_id)
-    if is_web_upload:
-        user_results = create_or_update_web_users(
-            domain,
-            user_specs,
-            upload_user=upload_user,
-            upload_record_id=upload_record_id,
-            update_progress=functools.partial(_update_progress, start=len(group_specs))
-        )
-    else:
-        user_results = create_or_update_commcare_users_and_groups(
-            domain,
-            user_specs,
-            upload_user=upload_user,
-            upload_record_id=upload_record_id,
-            group_memoizer=group_memoizer,
-            update_progress=functools.partial(_update_progress, start=len(group_specs))
-        )
-    results = {
-        'errors': group_results['errors'] + user_results['errors'],
-        'rows': user_results['rows']
-    }
-    upload_record = UserUploadRecord.objects.using(DEFAULT_DB_ALIAS).get(pk=upload_record_id)
-    upload_record.task_id = task_id
-    upload_record.result = results
-    upload_record.save()
-    DownloadBase.set_progress(self, total, total, task_id)
-    return {
-        'messages': results
-    }
+def import_users_and_groups(self, domain, user_specs, group_specs, upload_user_id,
+                            upload_record_id, is_web_upload):
+    return import_users(domain, user_specs, group_specs, upload_user_id,
+                        upload_record_id, is_web_upload, self)
 
 
 @task(queue='ush_background_tasks', bind=True)
 def parallel_import_task(self, domain, user_specs, group_specs, upload_user_id,
                          upload_record_id, is_web_user_upload=False):
-    task_id = self.request.id
-    return import_users_and_groups(domain, user_specs, group_specs, upload_user_id, upload_record_id,
-                                   is_web_user_upload, task_id)
+    return import_users(domain, user_specs, group_specs, upload_user_id,
+                        upload_record_id, is_web_user_upload, self)
 
 
 @task(queue='ush_background_tasks')
@@ -127,4 +82,51 @@ def parallel_user_import(domain, user_specs, upload_user_id):
 
     return {
         'messages': messages
+    }
+
+
+def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_id, is_web_upload, task):
+    from corehq.apps.user_importer.importer import create_or_update_commcare_users_and_groups, \
+        create_or_update_groups, create_or_update_web_users
+    upload_user = WebUser.get_by_user_id(upload_user_id)
+    DownloadBase.set_progress(task, 0, 100)
+
+    total = len(user_specs) + len(group_specs)
+    DownloadBase.set_progress(task, 0, total)
+
+    group_memoizer, group_results = create_or_update_groups(domain, group_specs)
+
+    DownloadBase.set_progress(task, len(group_specs), total)
+
+    def _update_progress(value, start=0):
+        DownloadBase.set_progress(task, start + value, total)
+
+    if is_web_upload:
+        user_results = create_or_update_web_users(
+            domain,
+            user_specs,
+            upload_user=upload_user,
+            upload_record_id=upload_record_id,
+            update_progress=functools.partial(_update_progress, start=len(group_specs))
+        )
+    else:
+        user_results = create_or_update_commcare_users_and_groups(
+            domain,
+            user_specs,
+            upload_user=upload_user,
+            upload_record_id=upload_record_id,
+            group_memoizer=group_memoizer,
+            update_progress=functools.partial(_update_progress, start=len(group_specs))
+        )
+    results = {
+        'errors': group_results['errors'] + user_results['errors'],
+        'rows': user_results['rows']
+    }
+    upload_record = UserUploadRecord.objects.using(DEFAULT_DB_ALIAS).get(pk=upload_record_id)
+    upload_record.task_id = task.request.id
+    upload_record.result = results
+    upload_record.save()
+    DownloadBase.set_progress(task, total, total)
+    return {
+        'messages': results
     }
