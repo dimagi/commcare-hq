@@ -4,6 +4,7 @@ from base64 import b64encode
 from io import BytesIO
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -28,6 +29,7 @@ from two_factor.views import (
 )
 
 from corehq.apps.domain.extension_points import has_custom_clean_password
+from corehq.apps.domain.forms import clean_password
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.hqwebapp.views import not_found
@@ -337,8 +339,12 @@ class ChangeMyPasswordView(BaseMyAccountView):
     @method_decorator(sensitive_post_parameters())
     def post(self, request, *args, **kwargs):
         if self.password_change_form.is_valid():
-            self.password_change_form.save()
-            messages.success(request, _("Your password was successfully changed!"))
+            try:
+                clean_password(request.POST['new_password1'])
+                self.password_change_form.save()
+                messages.success(request, _("Your password was successfully changed!"))
+            except ValidationError as e:
+                messages.error(request, _(e.message))
         return self.get(request, *args, **kwargs)
 
 
