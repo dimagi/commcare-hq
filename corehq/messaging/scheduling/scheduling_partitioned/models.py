@@ -45,6 +45,8 @@ class ScheduleInstance(PartitionedModel):
     schedule_iteration_num = models.IntegerField()
     next_event_due = models.DateTimeField()
     active = models.BooleanField()
+    attempts = models.IntegerField(default=0)
+    last_atempt = models.DateTimeField(null=True)
 
     RECIPIENT_TYPE_CASE = 'CommCareCase'
     RECIPIENT_TYPE_MOBILE_WORKER = 'CommCareUser'

@@ -45,10 +45,7 @@ from corehq.form_processor.models import (
     LedgerValue,
     XFormInstance,
 )
-from corehq.form_processor.utils.sql import (
-    fetchall_as_namedtuple,
-    fetchone_as_namedtuple,
-)
+from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.util import (
     estimate_row_count,
@@ -127,7 +124,7 @@ class ShardAccessor(object):
         with XFormInstance.get_plproxy_cursor() as cursor:
             doc_uuid_before_cast = '\\x%s' % doc_uuid.hex
             cursor.execute(query, [doc_uuid_before_cast])
-            return fetchone_as_namedtuple(cursor).hash
+            return cursor.fetchone()[0]
 
     @staticmethod
     def hash_doc_ids_python(doc_ids):

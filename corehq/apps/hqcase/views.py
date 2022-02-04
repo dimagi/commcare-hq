@@ -12,13 +12,14 @@ from soil import DownloadBase
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.api.decorators import allow_cors
-from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.domain.decorators import (
     api_auth,
     require_superuser_or_contractor,
 )
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.toggles import CASE_API_V0_6
@@ -81,7 +82,8 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET', 'POST', 'PUT'])
 @api_auth
-@require_can_edit_data
+@require_permission(Permissions.edit_data)
+@require_permission(Permissions.access_api)
 @CASE_API_V0_6.required_decorator()
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 def case_api(request, domain, case_id=None):

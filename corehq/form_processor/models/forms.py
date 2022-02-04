@@ -42,7 +42,7 @@ from ..system_action import system_action
 from ..track_related import TrackRelatedChanges
 from .attachment import AttachmentContent, AttachmentMixin
 from .mixin import SaveStateMixin
-from .util import attach_prefetch_models, sort_with_id_list
+from .util import attach_prefetch_models, fetchall_as_namedtuple, sort_with_id_list
 
 log = logging.getLogger(__name__)
 
@@ -174,7 +174,6 @@ class XFormInstanceManager(RequireDBManager):
         return self.get_form_ids_in_domain_by_state(domain, state)
 
     def get_form_ids_in_domain_by_state(self, domain, state):
-        from ..utils.sql import fetchall_as_namedtuple
         with self.model.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT form_id from get_form_ids_in_domain_by_type(%s, %s)',
@@ -209,7 +208,6 @@ class XFormInstanceManager(RequireDBManager):
         return self._get_form_ids_for_user(domain, user_id, is_deleted=True)
 
     def _get_form_ids_for_user(self, domain, user_id, is_deleted):
-        from ..utils.sql import fetchall_as_namedtuple
         with self.model.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
                 'SELECT form_id FROM get_form_ids_for_user(%s, %s, %s)',
@@ -340,7 +338,6 @@ class XFormInstanceManager(RequireDBManager):
 
     def soft_delete_forms(self, domain, form_ids, deletion_date=None, deletion_id=None):
         from ..change_publishers import publish_form_deleted
-        from ..utils.sql import fetchall_as_namedtuple
         assert isinstance(form_ids, list)
         deletion_date = deletion_date or datetime.utcnow()
         with self.model.get_plproxy_cursor() as cursor:
@@ -358,7 +355,6 @@ class XFormInstanceManager(RequireDBManager):
 
     def soft_undelete_forms(self, domain, form_ids):
         from ..change_publishers import publish_form_saved
-        from ..utils.sql import fetchall_as_namedtuple
         assert isinstance(form_ids, list)
         problem = 'Restored on {}'.format(datetime.utcnow())
         with self.model.get_plproxy_cursor() as cursor:
