@@ -74,11 +74,11 @@ def get_task_progress(task):
     )
 
 
-def set_task_progress(task, current, total, src='unknown'):
+def set_task_progress(task, current, total, src='unknown', task_id=None):
     metrics_counter('commcare.celery.set_task_progress', tags={
         'src': src
     })
-    update_task_state(task, 'PROGRESS', {'current': current, 'total': total})
+    update_task_state(task, 'PROGRESS', {'current': current, 'total': total}, task_id)
 
 
 class TaskProgressManager(object):
@@ -119,10 +119,13 @@ class TaskProgressManager(object):
         set_task_progress(self.task, src=self._src, **self._value)
 
 
-def update_task_state(task, state, meta):
+def update_task_state(task, state, meta, task_id=None):
     try:
         if task:
-            task.update_state(state=state, meta=meta)
+            if task_id is None:
+                task.update_state(state=state, meta=meta)
+            else:
+                task.update_state(task_id=task_id, state=state, meta=meta)
     except (TypeError, NotImplementedError):
         pass
     except IntegrityError:
