@@ -44,7 +44,7 @@ class Command(BaseCommand):
             update_cases(
                 domain=domain,
                 update_fn=_correct_bad_property,
-                case_ids=with_progress_bar(bad_case_ids),
+                case_ids=with_progress_bar(bad_case_ids, oneline=False),
                 user_id=user_id,
                 device_id=DEVICE_ID,
                 throttle_secs=options['throttle_secs'],
