@@ -41,11 +41,7 @@ class Format(object):
                           "download": False},
                    UNZIPPED_CSV: {"mimetype": "text/csv",
                                   "extension": "csv",
-                                  "download": True},
-                   CDISC_ODM: {'mimetype': 'application/cdisc-odm+xml',
-                               'extension': 'xml',
-                               'download': True},
-    }
+                                  "download": True}}
 
     VALID_FORMATS = list(FORMAT_DICT)
 
