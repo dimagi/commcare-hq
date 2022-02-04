@@ -1257,7 +1257,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [user_specs],
             [{'id': group._id, 'name': 'test_group', 'case-sharing': False, 'reporting': True}],
-            self.uploading_user,
+            self.uploading_user.get_id,
             self.upload_record.pk,
             False
         )
@@ -1283,7 +1283,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [user_specs],
             [],
-            self.uploading_user,
+            self.uploading_user.get_id,
             self.upload_record.pk,
             False
         )

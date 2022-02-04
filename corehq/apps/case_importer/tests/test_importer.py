@@ -95,11 +95,13 @@ class ImporterTest(TestCase):
     @patch('corehq.apps.case_importer.tasks.bulk_import_async.update_state')
     def testImportFileMissing(self, update_state):
         # by using a made up upload_id, we ensure it's not referencing any real file
-        case_upload = CaseUploadRecord(upload_id=str(uuid.uuid4()), task_id=str(uuid.uuid4()))
+        task_id = str(uuid.uuid4())
+        case_upload = CaseUploadRecord(upload_id=str(uuid.uuid4()), task_id=task_id)
         case_upload.save()
         res = bulk_import_async.delay(self._config(['anything']).to_json(), self.domain, case_upload.upload_id)
         self.assertIsInstance(res.result, Ignore)
         update_state.assert_called_with(
+            task_id=task_id,
             state=states.FAILURE,
             meta=get_interned_exception('Sorry, your session has expired. Please start over and try again.'))
         self.assertEqual(0, len(self.accessor.get_case_ids_in_domain()))
