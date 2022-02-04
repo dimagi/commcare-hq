@@ -123,8 +123,9 @@ def update_task_state(task, state, meta, task_id=None):
     try:
         if task:
             if task_id is None:
-                task_id = task.request.id
-            task.update_state(task_id=task_id, state=state, meta=meta)
+                task.update_state(state=state, meta=meta)
+            else:
+                task.update_state(task_id=task_id, state=state, meta=meta)
     except (TypeError, NotImplementedError):
         pass
     except IntegrityError:
