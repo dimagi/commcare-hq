@@ -1,4 +1,8 @@
-hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
+hqDefine('app_manager/js/forms/advanced/case_config_ui', [
+    'hqwebapp/js/toggles',
+], function (
+    toggles
+) {
     'use strict';
 
     $(function () {
@@ -40,6 +44,8 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             self.commtrack = params.commtrack_enabled;
             self.programs = params.commtrack_programs;
             self.isShadowForm = params.isShadowForm;
+
+            self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
             self.setPropertiesMap = function (propertiesMap) {
                 self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -281,7 +287,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             };
 
             self.load_update_cases = ko.observableArray(_(params.actions.load_update_cases).map(function (a) {
-                var preload = caseConfigUtils.propertyDictToArray([], a.preload, caseConfig, true);
+                var preload = caseConfigUtils.preloadDictToArray(a.preload, caseConfig);
                 var case_properties = caseConfigUtils.propertyDictToArray([], a.case_properties, caseConfig);
                 a.preload = [];
                 a.case_properties = [];
@@ -297,6 +303,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 action.visible_case_properties = ko.computed(function () {
                     return action.case_properties();
                 });
+                action.saveOnlyEditedFormFieldsEnabled = caseConfig.saveOnlyEditedFormFieldsEnabled;
 
                 _(preload).each(function (p) {
                     action.preload.push(casePreloadProperty.wrap(p, action));
@@ -323,8 +330,9 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             self.open_cases = ko.observableArray(_(params.actions.open_cases).map(function (a) {
                 var required_properties = [{
                     key: 'name',
-                    path: a.name_path,
+                    path: a.name_update.question_path,
                     required: true,
+                    save_only_if_edited: a.name_update.update_mode === 'edit',
                 }];
                 var case_properties = caseConfigUtils.propertyDictToArray(required_properties, a.case_properties, caseConfig);
                 a.case_properties = [];
@@ -340,6 +348,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 action.visible_case_properties = ko.computed(function () {
                     return action.case_properties();
                 });
+                action.caseConfig.saveOnlyEditedFormFieldsEnabled = caseConfig.saveOnlyEditedFormFieldsEnabled;
 
                 return action;
             }));
@@ -445,6 +454,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                             path: '',
                             key: 'name',
                             required: true,
+                            save_only_if_edited: action.name_update.update_mode === 'edit',
                         }],
                         repeat_context: '',
                         case_indices: [],
