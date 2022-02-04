@@ -737,6 +737,7 @@ class CaseExportInstanceFilters(ExportInstanceFilters):
 class FormExportInstanceFilters(ExportInstanceFilters):
     user_types = ListProperty(IntegerProperty, default=[HQUserType.ACTIVE, HQUserType.DEACTIVATED])
 
+
 class ExportInstance(BlobMixin, Document):
     """
     This is an instance of an export. It contains the tables to export and
