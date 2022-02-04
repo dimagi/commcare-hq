@@ -3,36 +3,18 @@ Note that the adapters must return the fields in the same order as they appear
 in the table DSL
 """
 import json
-from collections import namedtuple
 
 from jsonfield.fields import JSONEncoder
 from psycopg2.extensions import adapt
 
-from corehq.form_processor.models import (
+from ..models import (
     CommCareCase_DB_TABLE, CaseAttachment_DB_TABLE,
     CommCareCaseIndex_DB_TABLE, CaseTransaction_DB_TABLE,
     XFormInstance,
     LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE,
     XFormOperation,
 )
-
-
-def fetchall_as_namedtuple(cursor):
-    "Return all rows from a cursor as a namedtuple generator"
-    Result = _namedtuple_from_cursor(cursor)
-    return (Result(*row) for row in cursor)
-
-
-def fetchone_as_namedtuple(cursor):
-    "Return one row from a cursor as a namedtuple"
-    Result = _namedtuple_from_cursor(cursor)
-    row = cursor.fetchone()
-    return Result(*row)
-
-
-def _namedtuple_from_cursor(cursor):
-    desc = cursor.description
-    return namedtuple('Result', [col[0] for col in desc])
+from ..models.util import fetchall_as_namedtuple  # noqa: F401
 
 
 def form_adapter(form):
