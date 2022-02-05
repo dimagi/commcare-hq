@@ -525,6 +525,7 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
+        warn("DEPRECATED", DeprecationWarning)
         return CaseAccessorSQL._get_case_ids_in_domain(
             domain, case_type=case_type, owner_ids=owner_ids, is_closed=False
         )

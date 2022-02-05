@@ -99,6 +99,10 @@ class CommCareCaseManager(RequireDBManager):
     def get_case_ids_in_domain(self, domain, type=None):
         return self._get_case_ids_in_domain(domain, case_type=type)
 
+    def get_open_case_ids_in_domain_by_type(self, domain, case_type, owner_ids=None):
+        return self._get_case_ids_in_domain(
+            domain, case_type=case_type, owner_ids=owner_ids, is_closed=False)
+
     def get_deleted_case_ids_in_domain(self, domain):
         return self._get_case_ids_in_domain(domain, deleted=True)
 

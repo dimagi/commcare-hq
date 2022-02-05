@@ -55,6 +55,7 @@ class CaseAccessors(object):
         return self.db_accessor.get_case_ids_in_domain_by_owners(self.domain, owner_ids, closed=closed)
 
     def get_open_case_ids_in_domain_by_type(self, case_type, owner_ids=None):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_open_case_ids_in_domain_by_type(self.domain, case_type, owner_ids)
 
     def get_related_indices(self, case_ids, exclude_indices):
