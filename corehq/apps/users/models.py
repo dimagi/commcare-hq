@@ -1804,7 +1804,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return XFormInstance.objects.get_deleted_form_ids_for_user(self.domain, self.user_id)
 
     def _get_deleted_case_ids(self):
-        return CaseAccessors(self.domain).get_deleted_case_ids_by_owner(self.user_id)
+        return CommCareCase.objects.get_deleted_case_ids_by_owner(self.domain, self.user_id)
 
     def get_owner_ids(self, domain=None):
         owner_ids = [self.user_id]
