@@ -51,16 +51,7 @@ class CaseAccessors(object):
         return self.db_accessor.get_case_ids_in_domain(self.domain, type)
 
     def get_case_ids_by_owners(self, owner_ids, closed=None):
-        """
-        get case_ids for open, closed, or all cases in a domain
-        that belong to a list of owner_ids
-
-        owner_ids: a list of owner ids to filter on.
-            A case matches if it belongs to any of them.
-        closed: True (only closed cases), False (only open cases), or None (all)
-
-        returns a list of case_ids
-        """
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_case_ids_in_domain_by_owners(self.domain, owner_ids, closed=closed)
 
     def get_open_case_ids_for_owner(self, owner_id):

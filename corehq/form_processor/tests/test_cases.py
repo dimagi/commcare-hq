@@ -164,6 +164,29 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         deleted = CommCareCase.objects.get_deleted_case_ids_in_domain(DOMAIN)
         self.assertEqual(deleted, [case1.case_id])
 
+    def test_get_case_ids_in_domain_by_owners(self):
+        case1 = _create_case(user_id="user1")
+        case2 = _create_case(user_id="user1")
+        _create_case(user_id="user2")
+        case4 = _create_case(user_id="user3")
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain_by_owners(DOMAIN, ["user1", "user3"])
+        self.assertEqual(set(case_ids), set([case1.case_id, case2.case_id, case4.case_id]))
+
+    def test_get_case_ids_in_domain_by_owners_closed(self):
+        case1 = _create_case(user_id="user1")
+        case2 = _create_case(user_id="user1", closed=True)
+        case3 = _create_case(user_id="user2")
+        case4 = _create_case(user_id="user3", closed=True)
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain_by_owners(
+            DOMAIN, ["user1", "user3"], closed=True)
+        self.assertEqual(set(case_ids), set([case2.case_id, case4.case_id]))
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain_by_owners(
+            DOMAIN, ["user1", "user2", "user3"], closed=False)
+        self.assertEqual(set(case_ids), set([case1.case_id, case3.case_id]))
+
     def test_save_case_update_index(self):
         case = _create_case()
 

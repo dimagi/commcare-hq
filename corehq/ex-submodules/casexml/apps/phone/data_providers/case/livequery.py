@@ -70,7 +70,8 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
     debug("sync %s for %r", restore_state.current_sync_log._id, owner_ids)
     with timing_context("livequery"):
         with timing_context("get_case_ids_by_owners"):
-            owned_ids = accessor.get_case_ids_by_owners(owner_ids, closed=False)
+            owned_ids = CommCareCase.objects.get_case_ids_in_domain_by_owners(
+                restore_state.domain, owner_ids, closed=False)
             debug("owned: %r", owned_ids)
 
         live_ids, indices = get_live_case_ids_and_indices(restore_state.domain, owned_ids, timing_context)

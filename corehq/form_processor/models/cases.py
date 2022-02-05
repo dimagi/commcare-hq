@@ -102,6 +102,20 @@ class CommCareCaseManager(RequireDBManager):
     def get_deleted_case_ids_in_domain(self, domain):
         return self._get_case_ids_in_domain(domain, deleted=True)
 
+    def get_case_ids_in_domain_by_owners(self, domain, owner_ids, closed=None, case_type=None):
+        """
+        get case_ids for open, closed, or all cases in a domain
+        that belong to a list of owner_ids
+
+        owner_ids: a list of owner ids to filter on.
+            A case matches if it belongs to any of them.
+        closed: True (only closed cases), False (only open cases), or None (all)
+
+        returns a list of case_ids
+        """
+        return self._get_case_ids_in_domain(
+            domain, case_type=case_type, owner_ids=owner_ids, is_closed=closed)
+
     def _get_case_ids_in_domain(self, domain, case_type=None, owner_ids=None, is_closed=None, deleted=False):
         owner_ids = list(owner_ids) if owner_ids else None
         with self.model.get_plproxy_cursor(readonly=True) as cursor:
