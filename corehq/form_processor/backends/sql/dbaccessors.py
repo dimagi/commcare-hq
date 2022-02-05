@@ -520,10 +520,6 @@ class CaseAccessorSQL:
         return case.save(with_tracked_models=True)
 
     @staticmethod
-    def get_closed_case_ids_for_owner(domain, owner_id):
-        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], is_closed=True)
-
-    @staticmethod
     def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
         warn("DEPRECATED", DeprecationWarning)
         return CaseAccessorSQL._get_case_ids_in_domain(

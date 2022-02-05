@@ -467,15 +467,6 @@ class CaseAccessorTestsSQL(TestCase):
         )
         self.assertEqual(set(case_ids), set([case1.case_id, case3.case_id]))
 
-    def test_get_closed_case_ids(self):
-        case1 = _create_case(user_id="user1")  # noqa: F841
-        case2 = _create_case(user_id="user1")
-        case3 = _create_case(user_id="user2")  # noqa: F841
-        case2.closed = True
-        CaseAccessorSQL.save_case(case2)
-
-        self.assertEqual(CaseAccessorSQL.get_closed_case_ids_for_owner(DOMAIN, "user1"), [case2.case_id])
-
     def test_get_open_case_ids_in_domain_by_type(self):
         case1 = _create_case(user_id="user1", case_type='t1')
         case2 = _create_case(user_id="user1", case_type='t1')
