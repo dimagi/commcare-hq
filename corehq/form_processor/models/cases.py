@@ -346,8 +346,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return CaseAttachment.objects.get_attachment_by_name(self.case_id, name)
 
     def _get_attachments_from_db(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachments(self.case_id)
+        return CaseAttachment.objects.get_attachments(self.case_id)
 
     @property
     @memoized
@@ -658,6 +657,9 @@ def get_index_map(indices):
 
 
 class CaseAttachmentManager(RequireDBManager):
+
+    def get_attachments(self, case_id):
+        return list(self.partitioned_query(case_id).filter(case_id=case_id))
 
     def get_attachment_by_name(self, case_id, name):
         try:

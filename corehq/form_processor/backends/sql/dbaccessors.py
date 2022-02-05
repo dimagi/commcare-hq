@@ -460,7 +460,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_attachments(case_id):
-        return list(CaseAttachment.objects.partitioned_query(case_id).filter(case_id=case_id))
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseAttachment.objects.get_attachments(case_id)
 
     @staticmethod
     def get_transactions(case_id):

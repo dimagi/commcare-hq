@@ -171,7 +171,6 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         self.assertEqual([], CommCareCaseIndex.objects.get_indices(case.domain, case.case_id))
 
     def test_save_case_delete_attachment(self):
-        from ..backends.sql.dbaccessors import CaseAccessorSQL
         case = _create_case()
 
         case.track_create(CaseAttachment(
@@ -184,13 +183,12 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         ))
         case.save(with_tracked_models=True)
 
-        [attachment] = CaseAccessorSQL.get_attachments(case.case_id)
+        [attachment] = CaseAttachment.objects.get_attachments(case.case_id)
         case.track_delete(attachment)
         case.save(with_tracked_models=True)
-        self.assertEqual([], CaseAccessorSQL.get_attachments(case.case_id))
+        self.assertEqual([], CaseAttachment.objects.get_attachments(case.case_id))
 
     def test_save_case_update_attachment(self):
-        from ..backends.sql.dbaccessors import CaseAccessorSQL
         case = _create_case()
 
         case.track_create(CaseAttachment(
@@ -203,7 +201,7 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         ))
         case.save(with_tracked_models=True)
 
-        [attachment] = CaseAccessorSQL.get_attachments(case.case_id)
+        [attachment] = CaseAttachment.objects.get_attachments(case.case_id)
         attachment.name = 'new_name'
 
         # hack to call the sql function with an already saved attachment
@@ -241,7 +239,7 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
             CommCareCase.objects.get_case(case1.case_id)
 
         self.assertEqual([], CommCareCaseIndex.objects.get_indices(case1.domain, case1.case_id))
-        self.assertEqual([], CaseAccessorSQL.get_attachments(case1.case_id))
+        self.assertEqual([], CaseAttachment.objects.get_attachments(case1.case_id))
         self.assertEqual([], CaseAccessorSQL.get_transactions(case1.case_id))
 
 
@@ -251,6 +249,37 @@ class TestCaseAttachmentManager(BaseCaseManagerTest):
     def setUp(self):
         super().setUp()
         self.using = router.db_for_read(CaseAttachment, **{HINT_PLPROXY: True})
+
+    def test_get_attachments(self):
+        case = _create_case()
+
+        case.track_create(CaseAttachment(
+            case=case,
+            attachment_id=uuid.uuid4().hex,
+            name='pic.jpg',
+            content_type='image/jpeg',
+            blob_id='125',
+            md5='123',
+        ))
+        case.track_create(CaseAttachment(
+            case=case,
+            attachment_id=uuid.uuid4().hex,
+            name='doc',
+            content_type='text/xml',
+            blob_id='126',
+            md5='123',
+        ))
+        case.save(with_tracked_models=True)
+
+        with self.assertNumQueries(1, using=case.db):
+            attachments = CaseAttachment.objects.get_attachments(case.case_id)
+
+        self.assertEqual(2, len(attachments))
+        sorted_attachments = sorted(attachments, key=lambda x: x.name)
+        for att in attachments:
+            self.assertEqual(case.case_id, att.case_id)
+        self.assertEqual('doc', sorted_attachments[0].name)
+        self.assertEqual('pic.jpg', sorted_attachments[1].name)
 
     def test_get_attachment_by_name(self):
         case = _create_case()
