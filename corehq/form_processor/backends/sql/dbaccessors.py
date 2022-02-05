@@ -495,13 +495,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_case_by_location(domain, location_id):
-        try:
-            return CommCareCase.objects.plproxy_raw(
-                'SELECT * from get_case_by_location_id(%s, %s)',
-                [domain, location_id]
-            )[0]
-        except IndexError:
-            return None
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_case_by_location(domain, location_id)
 
     @staticmethod
     def get_case_ids_in_domain(domain, type_=None):

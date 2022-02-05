@@ -123,6 +123,15 @@ class CommCareCaseManager(RequireDBManager):
             attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
         return cases
 
+    def get_case_by_location(self, domain, location_id):
+        try:
+            return self.plproxy_raw(
+                'SELECT * from get_case_by_location_id(%s, %s)',
+                [domain, location_id]
+            )[0]
+        except IndexError:
+            return None
+
     def hard_delete_cases(self, domain, case_ids):
         """Permanently delete cases in domain
 

@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db import router
 from django.test import TestCase
 
+from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
 from corehq.form_processor.interfaces.processor import ProcessedForms
@@ -124,6 +125,15 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         bambi.save(with_tracked_models=True)
         cases = CommCareCase.objects.get_reverse_indexed_cases(DOMAIN, referenced_case_ids, is_closed=True)
         self.assertEqual([c.case_id for c in cases], [bambi.case_id])
+
+    def test_get_case_by_location(self):
+        case = _create_case(case_type=SUPPLY_POINT_CASE_TYPE)
+        location_id = uuid.uuid4().hex
+        case.location_id = location_id
+        case.save(with_tracked_models=True)
+
+        fetched_case = CommCareCase.objects.get_case_by_location(DOMAIN, location_id)
+        self.assertEqual(case.id, fetched_case.id)
 
     def test_save_case_update_index(self):
         case = _create_case()
