@@ -369,11 +369,10 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return transactions[0] if transactions else None
 
     def get_transaction_by_form_id(self, form_id):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         transaction = self._get_unsaved_transaction_for_form(form_id)
 
         if not transaction and self.is_saved():
-            transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
+            transaction = CaseTransaction.objects.get_transaction_by_form_id(self.case_id, form_id)
         return transaction
 
     @property
@@ -937,6 +936,14 @@ class CaseTransactionManager(RequireDBManager):
             .filter(case_id=case_id)
             .order_by('server_date')
         )
+
+    def get_transaction_by_form_id(self, case_id, form_id):
+        transactions = list(self.plproxy_raw(
+            'SELECT * from get_case_transaction_by_form_id(%s, %s)',
+            [case_id, form_id])
+        )
+        assert len(transactions) <= 1, (case_id, form_id, len(transactions))
+        return transactions[0] if transactions else None
 
     @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
     def check_order_for_case(self, case_id):

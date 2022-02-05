@@ -470,12 +470,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_transaction_by_form_id(case_id, form_id):
-        transactions = list(CaseTransaction.objects.plproxy_raw(
-            'SELECT * from get_case_transaction_by_form_id(%s, %s)',
-            [case_id, form_id])
-        )
-        assert len(transactions) <= 1
-        return transactions[0] if transactions else None
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.get_transaction_by_form_id(case_id, form_id)
 
     @staticmethod
     def get_most_recent_form_transaction(case_id):

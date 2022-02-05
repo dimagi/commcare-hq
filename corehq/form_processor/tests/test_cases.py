@@ -412,6 +412,17 @@ class TestCaseTransactionManager(BaseCaseManagerTest):
         self.assertEqual({t.form_id for t in transactions}, {form_id} | form_ids)
         self.assertEqual(len(transactions), 6)
 
+    def test_get_transaction_by_form_id(self):
+        form_id = uuid.uuid4().hex
+        case = _create_case(form_id=form_id)
+
+        transaction = CaseTransaction.objects.get_transaction_by_form_id(case.case_id, form_id)
+        self.assertEqual(form_id, transaction.form_id)
+        self.assertEqual(case.case_id, transaction.case_id)
+
+        transaction = CaseTransaction.objects.get_transaction_by_form_id(case.case_id, 'wrong')
+        self.assertIsNone(transaction)
+
 
 def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', closed=False, case_id=None):
     """Create case and related models directly (not via form processor)
