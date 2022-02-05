@@ -470,6 +470,15 @@ class TestCaseTransactionManager(BaseCaseManagerTest):
         # still second_form_id since the newest one is revoked
         self.assertEqual(transaction.form_id, second_form_id)
 
+    def test_get_transactions_for_case_rebuild(self):
+        form_id = uuid.uuid4().hex
+        case = _create_case(form_id=form_id)
+        form_ids = _create_case_transactions(case)
+
+        transactions = CaseTransaction.objects.get_transactions_for_case_rebuild(case.case_id)
+        self.assertEqual({t.form_id for t in transactions}, {form_id} | form_ids)
+        self.assertEqual(4, len(transactions))
+
 
 def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', closed=False, case_id=None):
     """Create case and related models directly (not via form processor)

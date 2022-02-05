@@ -480,14 +480,13 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_transactions_by_type(case_id, transaction_type):
-        return list(CaseTransaction.objects.plproxy_raw(
-            'SELECT * from get_case_transactions_by_type(%s, %s)',
-            [case_id, transaction_type])
-        )
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.get_transactions_by_type(case_id, transaction_type)
 
     @staticmethod
     def get_transactions_for_case_rebuild(case_id):
-        return CaseAccessorSQL.get_transactions_by_type(case_id, CaseTransaction.TYPE_FORM)
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.get_transactions_for_case_rebuild(case_id)
 
     @staticmethod
     def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):

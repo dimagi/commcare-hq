@@ -407,9 +407,8 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return self._transactions_by_type(CaseTransaction.TYPE_FORM)
 
     def _transactions_by_type(self, transaction_type):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         if self.is_saved():
-            transactions = CaseAccessorSQL.get_transactions_by_type(self.case_id, transaction_type)
+            transactions = CaseTransaction.objects.get_transactions_by_type(self.case_id, transaction_type)
         else:
             transactions = []
         transactions += [
@@ -955,6 +954,15 @@ class CaseTransactionManager(RequireDBManager):
             .order_by("-server_date")
             .first()
         )
+
+    def get_transactions_by_type(self, case_id, transaction_type):
+        return list(self.plproxy_raw(
+            'SELECT * from get_case_transactions_by_type(%s, %s)',
+            [case_id, transaction_type],
+        ))
+
+    def get_transactions_for_case_rebuild(self, case_id):
+        return self.get_transactions_by_type(case_id, self.model.TYPE_FORM)
 
     @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
     def check_order_for_case(self, case_id):
