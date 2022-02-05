@@ -135,6 +135,23 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         fetched_case = CommCareCase.objects.get_case_by_location(DOMAIN, location_id)
         self.assertEqual(case.id, fetched_case.id)
 
+    def test_get_case_ids_in_domain(self):
+        case1 = _create_case(case_type='t1')
+        case2 = _create_case(case_type='t1')
+        case3 = _create_case(case_type='t2')
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN)
+        self.assertEqual({case1.case_id, case2.case_id, case3.case_id}, set(case_ids))
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, 't1')
+        self.assertEqual({case1.case_id, case2.case_id}, set(case_ids))
+
+        case2.domain = 'new_domain'
+        case2.save(with_tracked_models=True)
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN)
+        self.assertEqual({case1.case_id, case3.case_id}, set(case_ids))
+
     def test_save_case_update_index(self):
         case = _create_case()
 

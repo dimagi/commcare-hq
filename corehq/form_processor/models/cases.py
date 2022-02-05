@@ -96,6 +96,18 @@ class CommCareCaseManager(RequireDBManager):
                           .values_list('case_id', flat=True))
         return result
 
+    def get_case_ids_in_domain(self, domain, type=None):
+        return self._get_case_ids_in_domain(domain, case_type=type)
+
+    def _get_case_ids_in_domain(self, domain, case_type=None, owner_ids=None, is_closed=None, deleted=False):
+        owner_ids = list(owner_ids) if owner_ids else None
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s, %s)',
+                [domain, case_type, owner_ids, is_closed, deleted]
+            )
+            return [row[0] for row in cursor]
+
     def get_case_xform_ids(self, case_id):
         with self.model.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
