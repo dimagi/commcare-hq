@@ -23,7 +23,7 @@ Example case graphs with outcomes:
 """
 import logging
 from collections import defaultdict
-from functools import wraps
+from functools import partial, wraps
 from itertools import chain, islice
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
@@ -35,7 +35,7 @@ from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
 from corehq.util.metrics import metrics_histogram, metrics_counter
@@ -259,10 +259,11 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     next_ids = all_ids = set(owned_ids)
     owned_ids = set(owned_ids)  # owned, open case ids (may be extensions)
     open_ids = set(owned_ids)
+    get_related_indices = partial(CommCareCaseIndex.objects.get_related_indices, domain)
     while next_ids:
         exclude = set(chain.from_iterable(seen_ix[id] for id in next_ids))
         with timing_context("get_related_indices({} cases, {} seen)".format(len(next_ids), len(exclude))):
-            related = accessor.get_related_indices(list(next_ids), exclude)
+            related = get_related_indices(list(next_ids), exclude)
             if not related:
                 break
             update_open_and_deleted_ids(related)
