@@ -351,8 +351,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def transactions(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        transactions = CaseAccessorSQL.get_transactions(self.case_id) if self.is_saved() else []
+        transactions = CaseTransaction.objects.get_transactions(self.case_id) if self.is_saved() else []
         transactions += self.get_tracked_models_to_create(CaseTransaction)
         return transactions
 
@@ -931,6 +930,13 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
 
 
 class CaseTransactionManager(RequireDBManager):
+
+    def get_transactions(self, case_id):
+        return list(
+            self.partitioned_query(case_id)
+            .filter(case_id=case_id)
+            .order_by('server_date')
+        )
 
     @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
     def check_order_for_case(self, case_id):

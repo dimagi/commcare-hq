@@ -6,9 +6,9 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseBlock
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, LedgerAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import CommCareCase, LedgerTransaction
+from corehq.form_processor.models import CaseTransaction, CommCareCase, LedgerTransaction
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 
@@ -166,7 +166,7 @@ class LedgerTests(TestCase):
         self._assert_ledger_state(100)
         case = CommCareCase.objects.get_case(self.case.case_id, DOMAIN)
         self.assertEqual("1", case.dynamic_case_properties()['a'])
-        transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
+        transactions = CaseTransaction.objects.get_transactions(self.case.case_id)
         self.assertEqual(2, len(transactions))
         self.assertTrue(transactions[0].is_form_transaction)
         # ordering not guaranteed since they have the same date
@@ -214,7 +214,7 @@ class LedgerTests(TestCase):
 
         self._assert_ledger_state(100)
 
-        transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
+        transactions = CaseTransaction.objects.get_transactions(self.case.case_id)
         self.assertEqual(2, len(transactions))
         self.assertTrue(transactions[0].is_form_transaction)
         self.assertTrue(transactions[1].is_form_transaction)
@@ -228,7 +228,7 @@ class LedgerTests(TestCase):
 
         self._assert_ledger_state(0)
 
-        transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
+        transactions = CaseTransaction.objects.get_transactions(self.case.case_id)
         self.assertEqual(3, len(transactions))
         self.assertTrue(transactions[0].is_form_transaction)
         # ordering not guaranteed since they have the same date
@@ -250,7 +250,7 @@ class LedgerTests(TestCase):
 
         self._assert_ledger_state(100)
 
-        transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
+        transactions = CaseTransaction.objects.get_transactions(self.case.case_id)
         self.assertEqual(2, len(transactions))
         self.assertTrue(transactions[0].is_form_transaction)
         self.assertTrue(transactions[1].is_form_transaction)
@@ -264,7 +264,7 @@ class LedgerTests(TestCase):
 
         self._assert_ledger_state(50)
 
-        transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
+        transactions = CaseTransaction.objects.get_transactions(self.case.case_id)
         self.assertEqual(2, len(transactions))
         self.assertTrue(transactions[0].is_form_transaction)
         self.assertTrue(transactions[1].is_form_transaction)

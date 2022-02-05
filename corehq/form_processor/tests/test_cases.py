@@ -211,7 +211,6 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
             case.save(with_tracked_models=True)
 
     def test_hard_delete_cases(self):
-        from ..backends.sql.dbaccessors import CaseAccessorSQL
         case1 = _create_case()
         case2 = _create_case(domain='other_domain')
         self.addCleanup(lambda: CommCareCase.objects.hard_delete_cases('other_domain', [case2.case_id]))
@@ -240,7 +239,7 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
 
         self.assertEqual([], CommCareCaseIndex.objects.get_indices(case1.domain, case1.case_id))
         self.assertEqual([], CaseAttachment.objects.get_attachments(case1.case_id))
-        self.assertEqual([], CaseAccessorSQL.get_transactions(case1.case_id))
+        self.assertEqual([], CaseTransaction.objects.get_transactions(case1.case_id))
 
 
 @sharded
@@ -398,6 +397,22 @@ class TestCommCareCaseIndexManager(BaseCaseManagerTest):
         )
 
 
+class TestCaseTransactionManager(BaseCaseManagerTest):
+
+    def test_get_transactions(self):
+        form_id = uuid.uuid4().hex
+        case = _create_case(form_id=form_id)
+        transactions = CaseTransaction.objects.get_transactions(case.case_id)
+        self.assertEqual(1, len(transactions))
+        self.assertEqual(form_id, transactions[0].form_id)
+
+        form_ids = _create_case_transactions(case, all_forms=True)
+
+        transactions = CaseTransaction.objects.get_transactions(case.case_id)
+        self.assertEqual({t.form_id for t in transactions}, {form_id} | form_ids)
+        self.assertEqual(len(transactions), 6)
+
+
 def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', closed=False, case_id=None):
     """Create case and related models directly (not via form processor)
 
@@ -446,14 +461,14 @@ def _create_case_with_index(referenced_case_id, identifier='parent', referenced_
     return case, index
 
 
-def _create_case_transactions(case):
+def _create_case_transactions(case, all_forms=False):
     TX = CaseTransaction
     traces = [
         CaseTransactionTrace(TX.TYPE_FORM | TX.TYPE_CASE_CREATE | TX.TYPE_LEDGER),
         CaseTransactionTrace(TX.TYPE_FORM | TX.TYPE_LEDGER),
         CaseTransactionTrace(TX.TYPE_FORM | TX.TYPE_CASE_CLOSE),
-        CaseTransactionTrace(TX.TYPE_FORM, revoked=True, include=False),  # excluded because revoked
-        CaseTransactionTrace(TX.TYPE_REBUILD_FORM_ARCHIVED, include=False),  # excluded based on type
+        CaseTransactionTrace(TX.TYPE_FORM, revoked=True, include=all_forms),  # excluded because revoked
+        CaseTransactionTrace(TX.TYPE_REBUILD_FORM_ARCHIVED, include=all_forms),  # excluded based on type
     ]
     for trace in traces:
         case.track_create(CaseTransaction(
