@@ -152,6 +152,18 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN)
         self.assertEqual({case1.case_id, case3.case_id}, set(case_ids))
 
+    def test_get_deleted_case_ids_in_domain(self):
+        from ..backends.sql.dbaccessors import CaseAccessorSQL
+        case1 = _create_case()
+        case2 = _create_case()
+        CaseAccessorSQL.soft_delete_cases(DOMAIN, [case1.case_id])
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN)
+        self.assertEqual(case_ids, [case2.case_id])
+
+        deleted = CommCareCase.objects.get_deleted_case_ids_in_domain(DOMAIN)
+        self.assertEqual(deleted, [case1.case_id])
+
     def test_save_case_update_index(self):
         case = _create_case()
 

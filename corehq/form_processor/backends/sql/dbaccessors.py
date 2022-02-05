@@ -505,6 +505,7 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_deleted_case_ids_in_domain(domain):
+        warn("DEPRECATED", DeprecationWarning)
         return CaseAccessorSQL._get_case_ids_in_domain(domain, deleted=True)
 
     @staticmethod
