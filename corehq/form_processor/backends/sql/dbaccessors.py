@@ -475,9 +475,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_most_recent_form_transaction(case_id):
-        return CaseTransaction.objects.partitioned_query(case_id).filter(case_id=case_id, revoked=False).annotate(
-            type_filter=F('type').bitand(CaseTransaction.TYPE_FORM)
-        ).filter(type_filter=CaseTransaction.TYPE_FORM).order_by("-server_date").first()
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.get_most_recent_form_transaction(case_id)
 
     @staticmethod
     def get_transactions_by_type(case_id, transaction_type):

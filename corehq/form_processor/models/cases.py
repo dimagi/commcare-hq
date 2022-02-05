@@ -7,6 +7,7 @@ from collections import OrderedDict, namedtuple
 from datetime import datetime
 
 from django.db import DatabaseError, models, transaction
+from django.db.models import F
 
 from ddtrace import tracer
 from jsonfield.fields import JSONField
@@ -944,6 +945,16 @@ class CaseTransactionManager(RequireDBManager):
         )
         assert len(transactions) <= 1, (case_id, form_id, len(transactions))
         return transactions[0] if transactions else None
+
+    def get_most_recent_form_transaction(self, case_id):
+        return (
+            self.partitioned_query(case_id)
+            .filter(case_id=case_id, revoked=False)
+            .annotate(type_filter=F('type').bitand(self.model.TYPE_FORM))
+            .filter(type_filter=self.model.TYPE_FORM)
+            .order_by("-server_date")
+            .first()
+        )
 
     @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
     def check_order_for_case(self, case_id):

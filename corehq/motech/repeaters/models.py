@@ -85,9 +85,8 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.form_processor.models import CaseTransaction, CommCareCase, XFormInstance
 from corehq.motech.const import (
     ALGO_AES,
     BASIC_AUTH,
@@ -794,7 +793,7 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         if host_index and host_index.referenced_type in self.white_listed_case_types:
             return False
 
-        transaction = CaseAccessorSQL.get_most_recent_form_transaction(payload.case_id)
+        transaction = CaseTransaction.objects.get_most_recent_form_transaction(payload.case_id)
         if transaction:
             # prevent chaining updates
             return transaction.xmlns != DataRegistryCaseUpdatePayloadGenerator.XMLNS

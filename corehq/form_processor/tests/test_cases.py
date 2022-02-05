@@ -423,6 +423,53 @@ class TestCaseTransactionManager(BaseCaseManagerTest):
         transaction = CaseTransaction.objects.get_transaction_by_form_id(case.case_id, 'wrong')
         self.assertIsNone(transaction)
 
+    def test_get_most_recent_form_transaction(self):
+        form_id = uuid.uuid4().hex
+        case = _create_case(form_id=form_id)
+
+        transaction = CaseTransaction.objects.get_most_recent_form_transaction(case.case_id)
+        self.assertEqual(transaction.form_id, form_id)
+
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED,
+            revoked=False
+        ))
+        case.save(with_tracked_models=True)
+
+        transaction = CaseTransaction.objects.get_most_recent_form_transaction(case.case_id)
+        # still the same since the last transaction was not a form transaction
+        self.assertEqual(transaction.form_id, form_id)
+
+        second_form_id = uuid.uuid4().hex
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=second_form_id,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM,
+            revoked=False
+        ))
+        case.save(with_tracked_models=True)
+
+        transaction = CaseTransaction.objects.get_most_recent_form_transaction(case.case_id)
+        # now it's the new form transaction
+        self.assertEqual(transaction.form_id, second_form_id)
+
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM,
+            revoked=True
+        ))
+        case.save(with_tracked_models=True)
+
+        transaction = CaseTransaction.objects.get_most_recent_form_transaction(case.case_id)
+        # still second_form_id since the newest one is revoked
+        self.assertEqual(transaction.form_id, second_form_id)
+
 
 def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', closed=False, case_id=None):
     """Create case and related models directly (not via form processor)
