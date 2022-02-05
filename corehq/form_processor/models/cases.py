@@ -420,8 +420,8 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     def modified_since_sync(self, sync_log):
         if self.server_modified_on >= sync_log.date:
             # check all of the transactions since last sync for one that had a different sync token
-            from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-            return CaseAccessorSQL.case_has_transactions_since_sync(self.case_id, sync_log._id, sync_log.date)
+            return CaseTransaction.objects.case_has_transactions_since_sync(
+                self.case_id, sync_log._id, sync_log.date)
         return False
 
     def get_actions_for_form(self, xform):
@@ -963,6 +963,14 @@ class CaseTransactionManager(RequireDBManager):
 
     def get_transactions_for_case_rebuild(self, case_id):
         return self.get_transactions_by_type(case_id, self.model.TYPE_FORM)
+
+    def case_has_transactions_since_sync(self, case_id, sync_log_id, sync_log_date):
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_has_transactions_since_sync(%s, %s, %s)',
+                [case_id, sync_log_id, sync_log_date],
+            )
+            return cursor.fetchone()[0]
 
     @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
     def check_order_for_case(self, case_id):

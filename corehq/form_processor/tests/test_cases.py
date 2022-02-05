@@ -479,6 +479,14 @@ class TestCaseTransactionManager(BaseCaseManagerTest):
         self.assertEqual({t.form_id for t in transactions}, {form_id} | form_ids)
         self.assertEqual(4, len(transactions))
 
+    def test_case_has_transactions_since_sync(self):
+        case1 = _create_case()
+        _create_case_transactions(case1)
+        self.assertTrue(CaseTransaction.objects.case_has_transactions_since_sync(
+            case1.case_id, "foo", datetime(1992, 1, 30)))
+        self.assertFalse(CaseTransaction.objects.case_has_transactions_since_sync(
+            case1.case_id, "foo", datetime.utcnow()))
+
 
 def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', closed=False, case_id=None):
     """Create case and related models directly (not via form processor)

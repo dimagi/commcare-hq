@@ -490,12 +490,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):
-        with CaseTransaction.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT case_has_transactions_since_sync(%s, %s, %s)', [case_id, sync_log_id, sync_log_date]
-            )
-            result = cursor.fetchone()[0]
-            return result
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date)
 
     @staticmethod
     def get_case_by_location(domain, location_id):
