@@ -14,8 +14,7 @@ from casexml.apps.phone.models import SyncLogSQL
 from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor,
-    iter_all_rows)
+    LedgerAccessorSQL, LedgerReindexAccessor, iter_all_rows)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstance, CommCareCase, CaseTransaction, Attachment
@@ -60,7 +59,7 @@ class FormProcessorTestUtils(object):
             for ledger in iter_all_rows(LedgerReindexAccessor()):
                 _delete_ledgers_for_case(ledger.case_id)
         else:
-            for case_id in CaseAccessorSQL.get_case_ids_in_domain(domain):
+            for case_id in CommCareCase.objects.get_case_ids_in_domain(domain):
                 _delete_ledgers_for_case(case_id)
 
     @classmethod

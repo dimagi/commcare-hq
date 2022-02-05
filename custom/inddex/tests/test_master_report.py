@@ -15,7 +15,6 @@ import custom.inddex.reports.r4_nutrient_stats
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.dbaccessors import get_fixture_data_types
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import require_db_context
 
@@ -51,7 +50,7 @@ def get_expected_report(filename):
 
 def _overwrite_report(filename, actual_report):
     """For use when making changes - force overwrites test data"""
-    case_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain()
+    case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN)
     external_ids_by_case_id = {c.case_id: c.external_id
         for c in CommCareCase.objects.get_cases(case_ids)}
     rows = [[
@@ -91,7 +90,7 @@ def get_food_data(*args, **kwargs):
 
 @memoized
 def _get_case_ids_by_external_id():
-    case_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain()
+    case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN)
     return {c.external_id: c.case_id for c in CommCareCase.objects.get_cases(case_ids)}
 
 
@@ -106,7 +105,7 @@ def food_names(rows):
 
 class TestSetupUtils(TestCase):
     def test_cases_created(self):
-        case_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN)
         cases = CommCareCase.objects.get_cases(case_ids)
 
         self.assertEqual(len(cases), 18)

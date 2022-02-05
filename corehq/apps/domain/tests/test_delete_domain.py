@@ -116,8 +116,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     doc_type_to_state,
 )
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
@@ -294,12 +293,12 @@ class TestDeleteDomain(TestCase):
     def _test_case_deletion(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             CaseFactory(domain_name).create_case()
-            self.assertEqual(len(CaseAccessors(domain_name).get_case_ids_in_domain()), 1)
+            self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(domain_name)), 1)
 
         self.domain.delete()
 
-        self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
-        self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain.name)), 0)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain2.name)), 1)
 
     def test_case_deletion_sql(self):
         self._test_case_deletion()
@@ -1063,20 +1062,20 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
     def test_hard_delete_cases(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             CaseFactory(domain_name).create_case()
-            self.assertEqual(len(CaseAccessors(domain_name).get_case_ids_in_domain()), 1)
+            self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(domain_name)), 1)
 
         self.domain.delete()
 
-        self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
-        self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain.name)), 0)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain2.name)), 1)
 
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
 
         call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
 
-        self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
-        self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain.name)), 0)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain2.name)), 1)
 
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 0)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
@@ -1084,20 +1083,20 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
     def test_hard_delete_cases_none_to_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             CaseFactory(domain_name).create_case()
-            self.assertEqual(len(CaseAccessors(domain_name).get_case_ids_in_domain()), 1)
+            self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(domain_name)), 1)
 
         self.domain.delete()
 
-        self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
-        self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain.name)), 0)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain2.name)), 1)
 
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
 
         call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name, noinput=True)
 
-        self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
-        self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain.name)), 0)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain2.name)), 1)
 
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)

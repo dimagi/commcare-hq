@@ -23,6 +23,7 @@ from corehq.elastic import ESError
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models.cases import CommCareCase
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
@@ -168,7 +169,7 @@ def _terminate_subscriptions(domain_name):
 def _delete_all_cases(domain_name):
     logger.info('Deleting cases...')
     case_accessor = CaseAccessors(domain_name)
-    case_ids = case_accessor.get_case_ids_in_domain()
+    case_ids = CommCareCase.objects.get_case_ids_in_domain(domain_name)
     for case_id_chunk in chunked(with_progress_bar(case_ids, stream=silence_during_tests()), 500):
         case_accessor.soft_delete_cases(list(case_id_chunk))
     logger.info('Deleting cases complete.')
