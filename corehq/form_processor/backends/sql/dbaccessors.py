@@ -428,8 +428,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_indices(domain, case_id):
-        query = CommCareCaseIndex.objects.partitioned_query(case_id)
-        return list(query.filter(case_id=case_id, domain=domain))
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCaseIndex.objects.get_indices(domain, case_id)
 
     @staticmethod
     def get_reverse_indices(domain, case_id):

@@ -263,12 +263,10 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @memoized
     def _saved_indices(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         cached_indices = 'cached_indices'
         if hasattr(self, cached_indices):
             return getattr(self, cached_indices)
-
-        return CaseAccessorSQL.get_indices(self.domain, self.case_id) if self.is_saved() else []
+        return CommCareCaseIndex.objects.get_indices(self.domain, self.case_id) if self.is_saved() else []
 
     def _set_indices(self, value):
         """Set previously-saved indices
@@ -695,8 +693,16 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
         ]
 
 
+class CommCareCaseIndexManager(RequireDBManager):
+
+    def get_indices(self, domain, case_id):
+        query = self.partitioned_query(case_id)
+        return list(query.filter(case_id=case_id, domain=domain))
+
+
 class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
+    objects = CommCareCaseIndexManager()
 
     # relationship_ids should be powers of 2
     CHILD = 1

@@ -12,6 +12,7 @@ from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
     CaseTransaction,
     CommCareCase,
+    CommCareCaseIndex,
     XFormInstance,
 )
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
@@ -20,14 +21,17 @@ from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 DOMAIN = 'test-case-accessor'
 
 
-@sharded
-class CaseAccessorTestsSQL(TestCase):
+class BaseCaseManagerTest(TestCase):
 
     def tearDown(self):
         if settings.USE_PARTITIONED_DATABASE:
             FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
             FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
-        super(CaseAccessorTestsSQL, self).tearDown()
+        super(BaseCaseManagerTest, self).tearDown()
+
+
+@sharded
+class TestCommCareCaseManager(BaseCaseManagerTest):
 
     def test_get_case_by_id(self):
         case = _create_case()
@@ -95,6 +99,35 @@ class CaseAccessorTestsSQL(TestCase):
             {form_id} | form_ids,
             set(CommCareCase.objects.get_case_xform_ids(case.case_id))
         )
+
+
+@sharded
+class TestCommCareCaseIndexManager(BaseCaseManagerTest):
+
+    def test_get_indices(self):
+        from ..backends.sql.dbaccessors import CaseAccessorSQL
+        case = _create_case()
+        index1 = CommCareCaseIndex(
+            case=case,
+            identifier='parent',
+            referenced_type='mother',
+            referenced_id=uuid.uuid4().hex,
+            relationship_id=CommCareCaseIndex.CHILD
+        )
+        case.track_create(index1)
+        index2 = CommCareCaseIndex(
+            case=case,
+            identifier='task',
+            referenced_type='task',
+            referenced_id=uuid.uuid4().hex,
+            relationship_id=CommCareCaseIndex.EXTENSION
+        )
+        case.track_create(index2)
+        CaseAccessorSQL.save_case(case)
+
+        indices = CommCareCaseIndex.objects.get_indices(case.domain, case.case_id)
+        indices.sort(key=lambda x: x.identifier)  # "parent" comes before "task"
+        self.assertEqual([index1, index2], indices)
 
 
 def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', closed=False, case_id=None):
