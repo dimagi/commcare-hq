@@ -548,25 +548,9 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_extension_case_ids(domain, case_ids, include_closed=True, exclude_for_case_type=None):
-        """
-        Given a base list of case ids, get all ids of all extension cases that reference them
-        """
-        if not case_ids:
-            return []
-
-        extension_case_ids = set()
-        for db_name in get_db_aliases_for_partitioned_query():
-            query = CommCareCaseIndex.objects.using(db_name).filter(
-                domain=domain,
-                relationship_id=CommCareCaseIndex.EXTENSION,
-                case__deleted=False,
-                referenced_id__in=case_ids)
-            if not include_closed:
-                query = query.filter(case__closed=False)
-            if exclude_for_case_type:
-                query = query.exclude(referenced_type=exclude_for_case_type)
-            extension_case_ids.update(query.values_list('case_id', flat=True))
-        return list(extension_case_ids)
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCaseIndex.objects.get_extension_case_ids(
+            domain, case_ids, include_closed, exclude_for_case_type)
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):

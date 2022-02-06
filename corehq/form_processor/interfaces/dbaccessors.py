@@ -71,6 +71,7 @@ class CaseAccessors(object):
         return self.db_accessor.get_modified_case_ids(self, case_ids, sync_log)
 
     def get_extension_case_ids(self, case_ids, exclude_for_case_type=None):
+        warn("DEPRECATED use CommCareCaseIndex.objects", DeprecationWarning)
         return self.db_accessor.get_extension_case_ids(
             self.domain, case_ids, exclude_for_case_type=exclude_for_case_type)
 

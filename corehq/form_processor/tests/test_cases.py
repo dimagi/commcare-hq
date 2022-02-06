@@ -483,6 +483,28 @@ class TestCommCareCaseIndexManager(BaseCaseManagerTest):
             }
         )
 
+    def test_get_extension_case_ids(self):
+        # There are similar tests for get_extension_case_ids in the
+        # `.test_extension_cases` module, but none that replicate this
+        # one precisely. This one may also be better because it creates
+        # models directly rather creating cases by constructing and
+        # processing form XML.
+
+        # Create case and index
+        referenced_id = uuid.uuid4().hex
+        case, _ = _create_case_with_index(referenced_id, identifier='task', referenced_type='task',
+                                relationship_id=CommCareCaseIndex.EXTENSION)
+
+        # Create irrelevant cases
+        _create_case_with_index(referenced_id)
+        _create_case_with_index(referenced_id, identifier='task', referenced_type='task',
+                                relationship_id=CommCareCaseIndex.EXTENSION, case_is_deleted=True)
+
+        self.assertEqual(
+            CommCareCaseIndex.objects.get_extension_case_ids(DOMAIN, [referenced_id]),
+            [case.case_id],
+        )
+
 
 class TestCaseTransactionManager(BaseCaseManagerTest):
 

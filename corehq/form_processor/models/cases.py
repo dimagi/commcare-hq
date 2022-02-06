@@ -24,7 +24,7 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.util import get_content_md5
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
-from corehq.sql_db.util import split_list_by_db_partition
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query, split_list_by_db_partition
 from corehq.util.json import CommCareJSONEncoder
 
 from ..exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError, UnknownActionType
@@ -910,6 +910,26 @@ class CommCareCaseIndexManager(RequireDBManager):
                 relationship=index.relationship_id
             ) for index in indexes
         ]
+
+    def get_extension_case_ids(self, domain, case_ids, include_closed=True, exclude_for_case_type=None):
+        """
+        Given a base list of case ids, get all ids of all extension cases that reference them
+        """
+        if not case_ids:
+            return []
+        extension_case_ids = set()
+        for db_name in get_db_aliases_for_partitioned_query():
+            query = self.using(db_name).filter(
+                domain=domain,
+                relationship_id=self.model.EXTENSION,
+                case__deleted=False,
+                referenced_id__in=case_ids)
+            if not include_closed:
+                query = query.filter(case__closed=False)
+            if exclude_for_case_type:
+                query = query.exclude(referenced_type=exclude_for_case_type)
+            extension_case_ids.update(query.values_list('case_id', flat=True))
+        return list(extension_case_ids)
 
 
 CaseIndexInfo = namedtuple(

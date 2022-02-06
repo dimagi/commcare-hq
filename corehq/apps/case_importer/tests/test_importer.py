@@ -29,8 +29,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import restrict_user_by_location
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.test_utils import flag_disabled, flag_enabled
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.workbook_reading import make_worksheet
@@ -64,8 +63,6 @@ class ImporterTest(TestCase):
         create_enterprise_permissions(self.couch_user.username, self.domain,
                                       [self.subdomain1.name, self.subdomain2.name],
                                       [self.ignored_domain.name])
-
-        self.accessor = CaseAccessors(self.domain)
 
         self.factory = CaseFactory(domain=self.domain, case_defaults={
             'case_type': self.default_case_type,
@@ -392,7 +389,10 @@ class ImporterTest(TestCase):
         # Should create child cases
         cases = CommCareCase.objects.get_reverse_indexed_cases(self.domain, [parent_case.case_id])
         self.assertEqual(len(cases), 3)
-        self.assertEqual(self.accessor.get_extension_case_ids([parent_case.case_id]), [])
+        self.assertEqual(
+            CommCareCaseIndex.objects.get_extension_case_ids(self.domain, [parent_case.case_id]),
+            [],
+        )
 
         file_missing = make_worksheet_wrapper(
             ['parent_id', 'name', 'case_id'],
@@ -425,7 +425,8 @@ class ImporterTest(TestCase):
         res = do_import(file, config, self.domain)
         self.assertEqual(res['created_count'], 3)
         # Of the 3, 2 should be extension cases
-        extension_case_ids = self.accessor.get_extension_case_ids([parent_case.case_id])
+        extension_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
+            self.domain, [parent_case.case_id])
         self.assertEqual(len(extension_case_ids), 2)
         extension_cases = CommCareCase.objects.get_cases(extension_case_ids, self.domain)
         # Check that identifier is set correctly
