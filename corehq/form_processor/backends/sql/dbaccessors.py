@@ -543,16 +543,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_modified_case_ids(accessor, case_ids, sync_log):
-        assert isinstance(case_ids, list), case_ids
-        if not case_ids:
-            return []
-        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
-                [accessor.domain, case_ids, sync_log.date, sync_log._id]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_modified_case_ids(accessor.domain, case_ids, sync_log)
 
     @staticmethod
     def get_extension_case_ids(domain, case_ids, include_closed=True, exclude_for_case_type=None):

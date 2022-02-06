@@ -67,9 +67,7 @@ class CaseAccessors(object):
         return self.db_accessor.get_closed_and_deleted_ids(self.domain, case_ids)
 
     def get_modified_case_ids(self, case_ids, sync_log):
-        """Get the subset of given list of case ids that have been modified
-        since sync date/log id
-        """
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_modified_case_ids(self, case_ids, sync_log)
 
     def get_extension_case_ids(self, case_ids, exclude_for_case_type=None):

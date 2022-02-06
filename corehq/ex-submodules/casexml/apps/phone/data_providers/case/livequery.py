@@ -79,8 +79,7 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
         if restore_state.last_sync_log:
             with timing_context("discard_already_synced_cases"):
                 debug('last sync: %s', restore_state.last_sync_log._id)
-                sync_ids = discard_already_synced_cases(
-                    live_ids, restore_state, accessor)
+                sync_ids = discard_already_synced_cases(live_ids, restore_state)
         else:
             sync_ids = live_ids
         restore_state.current_sync_log.case_ids_on_phone = live_ids
@@ -292,7 +291,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     return live_ids, indices
 
 
-def discard_already_synced_cases(live_ids, restore_state, accessor):
+def discard_already_synced_cases(live_ids, restore_state):
     debug = logging.getLogger(__name__).debug
     sync_log = restore_state.last_sync_log
     phone_ids = sync_log.case_ids_on_phone
@@ -300,7 +299,8 @@ def discard_already_synced_cases(live_ids, restore_state, accessor):
     if phone_ids:
         sync_ids = live_ids - phone_ids  # sync all live cases not on phone
         # also sync cases on phone that have been modified since last sync
-        sync_ids.update(accessor.get_modified_case_ids(list(phone_ids), sync_log))
+        sync_ids.update(CommCareCase.objects.get_modified_case_ids(
+            restore_state.domain, list(phone_ids), sync_log))
     else:
         sync_ids = live_ids
     debug('sync_ids: %r', sync_ids)

@@ -147,6 +147,19 @@ class CommCareCaseManager(RequireDBManager):
             )
             return list(fetchall_as_namedtuple(cursor))
 
+    def get_modified_case_ids(self, domain, case_ids, sync_log):
+        """Get the subset of given list of case ids that have been modified
+        since sync date/log id
+        """
+        assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
+                [domain, case_ids, sync_log.date, sync_log._id]
+            )
+            return [row[0] for row in cursor]
 
     def get_case_xform_ids(self, case_id):
         with self.model.get_plproxy_cursor(readonly=True) as cursor:
