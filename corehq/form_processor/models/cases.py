@@ -32,7 +32,7 @@ from ..track_related import TrackRelatedChanges
 from .attachment import AttachmentContent, AttachmentMixin
 from .forms import XFormInstance
 from .mixin import CaseToXMLMixin, IsImageMixin, SaveStateMixin
-from .util import attach_prefetch_models, sort_with_id_list
+from .util import attach_prefetch_models, fetchall_as_namedtuple, sort_with_id_list
 
 DEFAULT_PARENT_IDENTIFIER = 'parent'
 
@@ -131,6 +131,22 @@ class CommCareCaseManager(RequireDBManager):
                 [domain, case_type, owner_ids, is_closed, deleted]
             )
             return [row[0] for row in cursor]
+
+    def get_closed_and_deleted_ids(self, domain, case_ids):
+        """Get the subset of given list of case ids that are closed or deleted
+
+        :returns: List of three-tuples: `(case_id, closed, deleted)`
+        """
+        assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
+                [domain, case_ids]
+            )
+            return list(fetchall_as_namedtuple(cursor))
+
 
     def get_case_xform_ids(self, case_id):
         with self.model.get_plproxy_cursor(readonly=True) as cursor:

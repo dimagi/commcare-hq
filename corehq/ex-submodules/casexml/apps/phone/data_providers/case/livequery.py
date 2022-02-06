@@ -235,7 +235,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
             if index.relationship == 'extension'
         }
         check_cases = list(set(case_ids) - open_cases)
-        rows = accessor.get_closed_and_deleted_ids(check_cases)
+        rows = CommCareCase.objects.get_closed_and_deleted_ids(domain, check_cases)
         for case_id, closed, deleted in rows:
             if deleted:
                 deleted_ids.add(case_id)
@@ -245,7 +245,6 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
 
     IGNORE = object()
     debug = logging.getLogger(__name__).debug
-    accessor = CaseAccessors(domain)
 
     # case graph data structures
     live_ids = set()
