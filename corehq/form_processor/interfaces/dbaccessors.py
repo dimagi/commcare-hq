@@ -3,7 +3,7 @@ from collections import namedtuple
 from warnings import warn
 
 from memoized import memoized
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 
 
 CaseIndexInfo = namedtuple(
@@ -107,20 +107,9 @@ class CaseAccessors(object):
         return self.db_accessor.get_deleted_case_ids_by_owner(self.domain, owner_id)
 
     def get_extension_chain(self, case_ids, include_closed=True, exclude_for_case_type=None):
-        assert isinstance(case_ids, list)
-        get_extension_case_ids = self.db_accessor.get_extension_case_ids
-
-        incoming_extensions = set(get_extension_case_ids(
-            self.domain, case_ids, include_closed, exclude_for_case_type))
-        all_extension_ids = set(incoming_extensions)
-        new_extensions = set(incoming_extensions)
-        while new_extensions:
-            extensions = get_extension_case_ids(
-                self.domain, list(new_extensions), include_closed, exclude_for_case_type
-            )
-            new_extensions = set(extensions) - all_extension_ids
-            all_extension_ids = all_extension_ids | new_extensions
-        return all_extension_ids
+        warn("DEPRECATED use CommCareCaseIndex.objects", DeprecationWarning)
+        return CommCareCaseIndex.objects.get_extension_chain(
+            self.domain, case_ids, include_closed, exclude_for_case_type)
 
     def get_case_owner_ids(self):
         return self.db_accessor.get_case_owner_ids(self.domain)

@@ -931,6 +931,19 @@ class CommCareCaseIndexManager(RequireDBManager):
             extension_case_ids.update(query.values_list('case_id', flat=True))
         return list(extension_case_ids)
 
+    def get_extension_chain(self, domain, case_ids, include_closed=True, exclude_for_case_type=None):
+        assert isinstance(case_ids, list)
+        incoming_extensions = set(self.get_extension_case_ids(
+            domain, case_ids, include_closed, exclude_for_case_type))
+        all_extension_ids = set(incoming_extensions)
+        new_extensions = set(incoming_extensions)
+        while new_extensions:
+            extensions = self.get_extension_case_ids(
+                domain, list(new_extensions), include_closed, exclude_for_case_type)
+            new_extensions = set(extensions) - all_extension_ids
+            all_extension_ids = all_extension_ids | new_extensions
+        return all_extension_ids
+
 
 CaseIndexInfo = namedtuple(
     'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
