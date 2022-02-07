@@ -93,4 +93,5 @@ def test_remove_deleted_doc_type_suffix():
     yield from [
         (_check, 'DataSource', 'DataSource'),
         (_check, 'DataSource-Deleted', 'DataSource'),
+        (_check, 'DataSource-Deleted-Deleted', 'DataSource'),
     ]

@@ -72,4 +72,6 @@ def undo_delete(document, save=True):
 
 
 def remove_deleted_doc_type_suffix(doc_type):
-    return doc_type.removesuffix(DELETED_SUFFIX)
+    while _is_doc_type_deleted(doc_type):
+        doc_type = doc_type.removesuffix(DELETED_SUFFIX)
+    return doc_type
