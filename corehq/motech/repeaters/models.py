@@ -1157,9 +1157,9 @@ class RepeatRecord(Document):
         task = retry_process_repeat_record if is_retry else process_repeat_record
 
         if fire_synchronously:
-            task(self)
+            task(self._id)
         else:
-            task.delay(self)
+            task.delay(self._id)
 
     def requeue(self):
         self.cancelled = False

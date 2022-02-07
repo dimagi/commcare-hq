@@ -35,6 +35,7 @@ from .dbaccessors import (
     iterate_repeat_records_for_ids,
 )
 from .models import (
+    RepeatRecord,
     SQLRepeater,
     domain_can_forward,
     get_payload,
@@ -143,13 +144,15 @@ def check_repeaters_in_partition(partition):
         check_repeater_lock.release()
 
 
-@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeat_record(repeat_record):
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_repeat_record(repeat_record_id):
+    repeat_record = RepeatRecord.get(repeat_record_id)
     _process_repeat_record(repeat_record)
 
 
-@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def retry_process_repeat_record(repeat_record):
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def retry_process_repeat_record(repeat_record_id):
+    repeat_record = RepeatRecord.get(repeat_record_id)
     _process_repeat_record(repeat_record)
 
 
