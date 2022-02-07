@@ -87,11 +87,30 @@ class CommCareCaseManager(RequireDBManager):
         for chunk in chunked((x for x in case_ids if x), 100, list):
             yield from self.get_cases(chunk, domain)
 
-    def get_cases_by_external_id(self, domain, external_id, case_type=None):
-        return list(self.plproxy_raw(
+    def get_case_by_external_id(self, domain, external_id, case_type=None, raise_multiple=False):
+        """Get case in domain with external id and optional case type
+
+        :param raise_multiple: When true, raise an exception if multiple
+        cases match the given criteria. When false (the default), get
+        a random matching case. TODO raise by default?
+        :raises: `CommCareCase.MultipleObjectsReturned` if
+        `raise_multiple=True` and more than one case exists for the
+        given criteria. The exception has a `cases` attribute
+        containing a list of returned case objects.
+        :returns: `CommCareCase` object or `None` if there are no
+        matching cases
+        """
+        cases = list(self.plproxy_raw(
             'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
             [domain, external_id, case_type]
         ))
+        if not cases:
+            return None
+        if raise_multiple and len(cases) > 1:
+            error = CommCareCase.MultipleObjectsReturned()
+            error.cases = cases
+            raise error
+        return cases[0]
 
     def get_case_ids_that_exist(self, domain, case_ids):
         result = []

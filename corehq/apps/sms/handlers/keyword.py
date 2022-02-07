@@ -495,7 +495,11 @@ def keyword_uses_form_that_requires_case(survey_keyword):
 
 
 def get_case_by_external_id(domain, external_id, user):
-    cases = CommCareCase.objects.get_cases_by_external_id(domain, external_id)
+    try:
+        case = CommCareCase.objects.get_case_by_external_id(domain, external_id, raise_multiple=True)
+        cases = [case] if case is not None else []
+    except CommCareCase.MultipleObjectsReturned as err:
+        cases = err.cases
 
     def filter_fcn(case):
         return not case.closed and user_can_access_case(user, case)

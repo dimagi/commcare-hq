@@ -252,8 +252,8 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return site
 
     def get_case(self, external_id):
-        [case] = CommCareCase.objects.get_cases_by_external_id(self.domain, external_id)
-        return case
+        return CommCareCase.objects.get_case_by_external_id(
+            self.domain, external_id, raise_multiple=True)
 
     def assertCasePropertyEquals(self, case, prop, value):
         self.assertEqual(case.get_case_property(prop), value)

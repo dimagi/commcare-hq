@@ -21,6 +21,7 @@ from corehq.form_processor.models import (
 from corehq.form_processor.models.cases import CaseIndexInfo
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.sql_db.routers import HINT_PLPROXY
+from corehq.sql_db.tests.utils import new_id_in_different_dbalias
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 
 DOMAIN = 'test-case-accessor'
@@ -86,22 +87,37 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         self.assertEqual({r.case_id for r in result}, {case1.case_id, case2.case_id})
 
     def test_get_case_by_external_id(self):
-        case1 = _create_case()
-        case1.external_id = '123'
-        case1.save(with_tracked_models=True)
-        case2 = _create_case(domain='d2', case_type='t1')
-        case2.external_id = '123'
-        case2.save(with_tracked_models=True)
-        if not settings.USE_PARTITIONED_DATABASE:
+        case1 = _create_case(external_id='123')
+        case2 = _create_case(domain='d2', case_type='t1', external_id='123')
+        if settings.USE_PARTITIONED_DATABASE:
             self.addCleanup(lambda: FormProcessorTestUtils.delete_all_cases('d2'))
 
-        [case] = CommCareCase.objects.get_cases_by_external_id(DOMAIN, '123')
+        case = CommCareCase.objects.get_case_by_external_id(DOMAIN, '123')
         self.assertEqual(case.case_id, case1.case_id)
 
-        [case] = CommCareCase.objects.get_cases_by_external_id('d2', '123')
+        case = CommCareCase.objects.get_case_by_external_id('d2', '123')
         self.assertEqual(case.case_id, case2.case_id)
 
-        self.assertEqual([], CommCareCase.objects.get_cases_by_external_id('d2', '123', case_type='t2'))
+        case = CommCareCase.objects.get_case_by_external_id('d2', '123', case_type='t2')
+        self.assertIsNone(case)
+
+    def test_get_case_by_external_id_with_multiple_results(self):
+        case1_id = uuid.uuid4().hex
+        case2_id = new_id_in_different_dbalias(case1_id)  # raises SkipTest on non-sharded db
+        _create_case(case_id=case1_id, external_id='123')
+        _create_case(case_id=case2_id, external_id='123')
+
+        with self.assertRaises(CommCareCase.MultipleObjectsReturned) as context:
+            CommCareCase.objects.get_case_by_external_id(DOMAIN, '123', raise_multiple=True)
+        case_ids = {c.case_id for c in context.exception.cases}
+        self.assertEqual(case_ids, {case1_id, case2_id})
+
+        # This gets a random case from the set of matching cases.
+        # Code exists that uses this feature, but it is not part
+        # of a formal specification known to the test author.
+        # It may be better/safer to always raise multiple results.
+        case = CommCareCase.objects.get_case_by_external_id(DOMAIN, '123')
+        self.assertIn(case.case_id, {case1_id, case2_id})
 
     def test_get_case_ids_that_exist(self):
         case1 = _create_case()
@@ -615,7 +631,15 @@ class TestCaseTransactionManager(BaseCaseManagerTest):
             case1.case_id, "foo", datetime.utcnow()))
 
 
-def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', closed=False, case_id=None):
+def _create_case(
+    domain=DOMAIN,
+    *,
+    form_id=None,
+    case_id=None,
+    case_type=None,
+    user_id='user1',
+    **case_args,
+):
     """Create case and related models directly (not via form processor)
 
     :return: CommCareCase
@@ -639,7 +663,7 @@ def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', c
         modified_on=utcnow,
         modified_by=user_id,
         server_modified_on=utcnow,
-        closed=closed or False
+        **case_args
     )
     case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
     FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])

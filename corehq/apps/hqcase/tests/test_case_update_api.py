@@ -300,7 +300,7 @@ class TestCaseAPI(TestCase):
         updated_case = CommCareCase.objects.get_case(existing_case.case_id, self.domain)
         self.assertEqual(updated_case.name, 'Beth Harmon')
 
-        new_case = CommCareCase.objects.get_cases_by_external_id(self.domain, 'jolene')[0]
+        new_case = CommCareCase.objects.get_case_by_external_id(self.domain, 'jolene')
         self.assertEqual(new_case.name, 'Jolene')
 
     def test_bulk_update_too_big(self):
@@ -360,8 +360,8 @@ class TestCaseAPI(TestCase):
             },
         ])
         self.assertEqual(res.status_code, 200)
-        parent = CommCareCase.objects.get_cases_by_external_id(self.domain, 'beth')[0]
-        child = CommCareCase.objects.get_cases_by_external_id(self.domain, 'harmon-luchenko')[0]
+        parent = CommCareCase.objects.get_case_by_external_id(self.domain, 'beth')
+        child = CommCareCase.objects.get_case_by_external_id(self.domain, 'harmon-luchenko')
         self.assertEqual(parent.case_id, child.get_index('parent').referenced_id)
 
     def test_create_child_with_no_parent(self):

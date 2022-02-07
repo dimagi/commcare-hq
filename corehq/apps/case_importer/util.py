@@ -144,29 +144,22 @@ def lookup_case(search_field, search_id, domain, case_type):
     Returns a tuple with case (if found) and an
     error code (if there was an error in lookup).
     """
-    found = False
     if search_field == 'case_id':
         try:
             case = CommCareCase.objects.get_case(search_id, domain)
-            if case.domain == domain and case.type == case_type:
-                found = True
+            if case.type == case_type:
+                return (case, None)
         except CaseNotFound:
             pass
     elif search_field == EXTERNAL_ID:
-        cases_by_type = CommCareCase.objects.get_cases_by_external_id(
-            domain, search_id, case_type=case_type)
-        if not cases_by_type:
-            return (None, LookupErrors.NotFound)
-        elif len(cases_by_type) > 1:
+        try:
+            case = CommCareCase.objects.get_case_by_external_id(
+                domain, search_id, case_type=case_type, raise_multiple=True)
+        except CommCareCase.MultipleObjectsReturned:
             return (None, LookupErrors.MultipleResults)
-        else:
-            case = cases_by_type[0]
-            found = True
-
-    if found:
-        return (case, None)
-    else:
-        return (None, LookupErrors.NotFound)
+        if case is not None:
+            return (case, None)
+    return (None, LookupErrors.NotFound)
 
 
 def open_spreadsheet_download_ref(filename):

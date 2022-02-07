@@ -571,14 +571,12 @@ class CaseAccessorSQL:
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
         warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.get_cases_by_external_id(domain, external_id, case_type)
+        case = CommCareCase.objects.get_case_by_external_id(domain, external_id, case_type)
+        return [case] if case is not None else []
 
     @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-        try:
-            return CaseAccessorSQL.get_cases_by_external_id(domain, user_id, case_type)[0]
-        except IndexError:
-            return None
+        return CommCareCase.objects.get_case_by_external_id(domain, user_id, case_type)
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):

@@ -257,8 +257,9 @@ def get_case_by_id(domain, case_id):
 
 def get_case_by_external_id(domain, external_id, case_type):
     try:
-        [case] = CommCareCase.objects.get_cases_by_external_id(domain, external_id, case_type)
-    except ValueError:
+        case = CommCareCase.objects.get_case_by_external_id(
+            domain, external_id, case_type, raise_multiple=True)
+    except CommCareCase.MultipleObjectsReturned:
         return None
     return case if not case.is_deleted else None
 
