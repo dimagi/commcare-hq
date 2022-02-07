@@ -57,7 +57,7 @@ class Command(CaseUpdateCommand):
         case_blocks = []
         errors = []
         skip_count = 0
-        for case in accessor.iter_cases(case_ids):
+        for case in CommCareCase.objects.iter_cases(case_ids, domain):
             if case.get_case_property('current_status') == 'closed':
                 skip_count += 1
             elif needs_update(case):

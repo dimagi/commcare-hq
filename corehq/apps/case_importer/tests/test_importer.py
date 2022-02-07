@@ -121,7 +121,7 @@ class ImporterTest(TestCase):
         self.assertFalse(res['errors'])
         self.assertEqual(1, res['num_chunks'])
         case_ids = self.accessor.get_case_ids_in_domain()
-        cases = list(self.accessor.get_cases(case_ids))
+        cases = CommCareCase.objects.get_cases(case_ids, self.domain)
         self.assertEqual(5, len(cases))
         properties_seen = set()
         for case in cases:
@@ -147,7 +147,7 @@ class ImporterTest(TestCase):
         self.assertFalse(res['errors'])
         case_ids = self.accessor.get_case_ids_in_domain()
         self.assertItemsEqual(
-            [case.external_id for case in self.accessor.get_cases(case_ids)],
+            [case.external_id for case in CommCareCase.objects.get_cases(case_ids, self.domain)],
             ['external_id-0', 'external_id-0', 'external_id-1']
         )
 
@@ -203,7 +203,7 @@ class ImporterTest(TestCase):
         # shouldn't create any more cases, just the one
         case_ids = self.accessor.get_case_ids_in_domain()
         self.assertEqual(1, len(case_ids))
-        [case] = self.accessor.get_cases(case_ids)
+        [case] = CommCareCase.objects.get_cases(case_ids, self.domain)
         for prop in ['age', 'sex', 'location']:
             self.assertTrue(prop in case.get_case_property(prop))
 
@@ -367,7 +367,7 @@ class ImporterTest(TestCase):
         # should just create the one case
         case_ids = self.accessor.get_case_ids_in_domain()
         self.assertEqual(1, len(case_ids))
-        [case] = self.accessor.get_cases(case_ids)
+        [case] = CommCareCase.objects.get_cases(case_ids, self.domain)
         self.assertEqual(external_id, case.external_id)
         for prop in ['age', 'sex', 'location']:
             self.assertTrue(prop in case.get_case_property(prop))
@@ -426,7 +426,7 @@ class ImporterTest(TestCase):
         # Of the 3, 2 should be extension cases
         extension_case_ids = self.accessor.get_extension_case_ids([parent_case.case_id])
         self.assertEqual(len(extension_case_ids), 2)
-        extension_cases = self.accessor.get_cases(extension_case_ids)
+        extension_cases = CommCareCase.objects.get_cases(extension_case_ids, self.domain)
         # Check that identifier is set correctly
         self.assertEqual(
             {'host', 'mother'},
@@ -457,7 +457,7 @@ class ImporterTest(TestCase):
 
         # Asserting current domain
         cur_case_ids = self.accessor.get_case_ids_in_domain()
-        cur_cases = list(self.accessor.get_cases(cur_case_ids))
+        cur_cases = CommCareCase.objects.get_cases(cur_case_ids, self.domain)
         self.assertEqual(3, len(cur_cases))
         #Asserting current domain case property
         cases = {c.name: c for c in cur_cases}
@@ -465,7 +465,7 @@ class ImporterTest(TestCase):
 
         # Asserting subdomain 1
         s1_case_ids = CaseAccessors(self.subdomain1.name).get_case_ids_in_domain()
-        s1_cases = list(self.accessor.get_cases(s1_case_ids))
+        s1_cases = CommCareCase.objects.get_cases(s1_case_ids, self.domain)
         self.assertEqual(1, len(s1_cases))
         # Asserting subdomain 1 case property
         s1_cases_pro = {c.name: c for c in s1_cases}
@@ -473,7 +473,7 @@ class ImporterTest(TestCase):
 
         # Asserting subdomain 2
         s2_case_ids = CaseAccessors(self.subdomain2.name).get_case_ids_in_domain()
-        s2_cases = list(self.accessor.get_cases(s2_case_ids))
+        s2_cases = CommCareCase.objects.get_cases(s2_case_ids, self.domain)
         self.assertEqual(1, len(s2_cases))
         # Asserting subdomain 2 case property
         s2_cases_pro = {c.name: c for c in s2_cases}
@@ -498,7 +498,7 @@ class ImporterTest(TestCase):
         self.assertEqual(0, res['failed_count'])
         case_ids = self.accessor.get_case_ids_in_domain()
         # Asserting current domain
-        cur_cases = list(self.accessor.get_cases(case_ids))
+        cur_cases = CommCareCase.objects.get_cases(case_ids, self.domain)
         self.assertEqual(6, len(cur_cases))
         #Asserting domain case property
         cases = {c.name: c for c in cur_cases}
@@ -532,7 +532,7 @@ class ImporterTest(TestCase):
             ['', 'non-case-owning-name', '', improper_loc.name],
         ])
         case_ids = self.accessor.get_case_ids_in_domain()
-        cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
+        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
 
         self.assertEqual(cases['location-owner-id'].owner_id, location.location_id)
         self.assertEqual(cases['location-owner-code'].owner_id, location.location_id)
@@ -629,7 +629,7 @@ class ImporterTest(TestCase):
             ])
             self.assertEqual(res['errors'], {})
             case_ids = self.accessor.get_case_ids_in_domain()
-            cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
+            cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
             self.assertEqual(cases['Jeff'].owner_id, case_owner._id)
             self.assertEqual(cases['Jeff'].get_case_property('favorite_color'), 'blue')
             self.assertEqual(cases['Caroline'].owner_id, case_owner._id)
@@ -646,7 +646,7 @@ class ImporterTest(TestCase):
             ])
 
         case_ids = self.accessor.get_case_ids_in_domain()
-        cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
+        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
         self.assertEqual(cases['Quinton Fortune'].owner_id, dsa.location_id)
         self.assertTrue(res['errors'])
         error_message = exceptions.InvalidLocation.title
@@ -668,7 +668,7 @@ class ImporterTest(TestCase):
             ])
 
         case_ids = self.accessor.get_case_ids_in_domain()
-        cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
+        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
         self.assertEqual(cases['Quinton Fortune'].owner_id, dsa_owner._id)
         self.assertTrue(res['errors'])
         error_message = exceptions.InvalidLocation.title

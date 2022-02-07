@@ -13,6 +13,7 @@ from jsonobject import JsonObject, StringProperty
 from jsonobject.properties import BooleanProperty
 from memoized import memoized
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -28,6 +29,7 @@ from ..track_related import TrackRelatedChanges
 from .attachment import AttachmentMixin
 from .forms import XFormInstance
 from .mixin import CaseToXMLMixin, IsImageMixin, SaveStateMixin
+from .util import attach_prefetch_models, sort_with_id_list
 
 DEFAULT_PARENT_IDENTIFIER = 'parent'
 
@@ -46,6 +48,41 @@ class CommCareCaseManager(RequireDBManager):
             return self.partitioned_get(case_id, **kwargs)
         except CommCareCase.DoesNotExist:
             raise CaseNotFound(case_id)
+
+    def get_cases(self, case_ids, domain=None, ordered=False, prefetched_indices=None):
+        """
+        :param case_ids: List of case IDs to fetch
+        :param domain: Currently unused, may be enforced in the future.
+        :param ordered: Return cases in the same order as ``case_ids``
+        :param prefetched_indices: If not None this must be a dict
+            containing ALL the indices for ALL the cases being fetched.
+            If the list does not contain indices for a case then an
+            empty list will be attached to the case preventing further
+            DB lookup.
+        :return: List of cases
+        """
+        assert isinstance(case_ids, list)
+        if not case_ids:
+            return []
+        cases = list(self.plproxy_raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
+
+        if ordered:
+            sort_with_id_list(cases, case_ids, 'case_id')
+
+        if prefetched_indices is not None:
+            cases_by_id = {case.case_id: case for case in cases}
+            attach_prefetch_models(
+                cases_by_id, prefetched_indices, 'case_id', 'cached_indices')
+
+        return cases
+
+    def iter_cases(self, case_ids, domain=None):
+        """
+        :param case_ids: case ids iterable.
+        :param domain: See the same parameter of `get_cases`.
+        """
+        for chunk in chunked((x for x in case_ids if x), 100, list):
+            yield from self.get_cases(chunk, domain)
 
 
 class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
@@ -197,12 +234,11 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @memoized
     def get_subcases(self, index_identifier=None):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         subcase_ids = [
             ix.referenced_id for ix in self.reverse_indices
             if (index_identifier is None or ix.identifier == index_identifier)
         ]
-        return list(CaseAccessorSQL.get_cases(subcase_ids))
+        return type(self).objects.get_cases(subcase_ids, self.domain)
 
     def get_reverse_index_map(self):
         return self.get_index_map(True)

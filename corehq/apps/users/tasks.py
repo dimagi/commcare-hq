@@ -142,7 +142,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
 
         case_ids = get_case_ids_from_form(form)
         # all cases touched by the form and not already modified
-        for case in CaseAccessors(domain).iter_cases(case_ids - modified_cases):
+        for case in CommCareCase.objects.iter_cases(case_ids - modified_cases):
             if case.is_deleted != is_deletion:
                 # we can't delete/undelete this form - this would change the state of `case`
                 return False

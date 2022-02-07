@@ -9,10 +9,7 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.commtrack.processing import process_stock
 from corehq.apps.domain.dbaccessors import iter_domains
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    LedgerAccessorSQL,
-)
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.backends.sql.update_strategy import (
@@ -20,6 +17,7 @@ from corehq.form_processor.backends.sql.update_strategy import (
 )
 from corehq.form_processor.models import (
     CaseTransaction,
+    CommCareCase,
     LedgerTransaction,
     RebuildWithReason,
     XFormInstance,
@@ -188,7 +186,7 @@ class Command(BaseCommand):
 
         if case_ids:
             form_ids = set()
-            for case in CaseAccessorSQL.get_cases(case_ids):
+            for case in CommCareCase.objects.get_cases(case_ids):
                 assert not domain or case.domain == domain, 'Case "%s" not in domain "%s"' % (case.case_id, domain)
                 form_ids.update(case.xform_ids)
 

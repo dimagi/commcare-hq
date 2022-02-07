@@ -35,6 +35,7 @@ from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
 from corehq.util.metrics import metrics_histogram, metrics_counter
@@ -84,7 +85,7 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
         restore_state.current_sync_log.case_ids_on_phone = live_ids
 
         with timing_context("compile_response(%s cases)" % len(sync_ids)):
-            iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
+            iaccessor = PrefetchIndexCaseAccessor(restore_state.domain, indices)
             metrics_histogram(
                 'commcare.restore.case_load',
                 len(sync_ids),
@@ -305,11 +306,10 @@ def discard_already_synced_cases(live_ids, restore_state, accessor):
     return sync_ids
 
 
-class PrefetchIndexCaseAccessor(object):
+class PrefetchIndexCaseAccessor:
 
-    def __init__(self, accessor, indices):
-        self.domain = accessor.domain
-        self.accessor = accessor
+    def __init__(self, domain, indices):
+        self.domain = domain
         self.indices = indices
 
     def get_cases(self, case_ids, **kw):
@@ -317,7 +317,7 @@ class PrefetchIndexCaseAccessor(object):
         kw['prefetched_indices'] = [ix
             for case_id in case_ids
             for ix in self.indices[case_id]]
-        return self.accessor.get_cases(case_ids, **kw)
+        return CommCareCase.objects.get_cases(case_ids, self.domain, **kw)
 
 
 def batch_cases(accessor, case_ids):
@@ -332,7 +332,7 @@ def batch_cases(accessor, case_ids):
         if not next_ids:
             break
         track_load(len(next_ids))
-        yield accessor.get_cases(next_ids)
+        yield CommCareCase.objects.get_cases(next_ids, accessor.domain)
 
 
 def init_progress(async_task, total):

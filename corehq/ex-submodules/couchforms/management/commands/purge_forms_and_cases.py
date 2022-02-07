@@ -6,7 +6,7 @@ from django.http import Http404
 from corehq.apps.app_manager.models import Application
 from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.apps.app_manager.dbaccessors import get_app
 from dimagi.utils.django.management import are_you_sure
 from datetime import datetime
@@ -107,7 +107,7 @@ though deletion would be re-confirmed so dont panic
             _raise_xform_domain_mismatch(xform)
 
     def print_case_details(self):
-        for case in self.case_accessors.iter_cases(self.case_ids):
+        for case in CommCareCase.objects.iter_cases(self.case_ids, self.domain):
             _print_case_details(case, self.case_writer)
 
     def delete_permitted(self):

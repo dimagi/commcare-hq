@@ -7,7 +7,7 @@ import json
 from jsonfield.fields import JSONEncoder
 from psycopg2.extensions import adapt
 
-from corehq.form_processor.models import (
+from ..models import (
     CaseAttachment,
     CommCareCase,
     CommCareCaseIndex,

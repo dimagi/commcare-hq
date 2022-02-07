@@ -131,7 +131,7 @@ class CaseFactory(object):
         return self.create_or_update_cases([case_structure], form_extras, user_id=user_id)
 
     def create_or_update_cases(self, case_structures, form_extras=None, user_id=None, device_id=None):
-        from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+        from corehq.form_processor.models import CommCareCase
         self.post_case_blocks(
             self.get_case_blocks(case_structures),
             form_extras,
@@ -140,4 +140,4 @@ class CaseFactory(object):
         )
 
         case_ids = [id for structure in case_structures for id in structure.walk_ids()]
-        return list(CaseAccessors(self.domain).get_cases(case_ids, ordered=True))
+        return list(CommCareCase.objects.get_cases(case_ids, self.domain, ordered=True))

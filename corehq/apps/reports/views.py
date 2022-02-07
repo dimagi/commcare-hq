@@ -137,10 +137,7 @@ from corehq.apps.users.permissions import (
 )
 from corehq.blobs import CODES, NotFound, get_blob_db, models
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    LedgerAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase, UserRequestedRebuild, XFormInstance
 from corehq.form_processor.utils.general import use_sqlite_backend
@@ -2134,7 +2131,7 @@ def _get_cases_with_other_forms(domain, xform):
     :returns: Dict of Case ID -> Case"""
     cases_created = {u.id for u in get_case_updates(xform) if u.creates_case()}
     cases = {}
-    for case in CaseAccessors(domain).iter_cases(list(cases_created)):
+    for case in CommCareCase.objects.iter_cases(cases_created, domain):
         if not case.is_deleted and case.xform_ids != [xform.form_id]:
             # case has other forms that need to be archived before this one
             cases[case.case_id] = case.name
