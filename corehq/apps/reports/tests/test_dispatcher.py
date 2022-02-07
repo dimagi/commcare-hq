@@ -83,8 +83,8 @@ class DomainReportDispatcherTests(SimpleTestCase):
 def test_render_as_not_found():
     dispatcher = FooReportDispatcher()
     with assert_raises_regexp(AssertionError, (
-            'FooReport.not_found_response() not found in '
-            'ReportDispatcher.dispatch()'
+            r'^FooReport\.not_found_response\(\) not found in '
+            r'ReportDispatcher\.dispatch\(\)$'
     )):
         dispatcher.dispatch(
             request=object(),
@@ -110,7 +110,7 @@ class FooReport:
     def allow_access(cls, request):
         return True
 
-    def decorator_dispatcher(self, request, domain, slug, *args, **kwargs):
+    def decorator_dispatcher(self, request, *args, **kwargs):
         pass
 
 

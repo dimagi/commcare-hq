@@ -139,11 +139,13 @@ class ReportDispatcher(View):
             'email',
             'excel',
             'export',
+            'form_ids',
             'filters',
             'json',
             'partial',
             'print',
             'view',
+            None,
         ] = 'view',
         permissions_check: Optional[Callable] = None,
         *args,
@@ -187,11 +189,13 @@ class ReportDispatcher(View):
                     'excel': lambda: report.excel_response,
                     'email': lambda: report.email_response,
                     'export': lambda: report.export_response,
+                    'form_ids': lambda: report.form_ids_response,
                     'filters': lambda: report.filters_response,
                     'json': lambda: report.json_response,
                     'partial': lambda: report.partial_response,
                     'print': lambda: report.print_response,
                     'view': lambda: report.view_response,
+                    None: lambda: report.view_response,
                 }
                 assert render_as in render_as_to_response, (
                     f'{type(report).__name__}.{render_as}_response() not '
