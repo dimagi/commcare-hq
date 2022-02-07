@@ -1,10 +1,18 @@
+import doctest
+
 from django.test import SimpleTestCase
+
 from dimagi.ext.couchdbkit import Document
-from dimagi.utils.couch.undo import get_deleted_doc_type
+from dimagi.utils.couch.undo import (
+    get_deleted_doc_type,
+    soft_delete,
+    undo_delete,
+)
 
 
 class TestDocument(Document):
-    pass
+    def save(self):
+        pass
 
 
 class TestSubDocument(TestDocument):
@@ -27,3 +35,20 @@ class TestDeletedDocType(SimpleTestCase):
 
     def test_format_subclass_instance(self):
         self.assertEqual('TestSubDocument-Deleted', get_deleted_doc_type(TestSubDocument()))
+
+
+class TestUndoDelete(SimpleTestCase):
+
+    def test_undo_delete(self):
+        document = TestDocument(doc_type='Completed')
+        soft_delete(document)
+        self.assertEqual(document.doc_type, 'Completed-Deleted')
+        undo_delete(document)
+        self.assertEqual(document.doc_type, 'Completed')
+
+
+def test_doctests():
+    import dimagi.utils.couch.undo
+
+    results = doctest.testmod(dimagi.utils.couch.undo)
+    assert results.failed == 0

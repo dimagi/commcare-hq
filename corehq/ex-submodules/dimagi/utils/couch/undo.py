@@ -62,5 +62,30 @@ def get_deleted_doc_type(document_class_or_instance):
 
 
 def undo_delete(document):
-    document.doc_type = document.doc_type.rstrip(DELETED_SUFFIX)
-    document.save()
+    if is_deleted(document):
+        document.doc_type = removesuffix(document.doc_type, DELETED_SUFFIX)
+        document.save()
+
+
+def removesuffix(string: str, suffix: str) -> str:
+    """
+    If ``string`` ends with ``suffix``, returns ``string[:-len(suffix)]``,
+    otherwise, returns ``string``.
+
+    >>> 'Completed-Deleted'.rstrip(DELETED_SUFFIX)
+    'Comp'
+    >>> removesuffix('Completed-Deleted', DELETED_SUFFIX)
+    'Completed'
+
+    >>> 'I-Get-Deleted-But-I-Get-Undeleted-Again'.replace(DELETED_SUFFIX, '')
+    'I-Get-But-I-Get-Undeleted-Again'
+    >>> removesuffix('I-Get-Deleted-But-I-Get-Undeleted-Again', DELETED_SUFFIX)
+    'I-Get-Deleted-But-I-Get-Undeleted-Again'
+
+    """
+    try:
+        return string.removesuffix(suffix)  # Python 3.9+
+    except AttributeError:
+        if suffix and string.endswith(suffix):
+            return string[:-len(suffix)]
+        return string
