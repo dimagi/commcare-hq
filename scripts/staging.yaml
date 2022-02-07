@@ -78,4 +78,5 @@ branches:
     - mk/support-multibar-reports # MK Dec 14
     - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - ad/save-only-edited-fields-migration # Addison Feb 4
+    - gh/malt/last-run-enddate # Graham Feb 7
 submodules: { }
