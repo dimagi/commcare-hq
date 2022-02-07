@@ -126,9 +126,9 @@ class CaseAttachmentAPI(View):
                                      content_type=mime_type)
 
 
+@api_auth
 @require_form_view_permission
 @location_safe
-@api_auth
 def view_form_attachment(request, domain, instance_id, attachment_id):
     return get_form_attachment_response(request, domain, instance_id, attachment_id)
 
