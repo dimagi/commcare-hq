@@ -72,6 +72,19 @@ def undo_delete(document, save=True):
 
 
 def remove_deleted_doc_type_suffix(doc_type):
+    """
+    Removes '-Deleted' suffix.
+
+    >>> remove_deleted_doc_type_suffix('Completed-Deleted')
+    'Completed'
+
+    >>> remove_deleted_doc_type_suffix('Completed-Deleted-Deleted')
+    'Completed'
+
+    >>> remove_deleted_doc_type_suffix('Completed-Deleted-And-Undeleted')
+    'Completed-Deleted-And-Undeleted'
+
+    """
     while _is_doc_type_deleted(doc_type):
         doc_type = doc_type.removesuffix(DELETED_SUFFIX)
     return doc_type
