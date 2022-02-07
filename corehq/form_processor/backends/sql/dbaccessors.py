@@ -570,10 +570,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
-        return list(CommCareCase.objects.plproxy_raw(
-            'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
-            [domain, external_id, case_type]
-        ))
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_cases_by_external_id(domain, external_id, case_type)
 
     @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):

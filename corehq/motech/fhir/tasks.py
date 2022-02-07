@@ -12,7 +12,6 @@ from casexml.apps.case.mock import CaseBlock
 from corehq import toggles
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import (
     IMPORT_FREQUENCY_DAILY,
@@ -257,9 +256,8 @@ def get_case_by_id(domain, case_id):
 
 
 def get_case_by_external_id(domain, external_id, case_type):
-    accessor = CaseAccessors(domain)
     try:
-        [case] = accessor.get_cases_by_external_id(external_id, case_type)
+        [case] = CommCareCase.objects.get_cases_by_external_id(domain, external_id, case_type)
     except ValueError:
         return None
     return case if not case.is_deleted else None

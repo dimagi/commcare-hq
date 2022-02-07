@@ -10,7 +10,6 @@ from casexml.apps.case.mock import CaseBlock
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import Permissions, UserRole, WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -37,7 +36,6 @@ class TestCaseAPI(TestCase):
             cls.domain, 'edit-data', permissions=Permissions(edit_data=True, access_api=True)
         )
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
-        cls.case_accessor = CaseAccessors(cls.domain)
 
     def setUp(self):
         self.client.login(username='netflix', password='password')
@@ -302,7 +300,7 @@ class TestCaseAPI(TestCase):
         updated_case = CommCareCase.objects.get_case(existing_case.case_id, self.domain)
         self.assertEqual(updated_case.name, 'Beth Harmon')
 
-        new_case = self.case_accessor.get_cases_by_external_id('jolene')[0]
+        new_case = CommCareCase.objects.get_cases_by_external_id(self.domain, 'jolene')[0]
         self.assertEqual(new_case.name, 'Jolene')
 
     def test_bulk_update_too_big(self):
@@ -362,8 +360,8 @@ class TestCaseAPI(TestCase):
             },
         ])
         self.assertEqual(res.status_code, 200)
-        parent = self.case_accessor.get_cases_by_external_id('beth')[0]
-        child = self.case_accessor.get_cases_by_external_id('harmon-luchenko')[0]
+        parent = CommCareCase.objects.get_cases_by_external_id(self.domain, 'beth')[0]
+        child = CommCareCase.objects.get_cases_by_external_id(self.domain, 'harmon-luchenko')[0]
         self.assertEqual(parent.case_id, child.get_index('parent').referenced_id)
 
     def test_create_child_with_no_parent(self):

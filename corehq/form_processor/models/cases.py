@@ -87,6 +87,12 @@ class CommCareCaseManager(RequireDBManager):
         for chunk in chunked((x for x in case_ids if x), 100, list):
             yield from self.get_cases(chunk, domain)
 
+    def get_cases_by_external_id(self, domain, external_id, case_type=None):
+        return list(self.plproxy_raw(
+            'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
+            [domain, external_id, case_type]
+        ))
+
     def get_case_ids_that_exist(self, domain, case_ids):
         result = []
         for db_name, case_ids_chunk in split_list_by_db_partition(case_ids):

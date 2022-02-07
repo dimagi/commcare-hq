@@ -85,6 +85,24 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         result = CommCareCase.objects.iter_cases(case_ids, DOMAIN)
         self.assertEqual({r.case_id for r in result}, {case1.case_id, case2.case_id})
 
+    def test_get_case_by_external_id(self):
+        case1 = _create_case()
+        case1.external_id = '123'
+        case1.save(with_tracked_models=True)
+        case2 = _create_case(domain='d2', case_type='t1')
+        case2.external_id = '123'
+        case2.save(with_tracked_models=True)
+        if not settings.USE_PARTITIONED_DATABASE:
+            self.addCleanup(lambda: FormProcessorTestUtils.delete_all_cases('d2'))
+
+        [case] = CommCareCase.objects.get_cases_by_external_id(DOMAIN, '123')
+        self.assertEqual(case.case_id, case1.case_id)
+
+        [case] = CommCareCase.objects.get_cases_by_external_id('d2', '123')
+        self.assertEqual(case.case_id, case2.case_id)
+
+        self.assertEqual([], CommCareCase.objects.get_cases_by_external_id('d2', '123', case_type='t2'))
+
     def test_get_case_ids_that_exist(self):
         case1 = _create_case()
         case2 = _create_case()

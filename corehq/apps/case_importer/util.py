@@ -17,7 +17,6 @@ from corehq.apps.case_importer.exceptions import (
     ImporterRefError,
 )
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.util.workbook_reading import (
     SpreadsheetFileEncrypted,
@@ -146,7 +145,6 @@ def lookup_case(search_field, search_id, domain, case_type):
     error code (if there was an error in lookup).
     """
     found = False
-    case_accessors = CaseAccessors(domain)
     if search_field == 'case_id':
         try:
             case = CommCareCase.objects.get_case(search_id, domain)
@@ -155,7 +153,8 @@ def lookup_case(search_field, search_id, domain, case_type):
         except CaseNotFound:
             pass
     elif search_field == EXTERNAL_ID:
-        cases_by_type = case_accessors.get_cases_by_external_id(search_id, case_type=case_type)
+        cases_by_type = CommCareCase.objects.get_cases_by_external_id(
+            domain, search_id, case_type=case_type)
         if not cases_by_type:
             return (None, LookupErrors.NotFound)
         elif len(cases_by_type) > 1:
