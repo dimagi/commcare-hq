@@ -1515,6 +1515,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def can_view_some_reports(self, domain):
         return self.can_view_reports(domain) or bool(self.get_viewable_reports(domain))
 
+    def can_view_some_data_registry_contents(self, domain):
+        dm = self.get_domain_membership(domain, allow_enterprise=True)
+        data_registry_contents_list = dm.permissions.view_data_registry_contents_list if dm else []
+        return self.can_view_data_registry_contents() or (domain in data_registry_contents_list)
+
     def can_access_any_exports(self, domain=None):
         return self.can_view_reports(domain) or any([
             permission_slug for permission_slug in self._get_viewable_report_slugs(domain)
@@ -2835,6 +2840,12 @@ class AnonymousCouchUser(object):
         return False
 
     def can_view_roles(self):
+        return False
+
+    def can_view_data_registry_contents(self):
+        return False
+
+    def can_view_some_data_registry_contents(self, domain):
         return False
 
 
