@@ -1344,7 +1344,7 @@ def attempt_forward_now(repeater: SQLRepeater):
         return
     if not repeater.is_ready:
         return
-    process_repeater.delay(repeater)
+    process_repeater.delay(repeater.id)
 
 
 def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> str:

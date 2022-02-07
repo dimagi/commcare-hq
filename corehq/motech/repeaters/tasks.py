@@ -201,14 +201,15 @@ repeaters_overdue = metrics_gauge_task(
 )
 
 
-@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeater(repeater: SQLRepeater):
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_repeater(repeater_id):
     """
     Worker task to send SQLRepeatRecords in chronological order.
 
     This function assumes that ``repeater`` checks have already
     been performed. Call via ``models.attempt_forward_now()``.
     """
+    repeater = SQLRepeater.objects.get(id=repeater_id)
     with CriticalSection(
         [f'process-repeater-{repeater.repeater_id}'],
         fail_hard=False, block=False, timeout=5 * 60 * 60,
