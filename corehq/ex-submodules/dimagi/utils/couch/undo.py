@@ -72,4 +72,4 @@ def undo_delete(document, save=True):
 
 
 def remove_deleted_doc_type_suffix(doc_type):
-    return doc_type.rstrip(DELETED_SUFFIX)
+    return doc_type.removesuffix(DELETED_SUFFIX)
