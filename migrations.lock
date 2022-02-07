@@ -989,6 +989,7 @@ users
  0039_merge_20211007_0556
  0040_add_repr_and_changed_by_repr
  0041_migrate_reprs
+ 0042_deactivatemobileworkertrigger
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
