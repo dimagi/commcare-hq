@@ -5,6 +5,7 @@ from django.test import SimpleTestCase
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.couch.undo import (
     get_deleted_doc_type,
+    get_undeleted_doc_type,
     soft_delete,
     undo_delete,
 )
@@ -45,6 +46,12 @@ class TestUndoDelete(SimpleTestCase):
         self.assertEqual(document.doc_type, 'Completed-Deleted')
         undo_delete(document)
         self.assertEqual(document.doc_type, 'Completed')
+
+    def test_get_undeleted_doc_type(self):
+        document = TestDocument(doc_type='Completed')
+        self.assertEqual('Completed', get_undeleted_doc_type(document))
+        soft_delete(document)
+        self.assertEqual('Completed', get_undeleted_doc_type(document))
 
 
 def test_doctests():

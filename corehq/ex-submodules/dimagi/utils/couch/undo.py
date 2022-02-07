@@ -61,9 +61,13 @@ def get_deleted_doc_type(document_class_or_instance):
     return '{}{}'.format(base_name, DELETED_SUFFIX)
 
 
+def get_undeleted_doc_type(instance: Document) -> str:
+    return removesuffix(instance.doc_type, DELETED_SUFFIX)
+
+
 def undo_delete(document):
     if is_deleted(document):
-        document.doc_type = removesuffix(document.doc_type, DELETED_SUFFIX)
+        document.doc_type = get_undeleted_doc_type(document)
         document.save()
 
 
