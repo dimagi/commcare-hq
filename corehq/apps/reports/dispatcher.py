@@ -178,7 +178,7 @@ class ReportDispatcher(View):
                 report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
-                return {
+                render_as_to_response = {
                     # Use lambda to avoid executing all *_response properties.
                     # Use properties instead of strings so that IDEs see these
                     # as usage, and make them easier to find.
@@ -192,7 +192,12 @@ class ReportDispatcher(View):
                     'partial': lambda: report.partial_response,
                     'print': lambda: report.print_response,
                     'view': lambda: report.view_response,
-                }[render_as]()
+                }
+                assert render_as in render_as_to_response, (
+                    f'{type(report).__name__}.{render_as}_response() not '
+                    'found in ReportDispatcher.dispatch()'
+                )
+                return render_as_to_response[render_as]()
             except BadRequestError as e:
                 return HttpResponseBadRequest(e)
         else:
