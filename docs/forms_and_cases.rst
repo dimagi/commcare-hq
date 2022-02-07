@@ -99,7 +99,7 @@ name in order to know which DB needs to be queried.
 
 **Cases**
 
-- CaseAccessors(domain).get_case(case_id)
+- CommCareCase.objects.get_case(case_id, domain)
 - CaseAccessors(domain).get_cases(case_ids)
 - CaseAccessors(domain).iter_cases(case_ids)
 - CaseAccessors(domain).get_case_ids_in_domain(type='dog')
@@ -110,7 +110,6 @@ name in order to know which DB needs to be queried.
 
 For more details see:
 
-* :code:`corehq.form_processor.interfaces.dbaccessors.FormAccessors`
 * :code:`corehq.form_processor.interfaces.dbaccessors.CaseAccessors`
 * :code:`corehq.form_processor.interfaces.dbaccessors.LedgerAccessors`
 

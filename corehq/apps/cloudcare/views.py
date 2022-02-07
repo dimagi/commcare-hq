@@ -83,7 +83,7 @@ from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.models import XFormInstance
 from xml2json.lib import xml2json
 
@@ -407,7 +407,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     )
 
     if case_id:
-        case = CaseAccessors(domain).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, domain)
         session_name = '{0} - {1}'.format(session_name, case.name)
 
     root_context = {

@@ -29,7 +29,7 @@ from corehq.apps.integration.util import get_dialer_settings, get_gaen_otp_serve
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 
 class BiometricIntegrationView(BaseAdminProjectSettingsView):
@@ -90,7 +90,7 @@ def gaen_otp_view(request, domain):
 
         try:
             case_id = request.POST['case_id']
-            case = CaseAccessors(domain).get_case(case_id)
+            case = CommCareCase.objects.get_case(case_id, domain)
 
             case_name = case.name
 

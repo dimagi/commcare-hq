@@ -3,36 +3,21 @@ Note that the adapters must return the fields in the same order as they appear
 in the table DSL
 """
 import json
-from collections import namedtuple
 
 from jsonfield.fields import JSONEncoder
 from psycopg2.extensions import adapt
 
 from corehq.form_processor.models import (
-    CommCareCase_DB_TABLE, CaseAttachment_DB_TABLE,
-    CommCareCaseIndex_DB_TABLE, CaseTransaction_DB_TABLE,
+    CaseAttachment,
+    CommCareCase,
+    CommCareCaseIndex,
+    CaseTransaction,
+    LedgerTransaction,
+    LedgerValue,
     XFormInstance,
-    LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE,
     XFormOperation,
 )
-
-
-def fetchall_as_namedtuple(cursor):
-    "Return all rows from a cursor as a namedtuple generator"
-    Result = _namedtuple_from_cursor(cursor)
-    return (Result(*row) for row in cursor)
-
-
-def fetchone_as_namedtuple(cursor):
-    "Return one row from a cursor as a namedtuple"
-    Result = _namedtuple_from_cursor(cursor)
-    row = cursor.fetchone()
-    return Result(*row)
-
-
-def _namedtuple_from_cursor(cursor):
-    desc = cursor.description
-    return namedtuple('Result', [col[0] for col in desc])
+from ..models.util import fetchall_as_namedtuple  # noqa: F401
 
 
 def form_adapter(form):
@@ -98,7 +83,7 @@ def case_adapter(case):
         case.deleted_on,
         case.deletion_id,
     ]
-    return ObjectAdapter(fields, CommCareCase_DB_TABLE)
+    return ObjectAdapter(fields, CommCareCase._meta.db_table)
 
 
 def case_attachment_adapter(attachment):
@@ -114,7 +99,7 @@ def case_attachment_adapter(attachment):
         json.dumps(attachment.properties, cls=JSONEncoder),
         attachment.blob_bucket,
     ]
-    return ObjectAdapter(fields, CaseAttachment_DB_TABLE)
+    return ObjectAdapter(fields, CaseAttachment._meta.db_table)
 
 
 def case_index_adapter(index):
@@ -127,7 +112,7 @@ def case_index_adapter(index):
         index.relationship_id,
         index.case_id,
     ]
-    return ObjectAdapter(fields, CommCareCaseIndex_DB_TABLE)
+    return ObjectAdapter(fields, CommCareCaseIndex._meta.db_table)
 
 
 def case_transaction_adapter(transaction):
@@ -142,7 +127,7 @@ def case_transaction_adapter(transaction):
         json.dumps(transaction.details, cls=JSONEncoder),
         transaction.sync_log_id,
     ]
-    return ObjectAdapter(fields, CaseTransaction_DB_TABLE)
+    return ObjectAdapter(fields, CaseTransaction._meta.db_table)
 
 
 def ledger_value_adapter(ledger_value):
@@ -157,7 +142,7 @@ def ledger_value_adapter(ledger_value):
         ledger_value.last_modified_form_id,
         ledger_value.domain,
     ]
-    return ObjectAdapter(fields, LedgerValue_DB_TABLE)
+    return ObjectAdapter(fields, LedgerValue._meta.db_table)
 
 
 def ledger_transaction_adapter(ledger_transaction):
@@ -174,7 +159,7 @@ def ledger_transaction_adapter(ledger_transaction):
         ledger_transaction.delta,
         ledger_transaction.updated_balance,
     ]
-    return ObjectAdapter(fields, LedgerTransaction_DB_TABLE)
+    return ObjectAdapter(fields, LedgerTransaction._meta.db_table)
 
 
 class ObjectAdapter(object):

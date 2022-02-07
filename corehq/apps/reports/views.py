@@ -142,7 +142,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     LedgerAccessors,
 )
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import UserRequestedRebuild, XFormInstance
+from corehq.form_processor.models import CommCareCase, UserRequestedRebuild, XFormInstance
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.form_processor.utils.xform import resave_form
 from corehq.motech.repeaters.dbaccessors import (
@@ -1124,7 +1124,7 @@ class CaseDataView(BaseProjectReportSectionView):
     @memoized
     def case_instance(self):
         try:
-            case = CaseAccessors(self.domain).get_case(self.case_id)
+            case = CommCareCase.objects.get_case(self.case_id, self.domain)
             if case.domain != self.domain or case.is_deleted:
                 return None
             return case
@@ -1631,7 +1631,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
     for b in case_blocks:
         this_case_id = b.get(const.CASE_ATTR_ID)
         try:
-            this_case = CaseAccessors(domain).get_case(this_case_id) if this_case_id else None
+            this_case = CommCareCase.objects.get_case(this_case_id, domain) if this_case_id else None
             valid_case = True
         except ResourceNotFound:
             this_case = None
@@ -2008,7 +2008,7 @@ class EditFormInstance(View):
             non_parents = [cb for cb in case_blocks if cb.path == []]
             if len(non_parents) == 1:
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
-                case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
+                case = CommCareCase.objects.get_case(edit_session_data['case_id'], domain)
                 if case.closed:
                     message = format_html(_(
                         'Case <a href="{case_url}">{case_name}</a> is closed. Please reopen the '
@@ -2155,7 +2155,7 @@ def _get_case_id_and_redirect_url(domain, request):
         if case_id:
             case_id = case_id[0]
             try:
-                case = CaseAccessors(domain).get_case(case_id)
+                case = CommCareCase.objects.get_case(case_id, domain)
                 if case.is_deleted:
                     raise CaseNotFound
             except CaseNotFound:

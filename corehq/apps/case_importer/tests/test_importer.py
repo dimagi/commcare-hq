@@ -30,6 +30,7 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import restrict_user_by_location
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import flag_disabled, flag_enabled
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.workbook_reading import make_worksheet
@@ -176,7 +177,7 @@ class ImporterTest(TestCase):
         self.assertEqual(1, res['created_count'])
         case_ids = self.accessor.get_case_ids_in_domain()
         self.assertEqual(1, len(case_ids))
-        case = self.accessor.get_case(case_ids[0])
+        case = CommCareCase.objects.get_case(case_ids[0], self.domain)
         self.assertTrue(bool(case.get_case_property('sex')))  # make sure the value also got properly set
 
     def testCaseIdMatching(self):
@@ -291,7 +292,7 @@ class ImporterTest(TestCase):
         self.assertEqual(1, res['match_count'])
         case_ids = self.accessor.get_case_ids_in_domain()
         self.assertEqual(1, len(case_ids))
-        case = self.accessor.get_case(case_ids[0])
+        case = CommCareCase.objects.get_case(case_ids[0], self.domain)
         self.assertEqual(external_id, case.external_id)
 
     def testNoCreateNew(self):
@@ -555,7 +556,7 @@ class ImporterTest(TestCase):
                 ['case_id', 'date_opened'],
                 [case.case_id, new_date]
             ])
-        case = CaseAccessors(self.domain).get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
         self.assertEqual(case.opened_on, PhoneTime(parse_datetime(new_date)).done())
 
     def test_date_validity_checking(self):

@@ -13,7 +13,7 @@ from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.ota.case_restore import get_case_hierarchy_for_restore
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.hmac_request import get_hmac_digest
 from corehq.util.test_utils import flag_enabled
 
@@ -61,7 +61,7 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         )
 
     def test_get_related_case_ids(self):
-        dad_case = CaseAccessors(self.domain).get_case(self.dad.case_id)
+        dad_case = CommCareCase.objects.get_case(self.dad.case_id, self.domain)
         related_cases = get_case_hierarchy_for_restore(dad_case)
         # cases "above" this one should not be included
         self.assertItemsEqual(

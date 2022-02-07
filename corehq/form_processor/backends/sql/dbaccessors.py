@@ -32,7 +32,6 @@ from corehq.form_processor.exceptions import (
 )
 from corehq.form_processor.models.util import sort_with_id_list as _sort_with_id_list
 from corehq.form_processor.interfaces.dbaccessors import (
-    AbstractCaseAccessor,
     AbstractLedgerAccessor,
     CaseIndexInfo,
 )
@@ -45,12 +44,8 @@ from corehq.form_processor.models import (
     LedgerTransaction,
     LedgerValue,
     XFormInstance,
-    XFormOperation,
 )
-from corehq.form_processor.utils.sql import (
-    fetchall_as_namedtuple,
-    fetchone_as_namedtuple,
-)
+from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.util import (
     estimate_row_count,
@@ -129,7 +124,7 @@ class ShardAccessor(object):
         with XFormInstance.get_plproxy_cursor() as cursor:
             doc_uuid_before_cast = '\\x%s' % doc_uuid.hex
             cursor.execute(query, [doc_uuid_before_cast])
-            return fetchone_as_namedtuple(cursor).hash
+            return cursor.fetchone()[0]
 
     @staticmethod
     def hash_doc_ids_python(doc_ids):
@@ -369,130 +364,6 @@ class FormReindexAccessor(ReindexAccessor):
         return filters
 
 
-class FormAccessorSQL:
-    """DEPRECATED use XFormInstance.objects"""
-
-    @staticmethod
-    def get_form(form_id):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_form(form_id)
-
-    @staticmethod
-    def get_forms(form_ids, ordered=False):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_forms(form_ids, ordered)
-
-    @staticmethod
-    def get_attachments(form_id):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_attachments(form_id)
-
-    @staticmethod
-    def iter_form_ids_by_xmlns(domain, xmlns=None):
-        """DEPRECATED"""
-        return XFormInstance.objects.iter_form_ids_by_xmlns(domain, xmlns)
-
-    @staticmethod
-    def get_with_attachments(form_id):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_with_attachments(form_id)
-
-    @staticmethod
-    def get_attachment_by_name(form_id, attachment_name):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_attachment_by_name(form_id, attachment_name)
-
-    @staticmethod
-    def get_attachment_content(form_id, attachment_name, stream=False):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_attachment_content(form_id, attachment_name)
-
-    @staticmethod
-    def get_form_operations(form_id):
-        """DEPRECATED"""
-        return XFormOperation.objects.get_form_operations(form_id)
-
-    @staticmethod
-    def get_forms_with_attachments_meta(form_ids, ordered=False):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_forms_with_attachments_meta(form_ids, ordered)
-
-    @staticmethod
-    def get_forms_by_type(domain, type_, limit, recent_first=False):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_forms_by_type(domain, type_, limit, recent_first)
-
-    @staticmethod
-    def form_exists(form_id, domain=None):
-        """DEPRECATED"""
-        return XFormInstance.objects.form_exists(form_id, domain)
-
-    @staticmethod
-    def hard_delete_forms(domain, form_ids, delete_attachments=True):
-        """DEPRECATED"""
-        return XFormInstance.objects.hard_delete_forms(domain, form_ids, delete_attachments)
-
-    @staticmethod
-    def soft_undelete_forms(domain, form_ids):
-        """DEPRECATED"""
-        return XFormInstance.objects.soft_undelete_forms(domain, form_ids)
-
-    @staticmethod
-    def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml, _):
-        """DEPRECATED"""
-        return XFormInstance.objects.modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml)
-
-    @staticmethod
-    def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
-        """DEPRECATED"""
-        return XFormInstance.objects.soft_delete_forms(domain, form_ids, deletion_date, deletion_id)
-
-    @staticmethod
-    def set_archived_state(form, archive, user_id):
-        """DEPRECATED"""
-        type(form).objects.set_archived_state(form, archive, user_id)
-
-    @staticmethod
-    def save_new_form(form):
-        """DEPRECATED"""
-        XFormInstance.objects.save_new_form(form)
-
-    @staticmethod
-    def update_form(form, publish_changes=True):
-        """DEPRECATED"""
-        XFormInstance.objects.update_form(form, publish_changes)
-
-    @staticmethod
-    def update_form_problem_and_state(form):
-        """DEPRECATED"""
-        XFormInstance.objects.update_form_problem_and_state(form)
-
-    @staticmethod
-    def get_deleted_form_ids_for_user(domain, user_id):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_deleted_form_ids_for_user(domain, user_id)
-
-    @staticmethod
-    def get_form_ids_in_domain_by_type(domain, type_):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_form_ids_in_domain(domain, type_)
-
-    @staticmethod
-    def get_deleted_form_ids_in_domain(domain):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_deleted_form_ids_in_domain(domain)
-
-    @staticmethod
-    def get_form_ids_in_domain_by_state(domain, state):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_form_ids_in_domain_by_state(domain, state)
-
-    @staticmethod
-    def get_form_ids_for_user(domain, user_id):
-        """DEPRECATED"""
-        return XFormInstance.objects.get_form_ids_for_user(domain, user_id)
-
-
 class CaseReindexAccessor(ReindexAccessor):
     """
     :param: domain: If supplied the accessor will restrict results to only that domain
@@ -533,14 +404,12 @@ class CaseReindexAccessor(ReindexAccessor):
         return filters
 
 
-class CaseAccessorSQL(AbstractCaseAccessor):
+class CaseAccessorSQL:
 
     @staticmethod
     def get_case(case_id):
-        try:
-            return CommCareCase.objects.partitioned_get(case_id)
-        except CommCareCase.DoesNotExist:
-            raise CaseNotFound(case_id)
+        """DEPRECATED"""
+        return CommCareCase.objects.get_case(case_id)
 
     @staticmethod
     def get_cases(case_ids, ordered=False, prefetched_indices=None):

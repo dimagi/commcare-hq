@@ -165,7 +165,7 @@ def get_dhis2_server(
 def get_clays() -> Iterable[CassiusMarcellus]:
     case_accessors = CaseAccessors(DOMAIN)
     for case_id in case_accessors.get_case_ids_in_domain(type=CASE_TYPE):
-        case = case_accessors.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, DOMAIN)
         if not case.external_id:
             # This case is not mapped to a facility in DHIS2.
             continue

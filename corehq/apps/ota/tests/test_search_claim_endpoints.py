@@ -27,6 +27,7 @@ from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import CaseSearchReindexerFactory, domains_needing_search_index
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -335,7 +336,7 @@ class CaseClaimEndpointTests(TestCase):
 
         claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
         self.assertEqual(len(claim_ids), 1)
-        claim = CaseAccessors(DOMAIN).get_case(claim_ids[0])
+        claim = CommCareCase.objects.get_case(claim_ids[0], DOMAIN)
         self.assertEqual(claim.owner_id, self.user.get_id)
         self.assertEqual(claim.name, CASE_NAME)
 
@@ -390,7 +391,7 @@ class CaseClaimEndpointTests(TestCase):
         claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
         self.assertEqual(len(claim_ids), 1)
 
-        claim_case = CaseAccessors(DOMAIN).get_case(claim_ids[0])
+        claim_case = CommCareCase.objects.get_case(claim_ids[0], DOMAIN)
         self.assertEqual(claim_case.owner_id, other_user._id)
 
     def test_claim_restore_as_proper_cache(self):
@@ -414,7 +415,7 @@ class CaseClaimEndpointTests(TestCase):
         claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
         self.assertEqual(len(claim_ids), 1)
 
-        claim_case = CaseAccessors(DOMAIN).get_case(claim_ids[0])
+        claim_case = CommCareCase.objects.get_case(claim_ids[0], DOMAIN)
         self.assertEqual(claim_case.owner_id, other_user._id)
 
         client.post(url, {
