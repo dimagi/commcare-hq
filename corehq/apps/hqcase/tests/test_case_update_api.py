@@ -38,7 +38,6 @@ class TestCaseAPI(TestCase):
         )
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
         cls.case_accessor = CaseAccessors(cls.domain)
-        cls.form_accessor = XFormInstance.objects
 
     def setUp(self):
         self.client.login(username='netflix', password='password')
@@ -144,7 +143,7 @@ class TestCaseAPI(TestCase):
             'sport': 'chess',
         })
 
-        xform = self.form_accessor.get_form(res['form_id'])
+        xform = XFormInstance.objects.get_form(res['form_id'])
         self.assertEqual(xform.xmlns, 'http://commcarehq.org/case_api')
         self.assertEqual(xform.metadata.userID, self.web_user.user_id)
         self.assertEqual(xform.metadata.deviceID, 'user agent string')
@@ -436,7 +435,7 @@ class TestCaseAPI(TestCase):
         })
         self.assertEqual(res.status_code, 400)
         self.assertIn("InvalidCaseIndex", res.json()['error'])
-        form = self.form_accessor.get_form(res.json()['form_id'])
+        form = XFormInstance.objects.get_form(res.json()['form_id'])
         self.assertEqual(form.is_error, True)
 
     def test_unset_external_id(self):
