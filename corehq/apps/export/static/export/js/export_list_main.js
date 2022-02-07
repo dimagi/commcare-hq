@@ -2,6 +2,7 @@ hqDefine("export/js/export_list_main", [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'analytix/js/kissmetrix',
+    'hqwebapp/js/main',
     'export/js/create_export',
     'export/js/export_list',
     'hqwebapp/js/select_2_ajax_widget',  // for case owner & user filters in DashboardFeedFilterForm
@@ -9,6 +10,7 @@ hqDefine("export/js/export_list_main", [
     $,
     initialPageData,
     kissmetricsAnalytics,
+    utils,
     createModels,
     listModels
 ) {
@@ -31,6 +33,14 @@ hqDefine("export/js/export_list_main", [
             }));
             $('#createExportOptionsModal').on('show.bs.modal', function () {
                 kissmetricsAnalytics.track.event("Clicked New Export");
+
+                const modelType = utils.capitalize(initialPageData.get('model_type', 'unknown'));
+                const metricsMessage = `${modelType} Export - Clicked Add Export Button`;
+                kissmetricsAnalytics.track.event(metricsMessage, {
+                    username: initialPageData.get('user'),
+                    domain: initialPageData.get('domain'),
+                });
+
                 if (isOData) {
                     kissmetricsAnalytics.track.event("[BI Integration] Clicked + Add Odata Feed button");
                 }
