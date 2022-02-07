@@ -39,7 +39,7 @@ from dimagi.ext.jsonobject import JsonObject
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.couch.undo import is_deleted
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 
@@ -259,7 +259,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
 
     @property
     def is_deleted(self):
-        return DELETED_SUFFIX in self.doc_type
+        return is_deleted(self)
 
     def save(self, **params):
         self.last_modified = datetime.utcnow()
