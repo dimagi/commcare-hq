@@ -126,11 +126,20 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                 yield id_strings.report_command(config.uuid), trans(config.header)
                 yield id_strings.report_name(config.uuid), trans(config.header)
                 yield id_strings.report_description(config.uuid), trans(config.localized_description)
-                for column in config.report(app.domain).report_columns:
-                    yield (
-                        id_strings.report_column_header(config.uuid, column.column_id),
-                        column.get_header(lang)
-                    )
+                report = config.report(app.domain)
+                support_expanded_col = toggles.SUPPORT_EXPANDED_COLUMN_IN_REPORTS.enabled(app.domain)
+                for column in report.report_columns:
+                    if column.type == 'expanded' and support_expanded_col:
+                        for expanded_column in report.get_expanded_columns(column):
+                            yield (
+                                id_strings.report_column_header(config.uuid, expanded_column.slug),
+                                expanded_column.header
+                            )
+                    else:
+                        yield (
+                            id_strings.report_column_header(config.uuid, column.column_id),
+                            column.get_header(lang)
+                        )
                 for chart_id, graph_config in config.complete_graph_configs.items():
                     for index, item in enumerate(graph_config.annotations):
                         yield id_strings.mobile_ucr_annotation(module, config.uuid, index), trans(item.values)
