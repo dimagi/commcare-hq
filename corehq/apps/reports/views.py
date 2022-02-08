@@ -1907,9 +1907,9 @@ class FormDataView(BaseProjectReportSectionView):
         return page_context
 
 
+@login_and_domain_required
 @require_form_view_permission
 @location_safe
-@login_and_domain_required
 def view_form_attachment(request, domain, instance_id, attachment_id):
     # Open form attachment in browser
     return get_form_attachment_response(request, domain, instance_id, attachment_id)
