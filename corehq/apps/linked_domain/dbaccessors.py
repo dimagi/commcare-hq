@@ -1,7 +1,9 @@
 from django.db.models.expressions import RawSQL
 
 from corehq import toggles
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.accounting.utils.account import domain_is_enterprise
 from corehq.apps.domain.models import Domain
 from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
 from corehq.apps.linked_domain.util import (
@@ -54,19 +56,18 @@ def get_actions_in_domain_link_history(link):
     ))
 
 
-def get_available_domains_to_link(upstream_domain_name, user, billing_account=None):
+def get_available_domains_to_link(upstream_domain_name, user):
     """
     This supports both the old feature flagged version of linked projects and the GAed version
-    The GAed version is only available to enterprise customers and only usable by admins, but the feature flagged
-    version is available to anyone who can obtain access (the wild west)
     :param upstream_domain_name: potential upstream domain candidate
     :param user: user object
-    :param billing_account: optional parameter to limit available domains to within an enterprise account
     :return: list of domain names available to link as downstream projects
     """
-    if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
-        return get_available_domains_to_link_for_account(upstream_domain_name, user, billing_account)
-    elif domain_has_privilege(upstream_domain_name, LITE_RELEASE_MANAGEMENT):
+    is_enterprise = domain_is_enterprise(upstream_domain_name)
+    if is_enterprise and domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
+        return get_available_domains_to_link_for_enterprise(upstream_domain_name, user)
+    elif domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT) or \
+            domain_has_privilege(upstream_domain_name, LITE_RELEASE_MANAGEMENT):
         return get_available_domains_to_link_for_user(upstream_domain_name, user, should_enforce_admin=True)
     elif toggles.LINKED_DOMAINS.enabled(upstream_domain_name):
         return get_available_domains_to_link_for_user(upstream_domain_name, user, should_enforce_admin=False)
@@ -74,10 +75,11 @@ def get_available_domains_to_link(upstream_domain_name, user, billing_account=No
     return []
 
 
-def get_available_domains_to_link_for_account(upstream_domain_name, user, account):
+def get_available_domains_to_link_for_enterprise(upstream_domain_name, user):
     """
     Finds available domains to link based on domains associated with the provided account
     """
+    account = BillingAccount.get_account_by_domain(upstream_domain_name)
     domains = account.get_domains() if account else []
     return list({domain for domain in domains
                  if is_domain_available_to_link(upstream_domain_name, domain, user)})
@@ -92,27 +94,27 @@ def get_available_domains_to_link_for_user(upstream_domain_name, user, should_en
         upstream_domain_name, domain, user, should_enforce_admin=should_enforce_admin)})
 
 
-def get_available_upstream_domains(downstream_domain, user, billing_account=None):
+def get_available_upstream_domains(downstream_domain, user):
     """
     This supports both the old feature flagged version of linked projects and the GAed version
-    The GAed version is only available to enterprise customers and only usable by admins, but the feature flagged
-    version is available to anyone who can obtain access
     :param downstream_domain: potential upstream domain candidate
     :param user: user object
-    :param billing_account: optional parameter to limit available domains to within an enterprise account
     :return: list of domain names available to link as downstream projects
     """
-    if domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT):
-        return get_available_upstream_domains_for_account(downstream_domain, user, billing_account)
-    elif domain_has_privilege(downstream_domain, LITE_RELEASE_MANAGEMENT):
-        return get_available_upstream_domains_for_user(downstream_domain, user, True)
+    is_enterprise = domain_is_enterprise(downstream_domain)
+    if is_enterprise and domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT):
+        return get_available_upstream_domains_for_enterprise(downstream_domain, user)
+    elif domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT) or \
+            domain_has_privilege(downstream_domain, LITE_RELEASE_MANAGEMENT):
+        return get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=True)
     elif toggles.LINKED_DOMAINS.enabled(downstream_domain):
-        return get_available_upstream_domains_for_user(downstream_domain, user, False)
+        return get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=False)
 
     return []
 
 
-def get_available_upstream_domains_for_account(downstream_domain, user, account):
+def get_available_upstream_domains_for_enterprise(downstream_domain, user):
+    account = BillingAccount.get_account_by_domain(downstream_domain)
     domains = account.get_domains() if account else []
     return list({d for d in domains if is_available_upstream_domain(d, downstream_domain, user)})
 

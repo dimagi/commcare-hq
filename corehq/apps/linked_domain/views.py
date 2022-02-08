@@ -11,7 +11,6 @@ from couchdbkit import ResourceNotFound
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
-from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -278,8 +277,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         """
-        This view services both domains that are master domains and domains that are linked domains
-        (and legacy domains that are both).
+        This view services both domains that are upstream, downstream, and legacy domains that are both
         """
         timezone = get_timezone_for_request()
         upstream_link = get_upstream_domain_link(self.domain)
@@ -301,16 +299,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             is_superuser=is_superuser
         )
 
-        account = BillingAccount.get_account_by_domain(self.request.domain)
-        available_domains_to_link = get_available_domains_to_link(self.request.domain,
-                                                                  self.request.couch_user,
-                                                                  billing_account=account)
+        available_domains_to_link = get_available_domains_to_link(self.request.domain, self.request.couch_user)
 
         upstream_domain_urls = []
-        upstream_domains = get_available_upstream_domains(self.request.domain,
-                                                          self.request.couch_user,
-                                                          billing_account=account)
-        for domain in upstream_domains:
+        for domain in get_available_upstream_domains(self.request.domain, self.request.couch_user):
             upstream_domain_urls.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
 
         if upstream_link and upstream_link.is_remote:
