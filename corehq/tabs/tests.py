@@ -1,7 +1,8 @@
-from unittest.mock import ANY, patch
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
+from corehq.apps.users.models import WebUser
 from corehq.privileges import LITE_RELEASE_MANAGEMENT, RELEASE_MANAGEMENT
 from corehq.tabs.tabclasses import (
     _get_feature_flag_items,
@@ -70,6 +71,11 @@ class TestAccessToLinkedProjects(SimpleTestCase):
 
 class TestAccessToReleaseManagementTab(SimpleTestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = WebUser(username='test-username')
+
     def setUp(self):
         super().setUp()
 
@@ -89,7 +95,7 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
     def test_returns_none_if_cannot_user_access_release_management(self):
         self.mock_can_access.return_value = False
 
-        title, items = _get_release_management_items(ANY, "domain")
+        title, items = _get_release_management_items(self.user, "domain")
 
         self.assertFalse(title)
         self.assertFalse(items)
@@ -98,7 +104,7 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
         self.mock_can_access.return_value = True
         self.mock_domain_has_privilege.side_effect = lambda domain, privilege: privilege == RELEASE_MANAGEMENT
 
-        title, items = _get_release_management_items(ANY, "domain")
+        title, items = _get_release_management_items(self.user, "domain")
 
         self.assertEqual(title, 'Enterprise Release Management')
         self.assertEqual(items[0]['title'], 'Linked Project Spaces')
@@ -108,7 +114,7 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
         self.mock_can_access.return_value = True
         self.mock_domain_has_privilege.side_effect = lambda domain, privilege: privilege == LITE_RELEASE_MANAGEMENT
 
-        title, items = _get_release_management_items(ANY, "domain")
+        title, items = _get_release_management_items(self.user, "domain")
 
         self.assertEqual(title, 'Multi-Environment Release Management')
         self.assertEqual(items[0]['title'], 'Linked Project Spaces')
