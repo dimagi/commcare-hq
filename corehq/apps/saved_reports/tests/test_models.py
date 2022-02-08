@@ -19,7 +19,7 @@ class TestReportConfig(TestCase):
             domain=domain,
         )
         self.config.save()
-        self.assertFalse(self.config.is_shared_on_domain)
+        self.assertFalse(self.config.is_shared_on_domain())
 
 
 class TestReportNotification(SimpleTestCase):
