@@ -57,7 +57,6 @@ branches:
     - sr/cs-multiselect  # Sravan May 31
     - ce/bulk-case-search # Cal July 6
     #- sr/memoized-toggle # Sravan July 26
-    - cs/SC-1567-bulk-export-filters # Charl Aug 26
     - dmr/throttle-system-forms  # Danny Sept 24
     - smh/remove-extra-spinner-icons # Steph Oct 6
     - ml/remove-pickles-phonelog # Minha Oct 7
@@ -78,4 +77,7 @@ branches:
     - mk/support-multibar-reports # MK Dec 14
     - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - ad/save-only-edited-fields-migration # Addison Feb 4
+    - gh/malt/background-queue # Graham Feb 7
+    - cs/SC-1882-shared-saved-reports-m # Charl Feb 8
+    - nh/api_log_export  # Norman Feb 8
 submodules: { }
