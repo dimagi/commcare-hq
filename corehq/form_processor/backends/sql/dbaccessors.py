@@ -580,10 +580,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def form_has_case_transactions(form_id):
-        for db_name in get_db_aliases_for_partitioned_query():
-            if CaseTransaction.objects.using(db_name).filter(form_id=form_id).exists():
-                return True
-        return False
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.exists_for_form(form_id)
 
     @staticmethod
     def get_case_transactions_by_case_id(case, updated_xforms=None):

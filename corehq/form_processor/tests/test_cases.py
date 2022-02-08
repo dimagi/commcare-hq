@@ -672,6 +672,13 @@ class TestCaseTransactionManager(BaseCaseManagerTest):
         self.assertFalse(CaseTransaction.objects.case_has_transactions_since_sync(
             case1.case_id, "foo", datetime.utcnow()))
 
+    def test_exists_for_form(self):
+        self.assertFalse(CaseTransaction.objects.exists_for_form('missing-form'))
+
+        case = _create_case()
+        for form_id in _create_case_transactions(case):
+            self.assertTrue(CaseTransaction.objects.exists_for_form(form_id))
+
 
 def _create_case(domain=DOMAIN, **kw):
     return create_case(domain, save=True, **kw)

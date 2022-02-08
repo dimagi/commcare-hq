@@ -11,10 +11,7 @@ from lxml import etree
 from casexml.apps.case import const
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    LedgerAccessorSQL,
-)
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.change_publishers import (
     publish_form_saved, publish_case_saved, publish_ledger_v2_saved)
 from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
@@ -326,7 +323,7 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def form_has_case_transactions(form_id):
-        return CaseAccessorSQL.form_has_case_transactions(form_id)
+        return CaseTransaction.objects.exists_for_form(form_id)
 
     @staticmethod
     def get_case_with_lock(case_id, lock=False, wrap=False):

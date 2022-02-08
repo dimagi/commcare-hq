@@ -1179,6 +1179,12 @@ class CaseTransactionManager(RequireDBManager):
                 [case_id, model.case_rebuild_types() | model.TYPE_CASE_CREATE])
             return cursor.fetchone()[0]
 
+    def exists_for_form(self, form_id):
+        for db_name in get_db_aliases_for_partitioned_query():
+            if self.using(db_name).filter(form_id=form_id).exists():
+                return True
+        return False
+
 
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
