@@ -26,6 +26,7 @@ class UsercaseAccessorsTests(TestCase):
             user_id=self.user._id,
             name="bar",
             external_id=self.user._id,
+            save=True,
         )
 
     def test_get_usercase(self):

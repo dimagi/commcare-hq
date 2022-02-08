@@ -634,11 +634,11 @@ class TestCaseTransactionManager(BaseCaseManagerTest):
 
 
 def _create_case(domain=DOMAIN, **kw):
-    return create_case(domain, **kw)
+    return create_case(domain, save=True, **kw)
 
 
 def _create_case_with_index(*args, **kw):
-    return create_case_with_index(DOMAIN, *args, **kw)
+    return create_case_with_index(DOMAIN, save=True, *args, **kw)
 
 
 def _create_case_transactions(case, all_forms=False):

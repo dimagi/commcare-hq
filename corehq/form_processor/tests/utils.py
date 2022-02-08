@@ -312,10 +312,12 @@ def create_case(
     case_id=None,
     case_type=None,
     user_id='user1',
+    save=False,
     **case_args,
 ):
     """Create case and related models directly (not via form processor)
 
+    :param save: Save case if true. The default is false.
     :return: CommCareCase
     """
     form_id = form_id or uuid4().hex
@@ -340,7 +342,8 @@ def create_case(
         **case_args
     )
     case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
-    FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
+    if save:
+        FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
     return case
 
 
@@ -351,7 +354,9 @@ def create_case_with_index(
     referenced_type='mother',
     relationship_id=CommCareCaseIndex.CHILD,
     case_is_deleted=False,
-    case_type='child'
+    case_type='child',
+    *,
+    save=False,
 ):
     case = create_case(domain, case_type=case_type)
     case.deleted = case_is_deleted
@@ -363,7 +368,8 @@ def create_case_with_index(
         relationship_id=relationship_id
     )
     case.track_create(index)
-    case.save(with_tracked_models=True)
+    if save:
+        case.save(with_tracked_models=True)
     return case, index
 
 
