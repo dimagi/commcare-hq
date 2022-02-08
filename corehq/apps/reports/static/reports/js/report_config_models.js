@@ -88,10 +88,6 @@ hqDefine("reports/js/report_config_models", [
             return reportConfig(item);
         }));
 
-        self.otherReportConfigs = ko.observableArray(ko.utils.arrayMap(options.other_items, function (item) {
-            return reportConfig(item);
-        }));
-
         self.configBeingViewed = ko.observable();
 
         self.configBeingEdited = ko.observable();
