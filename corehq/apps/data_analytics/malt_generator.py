@@ -38,8 +38,9 @@ def generate_malt(monthspans, domains=None):
     """
     domain_names = domains or Domain.get_all_names()
     for domain_name in domain_names:
+        last_submission_date = get_last_form_submission_received(domain_name)
         for monthspan in monthspans:
-            if _should_update_malt(domain_name, monthspan):
+            if _should_update_malt(domain_name, monthspan, last_submission_date):
                 # use this date to populate last_run_date for all MALTRows with this domain and month
                 run_date = datetime.datetime.utcnow()
                 logger.info(f"Building MALT for {domain_name} for {monthspan} up to {run_date}")
@@ -51,13 +52,12 @@ def generate_malt(monthspans, domains=None):
                         _save_malt_row_dicts_to_db(malt_row_dicts)
 
 
-def _should_update_malt(domain_name, monthspan):
+def _should_update_malt(domain_name, monthspan, last_submission_date):
     """
     Only attempt to update a MALTRow if:
     - there's a valid last_submission_date
     - that last submission date is greater than or equal to the end date for the previous malt run
     """
-    last_submission_date = get_last_form_submission_received(domain_name)
     last_run_date = _get_last_run_date_for_malt(domain_name, monthspan)
     return last_submission_date and last_submission_date >= last_run_date
 

@@ -345,10 +345,7 @@ class TestShouldUpdateMalt(SimpleTestCase):
         self.domain = 'domain'
         self.monthspan = DateSpan.from_month(1, 2022)
 
-        last_form_patcher = patch('corehq.apps.data_analytics.malt_generator.get_last_form_submission_received')
-        self.mock_get_last_form_submission = last_form_patcher.start()
-        self.mock_get_last_form_submission.return_value = datetime.datetime(2022, 1, 10, 0, 0)
-        self.addCleanup(last_form_patcher.stop)
+        self.last_form_submission = datetime.datetime(2022, 1, 10, 0, 0)
 
         last_run_patcher = patch('corehq.apps.data_analytics.malt_generator._get_last_run_date_for_malt')
         self.mock_last_run_date = last_run_patcher.start()
@@ -356,36 +353,36 @@ class TestShouldUpdateMalt(SimpleTestCase):
         self.addCleanup(last_run_patcher.stop)
 
     def test_returns_false_if_last_form_submission_is_none(self):
-        self.mock_get_last_form_submission.return_value = None
+        self.last_form_submission = None
 
-        should_update = _should_update_malt(self.domain, self.monthspan)
+        should_update = _should_update_malt(self.domain, self.monthspan, self.last_form_submission)
 
         self.assertFalse(should_update)
 
     def test_returns_true_if_last_submission_is_equal_to_last_malt_run_date(self):
         self.monthspan = DateSpan.from_month(3, 2020)
-        self.mock_get_last_form_submission.return_value = datetime.datetime(2020, 3, 1, 0, 0)
+        self.last_form_submission = datetime.datetime(2020, 3, 1, 0, 0)
         self.mock_last_run_date.return_value = datetime.datetime(2020, 3, 1, 0, 0)
 
-        should_update = _should_update_malt(self.domain, self.monthspan)
+        should_update = _should_update_malt(self.domain, self.monthspan, self.last_form_submission)
 
         self.assertTrue(should_update)
 
     def test_returns_true_if_last_submission_is_greater_than_last_malt_run_date(self):
         self.monthspan = DateSpan.from_month(3, 2020)
-        self.mock_get_last_form_submission.return_value = datetime.datetime(2020, 3, 16, 0, 0)
+        self.last_form_submission = datetime.datetime(2020, 3, 16, 0, 0)
         self.mock_last_run_date.return_value = datetime.datetime(2020, 3, 15, 0, 0)
 
-        should_update = _should_update_malt(self.domain, self.monthspan)
+        should_update = _should_update_malt(self.domain, self.monthspan, self.last_form_submission)
 
         self.assertTrue(should_update)
 
     def test_returns_false_if_last_submission_is_less_than_last_malt_run_date(self):
         self.monthspan = DateSpan.from_month(3, 2020)
-        self.mock_get_last_form_submission.return_value = datetime.datetime(2020, 3, 15, 0, 0)
+        self.last_form_submission = datetime.datetime(2020, 3, 15, 0, 0)
         self.mock_last_run_date.return_value = datetime.datetime(2020, 3, 16, 0, 0)
 
-        should_update = _should_update_malt(self.domain, self.monthspan)
+        should_update = _should_update_malt(self.domain, self.monthspan, self.last_form_submission)
 
         self.assertFalse(should_update)
 
@@ -394,10 +391,10 @@ class TestShouldUpdateMalt(SimpleTestCase):
         Shows how naive this implementation is
         """
         self.monthspan = DateSpan.from_month(3, 2020)
-        self.mock_get_last_form_submission.return_value = datetime.datetime(2020, 4, 15, 0, 0)
+        self.last_form_submission = datetime.datetime(2020, 4, 15, 0, 0)
         self.mock_last_run_date.return_value = datetime.datetime(2020, 4, 10, 0, 0)
 
-        should_update = _should_update_malt(self.domain, self.monthspan)
+        should_update = _should_update_malt(self.domain, self.monthspan, self.last_form_submission)
 
         self.assertTrue(should_update)
 
