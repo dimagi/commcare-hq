@@ -202,10 +202,9 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         )
 
     def test_get_deleted_case_ids_in_domain(self):
-        from ..backends.sql.dbaccessors import CaseAccessorSQL
         case1 = _create_case()
         case2 = _create_case()
-        CaseAccessorSQL.soft_delete_cases(DOMAIN, [case1.case_id])
+        CommCareCase.objects.soft_delete_cases(DOMAIN, [case1.case_id])
 
         case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN)
         self.assertEqual(case_ids, [case2.case_id])
@@ -214,13 +213,12 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         self.assertEqual(deleted, [case1.case_id])
 
     def test_get_deleted_case_ids_by_owner(self):
-        from ..backends.sql.dbaccessors import CaseAccessorSQL
         user_id = uuid.uuid4().hex
         case1 = _create_case(user_id=user_id)
         case2 = _create_case(user_id=user_id)
         _create_case(user_id=user_id)
 
-        CaseAccessorSQL.soft_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
+        CommCareCase.objects.soft_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
 
         case_ids = CommCareCase.objects.get_deleted_case_ids_by_owner(DOMAIN, user_id)
         self.assertEqual(set(case_ids), {case1.case_id, case2.case_id})
@@ -332,6 +330,23 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
 
         with self.assertRaises(CaseSaveError):
             case.save(with_tracked_models=True)
+
+    def test_soft_delete(self):
+        _create_case(case_id='c1')
+        _create_case(case_id='c2')
+        _create_case(case_id='c3')
+
+        # delete
+        num = CommCareCase.objects.soft_delete_cases(DOMAIN, ['c1', 'c2'], deletion_id='123')
+        self.assertEqual(num, 2)
+
+        for case_id in ['c1', 'c2']:
+            case = CommCareCase.objects.get_case(case_id)
+            self.assertTrue(case.is_deleted)
+            self.assertEqual(case.deletion_id, '123')
+
+        case = CommCareCase.objects.get_case('c3')
+        self.assertFalse(case.is_deleted)
 
     def test_hard_delete_cases(self):
         case1 = _create_case()

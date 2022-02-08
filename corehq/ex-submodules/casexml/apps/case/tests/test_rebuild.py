@@ -8,7 +8,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks, primary_actions
 from corehq.apps.change_feed import topics
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase, RebuildWithReason, XFormInstance
 from corehq.form_processor.tests.utils import sharded
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
@@ -237,7 +236,7 @@ class CaseRebuildTest(TestCase):
                   form_extras={'received_on': now + timedelta(seconds=2)})
 
         case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
-        CaseAccessors(REBUILD_TEST_DOMAIN).soft_delete_cases([case_id])
+        CommCareCase.objects.soft_delete_cases(REBUILD_TEST_DOMAIN, [case_id])
 
         [f1, f2, f3] = case.xform_ids
         f2_doc = XFormInstance.objects.get_form(f2, REBUILD_TEST_DOMAIN)

@@ -222,6 +222,23 @@ class CommCareCaseManager(RequireDBManager):
         except IndexError:
             return None
 
+    def soft_delete_cases(self, domain, case_ids, deletion_date=None, deletion_id=None):
+        from ..change_publishers import publish_case_deleted
+        assert isinstance(case_ids, list), type(case_ids)
+        utcnow = datetime.utcnow()
+        deletion_date = deletion_date or utcnow
+        with self.model.get_plproxy_cursor() as cursor:
+            cursor.execute(
+                'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as deleted_count',
+                [domain, case_ids, utcnow, deletion_date, deletion_id]
+            )
+            deleted_count = sum(row[0] for row in cursor)
+
+        for case_id in case_ids:
+            publish_case_deleted(domain, case_id)
+
+        return deleted_count
+
     def hard_delete_cases(self, domain, case_ids):
         """Permanently delete cases in domain
 

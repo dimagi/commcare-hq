@@ -5,7 +5,6 @@ import operator
 import struct
 from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import namedtuple
-from datetime import datetime
 from uuid import UUID
 from warnings import warn
 
@@ -607,23 +606,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
-        from corehq.form_processor.change_publishers import publish_case_deleted
-
-        assert isinstance(case_ids, list)
-        utcnow = datetime.utcnow()
-        deletion_date = deletion_date or utcnow
-        with CommCareCase.get_plproxy_cursor() as cursor:
-            cursor.execute(
-                'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as affected_count',
-                [domain, case_ids, utcnow, deletion_date, deletion_id]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            affected_count = sum([result.affected_count for result in results])
-
-        for case_id in case_ids:
-            publish_case_deleted(domain, case_id)
-
-        return affected_count
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.soft_delete_cases(domain, case_ids, deletion_date, deletion_id)
 
     @staticmethod
     def get_case_owner_ids(domain):
