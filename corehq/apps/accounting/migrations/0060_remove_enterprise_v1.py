@@ -12,7 +12,7 @@ from corehq.util.django_migrations import skip_on_fresh_install
 @skip_on_fresh_install
 def _consolidate_enterprise_v1_into_v0(apps, schema_editor):
     change_role_for_software_plan_version('enterprise_plan_v1', 'enterprise_plan_v0')
-    # after updating software plan versions to reference v1, add release management to enterprise_v0 via boostrap
+    # after updating software plan versions to reference v0, add release management to enterprise_v0 via boostrap
     call_command('cchq_prbac_bootstrap')
     # delete the enterprise_plan_v1 role now that all active plans have been updated
     role = None
