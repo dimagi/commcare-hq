@@ -261,6 +261,53 @@ class CaseAccessorTestsSQL(TestCase):
             [t.form_id for t in transactions],
         )
 
+    def test_get_most_recent_form_transaction(self):
+        form_id = uuid.uuid4().hex
+        case = _create_case(form_id=form_id)
+
+        transaction = CaseAccessorSQL.get_most_recent_form_transaction(case.case_id)
+        self.assertEqual(transaction.form_id, form_id)
+
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED,
+            revoked=False
+        ))
+        CaseAccessorSQL.save_case(case)
+
+        transaction = CaseAccessorSQL.get_most_recent_form_transaction(case.case_id)
+        # still the same since the last transaction was not a form transaction
+        self.assertEqual(transaction.form_id, form_id)
+
+        second_form_id = uuid.uuid4().hex
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=second_form_id,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM,
+            revoked=False
+        ))
+        CaseAccessorSQL.save_case(case)
+
+        transaction = CaseAccessorSQL.get_most_recent_form_transaction(case.case_id)
+        # now it's the new form transaction
+        self.assertEqual(transaction.form_id, second_form_id)
+
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM,
+            revoked=True
+        ))
+        CaseAccessorSQL.save_case(case)
+
+        transaction = CaseAccessorSQL.get_most_recent_form_transaction(case.case_id)
+        # still second_form_id since the newest one is revoked
+        self.assertEqual(transaction.form_id, second_form_id)
+
     def test_get_transaction_by_form_id(self):
         form_id = uuid.uuid4().hex
         case = _create_case(form_id=form_id)

@@ -85,11 +85,9 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.const import (
     ALGO_AES,
     BASIC_AUTH,
@@ -351,7 +349,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def get_attempt_info(self, repeat_record):
         return None
 
-    def register(self, payload):
+    def register(self, payload, fire_synchronously=False):
         if not self.allowed_to_forward(payload):
             return
 
@@ -366,10 +364,17 @@ class Repeater(QuickCachedDocumentMixin, Document):
         )
         metrics_counter('commcare.repeaters.new_record', tags={
             'domain': self.domain,
-            'doc_type': self.doc_type
+            'doc_type': self.doc_type,
+            'mode': 'sync' if fire_synchronously else 'async'
         })
         repeat_record.save()
-        repeat_record.attempt_forward_now()
+
+        if fire_synchronously:
+            # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
+            # to prevent serializing the repeater in the celery task payload
+            RepeatRecord.repeater.fget.get_cache(repeat_record)[()] = self
+
+        repeat_record.attempt_forward_now(fire_synchronously)
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -599,7 +604,7 @@ class FormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
@@ -610,8 +615,8 @@ class FormRepeater(Repeater):
 
     def allowed_to_forward(self, payload):
         return (
-            payload.xmlns != DEVICE_LOG_XMLNS and
-            (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns
+            payload.xmlns != DEVICE_LOG_XMLNS
+            and (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns
             and payload.user_id not in self.user_blocklist)
         )
 
@@ -666,7 +671,7 @@ class CaseRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
+        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
@@ -786,7 +791,15 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         # Exclude extension cases where the host is also a case type that this repeater
         # would act on since they get forwarded along with their host
         host_index = payload.get_index(CASE_INDEX_IDENTIFIER_HOST)
-        return not host_index or host_index.referenced_type not in self.white_listed_case_types
+        if host_index and host_index.referenced_type in self.white_listed_case_types:
+            return False
+
+        transaction = CaseAccessorSQL.get_most_recent_form_transaction(payload.case_id)
+        if transaction:
+            # prevent chaining updates
+            return transaction.xmlns != DataRegistryCaseUpdatePayloadGenerator.XMLNS
+
+        return True
 
 
 class ShortFormRepeater(Repeater):
@@ -802,7 +815,7 @@ class ShortFormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     def allowed_to_forward(self, payload):
         return payload.xmlns != DEVICE_LOG_XMLNS
@@ -1114,7 +1127,7 @@ class RepeatRecord(Document):
         self.next_check = None
         self.cancelled = True
 
-    def attempt_forward_now(self, is_retry=False):
+    def attempt_forward_now(self, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import process_repeat_record, retry_process_repeat_record
 
         def is_ready():
@@ -1141,10 +1154,12 @@ class RepeatRecord(Document):
             return
 
         # separated for improved datadog reporting
-        if is_retry:
-            retry_process_repeat_record.delay(self)
+        task = retry_process_repeat_record if is_retry else process_repeat_record
+
+        if fire_synchronously:
+            task(self)
         else:
-            process_repeat_record.delay(self)
+            task.delay(self)
 
     def requeue(self):
         self.cancelled = False

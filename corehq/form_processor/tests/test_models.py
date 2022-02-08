@@ -8,8 +8,7 @@ from nose.tools import assert_equal
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import Attachment, CommCareCase
+from corehq.form_processor.models import Attachment, CommCareCase, CommCareCaseIndex
 
 DOMAIN = 'test-domain'
 
@@ -33,6 +32,60 @@ class AttachmentHasSizeTests(SimpleTestCase):
     @staticmethod
     def create_attachment_with_content(content):
         return Attachment(name='test_attachment', raw_content=content, content_type='text')
+
+
+class CommCareCaseTests(SimpleTestCase):
+    def test_sets_index(self):
+        data = {
+            'indices': [{
+                'referenced_id': 'some_id'
+            }]
+        }
+        case = CommCareCase(**data)
+        index = case.indices[0]
+        self.assertEqual(index.referenced_id, 'some_id')
+
+    def test_sets_index_with_doc_type(self):
+        data = {
+            'indices': [{
+                'doc_type': 'CommCareCaseIndex',
+                'referenced_id': 'some_id'
+            }]
+        }
+        case = CommCareCase(**data)
+        index = case.indices[0]
+        self.assertEqual(index.referenced_id, 'some_id')
+
+
+class CommCareCaseIndexTests(SimpleTestCase):
+    def test_fields(self):
+        data = {
+            'identifier': 'my_parent',
+            'relationship': 'child',
+            'referenced_type': 'some_type',
+            'referenced_id': 'some_id'
+        }
+        index = CommCareCaseIndex(**data)
+
+        self.assertEqual(index.identifier, 'my_parent')
+        self.assertEqual(index.relationship, 'child')
+        self.assertEqual(index.referenced_type, 'some_type')
+        self.assertEqual(index.referenced_id, 'some_id')
+
+    def test_relationship_id_is_set_by_relationship(self):
+        index = CommCareCaseIndex(relationship='extension')
+        self.assertEqual(index.relationship_id, 2)
+
+    def test_constructor_ignores_doc_type(self):
+        # Just ensure it doesn't raise an exception
+        data = {
+            'doc_type': 'CommCareCaseIndex',
+            'identifier': 'my_parent',
+            'relationship': 'child',
+            'referenced_type': 'comunidad',
+            'referenced_id': 'ed285193-3795-4b39-b08b-ac9ad941527f'
+        }
+        CommCareCaseIndex(**data)
 
 
 class TestIndices(TestCase):
@@ -122,9 +175,7 @@ class TestIndices(TestCase):
     def test_case_indices(self):
         indices = self.johnny_case.indices
         self.assertEqual(len(indices), 1)
-
-        case_accessor = CaseAccessors(DOMAIN)
-        case = case_accessor.get_case(indices[0].referenced_id)
+        case = CommCareCase.objects.get_case(indices[0].referenced_id, DOMAIN)
         self.assertTrue(are_cases_equal(case, self.elizabeth_case))
 
 

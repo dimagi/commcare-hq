@@ -11,7 +11,7 @@ from django.test import SimpleTestCase, TestCase
 import attr
 from dateutil.tz import tzoffset, tzutc
 from lxml import etree
-from nose.tools import assert_raises
+from nose.tools import assert_equal, assert_is_none, assert_raises
 
 import corehq.motech.openmrs.atom_feed
 from corehq.motech.openmrs.atom_feed import (
@@ -27,8 +27,12 @@ from corehq.motech.openmrs.atom_feed import (
     import_encounter,
 )
 from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT
-from corehq.motech.openmrs.exceptions import OpenmrsFeedSyntaxError
-from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.openmrs.exceptions import (
+    OpenmrsException,
+    OpenmrsFeedRuntimeException,
+    OpenmrsFeedSyntaxError,
+)
+from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import TestFileMixin
 
@@ -449,8 +453,89 @@ class ImportEncounterTest(TestCase, TestFileMixin):
         self.assertEqual(case_blocks[0].as_text(), case_block)
 
 
-def test_get_feed_xml():
-    response_url = 'https://www.example.com/openmrs/ws/atomfeed/patient/recent'
+def test_get_feed_xml_feed_does_not_exist():
+    page = '1000'
+    response_url = f'https://example.com/openmrs/ws/atomfeed/patient/{page}'
+    response = SimpleNamespace(
+        status_code=500,
+        url=response_url,
+        text=(
+            '<!DOCTYPE html>\n'
+            '<html><body><h1>HTTP Status 500 - Request processing failed; '
+            'nested exception is org.ict4h.atomfeed.server.exceptions'
+            '.AtomFeedRuntimeException: feed does not exist</h1></html>'
+        ),
+    )
+    requests = Mock(
+        domain_name='test_domain',
+        get=lambda url: response,
+    )
+    with assert_raises(OpenmrsFeedRuntimeException):
+        get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, page)
+    requests.notify_exception.assert_called_with(
+        'Domain "test_domain": Page does not exist in Atom feed '
+        f'"{response_url}". Resetting Atom feed status.',
+        'This can happen if the IP address of a Repeater is changed to point '
+        'to a different server, or if a server has been rebuilt. It can '
+        'signal more severe consequences, like attempts to synchronize '
+        'CommCare cases with OpenMRS patients that can no longer be found.'
+    )
+
+
+def test_get_feed_xml_feedid_zero():
+    page = '0'
+    response_url = f'https://example.com/openmrs/ws/atomfeed/patient/{page}'
+    response = SimpleNamespace(
+        status_code=500,
+        url=response_url,
+        text=(
+            '<!DOCTYPE html>\n'
+            '<html><body><h1>HTTP Status 500 - Request processing failed; '
+            'nested exception is org.ict4h.atomfeed.server.exceptions'
+            '.AtomFeedRuntimeException: feedId must not be null and must be '
+            'greater than 0</h1></html>'
+        ),
+    )
+    requests = Mock(
+        domain_name='test_domain',
+        get=lambda url: response,
+    )
+    with assert_raises(OpenmrsFeedRuntimeException):
+        get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, '0')
+    requests.notify_exception.assert_called_with(
+        f'Domain "test_domain": Page "{page}" is not valid in Atom feed '
+        f'"{response_url}". Resetting Atom feed status.',
+        f'It is unclear how Atom feed pagination can lead to page "{page}". '
+        'Follow up with OpenMRS system administrator.'
+    )
+
+
+def test_get_feed_xml_500():
+    page = 'recent'
+    response_url = f'https://example.com/openmrs/ws/atomfeed/patient/{page}'
+    response = SimpleNamespace(
+        status_code=500,
+        url=response_url,
+        text='<!DOCTYPE html>\n'
+             '<html><body>HTTP Status 500</body></html>',
+    )
+    requests = Mock(
+        domain_name='test_domain',
+        get=lambda url: response,
+    )
+    with assert_raises(OpenmrsException):
+        get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, page)
+    requests.notify_exception.assert_called_with(
+        'Domain "test_domain": Unrecognized error in Atom feed '
+        f'"{response_url}".',
+        'Response text: \n'
+        '<!DOCTYPE html>\n<html><body>HTTP Status 500</body></html>'
+    )
+
+
+def test_get_feed_xml_bad_xml():
+    page = 'recent'
+    response_url = f'https://example.com/openmrs/ws/atomfeed/patient/{page}'
     response = SimpleNamespace(
         status_code=200,
         url=response_url,
@@ -461,7 +546,7 @@ def test_get_feed_xml():
         get=lambda url: response,
     )
     with assert_raises(OpenmrsFeedSyntaxError):
-        get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, None)
+        get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, page)
     requests.notify_exception.assert_called_with(
         'Opening and ending tag mismatch: body line 1 and html, line 1, '
         'column 27 (<string>, line 1)',
@@ -491,6 +576,12 @@ def test_get_feed_updates():
 
         # Assert returns without raising
         get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
+
+
+def test_status_defaults():
+    status = AtomFeedStatus()
+    assert_is_none(status.last_polled_at)
+    assert_equal(status.last_page, 'recent')
 
 
 def test_doctests():

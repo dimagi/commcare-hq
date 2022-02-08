@@ -15,13 +15,13 @@ from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import strip_plus
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.messaging.scheduling.util import utcnow
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
 
-from . import signals
+from . import signals  # noqa: F401
 
 XFORMS_SESSION_SMS = "SMS"
 XFORMS_SESSION_IVR = "IVR"
@@ -170,7 +170,7 @@ class SQLXFormsSession(models.Model):
     def status_slug(self):
         xform_instance = None
         if self.submission_id:
-            xform_instance = FormAccessors(self.domain).get_form(self.submission_id)
+            xform_instance = XFormInstance.objects.get_form(self.submission_id, self.domain)
 
         if xform_instance:
             if xform_instance.partial_submission:

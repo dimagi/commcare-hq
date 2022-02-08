@@ -15,7 +15,7 @@ from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor,
-    iter_all_rows, FormAccessorSQL)
+    iter_all_rows)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstance, CommCareCase, CaseTransaction, Attachment
@@ -296,7 +296,7 @@ def create_form_for_test(
 
     if save:
         FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
-        form = FormAccessorSQL.get_form(form.form_id)
+        form = XFormInstance.objects.get_form(form.form_id)
 
     return form
 
@@ -319,7 +319,7 @@ def create_case(case) -> CommCareCase:
         case.track_create(transaction)
         processed_forms = ProcessedForms(form, [])
         FormProcessorSQL.save_processed_models(processed_forms, [case])
-    return CaseAccessorSQL.get_case(case.case_id)
+    return CommCareCase.objects.get_case(case.case_id)
 
 
 def create_case_with_index(case, index) -> CommCareCase:

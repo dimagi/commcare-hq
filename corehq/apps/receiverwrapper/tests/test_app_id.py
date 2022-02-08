@@ -9,7 +9,7 @@ from corehq.apps.receiverwrapper.util import (
     get_submit_url,
     get_version_from_build_id,
 )
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import sharded
 
 
@@ -62,7 +62,7 @@ class TestAppId(TestCase):
             get_submit_url(self.domain, submit_app_id),
             '<data xmlns="http://example.com/"><question1/></data>'
         )
-        form = FormAccessors(self.domain).get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id, self.domain)
         self.assertEqual(form.app_id, expected_app_id)
         self.assertEqual(form.build_id, expected_build_id)
         return form

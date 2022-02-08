@@ -6,15 +6,14 @@ import struct
 from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import namedtuple
 from datetime import datetime
-from io import BytesIO
-from itertools import groupby
 from uuid import UUID
+from warnings import warn
 
 from django.conf import settings
 from django.db import InternalError, transaction, router, DatabaseError
 from django.db.models import F, Q
 from django.db.models.expressions import Value
-from django.db.models.functions import Concat, Greatest
+from django.db.models.functions import Concat
 
 import csiphash
 from ddtrace import tracer
@@ -22,9 +21,6 @@ from ddtrace import tracer
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.chunked import chunked
 
-from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.blobs import CODES, get_blob_db
-from corehq.blobs.models import BlobMeta
 from corehq.form_processor.exceptions import (
     AttachmentNotFound,
     CaseNotFound,
@@ -33,16 +29,14 @@ from corehq.form_processor.exceptions import (
     LedgerValueNotFound,
     MissingFormXml,
     XFormNotFound,
-    XFormSaveError,
 )
+from corehq.form_processor.models.util import attach_prefetch_models as _attach_prefetch_models
 from corehq.form_processor.interfaces.dbaccessors import (
-    AbstractCaseAccessor,
-    AbstractFormAccessor,
     AbstractLedgerAccessor,
-    AttachmentContent,
     CaseIndexInfo,
 )
 from corehq.form_processor.models import (
+    AttachmentContent,
     CaseAttachment,
     CaseTransaction,
     CommCareCaseIndex,
@@ -50,12 +44,8 @@ from corehq.form_processor.models import (
     LedgerTransaction,
     LedgerValue,
     XFormInstance,
-    XFormOperation,
 )
-from corehq.form_processor.utils.sql import (
-    fetchall_as_namedtuple,
-    fetchone_as_namedtuple,
-)
+from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.util import (
     estimate_row_count,
@@ -134,7 +124,7 @@ class ShardAccessor(object):
         with XFormInstance.get_plproxy_cursor() as cursor:
             doc_uuid_before_cast = '\\x%s' % doc_uuid.hex
             cursor.execute(query, [doc_uuid_before_cast])
-            return fetchone_as_namedtuple(cursor).hash
+            return cursor.fetchone()[0]
 
     @staticmethod
     def hash_doc_ids_python(doc_ids):
@@ -349,7 +339,7 @@ class FormReindexAccessor(ReindexAccessor):
 
     def get_doc(self, doc_id):
         try:
-            return FormAccessorSQL.get_form(doc_id)
+            return XFormInstance.objects.get_form(doc_id, self.domain)
         except XFormNotFound:
             pass
 
@@ -372,357 +362,6 @@ class FormReindexAccessor(ReindexAccessor):
         if self.end_date is not None:
             filters.append(Q(received_on__lt=self.end_date))
         return filters
-
-
-class FormAccessorSQL(AbstractFormAccessor):
-
-    @staticmethod
-    def get_form(form_id):
-        try:
-            return XFormInstance.objects.partitioned_get(form_id)
-        except XFormInstance.DoesNotExist:
-            raise XFormNotFound(form_id)
-
-    @staticmethod
-    def get_forms(form_ids, ordered=False):
-        assert isinstance(form_ids, list)
-        if not form_ids:
-            return []
-        forms = list(XFormInstance.objects.plproxy_raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
-        if ordered:
-            _sort_with_id_list(forms, form_ids, 'form_id')
-
-        return forms
-
-    @staticmethod
-    def get_attachments(form_id):
-        return get_blob_db().metadb.get_for_parent(form_id)
-
-    @staticmethod
-    def iter_forms_by_last_modified(start_datetime, end_datetime):
-        '''
-        Returns all forms that have been modified within a time range. The start date is
-        exclusive while the end date is inclusive (start_datetime, end_datetime].
-
-        NOTE: This does not include archived forms
-
-        :param start_datetime: The start date of which modified forms must be greater than
-        :param end_datetime: The end date of which modified forms must be less than or equal to
-
-        :returns: An iterator of XFormInstance objects
-        '''
-        from corehq.sql_db.util import paginate_query_across_partitioned_databases
-
-        annotate = {
-            'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
-        }
-
-        return paginate_query_across_partitioned_databases(
-            XFormInstance,
-            Q(last_modified__gt=start_datetime, last_modified__lte=end_datetime),
-            annotate=annotate,
-            load_source='forms_by_last_modified'
-        )
-
-    @staticmethod
-    def iter_form_ids_by_xmlns(domain, xmlns=None):
-        from corehq.sql_db.util import paginate_query_across_partitioned_databases
-
-        q_expr = Q(domain=domain) & Q(state=XFormInstance.NORMAL)
-        if xmlns:
-            q_expr &= Q(xmlns=xmlns)
-
-        for form_id in paginate_query_across_partitioned_databases(
-                XFormInstance, q_expr, values=['form_id'], load_source='formids_by_xmlns'):
-            yield form_id[0]
-
-    @staticmethod
-    def get_with_attachments(form_id):
-        """
-        It's necessary to store these on the form rather than use a memoized property
-        since the form_id can change (in the case of a deprecated form) which breaks
-        the memoize hash.
-        """
-        form = FormAccessorSQL.get_form(form_id)
-        form.attachments_list = FormAccessorSQL.get_attachments(form_id)
-        return form
-
-    @staticmethod
-    def get_attachment_by_name(form_id, attachment_name):
-        code = (CODES.form_xml if attachment_name == "form.xml"
-                else CODES.form_attachment)
-        try:
-            return get_blob_db().metadb.get(
-                parent_id=form_id,
-                type_code=code,
-                name=attachment_name,
-            )
-        except BlobMeta.DoesNotExist:
-            raise AttachmentNotFound(form_id, attachment_name)
-
-    @staticmethod
-    def get_attachment_content(form_id, attachment_name, stream=False):
-        meta = FormAccessorSQL.get_attachment_by_name(form_id, attachment_name)
-        return AttachmentContent(meta.content_type, meta.open())
-
-    @staticmethod
-    def get_form_operations(form_id):
-        return list(XFormOperation.objects.partitioned_query(form_id).filter(form_id=form_id).order_by('date'))
-
-    @staticmethod
-    def get_forms_with_attachments_meta(form_ids, ordered=False):
-        assert isinstance(form_ids, list)
-        if not form_ids:
-            return []
-        forms = list(FormAccessorSQL.get_forms(form_ids))
-
-        attachments = sorted(
-            get_blob_db().metadb.get_for_parents(form_ids),
-            key=lambda meta: meta.parent_id
-        )
-        forms_by_id = {form.form_id: form for form in forms}
-        _attach_prefetch_models(forms_by_id, attachments, 'parent_id', 'attachments_list')
-
-        if ordered:
-            _sort_with_id_list(forms, form_ids, 'form_id')
-
-        return forms
-
-    @staticmethod
-    def get_forms_by_type(domain, type_, limit, recent_first=False):
-        state = doc_type_to_state[type_]
-        assert limit is not None
-        # apply limit in python as well since we may get more results than we expect
-        # if we're in a sharded environment
-        forms = XFormInstance.objects.plproxy_raw(
-            'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
-            [domain, state, limit, recent_first]
-        )
-        forms = sorted(forms, key=lambda f: f.received_on, reverse=recent_first)
-        return forms[:limit]
-
-    @staticmethod
-    def form_exists(form_id, domain=None):
-        query = XFormInstance.objects.partitioned_query(form_id).filter(form_id=form_id)
-        if domain:
-            query = query.filter(domain=domain)
-
-        return query.exists()
-
-    @staticmethod
-    def hard_delete_forms(domain, form_ids, delete_attachments=True):
-        assert isinstance(form_ids, list)
-
-        deleted_count = 0
-        for db_name, split_form_ids in split_list_by_db_partition(form_ids):
-            # cascade should delete the operations
-            _, deleted_models = XFormInstance.objects.using(db_name).filter(
-                domain=domain, form_id__in=split_form_ids
-            ).delete()
-            deleted_count += deleted_models.get(XFormInstance._meta.label, 0)
-
-        if delete_attachments and deleted_count:
-            if deleted_count != len(form_ids):
-                # in the unlikely event that we didn't delete all forms (because they weren't all
-                # in the specified domain), only delete attachments for forms that were deleted.
-                deleted_forms = [
-                    form_id for form_id in form_ids
-                    if not FormAccessorSQL.form_exists(form_id)
-                ]
-            else:
-                deleted_forms = form_ids
-            metas = get_blob_db().metadb.get_for_parents(deleted_forms)
-            get_blob_db().bulk_delete(metas=metas)
-
-        return deleted_count
-
-    @staticmethod
-    def soft_undelete_forms(domain, form_ids):
-        from corehq.form_processor.change_publishers import publish_form_saved
-
-        assert isinstance(form_ids, list)
-        problem = 'Restored on {}'.format(datetime.utcnow())
-        with XFormInstance.get_plproxy_cursor() as cursor:
-            cursor.execute(
-                'SELECT soft_undelete_forms(%s, %s, %s) as affected_count',
-                [domain, form_ids, problem]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return_value = sum([result.affected_count for result in results])
-
-        for form_ids_chunk in chunked(form_ids, 500):
-            forms = FormAccessorSQL.get_forms(list(form_ids_chunk))
-            for form in forms:
-                publish_form_saved(form)
-
-        return return_value
-
-    @staticmethod
-    def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml, _):
-        attachment_metadata = form_data.get_attachment_meta("form.xml")
-        # Write the new xml to the database
-        if isinstance(form_attachment_new_xml, bytes):
-            form_attachment_new_xml = BytesIO(form_attachment_new_xml)
-        get_blob_db().put(form_attachment_new_xml, meta=attachment_metadata)
-        operation = XFormOperation(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
-                                   operation=XFormOperation.GDPR_SCRUB)
-        form_data.track_create(operation)
-        FormAccessorSQL.update_form(form_data)
-
-    @staticmethod
-    def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
-        from corehq.form_processor.change_publishers import publish_form_deleted
-        assert isinstance(form_ids, list)
-        deletion_date = deletion_date or datetime.utcnow()
-        with XFormInstance.get_plproxy_cursor() as cursor:
-            cursor.execute(
-                'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
-                [domain, form_ids, deletion_date, deletion_id]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            affected_count = sum([result.affected_count for result in results])
-
-        for form_id in form_ids:
-            publish_form_deleted(domain, form_id)
-
-        return affected_count
-
-    @staticmethod
-    def set_archived_state(form, archive, user_id):
-        from casexml.apps.case.xform import get_case_ids_from_form
-        form_id = form.form_id
-        case_ids = list(get_case_ids_from_form(form))
-        with XFormInstance.get_plproxy_cursor() as cursor:
-            cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
-            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
-                           [case_ids, form_id, archive])
-        form.state = XFormInstance.ARCHIVED if archive else XFormInstance.NORMAL
-
-    @staticmethod
-    def save_new_form(form):
-        """
-        Save a previously unsaved form
-        """
-        if form.is_saved():
-            raise XFormSaveError('form already saved')
-        logging.debug('Saving new form: %s', form)
-
-        operations = form.get_tracked_models_to_create(XFormOperation)
-        for operation in operations:
-            if operation.is_saved():
-                raise XFormSaveError(
-                    'XFormOperation {} has already been saved'.format(operation.id)
-                )
-            operation.form_id = form.form_id
-
-        try:
-            with form.attachment_writer() as attachment_writer, \
-                    transaction.atomic(using=form.db, savepoint=False):
-                transaction.on_commit(attachment_writer.commit, using=form.db)
-                form.save()
-                attachment_writer.write()
-                for operation in operations:
-                    operation.save()
-        except InternalError as e:
-            raise XFormSaveError(e)
-
-        form.clear_tracked_models()
-
-    @staticmethod
-    def update_form(form, publish_changes=True):
-        from corehq.form_processor.change_publishers import publish_form_saved
-        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
-        assert form.is_saved(), "this method doesn't support creating unsaved forms"
-        assert not form.has_unsaved_attachments(), \
-            'Adding attachments to saved form not supported'
-        assert not form.has_tracked_models_to_delete(), 'Deleting other models not supported by this method'
-        assert not form.has_tracked_models_to_update(), 'Updating other models not supported by this method'
-        assert not form.has_tracked_models_to_create(BlobMeta), \
-            'Adding new attachments not supported by this method'
-
-        new_operations = form.get_tracked_models_to_create(XFormOperation)
-        db_name = form.db
-        if form.orig_id:
-            old_db_name = get_db_alias_for_partitioned_doc(form.orig_id)
-            assert old_db_name == db_name, "this method doesn't support moving the form to new db"
-
-        with transaction.atomic(using=db_name):
-            if form.form_id_updated():
-                operations = form.original_operations + new_operations
-                form.save()
-                get_blob_db().metadb.reparent(form.orig_id, form.form_id)
-                for model in operations:
-                    model.form = form
-                    model.save()
-            else:
-                with transaction.atomic(db_name):
-                    form.save()
-                    for operation in new_operations:
-                        operation.form = form
-                        operation.save()
-
-        if publish_changes:
-            publish_form_saved(form)
-
-    @staticmethod
-    def update_form_problem_and_state(form):
-        with XFormInstance.get_plproxy_cursor() as cursor:
-            cursor.execute(
-                'SELECT update_form_problem_and_state(%s, %s, %s)',
-                [form.form_id, form.problem, form.state]
-            )
-
-    @staticmethod
-    def get_deleted_form_ids_for_user(domain, user_id):
-        return FormAccessorSQL._get_form_ids_for_user(
-            domain,
-            user_id,
-            True,
-        )
-
-    @staticmethod
-    def get_form_ids_in_domain_by_type(domain, type_):
-        state = doc_type_to_state[type_]
-        return FormAccessorSQL.get_form_ids_in_domain_by_state(domain, state)
-
-    @staticmethod
-    def get_deleted_form_ids_in_domain(domain):
-        result = []
-        for db_name in get_db_aliases_for_partitioned_query():
-            result.extend(
-                XFormInstance.objects.using(db_name)
-                .annotate(state_deleted=F('state').bitand(XFormInstance.DELETED))
-                .filter(domain=domain, state_deleted=XFormInstance.DELETED).values_list('form_id', flat=True)
-            )
-        return result
-
-    @staticmethod
-    def get_form_ids_in_domain_by_state(domain, state):
-        with XFormInstance.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT form_id from get_form_ids_in_domain_by_type(%s, %s)',
-                [domain, state]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.form_id for result in results]
-
-    @staticmethod
-    def get_form_ids_for_user(domain, user_id):
-        return FormAccessorSQL._get_form_ids_for_user(
-            domain,
-            user_id,
-            False,
-        )
-
-    @staticmethod
-    def _get_form_ids_for_user(domain, user_id, is_deleted):
-        with XFormInstance.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT form_id FROM get_form_ids_for_user(%s, %s, %s)',
-                [domain, user_id, is_deleted]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.form_id for result in results]
 
 
 class CaseReindexAccessor(ReindexAccessor):
@@ -765,39 +404,17 @@ class CaseReindexAccessor(ReindexAccessor):
         return filters
 
 
-class CaseAccessorSQL(AbstractCaseAccessor):
+class CaseAccessorSQL:
 
     @staticmethod
     def get_case(case_id):
-        try:
-            return CommCareCase.objects.partitioned_get(case_id)
-        except CommCareCase.DoesNotExist:
-            raise CaseNotFound(case_id)
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_case(case_id)
 
     @staticmethod
     def get_cases(case_ids, ordered=False, prefetched_indices=None):
-        """
-        :param case_ids: List of case IDs to fetch
-        :param ordered: Return cases in the same order as ``case_ids``
-        :param prefetched_indices: If not None this must be a dict containing ALL the indices for ALL the
-                                    cases being fetched. If the list does not contain indices for a case
-                                    then an empty list will be attached to the case preventing further DB lookup.
-        :return: List of cases
-        """
-        assert isinstance(case_ids, list)
-        if not case_ids:
-            return []
-        cases = list(CommCareCase.objects.plproxy_raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
-
-        if ordered:
-            _sort_with_id_list(cases, case_ids, 'case_id')
-
-        if prefetched_indices is not None:
-            cases_by_id = {case.case_id: case for case in cases}
-            _attach_prefetch_models(
-                cases_by_id, prefetched_indices, 'case_id', 'cached_indices')
-
-        return cases
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_cases(case_ids, ordered, prefetched_indices)
 
     @staticmethod
     def case_exists(case_id):
@@ -943,7 +560,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_transactions(case_id):
-        return list(CaseTransaction.objects.partitioned_query(case_id).filter(case_id=case_id).order_by('server_date'))
+        return list(
+            CaseTransaction.objects
+            .partitioned_query(case_id)
+            .filter(case_id=case_id)
+            .order_by('server_date')
+        )
 
     @staticmethod
     def get_transaction_by_form_id(case_id, form_id):
@@ -953,6 +575,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         )
         assert len(transactions) <= 1
         return transactions[0] if transactions else None
+
+    @staticmethod
+    def get_most_recent_form_transaction(case_id):
+        return CaseTransaction.objects.partitioned_query(case_id).filter(case_id=case_id, revoked=False).annotate(
+            type_filter=F('type').bitand(CaseTransaction.TYPE_FORM)
+        ).filter(type_filter=CaseTransaction.TYPE_FORM).order_by("-server_date").first()
 
     @staticmethod
     def get_transactions_by_type(case_id, transaction_type):
@@ -1250,7 +878,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         form_load_counter("rebuild_case", case.domain)(len(form_ids_to_fetch))
         xform_map = {
             form.form_id: form
-            for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)
+            for form in XFormInstance.objects.get_forms_with_attachments_meta(form_ids_to_fetch)
         }
 
         forms_missing_transactions = list(updated_xform_ids - form_ids)
@@ -1475,33 +1103,3 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             )
             for trans in resultset:
                 yield trans
-
-
-def _sort_with_id_list(object_list, id_list, id_property):
-    """Sort object list in the same order as given list of ids
-
-    SQL does not necessarily return the rows in any particular order so
-    we need to order them ourselves.
-
-    NOTE: this does not return the sorted list. It sorts `object_list`
-    in place using Python's built-in `list.sort`.
-    """
-    def key(obj):
-        return index_map[getattr(obj, id_property)]
-
-    index_map = {id_: index for index, id_ in enumerate(id_list)}
-    object_list.sort(key=key)
-
-
-def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, cached_attrib_name):
-    prefetched_groups = groupby(prefetched_models, lambda x: getattr(x, link_field_name))
-    seen = set()
-    for obj_id, group in prefetched_groups:
-        seen.add(obj_id)
-        obj = objects_by_id[obj_id]
-        setattr(obj, cached_attrib_name, list(group))
-
-    unseen = set(objects_by_id) - seen
-    for obj_id in unseen:
-        obj = objects_by_id[obj_id]
-        setattr(obj, cached_attrib_name, [])

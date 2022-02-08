@@ -46,7 +46,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_id,
     get_latest_released_app_doc,
     get_latest_released_build_id,
-    wrap_app,
 )
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -79,15 +78,13 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
-from corehq.apps.users.models import CouchUser, DomainMembershipError
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import XFormInstance
 from xml2json.lib import xml2json
 
 
@@ -410,7 +407,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     )
 
     if case_id:
-        case = CaseAccessors(domain).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, domain)
         session_name = '{0} - {1}'.format(session_name, case.name)
 
     root_context = {
@@ -419,7 +416,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     }
     if instance_id:
         try:
-            root_context['instance_xml'] = FormAccessors(domain).get_form(instance_id).get_xml()
+            root_context['instance_xml'] = XFormInstance.objects.get_form(instance_id, domain).get_xml()
         except XFormNotFound:
             raise Http404()
 
@@ -544,7 +541,7 @@ def report_formplayer_error(request, domain):
             'domain': domain,
             'cloudcare_env': data.get('cloudcareEnv'),
         })
-        notify_error(message=f'[Cloudcare] unknown error type', details=data)
+        notify_error(message='[Cloudcare] unknown error type', details=data)
     return JsonResponse({'status': 'ok'})
 
 
@@ -580,7 +577,7 @@ def _message_to_sentry_thread_topic(message):
     ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
     ... 'If this error persists please report a bug to CommCareHQ.')
     'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCareHQ.'
-    """
+    """  # noqa: E501
     return re.sub(r'[a-f0-9-]{7,}', '[...]', message)
 
 

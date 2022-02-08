@@ -33,7 +33,7 @@ def user_save_callback(sender, **kwargs):
         properties.update(get_subscription_properties_by_user(couch_user))
         properties.update(get_domain_membership_properties(couch_user))
         identify.delay(couch_user.username, properties)
-        update_hubspot_properties.delay(couch_user, properties)
+        update_hubspot_properties.delay(couch_user.get_id, properties)
 
 
 @receiver(commcare_domain_post_save)
@@ -71,5 +71,4 @@ def track_user_login(sender, request, user, **kwargs):
                     return
 
             meta = get_meta(request)
-            track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE),
-                                                meta, request.path)
+            track_user_sign_in_on_hubspot.delay(couch_user.get_id, request.COOKIES.get(HUBSPOT_COOKIE), meta)

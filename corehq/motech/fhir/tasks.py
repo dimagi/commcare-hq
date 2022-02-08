@@ -13,6 +13,7 @@ from corehq import toggles
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import (
     IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
@@ -248,9 +249,8 @@ def get_case_id_or_none(resource):
 
 
 def get_case_by_id(domain, case_id):
-    accessor = CaseAccessors(domain)
     try:
-        case = accessor.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, domain)
     except (CaseNotFound, KeyError):
         return None
     return case if case.domain == domain and not case.is_deleted else None

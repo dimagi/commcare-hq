@@ -25,7 +25,7 @@ from corehq.apps.userreports.expressions.specs import (
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.test_utils import (
     create_and_save_a_case,
     create_and_save_a_form,
@@ -810,12 +810,12 @@ class RelatedDocExpressionTest(SimpleTestCase):
         })
 
     def patch_cases_database(self):
-        def get_case(self_, case_id):
+        def get_case(case_id, domain):
             doc = self.database.get(case_id)
             if doc is None:
                 raise CaseNotFound
             return Config(to_json=lambda: doc)
-        get_case_patch = patch.object(CaseAccessors, "get_case", get_case)
+        get_case_patch = patch.object(CommCareCase.objects, "get_case", get_case)
         get_case_patch.start()
         self.addCleanup(get_case_patch.stop)
         self.database = {}
@@ -1132,7 +1132,7 @@ class TestFormsExpressionSpec(TestCase):
         cls.domain = uuid.uuid4().hex
         factory = CaseFactory(domain=cls.domain)
         [cls.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
-        cls.forms = [f.to_json() for f in FormAccessors(cls.domain).get_forms(cls.case.xform_ids)]
+        cls.forms = [f.to_json() for f in XFormInstance.objects.get_forms(cls.case.xform_ids, cls.domain)]
         #  redundant case to create extra forms that shouldn't be in the results for cls.case
         [cls.case_b] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
 

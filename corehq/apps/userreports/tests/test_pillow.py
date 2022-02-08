@@ -45,7 +45,7 @@ from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.pillows.case import get_case_pillow
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import softer_assert, flaky_slow
 
 
 def setup_module():
@@ -731,6 +731,7 @@ class AsyncIndicatorTest(TestCase):
         self.config.validations = []
         self.config.save()
 
+    @flaky_slow
     def test_async_save_success(self):
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         for i in range(3):

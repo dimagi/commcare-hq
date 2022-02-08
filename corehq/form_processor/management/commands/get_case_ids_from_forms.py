@@ -5,7 +5,7 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.xform import get_case_ids_from_form
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
 
@@ -37,12 +37,12 @@ def _get_case_ids(form_ids):
     for form_id_chunk in chunked(form_ids, 100):
         form_id_chunk = list(form_id_chunk)
         try:
-            forms = FormAccessorSQL.get_forms_with_attachments_meta(form_id_chunk)
+            forms = XFormInstance.objects.get_forms_with_attachments_meta(form_id_chunk)
         except Exception:
             logger.exception("Error fetching bulk forms")
             for form_id in form_id_chunk:
                 try:
-                    form = FormAccessorSQL.get_form(form_id)
+                    form = XFormInstance.objects.get_form(form_id)
                 except Exception as e:
                     yield form_id, [f"Unable to get form: {e}"]
                 else:

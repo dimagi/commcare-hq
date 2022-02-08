@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 logger = logging.getLogger("delete_case_indices")
 
@@ -56,7 +56,7 @@ class Command(BaseCommand):
         for domain, case_ids in case_ids_by_domain.items():
             logger.info(f"Processing {len(case_ids)} for domain '{domain}'")
             case_blocks_and_meta = []
-            cases = CaseAccessors(domain).get_cases(case_ids)
+            cases = CommCareCase.objects.get_cases(case_ids, domain)
             for case in cases:
                 meta = case_metas[case.case_id]
                 index = get_index_by_ref_id(case, meta)

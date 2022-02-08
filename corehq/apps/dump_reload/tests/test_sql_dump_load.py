@@ -37,10 +37,7 @@ from corehq.apps.zapier.signals.receivers import (
 )
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import (
     CaseTransaction,
     CommCareCaseIndex,
@@ -176,7 +173,6 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     def setUpClass(cls):
         super(TestSQLDumpLoadShardedModels, cls).setUpClass()
         cls.factory = CaseFactory(domain=cls.domain_name)
-        cls.form_accessors = FormAccessors(cls.domain_name)
         cls.case_accessors = CaseAccessors(cls.domain_name)
         cls.product = make_product(cls.domain_name, 'A Product', 'prodcode_a')
         cls.default_objects_counts.update({SQLProduct: 1})
@@ -198,11 +194,11 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         ]
         self._dump_and_load(expected_object_counts)
 
-        form_ids = self.form_accessors.get_all_form_ids_in_domain('XFormInstance')
+        form_ids = XFormInstance.objects.get_form_ids_in_domain(self.domain_name, 'XFormInstance')
         self.assertEqual(set(form_ids), set(form.form_id for form in pre_forms))
 
         for pre_form in pre_forms:
-            post_form = self.form_accessors.get_form(pre_form.form_id)
+            post_form = XFormInstance.objects.get_form(pre_form.form_id)
             self.assertDictEqual(pre_form.to_json(), post_form.to_json())
 
     def test_load_renamed_model(self):
@@ -220,10 +216,8 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             self._load(stream, expected_object_counts)
 
         domain = "d47de5734d2c4670a8c294b51788075f"
-        form_patch = mock.patch.object(self.form_accessors, "domain", domain)
-        case_patch = mock.patch.object(self.case_accessors, "domain", domain)
-        with form_patch, case_patch:
-            form_ids = self.form_accessors.get_all_form_ids_in_domain('XFormInstance')
+        with mock.patch.object(self.case_accessors, "domain", domain):
+            form_ids = XFormInstance.objects.get_form_ids_in_domain(domain, 'XFormInstance')
             self.assertEqual(set(form_ids), {
                 '580987967edf45169574193f844e97dc',
                 '56e8ba18e6ab407c862309f421930a7c',
@@ -262,7 +256,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         case_ids = self.case_accessors.get_case_ids_in_domain()
         self.assertEqual(set(case_ids), set(case.case_id for case in pre_cases))
         for pre_case in pre_cases:
-            post_case = self.case_accessors.get_case(pre_case.case_id)
+            post_case = CommCareCase.objects.get_case(pre_case.case_id, self.domain_name)
             self.assertDictEqual(pre_case.to_json(), post_case.to_json())
 
     def test_ledgers(self):
@@ -396,7 +390,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self.assertEqual(role2_loaded.permissions.to_list(), Permissions(edit_web_users=True).to_list())
         self.assertEqual(role2_loaded.assignable_by, [role1_loaded.get_id])
 
-
     def test_device_logs(self):
         from corehq.apps.receiverwrapper.util import submit_form_locally
         from phonelog.models import DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry
@@ -465,7 +458,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         p1 = SQLProduct.objects.create(domain=self.domain_name, product_id='test1', name='test1')
         p2 = SQLProduct.objects.create(domain=self.domain_name, product_id='test2', name='test2')
-        parchived = SQLProduct.objects.create(domain=self.domain_name, product_id='test3', name='test3', is_archived=True)
+        parchived = SQLProduct.objects.create(
+            domain=self.domain_name, product_id='test3', name='test3', is_archived=True)
 
         self._dump_and_load(expected_object_counts)
 
@@ -709,7 +703,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         SQLProduct.objects.create(domain=self.domain_name, product_id='test1', name='test1')
         expected_object_counts = Counter({LocationType: 1, SQLProduct: 1})
 
-        self._dump_and_load(expected_object_counts, load_filter='sqlproduct', expected_load_counts=Counter({SQLProduct: 1}))
+        self._dump_and_load(expected_object_counts, load_filter='sqlproduct',
+            expected_load_counts=Counter({SQLProduct: 1}))
         self.assertEqual(0, LocationType.objects.count())
 
     def test_sms_content(self):
@@ -726,7 +721,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             ]
         )
 
-        self.addCleanup(lambda: delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, schedule.schedule_id))
+        self.addCleanup(lambda: delete_alert_schedule_instances_for_schedule(
+            AlertScheduleInstance, schedule.schedule_id))
         self._dump_and_load(Counter({AlertSchedule: 1, AlertEvent: 2, SMSContent: 2}))
 
     def test_zapier_subscription(self):
