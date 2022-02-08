@@ -2080,7 +2080,7 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
 
 # Config settings for the google oauth handshake to get a user token
-# Google Cloud Platform secret settings config file
+# Google Cloud Platform secret settings config dict. This will be overwritten in localsettings.py
 GOOGLE_OATH_CONFIG = {}
 # Scopes to give read/write access to the code that generates the spreadsheets
 GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
