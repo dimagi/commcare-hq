@@ -6,7 +6,6 @@ from testil import eq
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2_NAMESPACE
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeaters.models import ReferCaseRepeater
 from corehq.motech.repeaters.repeater_generators import ReferCasePayloadGenerator
@@ -62,7 +61,7 @@ def _test_refer_case_payload_generator(initial_case_properties, expected_referra
         type="patient",
         case_json=properties
     )
-    with patch.object(CaseAccessors, "get_cases", return_value=[target_case]):
+    with patch.object(CommCareCase.objects, "get_cases", return_value=[target_case]):
         form = generator.get_payload(None, transfer_case)
         formxml = ElementTree.fromstring(form)
         case = CaseBlock.from_xml(formxml.find("{%s}case" % V2_NAMESPACE))

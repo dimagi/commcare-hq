@@ -1,4 +1,5 @@
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 
 def get_ush_extension_cases_to_close(domain, cases):
@@ -16,7 +17,7 @@ def get_ush_extension_cases_to_close(domain, cases):
     )
     valid_extensions = {
         case.case_id
-        for case in CaseAccessors(domain).get_cases(list(patient_extensions))
+        for case in CommCareCase.objects.get_cases(list(patient_extensions), domain)
         # exclude CONTACT_CASE_TYPE extensions of the PATIENT_CASE_TYPE
         if case.type != CONTACT_CASE_TYPE
     }

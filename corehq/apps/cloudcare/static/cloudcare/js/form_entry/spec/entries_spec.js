@@ -179,9 +179,15 @@ describe('Entries', function () {
             Controls.ComboboxEntry.filter('onet', { text: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            Controls.ComboboxEntry.filter('OneT', { text: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('onet', { text: 'onetwothree', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isFalse(
+            Controls.ComboboxEntry.filter('onwt', { text: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
+        );
+        assert.isTrue(
+            Controls.ComboboxEntry.filter('OneT', { text: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
+        );
+        assert.isTrue(
             Controls.ComboboxEntry.filter('one tt', { text: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
@@ -189,6 +195,15 @@ describe('Entries', function () {
         );
         assert.isTrue(
             Controls.ComboboxEntry.filter('on', { text: 'on', id: 1 }, Const.COMBOBOX_FUZZY)
+        );
+        assert.isTrue(
+            Controls.ComboboxEntry.filter('three', { text: 'one two three', id: 1 }, Const.COMBOBOX_FUZZY)
+        );
+        assert.isTrue(
+            Controls.ComboboxEntry.filter('tree', { text: 'one two three', id: 1 }, Const.COMBOBOX_FUZZY)
+        );
+        assert.isFalse(
+            Controls.ComboboxEntry.filter('thirty', { text: 'one two three', id: 1 }, Const.COMBOBOX_FUZZY)
         );
     });
 

@@ -7,7 +7,7 @@ from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tasks import reprocess_archive_stubs
 from corehq.apps.change_feed import topics
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.context_managers import drop_connected_signals, catch_signal
 from couchforms.signals import xform_archived, xform_unarchived
 
@@ -24,8 +24,8 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
     def setUp(self):
         super(TestFormArchiving, self).setUp()
-        self.casedb = CaseAccessors('test-domain')
-        self.formdb = FormAccessors('test-domain')
+        self.casedb = CommCareCase.objects
+        self.formdb = XFormInstance.objects
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
@@ -49,7 +49,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         xform = self.formdb.get_form(xform.form_id)
         self.assertTrue(xform.is_archived)
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertTrue(case.is_deleted)
         self.assertEqual(case.xform_ids, [])
 
@@ -64,7 +64,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         xform = self.formdb.get_form(xform.form_id)
         self.assertTrue(xform.is_normal)
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertFalse(case.is_deleted)
         self.assertEqual(case.xform_ids, [xform.form_id])
 
@@ -102,7 +102,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual('librarian', archival.user)
 
         # The case associated with the form should still exist, it was not rebuilt because of the exception
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertFalse(case.is_deleted)
 
         # There should be a stub for the unfinished archive
@@ -117,7 +117,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         reprocess_archive_stubs()
 
         # The case and stub should both be deleted now
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertTrue(case.is_deleted)
         unfinished_archive_stubs_after_reprocessing = UnfinishedArchiveStub.objects.filter()
         self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)
@@ -155,7 +155,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual('librarian', xform.history[1].user)
 
         # The case should not exist because the unarchived form was not rebuilt
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertTrue(case.is_deleted)
 
         # There should be a stub for the unfinished unarchive
@@ -170,7 +170,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         reprocess_archive_stubs()
 
         # The case should be back, and the stub should be deleted now
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertFalse(case.is_deleted)
         unfinished_archive_stubs_after_reprocessing = UnfinishedArchiveStub.objects.filter()
         self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)
@@ -210,14 +210,14 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(len(unfinished_archive_stubs), 0)
 
         # The case should exist because the case close was unarchived
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertFalse(case.is_deleted)
 
         # Manually call the periodic celery task that reruns archiving/unarchiving actions
         reprocess_archive_stubs()
 
         # Make sure the case still exists (to double check that the archive stub was deleted)
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertFalse(case.is_deleted)
 
     def testArchivingWithUnarchiveStub(self):
@@ -259,7 +259,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(len(unfinished_archive_stubs), 0)
 
         # The case should not exist because the case close was archived
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertTrue(case.is_deleted)
 
         # Manually call the periodic celery task that reruns archiving/unarchiving actions
@@ -268,7 +268,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         # The history should not have been added to, make sure that it still only has one entry
 
         # Make sure the case still does not exist (to double check that the unarchive stub was deleted)
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertTrue(case.is_deleted)
 
     def testUnfinishedArchiveStubErrorAddingHistory(self):
@@ -284,7 +284,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertTrue(xform.is_normal)
         self.assertEqual(0, len(xform.history))
 
-        tmp = 'corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.set_archived_state'
+        tmp = 'corehq.form_processor.models.XFormInstance.objects.set_archived_state'
         with mock.patch(tmp) as mock_operation_sql:
             try:
                 mock_operation_sql.side_effect = Exception
@@ -298,7 +298,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertFalse(xform.is_archived)
 
         # The case associated with the form should still exist, it was not rebuilt because of the exception
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertFalse(case.is_deleted)
 
         # There should be a stub for the unfinished archive, and the history should not be updated yet
@@ -321,7 +321,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual('librarian', archival.user)
 
         # The case and stub should both be deleted now
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertTrue(case.is_deleted)
         unfinished_archive_stubs_after_reprocessing = UnfinishedArchiveStub.objects.filter()
         self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)
@@ -342,7 +342,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         # Archive the form successfully
         xform.archive(user_id='librarian')
 
-        tmp = 'corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.set_archived_state'
+        tmp = 'corehq.form_processor.models.XFormInstance.objects.set_archived_state'
         with mock.patch(tmp) as mock_operation_sql:
             try:
                 mock_operation_sql.side_effect = Exception
@@ -359,7 +359,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual('librarian', archival.user)
 
         # The case associated with the form should not exist, it was not rebuilt because of the exception
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertTrue(case.is_deleted)
 
         # There should be a stub for the unfinished archive, and the history should not be updated yet
@@ -383,7 +383,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual('librarian', xform.history[1].user)
 
         # The case should be back, and the stub should be deleted now
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, 'test-domain')
         self.assertFalse(case.is_deleted)
         unfinished_archive_stubs_after_reprocessing = UnfinishedArchiveStub.objects.filter()
         self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)

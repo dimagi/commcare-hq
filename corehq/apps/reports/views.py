@@ -5,6 +5,7 @@ import re
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from functools import cmp_to_key, partial
+from wsgiref.util import FileWrapper
 
 from django.conf import settings
 from django.contrib import messages
@@ -18,6 +19,7 @@ from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
     JsonResponse,
+    StreamingHttpResponse,
 )
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -73,7 +75,6 @@ from corehq.apps.cloudcare.touchforms_api import (
 )
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
-    login_or_digest,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.views.base import BaseDomainView
@@ -135,14 +136,10 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
 )
 from corehq.blobs import CODES, NotFound, get_blob_db, models
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-    LedgerAccessors,
-)
+from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import UserRequestedRebuild
+from corehq.form_processor.models import CommCareCase, UserRequestedRebuild, XFormInstance
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.form_processor.utils.xform import resave_form
 from corehq.motech.repeaters.dbaccessors import (
@@ -192,8 +189,16 @@ require_form_deid_export_permission = require_permission(
 require_case_export_permission = require_permission(
     Permissions.view_report, CASE_EXPORT_PERMISSION, login_decorator=None)
 
-require_form_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.SubmitHistory', login_decorator=None)
-require_case_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.cases.basic.CaseListReport', login_decorator=None)
+require_form_view_permission = require_permission(
+    Permissions.view_report,
+    'corehq.apps.reports.standard.inspect.SubmitHistory',
+    login_decorator=None,
+)
+require_case_view_permission = require_permission(
+    Permissions.view_report,
+    'corehq.apps.reports.standard.cases.basic.CaseListReport',
+    login_decorator=None,
+)
 
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
@@ -504,6 +509,7 @@ class AddSavedReportConfigView(View):
     def user_id(self):
         return self.request.couch_user._id
 
+
 @login_and_domain_required
 @datespan_default
 def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
@@ -677,8 +683,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @memoized
     def configs(self):
         user = self.request.couch_user
-        if (self.scheduled_report_id and user.is_domain_admin(self.domain) and
-                user._id != self.owner_id):
+        if (self.scheduled_report_id and user.is_domain_admin(self.domain)
+                and user._id != self.owner_id):
             return self.report_notification.configs
         return [
             c for c in ReportConfig.by_domain_and_owner(self.domain, user._id)
@@ -938,6 +944,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
     else:
         return HttpResponseRedirect(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
 
+
 def _can_send_test_report(report_id, user, domain):
     try:
         report = ReportNotification.get(report_id)
@@ -1082,8 +1089,8 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 def safely_get_case(request, domain, case_id):
     """Get case if accessible else raise a 404 or 403"""
     case = get_case_or_404(domain, case_id)
-    if not (request.can_access_all_locations or
-            user_can_access_case(domain, request.couch_user, case)):
+    if not (request.can_access_all_locations
+            or user_can_access_case(domain, request.couch_user, case)):
         raise location_restricted_exception(request)
     return case
 
@@ -1103,8 +1110,8 @@ class CaseDataView(BaseProjectReportSectionView):
                           _("Sorry, we couldn't find that case. If you think this "
                             "is a mistake please report an issue."))
             return HttpResponseRedirect(CaseListReport.get_url(domain=self.domain))
-        if not (request.can_access_all_locations or
-                user_can_access_case(self.domain, self.request.couch_user, self.case_instance)):
+        if not (request.can_access_all_locations
+                or user_can_access_case(self.domain, self.request.couch_user, self.case_instance)):
             raise location_restricted_exception(request)
         return super(CaseDataView, self).dispatch(request, *args, **kwargs)
 
@@ -1116,7 +1123,7 @@ class CaseDataView(BaseProjectReportSectionView):
     @memoized
     def case_instance(self):
         try:
-            case = CaseAccessors(self.domain).get_case(self.case_id)
+            case = CommCareCase.objects.get_case(self.case_id, self.domain)
             if case.domain != self.domain or case.is_deleted:
                 return None
             return case
@@ -1268,7 +1275,7 @@ def case_forms(request, domain, case_id):
         return HttpResponseBadRequest()
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
-    forms = FormAccessors(domain).get_forms(slice, ordered=True)
+    forms = XFormInstance.objects.get_forms(slice, domain, ordered=True)
     timezone = get_timezone_for_user(request.couch_user, domain)
     return json_response([
         form_to_json(domain, form, timezone) for form in forms
@@ -1478,7 +1485,7 @@ def undo_close_case_view(request, domain, case_id, xform_id):
     else:
         closing_form_id = xform_id
         assert closing_form_id in case.xform_ids
-        form = FormAccessors(domain).get_form(closing_form_id)
+        form = XFormInstance.objects.get_form(closing_form_id, domain)
         form.archive(user_id=request.couch_user._id)
         messages.success(request, 'Case {} has been reopened.'.format(case.name))
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
@@ -1623,7 +1630,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
     for b in case_blocks:
         this_case_id = b.get(const.CASE_ATTR_ID)
         try:
-            this_case = CaseAccessors(domain).get_case(this_case_id) if this_case_id else None
+            this_case = CommCareCase.objects.get_case(this_case_id, domain) if this_case_id else None
             valid_case = True
         except ResourceNotFound:
             this_case = None
@@ -1705,25 +1712,25 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
 
 
 def _top_level_tags(form):
-        """
-        Returns a OrderedDict of the top level tags found in the xml, in the
-        order they are found.
+    """
+    Returns a OrderedDict of the top level tags found in the xml, in the
+    order they are found.
 
-        The actual values are taken from the form JSON data and not from the XML
-        """
-        to_return = OrderedDict()
+    The actual values are taken from the form JSON data and not from the XML
+    """
+    to_return = OrderedDict()
 
-        element = form.get_xml_element()
-        if element is None:
-            return OrderedDict(sorted(form.form_data.items()))
+    element = form.get_xml_element()
+    if element is None:
+        return OrderedDict(sorted(form.form_data.items()))
 
-        for child in element:
-            # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
-            key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag
-            if key == "Meta":
-                key = "meta"
-            to_return[key] = form.get_data('form/' + key)
-        return to_return
+    for child in element:
+        # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
+        key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag
+        if key == "Meta":
+            key = "meta"
+        to_return[key] = form.get_data('form/' + key)
+    return to_return
 
 
 def _sorted_form_metadata_keys(keys):
@@ -1852,6 +1859,32 @@ class FormDataView(BaseProjectReportSectionView):
         return page_context
 
 
+@login_and_domain_required
+@require_form_view_permission
+@location_safe
+def view_form_attachment(request, domain, instance_id, attachment_id):
+    # Open form attachment in browser
+    return get_form_attachment_response(request, domain, instance_id, attachment_id)
+
+
+def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+    if not instance_id or not attachment_id:
+        raise Http404
+
+    # this raises a PermissionDenied error if necessary
+    safely_get_form(request, domain, instance_id)
+
+    try:
+        content = XFormInstance.objects.get_attachment_content(instance_id, attachment_id)
+    except AttachmentNotFound:
+        raise Http404
+
+    return StreamingHttpResponse(
+        streaming_content=FileWrapper(content.content_stream),
+        content_type=content.content_type
+    )
+
+
 @location_safe
 @require_form_view_permission
 @login_and_domain_required
@@ -1974,7 +2007,7 @@ class EditFormInstance(View):
             non_parents = [cb for cb in case_blocks if cb.path == []]
             if len(non_parents) == 1:
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
-                case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
+                case = CommCareCase.objects.get_case(edit_session_data['case_id'], domain)
                 if case.closed:
                     message = format_html(_(
                         'Case <a href="{case_url}">{case_name}</a> is closed. Please reopen the '
@@ -2100,7 +2133,7 @@ def _get_cases_with_other_forms(domain, xform):
     :returns: Dict of Case ID -> Case"""
     cases_created = {u.id for u in get_case_updates(xform) if u.creates_case()}
     cases = {}
-    for case in CaseAccessors(domain).iter_cases(list(cases_created)):
+    for case in CommCareCase.objects.iter_cases(cases_created, domain):
         if not case.is_deleted and case.xform_ids != [xform.form_id]:
             # case has other forms that need to be archived before this one
             cases[case.case_id] = case.name
@@ -2121,7 +2154,7 @@ def _get_case_id_and_redirect_url(domain, request):
         if case_id:
             case_id = case_id[0]
             try:
-                case = CaseAccessors(domain).get_case(case_id)
+                case = CommCareCase.objects.get_case(case_id, domain)
                 if case.is_deleted:
                     raise CaseNotFound
             except CaseNotFound:
@@ -2194,7 +2227,6 @@ def edit_form(request, domain, instance_id):
 def resave_form_view(request, domain, instance_id):
     """Re-save the form to have it re-processed by pillows
     """
-    from corehq.form_processor.change_publishers import publish_form_saved
     instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
     resave_form(domain, instance)

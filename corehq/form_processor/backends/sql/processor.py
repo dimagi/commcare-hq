@@ -12,7 +12,8 @@ from casexml.apps.case import const
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.backends.sql.dbaccessors import (
-    FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
+    CaseAccessorSQL,
+    LedgerAccessorSQL,
 )
 from corehq.form_processor.change_publishers import (
     publish_form_saved, publish_case_saved, publish_ledger_v2_saved)
@@ -59,12 +60,12 @@ class FormProcessorSQL(object):
 
     @classmethod
     def is_duplicate(cls, xform_id, domain=None):
-        return FormAccessorSQL.form_exists(xform_id, domain=domain)
+        return XFormInstance.objects.form_exists(xform_id, domain=domain)
 
     @classmethod
     def hard_delete_case_and_forms(cls, domain, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
-        FormAccessorSQL.hard_delete_forms(domain, form_ids)
+        XFormInstance.objects.hard_delete_forms(domain, form_ids)
         CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
         for form in xforms:
             form.state |= XFormInstance.DELETED
@@ -117,9 +118,9 @@ class FormProcessorSQL(object):
 
                 # Save deprecated form first to avoid ID conflicts
                 if processed_forms.deprecated:
-                    FormAccessorSQL.update_form(processed_forms.deprecated, publish_changes=False)
+                    XFormInstance.objects.update_form(processed_forms.deprecated, publish_changes=False)
 
-                FormAccessorSQL.save_new_form(processed_forms.submitted)
+                XFormInstance.objects.save_new_form(processed_forms.submitted)
                 if cases:
                     for case in cases:
                         CaseAccessorSQL.save_case(case)
@@ -274,7 +275,7 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, lock=True, save=True):
-        assert save or not lock, f"refusing to lock when not saving"
+        assert save or not lock, "refusing to lock when not saving"
         if lock:
             # only record metric if locking since otherwise it has been
             # (most likley) recorded elsewhere
@@ -323,7 +324,7 @@ class FormProcessorSQL(object):
     @staticmethod
     def get_case_forms(case_id):
         xform_ids = CaseAccessorSQL.get_case_xform_ids(case_id)
-        return FormAccessorSQL.get_forms_with_attachments_meta(xform_ids)
+        return XFormInstance.objects.get_forms_with_attachments_meta(xform_ids)
 
     @staticmethod
     def form_has_case_transactions(form_id):
@@ -336,9 +337,9 @@ class FormProcessorSQL(object):
                 try:
                     return CommCareCase.get_locked_obj(_id=case_id)
                 except redis.RedisError:
-                    case = CaseAccessorSQL.get_case(case_id)
+                    case = CommCareCase.objects.get_case(case_id)
             else:
-                case = CaseAccessorSQL.get_case(case_id)
+                case = CommCareCase.objects.get_case(case_id)
         except CaseNotFound:
             return None, None
 

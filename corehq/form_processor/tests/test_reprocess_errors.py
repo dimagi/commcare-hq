@@ -10,13 +10,12 @@ from casexml.apps.case.util import post_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
-    FormAccessors,
     LedgerAccessors,
 )
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.reprocess import (
     reprocess_form,
     reprocess_unfinished_stub,
@@ -60,13 +59,13 @@ class ReprocessXFormErrorsTest(TestCase):
 
         post_case_blocks([case.as_xml()], domain=self.domain)
 
-        form_accessors = FormAccessors(self.domain)
-        error_forms = form_accessors.get_forms_by_type('XFormError', 10)
+        get_forms_by_type = XFormInstance.objects.get_forms_by_type
+        error_forms = get_forms_by_type(self.domain, 'XFormError', 10)
         self.assertEqual(1, len(error_forms))
 
         form = error_forms[0]
         reprocess_xform_error(form)
-        error_forms = form_accessors.get_forms_by_type('XFormError', 10)
+        error_forms = get_forms_by_type(self.domain, 'XFormError', 10)
         self.assertEqual(1, len(error_forms))
 
         case = CaseBlock.deprecated_init(
@@ -80,14 +79,14 @@ class ReprocessXFormErrorsTest(TestCase):
 
         post_case_blocks([case.as_xml()], domain=self.domain)
 
-        reprocess_xform_error(form_accessors.get_form(form.form_id))
+        reprocess_xform_error(XFormInstance.objects.get_form(form.form_id))
 
-        form = form_accessors.get_form(form.form_id)
+        form = XFormInstance.objects.get_form(form.form_id)
         # self.assertTrue(form.initial_processing_complete)  Can't change this with SQL forms at the moment
         self.assertTrue(form.is_normal)
         self.assertIsNone(form.problem)
 
-        case = CaseAccessors(self.domain).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertEqual(1, len(case.indices))
         self.assertEqual(case.indices[0].referenced_id, parent_case_id)
         self._validate_case(case)
@@ -116,7 +115,7 @@ class ReprocessSubmissionStubTests(TestCase):
     def setUp(self):
         super(ReprocessSubmissionStubTests, self).setUp()
         self.factory = CaseFactory(domain=self.domain)
-        self.formdb = FormAccessors(self.domain)
+        self.formdb = XFormInstance.objects
         self.casedb = CaseAccessors(self.domain)
         self.ledgerdb = LedgerAccessors(self.domain)
 
@@ -135,14 +134,14 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertEqual(1, len(stubs))
 
         # form that was saved before case error raised
-        normal_form_ids = self.formdb.get_all_form_ids_in_domain('XFormInstance')
+        normal_form_ids = XFormInstance.objects.get_form_ids_in_domain(self.domain, 'XFormInstance')
         self.assertEqual(0, len(normal_form_ids))
 
         # shows error form (duplicate of form that was saved before case error)
         # this is saved becuase the saving was assumed to be atomic so if there was any error it's assumed
         # the form didn't get saved
         # we don't really care about this form in this test
-        error_forms = self.formdb.get_forms_by_type('XFormError', 10)
+        error_forms = XFormInstance.objects.get_forms_by_type(self.domain, 'XFormError', 10)
         self.assertEqual(1, len(error_forms))
         self.assertIsNone(error_forms[0].orig_id)
         self.assertEqual(error_forms[0].form_id, stubs[0].xform_id)
@@ -184,7 +183,7 @@ class ReprocessSubmissionStubTests(TestCase):
             self.domain
         )[0].form_id)
 
-        case = self.casedb.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertEqual(2, len(case.xform_ids))
         self.assertEqual('b', case.get_case_property('prop'))
 
@@ -192,7 +191,7 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertEqual(1, len(result.cases))
         self.assertEqual(0, len(result.ledgers))
 
-        case = self.casedb.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertEqual('b', case.get_case_property('prop'))  # should be property value from most recent form
         self.assertEqual(3, len(case.xform_ids))
         self.assertEqual(form_ids, case.xform_ids)
@@ -219,7 +218,7 @@ class ReprocessSubmissionStubTests(TestCase):
         ledgers = self.ledgerdb.get_ledger_values_for_case(case_id)
         self.assertEqual(0, len(ledgers))
 
-        case = self.casedb.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertEqual(1, len(case.xform_ids))
 
         ledger_transactions = self.ledgerdb.get_ledger_transactions_for_case(case_id)
@@ -236,7 +235,7 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertEqual(1, len(ledger_transactions))
 
         # case still only has 2 transactions
-        case = self.casedb.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertEqual(2, len(case.xform_ids))
         self.assertTrue(case.actions[1].is_ledger_transaction)
 
@@ -315,7 +314,7 @@ class ReprocessSubmissionStubTests(TestCase):
                 domain=self.domain,
             )
 
-        case = self.casedb.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
 
         self.assertEqual(form, form_handler.call_args[1]['xform'])
         self.assertEqual(case, case_handler.call_args[1]['case'])
@@ -331,7 +330,7 @@ class ReprocessSubmissionStubTests(TestCase):
         result = reprocess_form(form, save=True, lock_form=False)
         self.assertIsNone(result.error)
 
-        case = self.casedb.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
         transactions = case.actions
         self.assertEqual([trans.form_id for trans in transactions], [form.form_id])
 
@@ -380,7 +379,7 @@ class TestReprocessDuringSubmission(TestCase):
     def setUp(self):
         super(TestReprocessDuringSubmission, self).setUp()
         self.factory = CaseFactory(domain=self.domain)
-        self.formdb = FormAccessors(self.domain)
+        self.formdb = XFormInstance.objects
         self.casedb = CaseAccessors(self.domain)
         self.ledgerdb = LedgerAccessors(self.domain)
 
@@ -405,7 +404,7 @@ class TestReprocessDuringSubmission(TestCase):
         self.assertTrue(form.is_error)
 
         with self.assertRaises(CaseNotFound):
-            self.casedb.get_case(case_id)
+            CommCareCase.objects.get_case(case_id, self.domain)
 
         result = submit_form_locally(
             instance=form.get_xml(),
@@ -414,7 +413,7 @@ class TestReprocessDuringSubmission(TestCase):
         duplicate_form = result.xform
         self.assertTrue(duplicate_form.is_duplicate)
 
-        case = self.casedb.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertIsNotNone(case)
 
         form = self.formdb.get_form(form_id)
@@ -440,7 +439,7 @@ class TestReprocessDuringSubmission(TestCase):
         self.assertEqual(form.form_id, form_id)
 
         with self.assertRaises(CaseNotFound):
-            self.casedb.get_case(case_id)
+            CommCareCase.objects.get_case(case_id, self.domain)
 
         stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=False).all()
         self.assertEqual(0, len(stubs))
@@ -459,7 +458,7 @@ class TestReprocessDuringSubmission(TestCase):
         duplicate_form = result.xform
         self.assertTrue(duplicate_form.is_duplicate)
 
-        case = self.casedb.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
         self.assertIsNotNone(case)
 
         form = self.formdb.get_form(form_id)
@@ -490,7 +489,7 @@ class TestTransactionErrors(TransactionTestCase):
                 form_id=form_id
             )
 
-        form = FormAccessorSQL.get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id)
         self.assertTrue(form.is_error)
         self.assertIsNotNone(form.get_xml())
 
@@ -513,9 +512,9 @@ class TestTransactionErrors(TransactionTestCase):
                 form_id=form_id
             )
 
-        [error_form_id] = FormAccessorSQL.get_form_ids_in_domain_by_type(self.domain, 'XFormError')
+        [error_form_id] = XFormInstance.objects.get_form_ids_in_domain(self.domain, 'XFormError')
         self.assertNotEqual(error_form_id, form_id)
-        form = FormAccessorSQL.get_form(error_form_id)
+        form = XFormInstance.objects.get_form(error_form_id)
         self.assertTrue(form.is_error)
         self.assertIsNotNone(form.get_xml())
 
@@ -537,7 +536,7 @@ class TestTransactionErrors(TransactionTestCase):
         )
 
         # simulate an error by deleting the form XML
-        form = FormAccessorSQL.get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id)
         form.get_attachment_meta('form.xml').delete()
 
         # re-submit the form again
@@ -550,7 +549,7 @@ class TestTransactionErrors(TransactionTestCase):
             form_id=form_id
         )
 
-        form = FormAccessorSQL.get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id)
         self.assertTrue(form.is_normal)
 
 

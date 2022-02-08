@@ -132,7 +132,7 @@ def get_refresh_timed_schedule_instances_call(broadcast):
         refresh_timed_schedule_instances.delay(
             broadcast.schedule_id,
             broadcast.recipients,
-            start_date=json_format_date(broadcast.start_date)
+            start_date_iso_string=json_format_date(broadcast.start_date)
         )
 
     return refresh

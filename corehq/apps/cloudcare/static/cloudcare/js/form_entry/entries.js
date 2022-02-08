@@ -625,24 +625,45 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         query = query.toLowerCase();
         var haystack = option.text.toLowerCase();
 
-        var match;
+        var match,
+            wordsInQuery = query.split(/\s+/),
+            wordsInChoice = haystack.split(/\s+/);
         if (matchType === Const.COMBOBOX_MULTIWORD) {
             // Multiword filter, matches any choice that contains all of the words in the query
             //
             // Assumption is both query and choice will not be very long. Runtime is O(nm)
             // where n is number of words in the query, and m is number of words in the choice
-            var wordsInQuery = query.split(' ');
-            var wordsInChoice = haystack.split(' ');
 
             match = _.all(wordsInQuery, function (word) {
                 return _.include(wordsInChoice, word);
             });
         } else if (matchType === Const.COMBOBOX_FUZZY) {
+            var isFuzzyMatch = function (haystack, query, distanceThreshold) {
+                return (
+                    haystack === query ||
+                    (query.length > 3 && window.Levenshtein.get(haystack, query) <= distanceThreshold)
+                );
+            };
+
+            // First handle prefixes, which will fail fuzzy match if they're too short
+            var distanceThreshold = 2;
+            if (haystack.length > query.length + distanceThreshold) {
+                haystack = haystack.substring(0, query.length + distanceThreshold);
+            }
+
             // Fuzzy filter, matches if query is "close" to answer
-            match = (
-                (window.Levenshtein.get(haystack, query) <= 2 && query.length > 3) ||
-                haystack === query
-            );
+            match = isFuzzyMatch(haystack, query, distanceThreshold);
+
+            // For multiword strings, return true if any word in the query fuzzy matches any word in the target
+            if (!match) {
+                if (wordsInChoice.length > 1 || wordsInQuery.length > 1) {
+                    _.each(wordsInChoice, function (choiceWord) {
+                        _.each(wordsInQuery, function (queryWord) {
+                            match = match || isFuzzyMatch(choiceWord, queryWord, distanceThreshold);
+                        });
+                    });
+                }
+            }
         }
 
         // If we've already matched, return true

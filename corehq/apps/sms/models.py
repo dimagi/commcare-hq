@@ -1,20 +1,15 @@
 #!/usr/bin/env python
-import base64
 import hashlib
-import uuid
 from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import IntegrityError, connection, models, transaction
-from django.http import Http404
 from django.utils.encoding import force_str
 from django.utils.translation import ugettext_lazy, ugettext_noop, ugettext as _
 
 import jsonfield
-from memoized import memoized
 
-from dimagi.ext.couchdbkit import Document, StringProperty
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -26,10 +21,9 @@ from corehq.apps.sms.mixin import (
     apply_leniency,
 )
 from corehq.apps.users.models import CouchUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.util.quickcache import quickcache
-from corehq.util.view_utils import absolute_reverse
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -149,7 +143,7 @@ class Log(models.Model):
     @property
     def recipient(self):
         if self.couch_recipient_doc_type == 'CommCareCase':
-            return CaseAccessors(self.domain).get_case(self.couch_recipient)
+            return CommCareCase.objects.get_case(self.couch_recipient, self.domain)
         else:
             return CouchUser.get_by_user_id(self.couch_recipient)
 
@@ -658,8 +652,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @property
     def owner(self):
         if self.owner_doc_type == 'CommCareCase':
-            from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-            return CaseAccessors(self.domain).get_case(self.owner_id)
+            return CommCareCase.objects.get_case(self.owner_id, self.domain)
         elif self.owner_doc_type == 'CommCareUser':
             from corehq.apps.users.models import CommCareUser
             return CommCareUser.get(self.owner_id)
@@ -734,8 +727,8 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @classmethod
     def get_reserved_number(cls, phone_number):
         return (
-            cls.get_two_way_number(phone_number) or
-            cls.get_number_pending_verification(phone_number)
+            cls.get_two_way_number(phone_number)
+            or cls.get_number_pending_verification(phone_number)
         )
 
     @classmethod
@@ -1235,7 +1228,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             app = get_app(domain, app_id)
             form = app.get_form(form_unique_id)
             return form.full_path_name
-        except:
+        except Exception:
             return None
 
     @classmethod
@@ -1326,8 +1319,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             # is a location. We only count the include_descendant_locations flag when
             # the recipient_type is RECIPIENT_TYPE_LOCATION.
             if (
-                schedule_instance.recipient_type == ScheduleInstance.RECIPIENT_TYPE_LOCATION and
-                schedule_instance.memoized_schedule.include_descendant_locations
+                schedule_instance.recipient_type == ScheduleInstance.RECIPIENT_TYPE_LOCATION
+                and schedule_instance.memoized_schedule.include_descendant_locations
             ):
                 recipient_type = cls.RECIPIENT_LOCATION_PLUS_DESCENDANTS
             else:
@@ -1582,9 +1575,9 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
         # If the parent event had various recipients, mark it as such,
         # unless the source was a keyword in which case the recipient
         # listed should always be the keyword initiator.
-        if (parent.source != MessagingEvent.SOURCE_KEYWORD and
-                (parent.recipient_id != self.recipient_id or self.recipient_id is None) and
-                parent.recipient_type not in (
+        if (parent.source != MessagingEvent.SOURCE_KEYWORD
+                and (parent.recipient_id != self.recipient_id or self.recipient_id is None)
+                and parent.recipient_type not in (
                     MessagingEvent.RECIPIENT_USER_GROUP,
                     MessagingEvent.RECIPIENT_CASE_GROUP,
                     MessagingEvent.RECIPIENT_VARIOUS,
@@ -1720,9 +1713,9 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         """
         Returns True if the given domain is authorized to use this backend.
         """
-        return (self.is_global or
-                domain == self.domain or
-                self.domain_is_shared(domain))
+        return (self.is_global
+                or domain == self.domain
+                or self.domain_is_shared(domain))
 
     @classmethod
     def name_is_unique(cls, name, domain=None, backend_id=None):
@@ -2211,8 +2204,8 @@ class PhoneLoadBalancingMixin(object):
 
     def get_next_phone_number(self, destination_phone_number):
         if (
-            not isinstance(self.load_balancing_numbers, list) or
-            len(self.load_balancing_numbers) == 0
+            not isinstance(self.load_balancing_numbers, list)
+            or len(self.load_balancing_numbers) == 0
         ):
             raise Exception("Expected load_balancing_numbers to not be "
                             "empty for backend %s" % self.pk)

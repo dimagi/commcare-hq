@@ -19,7 +19,7 @@ from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser
 from corehq.const import OPENROSA_VERSION_3
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.motech.repeaters.exceptions import ReferralError, DataRegistryCaseUpdateError
 from dimagi.utils.parsing import json_format_datetime
@@ -249,7 +249,7 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
         else:
             case_ids_to_forward = [cid for cid in case_ids_to_forward.split(' ') if cid]
         new_owner = payload_doc.get_case_property('new_owner')
-        cases_to_forward = CaseAccessors(payload_doc.domain).get_cases(case_ids_to_forward)
+        cases_to_forward = CommCareCase.objects.get_cases(case_ids_to_forward, payload_doc.domain)
         case_ids_to_forward = set(case_ids_to_forward)
         included_case_types = payload_doc.get_case_property('case_types').split(' ')
         case_type_configs = {}
@@ -548,7 +548,7 @@ class CaseUpdateConfig:
                 return index_spec
 
         try:
-            index_case = CaseAccessors(self.domain).get_case(self.index_create_case_id)
+            index_case = CommCareCase.objects.get_case(self.index_create_case_id, self.domain)
         except CaseNotFound:
             raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
@@ -571,11 +571,11 @@ class CaseUpdateConfig:
         index = indices[0]
         if index.referenced_id != self.index_remove_case_id:
             raise DataRegistryCaseUpdateError("Index case ID does not match for index to remove")
-        if self.index_remove_relationship and self.index_remove_relationship != index.relationship_id:
+        if self.index_remove_relationship and self.index_remove_relationship != index.relationship:
             raise DataRegistryCaseUpdateError("Index relationship does not match for index to remove")
 
         return {
-            index.identifier: (index.referenced_type, "", index.relationship_id)
+            index.identifier: (index.referenced_type, "", index.relationship)
         }
 
     @staticmethod
@@ -599,6 +599,8 @@ class CaseUpdateConfig:
 
 
 class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
+    DEVICE_ID = 'DataRegistryCaseUpdateRepeater'
+    XMLNS = 'http://commcarehq.org/data_registry_case_update'
 
     def get_headers(self):
         headers = super().get_headers()
@@ -610,13 +612,13 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         submitting_user = CouchUser.get_by_user_id(payload_doc.user_id)
         case_blocks = self._get_case_blocks(repeat_record, configs, submitting_user)
         return render_to_string('hqcase/xml/case_block.xml', {
-            'xmlns': SYSTEM_FORM_XMLNS,
+            'xmlns': self.XMLNS,
             'case_block': " ".join(case_blocks),
             'time': json_format_datetime(datetime.utcnow()),
             'uid': str(uuid4()),
             'username': self.submission_username(),
             'user_id': self.submission_user_id(),
-            'device_id': "DataRegistryCaseUpdateRepeater",
+            'device_id': f"{self.DEVICE_ID}:{payload_doc.domain}",
             'form_data': {
                 "source_domain": payload_doc.domain,
                 "source_form_id": payload_doc.get_form_transactions()[-1].form_id,

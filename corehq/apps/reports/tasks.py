@@ -25,7 +25,7 @@ from corehq.apps.reports.util import send_report_download_email
 from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
 from corehq.elastic import send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.util.dates import get_timestamp_for_filename, iso_string_to_datetime
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_gauge
@@ -285,7 +285,7 @@ def _get_form_attachment_info(domain, form_ids, export):
     properties = _get_export_properties(export)
     return [
         _extract_form_attachment_info(form, properties)
-        for form in FormAccessors(domain).iter_forms(form_ids)
+        for form in XFormInstance.objects.iter_forms(form_ids, domain)
     ]
 
 

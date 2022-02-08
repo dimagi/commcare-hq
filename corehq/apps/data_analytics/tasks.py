@@ -10,7 +10,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
-from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
+from corehq.apps.data_analytics.malt_generator import generate_malt
 from corehq.apps.domain.models import Domain
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -71,7 +71,7 @@ def build_last_month_GIR():
 @task(queue='malt_generation_queue')
 def update_current_MALT_for_domains(month_dict, domains):
     month = DateSpan.from_month(month_dict['month'], month_dict['year'])
-    MALTTableGenerator([month]).build_table(domains=domains)
+    generate_malt([month], domains=domains)
 
 
 def send_MALT_complete_email(month_dict):
