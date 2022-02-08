@@ -58,7 +58,7 @@ class CopyApplicationForm(forms.Form):
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
-        if can_domain_access_release_management(self.from_domain, check_toggle=True) and not is_linked_app(app):
+        if can_domain_access_release_management(self.from_domain, include_toggle=True) and not is_linked_app(app):
             fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()
@@ -85,7 +85,7 @@ class CopyApplicationForm(forms.Form):
     def clean(self):
         domain = self.cleaned_data.get('domain')
         if self.cleaned_data.get('linked'):
-            if not can_domain_access_release_management(domain, check_toggle=True):
+            if not can_domain_access_release_management(domain, include_toggle=True):
                 raise forms.ValidationError("The target project space does not have this feature enabled.")
             link = DomainLink.objects.filter(linked_domain=domain)
             if link and link[0].master_domain != self.from_domain:
