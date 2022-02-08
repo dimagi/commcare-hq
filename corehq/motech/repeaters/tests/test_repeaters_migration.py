@@ -618,3 +618,33 @@ class TestSQLCaseExpressionRepeater(RepeaterSyncTestsBase):
             couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
             self.addCleanup(couch_repeater.delete)
             self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+
+class TestSQLUserRepeater(RepeaterSyncTestsBase):
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
+
+    @property
+    def couch_cls(cls):
+        return UserRepeater
+
+    @property
+    def sql_cls(cls):
+        return SQLUserRepeater
+
+    def test_repeaters_are_synced_to_sql(self):
+        for couch_repeater in self.get_couch_objects(self.couch_cls):
+            couch_repeater.save()
+            self.addCleanup(couch_repeater.delete)
+            sql_repeater = self.sql_cls.objects.get(repeater_id=couch_repeater._id)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        for sql_repeater in self.get_sql_objects(self.sql_cls):
+            sql_repeater.save()
+            couch_repeater_dict = self.couch_cls.get_db().get(sql_repeater.repeater_id)
+            self.assertIsNotNone(couch_repeater_dict)
+            couch_repeater = self.couch_cls.wrap(couch_repeater_dict)
+            self.addCleanup(couch_repeater.delete)
+            self._assert_same_repeater_objects(sql_repeater, couch_repeater)
