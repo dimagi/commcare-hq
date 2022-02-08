@@ -42,17 +42,15 @@ hqDefine('users/js/edit_commcare_user', [
             dataType: 'json',
             success: function (response, status, xhr, form) {
                 if (response.status === "OK") {
-                    alertUser.alert_user(gettext("Password changed successfully"), 'success');
+                    alertUser.alert_user(gettext("Password changed successfully."), 'success');
                     googleAnalytics.track.event("Edit Mobile Worker", "Reset password", couchUserId);
                 } else if (response.status === "weak") {
-                    var message = gettext('Password is not strong enough. Try making your password more complex.');
-                    alertUser.alert_user(message, 'danger');
+                    alertUser.alert_user(gettext("Password is not strong enough. " +
+                                                 "Try making your password more complex."), 'danger');
                 } else if (response.status === "different") {
-                    var message = gettext("The two password fields didn't match.");
-                    alertUser.alert_user(message, 'danger');
+                    alertUser.alert_user(gettext("The two password fields didn't match."), 'danger');
                 } else {
-                    var message = gettext('Password was not changed ');
-                    alertUser.alert_user(message, 'danger');
+                    alertUser.alert_user(gettext("Password was not changed."), 'danger');
                 }
             },
         });
