@@ -79,4 +79,5 @@ branches:
     - ad/save-only-edited-fields-migration # Addison Feb 4
     - gh/malt/background-queue # Graham Feb 7
     - cs/SC-1882-shared-saved-reports-m # Charl Feb 8
+    - nh/api_log_export  # Norman Feb 8
 submodules: { }
