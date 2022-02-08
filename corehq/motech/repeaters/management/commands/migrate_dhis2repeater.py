@@ -25,13 +25,3 @@ class Command(RepeaterMigrationHelper):
 
             }
         }
-
-    @classmethod
-    def diff_couch_and_sql(cls, couch, sql):
-        diff_results = cls.get_common_attrs_diff(couch, sql)
-        # Todo finish it
-        for prop in cls._get_string_props():
-            diff_results.append(cls.diff_value(prop, couch.get(prop), getattr(sql, prop)))
-
-        diff_results = [diff for diff in diff_results if diff]
-        return '\n'.join(diff_results) if diff_results else None
