@@ -146,12 +146,18 @@ def check_repeaters_in_partition(partition):
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record_id):
+    """
+    NOTE: Keep separate from retry_process_repeat_record for monitoring purposes
+    """
     repeat_record = RepeatRecord.get(repeat_record_id)
     _process_repeat_record(repeat_record)
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def retry_process_repeat_record(repeat_record_id):
+    """
+    NOTE: Keep separate from process_repeat_record for monitoring purposes
+    """
     repeat_record = RepeatRecord.get(repeat_record_id)
     _process_repeat_record(repeat_record)
 
