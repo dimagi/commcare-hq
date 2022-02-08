@@ -374,7 +374,7 @@ class CaseReindexAccessor(ReindexAccessor):
 
     def get_doc(self, doc_id):
         try:
-            return CaseAccessorSQL.get_case(doc_id)
+            return CommCareCase.objects.get_case(doc_id)
         except CaseNotFound:
             pass
 
