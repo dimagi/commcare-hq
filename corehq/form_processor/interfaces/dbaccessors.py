@@ -103,6 +103,7 @@ class CaseAccessors(object):
         return self.db_accessor.soft_delete_cases(self.domain, case_ids, deletion_date, deletion_id)
 
     def soft_undelete_cases(self, case_ids):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.soft_undelete_cases(self.domain, case_ids)
 
     def get_deleted_case_ids_by_owner(self, owner_id):

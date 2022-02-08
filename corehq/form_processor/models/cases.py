@@ -239,6 +239,19 @@ class CommCareCaseManager(RequireDBManager):
 
         return deleted_count
 
+    def soft_undelete_cases(self, domain, case_ids):
+        from ..change_publishers import publish_case_saved
+        assert isinstance(case_ids, list), type(case_ids)
+        with self.model.get_plproxy_cursor() as cursor:
+            cursor.execute(
+                'SELECT soft_undelete_cases(%s, %s) as undeleted_count',
+                [domain, case_ids]
+            )
+            undeleted_count = sum(row[0] for row in cursor)
+        for case in self.iter_cases(case_ids, domain):
+            publish_case_saved(case)
+        return undeleted_count
+
     def hard_delete_cases(self, domain, case_ids):
         """Permanently delete cases in domain
 

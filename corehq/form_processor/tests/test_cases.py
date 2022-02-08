@@ -331,7 +331,7 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         with self.assertRaises(CaseSaveError):
             case.save(with_tracked_models=True)
 
-    def test_soft_delete(self):
+    def test_soft_delete_and_undelete(self):
         _create_case(case_id='c1')
         _create_case(case_id='c2')
         _create_case(case_id='c3')
@@ -347,6 +347,19 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
 
         case = CommCareCase.objects.get_case('c3')
         self.assertFalse(case.is_deleted)
+
+        # undelete
+        num = CommCareCase.objects.soft_undelete_cases(DOMAIN, ['c2'])
+        self.assertEqual(num, 1)
+
+        case = CommCareCase.objects.get_case('c1')
+        self.assertTrue(case.is_deleted)
+        self.assertEqual(case.deletion_id, '123')
+
+        for case_id in ['c2', 'c3']:
+            case = CommCareCase.objects.get_case(case_id)
+            self.assertFalse(case.is_deleted, case_id)
+            self.assertIsNone(case.deletion_id, case_id)
 
     def test_hard_delete_cases(self):
         case1 = _create_case()

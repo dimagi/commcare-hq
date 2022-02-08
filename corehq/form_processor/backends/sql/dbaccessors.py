@@ -580,24 +580,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):
-        from corehq.form_processor.change_publishers import publish_case_saved
-
-        assert isinstance(case_ids, list)
-
-        with CommCareCase.get_plproxy_cursor() as cursor:
-            cursor.execute(
-                'SELECT soft_undelete_cases(%s, %s) as affected_count',
-                [domain, case_ids]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return_value = sum([result.affected_count for result in results])
-
-        for case_ids_chunk in chunked(case_ids, 500):
-            cases = CaseAccessorSQL.get_cases(list(case_ids_chunk))
-            for case in cases:
-                publish_case_saved(case)
-
-        return return_value
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.soft_undelete_cases(domain, case_ids)
 
     @staticmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
