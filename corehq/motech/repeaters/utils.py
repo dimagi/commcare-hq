@@ -58,6 +58,12 @@ class RepeaterMigrationHelper(PopulateSQLCommand):
             cls.diff_value('repeater_id', couch.get('_id'), sql.repeater_id)
         )
 
+        # Ignore nullish value in format
+        if couch.get('format') and sql.format:
+            diff_results.append(
+                cls.diff_value('format', couch.get('format'), sql.format)
+            )
+
         for prop in string_props:
             diff_results.append(cls.diff_value(prop, couch.get(prop), getattr(sql, prop)))
 
@@ -65,10 +71,12 @@ class RepeaterMigrationHelper(PopulateSQLCommand):
 
     @classmethod
     def get_common_sql_attr_obj(cls, doc):
+        format = doc.get("format") if doc.get("format") else None
         return {
             "domain": doc.get("domain"),
             "connection_settings": ConnectionSettings.objects.get(id=doc.get("connection_settings_id")),
-            "is_paused": doc.get("paused")
+            "is_paused": doc.get("paused"),
+            "format": format,
         }
 
     @classmethod
