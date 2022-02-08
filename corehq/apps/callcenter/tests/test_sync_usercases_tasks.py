@@ -6,7 +6,7 @@ from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.util.test_utils import flag_enabled
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 
 class TestWebUserSyncUsercase(TestCase):
@@ -21,7 +21,6 @@ class TestWebUserSyncUsercase(TestCase):
         cls.user_id = cls.user._id
         cls.domain_obj.usercase_enabled = True
         cls.domain_obj.save()
-        cls.accessor = CaseAccessors(cls.domain_name)
 
     @classmethod
     def tearDownClass(cls):
@@ -32,7 +31,7 @@ class TestWebUserSyncUsercase(TestCase):
     @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
     def test_sync_usercases(self):
         sync_usercases(self.user, self.domain_name)
-        usercase = self.accessor.get_case_by_domain_hq_user_id(self.user_id, USERCASE_TYPE)
+        usercase = CommCareCase.objects.get_case_by_external_id(self.domain_name, self.user_id, USERCASE_TYPE)
         self.assertIsNotNone(usercase)
         self.assertEqual(usercase.name, self.username)
 
@@ -56,7 +55,6 @@ class TestBulkSyncUsercases(TestCase):
         # Get their ids
         for user in cls.users:
             cls.user_ids.append(user._id)
-        cls.accessor = CaseAccessors(cls.domain_name)
 
     @classmethod
     def tearDownClass(cls):
@@ -70,6 +68,6 @@ class TestBulkSyncUsercases(TestCase):
 
         # Iterate through each id and assert cases properly synced
         for id in self.user_ids:
-            usercase = self.accessor.get_case_by_domain_hq_user_id(id, USERCASE_TYPE)
+            usercase = CommCareCase.objects.get_case_by_external_id(self.domain_name, id, USERCASE_TYPE)
             self.assertIsNotNone(usercase)
             self.assertEqual(usercase.name, self.usernames.pop(0))

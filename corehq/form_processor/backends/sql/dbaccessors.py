@@ -576,6 +576,7 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
+        warn("DEPRECATED", DeprecationWarning)
         return CommCareCase.objects.get_case_by_external_id(domain, user_id, case_type)
 
     @staticmethod

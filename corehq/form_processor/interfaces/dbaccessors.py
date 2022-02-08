@@ -91,6 +91,7 @@ class CaseAccessors(object):
         return self.db_accessor.get_attachment_content(case_id, attachment_id)
 
     def get_case_by_domain_hq_user_id(self, user_id, case_type):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_case_by_domain_hq_user_id(self.domain, user_id, case_type)
 
     def get_cases_by_external_id(self, external_id, case_type=None):
