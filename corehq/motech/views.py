@@ -121,7 +121,7 @@ def motech_log_export_view(request, domain):
     This view supports API key authentication so that exports can be
     scripted. For example, the following script exports the remote API
     logs from the previous 24 hours, and appends them to a table in
-    Postgres ::
+    Postgres::
 
         #!/bin/bash
 
@@ -140,7 +140,7 @@ def motech_log_export_view(request, domain):
         curl -L \
             -H "Authorization: ApiKey $USERNAME:$API_KEY" \
             -o remote_api_logs.csv \
-            "${url}?filter_from_date=${day_before}&filter_from_date=${yesterday}"
+            "${url}?filter_from_date=${day_before}&filter_to_date=${yesterday}"
 
         psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_DATABASE \
             -c "COPY api_logs FROM 'remote_api_logs.csv' csv HEADER; "
@@ -150,9 +150,13 @@ def motech_log_export_view(request, domain):
     """
 
     def as_utc_timestamp(timestamp):
+        """
+        Formats a datetime as a string that Postgres recognizes as a UTC
+        timestamp.
+        """
         return timestamp.isoformat(sep=' ', timespec='milliseconds') + '+00'
 
-    def dict_to_json(dict_):
+    def json_or_none(dict_):
         if not dict_:
             return None
         return json.dumps(dict_)
@@ -180,7 +184,7 @@ def motech_log_export_view(request, domain):
         ('request_body', _('Request Body'), string_or_none),
         ('request_error', _('Error'), string_or_none),
         ('response_status', _('Status Code'), int_or_none),
-        ('response_headers', _('Response Headers'), dict_to_json),
+        ('response_headers', _('Response Headers'), json_or_none),
         ('response_body', _('Response Body'), string_or_none),
     ]
 
