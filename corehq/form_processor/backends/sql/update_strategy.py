@@ -354,6 +354,21 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             for case_update in filtered_updates:
                 self._apply_case_update(case_update, form)
 
+    def get_transactions_for_rebuild(self, updated_xforms=None):
+        """
+        Fetch all the transactions required to rebuild the case along
+        with all the forms for those transactions.
+
+        For any forms that have been updated it replaces the old form
+        with the new one.
+
+        :param updated_xforms: optional list of forms that have been changed.
+        :return: list of ``CaseTransaction`` objects with their associated forms attached.
+        """
+        transactions = CaseTransaction.objects.get_transactions_for_case_rebuild(self.case.case_id)
+        self.fetch_case_transaction_forms(transactions, updated_xforms)
+        return transactions
+
     def fetch_case_transaction_forms(self, transactions, updated_xforms=None):
         """
         Fetch the forms for a list of transactions, caching them on each transaction

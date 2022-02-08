@@ -587,21 +587,9 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_case_transactions_by_case_id(case, updated_xforms=None):
-        """
-        This fetches all the transactions required to rebuild the case along
-        with all the forms for those transactions.
-
-        For any forms that have been updated it replaces the old form
-        with the new one.
-
-        :param case_id: ID of case to rebuild
-        :param updated_xforms: list of forms that have been changed.
-        :return: list of ``CaseTransaction`` objects with their associated forms attached.
-        """
-
-        transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case.case_id)
-        CaseAccessorSQL.fetch_case_transaction_forms(case, transactions, updated_xforms)
-        return transactions
+        warn("DEPRECATED", DeprecationWarning)
+        from .update_strategy import SqlCaseUpdateStrategy
+        return SqlCaseUpdateStrategy(case).get_transactions_for_rebuild(updated_xforms)
 
     @staticmethod
     def fetch_case_transaction_forms(case, transactions, updated_xforms=None):
