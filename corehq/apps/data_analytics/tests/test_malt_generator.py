@@ -2,7 +2,7 @@ import datetime
 from unittest.mock import Mock, patch
 
 from django.http import Http404
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, TransactionTestCase
 
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -21,7 +21,6 @@ from corehq.apps.data_analytics.malt_generator import (
     _get_malt_app_data,
     _get_malt_row_dicts,
     _save_malt_row_dicts_to_db,
-    _should_update_malt,
     _update_or_create_malt_row,
     generate_malt,
 )
@@ -38,7 +37,7 @@ from corehq.util.test_utils import disable_quickcache
 
 
 @es_test
-class MaltGeneratorTest(TestCase):
+class MaltGeneratorTest(TransactionTestCase):
     """
     This serves as the end to end test for malt generation and should only test the happy path
     """
@@ -51,8 +50,6 @@ class MaltGeneratorTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.es = get_es_new()
-        ensure_index_deleted(XFORM_INDEX_INFO.index)
-        initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
         cls._setup_domain()
         cls._setup_user()
         cls._setup_app()
@@ -89,12 +86,19 @@ class MaltGeneratorTest(TestCase):
             app_id=app_id,
         )
 
-    def test_successful_malt_generation(self):
+    def setUp(self) -> None:
+        super().setUp()
+        initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
+
+    def tearDown(self) -> None:
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
+        super().tearDown()
+
+    def test_successfully_creates(self):
         self._save_form_data(self.app_id, datetime.datetime(2019, 12, 31))
         self._save_form_data(self.app_id, datetime.datetime(2020, 1, 1))
         self._save_form_data(self.app_id, datetime.datetime(2020, 1, 31))
         self.es.indices.refresh(XFORM_INDEX_INFO.index)
-        self.addCleanup(ensure_index_deleted, XFORM_INDEX_INFO.index)
 
         monthspan = DateSpan.from_month(1, 2020)
         generate_malt([monthspan], domains=[self.domain.name])
@@ -109,6 +113,48 @@ class MaltGeneratorTest(TestCase):
         self.assertEqual(rows[0].num_of_forms, 2)
         self.assertEqual(rows[0].wam, True)
         self.assertFalse(MALTRow.objects.filter(month=DateSpan.from_month(12, 2019).startdate).exists())
+
+    def test_does_not_update(self):
+        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+
+        monthspan = DateSpan.from_month(1, 2020)
+        generate_malt([monthspan], domains=[self.domain.name])
+
+        rows = MALTRow.objects.filter(
+            user_id=self.user._id,
+            app_id=self.app_id,
+            device_id=self.DEVICE_ID,
+            month=monthspan.startdate
+        )
+        self.assertEqual(len(rows), 1)
+        previous_run_date = rows[0].last_run_date
+
+        generate_malt([monthspan], domains=[self.domain.name])
+
+        rows = MALTRow.objects.filter(
+            user_id=self.user._id,
+            app_id=self.app_id,
+            device_id=self.DEVICE_ID,
+            month=monthspan.startdate
+        )
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].last_run_date, previous_run_date)
+
+    def test_multiple_months(self):
+        self._save_form_data(self.app_id, datetime.datetime(2019, 12, 15))
+        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
+        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 16))
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+
+        monthspans = [DateSpan.from_month(12, 2019), DateSpan.from_month(1, 2020)]
+        generate_malt(monthspans, domains=[self.domain.name])
+
+        december_malt = MALTRow.objects.filter(month=DateSpan.from_month(12, 2019).startdate)[0]
+        january_malt = MALTRow.objects.filter(month=DateSpan.from_month(1, 2020).startdate)[0]
+
+        self.assertEqual(december_malt.num_of_forms, 1)
+        self.assertEqual(january_malt.num_of_forms, 2)
 
 
 class TestSaveMaltRowDictsToDB(TestCase):
@@ -336,67 +382,6 @@ class TestGetMaltRowDicts(SimpleTestCase):
         user2_malt_row_dict = malt_row_dicts[1]
         self.assertEqual(user1_malt_row_dict['num_of_forms'], 50)
         self.assertEqual(user2_malt_row_dict['num_of_forms'], 25)
-
-
-class TestShouldUpdateMalt(SimpleTestCase):
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.domain = 'domain'
-        self.monthspan = DateSpan.from_month(1, 2022)
-
-        self.last_form_submission = datetime.datetime(2022, 1, 10, 0, 0)
-
-        last_run_patcher = patch('corehq.apps.data_analytics.malt_generator._get_last_run_date_for_malt')
-        self.mock_last_run_date = last_run_patcher.start()
-        self.mock_last_run_date.return_value = self.monthspan.startdate
-        self.addCleanup(last_run_patcher.stop)
-
-    def test_returns_false_if_last_form_submission_is_none(self):
-        self.last_form_submission = None
-
-        should_update = _should_update_malt(self.domain, self.monthspan, self.last_form_submission)
-
-        self.assertFalse(should_update)
-
-    def test_returns_true_if_last_submission_is_equal_to_last_malt_run_date(self):
-        self.monthspan = DateSpan.from_month(3, 2020)
-        self.last_form_submission = datetime.datetime(2020, 3, 1, 0, 0)
-        self.mock_last_run_date.return_value = datetime.datetime(2020, 3, 1, 0, 0)
-
-        should_update = _should_update_malt(self.domain, self.monthspan, self.last_form_submission)
-
-        self.assertTrue(should_update)
-
-    def test_returns_true_if_last_submission_is_greater_than_last_malt_run_date(self):
-        self.monthspan = DateSpan.from_month(3, 2020)
-        self.last_form_submission = datetime.datetime(2020, 3, 16, 0, 0)
-        self.mock_last_run_date.return_value = datetime.datetime(2020, 3, 15, 0, 0)
-
-        should_update = _should_update_malt(self.domain, self.monthspan, self.last_form_submission)
-
-        self.assertTrue(should_update)
-
-    def test_returns_false_if_last_submission_is_less_than_last_malt_run_date(self):
-        self.monthspan = DateSpan.from_month(3, 2020)
-        self.last_form_submission = datetime.datetime(2020, 3, 15, 0, 0)
-        self.mock_last_run_date.return_value = datetime.datetime(2020, 3, 16, 0, 0)
-
-        should_update = _should_update_malt(self.domain, self.monthspan, self.last_form_submission)
-
-        self.assertFalse(should_update)
-
-    def test_returns_true_if_last_submission_is_from_next_month(self):
-        """
-        Shows how naive this implementation is
-        """
-        self.monthspan = DateSpan.from_month(3, 2020)
-        self.last_form_submission = datetime.datetime(2020, 4, 15, 0, 0)
-        self.mock_last_run_date.return_value = datetime.datetime(2020, 4, 10, 0, 0)
-
-        should_update = _should_update_malt(self.domain, self.monthspan, self.last_form_submission)
-
-        self.assertTrue(should_update)
 
 
 def create_malt_app_data(wam=AMPLIFIES_NOT_SET,

@@ -39,8 +39,10 @@ def generate_malt(monthspans, domains=None):
     domain_names = domains or Domain.get_all_names()
     for domain_name in domain_names:
         last_submission_date = get_last_form_submission_received(domain_name)
+        last_malt_run_dates_by_month = _get_last_run_date_for_malt_by_month(domain_name, monthspans)
         for monthspan in monthspans:
-            if _should_update_malt(domain_name, monthspan, last_submission_date):
+            last_malt_run_date = last_malt_run_dates_by_month.get(monthspan.startdate.date(), monthspan.startdate)
+            if last_submission_date and last_submission_date >= last_malt_run_date:
                 # use this date to populate last_run_date for all MALTRows with this domain and month
                 run_date = datetime.datetime.utcnow()
                 logger.info(f"Building MALT for {domain_name} for {monthspan} up to {run_date}")
@@ -52,25 +54,16 @@ def generate_malt(monthspans, domains=None):
                         _save_malt_row_dicts_to_db(malt_row_dicts)
 
 
-def _should_update_malt(domain_name, monthspan, last_submission_date):
-    """
-    Only attempt to update a MALTRow if:
-    - there's a valid last_submission_date
-    - that last submission date is greater than or equal to the end date for the previous malt run
-    """
-    last_run_date = _get_last_run_date_for_malt(domain_name, monthspan)
-    return last_submission_date and last_submission_date >= last_run_date
-
-
-def _get_last_run_date_for_malt(domain_name, monthspan):
+def _get_last_run_date_for_malt_by_month(domain_name, monthspans):
     """
     Checks for existing MALTRows for this domain and monthspan
     If a row does not exist, or the last_run_date on that row is None, return the start date of the month
     """
-    rows = MALTRow.objects.filter(domain_name=domain_name, month=monthspan.startdate)
-    if rows and rows[0].last_run_date:
-        return rows[0].last_run_date
-    return monthspan.startdate
+    return dict(MALTRow.objects.filter(
+        domain_name=domain_name,
+        month__in=[month.startdate for month in monthspans],
+        last_run_date__isnull=False,
+    ).values_list("month", "last_run_date"))
 
 
 @quickcache(['domain', 'app_id'])
