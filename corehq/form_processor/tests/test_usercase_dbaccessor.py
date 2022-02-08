@@ -5,7 +5,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 
-from .test_cases import _create_case as create_case
+from .utils import create_case
 
 
 class UsercaseAccessorsTests(TestCase):

@@ -8,18 +8,20 @@ from django.db import router
 from django.test import TestCase
 
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
-from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
-from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
     CaseAttachment,
     CaseTransaction,
     CommCareCase,
     CommCareCaseIndex,
-    XFormInstance,
 )
 from corehq.form_processor.models.cases import CaseIndexInfo
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    create_case,
+    create_case_with_index,
+    sharded,
+)
 from corehq.sql_db.routers import HINT_PLPROXY
 from corehq.sql_db.tests.utils import new_id_in_different_dbalias
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
@@ -631,60 +633,12 @@ class TestCaseTransactionManager(BaseCaseManagerTest):
             case1.case_id, "foo", datetime.utcnow()))
 
 
-def _create_case(
-    domain=DOMAIN,
-    *,
-    form_id=None,
-    case_id=None,
-    case_type=None,
-    user_id='user1',
-    **case_args,
-):
-    """Create case and related models directly (not via form processor)
-
-    :return: CommCareCase
-    """
-    form_id = form_id or uuid.uuid4().hex
-    case_id = case_id or uuid.uuid4().hex
-    utcnow = datetime.utcnow()
-    form = XFormInstance(
-        form_id=form_id,
-        xmlns='http://openrosa.org/formdesigner/form-processor',
-        received_on=utcnow,
-        user_id=user_id,
-        domain=domain
-    )
-    case = CommCareCase(
-        case_id=case_id,
-        domain=domain,
-        type=case_type or '',
-        owner_id=user_id,
-        opened_on=utcnow,
-        modified_on=utcnow,
-        modified_by=user_id,
-        server_modified_on=utcnow,
-        **case_args
-    )
-    case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
-    FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
-    return case
+def _create_case(domain=DOMAIN, **kw):
+    return create_case(domain, **kw)
 
 
-def _create_case_with_index(referenced_case_id, identifier='parent', referenced_type='mother',
-                            relationship_id=CommCareCaseIndex.CHILD, case_is_deleted=False,
-                            case_type='child'):
-    case = _create_case(case_type=case_type)
-    case.deleted = case_is_deleted
-    index = CommCareCaseIndex(
-        case=case,
-        identifier=identifier,
-        referenced_type=referenced_type,
-        referenced_id=referenced_case_id,
-        relationship_id=relationship_id
-    )
-    case.track_create(index)
-    case.save(with_tracked_models=True)
-    return case, index
+def _create_case_with_index(*args, **kw):
+    return create_case_with_index(DOMAIN, *args, **kw)
 
 
 def _create_case_transactions(case, all_forms=False):

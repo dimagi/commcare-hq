@@ -16,7 +16,13 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL, LedgerReindexAccessor, iter_all_rows)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import ProcessedForms
-from corehq.form_processor.models import XFormInstance, CommCareCase, CaseTransaction, Attachment
+from corehq.form_processor.models import (
+    Attachment,
+    CaseTransaction,
+    CommCareCase,
+    CommCareCaseIndex,
+    XFormInstance,
+)
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only
 
@@ -297,6 +303,68 @@ def create_form_for_test(
         form = XFormInstance.objects.get_form(form.form_id)
 
     return form
+
+
+def create_case(
+    domain,
+    *,
+    form_id=None,
+    case_id=None,
+    case_type=None,
+    user_id='user1',
+    **case_args,
+):
+    """Create case and related models directly (not via form processor)
+
+    :return: CommCareCase
+    """
+    form_id = form_id or uuid4().hex
+    case_id = case_id or uuid4().hex
+    utcnow = datetime.utcnow()
+    form = XFormInstance(
+        form_id=form_id,
+        xmlns='http://openrosa.org/formdesigner/form-processor',
+        received_on=utcnow,
+        user_id=user_id,
+        domain=domain
+    )
+    case = CommCareCase(
+        case_id=case_id,
+        domain=domain,
+        type=case_type or '',
+        owner_id=user_id,
+        opened_on=utcnow,
+        modified_on=utcnow,
+        modified_by=user_id,
+        server_modified_on=utcnow,
+        **case_args
+    )
+    case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
+    FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
+    return case
+
+
+def create_case_with_index(
+    domain,
+    referenced_case_id,
+    identifier='parent',
+    referenced_type='mother',
+    relationship_id=CommCareCaseIndex.CHILD,
+    case_is_deleted=False,
+    case_type='child'
+):
+    case = create_case(domain, case_type=case_type)
+    case.deleted = case_is_deleted
+    index = CommCareCaseIndex(
+        case=case,
+        identifier=identifier,
+        referenced_type=referenced_type,
+        referenced_id=referenced_case_id,
+        relationship_id=relationship_id
+    )
+    case.track_create(index)
+    case.save(with_tracked_models=True)
+    return case, index
 
 
 def delete_all_xforms_and_cases(domain):
