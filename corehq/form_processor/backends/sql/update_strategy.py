@@ -333,7 +333,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     error.format(self.case.case_id, sorted_transactions[0])
                 )
 
-        self.fetch_case_transaction_forms(sorted_transactions)
+        self._fetch_case_transaction_forms(sorted_transactions)
         rebuild_detail = RebuildWithReason(reason="client_date_reconciliation")
         rebuild_transaction = CaseTransaction.rebuild_transaction(self.case, rebuild_detail)
         self.rebuild_from_transactions(sorted_transactions, rebuild_transaction)
@@ -366,10 +366,10 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         :return: list of ``CaseTransaction`` objects with their associated forms attached.
         """
         transactions = CaseTransaction.objects.get_transactions_for_case_rebuild(self.case.case_id)
-        self.fetch_case_transaction_forms(transactions, updated_xforms)
+        self._fetch_case_transaction_forms(transactions, updated_xforms)
         return transactions
 
-    def fetch_case_transaction_forms(self, transactions, updated_xforms=None):
+    def _fetch_case_transaction_forms(self, transactions, updated_xforms=None):
         """
         Fetch the forms for a list of transactions, caching them on each transaction
 

@@ -591,12 +591,6 @@ class CaseAccessorSQL:
         from .update_strategy import SqlCaseUpdateStrategy
         return SqlCaseUpdateStrategy(case).get_transactions_for_rebuild(updated_xforms)
 
-    @staticmethod
-    def fetch_case_transaction_forms(case, transactions, updated_xforms=None):
-        warn("DEPRECATED", DeprecationWarning)
-        from .update_strategy import SqlCaseUpdateStrategy
-        SqlCaseUpdateStrategy(case).fetch_case_transaction_forms(transactions, updated_xforms)
-
 
 class LedgerReindexAccessor(ReindexAccessor):
 
