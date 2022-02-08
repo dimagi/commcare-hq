@@ -41,35 +41,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
     paginate_by = 100
 
     def get_queryset(self):
-        filter_from_date = self.request.GET.get("filter_from_date",
-                                                _a_week_ago())
-        filter_to_date = self.request.GET.get("filter_to_date")
-        filter_payload = self.request.GET.get("filter_payload")
-        filter_url = self.request.GET.get("filter_url")
-        filter_status = self.request.GET.get("filter_status")
-
-        queryset = (RequestLog.objects
-                    .filter(domain=self.domain)
-                    .filter(timestamp__gte=filter_from_date))
-        if filter_to_date:
-            queryset = queryset.filter(timestamp__lte=filter_to_date)
-        if filter_payload:
-            queryset = queryset.filter(payload_id=filter_payload)
-        if filter_url:
-            queryset = queryset.filter(request_url__istartswith=filter_url)
-        if filter_status:
-            if re.match(r'^\d{3}$', filter_status):
-                queryset = queryset.filter(response_status=filter_status)
-            elif re.match(r'^\dxx$', filter_status.lower()):
-                # Filtering response status code by "2xx", "4xx", etc. will
-                # return all responses in that range
-                status_min = int(filter_status[0]) * 100
-                status_max = status_min + 99
-                queryset = (queryset.filter(response_status__gte=status_min)
-                            .filter(response_status__lt=status_max))
-            elif filter_status.lower() == "none":
-                queryset = queryset.filter(response_status=None)
-
+        queryset = _get_request_log_queryset(self.request, self.domain)
         return queryset.order_by('-timestamp').only(
             'timestamp',
             'payload_id',
@@ -294,6 +266,37 @@ def test_connection_settings(request, domain):
                 "success": False,
                 "response": "Try saving the connection first"
             })
+
+
+def _get_request_log_queryset(request, domain):
+    filter_from_date = request.GET.get("filter_from_date", _a_week_ago())
+    filter_to_date = request.GET.get("filter_to_date")
+    filter_payload = request.GET.get("filter_payload")
+    filter_url = request.GET.get("filter_url")
+    filter_status = request.GET.get("filter_status")
+
+    queryset = (RequestLog.objects
+                .filter(domain=domain)
+                .filter(timestamp__gte=filter_from_date))
+    if filter_to_date:
+        queryset = queryset.filter(timestamp__lte=filter_to_date)
+    if filter_payload:
+        queryset = queryset.filter(payload_id=filter_payload)
+    if filter_url:
+        queryset = queryset.filter(request_url__istartswith=filter_url)
+    if filter_status:
+        if re.match(r'^\d{3}$', filter_status):
+            queryset = queryset.filter(response_status=filter_status)
+        elif re.match(r'^\dxx$', filter_status.lower()):
+            # Filtering response status code by "2xx", "4xx", etc. will
+            # return all responses in that range
+            status_min = int(filter_status[0]) * 100
+            status_max = status_min + 99
+            queryset = (queryset.filter(response_status__gte=status_min)
+                        .filter(response_status__lt=status_max))
+        elif filter_status.lower() == "none":
+            queryset = queryset.filter(response_status=None)
+    return queryset
 
 
 def _a_week_ago() -> str:
