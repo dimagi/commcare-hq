@@ -44,7 +44,6 @@ from corehq.sql_db.util import (
     split_list_by_db_partition,
 )
 from corehq.util.metrics.load_counters import form_load_counter
-from corehq.util.queries import fast_distinct_in_domain
 
 doc_type_to_state = XFormInstance.DOC_TYPE_TO_STATE
 
@@ -581,16 +580,6 @@ class CaseAccessorSQL:
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
         warn("DEPRECATED", DeprecationWarning)
         return CommCareCase.objects.soft_delete_cases(domain, case_ids, deletion_date, deletion_id)
-
-    @staticmethod
-    def get_case_owner_ids(domain):
-        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-        db_aliases = get_db_aliases_for_partitioned_query()
-        owner_ids = set()
-        for db_alias in db_aliases:
-            owner_ids.update(fast_distinct_in_domain(CommCareCase, 'owner_id', domain, using=db_alias))
-
-        return owner_ids
 
     @staticmethod
     def form_has_case_transactions(form_id):

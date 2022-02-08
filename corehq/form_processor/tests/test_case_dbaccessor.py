@@ -641,20 +641,6 @@ class CaseAccessorTestsSQL(TestCase):
         case_ids = CaseAccessorSQL.get_deleted_case_ids_by_owner(DOMAIN, user_id)
         self.assertEqual(set(case_ids), {case1.case_id, case2.case_id})
 
-    def test_get_case_owner_ids(self):
-        _create_case(user_id='user1', case_id='123')  # get's sharded to p1
-        _create_case(user_id='user2', case_id='125')  # get's sharded to p2
-        _create_case(user_id='user1')
-        _create_case(domain='other_domain', user_id='user3')
-        if settings.USE_PARTITIONED_DATABASE:
-            self.addCleanup(lambda: FormProcessorTestUtils.delete_all_cases('other_domain'))
-
-        owners = CaseAccessorSQL.get_case_owner_ids('other_domain')
-        self.assertEqual({'user3'}, owners)
-
-        owners = CaseAccessorSQL.get_case_owner_ids(DOMAIN)
-        self.assertEqual({'user1', 'user2'}, owners)
-
 
 @sharded
 class CaseAccessorsTests(TestCase):

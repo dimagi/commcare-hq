@@ -116,9 +116,6 @@ class CaseAccessors(object):
         return CommCareCaseIndex.objects.get_extension_chain(
             self.domain, case_ids, include_closed, exclude_for_case_type)
 
-    def get_case_owner_ids(self):
-        return self.db_accessor.get_case_owner_ids(self.domain)
-
 
 class AbstractLedgerAccessor(metaclass=ABCMeta):
 
