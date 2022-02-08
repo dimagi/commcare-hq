@@ -1016,6 +1016,15 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     def _migration_get_sql_model_class(cls):
         return SQLRepeater
 
+    def _migration_sync_to_sql(self, sql_object):
+        """Copy data from the Couch model to the SQL model and save it"""
+        for field_name in self._migration_get_fields():
+            value = getattr(self, field_name)
+            if hasattr(value, 'to_json'):
+                value = value.to_json()
+            setattr(sql_object, field_name, value)
+        sql_object.save(sync_to_couch=False)
+
 
 class FormRepeater(Repeater):
     """
