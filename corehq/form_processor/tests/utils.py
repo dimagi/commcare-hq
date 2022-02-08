@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from uuid import uuid4
+from unittest.mock import patch
 
 from django.conf import settings
 from django.test import TestCase, TransactionTestCase
@@ -343,7 +344,10 @@ def create_case(
     )
     case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
     if save:
-        FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
+        # disable publish to Kafka to avoid intermittent errors caused by
+        # the nexus of kafka's consumer thread and freeze_time
+        with patch.object(FormProcessorSQL, "publish_changes_to_kafka"):
+            FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
     return case
 
 
