@@ -23,6 +23,5 @@ class Command(RepeaterMigrationHelper):
             "options": {
                 "configured_filter": doc.get("configured_filter"),
                 "configured_expression": doc.get("configured_expression"),
-                "format": doc.get("format"),
             }
         }

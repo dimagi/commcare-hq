@@ -13,10 +13,6 @@ class Command(RepeaterMigrationHelper):
         return SQLDhis2Repeater
 
     @classmethod
-    def _get_string_props(cls):
-        return ['format']
-
-    @classmethod
     def _get_schema_props(cls):
         return ['dhis2_config']
 
@@ -25,7 +21,6 @@ class Command(RepeaterMigrationHelper):
             "options": {
                 "include_app_id_param": doc.get("include_app_id_param"),
                 "dhis2_config": doc.get("dhis2_config"),
-                "format": doc.get("format"),
                 "white_listed_form_xmlns": doc.get("white_listed_form_xmlns")
 
             }

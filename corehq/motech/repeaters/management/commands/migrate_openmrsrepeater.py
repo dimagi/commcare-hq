@@ -14,7 +14,7 @@ class Command(RepeaterMigrationHelper):
 
     @classmethod
     def _get_string_props(cls):
-        return ["format", "version", "location_id", "atom_feed_enabled"]
+        return ["version", "location_id", "atom_feed_enabled"]
 
     @classmethod
     def _get_list_props(cls):
@@ -32,7 +32,6 @@ class Command(RepeaterMigrationHelper):
                 "openmrs_config": doc.get("openmrs_config"),
                 "atom_feed_enabled": doc.get("atom_feed_enabled"),
                 "atom_feed_status": doc.get('atom_feed_status'),
-                "format": doc.get("format"),
                 "version": doc.get("version"),
                 "white_listed_case_types": doc.get("white_listed_case_types"),
                 "black_listed_users": doc.get("black_listed_users")

@@ -15,7 +15,7 @@ class Command(RepeaterMigrationHelper):
     @classmethod
     def _get_string_props(cls):
         return [
-            "format", "version", "include_app_id_param",
+            "version", "include_app_id_param",
             "fhir_version", "patient_registration_enabled", "patient_search_enabled"
         ]
 
@@ -26,7 +26,6 @@ class Command(RepeaterMigrationHelper):
     def get_sql_options_obj(self, doc):
         return {
             "options": {
-                "format": doc.get("format"),
                 "version": doc.get("version"),
                 "white_listed_case_types": doc.get("white_listed_case_types"),
                 "black_listed_users": doc.get("black_listed_users"),

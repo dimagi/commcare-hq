@@ -14,7 +14,7 @@ class Command(RepeaterMigrationHelper):
 
     @classmethod
     def _get_string_props(cls):
-        return ["format", "version", "include_app_id_param"]
+        return ["version", "include_app_id_param"]
 
     @classmethod
     def _get_list_props(cls):
@@ -29,7 +29,6 @@ class Command(RepeaterMigrationHelper):
             "options": {
                 "include_app_id_param": doc.get("include_app_id_param"),
                 "dhis2_entity_config": doc.get("dhis2_entity_config"),
-                "format": doc.get("format"),
                 "version": doc.get("version"),
                 "white_listed_case_types": doc.get("white_listed_case_types"),
                 "black_listed_users": doc.get("black_listed_users")
