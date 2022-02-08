@@ -1,25 +1,11 @@
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase
 from smtplib import SMTPSenderRefused
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODE
 from unittest.mock import create_autospec, patch, PropertyMock, ANY
 from corehq.apps.reports import views
 from corehq.apps.users.models import WebUser
 from corehq.apps.saved_reports import models
-from ..models import ReportNotification, ReportConfig
-
-
-class TestReportConfig(TestCase):
-
-    def tearDown(self) -> None:
-        self.config.delete()
-
-    def test_report_is_shared_on_domain(self):
-        domain = 'test_domain'
-        self.config = ReportConfig(
-            domain=domain,
-        )
-        self.config.save()
-        self.assertFalse(self.config.is_shared_on_domain)
+from ..models import ReportNotification
 
 
 class TestReportNotification(SimpleTestCase):
