@@ -3,6 +3,7 @@ import uuid
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from casexml.apps.case.xform import (
     get_all_extensions_to_close, get_extensions_to_close, get_ush_extension_cases_to_close)
 from casexml.apps.phone.tests.utils import create_restore_user
@@ -227,7 +228,7 @@ class AutoCloseExtensionsTest(TestCase):
     def test_close_cases_host(self):
         """Closing a host should close all the extensions"""
         self._create_extension_chain()
-        cases = CaseAccessors(self.domain).get_cases(self.extension_ids)
+        cases = CommCareCase.objects.get_cases(self.extension_ids, self.domain)
         self.assertFalse(cases[0].closed)
         self.assertFalse(cases[1].closed)
         self.assertFalse(cases[2].closed)
@@ -238,7 +239,7 @@ class AutoCloseExtensionsTest(TestCase):
         ))
         cases = {
             case.case_id: case.closed
-            for case in CaseAccessors(self.domain).get_cases([self.host_id] + self.extension_ids)
+            for case in CommCareCase.objects.get_cases([self.host_id] + self.extension_ids, self.domain)
         }
         self.assertFalse(cases[self.host_id])
         self.assertFalse(cases[self.extension_ids[0]])
@@ -251,7 +252,7 @@ class AutoCloseExtensionsTest(TestCase):
         ))
         cases = {
             case.case_id: case
-            for case in CaseAccessors(self.domain).get_cases([self.host_id] + self.extension_ids)
+            for case in CommCareCase.objects.get_cases([self.host_id] + self.extension_ids, self.domain)
         }
         self.assertTrue(cases[self.host_id].closed)
         self.assertTrue(cases[self.extension_ids[0]].closed)
@@ -269,7 +270,7 @@ class AutoCloseExtensionsTest(TestCase):
         self._create_host_is_subcase_chain()
         cases = {
             case.case_id: case.closed
-            for case in CaseAccessors(self.domain).get_cases([self.host_id] + self.extension_ids)
+            for case in CommCareCase.objects.get_cases([self.host_id] + self.extension_ids, self.domain)
         }
         self.assertFalse(cases[self.host_id])
         self.assertFalse(cases[self.extension_ids[0]])
@@ -281,7 +282,8 @@ class AutoCloseExtensionsTest(TestCase):
         ))
         cases = {
             case.case_id: case
-            for case in CaseAccessors(self.domain).get_cases([self.parent_id, self.host_id] + self.extension_ids)
+            for case in CommCareCase.objects.get_cases(
+                [self.parent_id, self.host_id] + self.extension_ids, self.domain)
         }
         self.assertFalse(cases[self.parent_id].closed)
         self.assertTrue(cases[self.host_id].closed)

@@ -138,7 +138,7 @@ class UnshardedCaseReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     def _create_docs(cls, domain, count):
         case_ids = [uuid.uuid4().hex for i in range(count)]
         [create_form_for_test(domain, case_id=case_id) for case_id in case_ids]
-        return CaseAccessorSQL.get_cases(case_ids, ordered=True)
+        return CommCareCase.objects.get_cases(case_ids, ordered=True)
 
     @classmethod
     def _get_doc_ids(cls, docs):

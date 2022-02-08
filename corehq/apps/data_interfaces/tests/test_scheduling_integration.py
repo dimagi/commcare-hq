@@ -25,7 +25,7 @@ from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
@@ -1366,7 +1366,7 @@ class VisitSchedulerIntegrationHelperTestCase(TestCase):
             self.assertIsNone(helper.get_case_current_schedule_phase())
 
             update_case(self.domain, case.case_id, case_properties={'current_schedule_phase': '2'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             helper = self.get_helper(case)
             self.assertEqual(helper.get_case_current_schedule_phase(), 2)
 
@@ -1395,6 +1395,6 @@ class VisitSchedulerIntegrationHelperTestCase(TestCase):
                 helper.get_anchor_date('add')
 
             update_case(self.domain, case.case_id, case_properties={'add': '2017-08-01'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             helper = self.get_helper(case)
             self.assertEqual(helper.get_anchor_date('add'), date(2017, 8, 1))

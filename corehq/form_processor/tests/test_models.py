@@ -8,7 +8,6 @@ from nose.tools import assert_equal
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import Attachment, CommCareCase, CommCareCaseIndex
 
 DOMAIN = 'test-domain'
@@ -176,9 +175,7 @@ class TestIndices(TestCase):
     def test_case_indices(self):
         indices = self.johnny_case.indices
         self.assertEqual(len(indices), 1)
-
-        case_accessor = CaseAccessors(DOMAIN)
-        case = case_accessor.get_case(indices[0].referenced_id)
+        case = CommCareCase.objects.get_case(indices[0].referenced_id, DOMAIN)
         self.assertTrue(are_cases_equal(case, self.elizabeth_case))
 
 

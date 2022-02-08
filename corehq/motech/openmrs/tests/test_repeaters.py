@@ -17,7 +17,6 @@ from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.const import DIRECTION_EXPORT, DIRECTION_IMPORT
 from corehq.motech.openmrs.atom_feed import get_observation_mappings
@@ -141,7 +140,7 @@ CASE_CONFIG = {
 }
 
 
-@mock.patch.object(CaseAccessors, 'get_cases', lambda self, case_ids, ordered=False: [{
+@mock.patch.object(CommCareCase.objects, 'get_cases', lambda case_ids, domain=None, ordered=False: [{
     '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCase(
         case_id='65e55473-e83b-4d78-9dde-eaf949758997',
         type='paciente',
@@ -543,12 +542,11 @@ class FindPatientTest(SimpleTestCase):
             'form_configs': [],
         })
 
-        with mock.patch('corehq.motech.openmrs.repeater_helpers.CaseAccessors') as CaseAccessorsPatch, \
+        with mock.patch.object(CommCareCase.objects, 'get_case'), \
                 mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch, \
                 mock.patch('corehq.motech.openmrs.repeater_helpers.save_match_ids'):
             requests = mock.Mock()
             info = mock.Mock(case_id='123')
-            CaseAccessorsPatch.return_value = mock.Mock(get_case=mock.Mock())
             create_patient_patch.return_value = None
 
             find_or_create_patient(requests, DOMAIN, info, openmrs_config)

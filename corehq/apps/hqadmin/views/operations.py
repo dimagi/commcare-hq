@@ -19,8 +19,8 @@ from corehq.apps.hqadmin.views.utils import (
     BaseAdminSectionView,
     get_hqadmin_base_context,
 )
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CommCareCase
 
 
 @require_superuser_or_contractor
@@ -104,7 +104,7 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
 
     def get_case(self, case_id):
         try:
-            return CaseAccessorSQL.get_case(case_id)
+            return CommCareCase.objects.get_case(case_id)
         except CaseNotFound:
             return None
 

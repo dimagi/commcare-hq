@@ -256,7 +256,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         case_ids = self.case_accessors.get_case_ids_in_domain()
         self.assertEqual(set(case_ids), set(case.case_id for case in pre_cases))
         for pre_case in pre_cases:
-            post_case = self.case_accessors.get_case(pre_case.case_id)
+            post_case = CommCareCase.objects.get_case(pre_case.case_id, self.domain_name)
             self.assertDictEqual(pre_case.to_json(), post_case.to_json())
 
     def test_ledgers(self):

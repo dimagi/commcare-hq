@@ -79,7 +79,6 @@ from corehq.apps.users.views.mobile import (
 )
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.filters import ScheduleInstanceFilter
@@ -242,7 +241,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
                 if recipient_doc_type.startswith('CommCareCaseGroup'):
                     couch_object = CommCareCaseGroup.get(recipient_id)
                 elif recipient_doc_type.startswith('CommCareCase'):
-                    obj = CaseAccessors(domain).get_case(recipient_id)
+                    obj = CommCareCase.objects.get_case(recipient_id, domain)
                     if isinstance(obj, CommCareCase):
                         sql_object = obj
                 elif recipient_doc_type in ('CommCareUser', 'WebUser'):

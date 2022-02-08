@@ -6,8 +6,8 @@ import struct
 from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import namedtuple
 from datetime import datetime
-from itertools import groupby
 from uuid import UUID
+from warnings import warn
 
 from django.conf import settings
 from django.db import InternalError, transaction, router, DatabaseError
@@ -30,9 +30,8 @@ from corehq.form_processor.exceptions import (
     MissingFormXml,
     XFormNotFound,
 )
-from corehq.form_processor.models.util import sort_with_id_list as _sort_with_id_list
+from corehq.form_processor.models.util import attach_prefetch_models as _attach_prefetch_models
 from corehq.form_processor.interfaces.dbaccessors import (
-    AbstractCaseAccessor,
     AbstractLedgerAccessor,
     CaseIndexInfo,
 )
@@ -46,10 +45,7 @@ from corehq.form_processor.models import (
     LedgerValue,
     XFormInstance,
 )
-from corehq.form_processor.utils.sql import (
-    fetchall_as_namedtuple,
-    fetchone_as_namedtuple,
-)
+from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.util import (
     estimate_row_count,
@@ -128,7 +124,7 @@ class ShardAccessor(object):
         with XFormInstance.get_plproxy_cursor() as cursor:
             doc_uuid_before_cast = '\\x%s' % doc_uuid.hex
             cursor.execute(query, [doc_uuid_before_cast])
-            return fetchone_as_namedtuple(cursor).hash
+            return cursor.fetchone()[0]
 
     @staticmethod
     def hash_doc_ids_python(doc_ids):
@@ -408,39 +404,17 @@ class CaseReindexAccessor(ReindexAccessor):
         return filters
 
 
-class CaseAccessorSQL(AbstractCaseAccessor):
+class CaseAccessorSQL:
 
     @staticmethod
     def get_case(case_id):
-        try:
-            return CommCareCase.objects.partitioned_get(case_id)
-        except CommCareCase.DoesNotExist:
-            raise CaseNotFound(case_id)
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_case(case_id)
 
     @staticmethod
     def get_cases(case_ids, ordered=False, prefetched_indices=None):
-        """
-        :param case_ids: List of case IDs to fetch
-        :param ordered: Return cases in the same order as ``case_ids``
-        :param prefetched_indices: If not None this must be a dict containing ALL the indices for ALL the
-                                    cases being fetched. If the list does not contain indices for a case
-                                    then an empty list will be attached to the case preventing further DB lookup.
-        :return: List of cases
-        """
-        assert isinstance(case_ids, list)
-        if not case_ids:
-            return []
-        cases = list(CommCareCase.objects.plproxy_raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
-
-        if ordered:
-            _sort_with_id_list(cases, case_ids, 'case_id')
-
-        if prefetched_indices is not None:
-            cases_by_id = {case.case_id: case for case in cases}
-            _attach_prefetch_models(
-                cases_by_id, prefetched_indices, 'case_id', 'cached_indices')
-
-        return cases
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_cases(case_ids, ordered, prefetched_indices)
 
     @staticmethod
     def case_exists(case_id):
@@ -1129,17 +1103,3 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             )
             for trans in resultset:
                 yield trans
-
-
-def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, cached_attrib_name):
-    prefetched_groups = groupby(prefetched_models, lambda x: getattr(x, link_field_name))
-    seen = set()
-    for obj_id, group in prefetched_groups:
-        seen.add(obj_id)
-        obj = objects_by_id[obj_id]
-        setattr(obj, cached_attrib_name, list(group))
-
-    unseen = set(objects_by_id) - seen
-    for obj_id in unseen:
-        obj = objects_by_id[obj_id]
-        setattr(obj, cached_attrib_name, [])

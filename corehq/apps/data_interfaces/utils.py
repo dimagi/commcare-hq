@@ -13,8 +13,7 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 
 
@@ -270,7 +269,7 @@ def run_rules_for_case(case, rules, now):
                 last_result.num_updates > 0 or last_result.num_related_updates > 0
                 or last_result.num_related_closes > 0
             ):
-                case = CaseAccessors(case.domain).get_case(case.case_id)
+                case = CommCareCase.objects.get_case(case.case_id, case.domain)
 
         try:
             last_result = rule.run_rule(case, now)

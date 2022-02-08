@@ -99,9 +99,9 @@ name in order to know which DB needs to be queried.
 
 **Cases**
 
-- CaseAccessors(domain).get_case(case_id)
-- CaseAccessors(domain).get_cases(case_ids)
-- CaseAccessors(domain).iter_cases(case_ids)
+- CommCareCase.objects.get_case(case_id, domain)
+- CommCareCase.objects.get_cases(case_ids, domain)
+- CommCareCase.objects.iter_cases(case_ids, domain)
 - CaseAccessors(domain).get_case_ids_in_domain(type='dog')
 
 **Ledgers**

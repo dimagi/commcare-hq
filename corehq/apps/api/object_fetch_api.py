@@ -24,10 +24,8 @@ from corehq.apps.reports.views import (
     require_form_view_permission,
 )
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    get_cached_case_attachment,
-)
+from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment
+from corehq.form_processor.models import CommCareCase
 
 
 class CaseAttachmentAPI(View):
@@ -54,7 +52,7 @@ class CaseAttachmentAPI(View):
         max_filesize = int(self.request.GET.get('max_size', 0))
 
         try:
-            CaseAccessors(domain).get_case(case_id)
+            CommCareCase.objects.get_case(case_id, domain)
         except CaseNotFound:
             raise Http404
 
@@ -128,9 +126,9 @@ class CaseAttachmentAPI(View):
                                      content_type=mime_type)
 
 
+@api_auth
 @require_form_view_permission
 @location_safe
-@api_auth
 def view_form_attachment(request, domain, instance_id, attachment_id):
     return get_form_attachment_response(request, domain, instance_id, attachment_id)
 
