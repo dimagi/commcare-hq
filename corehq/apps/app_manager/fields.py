@@ -78,11 +78,13 @@ class ApplicationDataSourceUIHelper(object):
     See usages for examples.
     """
 
-    def __init__(self, enable_raw=False, enable_registry=False):
+    def __init__(self, enable_raw=False, enable_registry=False, registry_permission_checker=None):
         self.all_sources = {}
         self.enable_raw = enable_raw
         self.enable_registry = enable_registry
         self.app_and_registry_sources = {}
+        self.registry_permission_checker = registry_permission_checker
+
         source_choices = [
             (DATA_SOURCE_TYPE_CASE, _("Case")),
             (DATA_SOURCE_TYPE_FORM, _("Form"))
@@ -145,7 +147,8 @@ class ApplicationDataSourceUIHelper(object):
                 app_data['data_source'] = [{"text": ds.display_name, "value": ds.data_source_id}
                                            for ds in available_data_sources]
         self.registry_slug_field.choices = sort_tuple_field_choices_by_name(
-            [(registry["slug"], registry["name"]) for registry in get_data_registry_dropdown_options(domain)],
+            [(registry["slug"], registry["name"]) for registry in
+             self.registry_permission_checker.get_registry_dropdown_options_visible_to_user()],
         ) + [('', '--------')]
 
         # NOTE: This corresponds to a view-model that must be initialized in your template.

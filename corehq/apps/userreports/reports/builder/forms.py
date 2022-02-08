@@ -984,7 +984,8 @@ class DataSourceForm(forms.Form):
         self.app_source_helper = ApplicationDataSourceUIHelper(
             enable_raw=SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER.enabled(self.domain),
             enable_registry=(DATA_REGISTRY.enabled(self.domain)
-                             and self.registry_permission_checker.can_view_some_data_registry_contents())
+                             and self.registry_permission_checker.can_view_some_data_registry_contents()),
+            registry_permission_checker=self.registry_permission_checker
         )
         self.app_source_helper.bootstrap(self.domain)
         self.fields.update(self.app_source_helper.get_fields())
