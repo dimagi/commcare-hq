@@ -2149,3 +2149,22 @@ HOURLY_SCHEDULED_REPORT = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
+
+SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
+    'save-only-edited-form-fields',
+    'Save a form field only if the answer has been edited',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Addison Dunn',
+    description="""
+    Enable a checkbox for the ability to save a form question's answer in Case Management in App
+    Manager only if the question's inputted answer has been edited
+    """
+)
+
+SUPPORT_EXPANDED_COLUMN_IN_REPORTS = StaticToggle(
+    'support_expanded_column_in_reports',
+    'Support count per choice column to show up in multibar graph in reports and mobile UCR tables',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
