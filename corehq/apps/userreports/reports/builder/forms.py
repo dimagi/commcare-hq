@@ -23,6 +23,7 @@ from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager.data_source_meta import (
     APP_DATA_SOURCE_TYPE_VALUES,
@@ -972,15 +973,18 @@ def get_data_source_interface(domain, app, source_type, source_id, registry_slug
 class DataSourceForm(forms.Form):
     report_name = forms.CharField()
 
-    def __init__(self, domain, max_allowed_reports, *args, **kwargs):
+    def __init__(self, domain, max_allowed_reports, request_user, *args, **kwargs):
         super(DataSourceForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.max_allowed_reports = max_allowed_reports
+        self.request_user = request_user
 
+        self.registry_permission_checker = RegistryPermissionCheck(self.domain, self.request_user)
         # TODO: Map reports.
         self.app_source_helper = ApplicationDataSourceUIHelper(
             enable_raw=SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER.enabled(self.domain),
-            enable_registry=DATA_REGISTRY.enabled(self.domain)
+            enable_registry=(DATA_REGISTRY.enabled(self.domain)
+                             and self.registry_permission_checker.can_view_some_data_registry_contents())
         )
         self.app_source_helper.bootstrap(self.domain)
         self.fields.update(self.app_source_helper.get_fields())
@@ -1014,7 +1018,8 @@ class DataSourceForm(forms.Form):
         )
 
     def get_data_layout(self):
-        if not DATA_REGISTRY.enabled(self.domain):
+        if not (DATA_REGISTRY.enabled(self.domain)
+                and self.registry_permission_checker.can_view_some_data_registry_contents()):
             return crispy.Fieldset(
                 _('Data'), *self.app_source_helper.get_crispy_fields(),
             )
