@@ -50,7 +50,7 @@ hqDefine('users/js/edit_commcare_user', [
                 } else if (response.status === "different") {
                     alertUser.alert_user(gettext("The two password fields didn't match."), 'danger');
                 } else {
-                    alertUser.alert_user(gettext("Password was not changed."), 'danger');
+                    alertUser.alert_user(gettext("Password was not changed. "), 'danger');
                 }
             },
         });
