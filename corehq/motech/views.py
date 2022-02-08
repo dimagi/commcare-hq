@@ -1,7 +1,9 @@
+import csv
+import json
 import re
 from datetime import datetime, timedelta
 
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, StreamingHttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
@@ -14,6 +16,7 @@ from memoized import memoized
 from requests import RequestException
 
 from corehq import privileges, toggles
+from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
@@ -21,9 +24,8 @@ from corehq.apps.users.models import Permissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.forms import ConnectionSettingsForm, UnrecognizedHost
 from corehq.motech.models import ConnectionSettings, RequestLog
-from no_exceptions.exceptions import Http400
-
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from no_exceptions.exceptions import Http400
 
 
 class Http409(Http400):
@@ -86,6 +88,116 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
     def page_url(self):
         pk = self.kwargs['pk']
         return reverse(self.urlname, args=[self.domain, pk])
+
+
+@login_or_api_key
+@require_permission(Permissions.edit_motech)
+def motech_log_export_view(request, domain):
+    """
+    Download ``RequestLog``s as CSV. Uses ``StreamingHttpResponse`` to
+    support large file sizes.
+
+    CSV files can be imported into PostgreSQL using ::
+
+        COPY api_logs FROM 'remote_api_logs.csv' FORMAT csv HEADER;
+
+    Replace "api_logs" with your own table name.
+
+    To create a suitable PostgreSQL table, use the following statement,
+    with your own table name, of course::
+
+        CREATE TABLE public.api_logs (
+            "timestamp" timestamp NOT NULL,
+            payload_id varchar NULL,
+            request_method varchar NOT NULL,
+            request_url varchar NOT NULL,
+            request_body jsonb NULL,
+            request_error varchar NULL,
+            response_status int NULL,
+            response_headers jsonb NULL,
+            response_body jsonb NULL
+        );
+
+    This view supports API key authentication so that exports can be
+    scripted. For example, the following script exports the remote API
+    logs from the previous 24 hours, and appends them to a table in
+    Postgres ::
+
+        #!/bin/bash
+
+        DOMAIN=demo
+        USERNAME=admin@example.com
+        API_KEY=abc123
+
+        DB_HOST=localhost
+        DB_PORT=5433
+        DB_USER=postgres
+        DB_DATABASE=postgres
+
+        yesterday=`date -d "yesterday" '+%Y-%m-%d'`
+        day_before=`date -d "2 days ago" '+%Y-%m-%d'`
+        url="https://commcarehq.org/a/$DOMAIN/motech/logs/remote_api_logs.csv"
+        curl -L \
+            -H "Authorization: ApiKey $USERNAME:$API_KEY" \
+            -o remote_api_logs.csv \
+            "${url}?filter_from_date=${day_before}&filter_from_date=${yesterday}"
+
+        psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_DATABASE \
+            -c "COPY api_logs FROM 'remote_api_logs.csv' csv HEADER; "
+
+        rm remote_api_logs.csv
+
+    """
+
+    def as_utc_timestamp(timestamp):
+        return timestamp.isoformat(sep=' ', timespec='milliseconds') + '+00'
+
+    def dict_to_json(dict_):
+        if not dict_:
+            return None
+        return json.dumps(dict_)
+
+    def int_or_none(value):
+        if value is None:
+            return None
+        if value == '':
+            return None
+        return int(value)
+
+    def string_or_none(value):
+        if value is None:
+            return None
+        if value == '':
+            return None
+        return str(value)
+
+    fields = [
+        # attribute, column label, transform
+        ('timestamp', _('Timestamp'), as_utc_timestamp),
+        ('payload_id', _('Payload ID'), string_or_none),
+        ('request_method', _('Request Method'), lambda x: x),
+        ('request_url', _('Request URL'), lambda x: x),
+        ('request_body', _('Request Body'), string_or_none),
+        ('request_error', _('Error'), string_or_none),
+        ('response_status', _('Status Code'), int_or_none),
+        ('response_headers', _('Response Headers'), dict_to_json),
+        ('response_body', _('Response Body'), string_or_none),
+    ]
+
+    def stream():
+        queryset = (_get_request_log_queryset(request, domain)
+                    .order_by('timestamp')
+                    .only(*[f[0] for f in fields]))
+        pseudo_buffer = PseudoBuffer()
+        writer = csv.writer(pseudo_buffer, dialect='excel')
+        yield writer.writerow([f[1] for f in fields])  # Header row
+        for request_log in queryset:
+            row = [f[2](getattr(request_log, f[0])) for f in fields]
+            yield writer.writerow(row)
+
+    response = StreamingHttpResponse(stream(), content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="remote_api_logs.csv"'
+    return response
 
 
 class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
@@ -266,6 +378,11 @@ def test_connection_settings(request, domain):
                 "success": False,
                 "response": "Try saving the connection first"
             })
+
+
+class PseudoBuffer:
+    def write(self, value):
+        return value
 
 
 def _get_request_log_queryset(request, domain):
