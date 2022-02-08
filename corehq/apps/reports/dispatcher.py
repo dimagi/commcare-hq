@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Literal, Optional
 
 from django.http import (
     Http404,
@@ -32,12 +32,6 @@ from corehq.util.quickcache import quickcache
 
 from .exceptions import BadRequestError
 from .lookup import ReportLookup
-
-try:
-    from typing import Literal  # Py 3.8+
-except ImportError:
-    from typing_extensions import Literal  # For environments still on Py 3.6
-
 
 datespan_default = datespan_in_request(
     from_param="startdate",

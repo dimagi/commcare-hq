@@ -125,9 +125,6 @@ toposort
 tropo-webapi-python
 turn-python
 twilio
-# Official backport to allow Literal and Protocol in Python 3.6. Safe to
-# drop once all environments have upgraded to Python 3.9.
-typing_extensions
 werkzeug
 xlrd
 xlwt
