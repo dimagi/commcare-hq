@@ -214,6 +214,18 @@ def can_view_attachments(request):
     )
 
 
+def domain_shared_configs(domain, stale=True):
+    # All scheduled reports' configs counts as shared saved reports,
+    # i.e. all ReportConfigs relating to ReportNotifications should be included
+    all_shared_reports = ReportNotification.by_domain(domain, stale=stale)
+    shared_configs_ids = []
+
+    for rn in all_shared_reports:
+        shared_configs_ids.extend(rn.config_ids)
+
+    return [ReportConfig.get(config_id) for config_id in set(shared_configs_ids)]
+
+
 class BaseProjectReportSectionView(BaseDomainView):
     section_name = ugettext_lazy("Project Reports")
 
@@ -312,6 +324,28 @@ class MySavedReportsView(BaseProjectReportSectionView):
                 ret.append(scheduled_report)
         return sorted(ret, key=self._report_sort_key())
 
+    @property
+    def shared_saved_reports(self):
+        user = self.request.couch_user
+        config_reports = []
+
+        if user.is_domain_admin(self.domain):
+            # Admin user should see ALL shared saved reports
+            config_reports = domain_shared_configs(self.domain)
+        else:
+            # The non-admin user should ONLY see his/her saved reports (ie ReportConfigs) which have been used
+            # in a ReportNotification (not other users' ReportConfigs).
+            [config_reports.extend(r.configs) for r in self.scheduled_reports]
+
+        good_configs = []
+        for config in config_reports:
+            if config.is_configurable_report and not config.configurable_report:
+                continue
+
+            good_configs.append(config.to_complete_json(lang=self.language))
+
+        return good_configs
+
     def _report_sort_key(self):
         return lambda report: report.configs[0].full_name.lower() if report.configs else None
 
@@ -355,6 +389,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
             'configs': self.good_configs,
             'scheduled_reports': scheduled_reports,
             'others_scheduled_reports': others_scheduled_reports,
+            'shared_saved_reports': self.shared_saved_reports,
             'report': {
                 'title': self.page_title,
                 'show': True,
@@ -477,8 +512,12 @@ class AddSavedReportConfigView(View):
             _id = None  # make sure we pass None not a blank string
         config = ReportConfig.get_or_create(_id)
         if config.owner_id:
-            # in case a user maliciously tries to edit another user's config
-            assert config.owner_id == self.user_id
+            # in case a non-admin user maliciously tries to edit another user's config
+            # or an admin edits a non-shared report in some way
+            assert config.owner_id == self.user_id or (
+                self.user.is_domain_admin(self.domain) and
+                config.is_shared_on_domain()
+            )
         else:
             config.domain = self.domain
             config.owner_id = self.user_id
@@ -507,7 +546,12 @@ class AddSavedReportConfigView(View):
 
     @property
     def user_id(self):
-        return self.request.couch_user._id
+        return self.user._id
+
+    @property
+    def user(self):
+        return self.request.couch_user
+
 
 
 @login_and_domain_required
@@ -681,11 +725,17 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @memoized
     def configs(self):
         user = self.request.couch_user
-        if (self.scheduled_report_id and user.is_domain_admin(self.domain)
-                and user._id != self.owner_id):
+
+        if self.scheduled_report_id and user.is_domain_admin(self.domain):
             return self.report_notification.configs
+
+        if user.is_domain_admin(self.domain):
+            report_configurations = domain_shared_configs(self.domain)
+        else:
+            report_configurations = ReportConfig.by_domain_and_owner(self.domain, user._id)
+
         return [
-            c for c in ReportConfig.by_domain_and_owner(self.domain, user._id)
+            c for c in report_configurations
             if c.report and c.report.emailable
         ]
 

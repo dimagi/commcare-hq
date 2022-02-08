@@ -212,7 +212,7 @@ class ScheduledReportForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(ScheduledReportForm, self).clean()
-        if cleaned_data["interval"] == "daily":
+        if cleaned_data.get("interval") == "daily":
             del cleaned_data["day"]
         if cleaned_data["interval"] == "hourly":
             del cleaned_data["day"]
