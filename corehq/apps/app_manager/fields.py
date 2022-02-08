@@ -115,7 +115,8 @@ class ApplicationDataSourceUIHelper(object):
         if self.enable_registry:
             self.application_field.choices += [('', '--------')]
             self.all_sources.update({'': {"name": '', "case": [], "form": []}})
-            self.app_and_registry_sources = get_dropdown_options(domain, self.all_sources)
+            self.app_and_registry_sources = get_dropdown_options(domain, self.all_sources,
+                                                                 self.registry_permission_checker)
             self.all_sources.update(get_registry_case_sources(domain))
 
         self.source_field.choices = []
@@ -148,7 +149,7 @@ class ApplicationDataSourceUIHelper(object):
                                            for ds in available_data_sources]
         self.registry_slug_field.choices = sort_tuple_field_choices_by_name(
             [(registry["slug"], registry["name"]) for registry in
-             self.registry_permission_checker.get_registry_dropdown_options_visible_to_user()],
+             get_data_registry_dropdown_options(domain, permission_checker=self.registry_permission_checker)],
         ) + [('', '--------')]
 
         # NOTE: This corresponds to a view-model that must be initialized in your template.
@@ -249,8 +250,9 @@ def get_registry_case_sources(domain):
     }
 
 
-def get_dropdown_options(domain, all_sources):
-    registry_options = get_data_registry_dropdown_options(domain) + [{'slug': '', 'name': ''}]
+def get_dropdown_options(domain, all_sources, registry_permission_checker):
+    registry_options = get_data_registry_dropdown_options(domain, permission_checker=registry_permission_checker)
+    registry_options += [{'slug': '', 'name': ''}]
     return{
         "app": {
             "true": [{"text": source['name'], "value": app_id} for app_id, source in all_sources.items()],

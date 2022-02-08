@@ -62,21 +62,6 @@ class RegistryPermissionCheck:
         data_registry_contents_list = dm.permissions.view_data_registry_contents_list if dm else []
         return self.couch_user.can_view_data_registry_contents() or bool(data_registry_contents_list)
 
-    def get_registry_dropdown_options_visible_to_user(self):
-        domain_dropdown_options = get_data_registry_dropdown_options(self.domain)
-        dm = self.couch_user.get_domain_membership(self.domain, allow_enterprise=True)
-        data_registry_contents_list = dm.permissions.view_data_registry_contents_list if dm else []
-        if self.couch_user.can_view_data_registry_contents():
-            return domain_dropdown_options
-        elif bool(data_registry_contents_list):
-            user_dropdown_options = {}
-            for dropdown_option in domain_dropdown_options:
-                if dropdown_option['slug'] in data_registry_contents_list:
-                    user_dropdown_options.append(dropdown_option)
-
-        else:
-            return {}
-
 
 manage_some_registries_required = require_permission_raw(RegistryPermissionCheck.user_can_manage_some)
 manage_all_registries_required = require_permission_raw(RegistryPermissionCheck.user_can_manage_all)
@@ -257,9 +242,21 @@ class DataRegistryAuditViewHelper:
         ]
 
 
-def get_data_registry_dropdown_options(domain, required_case_types=None):
+def get_data_registry_dropdown_options(domain, required_case_types=None, permission_checker=None):
+    all_registries = DataRegistry.objects.visible_to_domain(domain)
+    registries = []
+    if permission_checker:
+        dm = permission_checker.couch_user.get_domain_membership(domain, allow_enterprise=True)
+        data_registry_contents_list = dm.permissions.view_data_registry_contents_list if dm else []
+        if permission_checker.couch_user.can_view_data_registry_contents():
+            registries = all_registries
+        elif bool(data_registry_contents_list):
+            for registry in all_registries:
+                if registry.slug in data_registry_contents_list:
+                    registries.append(registry)
+
     return [
         {"slug": registry.slug, "name": registry.name}
-        for registry in DataRegistry.objects.visible_to_domain(domain)
+        for registry in registries
         if not required_case_types or set(registry.wrapped_schema.case_types) & required_case_types
     ]

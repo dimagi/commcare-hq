@@ -2837,9 +2837,6 @@ class AnonymousCouchUser(object):
     def can_view_roles(self):
         return False
 
-    def can_view_data_registry_contents(self):
-        return False
-
 
 class UserReportingMetadataStaging(models.Model):
     id = models.BigAutoField(primary_key=True)
