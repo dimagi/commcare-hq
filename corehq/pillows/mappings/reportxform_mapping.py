@@ -4,155 +4,231 @@ from pillowtop.es_utils import ElasticsearchIndexInfo, REPORT_XFORM_HQ_INDEX_NAM
 
 REPORT_XFORM_INDEX = prefix_for_tests("report_xforms_20160824_1708")
 
-CASE_MAPPING_FRAGMENT = {
-    'type': 'nested',
-    'dynamic': False,
-    'properties': {
-        'date_modified': {
-            "type": "date",
-            "format": DATE_FORMATS_STRING
-        },
-        '@date_modified': {
-            "type": "date",
-            "format": DATE_FORMATS_STRING
-        },
-        'index': {
-            'type': 'object',
-            'dynamic': True
-        },
-
-        "@case_id": {"type": "string", "index": "not_analyzed"},
-        "@user_id": {"type": "string", "index": "not_analyzed"},
-        "@xmlns": {"type": "string", "index": "not_analyzed"},
-
-
-        "case_id": {"type": "string", "index": "not_analyzed"},
-        "user_id": {"type": "string", "index": "not_analyzed"},
-        "xmlns": {"type": "string", "index": "not_analyzed"},
-
-        "create": {
-            'type': 'object',
-            'dynamic': True,
-            'properties': {
-                'case_type': {"type": "string", "index": "not_analyzed"},
-                'owner_id': {"type": "string", "index": "not_analyzed"},
-                'case_name': {"type": "string", "index": "not_analyzed"},
-            }
-        },
-
-        "update": {
-            'type': 'object',
-            'dynamic': True,
-            'properties': {
-                'case_type': {"type": "string", "index": "not_analyzed"},
-                'owner_id': {"type": "string", "index": "not_analyzed"},
-                'case_name': {"type": "string", "index": "not_analyzed"},
-                'date_opened': {
-                    "type": "date",
-                    "format": DATE_FORMATS_STRING
-                },
-
-            },
-        },
-        "index": {
-            'type': 'object',
-            'dynamic': True
-        },
-        'attachment': {
-            'type': 'object',
-            'dynamic': False
-        }
-    }
-}
-
 REPORT_XFORM_MAPPING = {
-    "date_detection": False,
-    "date_formats": DATE_FORMATS_ARR, #for parsing the explicitly defined dates
-    'dynamic': True,
     "_meta": {
-        "created": '2014-10-07', #record keeping on the index.
+        "created": "2014-10-07"  # record keeping on the index.
     },
-    "properties": {
-        'doc_type': {'type': 'string'},
-        "domain": {
-            "type": "multi_field",
-            "fields": {
-                "domain": {"type": "string", "index": "analyzed"},
-                "exact": {"type": "string", "index": "not_analyzed"}
-                #exact is full text string match - hyphens get parsed in standard
-                # analyzer
-                # in queries you can access by domain.exact
-            }
-        },
-        "xmlns": {
-            "type": "multi_field",
-            "fields": {
-                "xmlns": {"type": "string", "index": "analyzed"},
-                "exact": {"type": "string", "index": "not_analyzed"}
-            }
-        },
-        '@uiVersion': {"type": "string"},
-        '@version': {"type": "string"},
-        "path": {"type": "string", "index": "not_analyzed"},
-        "submit_ip": {"type": "ip"},
-        "app_id": {"type": "string", "index": "not_analyzed"},
-        "received_on": {
-            "type": "date",
-            "format": DATE_FORMATS_STRING
-        },
-        'initial_processing_complete': {"type": "boolean"},
-        'partial_submission': {"type": "boolean"},
-        "#export_tag": {"type": "string", "index": "not_analyzed"},
-        'external_blobs': {
-            'dynamic': False,
-            'type': 'object'
-        },
-        '_attachments': {
-            'dynamic': False,
-            'type': 'object'
-        },
-        'form': {
-            'dynamic': True,
-            'properties': {
-                '@name': {"type": "string", "index": "not_analyzed"},
-                "#type": {"type": "string", "index": "not_analyzed"},
-                'meta': {
-                    'dynamic': False,
-                    'properties': {
-                        "timeStart": {
-                            "type": "date",
-                            "format": DATE_FORMATS_STRING
-                        },
-                        "timeEnd": {
-                            "type": "date",
-                            "format": DATE_FORMATS_STRING
-                        },
-                        "userID": {"type": "string", "index": "not_analyzed"},
-                        "deviceID": {"type": "string", "index": "not_analyzed"},
-                        "instanceID": {"type": "string", "index": "not_analyzed"},
-                        "username": {"type": "string", "index": "not_analyzed"},
-                        "appVersion": {"type": "string", "index": "not_analyzed"},
-                        "CommCareVersion": {"type": "string", "index": "not_analyzed"},
-                    }
-                },
-            },
-        },
-    },
+    "date_detection": False,
+    "date_formats": DATE_FORMATS_ARR,  # for parsing the explicitly defined dates
+    "dynamic": True,
     "dynamic_templates": [
         {
-            'case_block': {
-                "match": "case",
-                "mapping": CASE_MAPPING_FRAGMENT
+            "case_block": {
+                "mapping": {  # case mapping fragment
+                    "dynamic": False,
+                    "type": "nested",
+                    "properties": {
+                        "@case_id": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "@date_modified": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "@user_id": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "@xmlns": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "attachment": {
+                            "dynamic": False,
+                            "type": "object"
+                        },
+                        "case_id": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "create": {
+                            "dynamic": True,
+                            "type": "object",
+                            "properties": {
+                                "case_name": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                },
+                                "case_type": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                },
+                                "owner_id": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "date_modified": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "index": {
+                            "dynamic": True,
+                            "type": "object"
+                        },
+                        "update": {
+                            "dynamic": True,
+                            "type": "object",
+                            "properties": {
+                                "case_name": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                },
+                                "case_type": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                },
+                                "date_opened": {
+                                    "format": DATE_FORMATS_STRING,
+                                    "type": "date"
+                                },
+                                "owner_id": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "user_id": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "xmlns": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
+                    }
+                },
+                "match": "case"
             }
         },
         {
             "everything_else": {
+                "mapping": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
                 "match": "*",
-                "match_mapping_type": "string",
-                "mapping": {"type": "string", "index": "not_analyzed"}
+                "match_mapping_type": "string"
             }
         }
-    ]
+    ],
+    "properties": {
+        "#export_tag": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "@uiVersion": {
+            "type": "string"
+        },
+        "@version": {
+            "type": "string"
+        },
+        "_attachments": {
+            "dynamic": False,
+            "type": "object"
+        },
+        "app_id": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "doc_type": {
+            "type": "string"
+        },
+        "domain": {
+            "fields": {
+                "exact": {
+                    # exact is full text string match - hyphens get parsed in standard
+                    # analyzer
+                    # in queries you can access by domain.exact
+                    "index": "not_analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "string"
+        },
+        "external_blobs": {
+            "dynamic": False,
+            "type": "object"
+        },
+        "form": {
+            "dynamic": True,
+            "properties": {
+                "#type": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "@name": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "meta": {
+                    "dynamic": False,
+                    "properties": {
+                        "CommCareVersion": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "appVersion": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "deviceID": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "instanceID": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "timeEnd": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "timeStart": {
+                            "format": DATE_FORMATS_STRING,
+                            "type": "date"
+                        },
+                        "userID": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "username": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "initial_processing_complete": {
+            "type": "boolean"
+        },
+        "partial_submission": {
+            "type": "boolean"
+        },
+        "path": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "received_on": {
+            "format": DATE_FORMATS_STRING,
+            "type": "date"
+        },
+        "submit_ip": {
+            "type": "ip"
+        },
+        "xmlns": {
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "string"
+        }
+    }
 }
 
 REPORT_XFORM_ALIAS = prefix_for_tests("report_xforms")
