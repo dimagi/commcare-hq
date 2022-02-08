@@ -206,10 +206,10 @@ def can_view_attachments(request):
     )
 
 
-def domain_shared_configs(domain):
+def domain_shared_configs(domain, stale=True):
     # All scheduled reports' configs counts as shared saved reports,
     # i.e. all ReportConfigs relating to ReportNotifications should be included
-    all_shared_reports = ReportNotification.by_domain(domain)
+    all_shared_reports = ReportNotification.by_domain(domain, stale=stale)
     shared_configs_ids = []
 
     for rn in all_shared_reports:
@@ -508,7 +508,7 @@ class AddSavedReportConfigView(View):
             # or an admin edits a non-shared report in some way
             assert config.owner_id == self.user_id or (
                 self.user.is_domain_admin(self.domain) and
-                config.is_shared_on_domain(self.domain)
+                config.is_shared_on_domain()
             )
         else:
             config.domain = self.domain
