@@ -553,19 +553,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):
-        """
-        Given a list of case IDs, return a dict where the ids are keys and the
-        values are the last server modified date of that case.
-        """
-        if not case_ids:
-            return []
-        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)',
-                [domain, case_ids]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return {result.case_id: result.server_modified_on for result in results}
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_last_modified_dates(domain, case_ids)
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):

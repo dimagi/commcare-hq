@@ -186,6 +186,20 @@ class CommCareCaseManager(RequireDBManager):
             )
             return [row[0] for row in cursor]
 
+    def get_last_modified_dates(self, domain, case_ids):
+        """
+        Given a list of case IDs, return a dict where the ids are keys and the
+        values are the last server modified date of that case.
+        """
+        if not case_ids:
+            return []
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)',
+                [domain, case_ids]
+            )
+            return dict(cursor)
+
     def get_case_xform_ids(self, case_id):
         with self.model.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(

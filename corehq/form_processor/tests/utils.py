@@ -311,7 +311,7 @@ def create_case(
     *,
     form_id=None,
     case_id=None,
-    case_type=None,
+    case_type='',
     user_id='user1',
     save=False,
     **case_args,
@@ -324,22 +324,22 @@ def create_case(
     form_id = form_id or uuid4().hex
     case_id = case_id or uuid4().hex
     utcnow = datetime.utcnow()
+    case_args.setdefault("owner_id", user_id)
+    case_args.setdefault("opened_on", utcnow)
+    case_args.setdefault("modified_on", utcnow)
+    case_args.setdefault("modified_by", user_id)
+    received_on = case_args.setdefault("server_modified_on", utcnow)
     form = XFormInstance(
         form_id=form_id,
         xmlns='http://openrosa.org/formdesigner/form-processor',
-        received_on=utcnow,
+        received_on=received_on,
         user_id=user_id,
         domain=domain
     )
     case = CommCareCase(
         case_id=case_id,
         domain=domain,
-        type=case_type or '',
-        owner_id=user_id,
-        opened_on=utcnow,
-        modified_on=utcnow,
-        modified_by=user_id,
-        server_modified_on=utcnow,
+        type=case_type,
         **case_args
     )
     case.track_create(CaseTransaction.form_transaction(case, form, utcnow))

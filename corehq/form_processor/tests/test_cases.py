@@ -131,6 +131,18 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         )
         self.assertItemsEqual(case_ids, [case1.case_id, case2.case_id])
 
+    def test_get_last_modified_dates(self):
+        date1 = datetime(1992, 1, 30, 12, 0)
+        date2 = datetime(2015, 12, 28, 5, 48)
+        case1 = _create_case(server_modified_on=date1)
+        case2 = _create_case(server_modified_on=date2)
+        _create_case()
+
+        self.assertEqual(
+            CommCareCase.objects.get_last_modified_dates(DOMAIN, [case1.case_id, case2.case_id]),
+            {case1.case_id: date1, case2.case_id: date2}
+        )
+
     def test_get_case_xform_ids(self):
         form_id = uuid.uuid4().hex
         case = _create_case(form_id=form_id)

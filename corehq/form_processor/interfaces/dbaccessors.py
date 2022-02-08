@@ -76,6 +76,7 @@ class CaseAccessors(object):
             self.domain, case_ids, exclude_for_case_type=exclude_for_case_type)
 
     def get_last_modified_dates(self, case_ids):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_last_modified_dates(self.domain, case_ids)
 
     def get_all_reverse_indices_info(self, case_ids):
