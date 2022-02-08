@@ -522,8 +522,9 @@ def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDis
 
     request_data = request_as_dict(request)
     report_type = dispatcher_class.prefix
-    request_data['startdate'] = str(request_data['datespan'].startdate)
-    del request_data['datespan']
+    datespan = request_data.pop('datespan')
+    request_data['startdate'] = datespan.startdate.isoformat()
+    request_data['enddate'] = datespan.enddate.isoformat()
     send_email_report.delay(list(recipient_emails), domain, report_slug, report_type,
                             request_data, once, form.cleaned_data)
     return HttpResponse()

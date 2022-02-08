@@ -818,8 +818,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             request_data = vars(mock_request)
             request_data['couch_user'] = mock_request.couch_user.userID
             request_params = json_request(request_data['GET'])
-            if report_config.report_slug != ApplicationStatusReport.slug\
-                    and report_config.report_slug != CaseActivityReport.slug:
+            if report_config.report_slug not in [ApplicationStatusReport.slug, CaseActivityReport.slug]:
                 # ApplicationStatusReport and CaseActivityReport don't have date filter
                 date_range = report_config.get_date_range()
                 request_params['startdate'] = str(datetime.strptime(date_range['startdate'], '%Y-%m-%d'))

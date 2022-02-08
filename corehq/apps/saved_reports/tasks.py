@@ -185,9 +185,8 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
             # If the email doesn't work because it is too large to fit in the HTML body,
             # send it as an excel attachment.
             request_params = json_request(request_data['GET'])
-            request_params['startdate'] = str(request_data['datespan'].startdate)
-            request_params['enddate'] = str(request_data['datespan'].enddate)
-            del request_data['datespan']
+            request_params['startdate'] = request_data['startdate']
+            request_params['enddate'] = request_data['enddate']
             report_state = {
                 'request': request_data,
                 'domain': domain,

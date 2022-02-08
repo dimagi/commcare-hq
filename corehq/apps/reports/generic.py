@@ -17,7 +17,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from django.utils.html import conditional_escape
 
-from celery.utils.log import get_task_logger
 from memoized import memoized
 
 from couchexport.export import export_from_tables, get_writer
@@ -210,7 +209,6 @@ class GenericReportView(object):
         """
             Restoring a report from __getstate__ returned report parameters.
         """
-        #logging = get_task_logger(__name__)  # logging lis likely to happen within celery.
         self.domain = state.get('domain')
         self.context = state.get('context', {})
 
@@ -665,9 +663,9 @@ class GenericReportView(object):
         """
         self.is_rendered_as_export = True
         report_state = self.__getstate__()
-        report_state['request_params']['startdate'] = str(report_state['request']['datespan'].startdate)
-        report_state['request_params']['enddate'] = str(report_state['request']['datespan'].enddate)
-        del report_state['request']['datespan']
+        datespan = report_state['request'].pop('datespan')
+        report_state['request_params']['startdate'] = datespan.startdate.isoformat()
+        report_state['request_params']['enddate'] = datespan.enddate.isoformat()
         if self.exportable_all:
             export_all_rows_task.delay(self.__class__.slug, report_state)
             return HttpResponse()

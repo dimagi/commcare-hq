@@ -51,7 +51,7 @@ class TestEmailReport(TestCase):
         })
         self.email_report()
 
-        self.assertEqual(
+        self.assertCountEqual(
             mock_send_email.delay.call_args[self.ARG_INDEX][self.RECIPIENT_INDEX],
             ['test_user@dimagi.com', 'user1@test.com']
         )

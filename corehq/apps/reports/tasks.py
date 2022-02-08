@@ -26,7 +26,7 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
 from corehq.elastic import send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.util.dates import get_timestamp_for_filename
+from corehq.util.dates import get_timestamp_for_filename, iso_string_to_datetime
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_gauge
 from corehq.util.soft_assert import soft_assert
@@ -161,13 +161,9 @@ def apps_update_calculated_properties():
 
 
 @task(ignore_result=True)
-def export_all_rows_task(report_class, report_state, recipient_list=None, subject=None):
-    #will move imports to the top
-    from corehq.apps.reports.standard.monitoring import (
-        WorkerActivityReport,
-        DailyFormStatsReport,
-        CaseActivityReport,
-    )
+def export_all_rows_task(report_class_name, report_state, recipient_list=None, subject=None):
+    from corehq.apps.reports.standard.monitoring import WorkerActivityReport, DailyFormStatsReport, \
+        CaseActivityReport
     from corehq.apps.reports.standard.deployments import ApplicationStatusReport
     from phonelog.reports import DeviceLogDetailsReport
     from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
@@ -177,8 +173,7 @@ def export_all_rows_task(report_class, report_state, recipient_list=None, subjec
     from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
     from corehq.apps.hqadmin.reports import DeviceLogSoftAssertReport
 
-    #for testing
-    temp_dict = {
+    reports = {
         ApplicationStatusReport.slug: ApplicationStatusReport,
         CaseActivityReport.slug: CaseActivityReport,
         DailyFormStatsReport.slug: DailyFormStatsReport,
@@ -195,21 +190,15 @@ def export_all_rows_task(report_class, report_state, recipient_list=None, subjec
 
     #Reforming datespan object
     if 'startdate' and 'enddate' in report_state['request_params']:
-        start_date = datetime.strptime(str(report_state['request_params']['startdate']), '%Y-%m-%d %H:%M:%S')
-        end_date = datetime.strptime(str(report_state['request_params']['enddate']), '%Y-%m-%d %H:%M:%S')
+        start_date = iso_string_to_datetime(report_state['request_params']['startdate'])
+        end_date = iso_string_to_datetime(report_state['request_params']['enddate'])
         report_state['request']['datespan'] = DateSpan(start_date, end_date)
-
-    #for testing - will remove
-    if report_class in temp_dict:
-        get_class = temp_dict[report_class]
-    else:
-        get_class = report_class
 
     GET_data = QueryDict('', mutable=True)
     GET_data.update(report_state['request']['GET'])
     report_state['request']['GET'] = GET_data
 
-    report = object.__new__(get_class)
+    report = object.__new__(reports[report_class_name])
     report.__setstate__(report_state)
     report.rendered_as = 'export'
 
