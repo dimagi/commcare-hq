@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from unittest.mock import patch
 from uuid import uuid4
 
 from django.conf import settings
@@ -298,35 +297,6 @@ def create_form_for_test(
         form = XFormInstance.objects.get_form(form.form_id)
 
     return form
-
-
-def create_case(case) -> CommCareCase:
-    form = XFormInstance(
-        form_id=uuid4().hex,
-        xmlns='http://commcarehq.org/formdesigner/form-processor',
-        received_on=case.server_modified_on,
-        user_id=case.owner_id,
-        domain=case.domain,
-    )
-    transaction = CaseTransaction(
-        type=CaseTransaction.TYPE_FORM,
-        form_id=form.form_id,
-        case=case,
-        server_date=case.server_modified_on,
-    )
-    with patch.object(FormProcessorSQL, "publish_changes_to_kafka"):
-        case.track_create(transaction)
-        processed_forms = ProcessedForms(form, [])
-        FormProcessorSQL.save_processed_models(processed_forms, [case])
-    return CommCareCase.objects.get_case(case.case_id)
-
-
-def create_case_with_index(case, index) -> CommCareCase:
-    case = create_case(case)
-    index.case = case
-    case.track_create(index)
-    case.save(with_tracked_models=True)
-    return case
 
 
 def delete_all_xforms_and_cases(domain):
