@@ -21,7 +21,7 @@ def _consolidate_enterprise_v1_into_v0(apps, schema_editor):
     except Role.DoesNotExist:
         pass
     if role:
-        # will delete all software plan versions that reference this role as well
+        # change_role_for_software_plan_version should ensure there aren't any more versions referencing this role
         role.delete()
 
 
