@@ -81,6 +81,8 @@ from . import toggles
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
 
+    i = 1
+    print(i)
     report_set = None
     if project.report_whitelist:
         report_set = set(project.report_whitelist)
