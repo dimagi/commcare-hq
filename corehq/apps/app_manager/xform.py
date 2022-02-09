@@ -29,7 +29,7 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.xpath import XPath, UsercaseXPath
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
-from corehq.toggles import DONT_INDEX_SAME_CASETYPE, SAVE_ONLY_EDITED_FORM_FIELDS
+from corehq.toggles import DONT_INDEX_SAME_CASETYPE, NAMESPACE_DOMAIN, SAVE_ONLY_EDITED_FORM_FIELDS
 from corehq.util.view_utils import get_request
 
 from .exceptions import (
@@ -516,7 +516,7 @@ class XFormCaseBlock(object):
         for key, q_path in sorted(update_mapping.items()):
             resolved_path = self.xform.resolve_path(q_path)
             edit_mode_path = ''
-            if (SAVE_ONLY_EDITED_FORM_FIELDS.enabled(domain, 'domain')
+            if (SAVE_ONLY_EDITED_FORM_FIELDS.enabled(domain, NAMESPACE_DOMAIN)
             and isinstance(q_path, ConditionalCaseUpdate)
             and q_path.update_mode == UPDATE_MODE_EDIT):
                 case_id_xpath = self.xform.resolve_path(f"{self.path}case/@case_id")
@@ -1550,10 +1550,10 @@ class XForm(WrappedNode):
         return self.model_node.find('{f}bind[@nodeset="%s"]' % path)
 
     def add_bind(self, **d):
+        from corehq.apps.app_manager.models import ConditionalCaseUpdate
         if d.get('relevant') == 'true()':
             del d['relevant']
         d['nodeset'] = self.resolve_path(d['nodeset'])
-        from corehq.apps.app_manager.models import ConditionalCaseUpdate
         if 'calculate' in d and isinstance(d['calculate'], ConditionalCaseUpdate):
             d['calculate'] = d['calculate'].question_path
         if len(d) > 1:
