@@ -80,7 +80,7 @@ class Command(BaseCommand):
                 base_action = AdvancedOpenCaseAction(
                     case_type=case_type,
                     case_tag='open_{0}_0'.format(case_type),
-                    name_update=ConditionalCaseUpdate(question_path=open.name_update.question_path),
+                    name_update=open.name_update,
                     open_condition=open.condition,
                     case_properties=update.update if update else {},
                 )
@@ -115,9 +115,9 @@ class Command(BaseCommand):
                     open_subcase_action = AdvancedOpenCaseAction(
                         case_type=subcase.case_type,
                         case_tag='open_{0}_{1}'.format(subcase.case_type, i + 1),
-                        name_update=ConditionalCaseUpdate(question_path=subcase.name_update.question_path),
+                        name_update=subcase.name_update,
                         open_condition=subcase.condition,
-                        case_properties=subcase.case_properties,  # TODO: should also be case_properties=subcase.case_properties.question_path?
+                        case_properties=subcase.case_properties,
                         repeat_context=subcase.repeat_context,
                         case_indices=[CaseIndex(
                             tag=base_action.case_tag if base_action else '',
