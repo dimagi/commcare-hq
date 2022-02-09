@@ -20,7 +20,7 @@ from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.export.views.download import DownloadDETSchemaView
-from couchexport.models import Format
+from couchexport.models import Format, IntegrationFormat
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -78,7 +78,6 @@ from corehq.apps.users.permissions import (
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
-
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: replace with library function
 
@@ -352,7 +351,8 @@ class DailySavedExportListHelper(ExportListHelper):
     def _should_appear_in_list(self, export):
         return (export['is_daily_saved_export']
                 and not export['export_format'] == "html"
-                and not export['is_odata_config'])
+                and not export['is_odata_config']
+                and not IntegrationFormat.is_integration_format(export['export_format']))
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormDailySavedExportView, EditCaseDailySavedExportView
@@ -391,7 +391,9 @@ class FormExportListHelper(ExportListHelper):
         return _("Select a Form to Export")
 
     def _should_appear_in_list(self, export):
-        return not export['is_daily_saved_export'] and not export['is_odata_config']
+        return (not export['is_daily_saved_export']
+            and not export['is_odata_config']
+            and not IntegrationFormat.is_integration_format(export['export_format']))
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomFormExportView
@@ -407,7 +409,9 @@ class CaseExportListHelper(ExportListHelper):
     allow_bulk_export = False
 
     def _should_appear_in_list(self, export):
-        return not export['is_daily_saved_export'] and not export['is_odata_config']
+        return (not export['is_daily_saved_export']
+            and not export['is_odata_config']
+            and not IntegrationFormat.is_integration_format(export['export_format']))
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomCaseExportView
@@ -438,7 +442,8 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
     def _should_appear_in_list(self, export):
         return (export['is_daily_saved_export']
                 and export['export_format'] == "html"
-                and not export['is_odata_config'])
+                and not export['is_odata_config']
+                and not IntegrationFormat.is_integration_format(export['export_format']))
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
