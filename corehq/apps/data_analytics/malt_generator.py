@@ -41,6 +41,7 @@ def generate_malt(monthspans, domains=None):
         last_submission_date = get_last_form_submission_received(domain_name)
         last_malt_run_dates_by_month = _get_last_run_date_for_malt_by_month(domain_name, monthspans)
         for monthspan in monthspans:
+            # if the MALTRow last_run_date is none, use the start date of the month
             last_malt_run_date = last_malt_run_dates_by_month.get(monthspan.startdate.date(), monthspan.startdate)
             if last_submission_date and last_submission_date >= last_malt_run_date:
                 # use this date to populate last_run_date for all MALTRows with this domain and month
@@ -56,8 +57,7 @@ def generate_malt(monthspans, domains=None):
 
 def _get_last_run_date_for_malt_by_month(domain_name, monthspans):
     """
-    Checks for existing MALTRows for this domain and monthspan
-    If a row does not exist, or the last_run_date on that row is None, return the start date of the month
+    Return month and last_run_date values for MALTRows for this domain
     """
     return dict(MALTRow.objects.filter(
         domain_name=domain_name,
