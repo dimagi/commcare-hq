@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-07 20:56+0000\n"
+"POT-Creation-Date: 2022-02-09 20:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4106,27 +4106,35 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:46
-msgid "Password changed successfully"
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:45
+msgid "Password changed successfully."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:49
-msgid "Password was not changed "
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:48
+msgid "Password is not strong enough. Try making your password more complex."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:90
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:51
+msgid "The two password fields didn't match."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:53
+msgid "Password was not changed. "
+msgstr ""
+
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:93
 msgid "Available Groups"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:91
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:94
 msgid "Groups with this User"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:92
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:95
 msgid "Search Group..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:103
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:106
 msgid "Group membership has changed."
 msgstr ""
 
