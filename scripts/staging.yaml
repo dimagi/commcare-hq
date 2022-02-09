@@ -68,7 +68,6 @@ branches:
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/datums  # sravan Dec 21
     - ml/remove-pickles-reports # Minha Jan 24
-    - ml/reject-weak-password-backend # Minha Jan 28
     - jls/drop-case-search-limit # Jenny Jan 31
     - do/compare-case-properties # Dominic Feb 2
     - ml/remove-pickles-user-importer # Minha Feb 2
