@@ -96,57 +96,6 @@ def motech_log_export_view(request, domain):
     """
     Download ``RequestLog``s as CSV. Uses ``StreamingHttpResponse`` to
     support large file sizes.
-
-    CSV files can be imported into PostgreSQL using ::
-
-        COPY api_logs FROM 'remote_api_logs.csv' FORMAT csv HEADER;
-
-    Replace "api_logs" with your own table name.
-
-    To create a suitable PostgreSQL table, use the following statement,
-    with your own table name, of course::
-
-        CREATE TABLE public.api_logs (
-            "timestamp" timestamp NOT NULL,
-            payload_id varchar NULL,
-            request_method varchar NOT NULL,
-            request_url varchar NOT NULL,
-            request_body jsonb NULL,
-            request_error varchar NULL,
-            response_status int NULL,
-            response_headers jsonb NULL,
-            response_body jsonb NULL
-        );
-
-    This view supports API key authentication so that exports can be
-    scripted. For example, the following script exports the remote API
-    logs from the previous 24 hours, and appends them to a table in
-    Postgres::
-
-        #!/bin/bash
-
-        DOMAIN=demo
-        USERNAME=admin@example.com
-        API_KEY=abc123
-
-        DB_HOST=localhost
-        DB_PORT=5433
-        DB_USER=postgres
-        DB_DATABASE=postgres
-
-        yesterday=`date -d "yesterday" '+%Y-%m-%d'`
-        day_before=`date -d "2 days ago" '+%Y-%m-%d'`
-        url="https://commcarehq.org/a/$DOMAIN/motech/logs/remote_api_logs.csv"
-        curl -L \
-            -H "Authorization: ApiKey $USERNAME:$API_KEY" \
-            -o remote_api_logs.csv \
-            "${url}?filter_from_date=${day_before}&filter_to_date=${yesterday}"
-
-        psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_DATABASE \
-            -c "COPY api_logs FROM 'remote_api_logs.csv' csv HEADER; "
-
-        rm remote_api_logs.csv
-
     """
 
     def as_utc_timestamp(timestamp):
