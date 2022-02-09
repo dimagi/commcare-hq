@@ -214,18 +214,6 @@ def can_view_attachments(request):
     )
 
 
-def domain_shared_configs(domain, stale=True):
-    # All scheduled reports' configs counts as shared saved reports,
-    # i.e. all ReportConfigs relating to ReportNotifications should be included
-    all_shared_reports = ReportNotification.by_domain(domain, stale=stale)
-    shared_configs_ids = []
-
-    for rn in all_shared_reports:
-        shared_configs_ids.extend(rn.config_ids)
-
-    return [ReportConfig.get(config_id) for config_id in set(shared_configs_ids)]
-
-
 class BaseProjectReportSectionView(BaseDomainView):
     section_name = ugettext_lazy("Project Reports")
 
@@ -331,7 +319,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
         if user.is_domain_admin(self.domain):
             # Admin user should see ALL shared saved reports
-            config_reports = domain_shared_configs(self.domain)
+            config_reports = ReportConfig.shared_on_domain(self.domain)
         else:
             # The non-admin user should ONLY see his/her saved reports (ie ReportConfigs) which have been used
             # in a ReportNotification (not other users' ReportConfigs).
@@ -608,7 +596,10 @@ def delete_config(request, domain, config_id):
 
 
 def _can_delete_saved_report(report, user, domain):
-    return domain == report.domain and user._id == report.owner_id
+    return domain == report.domain and user._id == report.owner_id or (
+        user.is_domain_admin(domain) and
+        report.is_shared_on_domain()
+    )
 
 
 def normalize_hour(hour):
@@ -730,7 +721,11 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             return self.report_notification.configs
 
         if user.is_domain_admin(self.domain):
-            report_configurations = domain_shared_configs(self.domain)
+            report_configurations = ReportConfig.by_domain_and_owner(
+                self.domain,
+                user._id,
+                include_shared=True
+            )
         else:
             report_configurations = ReportConfig.by_domain_and_owner(self.domain, user._id)
 

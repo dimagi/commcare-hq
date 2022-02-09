@@ -111,7 +111,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None,
-                            stale=True, skip=None, limit=None):
+                            stale=True, skip=None, limit=None, include_shared=False):
         kwargs = {}
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
@@ -127,17 +127,47 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         if limit is not None:
             kwargs['limit'] = limit
 
-        result = cache_core.cached_view(
-            db,
-            "reportconfig/configs_by_domain",
-            reduce=False,
-            include_docs=True,
-            startkey=key,
-            endkey=key + [{}],
-            wrapper=cls.wrap,
-            **kwargs
-        )
+        if not include_shared:
+            result = cache_core.cached_view(
+                db,
+                "reportconfig/configs_by_domain",
+                reduce=False,
+                include_docs=True,
+                startkey=key,
+                endkey=key + [{}],
+                wrapper=cls.wrap,
+                **kwargs
+            )
+        else:
+            # Get user's own configs on domain
+            user_configs = cache_core.cached_view(
+                db,
+                "reportconfig/configs_by_domain",
+                reduce=False,
+                include_docs=False,
+                startkey=key,
+                endkey=key + [{}],
+                wrapper=cls.wrap,
+                **kwargs
+            )
+            user_configs = [c['id'] for c in user_configs]
+            # Include all shared configs
+            user_configs.extend(cls.shared_on_domain(domain, only_id=True))
+
+            result = [ReportConfig.get(id) for id in set(user_configs)]
+
         return result
+
+    @classmethod
+    def shared_on_domain(cls, domain, only_id=False, **kwargs):
+        shared_config_ids = []
+        for rn in ReportNotification.by_domain(domain, **kwargs):
+            shared_config_ids.extend(rn.config_ids)
+
+        if only_id:
+            return list(set(shared_config_ids))
+        else:
+            return [ReportConfig.get(config_id) for config_id in set(shared_config_ids)]
 
     @classmethod
     def default(self):
@@ -513,7 +543,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     def is_shared_on_domain(self):
         # Is there a better way of checking this?
-        domain_scheduled_reports = ReportNotification.by_domain(self.domain)
+        domain_scheduled_reports = ReportNotification.by_domain(self.domain, stale=False)
         config_id = self._id
 
         for report in domain_scheduled_reports:

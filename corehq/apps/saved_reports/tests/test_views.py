@@ -4,11 +4,9 @@ from corehq.apps.saved_reports.models import (
     ReportConfig,
     ReportNotification,
 )
-from corehq.apps.reports.views import domain_shared_configs
 from corehq.apps.reports.views import (
     MySavedReportsView,
     AddSavedReportConfigView,
-    ScheduledReportsView
 )
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
@@ -21,7 +19,7 @@ class TestDomainSharedConfigs(TestCase):
     OWNER_ID = '5'
 
     def test_domain_does_not_have_shared_configs(self):
-        self.assertEqual(domain_shared_configs(self.DOMAIN), [])
+        self.assertEqual(ReportConfig.shared_on_domain(self.DOMAIN), [])
 
     def test_domain_has_shared_configs(self):
         config = ReportConfig(domain=self.DOMAIN, owner_id=self.OWNER_ID)
@@ -33,7 +31,7 @@ class TestDomainSharedConfigs(TestCase):
             owner_id=self.OWNER_ID,
             config_ids=[config._id],
         )
-        configs = domain_shared_configs(self.DOMAIN, stale=False)
+        configs = ReportConfig.shared_on_domain(self.DOMAIN, stale=False)
 
         self.assertEqual(len(configs), 1)
         self.assertEqual(configs[0]._id, config._id)
@@ -54,7 +52,7 @@ class TestDomainSharedConfigs(TestCase):
             config_ids=[config._id],
         )
 
-        configs = domain_shared_configs(self.DOMAIN, stale=False)
+        configs = ReportConfig.shared_on_domain(self.DOMAIN, stale=False)
         self.assertEqual(len(configs), 1)
         self.assertEqual(configs[0]._id, config._id)
 
