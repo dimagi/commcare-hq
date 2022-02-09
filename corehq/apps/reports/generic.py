@@ -17,7 +17,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from django.utils.html import conditional_escape
 
-from celery.utils.log import get_task_logger
 from memoized import memoized
 
 from couchexport.export import export_from_tables, get_writer
@@ -193,7 +192,7 @@ class GenericReportView(object):
 
     def __getstate__(self):
         """
-            For pickling the report when passing it to Celery.
+            Returns report parameters to rebuild report in Celery.
         """
         request = request_as_dict(self.request)
 
@@ -208,9 +207,8 @@ class GenericReportView(object):
 
     def __setstate__(self, state):
         """
-            For unpickling a pickled report.
+            Restoring a report from __getstate__ returned report parameters.
         """
-        logging = get_task_logger(__name__) # logging lis likely to happen within celery.
         self.domain = state.get('domain')
         self.context = state.get('context', {})
 
@@ -230,13 +228,8 @@ class GenericReportView(object):
         request.META = request_data.get('META', {})
         request.datespan = request_data.get('datespan')
         request.can_access_all_locations = request_data.get('can_access_all_locations')
-
-        try:
-            couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
-            request.couch_user = couch_user
-        except Exception as e:
-            logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
-                            (self.name, e))
+        couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
+        request.couch_user = couch_user
         self.request = request
         self._caching = True
         self.request_params = state.get('request_params')
@@ -669,8 +662,12 @@ class GenericReportView(object):
         Returns the tabular export of the data, if available.
         """
         self.is_rendered_as_export = True
+        report_state = self.__getstate__()
+        datespan = report_state['request'].pop('datespan')
+        report_state['request_params']['startdate'] = datespan.startdate.isoformat()
+        report_state['request_params']['enddate'] = datespan.enddate.isoformat()
         if self.exportable_all:
-            export_all_rows_task.delay(self.__class__, self.__getstate__())
+            export_all_rows_task.delay(self.__class__.slug, report_state)
             return HttpResponse()
         else:
             # We only want to cache the responses which serve files directly
