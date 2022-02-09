@@ -16,8 +16,7 @@ from corehq.form_processor.exceptions import (
     MissingFormXml,
     XFormNotFound,
 )
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
 class UnexpectedBackend(Exception):
@@ -59,12 +58,11 @@ class CaseDocumentStore(DocumentStore):
 
     def __init__(self, domain, case_type=None):
         self.domain = domain
-        self.case_accessors = CaseAccessors(domain=domain)
         self.case_type = case_type
 
     def get_document(self, doc_id):
         try:
-            return self.case_accessors.get_case(doc_id).to_json()
+            return CommCareCase.objects.get_case(doc_id, self.domain).to_json()
         except CaseNotFound as e:
             raise DocumentNotFoundError(e)
 
@@ -73,7 +71,7 @@ class CaseDocumentStore(DocumentStore):
         return iter_all_ids(accessor)
 
     def iter_documents(self, ids):
-        for wrapped_case in self.case_accessors.iter_cases(ids):
+        for wrapped_case in CommCareCase.objects.iter_cases(ids, self.domain):
             yield wrapped_case.to_json()
 
 

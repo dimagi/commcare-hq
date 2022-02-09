@@ -4,7 +4,7 @@ from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.apps.locations.models import SQLLocation
 from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
@@ -26,13 +26,12 @@ class Command(CaseUpdateCommand):
 
     def update_cases(self, domain, case_type, user_id):
         case_ids = self.find_case_ids_by_type(domain, case_type)
-        accessor = CaseAccessors(domain)
 
         locations_objects = {}
         case_blocks = []
         errors = []
         skip_count = 0
-        for case in accessor.iter_cases(case_ids):
+        for case in CommCareCase.objects.iter_cases(case_ids, domain):
             owner_id = case.get_case_property('owner_id')
             if owner_id in locations_objects:
                 location_obj = locations_objects[owner_id]

@@ -8,8 +8,7 @@ from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.users.util import cached_owner_id_to_display
 from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
 class Command(BaseCommand):
@@ -98,7 +97,7 @@ class Command(BaseCommand):
             exists = set()
             for invalid_id in invalid_referenced_ids:
                 try:
-                    case = CaseAccessors(domain).get_case(invalid_id)
+                    case = CommCareCase.objects.get_case(invalid_id, domain)
                 except CaseNotFound:
                     missing.add(invalid_id)
                 else:

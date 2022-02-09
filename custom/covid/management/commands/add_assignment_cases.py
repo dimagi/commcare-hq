@@ -9,6 +9,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 
 BATCH_SIZE = 100
@@ -20,9 +21,10 @@ def needs_update(case):
         case.get_case_property('is_assigned_temp') == 'yes'
 
 
-def find_owner_id(case, accessor, case_property):
+def find_owner_id(case, case_property):
     try:
-        checkin_case = accessor.get_case(case.get_case_property(case_property))
+        case_id = case.get_case_property(case_property)
+        checkin_case = CommCareCase.objects.get_case(case_id, case.domain)
         return checkin_case.get_case_property('hq_user_id')
     except CaseNotFound:
         print("CaseNotFound: case:{} no matching case for this case's {}".format(case.case_id, case_property))
@@ -55,12 +57,12 @@ class Command(CaseUpdateCommand):
         case_blocks = []
         errors = []
         skip_count = 0
-        for case in accessor.iter_cases(case_ids):
+        for case in CommCareCase.objects.iter_cases(case_ids, domain):
             if case.get_case_property('current_status') == 'closed':
                 skip_count += 1
             elif needs_update(case):
-                new_primary_owner_id = find_owner_id(case, accessor, 'assigned_to_primary_checkin_case_id')
-                new_temp_owner_id = find_owner_id(case, accessor, 'assigned_to_temp_checkin_case_id')
+                new_primary_owner_id = find_owner_id(case, 'assigned_to_primary_checkin_case_id')
+                new_temp_owner_id = find_owner_id(case, 'assigned_to_temp_checkin_case_id')
                 case_created = False
                 if case.get_case_property('is_assigned_primary') == 'yes' and new_primary_owner_id:
                     case_blocks.append(self.case_block(case, new_primary_owner_id, 'primary'))

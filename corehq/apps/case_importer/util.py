@@ -18,6 +18,7 @@ from corehq.apps.case_importer.exceptions import (
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.workbook_reading import (
     SpreadsheetFileEncrypted,
     SpreadsheetFileInvalidError,
@@ -148,7 +149,7 @@ def lookup_case(search_field, search_id, domain, case_type):
     case_accessors = CaseAccessors(domain)
     if search_field == 'case_id':
         try:
-            case = case_accessors.get_case(search_id)
+            case = CommCareCase.objects.get_case(search_id, domain)
             if case.domain == domain and case.type == case_type:
                 found = True
         except CaseNotFound:

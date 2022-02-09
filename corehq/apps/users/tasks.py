@@ -28,7 +28,7 @@ from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import UserArchivedRebuild, XFormInstance
+from corehq.form_processor.models import CommCareCase, UserArchivedRebuild, XFormInstance
 from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
 
 logger = get_task_logger(__name__)
@@ -131,7 +131,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
     form_ids_to_modify = set()
     for case_id in modified_cases:
         try:
-            xform_ids = CaseAccessors(domain).get_case(case_id).xform_ids
+            xform_ids = CommCareCase.objects.get_case(case_id, domain).xform_ids
         except CaseNotFound:
             xform_ids = []
         form_ids_to_modify |= set(xform_ids) - modified_forms
@@ -142,7 +142,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
 
         case_ids = get_case_ids_from_form(form)
         # all cases touched by the form and not already modified
-        for case in CaseAccessors(domain).iter_cases(case_ids - modified_cases):
+        for case in CommCareCase.objects.iter_cases(case_ids - modified_cases):
             if case.is_deleted != is_deletion:
                 # we can't delete/undelete this form - this would change the state of `case`
                 return False

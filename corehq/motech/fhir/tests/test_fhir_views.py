@@ -11,7 +11,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseIndex
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.motech.fhir.tests.utils import (
     add_case_property_with_resource_property_path,
     add_case_type_with_resource_type,
@@ -201,7 +201,7 @@ def _setup_cases(owner_id):
         [DELETED_CASE_ID], datetime.utcnow(), 'test-deletion-with-cases'
     )
 
-    test_case = case_accessor.get_case(TEST_CASE_ID)
+    test_case = CommCareCase.objects.get_case(TEST_CASE_ID, DOMAIN)
     test_case.track_create(CommCareCaseIndex(
         case=test_case,
         identifier='parent',

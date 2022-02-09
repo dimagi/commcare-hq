@@ -20,8 +20,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.blobs import get_blob_db
 from corehq.const import OPENROSA_VERSION_2, OPENROSA_VERSION_3
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -336,7 +335,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         deprecated_form = XFormInstance.objects.get_form(form.deprecated_form_id, self.domain.name)
         self.assertTrue(deprecated_form.is_deprecated)
 
-        case = CaseAccessors(self.domain.name).get_case('ad38211be256653bceac8e2156475667')
+        case = CommCareCase.objects.get_case('ad38211be256653bceac8e2156475667', self.domain.name)
         transactions = case.transactions
         self.assertEqual(2, len(transactions))
         self.assertTrue(transactions[0].is_form_transaction)

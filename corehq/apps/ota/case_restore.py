@@ -11,7 +11,7 @@ from corehq.apps.locations.fixtures import (
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.toggles import ADD_LIMITED_FIXTURES_TO_CASE_RESTORE
 
 
@@ -25,7 +25,7 @@ def get_case_hierarchy_for_restore(case):
 
 def get_case_restore_response(domain, case_id):
     try:
-        case = CaseAccessors(domain).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, domain)
         if case.domain != domain or case.is_deleted:
             raise Http404
     except CaseNotFound:

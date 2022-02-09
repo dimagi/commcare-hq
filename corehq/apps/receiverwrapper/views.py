@@ -48,7 +48,7 @@ from corehq.apps.receiverwrapper.util import (
     should_ignore_submission,
 )
 from corehq.form_processor.exceptions import XFormLockError
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.metrics import metrics_counter, metrics_histogram
@@ -80,7 +80,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             instance = request.FILES[MAGIC_PROPERTY].read()
             xform = convert_xform_to_json(instance)
             meta = xform.get("meta", {})
-        except:
+        except Exception:
             meta = {}
 
         metrics_counter('commcare.corrupt_multimedia_submissions', tags={
@@ -295,7 +295,7 @@ def _noauth_post(request, domain, app_id=None):
 
         # todo: consider whether we want to remove this call, and/or pass the result
         # through to the next function so we don't have to get the cases again later
-        cases = CaseAccessors(domain).get_cases(list(case_ids))
+        cases = CommCareCase.objects.get_cases(list(case_ids), domain)
         for case in cases:
             if case.domain != domain:
                 return False

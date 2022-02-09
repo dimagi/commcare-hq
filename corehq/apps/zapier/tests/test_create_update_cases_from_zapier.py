@@ -13,6 +13,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.apps.zapier.views import ZapierCreateCase, ZapierUpdateCase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
@@ -55,7 +56,7 @@ class TestZapierCreateCaseAction(TestCase):
         self.assertEqual(response.status_code, 200)
 
         case_id = self.accessor.get_case_ids_in_domain()
-        case = self.accessor.get_case(case_id[0])
+        case = CommCareCase.objects.get_case(case_id[0], self.domain)
         self.assertEqual('test1', case.get_case_property('name'))
         self.assertEqual('11', case.get_case_property('price'))
         self.assertEqual('watermelon', case.get_case_property('type'))
@@ -69,7 +70,7 @@ class TestZapierCreateCaseAction(TestCase):
 
         self.assertEqual(response.status_code, 200)
         case_id = self.accessor.get_case_ids_in_domain()
-        case = self.accessor.get_case(case_id[0])
+        case = CommCareCase.objects.get_case(case_id[0], self.domain)
         self.assertEqual('11', case.get_case_property('price'))
 
         data = {'case_name': 'test1', 'price': '15', 'case_id': case_id[0]}
@@ -80,7 +81,7 @@ class TestZapierCreateCaseAction(TestCase):
                                HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 200)
-        case = self.accessor.get_case(case_id[0])
+        case = CommCareCase.objects.get_case(case_id[0], self.domain)
         self.assertEqual('15', case.get_case_property('price'))
 
     def test_update_case_does_not_exist(self):

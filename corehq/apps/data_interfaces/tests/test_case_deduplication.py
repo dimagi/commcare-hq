@@ -22,7 +22,7 @@ from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.xform import get_xform_pillow
@@ -179,7 +179,6 @@ class CaseDeduplicationActionTest(TestCase):
         cls.domain = 'case-dedupe-test'
         cls.case_type = 'adult'
         cls.factory = CaseFactory(cls.domain)
-        cls.accessor = CaseAccessors(cls.domain)
 
         cls.rule = AutomaticUpdateRule.objects.create(
             domain=cls.domain,
@@ -236,12 +235,15 @@ class CaseDeduplicationActionTest(TestCase):
 
         for duplicate_case in duplicates:
             self.assertEqual(
-                self.accessor.get_case(duplicate_case.case_id).get_case_property('is_potential_duplicate'), 'yes'
+                CommCareCase.objects.get_case(duplicate_case.case_id, self.domain)
+                .get_case_property('is_potential_duplicate'),
+                'yes',
             )
 
         for unique_case in uniques:
             self.assertIsNone(
-                self.accessor.get_case(unique_case.case_id).get_case_property('is_potential_duplicate'),
+                CommCareCase.objects.get_case(unique_case.case_id, self.domain)
+                .get_case_property('is_potential_duplicate'),
             )
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
@@ -259,7 +261,8 @@ class CaseDeduplicationActionTest(TestCase):
         # It should only have two transactions (create and the initial
         # duplicate update). This prevents a situation where there are many
         # duplicates of the same case that get updated N times
-        form_transactions = CaseAccessors(self.domain).get_case(duplicates[1].case_id).get_form_transactions()
+        form_transactions = CommCareCase.objects.get_case(
+            duplicates[1].case_id, self.domain).get_form_transactions()
         self.assertEqual(2, len(form_transactions))
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
@@ -274,12 +277,14 @@ class CaseDeduplicationActionTest(TestCase):
 
         for duplicate_case in duplicates:
             self.assertIsNone(
-                self.accessor.get_case(duplicate_case.case_id).get_case_property('is_potential_duplicate'),
+                CommCareCase.objects.get_case(duplicate_case.case_id, self.domain)
+                .get_case_property('is_potential_duplicate'),
             )
 
         for unique_case in uniques:
             self.assertIsNone(
-                self.accessor.get_case(unique_case.case_id).get_case_property('is_potential_duplicate'),
+                CommCareCase.objects.get_case(unique_case.case_id, self.domain)
+                .get_case_property('is_potential_duplicate'),
             )
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
@@ -547,8 +552,8 @@ class DeduplicationPillowTest(TestCase):
         self._assert_case_duplicate_pair(case1.case_id, [case2.case_id])
         self._assert_case_duplicate_pair(case2.case_id, [case1.case_id])
         self.assertEqual(CaseDuplicate.objects.count(), 2)
-        self.assertEqual(CaseAccessors(self.domain).get_case(case1.case_id).get_case_property('age'), '5')
-        self.assertEqual(CaseAccessors(self.domain).get_case(case1.case_id).name, 'Herman Miller')
+        self.assertEqual(CommCareCase.objects.get_case(case1.case_id, self.domain).get_case_property('age'), '5')
+        self.assertEqual(CommCareCase.objects.get_case(case1.case_id, self.domain).name, 'Herman Miller')
 
         # The new changes present should not be processed by the pillow
         # processor, since they were updates from a duplicate action.

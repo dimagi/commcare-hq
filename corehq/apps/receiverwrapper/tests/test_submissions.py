@@ -12,8 +12,7 @@ from unittest.mock import patch
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
@@ -114,7 +113,7 @@ class SubmissionTest(BaseSubmissionTest):
             xmlns='http://commcarehq.org/test/submit',
         )
         case_id = 'ad38211be256653bceac8e2156475667'
-        case = CaseAccessors(self.domain.name).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, self.domain.name)
         self.assertEqual(case.name, "👕 👖 👔 👗 👙")
 
     @softer_assert()

@@ -10,7 +10,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -29,7 +29,6 @@ class TestAPISerialization(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
-        cls.case_accessor = CaseAccessors(cls.domain)
 
         cls.parent_case_id = str(uuid.uuid4())
         case_id = str(uuid.uuid4())
@@ -64,8 +63,8 @@ class TestAPISerialization(TestCase):
             ).as_text()
         ], domain=cls.domain)
 
-        cls.parent_case = cls.case_accessor.get_case(cls.parent_case_id)
-        cls.case = cls.case_accessor.get_case(case_id)
+        cls.parent_case = CommCareCase.objects.get_case(cls.parent_case_id, cls.domain)
+        cls.case = CommCareCase.objects.get_case(case_id, cls.domain)
         for case in [cls.case, cls.parent_case]:
             # Patch datetimes for test consistency
             case.opened_on = datetime(2021, 2, 18, 10, 59)

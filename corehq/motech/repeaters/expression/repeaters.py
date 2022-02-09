@@ -7,7 +7,7 @@ from dimagi.ext.couchdbkit import DictProperty
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeaters.expression.repeater_generators import (
     ExpressionPayloadGenerator,
 )
@@ -65,7 +65,7 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id).to_json()
+        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain).to_json()
 
     @classmethod
     def _migration_get_sql_model_class(cls):
@@ -128,7 +128,7 @@ class SQLCaseExpressionRepeater(SQLBaseExpressionRepeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id).to_json()
+        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain).to_json()
 
     @classmethod
     def _migration_get_couch_model_class(cls):

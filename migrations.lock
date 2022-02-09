@@ -234,6 +234,7 @@ data_analytics
  0007_auto_20160819_1423
  0008_auto_20161114_1903
  0009_remove_girrow_wam
+ 0010_maltrow_last_run_date
 data_dictionary
  0001_squashed_0002_auto_20161116_2209
  0002_auto_20161118_1537
@@ -677,6 +678,7 @@ scheduling_partitioned
  0005_timed_schedule_instance_schedule_revision
  0006_unique_indexes
  0007_index_cleanup
+ 0008_track_attempts
 sessions
  0001_initial
 sites

@@ -8,8 +8,7 @@ from corehq.apps.data_pipeline_audit.management.commands.compare_doc_ids import 
     compare_xforms,
 )
 from corehq.apps.hqcase.utils import resave_case
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.utils.xform import resave_form
 from corehq.util.log import with_progress_bar
 
@@ -76,9 +75,8 @@ def perform_resave_on_cases(domain, start_date, end_date, no_input):
         if ok != "ok":
             print("No changes made")
             return
-    case_accessor = CaseAccessors(domain)
-    for case_ids in chunked(with_progress_bar(case_ids_missing_in_es), 100):
-        cases = case_accessor.get_cases(list(case_ids))
+    for case_ids in chunked(with_progress_bar(case_ids_missing_in_es), 100, list):
+        cases = CommCareCase.objects.get_cases(case_ids, domain)
         found_case_ids = set()
 
         for case in cases:

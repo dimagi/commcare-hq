@@ -13,6 +13,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -68,7 +69,7 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
         usercase_ids = self.case_accessor.get_case_ids_in_domain(type=USERCASE_TYPE)
         for usercase_id in usercase_ids:
             CaseFactory(self.domain).close_case(usercase_id)
-            usercase = self.case_accessor.get_case(usercase_id)
+            usercase = CommCareCase.objects.get_case(usercase_id, self.domain)
             send_to_elasticsearch(
                 "case_search", transform_case_for_elasticsearch(usercase.to_json())
             )
@@ -114,21 +115,21 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
 
         close_cases_assigned_to_checkin(checkin_case, rule)
 
-        self.assertTrue(self.case_accessor.get_case(checkin_case.case_id).closed)
+        self.assertTrue(CommCareCase.objects.get_case(checkin_case.case_id).closed, self.domain)
 
-        patient_case = self.case_accessor.get_case(patient_case.case_id)
+        patient_case = CommCareCase.objects.get_case(patient_case.case_id, self.domain)
         self.assertFalse(patient_case.closed)
         for prop in case_properties:
             self.assertEqual(patient_case.get_case_property(prop), "")
 
-        other_case = self.case_accessor.get_case(other_case.case_id)
+        other_case = CommCareCase.objects.get_case(other_case.case_id, self.domain)
         self.assertFalse(other_case.closed)
         self.assertEqual(
             other_case.get_case_property("assigned_to_primary_checkin_case_id"),
             checkin_case.case_id,
         )
 
-        other_patient_case = self.case_accessor.get_case(other_patient_case.case_id)
+        other_patient_case = CommCareCase.objects.get_case(other_patient_case.case_id, self.domain)
         self.assertFalse(other_patient_case.closed)
         self.assertEqual(
             other_patient_case.get_case_property("assigned_to_primary_checkin_case_id"), "123",
