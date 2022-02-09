@@ -75,7 +75,7 @@ class OTARestoreUser(object):
         both the toggle is enabled for the domain, and the user has a non-zero,
         non-null factor set.
         """
-        if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
+        if loadtest_users_enabled(self.domain):
             return self._loadtest_factor or 1
         return 1
 
@@ -1022,6 +1022,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if dependent_case_id in self.dependent_case_ids_on_phone:
                 # this will be a no-op if the case cannot be purged due to dependencies
                 self.purge(dependent_case_id)
+
+
+def loadtest_users_enabled(domain: str) -> bool:
+    return toggles.ENABLE_LOADTEST_USERS.enabled(domain)
 
 
 def _domain_has_legacy_toggle_set():
