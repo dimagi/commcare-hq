@@ -1044,3 +1044,8 @@ class DomainAuditRecordEntry(models.Model):
         # update_fields prevents the possibility of a race condition
         # https://stackoverflow.com/a/1599090
         obj.save(update_fields=[property_to_update])
+
+
+class TestModel(models.Model):
+    user = models.TextField(db_index=True)
+    name = models.TextField()
