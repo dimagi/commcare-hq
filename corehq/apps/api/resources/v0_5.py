@@ -61,10 +61,11 @@ from corehq.apps.reports.standard.cases.utils import (
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
+from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     StaticReportConfiguration,
-    report_config_id_is_static,
+    report_config_id_is_static, DataSourceConfiguration,
 )
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
@@ -100,6 +101,7 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
+
 
 MOCK_BULK_USER_ES = None
 
@@ -740,6 +742,41 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         }
 
     class Meta(CustomResourceMeta):
+        list_allowed_methods = ["get"]
+        detail_allowed_methods = ["get"]
+        paginator_class = DoesNothingPaginator
+
+
+class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+    """
+    API resource for DataSourceConfigurations (UCR data sources)
+    """
+    id = fields.CharField(attribute='get_id', readonly=True, unique=True)
+    display_name = fields.CharField(attribute="display_name", readonly=True, null=True)
+    configured_filter = fields.DictField(attribute="configured_filter", readonly=True, use_in='detail')
+    configured_indicators = fields.ListField(attribute="configured_indicators", readonly=True, use_in='detail')
+
+    def obj_get(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        pk = kwargs['pk']
+        try:
+            data_source = get_document_or_404(DataSourceConfiguration, domain, pk)
+        except Http404 as e:
+            raise NotFound(str(e))
+        return data_source
+
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        return get_datasources_for_domain(domain)
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'domain': get_obj(bundle_or_obj).domain,
+            'pk': get_obj(bundle_or_obj)._id,
+        }
+
+    class Meta(CustomResourceMeta):
+        resource_name = 'ucr_data_source'
         list_allowed_methods = ["get"]
         detail_allowed_methods = ["get"]
         paginator_class = DoesNothingPaginator
