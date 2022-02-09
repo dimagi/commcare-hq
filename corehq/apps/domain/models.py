@@ -125,6 +125,11 @@ def icds_conditional_session_key():
         return get_session_key
 
 
+class SanityCheckModel(models.Model):
+    user = models.TextField(db_index=True)
+    name = models.TextField()
+
+
 class UpdatableSchema(object):
 
     def update(self, new_dict):
