@@ -845,12 +845,14 @@ class TestRepeaterFormat(BaseRepeaterTest):
             RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator, is_default=True)
 
     def test_new_format_payload(self):
-        repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request') as mock_request, \
                 patch.object(ConnectionSettings, 'get_auth_manager') as mock_manager:
             mock_request.return_value.status_code = 200
             mock_manager.return_value = 'MockAuthManager'
-            repeat_record.fire()
+            rr = self.repeater.register(case)
+
+            repeat_record = RepeatRecord.get(rr.record_id)
             headers = self.repeater.get_headers(repeat_record)
             mock_request.assert_called_with(
                 self.domain,
