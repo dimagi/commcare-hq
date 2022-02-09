@@ -3108,5 +3108,5 @@ class DeactivateMobileWorkerTrigger(models.Model):
     after a certain date.
     """
     domain = models.CharField(max_length=255)
-    username = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255)
     deactivate_after = models.DateField()
