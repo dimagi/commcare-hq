@@ -243,17 +243,10 @@ class DataRegistryAuditViewHelper:
 
 
 def get_data_registry_dropdown_options(domain, required_case_types=None, permission_checker=None):
-    all_registries = DataRegistry.objects.visible_to_domain(domain)
-    registries = []
+    registries = DataRegistry.objects.visible_to_domain(domain)
     if permission_checker:
-        dm = permission_checker.couch_user.get_domain_membership(domain, allow_enterprise=True)
-        data_registry_contents_list = dm.permissions.view_data_registry_contents_list if dm else []
-        if permission_checker.couch_user.can_view_data_registry_contents():
-            registries = all_registries
-        elif bool(data_registry_contents_list):
-            for registry in all_registries:
-                if registry.slug in data_registry_contents_list:
-                    registries.append(registry)
+        registries = [registry for registry in registries
+                      if permission_checker.can_view_registry_data(registry.slug)]
 
     return [
         {"slug": registry.slug, "name": registry.name}
