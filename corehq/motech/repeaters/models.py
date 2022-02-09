@@ -374,7 +374,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
             # to prevent serializing the repeater in the celery task payload
             RepeatRecord.repeater.fget.get_cache(repeat_record)[()] = self
 
-        repeat_record.attempt_forward_now(fire_synchronously)
+        repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
     def allowed_to_forward(self, payload):
