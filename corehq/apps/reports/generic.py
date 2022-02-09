@@ -1132,30 +1132,6 @@ def summary_context(report):
     return {"summary_values": report.summary_values}
 
 
-class SummaryTablularReport(GenericTabularReport):
-    report_template_path = "reports/async/summary_tabular.html"
-    extra_context_providers = [summary_context]
-
-    @property
-    def data(self):
-        """
-        Should return a list of data values, that corresponds to the
-        headers.
-        """
-        raise NotImplementedError("Override this function!")
-
-    @property
-    def rows(self):
-        # for backwards compatibility / easy switching with a single-row table
-        return [self.data]
-
-    @property
-    def summary_values(self):
-        headers = list(self.headers)
-        assert (len(self.data) == len(headers))
-        return list(zip(headers, self.data))
-
-
 class ProjectInspectionReportParamsMixin(object):
 
     @property
