@@ -519,11 +519,8 @@ class XFormCaseBlock(object):
             if (SAVE_ONLY_EDITED_FORM_FIELDS.enabled(domain, 'domain')
             and isinstance(q_path, ConditionalCaseUpdate)
             and q_path.update_mode == UPDATE_MODE_EDIT):
-                if 'commcare_usercase' in self.path:
-                    case_value = UsercaseXPath().case().slash(key)
-                else:
-                    case_id_xpath = self.xform.resolve_path(f"{self.path}case/@case_id")
-                    case_value = CaseIDXPath(case_id_xpath).case().slash(key)
+                case_id_xpath = self.xform.resolve_path(f"{self.path}case/@case_id")
+                case_value = CaseIDXPath(case_id_xpath).case().slash(key)
                 self.xform.add_casedb()
                 edit_mode_path = f' and {case_value} != {resolved_path}'
             update_block.append(make_case_elem(key))

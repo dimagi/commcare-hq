@@ -88,7 +88,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         expected = """
             <partial>
               <ns0:bind xmlns:ns0="http://www.w3.org/2002/xforms" nodeset="/data/commcare_usercase/case/update/case_name"
-                relevant="count(/data/question1) &gt; 0 and instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid]/case_name != /data/question1"
+                relevant="count(/data/question1) &gt; 0 and instance('casedb')/casedb/case[@case_id=/data/commcare_usercase/case/@case_id]/case_name != /data/question1"
                 calculate="/data/question1"/>
             </partial>
         """
