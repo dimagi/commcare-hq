@@ -2088,7 +2088,7 @@ class XForm(WrappedNode):
                     node_path,
                     parent_path,
                     case_id_xpath=case_id_xpath)
-                parent_case_block.add_case_updates(updates, domain)
+                parent_case_block.add_case_updates(updates, domain=domain)
                 node.append(parent_case_block.elem)
 
     def get_scheduler_case_updates(self):
