@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
-from io import BytesIO
 from warnings import warn
 
 from memoized import memoized
@@ -40,9 +39,11 @@ class CaseAccessors(object):
         yield from CommCareCase.objects.iter_cases(case_ids)
 
     def get_case_ids_that_exist(self, case_ids):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_case_ids_that_exist(self.domain, case_ids)
 
     def get_case_xform_ids(self, case_id):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_case_xform_ids(case_id)
 
     def get_case_ids_in_domain(self, type=None):
@@ -94,9 +95,6 @@ class CaseAccessors(object):
         return self.db_accessor.get_extension_case_ids(
             self.domain, case_ids, exclude_for_case_type=exclude_for_case_type)
 
-    def get_indexed_case_ids(self, case_ids):
-        return self.db_accessor.get_indexed_case_ids(self.domain, case_ids)
-
     def get_last_modified_dates(self, case_ids):
         return self.db_accessor.get_last_modified_dates(self.domain, case_ids)
 
@@ -104,12 +102,15 @@ class CaseAccessors(object):
         return self.db_accessor.get_closed_case_ids_for_owner(self.domain, owner_id)
 
     def get_all_reverse_indices_info(self, case_ids):
+        warn("DEPRECATED use CommCareCaseIndex.objects", DeprecationWarning)
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
 
     def get_reverse_indexed_cases(self, case_ids, case_types=None, is_closed=None):
+        warn("DEPRECATED use CommCareCaseIndex.objects", DeprecationWarning)
         return self.db_accessor.get_reverse_indexed_cases(self.domain, case_ids, case_types, is_closed)
 
     def get_attachment_content(self, case_id, attachment_id):
+        warn("DEPRECATED use CaseAttachment.get_content", DeprecationWarning)
         return self.db_accessor.get_attachment_content(case_id, attachment_id)
 
     def get_case_by_domain_hq_user_id(self, user_id, case_type):
@@ -145,23 +146,6 @@ class CaseAccessors(object):
 
     def get_case_owner_ids(self):
         return self.db_accessor.get_case_owner_ids(self.domain)
-
-
-def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
-    attachment_cache_key = "%(case_id)s_%(attachment)s" % {
-        "case_id": case_id,
-        "attachment": attachment_id
-    }
-
-    from dimagi.utils.django.cached_object import CachedObject, CachedImage
-    cobject = CachedImage(attachment_cache_key) if is_image else CachedObject(attachment_cache_key)
-    if not cobject.is_cached():
-        content = CaseAccessors(domain).get_attachment_content(case_id, attachment_id)
-        stream = BytesIO(content.content_body)
-        metadata = {'content_type': content.content_type}
-        cobject.cache_put(stream, metadata)
-
-    return cobject
 
 
 class AbstractLedgerAccessor(metaclass=ABCMeta):

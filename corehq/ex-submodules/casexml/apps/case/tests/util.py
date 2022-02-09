@@ -11,7 +11,7 @@ from casexml.apps.case.xml import NS_VERSION_MAP, V1, V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.tests.util.xml import assert_xml_equal
 from corehq.util.test_utils import unit_testing_only
@@ -71,7 +71,7 @@ def create_case(domain, case_type, **kwargs):
     try:
         yield case
     finally:
-        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
+        CommCareCase.objects.hard_delete_cases(domain, [case.case_id])
 
 
 def _replace_ids_in_xform_xml(xml_data, case_id_override=None):

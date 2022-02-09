@@ -59,7 +59,7 @@ class SqlUpdateStrategyTest(TestCase):
         self.assertTrue(update_strategy.reconcile_transactions_if_necessary())
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
 
-        CaseAccessorSQL.save_case(case)
+        case.save(with_tracked_models=True)
 
         case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
@@ -140,7 +140,7 @@ class SqlUpdateStrategyTest(TestCase):
         self.assertTrue(update_strategy.reconcile_transactions_if_necessary())
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
 
-        CaseAccessorSQL.save_case(case)
+        case.save(with_tracked_models=True)
 
         case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)

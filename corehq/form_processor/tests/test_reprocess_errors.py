@@ -479,10 +479,8 @@ class TestTransactionErrors(TransactionTestCase):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
 
-        with patch(
-            'corehq.form_processor.backends.sql.dbaccessors.CaseAccessorSQL.save_case',
-            side_effect=IntegrityError
-        ), self.assertRaises(IntegrityError):
+        error_on_save = patch.object(CommCareCase, 'save', side_effect=IntegrityError)
+        with error_on_save, self.assertRaises(IntegrityError):
             submit_case_blocks(
                 [CaseBlock.deprecated_init(case_id=case_id, update={'a': "2"}).as_text()],
                 self.domain,
@@ -502,10 +500,8 @@ class TestTransactionErrors(TransactionTestCase):
             form_id=form_id
         )
 
-        with patch(
-            'corehq.form_processor.backends.sql.dbaccessors.CaseAccessorSQL.save_case',
-            side_effect=IntegrityError
-        ), self.assertRaises(IntegrityError):
+        error_on_save = patch.object(CommCareCase, 'save', side_effect=IntegrityError)
+        with error_on_save, self.assertRaises(IntegrityError):
             submit_case_blocks(
                 [CaseBlock.deprecated_init(case_id=case_id, update={'a': "2"}).as_text()],
                 self.domain,

@@ -390,7 +390,8 @@ class ImporterTest(TestCase):
         res = do_import(file, config, self.domain)
         self.assertEqual(rows, res['created_count'])
         # Should create child cases
-        self.assertEqual(len(self.accessor.get_reverse_indexed_cases([parent_case.case_id])), 3)
+        cases = CommCareCase.objects.get_reverse_indexed_cases(self.domain, [parent_case.case_id])
+        self.assertEqual(len(cases), 3)
         self.assertEqual(self.accessor.get_extension_case_ids([parent_case.case_id]), [])
 
         file_missing = make_worksheet_wrapper(

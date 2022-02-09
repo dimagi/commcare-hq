@@ -514,44 +514,6 @@ class CaseAccessorTestsSQL(TestCase):
             [case.case_id]
         )
 
-    def test_get_indexed_case_ids(self):
-        # Create case and indexes
-        case = _create_case()
-        extension_index = CommCareCaseIndex(
-            case=case,
-            identifier="task",
-            referenced_type="task",
-            referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndex.EXTENSION
-        )
-        case.track_create(extension_index)
-        child_index = CommCareCaseIndex(
-            case=case,
-            identifier='parent',
-            referenced_type='mother',
-            referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndex.CHILD
-        )
-        case.track_create(child_index)
-        CaseAccessorSQL.save_case(case)
-
-        # Create irrelevant case
-        other_case = _create_case()
-        other_child_index = CommCareCaseIndex(
-            case=other_case,
-            identifier='parent',
-            referenced_type='mother',
-            referenced_id=case.case_id,
-            relationship_id=CommCareCaseIndex.CHILD
-        )
-        other_case.track_create(other_child_index)
-        CaseAccessorSQL.save_case(other_case)
-
-        self.assertEqual(
-            set(CaseAccessorSQL.get_indexed_case_ids(DOMAIN, [case.case_id])),
-            set([extension_index.referenced_id, child_index.referenced_id])
-        )
-
     def test_get_last_modified_dates(self):
         case1 = _create_case()
         date1 = datetime(1992, 1, 30, 12, 0)

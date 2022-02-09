@@ -209,7 +209,7 @@ def _setup_cases(owner_id):
         referenced_id=PERSON_CASE_ID,
         relationship_id=CommCareCaseIndex.CHILD
     ))
-    case_accessor.db_accessor.save_case(test_case)
+    test_case.save(with_tracked_models=True)
 
 
 def _get_caseblock(case_id, case_type, owner_id, updates=None):

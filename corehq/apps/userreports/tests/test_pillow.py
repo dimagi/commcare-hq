@@ -43,6 +43,7 @@ from corehq.apps.userreports.tests.utils import (
 )
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case import get_case_pillow
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import softer_assert, flaky_slow
@@ -482,7 +483,7 @@ class IndicatorPillowTest(TestCase):
         self.pillow.process_changes(since=since, forever=False)
         self._check_sample_doc_state(expected_indicators)
 
-        CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+        CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):
@@ -513,7 +514,7 @@ class IndicatorPillowTest(TestCase):
         self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(0, self.adapter.get_query_object().count())
 
-        CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+        CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_filter_no_longer_pass(self, datetime_mock):

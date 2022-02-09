@@ -10,33 +10,25 @@ from uuid import UUID
 from warnings import warn
 
 from django.conf import settings
-from django.db import InternalError, transaction, router, DatabaseError
+from django.db import InternalError, transaction, router
 from django.db.models import F, Q
 from django.db.models.expressions import Value
 from django.db.models.functions import Concat
 
 import csiphash
-from ddtrace import tracer
 
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.chunked import chunked
 
 from corehq.form_processor.exceptions import (
-    AttachmentNotFound,
     CaseNotFound,
-    CaseSaveError,
     LedgerSaveError,
     LedgerValueNotFound,
     MissingFormXml,
     XFormNotFound,
 )
-from corehq.form_processor.models.util import attach_prefetch_models as _attach_prefetch_models
-from corehq.form_processor.interfaces.dbaccessors import (
-    AbstractLedgerAccessor,
-    CaseIndexInfo,
-)
+from corehq.form_processor.interfaces.dbaccessors import AbstractLedgerAccessor
 from corehq.form_processor.models import (
-    AttachmentContent,
     CaseAttachment,
     CaseTransaction,
     CommCareCaseIndex,
@@ -417,146 +409,59 @@ class CaseAccessorSQL:
         return CommCareCase.objects.get_cases(case_ids, ordered, prefetched_indices)
 
     @staticmethod
-    def case_exists(case_id):
-        return CommCareCase.objects.partitioned_query(case_id).filter(case_id=case_id).exists()
-
-    @staticmethod
     def get_case_ids_that_exist(domain, case_ids):
-        result = []
-        for db_name, case_ids_chunk in split_list_by_db_partition(case_ids):
-            result.extend(CommCareCase.objects
-                          .using(db_name)
-                          .filter(domain=domain, case_id__in=case_ids_chunk)
-                          .values_list('case_id', flat=True))
-        return result
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_case_ids_that_exist(domain, case_ids)
 
     @staticmethod
     def get_case_xform_ids(case_id):
-        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT form_id FROM get_case_transactions_by_type(%s, %s)',
-                [case_id, CaseTransaction.TYPE_FORM]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.form_id for result in results]
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_case_xform_ids(case_id)
 
     @staticmethod
     def get_indices(domain, case_id):
-        query = CommCareCaseIndex.objects.partitioned_query(case_id)
-        return list(query.filter(case_id=case_id, domain=domain))
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCaseIndex.objects.get_indices(domain, case_id)
 
     @staticmethod
     def get_reverse_indices(domain, case_id):
-        indices = list(CommCareCaseIndex.objects.plproxy_raw(
-            'SELECT * FROM get_case_indices_reverse(%s, %s)', [domain, case_id]
-        ))
-
-        def _set_referenced_id(index):
-            # see corehq/couchapps/case_indices/views/related/map.js
-            index.referenced_id = index.case_id
-            return index
-
-        return [_set_referenced_id(index) for index in indices]
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCaseIndex.objects.get_reverse_indices(domain, case_id)
 
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
-        assert isinstance(case_ids, list)
-        if not case_ids:
-            return []
-
-        indexes = CommCareCaseIndex.objects.plproxy_raw(
-            'SELECT * FROM get_all_reverse_indices(%s, %s)',
-            [domain, case_ids]
-        )
-        return [
-            CaseIndexInfo(
-                case_id=index.case_id,
-                identifier=index.identifier,
-                referenced_id=index.referenced_id,
-                referenced_type=index.referenced_type,
-                relationship=index.relationship_id
-            ) for index in indexes
-        ]
-
-    @staticmethod
-    def get_indexed_case_ids(domain, case_ids):
-        """
-        Given a base list of case ids, gets all ids of cases they reference (parent and host cases)
-        """
-        if not case_ids:
-            return []
-
-        with CommCareCaseIndex.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT referenced_id FROM get_multiple_cases_indices(%s, %s)',
-                [domain, list(case_ids)]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.referenced_id for result in results]
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCaseIndex.objects.get_all_reverse_indices_info(domain, case_ids)
 
     @staticmethod
     def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
-        assert isinstance(case_ids, list)
-        assert case_types is None or isinstance(case_types, list)
-        if not case_ids:
-            return []
-
-        cases = list(CommCareCase.objects.plproxy_raw(
-            'SELECT * FROM get_reverse_indexed_cases_3(%s, %s, %s, %s)',
-            [domain, case_ids, case_types, is_closed])
-        )
-        cases_by_id = {case.case_id: case for case in cases}
-        if cases_by_id:
-            indices = list(CommCareCaseIndex.objects.plproxy_raw(
-                'SELECT * FROM get_multiple_cases_indices(%s, %s)',
-                [domain, list(cases_by_id)])
-            )
-            _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
-        return cases
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_reverse_indexed_cases(domain, case_ids, case_types, is_closed)
 
     @staticmethod
-    @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
     def check_transaction_order_for_case(case_id):
-        """ Returns whether the order of transactions needs to be reconciled by client_date
-
-        True if the order is fine, False if the order is bad
-        """
-        if not case_id:
-            return False
-
-        with CaseTransaction.get_cursor_for_partition_value(case_id) as cursor:
-            cursor.execute(
-                'SELECT compare_server_client_case_transaction_order(%s, %s)',
-                [case_id, CaseTransaction.case_rebuild_types() | CaseTransaction.TYPE_CASE_CREATE])
-            result = cursor.fetchone()[0]
-            return result
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.check_order_for_case(case_id)
 
     @staticmethod
     def hard_delete_cases(domain, case_ids):
-        assert isinstance(case_ids, list)
-        with CommCareCase.get_plproxy_cursor() as cursor:
-            cursor.execute('SELECT hard_delete_cases(%s, %s) as deleted_count', [domain, case_ids])
-            results = fetchall_as_namedtuple(cursor)
-            return sum([result.deleted_count for result in results])
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.hard_delete_cases(domain, case_ids)
 
     @staticmethod
     def get_attachment_by_name(case_id, attachment_name):
-        try:
-            return CaseAttachment.objects.plproxy_raw(
-                'select * from get_case_attachment_by_name(%s, %s)',
-                [case_id, attachment_name]
-            )[0]
-        except IndexError:
-            raise AttachmentNotFound(case_id, attachment_name)
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseAttachment.objects.get_attachment_by_name(case_id, attachment_name)
 
     @staticmethod
     def get_attachment_content(case_id, attachment_name):
-        meta = CaseAccessorSQL.get_attachment_by_name(case_id, attachment_name)
-        return AttachmentContent(meta.content_type, meta.open())
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseAttachment.get_content(case_id, attachment_name)
 
     @staticmethod
     def get_attachments(case_id):
-        return list(CaseAttachment.objects.partitioned_query(case_id).filter(case_id=case_id))
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseAttachment.objects.get_attachments(case_id)
 
     @staticmethod
     def get_transactions(case_id):
@@ -627,46 +532,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def save_case(case):
-        transactions_to_save = case.get_live_tracked_models(CaseTransaction)
-
-        indices_to_save_or_update = case.get_live_tracked_models(CommCareCaseIndex)
-        index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndex)]
-
-        attachments_to_save = case.get_tracked_models_to_create(CaseAttachment)
-        attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachment)]
-        for attachment in attachments_to_save:
-            if attachment.is_saved():
-                raise CaseSaveError(
-                    """Updating attachments is not supported.
-                    case id={}, attachment id={}""".format(
-                        case.case_id, attachment.attachment_id
-                    )
-                )
-
-        try:
-            with transaction.atomic(using=case.db, savepoint=False):
-                case.save()
-                for case_transaction in transactions_to_save:
-                    case_transaction.save()
-
-                for index in indices_to_save_or_update:
-                    index.domain = case.domain  # ensure domain is set on indices
-                    update_fields = None
-                    if index.is_saved():
-                        # prevent changing identifier
-                        update_fields = ['referenced_id', 'referenced_type', 'relationship_id']
-                    index.save(update_fields=update_fields)
-
-                CommCareCaseIndex.objects.using(case.db).filter(id__in=index_ids_to_delete).delete()
-
-                for attachment in attachments_to_save:
-                    attachment.save()
-
-                CaseAttachment.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
-
-                case.clear_tracked_models()
-        except DatabaseError as e:
-            raise CaseSaveError(e)
+        warn("DEPRECATED", DeprecationWarning)
+        return case.save(with_tracked_models=True)
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):

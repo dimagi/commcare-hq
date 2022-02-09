@@ -80,11 +80,11 @@ def get_entire_case_network(domain, case_ids):
     This includes all cases that index into the passed in cases (extensions or children)
     as well as all cases that index into those, recursively.
     """
-    case_accessor = CaseAccessors(domain=domain)
     all_ids = set(case_ids)
     remaining_ids = set(case_ids)
     while remaining_ids:
-        this_round_ids = set(c.case_id for c in case_accessor.get_reverse_indexed_cases(list(remaining_ids)))
+        cases = CommCareCase.objects.get_reverse_indexed_cases(domain, list(remaining_ids))
+        this_round_ids = {c.case_id for c in cases}
         remaining_ids = this_round_ids - all_ids
         all_ids = all_ids | this_round_ids
     return all_ids

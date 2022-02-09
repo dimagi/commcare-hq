@@ -66,7 +66,7 @@ class FormProcessorSQL(object):
     def hard_delete_case_and_forms(cls, domain, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
         XFormInstance.objects.hard_delete_forms(domain, form_ids)
-        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
+        CommCareCase.objects.hard_delete_cases(domain, [case.case_id])
         for form in xforms:
             form.state |= XFormInstance.DELETED
             publish_form_saved(form)
@@ -123,7 +123,7 @@ class FormProcessorSQL(object):
                 XFormInstance.objects.save_new_form(processed_forms.submitted)
                 if cases:
                     for case in cases:
-                        CaseAccessorSQL.save_case(case)
+                        case.save(with_tracked_models=True)
 
                 if stock_result:
                     ledgers_to_save = stock_result.models_to_save
@@ -135,7 +135,7 @@ class FormProcessorSQL(object):
                 if sort_submissions:
                     for case in cases:
                         if SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary():
-                            CaseAccessorSQL.save_case(case)
+                            case.save(with_tracked_models=True)
         except DatabaseError:
             for model in all_models:
                 setattr(model, model._meta.pk.attname, None)
@@ -296,7 +296,7 @@ class FormProcessorSQL(object):
 
             case.server_modified_on = rebuild_transaction.server_date
             if save:
-                CaseAccessorSQL.save_case(case)
+                case.save(with_tracked_models=True)
                 publish_case_saved(case)
             return case
         finally:
@@ -323,7 +323,7 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def get_case_forms(case_id):
-        xform_ids = CaseAccessorSQL.get_case_xform_ids(case_id)
+        xform_ids = CommCareCase.objects.get_case_xform_ids(case_id)
         return XFormInstance.objects.get_forms_with_attachments_meta(xform_ids)
 
     @staticmethod
@@ -344,7 +344,3 @@ class FormProcessorSQL(object):
             return None, None
 
         return case, None
-
-    @staticmethod
-    def case_exists(case_id):
-        return CaseAccessorSQL.case_exists(case_id)

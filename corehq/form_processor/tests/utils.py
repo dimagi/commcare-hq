@@ -326,7 +326,7 @@ def create_case_with_index(case, index) -> CommCareCase:
     case = create_case(case)
     index.case = case
     case.track_create(index)
-    CaseAccessorSQL.save_case(case)
+    case.save(with_tracked_models=True)
     return case
 
 
