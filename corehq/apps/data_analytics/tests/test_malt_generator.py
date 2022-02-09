@@ -2,7 +2,7 @@ import datetime
 from unittest.mock import Mock, patch
 
 from django.http import Http404
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, TransactionTestCase
 
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -25,8 +25,7 @@ from corehq.apps.data_analytics.malt_generator import (
     generate_malt,
 )
 from corehq.apps.data_analytics.models import MALTRow
-from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
-from corehq.apps.domain.models import Domain
+from corehq.apps.data_analytics.tests.utils import MaltEndToEndTestMixin
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.const import MISSING_APP_ID
@@ -37,54 +36,24 @@ from corehq.util.test_utils import disable_quickcache
 
 
 @es_test
-class MaltGeneratorTest(TestCase):
+class MaltGeneratorTest(TestCase, MaltEndToEndTestMixin):
     """
     End to end tests for malt generation. Use sparingly.
     """
-
-    DOMAIN_NAME = "test"
-    USERNAME = "malt-user"
-    DEVICE_ID = "my_phone"
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.es = get_es_new()
-        cls._setup_domain()
-        cls._setup_user()
-        cls._setup_app()
+        cls.setup_domain()
+        cls.setup_user()
+        cls.setup_app()
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         super().tearDownClass()
-
-    @classmethod
-    def _setup_domain(cls):
-        cls.domain = Domain(name=cls.DOMAIN_NAME)
-        cls.domain.save()
-
-    @classmethod
-    def _setup_user(cls):
-        cls.user = CommCareUser.create(cls.DOMAIN_NAME, cls.USERNAME, '*****', None, None)
-        cls.user.save()
-
-    @classmethod
-    def _setup_app(cls):
-        cls.app = Application.new_app(cls.DOMAIN_NAME, "app 1")
-        cls.app.amplifies_workers = AMPLIFIES_YES
-        cls.app.save()
-        cls.app_id = cls.app._id
-
-    def _save_form_data(self, app_id, received_on):
-        save_to_es_analytics_db(
-            domain=self.DOMAIN_NAME,
-            received_on=received_on,
-            device_id=self.DEVICE_ID,
-            user_id=self.user._id,
-            app_id=app_id,
-        )
 
     def setUp(self) -> None:
         super().setUp()
@@ -95,9 +64,9 @@ class MaltGeneratorTest(TestCase):
         super().tearDown()
 
     def test_successfully_creates(self):
-        self._save_form_data(self.app_id, datetime.datetime(2019, 12, 31))
-        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 1))
-        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 31))
+        self.save_form_data(self.app_id, datetime.datetime(2019, 12, 31))
+        self.save_form_data(self.app_id, datetime.datetime(2020, 1, 1))
+        self.save_form_data(self.app_id, datetime.datetime(2020, 1, 31))
         self.es.indices.refresh(XFORM_INDEX_INFO.index)
 
         monthspan = DateSpan.from_month(1, 2020)
@@ -113,7 +82,7 @@ class MaltGeneratorTest(TestCase):
         self.assertFalse(MALTRow.objects.filter(month=DateSpan.from_month(12, 2019).startdate).exists())
 
     def test_does_not_update(self):
-        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
+        self.save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
         self.es.indices.refresh(XFORM_INDEX_INFO.index)
 
         monthspan = DateSpan.from_month(1, 2020)
@@ -138,9 +107,9 @@ class MaltGeneratorTest(TestCase):
         self.assertEqual(malt_row.last_run_date, previous_run_date)
 
     def test_multiple_months(self):
-        self._save_form_data(self.app_id, datetime.datetime(2019, 12, 15))
-        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
-        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 16))
+        self.save_form_data(self.app_id, datetime.datetime(2019, 12, 15))
+        self.save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
+        self.save_form_data(self.app_id, datetime.datetime(2020, 1, 16))
         self.es.indices.refresh(XFORM_INDEX_INFO.index)
 
         monthspans = [DateSpan.from_month(12, 2019), DateSpan.from_month(1, 2020)]
@@ -151,6 +120,62 @@ class MaltGeneratorTest(TestCase):
 
         self.assertEqual(december_malt.num_of_forms, 1)
         self.assertEqual(january_malt.num_of_forms, 2)
+
+
+class TestMaltUpdates(TransactionTestCase, MaltEndToEndTestMixin):
+    """
+    TransactionTestCase is very slow. Do not add tests to this class.
+    NOTE: only use for the update test since an exception is intentionally thrown and caught in the implementation
+    wrapping generate_malt with the transaction.atomic() context manager doesn't work since the exception is caught
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.es = get_es_new()
+        cls.setup_domain()
+        cls.setup_user()
+        cls.setup_app()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete(cls.domain.name, deleted_by=None)
+        cls.domain.delete()
+        super().tearDownClass()
+
+    def setUp(self) -> None:
+        super().setUp()
+        initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
+
+    def tearDown(self) -> None:
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
+        super().tearDown()
+
+    def test_successfully_updates(self):
+        self.save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+
+        monthspan = DateSpan.from_month(1, 2020)
+        generate_malt([monthspan], domains=[self.domain.name])
+
+        malt_row = MALTRow.objects.get(user_id=self.user._id, app_id=self.app_id, device_id=self.DEVICE_ID,
+                                       month=monthspan.startdate)
+
+        self.assertEqual(malt_row.num_of_forms, 1)
+        # hacky way to simulate last run date in between form submissions
+        malt_row.last_run_date = datetime.datetime(2020, 1, 17)
+        malt_row.save()
+
+        self.save_form_data(self.app_id, datetime.datetime(2020, 1, 20))
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+
+        generate_malt([monthspan], domains=[self.domain.name])
+
+        malt_row = MALTRow.objects.get(user_id=self.user._id, app_id=self.app_id, device_id=self.DEVICE_ID,
+                                       month=monthspan.startdate)
+
+        # ensure it updates
+        self.assertEqual(malt_row.num_of_forms, 2)
 
 
 class TestSaveMaltRowDictsToDB(TestCase):
