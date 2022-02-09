@@ -1,6 +1,7 @@
 import datetime
 from unittest.mock import Mock, patch
 
+from django.db import IntegrityError
 from django.http import Http404
 from django.test import SimpleTestCase, TestCase
 
@@ -111,6 +112,35 @@ class MaltGeneratorTest(TestCase):
         self.assertEqual(malt_row.num_of_forms, 2)
         self.assertEqual(malt_row.wam, True)
         self.assertFalse(MALTRow.objects.filter(month=DateSpan.from_month(12, 2019).startdate).exists())
+
+    def test_successfully_updates(self):
+        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+
+        monthspan = DateSpan.from_month(1, 2020)
+        generate_malt([monthspan], domains=[self.domain.name])
+
+        malt_row = MALTRow.objects.get(user_id=self.user._id, app_id=self.app_id, device_id=self.DEVICE_ID,
+                                       month=monthspan.startdate)
+
+        self.assertEqual(malt_row.num_of_forms, 1)
+        # hacky way to simulate last run date in between form submissions
+        malt_row.last_run_date = datetime.datetime(2020, 1, 17)
+        malt_row.save()
+
+        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 20))
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+
+        # mock bulk_create to avoid raising an actual error in the db transaction because this results in errors
+        # when trying to make future changes within the same transaction
+        with patch.object(MALTRow.objects, 'bulk_create', side_effect=IntegrityError):
+            generate_malt([monthspan], domains=[self.domain.name])
+
+        malt_row = MALTRow.objects.get(user_id=self.user._id, app_id=self.app_id, device_id=self.DEVICE_ID,
+                                       month=monthspan.startdate)
+
+        # ensure it updates
+        self.assertEqual(malt_row.num_of_forms, 2)
 
     def test_does_not_update(self):
         self._save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
