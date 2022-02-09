@@ -2,7 +2,7 @@ import datetime
 from unittest.mock import Mock, patch
 
 from django.http import Http404
-from django.test import SimpleTestCase, TestCase, TransactionTestCase
+from django.test import SimpleTestCase, TestCase
 
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -37,7 +37,7 @@ from corehq.util.test_utils import disable_quickcache
 
 
 @es_test
-class MaltGeneratorTest(TransactionTestCase):
+class MaltGeneratorTest(TestCase):
     """
     This serves as the end to end test for malt generation and should only test the happy path
     Avoid adding other test cases to this class if possible because it is very slow
