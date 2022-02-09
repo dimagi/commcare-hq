@@ -40,6 +40,7 @@ from corehq.util.test_utils import disable_quickcache
 class MaltGeneratorTest(TransactionTestCase):
     """
     This serves as the end to end test for malt generation and should only test the happy path
+    Avoid adding other test cases to this class if possible because it is very slow
     """
 
     DOMAIN_NAME = "test"
@@ -50,12 +51,14 @@ class MaltGeneratorTest(TransactionTestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.es = get_es_new()
+        initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
         cls._setup_domain()
         cls._setup_user()
         cls._setup_app()
 
     @classmethod
     def tearDownClass(cls):
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
         cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         super().tearDownClass()
@@ -86,15 +89,7 @@ class MaltGeneratorTest(TransactionTestCase):
             app_id=app_id,
         )
 
-    def setUp(self) -> None:
-        super().setUp()
-        initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
-
-    def tearDown(self) -> None:
-        ensure_index_deleted(XFORM_INDEX_INFO.index)
-        super().tearDown()
-
-    def test_successfully_creates(self):
+    def test_malt(self):
         self._save_form_data(self.app_id, datetime.datetime(2019, 12, 31))
         self._save_form_data(self.app_id, datetime.datetime(2020, 1, 1))
         self._save_form_data(self.app_id, datetime.datetime(2020, 1, 31))
@@ -113,48 +108,19 @@ class MaltGeneratorTest(TransactionTestCase):
         self.assertEqual(rows[0].num_of_forms, 2)
         self.assertEqual(rows[0].wam, True)
         self.assertFalse(MALTRow.objects.filter(month=DateSpan.from_month(12, 2019).startdate).exists())
+        previous_jan_run_date = rows[0].last_run_date
 
-    def test_does_not_update(self):
-        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
-
-        monthspan = DateSpan.from_month(1, 2020)
-        generate_malt([monthspan], domains=[self.domain.name])
-
-        rows = MALTRow.objects.filter(
-            user_id=self.user._id,
-            app_id=self.app_id,
-            device_id=self.DEVICE_ID,
-            month=monthspan.startdate
-        )
-        self.assertEqual(len(rows), 1)
-        previous_run_date = rows[0].last_run_date
-
-        generate_malt([monthspan], domains=[self.domain.name])
-
-        rows = MALTRow.objects.filter(
-            user_id=self.user._id,
-            app_id=self.app_id,
-            device_id=self.DEVICE_ID,
-            month=monthspan.startdate
-        )
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0].last_run_date, previous_run_date)
-
-    def test_multiple_months(self):
-        self._save_form_data(self.app_id, datetime.datetime(2019, 12, 15))
-        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
-        self._save_form_data(self.app_id, datetime.datetime(2020, 1, 16))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
-
+        # test multiple months
         monthspans = [DateSpan.from_month(12, 2019), DateSpan.from_month(1, 2020)]
         generate_malt(monthspans, domains=[self.domain.name])
 
         december_malt = MALTRow.objects.filter(month=DateSpan.from_month(12, 2019).startdate)[0]
         january_malt = MALTRow.objects.filter(month=DateSpan.from_month(1, 2020).startdate)[0]
-
         self.assertEqual(december_malt.num_of_forms, 1)
         self.assertEqual(january_malt.num_of_forms, 2)
+
+        # ensure last_run_date wasn't changed
+        self.assertEqual(january_malt.last_run_date, previous_jan_run_date)
 
 
 class TestSaveMaltRowDictsToDB(TestCase):
