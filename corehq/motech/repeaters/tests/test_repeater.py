@@ -350,7 +350,10 @@ class RepeaterTest(BaseRepeaterTest):
             self.assertEqual(mock_process.delay.call_count, 2)
 
     def test_automatic_cancel_repeat_record(self):
-        repeat_record = self.case_repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
+        rr = self.case_repeater.register(case)
+        # Fetch the revision that was updated:
+        repeat_record = RepeatRecord.get(rr.record_id)
         self.assertEqual(1, repeat_record.overall_tries)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=Exception('Boom!')):
             for __ in range(repeat_record.max_possible_tries - repeat_record.overall_tries):
