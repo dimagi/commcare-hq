@@ -23,6 +23,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import XForm
+from corehq.util.test_utils import flag_enabled
 
 
 class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
@@ -63,6 +64,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         self.form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_case'), self.form.render_xform())
 
+    @flag_enabled('SAVE_ONLY_EDITED_FORM_FIELDS')
     def test_update_case_edit_update_mode(self):
         self.form.requires = 'case'
         self.form.actions.update_case = UpdateCaseAction(
@@ -80,6 +82,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         )
         self.assertXmlPartialEqual(expected, self.form.render_xform(), xpath)
 
+    @flag_enabled('SAVE_ONLY_EDITED_FORM_FIELDS')
     def test_update_usercase_edit_update_mode(self):
         self.form.actions.usercase_update = UpdateCaseAction(
             update={'name': ConditionalCaseUpdate(question_path='/data/question1', update_mode='edit')})
@@ -307,6 +310,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         ))
         self.assertXmlEqual(self.get_xml('update_case'), self.form.render_xform())
 
+    @flag_enabled('SAVE_ONLY_EDITED_FORM_FIELDS')
     def test_update_case_edit_update_mode(self):
         self.form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=self.module.case_type,
