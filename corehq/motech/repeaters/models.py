@@ -435,7 +435,7 @@ class SQLCaseRepeater(SQLRepeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
+        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
 
     def get_headers(self, repeat_record):
         headers = super().get_headers(repeat_record)
