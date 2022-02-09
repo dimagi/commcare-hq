@@ -668,6 +668,12 @@ class RepeaterFailureTest(BaseRepeaterTest):
 
     def setUp(self):
         super().setUp()
+
+        # Create the case before creating the repeater, so that the
+        # repeater doesn't fire for the case creation. Each test
+        # registers this case, and the repeater will fire then.
+        self.post_xml(self.xform_xml, self.domain)
+
         self.connx = ConnectionSettings.objects.create(
             domain=self.domain,
             url='case-repeater-url',
@@ -677,7 +683,6 @@ class RepeaterFailureTest(BaseRepeaterTest):
             connection_settings_id=self.connx.id,
         )
         self.repeater.save()
-        self.post_xml(self.xform_xml, self.domain)
 
     def tearDown(self):
         self.repeater.delete()
@@ -696,29 +701,32 @@ class RepeaterFailureTest(BaseRepeaterTest):
         self.assertFalse(repeat_record.succeeded)
 
     def test_failure(self):
-        repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=RequestException('Boom!')):
-            repeat_record.fire()
+            rr = self.repeater.register(case)  # calls repeat_record.fire()
 
+        # Fetch the repeat_record revision that was updated
+        repeat_record = RepeatRecord.get(rr.record_id)
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
         self.assertFalse(repeat_record.succeeded)
 
     def test_unexpected_failure(self):
-        repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=Exception('Boom!')):
-            repeat_record.fire()
+            rr = self.repeater.register(case)
 
+        repeat_record = RepeatRecord.get(rr.record_id)
         self.assertEqual(repeat_record.failure_reason, 'Internal Server Error')
         self.assertFalse(repeat_record.succeeded)
 
     def test_success(self):
-        repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
-        repeat_record = RepeatRecord.get(repeat_record.record_id)
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         # Should be marked as successful after a successful run
         with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
             mock_simple_post.return_value.status_code = 200
-            repeat_record.fire()
+            rr = self.repeater.register(case)
 
+        repeat_record = RepeatRecord.get(rr.record_id)
         self.assertTrue(repeat_record.succeeded)
 
 
