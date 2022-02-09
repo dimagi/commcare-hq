@@ -15,13 +15,9 @@ class UsercaseAccessorsTests(TestCase):
         super(UsercaseAccessorsTests, cls).setUpClass()
         cls.domain = Domain(name='foo')
         cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
         cls.user = CommCareUser.create(cls.domain.name, 'username', 's3cr3t', None, None)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain.name, deleted_by=None)
-        cls.domain.delete()
-        super(UsercaseAccessorsTests, cls).tearDownClass()
+        cls.addClassCleanup(cls.user.delete, cls.domain.name, deleted_by=None)
 
     def setUp(self):
         create_case(

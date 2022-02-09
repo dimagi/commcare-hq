@@ -16,17 +16,13 @@ class TestWebUserSyncUsercase(TestCase):
         super(TestWebUserSyncUsercase, cls).setUpClass()
         cls.username = "test-username"
         cls.domain_obj = create_domain("test")
+        cls.addClassCleanup(cls.domain_obj.delete)
         cls.domain_name = cls.domain_obj.name
         cls.user = WebUser.create(cls.domain_name, cls.username, '***', None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
         cls.user_id = cls.user._id
         cls.domain_obj.usercase_enabled = True
         cls.domain_obj.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain_name, deleted_by=None)
-        cls.domain_obj.delete()
-        return super(TestWebUserSyncUsercase, cls).tearDownClass()
 
     @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
     def test_sync_usercases(self):
@@ -41,6 +37,7 @@ class TestBulkSyncUsercases(TestCase):
     def setUpClass(cls):
         super(TestBulkSyncUsercases, cls).setUpClass()
         cls.domain_obj = create_domain("test")
+        cls.addClassCleanup(cls.domain_obj.delete)
         cls.domain_name = cls.domain_obj.name
         cls.domain_obj.usercase_enabled = True
         cls.domain_obj.save()
@@ -51,17 +48,12 @@ class TestBulkSyncUsercases(TestCase):
 
         # Create multiple users
         for username in cls.usernames:
-            cls.users.append(CommCareUser.create(cls.domain_name, username, '***', None, None))
+            user = CommCareUser.create(cls.domain_name, username, '***', None, None)
+            cls.users.append(user)
+            cls.addClassCleanup(user.delete, cls.domain_name, deleted_by=None)
         # Get their ids
         for user in cls.users:
             cls.user_ids.append(user._id)
-
-    @classmethod
-    def tearDownClass(cls):
-        for user in cls.users:
-            user.delete(cls.domain_name, deleted_by=None)
-        cls.domain_obj.delete()
-        return super(TestBulkSyncUsercases, cls).tearDownClass()
 
     def test_bulk_sync_usercases(self):
         bulk_sync_usercases_if_applicable(self.domain_name, self.user_ids)
