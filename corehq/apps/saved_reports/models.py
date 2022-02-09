@@ -821,8 +821,8 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             if report_config.report_slug not in [ApplicationStatusReport.slug, CaseActivityReport.slug]:
                 # ApplicationStatusReport and CaseActivityReport don't have date filter
                 date_range = report_config.get_date_range()
-                request_params['startdate'] = str(datetime.strptime(date_range['startdate'], '%Y-%m-%d'))
-                request_params['enddate'] = str(datetime.strptime(date_range['enddate'], '%Y-%m-%d'))
+                request_params['startdate'] = datetime.strptime(date_range['startdate'], '%Y-%m-%d').isoformat()
+                request_params['enddate'] = datetime.strptime(date_range['enddate'], '%Y-%m-%d').isoformat()
 
             full_request = {'request': request_data,
                             'domain': request_data['domain'],

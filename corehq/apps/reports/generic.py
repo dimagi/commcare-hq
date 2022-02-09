@@ -21,6 +21,7 @@ from memoized import memoized
 
 from couchexport.export import export_from_tables, get_writer
 from couchexport.shortcuts import export_response
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_request, json_response
@@ -41,6 +42,7 @@ from corehq.apps.reports.util import DatatablesParams, get_report_timezone
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
+from corehq.util.dates import iso_string_to_datetime
 
 from corehq import toggles
 
@@ -190,24 +192,28 @@ class GenericReportView(object):
             fields="\n   Report Fields: \n     -%s" % "\n     -".join(self.fields) if self.fields else ""
         )
 
-    def __getstate__(self):
+    def get_json_report_parameters(self):
         """
-            Returns report parameters to rebuild report in Celery.
+            Returns a JSON serializable dict of report parameters for rebuilding the report in Celery.
         """
         request = request_as_dict(self.request)
-
-        return dict(
+        report_state = dict(
             request=request,
             request_params=self.request_params,
             domain=self.domain,
             context={}
         )
+        datespan = report_state['request'].pop('datespan')
+        report_state['request_params']['startdate'] = datespan.startdate.isoformat()
+        report_state['request_params']['enddate'] = datespan.enddate.isoformat()
+
+        return report_state
 
     _caching = False
 
-    def __setstate__(self, state):
+    def set_report_parameters(self, state):
         """
-            Restoring a report from __getstate__ returned report parameters.
+            Restoring a report from report parameters returned by get_json_report_parameters.
         """
         self.domain = state.get('domain')
         self.context = state.get('context', {})
@@ -220,6 +226,15 @@ class GenericReportView(object):
             couch_user = None
             datespan = None
             can_access_all_locations = None
+
+        if 'startdate' and 'enddate' in state['request_params']:
+            date_holder = state['request_params']
+        elif 'startdate' and 'enddate' in state['request']:
+            date_holder = state['request']
+        if date_holder:
+            start_date = iso_string_to_datetime(date_holder['startdate'])
+            end_date = iso_string_to_datetime(date_holder['enddate'])
+            state['request']['datespan'] = DateSpan(start_date, end_date)
 
         request_data = state.get('request')
         request = FakeHttpRequest()
@@ -662,12 +677,8 @@ class GenericReportView(object):
         Returns the tabular export of the data, if available.
         """
         self.is_rendered_as_export = True
-        report_state = self.__getstate__()
-        datespan = report_state['request'].pop('datespan')
-        report_state['request_params']['startdate'] = datespan.startdate.isoformat()
-        report_state['request_params']['enddate'] = datespan.enddate.isoformat()
         if self.exportable_all:
-            export_all_rows_task.delay(self.__class__.slug, report_state)
+            export_all_rows_task.delay(self.__class__.slug, self.get_json_report_parameters())
             return HttpResponse()
         else:
             # We only want to cache the responses which serve files directly

@@ -11,7 +11,6 @@ from text_unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
-from dimagi.utils.dates import DateSpan
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
@@ -26,7 +25,7 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
 from corehq.elastic import send_to_elasticsearch
 from corehq.form_processor.models import XFormInstance
-from corehq.util.dates import get_timestamp_for_filename, iso_string_to_datetime
+from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_gauge
 from corehq.util.soft_assert import soft_assert
@@ -37,6 +36,7 @@ from .analytics.esaccessors import (
     get_form_ids_with_multimedia,
     scroll_case_names,
 )
+from .const import get_report_class
 
 logger = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
@@ -162,44 +162,12 @@ def apps_update_calculated_properties():
 
 @task(ignore_result=True)
 def export_all_rows_task(report_class_name, report_state, recipient_list=None, subject=None):
-    from corehq.apps.reports.standard.monitoring import WorkerActivityReport, DailyFormStatsReport, \
-        CaseActivityReport
-    from corehq.apps.reports.standard.deployments import ApplicationStatusReport
-    from phonelog.reports import DeviceLogDetailsReport
-    from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
-    from corehq.apps.reports.standard.cases.duplicate_cases import DuplicateCasesExplorer
-    from corehq.apps.reports.commtrack import CurrentStockStatusReport
-    from corehq.apps.smsbillables.interface import SMSBillablesInterface, SMSGatewayFeeCriteriaInterface
-    from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
-    from corehq.apps.hqadmin.reports import DeviceLogSoftAssertReport
-
-    reports = {
-        ApplicationStatusReport.slug: ApplicationStatusReport,
-        CaseActivityReport.slug: CaseActivityReport,
-        DailyFormStatsReport.slug: DailyFormStatsReport,
-        DeviceLogDetailsReport.slug: DeviceLogDetailsReport,
-        SMSBillablesInterface.slug: SMSBillablesInterface,
-        SMSGatewayFeeCriteriaInterface.slug: SMSGatewayFeeCriteriaInterface,
-        WorkerActivityReport.slug: WorkerActivityReport,
-        DeviceLogSoftAssertReport.slug: DeviceLogSoftAssertReport,
-        EnterpriseSMSBillablesReport.slug: EnterpriseSMSBillablesReport,
-        CaseListExplorer.slug: CaseListExplorer,
-        DuplicateCasesExplorer.slug: DuplicateCasesExplorer,
-        CurrentStockStatusReport.slug: CurrentStockStatusReport,
-    }
-
-    #Reforming datespan object
-    if 'startdate' and 'enddate' in report_state['request_params']:
-        start_date = iso_string_to_datetime(report_state['request_params']['startdate'])
-        end_date = iso_string_to_datetime(report_state['request_params']['enddate'])
-        report_state['request']['datespan'] = DateSpan(start_date, end_date)
-
     GET_data = QueryDict('', mutable=True)
     GET_data.update(report_state['request']['GET'])
     report_state['request']['GET'] = GET_data
 
-    report = object.__new__(reports[report_class_name])
-    report.__setstate__(report_state)
+    report = object.__new__(get_report_class(report_class_name))
+    report.set_report_parameters(report_state)
     report.rendered_as = 'export'
 
     setattr(report.request, 'REQUEST', {})
