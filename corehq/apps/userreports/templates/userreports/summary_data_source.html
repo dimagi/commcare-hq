@@ -72,7 +72,7 @@
       <tr>
         <td id="{{ named_filter_prefix }}:{{ filter.name }}">{{ filter.name }}</td>
         <td>{{ filter.comment }}</td>
-        <td><pre>{{ filter.readable_output|safe }}</pre></td>
+        <td><pre>{{ filter.readable_output }}</pre></td>
       </tr>
     {% endfor %}
   </table>
