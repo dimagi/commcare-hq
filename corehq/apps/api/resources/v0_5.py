@@ -769,6 +769,26 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
         domain = kwargs['domain']
         return get_datasources_for_domain(domain)
 
+    def obj_update(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        pk = kwargs['pk']
+        try:
+            data_source = get_document_or_404(DataSourceConfiguration, domain, pk)
+        except Http404 as e:
+            raise NotFound(str(e))
+        allowed_update_fields = [
+            'display_name',
+            'configured_filter',
+            'configured_indicators',
+        ]
+        for key, value in bundle.data.items():
+            if key in allowed_update_fields:
+                print(f'setting {key} to {value}')
+                data_source[key] = value
+        data_source.save()
+        bundle.obj = data_source
+        return bundle
+
     def detail_uri_kwargs(self, bundle_or_obj):
         return {
             'domain': get_obj(bundle_or_obj).domain,
@@ -777,8 +797,9 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
 
     class Meta(CustomResourceMeta):
         resource_name = 'ucr_data_source'
-        list_allowed_methods = ["get"]
-        detail_allowed_methods = ["get"]
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get', 'put']
+        always_return_data = True
         paginator_class = DoesNothingPaginator
 
 
