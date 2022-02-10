@@ -1086,10 +1086,7 @@ class XForm(WrappedNode):
             node = cnode.node
             path = cnode.path
 
-            try:
-                path = path.question_path
-            except AttributeError:
-                pass
+            path = getattr(path, "question_path", path)
 
             is_group = not cnode.is_leaf
             if is_group and not include_groups:

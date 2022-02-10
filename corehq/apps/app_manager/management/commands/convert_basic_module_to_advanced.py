@@ -69,7 +69,7 @@ class Command(BaseCommand):
 
             actions = form.active_actions()
             open = actions.get('open_case', None)
-            update = actions.get('update_case', None)  # TODO: confirm correct format
+            update = actions.get('update_case', None)
             close = actions.get('close_case', None)
             preload = actions.get('case_preload', None)
             subcases = actions.get('subcases', None)
