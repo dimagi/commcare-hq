@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.contrib.auth.models import User
 
 from google.oauth2.credentials import Credentials
@@ -12,7 +12,7 @@ from corehq.apps.oauth_integrations.utils import get_token, chunkify_data, load_
 class TestUtils(TestCase):
 
     def setUp(self):
-        super(TestUtils, self).setUp()
+        super().setUp()
         self.user = User()
         self.user.username = 'test@user.com'
         self.user.save()
@@ -26,10 +26,6 @@ class TestUtils(TestCase):
             scopes="scopes",
             expiry=datetime(2020, 1, 1)
         )
-        GoogleApiToken.objects.create(
-            user=self.user,
-            token=stringify_credentials(self.credentials)
-        )
 
     def tearDown(self):
         self.credentials = None
@@ -37,6 +33,33 @@ class TestUtils(TestCase):
         objects.delete()
         self.user.delete()
         return super().tearDown()
+
+    def test_get_token_with_created_token(self):
+        GoogleApiToken.objects.create(
+            user=self.user,
+            token=stringify_credentials(self.credentials)
+        )
+
+        token = get_token(self.user)
+
+        self.assertIsNotNone(token)
+
+    def test_get_token_without_token(self):
+        token = get_token(self.user)
+
+        self.assertIsNone(token)
+
+    def test_chunkify_data(self):
+        desired_list = ['This is a string of ', 'data that I want to ', 'break up in four chu', 'nks']
+        chunk_length = 20
+        data = "This is a string of data that I want to break up in four chunks"
+
+        chunkified_data = chunkify_data(data, chunk_length)
+
+        self.assertListEqual(chunkified_data, desired_list)
+
+
+class TestCredentialsUtils(SimpleTestCase):
 
     def test_stringify_credentials(self):
         desired_credentials = ('{"token": "token", "refresh_token": "refresh_token", "id_token": "id_token", '
@@ -54,17 +77,3 @@ class TestUtils(TestCase):
         loaded_credentials = load_credentials(stringified_credentials)
 
         self.assertEqual(loaded_credentials.token, desired_credentials.token)
-
-    def test_get_token(self):
-        token = get_token(self.user)
-
-        self.assertIsNotNone(token)
-
-    def test_chunkify_data(self):
-        desired_chunk_len = 4
-        chunk_length = 20
-        data = "This is a string of data that I want to break up in four chunks"
-
-        chunkified_data = chunkify_data(data, chunk_length)
-
-        self.assertEqual(len(chunkified_data), desired_chunk_len)
