@@ -43,7 +43,7 @@ def _find_plans_with_linked_projects_toggle():
         domain_obj = Domain.get_by_name(domain)
         if not domain_obj:
             continue
-        if not domain_obj.is_test == 'true':
+        if domain_obj.is_test == 'true':
             continue
         subscription = Subscription.get_active_subscription_by_domain(domain)
         plan_version = subscription.plan_version if subscription else \
@@ -59,6 +59,7 @@ def _find_plans_with_linked_projects_toggle():
                 'edition': plan_version.plan.edition,
                 'visibility': plan_version.plan.visibility,
                 'active_subscription': subscription is not None,
+                'created_by': domain_obj.creating_user,
             }
             if is_public or is_community:
                 manual_audits.append(entry)
