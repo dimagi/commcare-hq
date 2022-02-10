@@ -81,5 +81,4 @@ branches:
     - nh/api_log_export  # Norman Feb 8
     - smh/data-registry-reports-permissions # Steph Feb 8
     - gh/mrm/base # Graham Feb 8
-    - gh/malt/update-last-run # Graham Feb 9
 submodules: { }
