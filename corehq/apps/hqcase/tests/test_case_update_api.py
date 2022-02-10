@@ -223,7 +223,7 @@ class TestCaseAPI(TestCase):
             },
         })
         self.assertEqual(res.json()['error'], "No case found with ID 'notarealcaseid'")
-        self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
+        self.assertEqual(CommCareCase.objects.get_case_ids_in_domain(self.domain), [])
 
     def test_update_case_on_other_domain(self):
         case_id = str(uuid.uuid4())
@@ -239,7 +239,7 @@ class TestCaseAPI(TestCase):
             'owner_id': 'stealing_this_case',
         })
         self.assertEqual(res.json()['error'], f"No case found with ID '{case_id}'")
-        self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
+        self.assertEqual(CommCareCase.objects.get_case_ids_in_domain(self.domain), [])
 
     def test_create_child_case(self):
         parent_case = self._make_case()
@@ -333,7 +333,7 @@ class TestCaseAPI(TestCase):
             },
         ])
         self.assertEqual(res.json()['error'], "The following case IDs were not found: notarealcaseid")
-        self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
+        self.assertEqual(CommCareCase.objects.get_case_ids_in_domain(self.domain), [])
 
     def test_create_parent_and_child_together(self):
         res = self._bulk_update_cases([

@@ -10,7 +10,6 @@ from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 
@@ -54,7 +53,7 @@ class CaseClaimTests(TestCase):
 
     def assert_claim(self, claim=None, claim_id=None):
         if claim is None:
-            claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+            claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
             self.assertEqual(len(claim_ids), 1)
             claim = CommCareCase.objects.get_case(claim_ids[0], DOMAIN)
         if claim_id:

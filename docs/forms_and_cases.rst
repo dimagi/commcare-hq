@@ -102,7 +102,7 @@ name in order to know which DB needs to be queried.
 - CommCareCase.objects.get_case(case_id, domain)
 - CommCareCase.objects.get_cases(case_ids, domain)
 - CommCareCase.objects.iter_cases(case_ids, domain)
-- CaseAccessors(domain).get_case_ids_in_domain(type='dog')
+- CommCareCase.objects.get_case_ids_in_domain(domain, type='dog')
 
 **Ledgers**
 

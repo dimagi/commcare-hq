@@ -7,6 +7,7 @@ from collections import OrderedDict, namedtuple
 from datetime import datetime
 
 from django.db import DatabaseError, models, transaction
+from django.db.models import F
 
 from ddtrace import tracer
 from jsonfield.fields import JSONField
@@ -95,6 +96,42 @@ class CommCareCaseManager(RequireDBManager):
                           .values_list('case_id', flat=True))
         return result
 
+    def get_case_ids_in_domain(self, domain, type=None):
+        return self._get_case_ids_in_domain(domain, case_type=type)
+
+    def get_open_case_ids_in_domain_by_type(self, domain, case_type, owner_ids=None):
+        return self._get_case_ids_in_domain(
+            domain, case_type=case_type, owner_ids=owner_ids, is_closed=False)
+
+    def get_deleted_case_ids_in_domain(self, domain):
+        return self._get_case_ids_in_domain(domain, deleted=True)
+
+    def get_deleted_case_ids_by_owner(self, domain, owner_id):
+        return self._get_case_ids_in_domain(domain, owner_ids=[owner_id], deleted=True)
+
+    def get_case_ids_in_domain_by_owners(self, domain, owner_ids, closed=None, case_type=None):
+        """
+        get case_ids for open, closed, or all cases in a domain
+        that belong to a list of owner_ids
+
+        owner_ids: a list of owner ids to filter on.
+            A case matches if it belongs to any of them.
+        closed: True (only closed cases), False (only open cases), or None (all)
+
+        returns a list of case_ids
+        """
+        return self._get_case_ids_in_domain(
+            domain, case_type=case_type, owner_ids=owner_ids, is_closed=closed)
+
+    def _get_case_ids_in_domain(self, domain, case_type=None, owner_ids=None, is_closed=None, deleted=False):
+        owner_ids = list(owner_ids) if owner_ids else None
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s, %s)',
+                [domain, case_type, owner_ids, is_closed, deleted]
+            )
+            return [row[0] for row in cursor]
+
     def get_case_xform_ids(self, case_id):
         with self.model.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
@@ -121,6 +158,15 @@ class CommCareCaseManager(RequireDBManager):
             )
             attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
         return cases
+
+    def get_case_by_location(self, domain, location_id):
+        try:
+            return self.plproxy_raw(
+                'SELECT * from get_case_by_location_id(%s, %s)',
+                [domain, location_id]
+            )[0]
+        except IndexError:
+            return None
 
     def hard_delete_cases(self, domain, case_ids):
         """Permanently delete cases in domain
@@ -351,8 +397,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def transactions(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        transactions = CaseAccessorSQL.get_transactions(self.case_id) if self.is_saved() else []
+        transactions = CaseTransaction.objects.get_transactions(self.case_id) if self.is_saved() else []
         transactions += self.get_tracked_models_to_create(CaseTransaction)
         return transactions
 
@@ -370,11 +415,10 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return transactions[0] if transactions else None
 
     def get_transaction_by_form_id(self, form_id):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         transaction = self._get_unsaved_transaction_for_form(form_id)
 
         if not transaction and self.is_saved():
-            transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
+            transaction = CaseTransaction.objects.get_transaction_by_form_id(self.case_id, form_id)
         return transaction
 
     @property
@@ -408,9 +452,8 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return self._transactions_by_type(CaseTransaction.TYPE_FORM)
 
     def _transactions_by_type(self, transaction_type):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         if self.is_saved():
-            transactions = CaseAccessorSQL.get_transactions_by_type(self.case_id, transaction_type)
+            transactions = CaseTransaction.objects.get_transactions_by_type(self.case_id, transaction_type)
         else:
             transactions = []
         transactions += [
@@ -422,8 +465,8 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     def modified_since_sync(self, sync_log):
         if self.server_modified_on >= sync_log.date:
             # check all of the transactions since last sync for one that had a different sync token
-            from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-            return CaseAccessorSQL.case_has_transactions_since_sync(self.case_id, sync_log._id, sync_log.date)
+            return CaseTransaction.objects.case_has_transactions_since_sync(
+                self.case_id, sync_log._id, sync_log.date)
         return False
 
     def get_actions_for_form(self, xform):
@@ -931,6 +974,48 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
 
 
 class CaseTransactionManager(RequireDBManager):
+
+    def get_transactions(self, case_id):
+        return list(
+            self.partitioned_query(case_id)
+            .filter(case_id=case_id)
+            .order_by('server_date')
+        )
+
+    def get_transaction_by_form_id(self, case_id, form_id):
+        transactions = list(self.plproxy_raw(
+            'SELECT * from get_case_transaction_by_form_id(%s, %s)',
+            [case_id, form_id])
+        )
+        assert len(transactions) <= 1, (case_id, form_id, len(transactions))
+        return transactions[0] if transactions else None
+
+    def get_most_recent_form_transaction(self, case_id):
+        return (
+            self.partitioned_query(case_id)
+            .filter(case_id=case_id, revoked=False)
+            .annotate(type_filter=F('type').bitand(self.model.TYPE_FORM))
+            .filter(type_filter=self.model.TYPE_FORM)
+            .order_by("-server_date")
+            .first()
+        )
+
+    def get_transactions_by_type(self, case_id, transaction_type):
+        return list(self.plproxy_raw(
+            'SELECT * from get_case_transactions_by_type(%s, %s)',
+            [case_id, transaction_type],
+        ))
+
+    def get_transactions_for_case_rebuild(self, case_id):
+        return self.get_transactions_by_type(case_id, self.model.TYPE_FORM)
+
+    def case_has_transactions_since_sync(self, case_id, sync_log_id, sync_log_date):
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_has_transactions_since_sync(%s, %s, %s)',
+                [case_id, sync_log_id, sync_log_date],
+            )
+            return cursor.fetchone()[0]
 
     @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
     def check_order_for_case(self, case_id):

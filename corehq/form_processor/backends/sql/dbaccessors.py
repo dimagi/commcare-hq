@@ -465,68 +465,52 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_transactions(case_id):
-        return list(
-            CaseTransaction.objects
-            .partitioned_query(case_id)
-            .filter(case_id=case_id)
-            .order_by('server_date')
-        )
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.get_transactions(case_id)
 
     @staticmethod
     def get_transaction_by_form_id(case_id, form_id):
-        transactions = list(CaseTransaction.objects.plproxy_raw(
-            'SELECT * from get_case_transaction_by_form_id(%s, %s)',
-            [case_id, form_id])
-        )
-        assert len(transactions) <= 1
-        return transactions[0] if transactions else None
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.get_transaction_by_form_id(case_id, form_id)
 
     @staticmethod
     def get_most_recent_form_transaction(case_id):
-        return CaseTransaction.objects.partitioned_query(case_id).filter(case_id=case_id, revoked=False).annotate(
-            type_filter=F('type').bitand(CaseTransaction.TYPE_FORM)
-        ).filter(type_filter=CaseTransaction.TYPE_FORM).order_by("-server_date").first()
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.get_most_recent_form_transaction(case_id)
 
     @staticmethod
     def get_transactions_by_type(case_id, transaction_type):
-        return list(CaseTransaction.objects.plproxy_raw(
-            'SELECT * from get_case_transactions_by_type(%s, %s)',
-            [case_id, transaction_type])
-        )
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.get_transactions_by_type(case_id, transaction_type)
 
     @staticmethod
     def get_transactions_for_case_rebuild(case_id):
-        return CaseAccessorSQL.get_transactions_by_type(case_id, CaseTransaction.TYPE_FORM)
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.get_transactions_for_case_rebuild(case_id)
 
     @staticmethod
     def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):
-        with CaseTransaction.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT case_has_transactions_since_sync(%s, %s, %s)', [case_id, sync_log_id, sync_log_date]
-            )
-            result = cursor.fetchone()[0]
-            return result
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date)
 
     @staticmethod
     def get_case_by_location(domain, location_id):
-        try:
-            return CommCareCase.objects.plproxy_raw(
-                'SELECT * from get_case_by_location_id(%s, %s)',
-                [domain, location_id]
-            )[0]
-        except IndexError:
-            return None
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_case_by_location(domain, location_id)
 
     @staticmethod
     def get_case_ids_in_domain(domain, type_=None):
+        warn("DEPRECATED", DeprecationWarning)
         return CaseAccessorSQL._get_case_ids_in_domain(domain, case_type=type_)
 
     @staticmethod
     def get_deleted_case_ids_in_domain(domain):
+        warn("DEPRECATED", DeprecationWarning)
         return CaseAccessorSQL._get_case_ids_in_domain(domain, deleted=True)
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None, case_type=None):
+        warn("DEPRECATED", DeprecationWarning)
         return CaseAccessorSQL._get_case_ids_in_domain(domain, case_type=case_type,
                                                        owner_ids=owner_ids, is_closed=closed)
 
@@ -536,29 +520,16 @@ class CaseAccessorSQL:
         return case.save(with_tracked_models=True)
 
     @staticmethod
-    def get_open_case_ids_for_owner(domain, owner_id):
-        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], is_closed=False)
-
-    @staticmethod
-    def get_closed_case_ids_for_owner(domain, owner_id):
-        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], is_closed=True)
-
-    @staticmethod
     def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
+        warn("DEPRECATED", DeprecationWarning)
         return CaseAccessorSQL._get_case_ids_in_domain(
             domain, case_type=case_type, owner_ids=owner_ids, is_closed=False
         )
 
     @staticmethod
     def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None, deleted=False):
-        owner_ids = list(owner_ids) if owner_ids else None
-        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s, %s)',
-                [domain, case_type, owner_ids, is_closed, deleted]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects._get_case_ids_in_domain(domain, case_type, owner_ids, is_closed, deleted)
 
     @staticmethod
     def get_related_indices(domain, case_ids, exclude_indices):
@@ -669,6 +640,7 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
+        warn("DEPRECATED", DeprecationWarning)
         return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], deleted=True)
 
     @staticmethod

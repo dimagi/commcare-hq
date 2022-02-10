@@ -47,25 +47,15 @@ class CaseAccessors(object):
         return self.db_accessor.get_case_xform_ids(case_id)
 
     def get_case_ids_in_domain(self, type=None):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_case_ids_in_domain(self.domain, type)
 
     def get_case_ids_by_owners(self, owner_ids, closed=None):
-        """
-        get case_ids for open, closed, or all cases in a domain
-        that belong to a list of owner_ids
-
-        owner_ids: a list of owner ids to filter on.
-            A case matches if it belongs to any of them.
-        closed: True (only closed cases), False (only open cases), or None (all)
-
-        returns a list of case_ids
-        """
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_case_ids_in_domain_by_owners(self.domain, owner_ids, closed=closed)
 
-    def get_open_case_ids_for_owner(self, owner_id):
-        return self.db_accessor.get_open_case_ids_for_owner(self.domain, owner_id)
-
     def get_open_case_ids_in_domain_by_type(self, case_type, owner_ids=None):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_open_case_ids_in_domain_by_type(self.domain, case_type, owner_ids)
 
     def get_related_indices(self, case_ids, exclude_indices):
@@ -98,9 +88,6 @@ class CaseAccessors(object):
     def get_last_modified_dates(self, case_ids):
         return self.db_accessor.get_last_modified_dates(self.domain, case_ids)
 
-    def get_closed_case_ids_for_owner(self, owner_id):
-        return self.db_accessor.get_closed_case_ids_for_owner(self.domain, owner_id)
-
     def get_all_reverse_indices_info(self, case_ids):
         warn("DEPRECATED use CommCareCaseIndex.objects", DeprecationWarning)
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
@@ -126,6 +113,7 @@ class CaseAccessors(object):
         return self.db_accessor.soft_undelete_cases(self.domain, case_ids)
 
     def get_deleted_case_ids_by_owner(self, owner_id):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_deleted_case_ids_by_owner(self.domain, owner_id)
 
     def get_extension_chain(self, case_ids, include_closed=True, exclude_for_case_type=None):

@@ -313,7 +313,8 @@ class RetireUserTestCase(TestCase):
         )
         submit_case_blocks(caseblock.as_text(), self.domain, user_id=self.other_user._id)
 
-        case_ids = CaseAccessors(self.domain).get_case_ids_by_owners([self.commcare_user._id])
+        case_ids = CommCareCase.objects.get_case_ids_in_domain_by_owners(
+            self.domain, [self.commcare_user._id])
         self.assertEqual(1, len(case_ids))
 
         form_ids = XFormInstance.objects.get_form_ids_for_user(self.domain, self.commcare_user._id)
