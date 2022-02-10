@@ -9,34 +9,41 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import loadtest_users_enabled
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 
-from corehq.apps.domain.models import Domain
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
-from corehq.toggles import ENABLE_LOADTEST_USERS, NAMESPACE_DOMAIN
+
+DOMAIN = 'foo-domain'
 
 
-class LoadtestUserTest(TestCase):
+class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def setUpClass(cls):
         super(LoadtestUserTest, cls).setUpClass()
-        cls.domain = Domain(name='foo')
-        cls.domain.save()
-        cls.user = CommCareUser.create(cls.domain.name, 'somebody', 'password', None, None)
-        cls.user_id = cls.user._id
-        cls.factory = CaseFactory(domain='foo', case_defaults={'owner_id': cls.user_id})
-        ENABLE_LOADTEST_USERS.set('foo', True, namespace=NAMESPACE_DOMAIN)
+        cls.domain = create_domain(DOMAIN)
+        cls.setup_subscription(DOMAIN, SoftwarePlanEdition.PRO)
+        cls.user = CommCareUser.create(
+            DOMAIN, 'somebody', 'password',
+            created_by=None, created_via=None,
+        )
+        cls.factory = CaseFactory(
+            domain=DOMAIN,
+            case_defaults={'owner_id': cls.user._id},
+        )
 
     def setUp(self):
         delete_all_cases()
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(cls.domain.name, deleted_by=None)
+        cls.user.delete(DOMAIN, deleted_by=None)
         cls.domain.delete()
         super(LoadtestUserTest, cls).tearDownClass()
 
     def test_loadtest_users_enabled(self):
-        self.assertTrue(loadtest_users_enabled('foo'))
+        self.assertTrue(loadtest_users_enabled(DOMAIN))
 
     def test_no_factor_set(self):
         self.user.loadtest_factor = None
@@ -65,10 +72,14 @@ class LoadtestUserTest(TestCase):
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
         self.assertEqual(6, len(caseblocks))
-        self.assertEqual(1, len([cb for cb in caseblocks if cb.get_case_id() == case1.case_id]))
-        self.assertEqual(1, len([cb for cb in caseblocks if cb.get_case_id() == case2.case_id]))
-        self.assertEqual(3, len([cb for cb in caseblocks if case1.name in cb.get_case_name()]))
-        self.assertEqual(3, len([cb for cb in caseblocks if case2.name in cb.get_case_name()]))
+        self.assertEqual(1, len([cb for cb in caseblocks
+                                 if cb.get_case_id() == case1.case_id]))
+        self.assertEqual(1, len([cb for cb in caseblocks
+                                 if cb.get_case_id() == case2.case_id]))
+        self.assertEqual(3, len([cb for cb in caseblocks
+                                 if case1.name in cb.get_case_name()]))
+        self.assertEqual(3, len([cb for cb in caseblocks
+                                 if case2.name in cb.get_case_name()]))
 
     def test_parent_child(self):
         self.user.loadtest_factor = 3
@@ -76,9 +87,8 @@ class LoadtestUserTest(TestCase):
         child, parent = self.factory.create_or_update_case(
             CaseStructure(
                 attrs={'case_name': 'parent', 'create': True},
-                indices=[
-                    CaseIndex(CaseStructure(attrs={'case_name': 'child', 'create': True})),
-                ]
+                indices=[CaseIndex(CaseStructure(
+                    attrs={'case_name': 'child', 'create': True}))],
             )
         )
         restore_config = RestoreConfig(
@@ -89,7 +99,11 @@ class LoadtestUserTest(TestCase):
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
         self.assertEqual(6, len(caseblocks))
-        self.assertEqual(1, len([cb for cb in caseblocks if cb.get_case_id() == child.case_id]))
-        self.assertEqual(1, len([cb for cb in caseblocks if cb.get_case_id() == parent.case_id]))
-        self.assertEqual(3, len([cb for cb in caseblocks if child.name in cb.get_case_name()]))
-        self.assertEqual(3, len([cb for cb in caseblocks if parent.name in cb.get_case_name()]))
+        self.assertEqual(1, len([cb for cb in caseblocks
+                                 if cb.get_case_id() == child.case_id]))
+        self.assertEqual(1, len([cb for cb in caseblocks
+                                 if cb.get_case_id() == parent.case_id]))
+        self.assertEqual(3, len([cb for cb in caseblocks
+                                 if child.name in cb.get_case_name()]))
+        self.assertEqual(3, len([cb for cb in caseblocks
+                                 if parent.name in cb.get_case_name()]))

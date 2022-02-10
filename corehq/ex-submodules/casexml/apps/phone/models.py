@@ -37,7 +37,8 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.logging import notify_exception
 
-from corehq import toggles
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
@@ -1025,7 +1026,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
 
 def loadtest_users_enabled(domain: str) -> bool:
-    return toggles.ENABLE_LOADTEST_USERS.enabled(domain)
+    return domain_has_privilege(domain, privileges.LOADTEST_USERS)
 
 
 def _domain_has_legacy_toggle_set():
