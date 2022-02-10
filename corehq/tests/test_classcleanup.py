@@ -20,9 +20,9 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
             @wraps(func)
             def wrapper(self_):
                 func(self_)
-                self.result.append(func.__name__)
+                self.call_log.append(func.__name__)
                 if func.__name__ in self.errors:
-                    self.result[-1] += f" {self.error_class.__name__}"
+                    self.call_log[-1] += f" {self.error_class.__name__}"
                     raise self.error_class
             return wrapper
 
@@ -30,7 +30,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
             @classmethod
             @log_call_and_maybe_error
             def setUpClass(cls):
-                cls.addClassCleanup(lambda: self.result.append("cleanup"))
+                cls.addClassCleanup(self.call_log.append, "cleanup")
 
             @log_call_and_maybe_error
             def setUp(self):
@@ -52,14 +52,14 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
         return [Test()]
 
     def run_with_errors(self, *errors, error_class=Exception):
+        self.call_log = []
         self.errors = errors
-        self.result = []
         self.error_class = error_class
         super().setUp()
 
     def test_cleanup_in_happy_path(self):
         self.run_with_errors()
-        eq(self.result, [
+        eq(self.call_log, [
             "setUpClass",
             "setUp",
             "runTest",
@@ -70,14 +70,14 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
 
     def test_cleanup_on_error_in_set_up_class(self):
         self.run_with_errors("setUpClass")
-        eq(self.result, [
+        eq(self.call_log, [
             "setUpClass Exception",
             "cleanup"
         ])
 
     def test_cleanup_on_error_in_set_up(self):
         self.run_with_errors("setUp")
-        eq(self.result, [
+        eq(self.call_log, [
             "setUpClass",
             "setUp Exception",
             "tearDownClass",
@@ -86,7 +86,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
 
     def test_cleanup_on_error_in_test(self):
         self.run_with_errors("runTest")
-        eq(self.result, [
+        eq(self.call_log, [
             "setUpClass",
             "setUp",
             "runTest Exception",
@@ -97,7 +97,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
 
     def test_cleanup_on_test_fail(self):
         self.run_with_errors("runTest", error_class=AssertionError)
-        eq(self.result, [
+        eq(self.call_log, [
             "setUpClass",
             "setUp",
             "runTest AssertionError",
@@ -108,7 +108,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
 
     def test_cleanup_on_error_in_tearDown(self):
         self.run_with_errors("tearDown")
-        eq(self.result, [
+        eq(self.call_log, [
             "setUpClass",
             "setUp",
             "runTest",
@@ -119,7 +119,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
 
     def test_cleanup_on_error_in_tearDownClass(self):
         self.run_with_errors("tearDownClass")
-        eq(self.result, [
+        eq(self.call_log, [
             "setUpClass",
             "setUp",
             "runTest",
@@ -130,7 +130,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
 
     def test_cleanup_on_error_in_tearDown_and_tearDownClass(self):
         self.run_with_errors("tearDown", "tearDownClass")
-        eq(self.result, [
+        eq(self.call_log, [
             "setUpClass",
             "setUp",
             "runTest",
