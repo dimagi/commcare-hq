@@ -30,7 +30,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
             @classmethod
             @log_call_and_maybe_error
             def setUpClass(cls):
-                cls.addClassCleanup(self.call_log.append, "cleanup")
+                cls.addClassCleanup(self.call_log.append, "classCleanup")
 
             @log_call_and_maybe_error
             def setUp(self):
@@ -65,14 +65,14 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
             "runTest",
             "tearDown",
             "tearDownClass",
-            "cleanup",
+            "classCleanup",
         ])
 
     def test_cleanup_on_error_in_set_up_class(self):
         self.run_with_errors("setUpClass")
         eq(self.call_log, [
             "setUpClass Exception",
-            "cleanup"
+            "classCleanup"
         ])
 
     def test_cleanup_on_error_in_set_up(self):
@@ -81,7 +81,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
             "setUpClass",
             "setUp Exception",
             "tearDownClass",
-            "cleanup",
+            "classCleanup",
         ])
 
     def test_cleanup_on_error_in_test(self):
@@ -92,7 +92,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
             "runTest Exception",
             "tearDown",
             "tearDownClass",
-            "cleanup",
+            "classCleanup",
         ])
 
     def test_cleanup_on_test_fail(self):
@@ -103,7 +103,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
             "runTest AssertionError",
             "tearDown",
             "tearDownClass",
-            "cleanup",
+            "classCleanup",
         ])
 
     def test_cleanup_on_error_in_tearDown(self):
@@ -114,7 +114,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
             "runTest",
             "tearDown Exception",
             "tearDownClass",
-            "cleanup",
+            "classCleanup",
         ])
 
     def test_cleanup_on_error_in_tearDownClass(self):
@@ -125,7 +125,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
             "runTest",
             "tearDown",
             "tearDownClass Exception",
-            "cleanup",
+            "classCleanup",
         ])
 
     def test_cleanup_on_error_in_tearDown_and_tearDownClass(self):
@@ -136,5 +136,5 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
             "runTest",
             "tearDown Exception",
             "tearDownClass Exception",
-            "cleanup",
+            "classCleanup",
         ])
