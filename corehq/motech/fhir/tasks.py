@@ -261,7 +261,7 @@ def get_case_by_external_id(domain, external_id, case_type):
             domain, external_id, case_type, raise_multiple=True)
     except CommCareCase.MultipleObjectsReturned:
         return None
-    return case if not case.is_deleted else None
+    return case if case is not None and not case.is_deleted else None
 
 
 def get_caseblock_kwargs(resource_type, resource):
