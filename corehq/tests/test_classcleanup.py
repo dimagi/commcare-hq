@@ -15,26 +15,37 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
         pass  # super().setUp() is called by self.run_with_errors(...)
 
     def makeSuite(self):
+
+        def log_call_and_maybe_error(func):
+            @wraps(func)
+            def wrapper(self_):
+                func(self_)
+                self.result.append(func.__name__)
+                if func.__name__ in self.errors:
+                    self.result[-1] += f" {self.error_class.__name__}"
+                    raise self.error_class
+            return wrapper
+
         class Test(TestCase):
             @classmethod
-            @maybe_error(self)
+            @log_call_and_maybe_error
             def setUpClass(cls):
                 cls.addClassCleanup(lambda: self.result.append("cleanup"))
 
-            @maybe_error(self)
+            @log_call_and_maybe_error
             def setUp(self):
                 pass
 
-            @maybe_error(self)
+            @log_call_and_maybe_error
             def runTest(self):
                 pass
 
-            @maybe_error(self)
+            @log_call_and_maybe_error
             def tearDown(self):
                 pass
 
             @classmethod
-            @maybe_error(self)
+            @log_call_and_maybe_error
             def tearDownClass(cls):
                 pass
 
@@ -127,16 +138,3 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
             "tearDownClass Exception",
             "cleanup",
         ])
-
-
-def maybe_error(test):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(self):
-            func(self)
-            test.result.append(func.__name__)
-            if func.__name__ in test.errors:
-                test.result[-1] += f" {test.error_class.__name__}"
-                raise test.error_class
-        return wrapper
-    return decorator
