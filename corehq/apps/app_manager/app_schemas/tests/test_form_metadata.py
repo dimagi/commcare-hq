@@ -29,8 +29,8 @@ class TestGetFormData(TestCase):
 
         form1.source = form1_builder.tostring(pretty_print=True).decode('utf-8')
         factory.form_requires_case(form1, case_type='household', update={
-            "name": ConditionalCaseUpdate(question_path='/data/name'),
-            "age": ConditionalCaseUpdate(question_path='/data/demographics/age'),
+            "name": '/data/name',
+            "age": '/data/demographics/age',
         }, preload={
             '/data/polar_bears_seen': 'polar_bears_seen',
         })
