@@ -29,8 +29,6 @@ class TestUtils(TestCase):
 
     def tearDown(self):
         self.credentials = None
-        objects = GoogleApiToken.objects.get(user=self.user)
-        objects.delete()
         self.user.delete()
         return super().tearDown()
 
@@ -43,23 +41,35 @@ class TestUtils(TestCase):
         token = get_token(self.user)
 
         self.assertIsNotNone(token)
+        self.tearDowntoken()
 
     def test_get_token_without_token(self):
         token = get_token(self.user)
 
         self.assertIsNone(token)
 
-    def test_chunkify_data(self):
-        desired_list = ['This is a string of ', 'data that I want to ', 'break up in four chu', 'nks']
-        chunk_length = 20
-        data = "This is a string of data that I want to break up in four chunks"
-
-        chunkified_data = chunkify_data(data, chunk_length)
-
-        self.assertListEqual(chunkified_data, desired_list)
+    def tearDowntoken(self):
+        objects = GoogleApiToken.objects.get(user=self.user)
+        objects.delete()
 
 
 class TestCredentialsUtils(SimpleTestCase):
+    def setUp(self):
+        super().setUp()
+        self.credentials = Credentials(
+            token="token",
+            refresh_token="refresh_token",
+            id_token="id_token",
+            token_uri="token_uri",
+            client_id="client_id",
+            client_secret="client_secret",
+            scopes="scopes",
+            expiry=datetime(2020, 1, 1)
+        )
+
+    def tearDown(self):
+        self.credentials = None
+        return super().tearDown()
 
     def test_stringify_credentials(self):
         desired_credentials = ('{"token": "token", "refresh_token": "refresh_token", "id_token": "id_token", '
@@ -77,3 +87,12 @@ class TestCredentialsUtils(SimpleTestCase):
         loaded_credentials = load_credentials(stringified_credentials)
 
         self.assertEqual(loaded_credentials.token, desired_credentials.token)
+
+    def test_chunkify_data(self):
+        desired_list = ['This is a string of ', 'data that I want to ', 'break up in four chu', 'nks']
+        chunk_length = 20
+        data = "This is a string of data that I want to break up in four chunks"
+
+        chunkified_data = chunkify_data(data, chunk_length)
+
+        self.assertListEqual(chunkified_data, desired_list)
