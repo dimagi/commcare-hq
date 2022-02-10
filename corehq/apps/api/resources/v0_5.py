@@ -752,9 +752,9 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
     API resource for DataSourceConfigurations (UCR data sources)
     """
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
-    display_name = fields.CharField(attribute="display_name", readonly=True, null=True)
-    configured_filter = fields.DictField(attribute="configured_filter", readonly=True, use_in='detail')
-    configured_indicators = fields.ListField(attribute="configured_indicators", readonly=True, use_in='detail')
+    display_name = fields.CharField(attribute="display_name", null=True)
+    configured_filter = fields.DictField(attribute="configured_filter", use_in='detail')
+    configured_indicators = fields.ListField(attribute="configured_indicators", use_in='detail')
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
