@@ -20,6 +20,8 @@ from casexml.apps.case.const import (
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.exceptions import AutoDeactivateUserException
+from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from corehq.util.quickcache import quickcache
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
@@ -387,3 +389,28 @@ def _get_changed_details(couch_user, action, fields_changed):
     for prop in USER_FIELDS_TO_IGNORE_FOR_HISTORY:
         changed_details.pop(prop, None)
     return changed_details
+
+
+def auto_deactivate_commcare_user(user_id, domain):
+    """
+    Deactivate a Mobile Worker / CommCareUser through the auto-deactivation
+    process.
+    :param user_id: string - user ID of CommCareUser
+    :param domain: string - domain CommCareUser belongs to
+    """
+    from corehq.apps.users.models import CommCareUser
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    if user is None:
+        raise AutoDeactivateUserException("no user found")
+    if user.is_active and user.domain == domain:
+        # Only record change if user has not previously been deactivated
+        user.is_active = False
+        user.save(spawn_task=True)
+        log_user_change(
+            by_domain=domain,
+            for_domain=domain,
+            couch_user=user,
+            changed_by_user=SYSTEM_USER_ID,
+            changed_via=USER_CHANGE_VIA_AUTO_DEACTIVATE,
+            fields_changed={'is_active': user.is_active}
+        )
