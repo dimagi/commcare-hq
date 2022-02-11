@@ -1,13 +1,14 @@
-from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
-from corehq.apps.es.client import get_client
-from corehq.apps.es.exceptions import ESError, ESShardFailure
+from corehq.apps.es.client import ElasticManageAdapter, get_client
+from corehq.apps.es.exceptions import ESError
 from corehq.apps.es.registry import registry_entry
+from corehq.apps.es.transient_util import (  # noqa: F401
+    doc_adapter_from_info,
+    report_and_fail_on_shard_failures,
+)
 from corehq.util.es.elasticsearch import ElasticsearchException
-from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.files import TransientTempfile
-from corehq.util.metrics import metrics_counter
 
 
 def get_es_new():
@@ -24,7 +25,7 @@ def doc_exists_in_es(index_info, doc_id):
     """
     Check if a document exists
     """
-    return ElasticsearchInterface(get_client()).doc_exists(index_info.alias, doc_id, index_info.type)
+    return doc_adapter_from_info(index_info).exists(doc_id)
 
 
 def send_to_elasticsearch(index_cname, doc, delete=False, es_merge_update=False):
@@ -51,43 +52,28 @@ def send_to_elasticsearch(index_cname, doc, delete=False, es_merge_update=False)
 
 def refresh_elasticsearch_index(index_cname):
     index_info = registry_entry(index_cname)
-    es = get_client()
-    es.indices.refresh(index=index_info.alias)
+    ElasticManageAdapter().index_refresh(index_info.alias)
 
 
 def run_query(index_cname, q, for_export=False):
-    es_instance = get_client(for_export=for_export)
-    es_interface = ElasticsearchInterface(es_instance)
     index_info = registry_entry(index_cname)
+    adapter = doc_adapter_from_info(index_info, for_export)
     try:
-        results = es_interface.search(index_info.alias, index_info.type, body=q)
-        report_and_fail_on_shard_failures(results)
-        return results
+        results = adapter.search(q)
     except ElasticsearchException as e:
         raise ESError(e)
+    return results
 
 
-def mget_query(index_cname, ids):
-    if not ids:
-        return []
-
-    es_interface = ElasticsearchInterface(get_client())
-    index_info = registry_entry(index_cname)
-    try:
-        return es_interface.get_bulk_docs(index_info.alias, index_info.type, ids)
-    except ElasticsearchException as e:
-        raise ESError(e)
-
-
-def iter_es_docs(index_cname, ids):
+def _iter_es_docs(index_cname, ids):
     """Returns a generator which pulls documents from elasticsearch in chunks"""
-    for ids_chunk in chunked(ids, 100):
-        yield from mget_query(index_cname, ids_chunk)
+    index_info = registry_entry(index_cname)
+    adapter = doc_adapter_from_info(index_info)
+    yield from adapter.iter_fetch(ids)
 
 
 def iter_es_docs_from_query(query):
-    """Returns all docs which match query
-    """
+    """Returns all docs which match query"""
     scroll_result = query.scroll_ids()
 
     def iter_export_docs():
@@ -99,7 +85,7 @@ def iter_es_docs_from_query(query):
             # Stream doc ids from disk and fetch documents from ES in chunks
             with open(temp_path, 'r', encoding='utf-8') as f:
                 doc_ids = (doc_id.strip() for doc_id in f)
-                for doc in iter_es_docs(query.index, doc_ids):
+                for doc in _iter_es_docs(query.index, doc_ids):
                     yield doc
 
     return ScanResult(query.count(), iter_export_docs())
@@ -121,21 +107,17 @@ def scroll_query(index_cname, query, for_export=False, **kw):
     if not set(kw).issubset(valid_kw):
         raise ValueError(f"invalid keyword args: {set(kw) - valid_kw}")
     index_info = registry_entry(index_cname)
-    es_interface = ElasticsearchInterface(get_client(for_export=for_export))
+    adapter = doc_adapter_from_info(index_info, for_export=for_export)
     try:
-        for results in es_interface.iter_scroll(index_info.alias, index_info.type,
-                                                body=query, **kw):
-            report_and_fail_on_shard_failures(results)
-            for hit in results["hits"]["hits"]:
-                yield hit
+        yield from adapter.scroll(query, **kw)
     except ElasticsearchException as e:
         raise ESError(e)
 
 
 def count_query(index_cname, q):
     index_info = registry_entry(index_cname)
-    es_interface = ElasticsearchInterface(get_client())
-    return es_interface.count(index_info.alias, index_info.type, q)
+    adapter = doc_adapter_from_info(index_info)
+    return adapter.count(q)
 
 
 class ScanResult(object):
@@ -147,20 +129,3 @@ class ScanResult(object):
     def __iter__(self):
         for x in self._iterator:
             yield x
-
-
-def report_and_fail_on_shard_failures(search_result):
-    """
-    Raise an ESShardFailure if there are shard failures in an ES search result (JSON)
-
-    and report to datadog.
-    The commcare.es.partial_results metric counts 1 per ES request with any shard failure.
-    """
-    if not isinstance(search_result, dict):
-        return
-
-    if search_result.get('_shards', {}).get('failed'):
-        metrics_counter('commcare.es.partial_results')
-        # Example message:
-        #   "_shards: {'successful': 4, 'failed': 1, 'total': 5}"
-        raise ESShardFailure('_shards: {!r}'.format(search_result.get('_shards')))
