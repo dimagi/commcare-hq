@@ -61,7 +61,7 @@
         "less": "3.10.3",
         "marionette.approuter": "^1.0.2",
         "marionette.templatecache": "^1.0.0",
-        "markdown-it": "12.0.4",
+        "markdown-it": "12.3.2",
         "modernizr": "^3.11.3",
         "moment": "2.27.0",
         "multiselect": "0.9.12",
