@@ -1,7 +1,15 @@
+import datetime
+
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
 from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.es import UserES
+from corehq.apps.reports.analytics.esaccessors import (
+    get_days_since_last_form_submission_for_user_id,
+)
+from corehq.apps.users.util import auto_deactivate_commcare_user
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
 
 
@@ -63,3 +71,19 @@ class EnterpriseMobileWorkerSettings(models.Model):
     enable_auto_deactivation = models.BooleanField(default=False)
     inactivity_period = models.IntegerField(default=90)
     allow_custom_deactivation = models.BooleanField(default=False)
+
+    def deactivate_mobile_workers_by_inactivity(self, domain):
+        user_query = UserES().domain(domain).mobile_users().is_active()
+        user_data = user_query.source([
+            '_id',
+            'created_on',
+        ]).run()
+        for user in user_data.hits:
+            inactive_days = get_days_since_last_form_submission_for_user_id(
+                domain, user['_id']
+            )
+            if inactive_days == -1:
+                delta = datetime.datetime.utcnow() - iso_string_to_datetime(user['created_on'])
+                inactive_days = delta.days
+            if inactive_days >= self.inactivity_period:
+                auto_deactivate_commcare_user(user['_id'], domain)
