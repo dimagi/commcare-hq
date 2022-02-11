@@ -28,17 +28,17 @@ from itertools import chain, islice
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER
-from casexml.apps.phone.data_providers.case.load_testing import (
-    get_xml_for_response,
-)
-from casexml.apps.phone.data_providers.case.stock import get_stock_payload
-from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
+
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
-from corehq.util.metrics import metrics_histogram, metrics_counter
+from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
+
+from .load_testing import get_xml_for_response
+from .stock import get_stock_payload
+from .utils import get_case_sync_updates
 
 
 def livequery_read_from_standbys(func):
