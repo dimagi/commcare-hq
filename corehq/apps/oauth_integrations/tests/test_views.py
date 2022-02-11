@@ -2,7 +2,7 @@ from datetime import datetime
 
 from unittest.mock import patch
 
-from django.test import TestCase, RequestFactory
+from django.test import TestCase, RequestFactory, override_settings
 from django.contrib.auth.models import User
 
 from google.oauth2.credentials import Credentials
@@ -38,6 +38,15 @@ class TestViews(TestCase):
         self.assertEqual(response.url, "placeholder.com")
         self.assertEqual(creds.token, 'new_token')
 
+    @override_settings(GOOGLE_OATH_CONFIG={
+        "web": {
+            "client_id": "test_id",
+            "project_id": "test_project_id",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "client_secret": "test_client_secret"}
+    })
     def test_call_back_view_with_token_updates_credentials(self):
         self.setUp_credentials()
         self.mocked_get_token.return_value = stringify_credentials(self.create_new_credentials("new_token"))
@@ -51,6 +60,15 @@ class TestViews(TestCase):
 
         self.assertEqual(creds.token, "new_token")
 
+    @override_settings(GOOGLE_OATH_CONFIG={
+        "web": {
+            "client_id": "test_id",
+            "project_id": "test_project_id",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "client_secret": "test_client_secret"}
+    })
     def test_call_back_view_without_token_creates_credentials(self):
         self.mocked_get_token.return_value = stringify_credentials(self.create_new_credentials("new_token"))
         request = self.factory.get('', {'state': 101})
