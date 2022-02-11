@@ -291,7 +291,7 @@ HQ_APPS = (
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.app_manager',
-    'corehq.apps.es',
+    'corehq.apps.es.app_config.ElasticAppConfig',
     'corehq.apps.fixtures',
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
@@ -1086,9 +1086,6 @@ if helper.is_testing():
 
 # TODO: remove these Elastic settings:
 ELASTIC_SETTINGS_OVERRIDE = None  # [do not use] legacy mechanism for tests
-ES_XFORM_INDEX_NAME = ELASTIC_INDICES["form"]["INDEX"]
-ES_CASE_SEARCH_INDEX_NAME = ELASTIC_INDICES["case_search"]["INDEX"]
-ES_XFORM_DISABLE_ALL = ELASTIC_INDICES["form"]["ADAPTER_SETTINGS"]["DISABLE_ALL"]
 CASE_ES_DROP_FORM_FIELDS = ELASTIC_INDICES["case"]["ADAPTER_SETTINGS"]["DROP_FORM_FIELDS"]
 
 PHI_API_KEY = None
