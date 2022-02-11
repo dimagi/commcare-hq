@@ -21,10 +21,13 @@ Example case graphs with outcomes:
 
    a(closed) <--ext-- b <--chi-- c(owned) >> []
 """
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
 from functools import wraps
 from itertools import chain, islice
+from typing import TYPE_CHECKING, Callable, Iterator
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER
@@ -36,10 +39,14 @@ from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
+from corehq.util.timer import TimingContext
 
 from .load_testing import get_xml_for_response
 from .stock import get_stock_payload
 from .utils import get_case_sync_updates
+
+if TYPE_CHECKING:
+    from casexml.apps.phone.restore import RestoreContent, RestoreState
 
 
 def livequery_read_from_standbys(func):
@@ -84,7 +91,8 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
             sync_ids = live_ids
         restore_state.current_sync_log.case_ids_on_phone = live_ids
 
-        with timing_context("compile_response(%s cases)" % len(sync_ids)):
+        total_cases = len(sync_ids)
+        with timing_context("compile_response(%s cases)" % total_cases):
             iaccessor = PrefetchIndexCaseAccessor(restore_state.domain, indices)
             metrics_histogram(
                 'commcare.restore.case_load',
@@ -96,13 +104,14 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
                     'restore_type': 'incremental' if restore_state.last_sync_log else 'fresh'
                 }
             )
-            metrics_counter('commcare.restore.case_load.count', len(sync_ids), {'domain': accessor.domain})
+            metrics_counter('commcare.restore.case_load.count', total_cases, {'domain': accessor.domain})
             compile_response(
                 timing_context,
                 restore_state,
                 response,
                 batch_cases(iaccessor, sync_ids),
-                init_progress(async_task, len(sync_ids)),
+                init_progress(async_task, total_cases),
+                total_cases,
             )
 
 
@@ -353,7 +362,14 @@ def init_progress(async_task, total):
     return update_progress
 
 
-def compile_response(timing_context, restore_state, response, batches, update_progress):
+def compile_response(
+        timing_context: TimingContext,
+        restore_state: RestoreState,
+        response: RestoreContent,
+        batches: Iterator[list[CommCareCase]],
+        update_progress: Callable,
+        total_cases: int,
+):
     done = 0
     for cases in batches:
         with timing_context("get_stock_payload"):
@@ -368,9 +384,12 @@ def compile_response(timing_context, restore_state, response, batches, update_pr
                 restore_state.domain, cases, restore_state.last_sync_log)
 
         with timing_context("get_xml_for_response (%s updates)" % len(updates)):
-            response.extend(item
-                for update in updates
-                for item in get_xml_for_response(update, restore_state))
+            response.extend(
+                item for update in updates
+                for item in get_xml_for_response(
+                    update, restore_state, total_cases
+                )
+            )
 
         done += len(cases)
         update_progress(done)

@@ -35,3 +35,5 @@ USER_CHANGE_VIA_BULK_IMPORTER = "bulk_importer"
 USER_CHANGE_VIA_INVITATION = "invitation"
 USER_CHANGE_VIA_SSO_NEW_USER = "sso_new"
 USER_CHANGE_VIA_SSO_INVITE = "sso_invitation"
+
+LOADTEST_HARD_LIMIT = 50_000  # max cases a loadtest user can sync
