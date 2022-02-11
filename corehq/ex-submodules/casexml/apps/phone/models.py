@@ -72,10 +72,12 @@ class OTARestoreUser(object):
     @property
     def loadtest_factor(self):
         """
-        Gets the loadtest factor for a domain and user. Is always 1 unless
-        both the toggle is enabled for the domain, and the user has a non-zero,
-        non-null factor set.
+        Gets the loadtest factor for a domain and user. Is always 1
+        unless both the LOADTEST_USER privilege is available for the
+        domain, and the user has a non-zero, non-null factor set.
         """
+        # This method is called by `RestoreState.get_safe_loadtest_factor()`,
+        # which sets guard rails by checking the user's case load.
         if loadtest_users_enabled(self.domain):
             return self._loadtest_factor or 1
         return 1

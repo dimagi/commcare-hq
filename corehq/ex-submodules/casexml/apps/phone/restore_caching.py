@@ -1,10 +1,13 @@
+import datetime
 import hashlib
 import logging
-import datetime
-from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX, ASYNC_RESTORE_CACHE_KEY_PREFIX
-from casexml.apps.phone.models import loadtest_users_enabled
-from corehq.util.quickcache import quickcache
+
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+
+from corehq.util.quickcache import quickcache
+
+from .const import ASYNC_RESTORE_CACHE_KEY_PREFIX, RESTORE_CACHE_KEY_PREFIX
+from .models import loadtest_users_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +38,9 @@ class _CacheAccessor(object):
 
 @quickcache(['domain', 'user_id'], timeout=24 * 60 * 60)
 def get_loadtest_factor_for_user(domain, user_id):
+    # This function is only used for calculating the restore cache key.
+    # It does not determine how many cases a loadtest user will sync.
+    # See `RestoreState.get_safe_loadtest_factor()`
     from corehq.apps.users.models import CouchUser, CommCareUser
 
     if loadtest_users_enabled(domain) and user_id:
