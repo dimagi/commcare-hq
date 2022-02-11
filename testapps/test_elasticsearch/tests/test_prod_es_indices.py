@@ -2,6 +2,18 @@ from django.conf import settings
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from corehq.pillows.utils import get_all_expected_es_indices
+from pillowtop.es_utils import (
+    XFORM_HQ_INDEX_NAME,
+    CASE_HQ_INDEX_NAME,
+    USER_HQ_INDEX_NAME,
+    DOMAIN_HQ_INDEX_NAME,
+    APP_HQ_INDEX_NAME,
+    GROUP_HQ_INDEX_NAME,
+    SMS_HQ_INDEX_NAME,
+    REPORT_CASE_HQ_INDEX_NAME,
+    REPORT_XFORM_HQ_INDEX_NAME,
+    CASE_SEARCH_HQ_INDEX_NAME,
+)
 
 
 class ProdIndexManagementTest(SimpleTestCase):
@@ -18,20 +30,21 @@ class ProdIndexManagementTest(SimpleTestCase):
         settings.PILLOWTOPS = cls._PILLOWTOPS
         super(ProdIndexManagementTest, cls).tearDownClass()
 
-    @override_settings(SERVER_ENVIRONMENT='production', ES_SETTINGS={
+    @override_settings(SERVER_ENVIRONMENT='production', ELASTIC_SETTINGS_OVERRIDE={
         "default": {"number_of_replicas": 1},
-        "case_search": {},
-        "hqapps": {},
-        "hqcases": {},
-        "hqdomains": {},
-        "hqgroups": {},
-        "hqusers": {},
-        "report_cases": {},
-        "report_xforms": {},
-        "smslogs": {},
-        "xforms": {},
+        CASE_SEARCH_HQ_INDEX_NAME: {},
+        APP_HQ_INDEX_NAME: {},
+        CASE_HQ_INDEX_NAME: {},
+        DOMAIN_HQ_INDEX_NAME: {},
+        GROUP_HQ_INDEX_NAME: {},
+        USER_HQ_INDEX_NAME: {},
+        REPORT_CASE_HQ_INDEX_NAME: {},
+        REPORT_XFORM_HQ_INDEX_NAME: {},
+        SMS_HQ_INDEX_NAME: {},
+        XFORM_HQ_INDEX_NAME: {},
     })
     def test_prod_config(self):
+        # TODO: implement index verification in a way that is reindex-friendly
         found_prod_indices = [info.to_json() for info in get_all_expected_es_indices()]
         for info in found_prod_indices:
             # for now don't test this property, just ensure it exist

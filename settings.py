@@ -1044,7 +1044,7 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
-ES_SETTINGS = None
+ELASTIC_SETTINGS_OVERRIDE = None  # [do not use] legacy mechanism for tests
 ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
 ES_CASE_SEARCH_INDEX_NAME = "case_search_2018-05-29"
 ES_XFORM_DISABLE_ALL = False
