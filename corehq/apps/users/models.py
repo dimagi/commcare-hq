@@ -77,6 +77,7 @@ from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
     username_to_user_id,
+    auto_deactivate_commcare_user,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -3110,3 +3111,18 @@ class DeactivateMobileWorkerTrigger(models.Model):
     domain = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255)
     deactivate_after = models.DateField()
+
+    @classmethod
+    def deactivate_mobile_workers(cls, domain, date_deactivation):
+        """
+        This deactivates all CommCareUsers who have a matching
+        DeactivateMobileWorkerTrigger with deactivate_after
+        :param domain: String - domain name
+        :param date_deactivation: Date
+        """
+        for trigger in cls.objects.filter(
+            domain=domain,
+            deactivate_after__lte=date_deactivation
+        ):
+            auto_deactivate_commcare_user(trigger.user_id, trigger.domain)
+            trigger.delete()
