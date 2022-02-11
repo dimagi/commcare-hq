@@ -515,14 +515,14 @@ class XFormCaseBlock(object):
 
         for key, q_path in sorted(update_mapping.items()):
             resolved_path = self.xform.resolve_path(q_path)
-            edit_mode_path = ''
+            edit_mode_expression = ''
             if (SAVE_ONLY_EDITED_FORM_FIELDS.enabled(domain, NAMESPACE_DOMAIN)
             and isinstance(q_path, ConditionalCaseUpdate)
             and q_path.update_mode == UPDATE_MODE_EDIT):
                 case_id_xpath = self.xform.resolve_path(f"{self.path}case/@case_id")
                 case_value = CaseIDXPath(case_id_xpath).case().slash(key)
                 self.xform.add_casedb()
-                edit_mode_path = f' and {case_value} != {resolved_path}'
+                edit_mode_expression = f' and {case_value} != {resolved_path}'
             update_block.append(make_case_elem(key))
             nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
             if make_relative:
@@ -531,7 +531,7 @@ class XFormCaseBlock(object):
             self.xform.add_bind(
                 nodeset=nodeset,
                 calculate=resolved_path,
-                relevant=(f"count({resolved_path}) > 0" + edit_mode_path)
+                relevant=(f"count({resolved_path}) > 0" + edit_mode_expression)
             )
 
         if attachments:

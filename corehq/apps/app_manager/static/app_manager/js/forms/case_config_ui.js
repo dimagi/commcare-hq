@@ -593,7 +593,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     name_update: (o.open_case || {}).name_update || DEFAULT_UPDATE_ALWAYS,
                 };
                 self.update_case = {
-                    update: (o.update_case || {}).update || DEFAULT_UPDATE_ALWAYS,
+                    update: (o.update_case || {}).update || {},
                 };
                 self.case_preload = {
                     preload: (o.case_preload || {}).preload || {},
@@ -602,7 +602,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     condition: (o.close_case || {}).condition || DEFAULT_CONDITION_ALWAYS,
                 };
                 self.usercase_update = {
-                    update: (o.usercase_update || {}).update || DEFAULT_UPDATE_ALWAYS,
+                    update: (o.usercase_update || {}).update || {},
                 };
                 self.usercase_preload = {
                     preload: (o.usercase_preload || {}).preload || {},
@@ -758,7 +758,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             },
             to_case_transaction: function (o, caseConfig) {
                 var self = HQOpenSubCaseAction.normalize(o);
-                // To be modified. Dependent on possible change to OpenCaseAction model.
                 var case_properties = caseConfigUtils.propertyDictToArray([{
                     path: self.name_update.question_path,
                     key: 'name',
