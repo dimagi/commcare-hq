@@ -31,7 +31,9 @@ from typing import TYPE_CHECKING, Callable, Iterator
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER
+from casexml.apps.phone.models import loadtest_users_enabled
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
+from corehq.apps.users.models import reset_loadtest_factor
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
@@ -113,6 +115,11 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
                 init_progress(async_task, total_cases),
                 total_cases,
             )
+    # Reset loadtest factor for loadtest users after their sync payload
+    # is created.
+    if loadtest_users_enabled(restore_state.domain):
+        for owner_id in owner_ids:
+            reset_loadtest_factor(owner_id)
 
 
 def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
