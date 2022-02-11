@@ -2,6 +2,7 @@ from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 from django.conf import settings
 
+from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
@@ -65,6 +66,21 @@ def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_a
     for user_id, bucket in buckets_dict.items():
         result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['received_on'])
     return result
+
+
+def get_days_since_last_form_submission_for_user_id(domain, user_id):
+    query = (
+        FormES()
+        .domain(domain)
+        .user_id(user_id)
+        .sort('received_on', desc=True)
+        .size(1)
+    )
+    result = query.run().hits
+    if not result:
+        return -1
+    delta = datetime.utcnow() - iso_string_to_datetime(result[0]['received_on'])
+    return delta.days
 
 
 def get_active_case_counts_by_owner(domain, datespan, case_types=None, owner_ids=None, export=False):
