@@ -1,4 +1,8 @@
-from django.test import TestCase
+from dataclasses import dataclass
+
+from django.test import SimpleTestCase, TestCase
+
+from nose.tools import assert_equal
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import (
@@ -7,12 +11,17 @@ from casexml.apps.case.tests.util import (
 )
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import loadtest_users_enabled
-from casexml.apps.phone.restore import RestoreConfig, RestoreParams
+from casexml.apps.phone.restore import (
+    RestoreConfig,
+    RestoreParams,
+    RestoreState,
+)
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
+from corehq.const import LOADTEST_HARD_LIMIT
 
 DOMAIN = 'foo-domain'
 
@@ -22,23 +31,25 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super(LoadtestUserTest, cls).setUpClass()
-        cls.domain = create_domain(DOMAIN)
+        cls.domain = Domain.get_or_create_with_name(DOMAIN)
         cls.setup_subscription(DOMAIN, SoftwarePlanEdition.PRO)
-        cls.user = CommCareUser.create(
+
+    def setUp(self):
+        self.user = CommCareUser.create(
             DOMAIN, 'somebody', 'password',
             created_by=None, created_via=None,
         )
-        cls.factory = CaseFactory(
+        self.factory = CaseFactory(
             domain=DOMAIN,
-            case_defaults={'owner_id': cls.user._id},
+            case_defaults={'owner_id': self.user._id},
         )
 
-    def setUp(self):
+    def tearDown(self):
+        self.user.delete(DOMAIN, deleted_by=None)
         delete_all_cases()
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(DOMAIN, deleted_by=None)
         cls.domain.delete()
         super(LoadtestUserTest, cls).tearDownClass()
 
@@ -107,3 +118,35 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
                                  if child.name in cb.get_case_name()]))
         self.assertEqual(3, len([cb for cb in caseblocks
                                  if parent.name in cb.get_case_name()]))
+
+
+class TestGetSafeLoadtestFactor(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        project = Domain(name=DOMAIN)
+        restore_user = FakeRestoreUser(loadtest_factor=1000)
+        cls.restore_state = RestoreState(
+            project=project,
+            restore_user=restore_user,
+            params=None,
+        )
+
+    def test_get_safe_loadtest_factor_safe(self):
+        safe = self.restore_state.get_safe_loadtest_factor(total_cases=10)
+        assert_equal(safe, 1000)
+
+    def test_get_safe_loadtest_factor_unsafe(self):
+        safe = self.restore_state.get_safe_loadtest_factor(total_cases=1000)
+        assert_equal(safe, 500)
+
+    def test_get_safe_loadtest_factor_above_limit(self):
+        too_many = LOADTEST_HARD_LIMIT + 1
+        safe = self.restore_state.get_safe_loadtest_factor(total_cases=too_many)
+        assert_equal(safe, 1)
+
+
+@dataclass
+class FakeRestoreUser:
+    loadtest_factor: int

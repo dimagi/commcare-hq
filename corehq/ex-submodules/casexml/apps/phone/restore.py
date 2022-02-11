@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime, timedelta
 from distutils.version import LooseVersion
 from io import BytesIO
+from typing import Optional
 from uuid import uuid4
 from wsgiref.util import FileWrapper
 from xml.etree import cElementTree as ElementTree
@@ -25,8 +26,10 @@ from couchforms.openrosa_response import (
     get_simple_response_xml,
 )
 
+from corehq.apps.domain.models import Domain
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
+from corehq.const import LOADTEST_HARD_LIMIT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext
@@ -334,17 +337,24 @@ class RestoreCacheSettings(object):
         )
 
 
-
-class RestoreState(object):
+class RestoreState:
     """
-    The RestoreState object can be passed around to multiple restore data providers.
+    The RestoreState object can be passed around to multiple restore
+    data providers.
 
-    This allows the providers to set values on the state, for either logging or performance
-    reasons.
+    This allows the providers to set values on the state, for either
+    logging or performance reasons.
     """
 
-    def __init__(self, project, restore_user, params, is_async=False,
-                 overwrite_cache=False, auth_type=None):
+    def __init__(
+            self,
+            project: Domain,
+            restore_user: OTARestoreUser,
+            params: RestoreParams,
+            is_async: bool = False,
+            overwrite_cache: bool = False,
+            auth_type: Optional[str] = None,
+    ):
         if not project or not project.name:
             raise Exception('you are not allowed to make a RestoreState without a domain!')
 
@@ -459,10 +469,16 @@ class RestoreState(object):
         new_synclog.log_format = LOG_FORMAT_LIVEQUERY
         return new_synclog
 
-    @property
     @memoized
-    def loadtest_factor(self):
-        return self.restore_user.loadtest_factor
+    def get_safe_loadtest_factor(self, total_cases: int) -> int:
+        """
+        Ensures ``RestoreUser.loadtest_factor`` cannot result in a
+        payload that exceeds ``LOADTEST_HARD_LIMIT`` number of cases
+        (unless the user really has that many cases).
+        """
+        unsafe = self.restore_user.loadtest_factor
+        max_factor = max(1, LOADTEST_HARD_LIMIT // total_cases)
+        return min(unsafe, max_factor)
 
     def __repr__(self):
         return "RestoreState(project='{}', domain={}, restore_user='{}', start_time='{}', duration='{}'".format(

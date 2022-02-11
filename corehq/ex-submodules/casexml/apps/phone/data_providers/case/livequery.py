@@ -83,7 +83,8 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
             sync_ids = live_ids
         restore_state.current_sync_log.case_ids_on_phone = live_ids
 
-        with timing_context("compile_response(%s cases)" % len(sync_ids)):
+        total_cases = len(sync_ids)
+        with timing_context("compile_response(%s cases)" % total_cases):
             iaccessor = PrefetchIndexCaseAccessor(domain, indices)
             metrics_histogram(
                 'commcare.restore.case_load',
@@ -95,13 +96,14 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
                     'restore_type': 'incremental' if restore_state.last_sync_log else 'fresh'
                 }
             )
-            metrics_counter('commcare.restore.case_load.count', len(sync_ids), {'domain': domain})
+            metrics_counter('commcare.restore.case_load.count', total_cases, {'domain': domain})
             compile_response(
                 timing_context,
                 restore_state,
                 response,
                 batch_cases(iaccessor, sync_ids),
-                init_progress(async_task, len(sync_ids)),
+                init_progress(async_task, total_cases),
+                total_cases,
             )
 
 
@@ -353,7 +355,14 @@ def init_progress(async_task, total):
     return update_progress
 
 
-def compile_response(timing_context, restore_state, response, batches, update_progress):
+def compile_response(
+    timing_context,
+    restore_state,
+    response,
+    batches,
+    update_progress,
+    total_cases,
+):
     done = 0
     for cases in batches:
         with timing_context("get_stock_payload"):
@@ -368,9 +377,12 @@ def compile_response(timing_context, restore_state, response, batches, update_pr
                 restore_state.domain, cases, restore_state.last_sync_log)
 
         with timing_context("get_xml_for_response (%s updates)" % len(updates)):
-            response.extend(item
-                for update in updates
-                for item in get_xml_for_response(update, restore_state))
+            response.extend(
+                item for update in updates
+                for item in get_xml_for_response(
+                    update, restore_state, total_cases
+                )
+            )
 
         done += len(cases)
         update_progress(done)
