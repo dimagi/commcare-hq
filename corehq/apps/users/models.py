@@ -3100,3 +3100,13 @@ class UserHistory(models.Model):
             models.Index(fields=['by_domain']),
             models.Index(fields=['for_domain']),
         ]
+
+
+class DeactivateMobileWorkerTrigger(models.Model):
+    """
+    This determines if a Mobile Worker / CommCareUser is to be deactivated
+    after a certain date.
+    """
+    domain = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255)
+    deactivate_after = models.DateField()

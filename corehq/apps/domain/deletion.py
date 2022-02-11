@@ -374,6 +374,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('userreports', 'ReportComparisonException', 'domain'),
     ModelDeletion('userreports', 'ReportComparisonTiming', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
+    ModelDeletion('users', 'DeactivateMobileWorkerTrigger', 'domain'),
     ModelDeletion('users', 'Invitation', 'domain'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
     ModelDeletion('users', 'UserRole', 'domain', [
