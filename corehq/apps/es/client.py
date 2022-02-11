@@ -55,8 +55,8 @@ cooresponding ``ElasticDocumentAdapter`` subclass which defines how the Python
 model is applied to that specific index.  At the very least, a document adapter
 must define the following:
 
-- An ``index`` attribute whose value is the name of the Elastic index used by
-  the adapter.
+- An ``index_key`` attribute whose value is the Django settings key for the
+  Elastic index used by the adapter.
 - A ``type`` attribute whose value is the name is the Elastic ``_type`` for
   documents used by the adapter.
 - a ``transform()`` classmethod which can convert a Python model object into the
@@ -114,6 +114,7 @@ import logging
 from collections import defaultdict
 
 from django.conf import settings
+from django.utils.decorators import classproperty
 
 from memoized import memoized
 
@@ -353,8 +354,18 @@ class ElasticManageAdapter(ElasticClientAdapter):
 class ElasticDocumentAdapter(ElasticClientAdapter):
     """Base for subclassing document-specific adapters."""
 
-    index = None  # set by subclass
+    index_key = None  # set by subclass
     type = None  # set by subclass
+
+    @classproperty
+    @memoized
+    def index(cls):
+        return settings.ELASTIC_INDICES[cls.index_key]["INDEX"]
+
+    @classproperty
+    @memoized
+    def settings(cls):
+        return settings.ELASTIC_INDICES[cls.index_key].get("ADAPTER_SETTINGS", {})
 
     @property
     def query(self):

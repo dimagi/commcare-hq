@@ -16,6 +16,7 @@ For example,
 will give you JSON for the first 10 groups in `domain` with names matching `q`.
 """
 from . import filters
+from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
 
 
@@ -30,6 +31,12 @@ class GroupES(HQESQuery):
             group_ids,
             not_deleted,
         ] + super(GroupES, self).builtin_filters
+
+
+class ElasticGroup(ElasticDocumentAdapter):
+
+    index_key = "group"
+    type = "group"
 
 
 def is_case_sharing(value=True):

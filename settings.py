@@ -796,11 +796,6 @@ RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
 RUN_DEDUPLICATION_PILLOW = True
 
-# Set to True to remove the `actions` and `xform_id` fields from the
-# ES Case index. These fields contribute high load to the shard
-# databases.
-CASE_ES_DROP_FORM_FIELDS = False
-
 # Repeaters in the order in which they should appear in "Data Forwarding"
 REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.FormRepeater',
@@ -1044,10 +1039,58 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
+ELASTIC_INDICES = {
+    "domain": {
+        "INDEX": "hqdomains_2020-02-10",
+    },
+    "app": {
+        "INDEX": "hqapps_2020-02-26",
+    },
+    "user": {
+        "INDEX": "hqusers_2017-09-07",
+    },
+    "group": {
+        "INDEX": "hqgroups_2017-05-29",
+    },
+    "form": {
+        "INDEX": "xforms_2016-07-07",
+        "ADAPTER_SETTINGS": {
+            # TODO: document what this is for
+            "DISABLE_ALL": False,
+        }
+    },
+    "case": {
+        "INDEX": "hqcases_2016-03-04",
+        "ADAPTER_SETTINGS": {
+            # Set to True to remove the `actions` and `xform_id` fields from the
+            # ES Case index. These fields contribute high load to the shard
+            # databases.
+            "DROP_FORM_FIELDS": False,
+        }
+    },
+    "case_search": {
+        "INDEX": "case_search_2018-05-29",
+    },
+    "report_case": {
+        "INDEX": "report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
+    },
+    "report_form": {
+        "INDEX": "report_xforms_20160824_1708",
+    },
+    "sms": {
+        "INDEX": "smslogs_2020-01-28",
+    },
+}
+if helper.is_testing():
+    helper.assign_elastic_test_index_names(ELASTIC_INDICES)
+
+# TODO: remove these Elastic settings:
 ELASTIC_SETTINGS_OVERRIDE = None  # [do not use] legacy mechanism for tests
-ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
-ES_CASE_SEARCH_INDEX_NAME = "case_search_2018-05-29"
-ES_XFORM_DISABLE_ALL = False
+ES_XFORM_INDEX_NAME = ELASTIC_INDICES["form"]["INDEX"]
+ES_CASE_SEARCH_INDEX_NAME = ELASTIC_INDICES["case_search"]["INDEX"]
+ES_XFORM_DISABLE_ALL = ELASTIC_INDICES["form"]["ADAPTER_SETTINGS"]["DISABLE_ALL"]
+CASE_ES_DROP_FORM_FIELDS = ELASTIC_INDICES["case"]["ADAPTER_SETTINGS"]["DROP_FORM_FIELDS"]
+
 PHI_API_KEY = None
 PHI_PASSWORD = None
 

@@ -120,6 +120,12 @@ def assign_test_db_names(dbs):
         db['NAME'] = db.setdefault('TEST', {}).setdefault('NAME', test_db_name)
 
 
+def assign_elastic_test_index_names(indices):
+    """Set Elastic index names to testing values."""
+    for index in indices.values():
+        index["INDEX"] = get_db_name(index["INDEX"], is_test=True)
+
+
 class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
                           ['couch_database_configs', 'couchdb_apps', 'extra_db_names', 'unit_testing'])):
     def make_couchdb_tuples(self):

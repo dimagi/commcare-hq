@@ -32,6 +32,8 @@ from corehq.apps.es.cases import CaseES, owner
 from corehq.util.dates import iso_string_to_datetime
 
 from . import filters, queries
+from .cases import ElasticCase
+from .client import ElasticDocumentAdapter
 
 
 class CaseSearchES(CaseES):
@@ -128,6 +130,12 @@ class CaseSearchES(CaseES):
             desc,
             reset_sort=False
         )
+
+
+class ElasticCaseSearch(ElasticDocumentAdapter):
+
+    index_key = "case_search"
+    type = ElasticCase.type
 
 
 def case_property_filter(case_property_name, value):

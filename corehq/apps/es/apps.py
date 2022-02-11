@@ -3,6 +3,7 @@ AppES
 -----
 """
 from . import filters, queries
+from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
 
 
@@ -19,6 +20,12 @@ class AppES(HQESQuery):
             cloudcare_enabled,
             app_id,
         ] + super(AppES, self).builtin_filters
+
+
+class ElasticApp(ElasticDocumentAdapter):
+
+    index_key = "app"
+    type = "app"
 
 
 def build_comment(comment):

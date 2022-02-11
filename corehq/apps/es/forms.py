@@ -5,6 +5,7 @@ FormES
 from corehq.pillows.mappings.const import NULL_VALUE
 
 from . import filters
+from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
 
 
@@ -48,6 +49,18 @@ class FormES(HQESQuery):
         """Include only archived forms, which are normally excluded"""
         return (self.remove_default_filter('is_xform_instance')
                 .filter(filters.doc_type('xformarchived')))
+
+
+class ElasticForm(ElasticDocumentAdapter):
+
+    index_key = "form"
+    type = "xform"
+
+
+class ElasticReportForm(ElasticDocumentAdapter):
+
+    index_key = "report_form"
+    type = "report_xform"
 
 
 def form_ids(form_ids):
