@@ -49,6 +49,15 @@ class RegistryPermissionCheck:
             or slug in self._permissions.view_data_registry_contents_list
         )
 
+    def can_view_report(self, report_class):
+        from corehq.apps.userreports.models import ReportConfiguration
+        if 'DynamicReport' in report_class:
+            config_id = report_class.replace('corehq.reports.DynamicReport', '')
+            report_config = ReportConfiguration.get(config_id).config
+            if 'registry_slug' in report_config:
+                return self.can_view_registry_data(report_config.registry_slug)
+        return True
+
     @staticmethod
     def user_can_manage_some(couch_user, domain):
         return RegistryPermissionCheck(domain, couch_user).can_manage_some
