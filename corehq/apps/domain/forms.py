@@ -95,6 +95,7 @@ from corehq.apps.callcenter.views import (
 from corehq.apps.domain.auth import get_active_users_by_email
 from corehq.apps.domain.extension_points import validate_password_rules
 from corehq.apps.domain.models import (
+    RESTRICTED_DTE_EXPRESSIONS,
     AREA_CHOICES,
     BUSINESS_UNITS,
     DATA_DICT,
@@ -961,6 +962,11 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         help_text="Check this box to enable messaging.",  # TODO through non-test gateways
     )
+    active_dte_expressions = forms.MultipleChoiceField(
+        label="Expressions for SaaS to Manage",
+        choices=RESTRICTED_DTE_EXPRESSIONS,
+        required=False,
+    )
 
     def __init__(self, domain, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -1045,6 +1051,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     data_bind="visible: use_custom_odata_feed_limit() === 'Y'",
                 ),
                 'granted_messaging_access',
+                'active_dte_expressions',
             ),
             crispy.Fieldset(
                 _("Salesforce Details"),
@@ -1171,6 +1178,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             partner_comments=self.cleaned_data['partner_comments'],
             partner_contact=self.cleaned_data['partner_contact'],
             dimagi_contact=self.cleaned_data['dimagi_contact'],
+            active_dte_expressions=self.cleaned_data['active_dte_expressions'],
             **kwargs
         )
 
