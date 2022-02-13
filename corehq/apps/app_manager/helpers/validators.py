@@ -943,7 +943,7 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
 
             if isinstance(action, AdvancedOpenCaseAction):
                 if not action.name_update.question_path:
-                    errors.append({'type': 'case_name', 'case_tag': action.case_tag})
+                    errors.append({'type': 'case_name required', 'case_tag': action.case_tag})
 
                 for case_index in action.case_indices:
                     meta = self.form.actions.actions_meta_by_tag.get(case_index.tag)

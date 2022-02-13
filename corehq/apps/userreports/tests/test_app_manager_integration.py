@@ -40,7 +40,7 @@ class AppManagerDataSourceConfigTest(TestCase):
         f0.source = get_simple_xform()
         f0.name = {'en': 'Main Form'}
         factory.form_requires_case(f0, case_type=cls.case_type, update={
-            cp: ConditionalCaseUpdate(question_path='/data/{}'.format(cp)) for cp in cls.case_properties.keys()
+            cp: '/data/{}'.format(cp) for cp in cls.case_properties.keys()
         })
         cls.main_form = f0
         # create another module/form to generate a parent case relationship
