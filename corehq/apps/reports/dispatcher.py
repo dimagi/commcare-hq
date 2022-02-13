@@ -21,13 +21,13 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     track_domain_request,
 )
-from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.users.models import AnonymousCouchUser
 from corehq.util.quickcache import quickcache
 
 from .lookup import ReportLookup
+from ..registry.utils import RegistryPermissionCheck
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -256,6 +256,9 @@ class ProjectReportDispatcher(ReportDispatcher):
         if domain is None:
             return False
         if not request.couch_user.is_active:
+            return False
+        permission_checker = RegistryPermissionCheck(domain, request.couch_user)
+        if not permission_checker.can_view_report(report):
             return False
         return request.couch_user.can_view_report(domain, report)
 
