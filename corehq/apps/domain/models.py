@@ -79,6 +79,13 @@ BUSINESS_UNITS = [
     "INC",
 ]
 
+# These are the DTE Expressions (UCR expressions) that are not currently
+# supported by SaaS. If any domain wants to use them them it can be
+# enabled from  Project Settings > Project Information Internal
+RESTRICTED_DTE_EXPRESSIONS = [
+    ('base_item', 'Base Item Expressions'),
+    ('related_document', 'Related Document Expressions')
+]
 
 for lang in all_langs:
     lang_lookup[lang['three']] = lang['names'][0]  # arbitrarily using the first name if there are multiple
