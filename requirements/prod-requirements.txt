@@ -54,7 +54,7 @@ cloudant==2.14.0
     # via jsonobject-couchdbkit
 commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
-concurrent-log-handler==0.9.12
+concurrent-log-handler==0.9.20
     # via -r base-requirements.in
 contextlib2==0.6.0.post1
     # via schema
@@ -303,6 +303,8 @@ ply==3.11
     #   jsonpath-ng
 polib==1.1.0
     # via -r base-requirements.in
+portalocker==2.3.2
+    # via concurrent-log-handler
 prometheus-client==0.7.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.26
@@ -499,8 +501,6 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==6.5.1
     # via -r base-requirements.in
-typing-extensions==4.0.1
-    # via black
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0

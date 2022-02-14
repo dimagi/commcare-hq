@@ -42,7 +42,7 @@ cloudant==2.14.0
     # via jsonobject-couchdbkit
 commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
-concurrent-log-handler==0.9.12
+concurrent-log-handler==0.9.20
     # via -r base-requirements.in
 contextlib2==0.6.0.post1
     # via schema
@@ -264,6 +264,8 @@ ply==3.11
     #   jsonpath-ng
 polib==1.1.0
     # via -r base-requirements.in
+portalocker==2.3.2
+    # via concurrent-log-handler
 prometheus-client==0.7.1
     # via -r base-requirements.in
 protobuf==3.13.0
