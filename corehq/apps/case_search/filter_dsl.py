@@ -78,7 +78,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
     If fuzzy is true, all equality operations will be treated as fuzzy.
     """
 
-    def _walk_related_cases(node):
+    def _walk_ancestor_cases(node):
         """Return a query that will fulfill the filter on the related case.
 
         :param node: a node returned from eulxml.xpath.parse of the form `parent/grandparent/property = 'value'`
@@ -96,7 +96,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
 
         # get the related case path we need to walk, i.e. `parent/grandparent/property`
         n = node.left
-        while _is_related_case_lookup(n):
+        while _is_ancestor_case_lookup(n):
             # This walks down the tree and finds case ids that match each identifier
             # This is basically performing multiple "joins" to find related cases since ES
             # doesn't have a way to relate models together
@@ -137,8 +137,8 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         """
         return CaseSearchES().domain(domain).get_child_cases(case_ids, identifier).scroll_ids()
 
-    def _is_related_case_lookup(node):
-        """Returns whether a particular AST node is a related case lookup
+    def _is_ancestor_case_lookup(node):
+        """Returns whether a particular AST node is an ancestory case lookup
 
         e.g. `parent/host/thing = 'foo'`
         """
@@ -221,9 +221,9 @@ def build_filter_from_ast(domain, node, fuzzy=False):
                 serialize(node)
             )
 
-        if _is_related_case_lookup(node):
+        if _is_ancestor_case_lookup(node):
             # this node represents a filter on a property for a related case
-            return _walk_related_cases(node)
+            return _walk_ancestor_cases(node)
 
         if node.op in [EQ, NEQ]:
             # This node is a leaf
