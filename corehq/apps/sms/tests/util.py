@@ -32,8 +32,7 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.util.test_utils import unit_testing_only
 
@@ -253,8 +252,8 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return site
 
     def get_case(self, external_id):
-        [case] = CaseAccessors(self.domain).get_cases_by_external_id(external_id)
-        return case
+        return CommCareCase.objects.get_case_by_external_id(
+            self.domain, external_id, raise_multiple=True)
 
     def assertCasePropertyEquals(self, case, prop, value):
         self.assertEqual(case.get_case_property(prop), value)

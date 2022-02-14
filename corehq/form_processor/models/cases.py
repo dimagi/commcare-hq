@@ -24,7 +24,7 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.util import get_content_md5
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
-from corehq.sql_db.util import split_list_by_db_partition
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query, split_list_by_db_partition
 from corehq.util.json import CommCareJSONEncoder
 
 from ..exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError, UnknownActionType
@@ -32,7 +32,7 @@ from ..track_related import TrackRelatedChanges
 from .attachment import AttachmentContent, AttachmentMixin
 from .forms import XFormInstance
 from .mixin import CaseToXMLMixin, IsImageMixin, SaveStateMixin
-from .util import attach_prefetch_models, sort_with_id_list
+from .util import attach_prefetch_models, fetchall_as_namedtuple, sort_with_id_list
 
 DEFAULT_PARENT_IDENTIFIER = 'parent'
 
@@ -87,6 +87,31 @@ class CommCareCaseManager(RequireDBManager):
         for chunk in chunked((x for x in case_ids if x), 100, list):
             yield from self.get_cases(chunk, domain)
 
+    def get_case_by_external_id(self, domain, external_id, case_type=None, raise_multiple=False):
+        """Get case in domain with external id and optional case type
+
+        :param raise_multiple: When true, raise an exception if multiple
+        cases match the given criteria. When false (the default), get
+        a random matching case. TODO raise by default?
+        :raises: `CommCareCase.MultipleObjectsReturned` if
+        `raise_multiple=True` and more than one case exists for the
+        given criteria. The exception has a `cases` attribute
+        containing a list of returned case objects.
+        :returns: `CommCareCase` object or `None` if there are no
+        matching cases
+        """
+        cases = list(self.plproxy_raw(
+            'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
+            [domain, external_id, case_type]
+        ))
+        if not cases:
+            return None
+        if raise_multiple and len(cases) > 1:
+            error = CommCareCase.MultipleObjectsReturned()
+            error.cases = cases
+            raise error
+        return cases[0]
+
     def get_case_ids_that_exist(self, domain, case_ids):
         result = []
         for db_name, case_ids_chunk in split_list_by_db_partition(case_ids):
@@ -129,6 +154,35 @@ class CommCareCaseManager(RequireDBManager):
             cursor.execute(
                 'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s, %s)',
                 [domain, case_type, owner_ids, is_closed, deleted]
+            )
+            return [row[0] for row in cursor]
+
+    def get_closed_and_deleted_ids(self, domain, case_ids):
+        """Get the subset of given list of case ids that are closed or deleted
+
+        :returns: List of three-tuples: `(case_id, closed, deleted)`
+        """
+        assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
+                [domain, case_ids]
+            )
+            return list(fetchall_as_namedtuple(cursor))
+
+    def get_modified_case_ids(self, domain, case_ids, sync_log):
+        """Get the subset of given list of case ids that have been modified
+        since sync date/log id
+        """
+        assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
+                [domain, case_ids, sync_log.date, sync_log._id]
             )
             return [row[0] for row in cursor]
 
@@ -835,6 +889,22 @@ class CommCareCaseIndexManager(RequireDBManager):
         query = self.partitioned_query(case_id)
         return list(query.filter(case_id=case_id, domain=domain))
 
+    def get_related_indices(self, domain, case_ids, exclude_indices):
+        """Get indices (forward and reverse) for the given set of case ids
+
+        :param case_ids: A list of case ids.
+        :param exclude_indices: A set or dict of index id strings with
+        the format ``'<index.case_id> <index.identifier>'``.
+        :returns: A list of CommCareCaseIndex-like objects.
+        """
+        assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
+        return list(self.plproxy_raw(
+            'SELECT * FROM get_related_indices(%s, %s, %s)',
+            [domain, case_ids, list(exclude_indices)],
+        ))
+
     def get_reverse_indices(self, domain, case_id):
         indices = list(self.plproxy_raw(
             'SELECT * FROM get_case_indices_reverse(%s, %s)', [domain, case_id]
@@ -865,6 +935,39 @@ class CommCareCaseIndexManager(RequireDBManager):
                 relationship=index.relationship_id
             ) for index in indexes
         ]
+
+    def get_extension_case_ids(self, domain, case_ids, include_closed=True, exclude_for_case_type=None):
+        """
+        Given a base list of case ids, get all ids of all extension cases that reference them
+        """
+        if not case_ids:
+            return []
+        extension_case_ids = set()
+        for db_name in get_db_aliases_for_partitioned_query():
+            query = self.using(db_name).filter(
+                domain=domain,
+                relationship_id=self.model.EXTENSION,
+                case__deleted=False,
+                referenced_id__in=case_ids)
+            if not include_closed:
+                query = query.filter(case__closed=False)
+            if exclude_for_case_type:
+                query = query.exclude(referenced_type=exclude_for_case_type)
+            extension_case_ids.update(query.values_list('case_id', flat=True))
+        return list(extension_case_ids)
+
+    def get_extension_chain(self, domain, case_ids, include_closed=True, exclude_for_case_type=None):
+        assert isinstance(case_ids, list)
+        incoming_extensions = set(self.get_extension_case_ids(
+            domain, case_ids, include_closed, exclude_for_case_type))
+        all_extension_ids = set(incoming_extensions)
+        new_extensions = set(incoming_extensions)
+        while new_extensions:
+            extensions = self.get_extension_case_ids(
+                domain, list(new_extensions), include_closed, exclude_for_case_type)
+            new_extensions = set(extensions) - all_extension_ids
+            all_extension_ids = all_extension_ids | new_extensions
+        return all_extension_ids
 
 
 CaseIndexInfo = namedtuple(

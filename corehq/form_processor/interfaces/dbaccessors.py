@@ -3,7 +3,7 @@ from collections import namedtuple
 from warnings import warn
 
 from memoized import memoized
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 
 
 CaseIndexInfo = namedtuple(
@@ -59,29 +59,19 @@ class CaseAccessors(object):
         return self.db_accessor.get_open_case_ids_in_domain_by_type(self.domain, case_type, owner_ids)
 
     def get_related_indices(self, case_ids, exclude_indices):
-        """Get indices (forward and reverse) for the given set of case ids
-
-        :param case_ids: A list of case ids.
-        :param exclude_indices: A set or dict of index id strings with
-        the format ``'<index.case_id> <index.identifier>'``.
-        :returns: A list of CommCareCaseIndex-like objects.
-        """
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_related_indices(self.domain, case_ids, exclude_indices)
 
     def get_closed_and_deleted_ids(self, case_ids):
-        """Get the subset of given list of case ids that are closed or deleted
-
-        :returns: List of three-tuples: `(case_id, closed, deleted)`
-        """
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_closed_and_deleted_ids(self.domain, case_ids)
 
     def get_modified_case_ids(self, case_ids, sync_log):
-        """Get the subset of given list of case ids that have been modified
-        since sync date/log id
-        """
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_modified_case_ids(self, case_ids, sync_log)
 
     def get_extension_case_ids(self, case_ids, exclude_for_case_type=None):
+        warn("DEPRECATED use CommCareCaseIndex.objects", DeprecationWarning)
         return self.db_accessor.get_extension_case_ids(
             self.domain, case_ids, exclude_for_case_type=exclude_for_case_type)
 
@@ -101,9 +91,11 @@ class CaseAccessors(object):
         return self.db_accessor.get_attachment_content(case_id, attachment_id)
 
     def get_case_by_domain_hq_user_id(self, user_id, case_type):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_case_by_domain_hq_user_id(self.domain, user_id, case_type)
 
     def get_cases_by_external_id(self, external_id, case_type=None):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_cases_by_external_id(self.domain, external_id, case_type)
 
     def soft_delete_cases(self, case_ids, deletion_date=None, deletion_id=None):
@@ -117,20 +109,9 @@ class CaseAccessors(object):
         return self.db_accessor.get_deleted_case_ids_by_owner(self.domain, owner_id)
 
     def get_extension_chain(self, case_ids, include_closed=True, exclude_for_case_type=None):
-        assert isinstance(case_ids, list)
-        get_extension_case_ids = self.db_accessor.get_extension_case_ids
-
-        incoming_extensions = set(get_extension_case_ids(
-            self.domain, case_ids, include_closed, exclude_for_case_type))
-        all_extension_ids = set(incoming_extensions)
-        new_extensions = set(incoming_extensions)
-        while new_extensions:
-            extensions = get_extension_case_ids(
-                self.domain, list(new_extensions), include_closed, exclude_for_case_type
-            )
-            new_extensions = set(extensions) - all_extension_ids
-            all_extension_ids = all_extension_ids | new_extensions
-        return all_extension_ids
+        warn("DEPRECATED use CommCareCaseIndex.objects", DeprecationWarning)
+        return CommCareCaseIndex.objects.get_extension_chain(
+            self.domain, case_ids, include_closed, exclude_for_case_type)
 
     def get_case_owner_ids(self):
         return self.db_accessor.get_case_owner_ids(self.domain)

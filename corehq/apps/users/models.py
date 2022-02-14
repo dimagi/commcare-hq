@@ -2267,7 +2267,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return self.get_usercase()
 
     def get_usercase(self):
-        return CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
+        return CommCareCase.objects.get_case_by_external_id(self.domain, self._id, USERCASE_TYPE)
 
     @quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):

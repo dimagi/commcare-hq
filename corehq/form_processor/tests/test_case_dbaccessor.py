@@ -2,6 +2,7 @@ import uuid
 from collections import namedtuple
 from datetime import datetime
 
+from django.conf import settings
 from django.db import router
 from django.test import TestCase
 
@@ -645,6 +646,8 @@ class CaseAccessorTestsSQL(TestCase):
         _create_case(user_id='user2', case_id='125')  # get's sharded to p2
         _create_case(user_id='user1')
         _create_case(domain='other_domain', user_id='user3')
+        if settings.USE_PARTITIONED_DATABASE:
+            self.addCleanup(lambda: FormProcessorTestUtils.delete_all_cases('other_domain'))
 
         owners = CaseAccessorSQL.get_case_owner_ids('other_domain')
         self.assertEqual({'user3'}, owners)

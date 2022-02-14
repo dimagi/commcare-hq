@@ -533,59 +533,24 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_related_indices(domain, case_ids, exclude_indices):
-        assert isinstance(case_ids, list), case_ids
-        if not case_ids:
-            return []
-        return list(CommCareCaseIndex.objects.plproxy_raw(
-            'SELECT * FROM get_related_indices(%s, %s, %s)',
-            [domain, case_ids, list(exclude_indices)]))
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCaseIndex.objects.get_related_indices(domain, case_ids, exclude_indices)
 
     @staticmethod
     def get_closed_and_deleted_ids(domain, case_ids):
-        assert isinstance(case_ids, list), case_ids
-        if not case_ids:
-            return []
-        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
-                [domain, case_ids]
-            )
-            return list(fetchall_as_namedtuple(cursor))
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_closed_and_deleted_ids(domain, case_ids)
 
     @staticmethod
     def get_modified_case_ids(accessor, case_ids, sync_log):
-        assert isinstance(case_ids, list), case_ids
-        if not case_ids:
-            return []
-        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
-                [accessor.domain, case_ids, sync_log.date, sync_log._id]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_modified_case_ids(accessor.domain, case_ids, sync_log)
 
     @staticmethod
     def get_extension_case_ids(domain, case_ids, include_closed=True, exclude_for_case_type=None):
-        """
-        Given a base list of case ids, get all ids of all extension cases that reference them
-        """
-        if not case_ids:
-            return []
-
-        extension_case_ids = set()
-        for db_name in get_db_aliases_for_partitioned_query():
-            query = CommCareCaseIndex.objects.using(db_name).filter(
-                domain=domain,
-                relationship_id=CommCareCaseIndex.EXTENSION,
-                case__deleted=False,
-                referenced_id__in=case_ids)
-            if not include_closed:
-                query = query.filter(case__closed=False)
-            if exclude_for_case_type:
-                query = query.exclude(referenced_type=exclude_for_case_type)
-            extension_case_ids.update(query.values_list('case_id', flat=True))
-        return list(extension_case_ids)
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCaseIndex.objects.get_extension_case_ids(
+            domain, case_ids, include_closed, exclude_for_case_type)
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):
@@ -605,17 +570,14 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
-        return list(CommCareCase.objects.plproxy_raw(
-            'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
-            [domain, external_id, case_type]
-        ))
+        warn("DEPRECATED", DeprecationWarning)
+        case = CommCareCase.objects.get_case_by_external_id(domain, external_id, case_type)
+        return [case] if case is not None else []
 
     @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-        try:
-            return CaseAccessorSQL.get_cases_by_external_id(domain, user_id, case_type)[0]
-        except IndexError:
-            return None
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_case_by_external_id(domain, user_id, case_type)
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):

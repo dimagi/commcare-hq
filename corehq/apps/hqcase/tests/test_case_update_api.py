@@ -10,7 +10,6 @@ from casexml.apps.case.mock import CaseBlock
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import Permissions, UserRole, WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -37,8 +36,6 @@ class TestCaseAPI(TestCase):
             cls.domain, 'edit-data', permissions=Permissions(edit_data=True, access_api=True)
         )
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
-        cls.case_accessor = CaseAccessors(cls.domain)
-        cls.form_accessor = XFormInstance.objects
 
     def setUp(self):
         self.client.login(username='netflix', password='password')
@@ -144,7 +141,7 @@ class TestCaseAPI(TestCase):
             'sport': 'chess',
         })
 
-        xform = self.form_accessor.get_form(res['form_id'])
+        xform = XFormInstance.objects.get_form(res['form_id'])
         self.assertEqual(xform.xmlns, 'http://commcarehq.org/case_api')
         self.assertEqual(xform.metadata.userID, self.web_user.user_id)
         self.assertEqual(xform.metadata.deviceID, 'user agent string')
@@ -303,7 +300,7 @@ class TestCaseAPI(TestCase):
         updated_case = CommCareCase.objects.get_case(existing_case.case_id, self.domain)
         self.assertEqual(updated_case.name, 'Beth Harmon')
 
-        new_case = self.case_accessor.get_cases_by_external_id('jolene')[0]
+        new_case = CommCareCase.objects.get_case_by_external_id(self.domain, 'jolene')
         self.assertEqual(new_case.name, 'Jolene')
 
     def test_bulk_update_too_big(self):
@@ -363,8 +360,8 @@ class TestCaseAPI(TestCase):
             },
         ])
         self.assertEqual(res.status_code, 200)
-        parent = self.case_accessor.get_cases_by_external_id('beth')[0]
-        child = self.case_accessor.get_cases_by_external_id('harmon-luchenko')[0]
+        parent = CommCareCase.objects.get_case_by_external_id(self.domain, 'beth')
+        child = CommCareCase.objects.get_case_by_external_id(self.domain, 'harmon-luchenko')
         self.assertEqual(parent.case_id, child.get_index('parent').referenced_id)
 
     def test_create_child_with_no_parent(self):
@@ -436,7 +433,7 @@ class TestCaseAPI(TestCase):
         })
         self.assertEqual(res.status_code, 400)
         self.assertIn("InvalidCaseIndex", res.json()['error'])
-        form = self.form_accessor.get_form(res.json()['form_id'])
+        form = XFormInstance.objects.get_form(res.json()['form_id'])
         self.assertEqual(form.is_error, True)
 
     def test_unset_external_id(self):
