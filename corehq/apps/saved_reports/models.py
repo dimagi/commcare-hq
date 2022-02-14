@@ -110,7 +110,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None,
-                            stale=True, skip=None, limit=None):
+                            stale=True, skip=None, limit=None, include_shared=False):
         kwargs = {}
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
@@ -126,17 +126,47 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         if limit is not None:
             kwargs['limit'] = limit
 
-        result = cache_core.cached_view(
-            db,
-            "reportconfig/configs_by_domain",
-            reduce=False,
-            include_docs=True,
-            startkey=key,
-            endkey=key + [{}],
-            wrapper=cls.wrap,
-            **kwargs
-        )
+        if not include_shared:
+            result = cache_core.cached_view(
+                db,
+                "reportconfig/configs_by_domain",
+                reduce=False,
+                include_docs=True,
+                startkey=key,
+                endkey=key + [{}],
+                wrapper=cls.wrap,
+                **kwargs
+            )
+        else:
+            # Get user's own configs on domain
+            user_configs = cache_core.cached_view(
+                db,
+                "reportconfig/configs_by_domain",
+                reduce=False,
+                include_docs=False,
+                startkey=key,
+                endkey=key + [{}],
+                wrapper=cls.wrap,
+                **kwargs
+            )
+            user_configs = [c['id'] for c in user_configs]
+            # Include all shared configs
+            user_configs.extend(cls.shared_on_domain(domain, only_id=True))
+
+            result = [ReportConfig.get(id) for id in set(user_configs)]
+
         return result
+
+    @classmethod
+    def shared_on_domain(cls, domain, only_id=False, stale=False):
+        shared_config_ids = {
+            id_ for rn in ReportNotification.by_domain(domain, stale=stale)
+            for id_ in rn.config_ids
+        }
+        if only_id:
+            return shared_config_ids
+        else:
+            return {ReportConfig.get(config_id) for config_id in shared_config_ids}
 
     @classmethod
     def default(self):
@@ -154,6 +184,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         result = super(ReportConfig, self).to_json()
         result.update({
             'url': self.url,
+            'report_owner': self.owner.username,
             'report_name': self.report_name,
             'date_description': self.date_description,
             'datespan_filters': self.datespan_filter_choices(
@@ -509,6 +540,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 'slug': None,
             }] + localized_datespan_filters
 
+    def is_shared_on_domain(self):
+        config_ids = self.shared_on_domain(self.domain, only_id=True)
+        return self._id in config_ids
+
 
 class ReportNotification(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
@@ -552,11 +587,23 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         return notification
 
     @classmethod
+    def by_domain(cls, domain, stale=True, **kwargs):
+        if stale:
+            kwargs['stale'] = settings.COUCH_STALE_QUERY
+
+        key = [domain]
+        return cls._get_view_by_key(key, **kwargs)
+
+    @classmethod
     def by_domain_and_owner(cls, domain, owner_id, stale=True, **kwargs):
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
 
         key = [domain, owner_id]
+        return cls._get_view_by_key(key, **kwargs)
+
+    @classmethod
+    def _get_view_by_key(cls, key, **kwargs):
         db = cls.get_db()
         result = cache_core.cached_view(db, "reportconfig/user_notifications", reduce=False,
                                         include_docs=True, startkey=key, endkey=key + [{}],
