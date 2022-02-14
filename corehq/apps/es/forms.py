@@ -7,6 +7,7 @@ from corehq.pillows.mappings.const import NULL_VALUE
 from . import filters
 from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
+from .transient_util import transform_dict_with_possible_id
 
 
 class FormES(HQESQuery):
@@ -56,11 +57,19 @@ class ElasticForm(ElasticDocumentAdapter):
     index_key = "form"
     type = "xform"
 
+    @classmethod
+    def transform(cls, doc):
+        return transform_dict_with_possible_id(doc)
+
 
 class ElasticReportForm(ElasticDocumentAdapter):
 
     index_key = "report_form"
     type = "report_xform"
+
+    @classmethod
+    def transform(cls, doc):
+        return transform_dict_with_possible_id(doc)
 
 
 def form_ids(form_ids):

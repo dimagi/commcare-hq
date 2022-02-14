@@ -19,6 +19,7 @@ faceted query), filtered by a provided list of domains and a report date range.
 from . import filters
 from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
+from .transient_util import transform_dict_with_possible_id
 
 
 class DomainES(HQESQuery):
@@ -52,6 +53,10 @@ class ElasticDomain(ElasticDocumentAdapter):
 
     index_key = "domain"
     type = "hqdomain"
+
+    @classmethod
+    def transform(cls, doc):
+        return transform_dict_with_possible_id(doc)
 
 
 def non_test_domains():

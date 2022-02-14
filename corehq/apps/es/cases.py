@@ -18,6 +18,7 @@ closed after May 1st.
 from . import aggregations, filters
 from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
+from .transient_util import transform_dict_with_possible_id
 
 
 class CaseES(HQESQuery):
@@ -48,11 +49,19 @@ class ElasticCase(ElasticDocumentAdapter):
     index_key = "case"
     type = "case"
 
+    @classmethod
+    def transform(cls, doc):
+        return transform_dict_with_possible_id(doc)
+
 
 class ElasticReportCase(ElasticDocumentAdapter):
 
     index_key = "report_case"
     type = "report_case"
+
+    @classmethod
+    def transform(cls, doc):
+        return transform_dict_with_possible_id(doc)
 
 
 def opened_range(gt=None, gte=None, lt=None, lte=None):

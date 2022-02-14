@@ -27,6 +27,7 @@ from copy import deepcopy
 from . import filters, queries
 from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
+from .transient_util import transform_dict_with_possible_id
 
 
 class UserES(HQESQuery):
@@ -69,6 +70,10 @@ class ElasticUser(ElasticDocumentAdapter):
 
     index_key = "user"
     type = "user"
+
+    @classmethod
+    def transform(cls, doc):
+        return transform_dict_with_possible_id(doc)
 
 
 def domain(domain, allow_enterprise=False):

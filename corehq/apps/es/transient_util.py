@@ -5,6 +5,14 @@ from .client import ElasticDocumentAdapter
 from .registry import get_registry
 
 
+def transform_dict_with_possible_id(doc):
+    """Temporary "common transform" function for adapters who don't yet own
+    their document transform logic."""
+    if "_id" in doc:
+        return doc["_id"], {k: doc[k] for k in doc if k != "_id"}
+    return None, doc
+
+
 def doc_adapter_from_info(index_info, for_export=False):
     """Return the document adapter for the provided ``index_info`` object.
 

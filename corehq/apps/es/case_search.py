@@ -34,6 +34,7 @@ from corehq.util.dates import iso_string_to_datetime
 from . import filters, queries
 from .cases import ElasticCase
 from .client import ElasticDocumentAdapter
+from .transient_util import transform_dict_with_possible_id
 
 
 class CaseSearchES(CaseES):
@@ -136,6 +137,10 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
 
     index_key = "case_search"
     type = ElasticCase.type
+
+    @classmethod
+    def transform(cls, doc):
+        return transform_dict_with_possible_id(doc)
 
 
 def case_property_filter(case_property_name, value):

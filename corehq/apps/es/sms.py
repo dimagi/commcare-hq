@@ -5,6 +5,7 @@ SMSES
 from . import filters
 from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
+from .transient_util import transform_dict_with_possible_id
 
 
 class SMSES(HQESQuery):
@@ -34,6 +35,10 @@ class ElasticSMS(ElasticDocumentAdapter):
 
     index_key = "sms"
     type = "sms"
+
+    @classmethod
+    def transform(cls, doc):
+        return transform_dict_with_possible_id(doc)
 
 
 def incoming_messages():
