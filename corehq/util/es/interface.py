@@ -42,10 +42,6 @@ class ElasticsearchInterface:
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
         return doc_adapter.exists(doc_id)
 
-    def _mget(self, index_alias, body, doc_type):
-        return self.es.mget(
-            index=index_alias, doc_type=doc_type, body=body, _source=True)
-
     def get_doc(self, index_alias, doc_type, doc_id, source_includes=None):
         self._verify_is_alias(index_alias)
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
@@ -54,17 +50,9 @@ class ElasticsearchInterface:
         return doc_adapter.fetch(doc_id, source_includes=source_includes)
 
     def get_bulk_docs(self, index_alias, doc_type, doc_ids):
-        from corehq.elastic import ESError
         self._verify_is_alias(index_alias)
-        docs = []
-        results = self._mget(index_alias=index_alias, doc_type=doc_type, body={'ids': doc_ids})
-        for doc_result in results['docs']:
-            if 'error' in doc_result:
-                raise ESError(doc_result['error'].get('reason', 'error doing bulk get'))
-            if doc_result['found']:
-                self._fix_hit(doc_result)
-                docs.append(doc_result['_source'])
-        return docs
+        doc_adapter = self._get_doc_adapter(index_alias, doc_type)
+        return doc_adapter.fetch_many(doc_ids)
 
     def index_doc(self, index_alias, doc_type, doc_id, doc, params=None):
         self._verify_is_alias(index_alias)
