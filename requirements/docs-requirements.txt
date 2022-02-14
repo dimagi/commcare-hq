@@ -503,9 +503,9 @@ xlrd==2.0.1
     # via -r base-requirements.in
 xlwt==1.3.0
     # via -r base-requirements.in
-zope.event==4.5.0
+zope-event==4.5.0
     # via gevent
-zope.interface==5.4.0
+zope-interface==5.4.0
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
@@ -516,5 +516,5 @@ setuptools==53.0.0
     #   gunicorn
     #   jsonschema
     #   sphinx
-    #   zope.event
-    #   zope.interface
+    #   zope-event
+    #   zope-interface
