@@ -119,14 +119,18 @@ class ElasticPillowTest(SimpleTestCase):
 
         # make sure it's there in the other index
         aliases = self.es_interface.get_aliases()
-        self.assertEqual([TEST_INDEX_INFO.alias], list(aliases[new_index]['aliases']))
+        # NOTE: alias is currently applied to *both* indices now because the
+        # `initialize_index_and_mapping` helper function both creates the index
+        # and applies an alias to the (new) index. The `assertIn()` test is used
+        # here as to not make this test depend on that implied functionality of
+        # the helper function.
+        self.assertIn(new_index, aliases[TEST_INDEX_INFO.alias])
 
         # assume alias and make sure it's removed (and added to the right index)
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
         aliases = self.es_interface.get_aliases()
 
-        self.assertEqual(0, len(aliases[new_index]['aliases']))
-        self.assertEqual([TEST_INDEX_INFO.alias], list(aliases[self.index]['aliases']))
+        self.assertEqual([self.index], aliases[TEST_INDEX_INFO.alias])
 
     def test_update_settings(self):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)

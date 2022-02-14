@@ -21,7 +21,7 @@ class ElasticsearchInterface:
         return ElasticManageAdapter()
 
     def get_aliases(self):
-        return self.es.indices.get_aliases()
+        return self.manager.get_aliases()
 
     def put_mapping(self, doc_type, mapping, index):
         return self.es.indices.put_mapping(doc_type, {doc_type: mapping}, index=index)
