@@ -9,6 +9,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedOpenCaseAction,
     CaseIndex,
+    ConditionalCaseUpdate,
     Form,
     LoadUpdateAction,
 )
@@ -68,7 +69,7 @@ class Command(BaseCommand):
 
             actions = form.active_actions()
             open = actions.get('open_case', None)
-            update = actions.get('update_case', None)
+            update = actions.get('update_case', None)  # TODO: confirm correct format
             close = actions.get('close_case', None)
             preload = actions.get('case_preload', None)
             subcases = actions.get('subcases', None)
@@ -79,7 +80,7 @@ class Command(BaseCommand):
                 base_action = AdvancedOpenCaseAction(
                     case_type=case_type,
                     case_tag='open_{0}_0'.format(case_type),
-                    name_path=open.name_path,
+                    name_update=ConditionalCaseUpdate(question_path=open.name_update.question_path),
                     open_condition=open.condition,
                     case_properties=update.update if update else {},
                 )
@@ -114,9 +115,9 @@ class Command(BaseCommand):
                     open_subcase_action = AdvancedOpenCaseAction(
                         case_type=subcase.case_type,
                         case_tag='open_{0}_{1}'.format(subcase.case_type, i + 1),
-                        name_path=subcase.case_name,
+                        name_update=ConditionalCaseUpdate(question_path=subcase.name_update.question_path),
                         open_condition=subcase.condition,
-                        case_properties=subcase.case_properties,
+                        case_properties=subcase.case_properties,  # TODO: should also be case_properties=subcase.case_properties.question_path?
                         repeat_context=subcase.repeat_context,
                         case_indices=[CaseIndex(
                             tag=base_action.case_tag if base_action else '',
