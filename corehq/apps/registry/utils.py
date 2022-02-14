@@ -53,7 +53,11 @@ class RegistryPermissionCheck:
         from corehq.apps.userreports.models import ReportConfiguration
         if 'DynamicReport' in report_class:
             config_id = report_class.replace('corehq.reports.DynamicReport', '')
-            report_config = ReportConfiguration.get(config_id).config
+            from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
+            try:
+                report_config = ReportConfiguration.get(config_id).config
+            except DataSourceConfigurationNotFoundError:
+                return False
             if 'registry_slug' in report_config:
                 return self.can_view_registry_data(report_config.registry_slug)
         return True
