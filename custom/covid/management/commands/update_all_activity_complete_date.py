@@ -108,7 +108,7 @@ def _get_new_patient_date_value(case):
     return _get_new_date_value(
         case,
         ['closed_date', 'isolation_end_date', 'quarantine_end_date'],
-        ['new_lab_result_specimen_collection_date', 'symptom_onset_date', 'opened_on']
+        ['symptom_onset_date', 'new_lab_result_specimen_collection_date', 'specimen_collection_date', 'opened_on']
     )
 
 
