@@ -54,8 +54,8 @@ class ReportBuilderDBTest(TestCase):
         form.source = get_simple_xform()
         cls.form = form
         factory.form_requires_case(form, case_type=cls.case_type, update={
-            'first_name': ConditionalCaseUpdate(question_path='/data/first_name'),
-            'last_name': ConditionalCaseUpdate(question_path='/data/last_name'),
+            'first_name': '/data/first_name',
+            'last_name': '/data/last_name',
         })
         cls.app = factory.app
         cls.app.save()

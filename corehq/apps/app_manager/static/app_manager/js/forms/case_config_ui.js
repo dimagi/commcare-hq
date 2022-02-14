@@ -1,13 +1,10 @@
-hqDefine('app_manager/js/forms/case_config_ui', [
-    'hqwebapp/js/toggles',
-], function (
-    toggles
-) {
+hqDefine('app_manager/js/forms/case_config_ui', function () {
     "use strict";
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            privileges = initial_page_data('add_ons_privileges');
+            privileges = initial_page_data('add_ons_privileges'),
+            toggles = hqImport("hqwebapp/js/toggles");
         var action_names = ["open_case", "update_case", "close_case", "case_preload",
             // Usercase actions are managed in the User Properties tab.
             "usercase_update", "usercase_preload",
@@ -40,8 +37,6 @@ hqDefine('app_manager/js/forms/case_config_ui', [
             self.valid_index_names = params.valid_index_names;
             self.moduleCaseTypes = params.moduleCaseTypes;
             self.allowUsercase = params.allowUsercase;
-
-            self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
             self.setPropertiesMap = function (propertiesMap) {
                 self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -311,7 +306,7 @@ hqDefine('app_manager/js/forms/case_config_ui', [
 
             self.hasPrivilege = hasPrivilege;
             self.caseConfig = caseConfig;
-            self.saveOnlyEditedFormFieldsEnabled = caseConfig.saveOnlyEditedFormFieldsEnabled;
+            self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
             // link self.case_name to corresponding path observable in case_properties for convenience
             try {
@@ -598,7 +593,7 @@ hqDefine('app_manager/js/forms/case_config_ui', [
                     name_update: (o.open_case || {}).name_update || DEFAULT_UPDATE_ALWAYS,
                 };
                 self.update_case = {
-                    update: (o.update_case || {}).update || DEFAULT_UPDATE_ALWAYS,
+                    update: (o.update_case || {}).update || {},
                 };
                 self.case_preload = {
                     preload: (o.case_preload || {}).preload || {},
@@ -607,7 +602,7 @@ hqDefine('app_manager/js/forms/case_config_ui', [
                     condition: (o.close_case || {}).condition || DEFAULT_CONDITION_ALWAYS,
                 };
                 self.usercase_update = {
-                    update: (o.usercase_update || {}).update || DEFAULT_UPDATE_ALWAYS,
+                    update: (o.usercase_update || {}).update || {},
                 };
                 self.usercase_preload = {
                     preload: (o.usercase_preload || {}).preload || {},
@@ -763,7 +758,6 @@ hqDefine('app_manager/js/forms/case_config_ui', [
             },
             to_case_transaction: function (o, caseConfig) {
                 var self = HQOpenSubCaseAction.normalize(o);
-                // To be modified. Dependent on possible change to OpenCaseAction model.
                 var case_properties = caseConfigUtils.propertyDictToArray([{
                     path: self.name_update.question_path,
                     key: 'name',
