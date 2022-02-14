@@ -24,7 +24,7 @@ class ElasticsearchInterface:
         return self.manager.get_aliases()
 
     def put_mapping(self, doc_type, mapping, index):
-        return self.es.indices.put_mapping(doc_type, {doc_type: mapping}, index=index)
+        return self.manager.index_put_mapping(index, doc_type, mapping)
 
     def _verify_is_alias(self, alias):
         """Verify that an alias is one of a registered index"""
