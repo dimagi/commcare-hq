@@ -6,6 +6,7 @@ from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
+from corehq.apps.enterprise.tasks import auto_deactivate_mobile_workers
 from corehq.apps.enterprise.tests.utils import (
     get_enterprise_account,
     get_enterprise_software_plan,
@@ -93,7 +94,7 @@ class TestAutoDeactivateMobileWorkersTask(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        EnterpriseMobileWorkerSettings.objects.all.delete()
+        EnterpriseMobileWorkerSettings.objects.all().delete()
         for domains in [cls.domains1, cls.domains2, cls.domains3, cls.domains4]:
             for domain in domains:
                 domain.delete()
@@ -106,6 +107,7 @@ class TestAutoDeactivateMobileWorkersTask(TestCase):
     def test_auto_deactivate_mobile_workers_task(
         self, deactivate_mobile_workers, deactivate_mobile_workers_by_inactivity
     ):
+        auto_deactivate_mobile_workers()
         domains_checked_for_inactivity = [
             arg[0][0]
             for arg in deactivate_mobile_workers_by_inactivity.call_args_list
