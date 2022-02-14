@@ -10,8 +10,10 @@ from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 def test_public_only_session__simple_success():
     session = _set_up_session()
-    response = session.get('https://example.com/')
-    eq(response.status_code, 200)
+    with _patch_session_with_hard_coded_response(session, 'https://example.com/',
+                                                 _get_200_response()):
+        response = session.get('https://example.com/')
+        eq(response.status_code, 200)
 
 
 def test_public_only_session__simple_invalid_url_local():
@@ -28,8 +30,13 @@ def test_public_only_session__simple_invalid_url_private():
 
 def test_public_only_session__redirect_to_valid_url():
     session = _set_up_session()
-    with _patch_session_with_hard_coded_response(session, 'https://myredirect.com/',
-                                                 _get_redirect_response('https://example.com/')):
+    with (
+        _patch_session_with_hard_coded_response(
+            session, 'https://myredirect.com/', _get_redirect_response('https://example.com/')),
+        _patch_session_with_hard_coded_response(
+            session, 'https://example.com/', _get_200_response())
+    ):
+
         response = session.get('https://myredirect.com/')
         eq(response.status_code, 200)
 
@@ -65,6 +72,15 @@ def _get_redirect_response(redirect_location):
     response = requests.Response()
     response.status_code = 301
     response.headers['Location'] = redirect_location
+    return response
+
+
+def _get_200_response():
+    """
+    Get a requests.Response object that is a 200 Success
+    """
+    response = requests.Response()
+    response.status_code = 200
     return response
 
 
