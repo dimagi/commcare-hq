@@ -144,6 +144,31 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         """
         return hasattr(node, 'left') and hasattr(node.left, 'op') and node.left.op == '/'
 
+    def _subcase_filter(node):
+        index_identifier, subcase_predicate, case_count_gt, invert_condition = _parse_subcase_query(node)
+        ids = _get_parent_case_ids_matching_subcase_query(index_identifier, subcase_predicate, case_count_gt)
+        if invert_condition:
+            return filters.NOT(filters.doc_id(ids))
+        return filters.doc_id(ids)
+
+    def _get_parent_case_ids_matching_subcase_query(index_identifier, subcase_predicates, case_count_gt):
+        """Get a list of case IDs for cases that have a subcase with the given index identifier
+        and matching the subcase predicate filter.
+
+        Only cases with `> case_count_gt` subcases will be returned.
+        """
+        return []  # TODO
+
+    def _parse_subcase_query(node):
+        """Parse the subcase query and normalize it to the form 'subcase_count > N'
+
+        :returns: tuple(index_identifier, subcase search predicate, case_count_gt, invert_condition)"""
+        return "", None, 0  # TODO
+
+    def _is_subcase_lookup(node):
+        """Returns whether a particular AST node is a subcase lookup"""
+        return False  # TODO
+
     def _raise_step_RHS(node):
         raise CaseFilterError(
             _("You cannot reference a case property on the right side "
@@ -214,6 +239,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
 
     def visit(node):
         if not hasattr(node, 'op'):
+            # TODO: adjust this for subcase queries
             raise CaseFilterError(
                 _("Your search query is required to have at least one boolean operator ({boolean_ops})").format(
                     boolean_ops=", ".join(list(COMPARISON_MAPPING.keys()) + [EQ, NEQ]),
@@ -224,6 +250,9 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         if _is_ancestor_case_lookup(node):
             # this node represents a filter on a property for a related case
             return _walk_ancestor_cases(node)
+
+        if _is_subcase_lookup(node):
+            return _subcase_filter(node)
 
         if node.op in [EQ, NEQ]:
             # This node is a leaf
