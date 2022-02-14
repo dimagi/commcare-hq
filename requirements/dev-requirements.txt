@@ -364,7 +364,7 @@ prometheus-client==0.7.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.26
     # via ipython
-protobuf==3.13.0
+protobuf==3.15.0
     # via ddtrace
 psutil==5.8.0
     # via -r dev-requirements.in
@@ -606,8 +606,6 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==6.5.1
     # via -r base-requirements.in
-typing-extensions==4.0.1
-    # via black
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
@@ -642,9 +640,9 @@ xmlsec==1.3.11
     # via python3-saml
 yapf==0.31.0
     # via -r dev-requirements.in
-zope.event==4.5.0
+zope-event==4.5.0
     # via gevent
-zope.interface==5.4.0
+zope-interface==5.4.0
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
@@ -658,8 +656,7 @@ setuptools==50.3.0
     #   ipython
     #   jsonschema
     #   pip-tools
-    #   protobuf
     #   python-termstyle
     #   sphinx
-    #   zope.event
-    #   zope.interface
+    #   zope-event
+    #   zope-interface
