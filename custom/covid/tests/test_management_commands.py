@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -19,6 +20,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from dimagi.utils.parsing import json_format_date
 
 
 class CaseCommandsTest(TestCase):
@@ -404,7 +406,9 @@ class TestUpdateAllActivityCompleteDate(TestCase):
                 'patient', {"isolation_end_date": "2022-01-04"}, inactive_owner=False),
             'contact_to_ignore': cls._make_case('contact', {'finale_disposition': 'converted_to_pui'}),
             'patient_to_update': cls._make_case('patient', {"isolation_end_date": "2022-01-04"}),
+            'patient_to_update_adjust': cls._make_case('patient', {"symptom_onset_date": "2022-01-05"}),
             'contact_to_update': cls._make_case('contact', {"quarantine_end_date": "2022-01-07"}),
+            'contact_to_update_adjust': cls._make_case('contact', {"exposure_date": "2022-01-06"}),
             'no_fallback': cls._make_case('patient', {}),
         }
         case_search_es_setup(cls.domain, list(cls.cases.values()))
@@ -445,6 +449,13 @@ class TestUpdateAllActivityCompleteDate(TestCase):
             case_block.update.get('isolation_end_date'),
         )
 
+        case, case_block = cases['patient_to_update_adjust']
+        self.assertEqual(len(case.transactions), 2)
+        self.assertEqual(
+            case.get_case_property('all_activity_complete_date'),
+            '2022-01-20',
+        )
+
         case, case_block = cases['contact_to_update']
         self.assertEqual(len(case.transactions), 2)
         self.assertEqual(
@@ -452,9 +463,16 @@ class TestUpdateAllActivityCompleteDate(TestCase):
             case_block.update.get('quarantine_end_date'),
         )
 
+        case, case_block = cases['contact_to_update_adjust']
+        self.assertEqual(len(case.transactions), 2)
+        self.assertEqual(
+            case.get_case_property('all_activity_complete_date'),
+            '2022-01-21',
+        )
+
         case, case_block = cases['no_fallback']
         self.assertEqual(len(case.transactions), 2)
         self.assertEqual(
             case.get_case_property('all_activity_complete_date'),
-            '2022-02-02',
+            json_format_date(case.get_case_property('opened_on') + timedelta(days=15))
         )

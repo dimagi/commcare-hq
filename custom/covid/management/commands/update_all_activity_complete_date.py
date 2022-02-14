@@ -3,6 +3,8 @@ import textwrap
 
 from django.core.management.base import BaseCommand
 
+from jsonobject.api import re_date
+
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.es.case_search import (
@@ -13,7 +15,10 @@ from corehq.apps.es.case_search import (
 from corehq.apps.hqcase.bulk import update_cases
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.users.util import SYSTEM_USER_ID, username_to_user_id
+from corehq.util.dates import iso_string_to_date
 from corehq.util.log import with_progress_bar
+
+from dimagi.utils.parsing import json_format_date
 
 DEVICE_ID = __name__
 
@@ -90,13 +95,47 @@ def _correct_bad_property(case):
     ):
         return None
 
-    fallback_property = 'quarantine_end_date' if case.type == 'contact' else 'isolation_end_date'
-    new_value = case.get_case_property(fallback_property) or '2022-02-02'
+    date_func = _get_new_contact_date_value if case.type == 'contact' else _get_new_patient_date_value
+    new_value = date_func(case)
     return CaseBlock(
         create=False,
         case_id=case.case_id,
         update={"all_activity_complete_date": new_value},
     )
+
+
+def _get_new_patient_date_value(case):
+    return _get_new_date_value(
+        case,
+        ['closed_date', 'isolation_end_date', 'quarantine_end_date'],
+        ['new_lab_result_specimen_collection_date', 'symptom_onset_date', 'opened_on']
+    )
+
+
+def _get_new_contact_date_value(case):
+    return _get_new_date_value(
+        case,
+        ['closed_date', 'quarantine_end_date'],
+        ['exposure_date', 'fup_next_call_date', 'opened_on']
+    )
+
+
+def _get_new_date_value(case, plain_date_props, adjust_date_props):
+    def _is_date(value):
+        return value and re_date.match(value)
+
+    found_prop, found_value = None, None
+    for prop in plain_date_props + adjust_date_props:
+        value = case.get_case_property(prop)
+        if _is_date(value):
+            found_prop, found_value = prop, value
+            break
+
+    if found_prop in adjust_date_props:
+        date_value = iso_string_to_date(found_value) if isinstance(found_value, str) else found_value
+        adjusted_date_value = date_value + datetime.timedelta(days=15)
+        return json_format_date(adjusted_date_value)
+    return found_value
 
 
 INACTIVE_LOCATION_IDS = [
