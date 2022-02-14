@@ -402,8 +402,11 @@ class GroupChoiceProvider(ChainableChoiceProvider):
 class DomainChoiceProvider(ChainableChoiceProvider):
 
     @memoized
-    def _query_domains(self, domain, query_text):
+    def _query_domains(self, domain, query_text, user=None):
         domains = {domain}
+        if user:
+            if not user.can_view_registry_data(self.report.registry_helper.registry_slug):
+                return domains
         try:
             domains.update(self.report.registry_helper.visible_domains)
         except RegistryNotFound:
@@ -413,17 +416,17 @@ class DomainChoiceProvider(ChainableChoiceProvider):
         return list(domains)
 
     def query(self, query_context):
-        domains = self._query_domains(self.domain, query_context.query)
+        domains = self._query_domains(self.domain, query_context.query, query_context.user)
         domains.sort()
         return self._domains_to_choices(
             domains[query_context.offset:query_context.offset + query_context.limit]
         )
 
-    def query_count(self, query):
-        return len(self._query_domains(self.domain, query))
+    def query_count(self, query, user=None):
+        return len(self._query_domains(self.domain, query, user))
 
     def get_choices_for_known_values(self, values, user):
-        domains = self._query_domains(self.domain, None)
+        domains = self._query_domains(self.domain, None, user=user)
         domain_options = [domain for domain in domains if domain in values]
         return self._domains_to_choices(domain_options)
 
