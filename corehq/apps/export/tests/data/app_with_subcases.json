@@ -521,7 +521,6 @@
                             "doc_type": "UpdateCaseAction",
                             "update": {
                                 "last_status": {
-                                  "doc_type": "SmartCaseUpdate",
                                   "question_path": "/data/how_are_you_today",
                                   "update_mode": "always"
                                 }

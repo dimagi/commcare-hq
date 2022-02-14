@@ -110,6 +110,9 @@ class AppFactory(object):
 
     @staticmethod
     def form_requires_case(form, case_type=None, parent_case_type=None, update=None, preload=None):
+        if update:
+            update = {
+                name: ConditionalCaseUpdate(question_path=question_path) for name, question_path in update.items()}
         if form.form_type == 'module_form':
             form.requires = 'case'
             if update:

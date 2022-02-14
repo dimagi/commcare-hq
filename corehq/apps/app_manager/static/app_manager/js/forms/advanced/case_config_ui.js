@@ -1,8 +1,4 @@
-hqDefine('app_manager/js/forms/advanced/case_config_ui', [
-    'hqwebapp/js/toggles',
-], function (
-    toggles
-) {
+hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
     'use strict';
 
     $(function () {
@@ -11,7 +7,8 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', [
             casePreloadProperty = hqImport("app_manager/js/forms/advanced/case_properties").casePreloadProperty,
             loadUpdateAction = hqImport("app_manager/js/forms/advanced/actions").loadUpdateAction,
             openCaseAction = hqImport("app_manager/js/forms/advanced/actions").openCaseAction,
-            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
+            toggles = hqImport("hqwebapp/js/toggles");
 
         var DEFAULT_CONDITION = function (type) {
             return {
@@ -44,8 +41,6 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', [
             self.commtrack = params.commtrack_enabled;
             self.programs = params.commtrack_programs;
             self.isShadowForm = params.isShadowForm;
-
-            self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
             self.setPropertiesMap = function (propertiesMap) {
                 self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -303,7 +298,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', [
                 action.visible_case_properties = ko.computed(function () {
                     return action.case_properties();
                 });
-                action.saveOnlyEditedFormFieldsEnabled = caseConfig.saveOnlyEditedFormFieldsEnabled;
+                action.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
                 _(preload).each(function (p) {
                     action.preload.push(casePreloadProperty.wrap(p, action));
@@ -348,7 +343,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', [
                 action.visible_case_properties = ko.computed(function () {
                     return action.case_properties();
                 });
-                action.caseConfig.saveOnlyEditedFormFieldsEnabled = caseConfig.saveOnlyEditedFormFieldsEnabled;
+                action.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
                 return action;
             }));

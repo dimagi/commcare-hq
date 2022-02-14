@@ -177,12 +177,10 @@
                             },
                             "update": {
                               "age": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/parent_age",
                                 "update_mode": "always"
                               },
                               "only_parent_has_this": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/parent_age",
                                 "update_mode": "always"
                               }

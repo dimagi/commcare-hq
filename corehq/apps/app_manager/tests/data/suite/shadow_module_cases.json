@@ -504,7 +504,6 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                 "name": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "\/data\/name",
                   "update_mode": "always"
                 }

@@ -45,7 +45,7 @@ class SchemaTest(SimpleTestCase):
         self.factory.form_requires_case(
             village,
             case_type=self.factory.app.get_module(0).case_type,
-            update={'foo': ConditionalCaseUpdate(question_path='/data/question1')}
+            update={'foo': '/data/question1'}
         )
         schema = get_casedb_schema(village)
         self.assertEqual(len(schema["subsets"]), 1, schema["subsets"])
@@ -66,7 +66,7 @@ class SchemaTest(SimpleTestCase):
         self.factory.form_requires_case(
             form,
             case_type=self.factory.app.get_module(0).case_type,
-            update={'foo': ConditionalCaseUpdate(question_path='/data/question1')}
+            update={'foo': '/data/question1'}
         )
         schema = get_casedb_schema(form)
         self.assertEqual(len(schema["subsets"]), 1, schema["subsets"])
@@ -85,7 +85,7 @@ class SchemaTest(SimpleTestCase):
         village = self.add_form("village")
         self.factory.form_opens_case(village, case_type='family', is_subcase=True)
         self.factory.form_requires_case(family, case_type='family', update={
-            'foo': ConditionalCaseUpdate(question_path='/data/question1'),
+            'foo': '/data/question1',
         })
         schema = get_casedb_schema(family)
         subsets = {s["id"]: s for s in schema["subsets"]}
@@ -99,7 +99,7 @@ class SchemaTest(SimpleTestCase):
     def test_get_casedb_schema_with_multiple_parent_case_types(self):
         referral = self.add_form("referral")
         self.factory.form_requires_case(referral, case_type='referral', update={
-            'foo': ConditionalCaseUpdate(question_path='/data/question1'),
+            'foo': '/data/question1',
         })
         child = self.add_form("child")
         self.factory.form_opens_case(child, case_type='referral', is_subcase=True)
@@ -114,7 +114,7 @@ class SchemaTest(SimpleTestCase):
     def test_get_casedb_schema_with_deep_hierarchy(self):
         child = self.add_form("child")
         case_type = self.factory.app.get_module(0).case_type
-        case_update = {'foo': ConditionalCaseUpdate(question_path='/data/question1')}
+        case_update = {'foo': '/data/question1'}
         self.factory.form_requires_case(child, case_type=case_type, update=case_update)
         parent = self.add_form("parent")
         self.factory.form_requires_case(parent, case_type=case_type, update=case_update)
@@ -136,7 +136,7 @@ class SchemaTest(SimpleTestCase):
 
     def test_get_casedb_schema_with_parent_case_property_update(self):
         family = self.add_form("family", {
-            "parent/has_well": ConditionalCaseUpdate(question_path="/data/village_has_well")
+            "parent/has_well": "/data/village_has_well"
         })
         village = self.add_form("village")
         self.factory.form_opens_case(village, case_type='family', is_subcase=True)
@@ -189,7 +189,7 @@ class SchemaTest(SimpleTestCase):
         self.module_1, _ = self.factory.new_basic_module('child', 'guppy', parent_module=self.module_0)
         # m0f0 registers gold-fish case and a child case ('guppy')
         m0f0 = self.module_0.get_form(0)
-        self.factory.form_requires_case(m0f0, update={'name': ConditionalCaseUpdate(question_path='goldilocks')})
+        self.factory.form_requires_case(m0f0, update={'name': 'goldilocks'})
         self.factory.form_opens_case(m0f0, 'guppy', is_subcase=True)
 
         # m1f0 has parent-select, updates `guppy` case
@@ -396,7 +396,7 @@ class SchemaTest(SimpleTestCase):
 
             referral_2 = self.add_form_app_2('referral')
             self.factory.form_requires_case(referral_2, case_type='referral', update={
-                'foo': ConditionalCaseUpdate(question_path='/data/question1'),
+                'foo': '/data/question1',
             })
             schema = get_casedb_schema(referral_2)
             subsets = {s["id"]: s for s in schema["subsets"]}
@@ -481,7 +481,7 @@ class SchemaTest(SimpleTestCase):
         self.factory.form_requires_case(
             village,
             case_type=self.factory.app.get_module(0).case_type,
-            update={'foo': ConditionalCaseUpdate(question_path='/data/question1')}
+            update={'foo': '/data/question1'}
         )
         schema = get_casedb_schema(village)
         self.assertEqual(len(schema["subsets"]), 0, schema["subsets"])
@@ -493,7 +493,7 @@ class SchemaTest(SimpleTestCase):
         self.factory.form_requires_case(
             village,
             case_type=self.factory.app.get_module(0).case_type,
-            update={'foo': ConditionalCaseUpdate(question_path='/data/question1')}
+            update={'foo': '/data/question1'}
         )
 
         schema = get_registry_schema(village)

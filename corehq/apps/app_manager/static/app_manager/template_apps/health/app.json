@@ -231,27 +231,22 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                   "Last_menstrual_period": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/last_menstrual_period",
                     "update_mode": "always"
                   },
                   "Total_children": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/Total_children",
                     "update_mode": "always"
                   },
                   "Children_alive": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/children_alive",
                     "update_mode": "always"
                   },
                   "village_name": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/village_name",
                     "update_mode": "always"
                   },
                   "feeling_sick": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/feeling_sick",
                     "update_mode": "always"
                   }
@@ -714,27 +709,22 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                 "danger_signs": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "/data/danger_signs",
                   "update_mode": "always"
                 },
                 "referral": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "/data/referral",
                   "update_mode": "always"
                 },
                 "feeling_sick": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "/data/feeling_sick",
                   "update_mode": "always"
                 },
                 "referral_anyway": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "/data/referral_anyway",
                   "update_mode": "always"
                 },
                 "had_referral_checkup": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "/data/had_referral_checkup",
                   "update_mode": "always"
                 }
@@ -932,12 +922,10 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                 "pregnancy_outcome": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "/data/pregnancy_outcome",
                   "update_mode": "always"
                 },
                 "baby_name": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "/data/baby_name",
                   "update_mode": "always"
                 }
@@ -1555,17 +1543,14 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                   "danger_signs": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/danger_signs",
                     "update_mode": "always"
                   },
                   "has_condition_improved": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/has_condition_improved",
                     "update_mode": "always"
                   },
                   "had_referral_checkup": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/had_referral_checkup",
                     "update_mode": "always"
                   }

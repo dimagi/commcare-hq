@@ -2158,7 +2158,7 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     owner='Addison Dunn',
     description="""
     Enable a checkbox for the ability to save a form question's answer in Case Management in App
-    Manager only if the question's inputted answer has been edited
+    Manager only if the question's inputted answer is different from the current value in the case.
     """
 )
 

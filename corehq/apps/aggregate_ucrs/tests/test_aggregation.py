@@ -79,7 +79,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         f1 = factory.new_form(m0)
         f1.source = cls._get_xform()
         factory.form_requires_case(f1, case_type=cls.case_type, update={
-            cp[0]: ConditionalCaseUpdate(question_path='/data/{}'.format(cp[0])) for cp in cls.case_properties
+            cp[0]: '/data/{}'.format(cp[0]) for cp in cls.case_properties
         })
         cls.followup_form = f1
 

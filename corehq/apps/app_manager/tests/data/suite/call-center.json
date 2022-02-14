@@ -315,37 +315,30 @@
                             },
                             "update": {
                               "another_issue": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/follow_up/another_issue",
                                 "update_mode": "always"
                               },
                               "date_identified": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/date_identified",
                                 "update_mode": "always"
                               },
                               "debug_level": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/debug_level",
                                 "update_mode": "always"
                               },
                               "issue_description": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/description",
                                 "update_mode": "always"
                               },
                               "issue_identified": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/issue_identified",
                                 "update_mode": "always"
                               },
                               "issue_resolved": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/follow_up/issue_resolved",
                                 "update_mode": "always"
                               },
                               "phone_number": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/info/alt_phone_number",
                                 "update_mode": "always"
                               }
@@ -444,12 +437,10 @@
                             },
                             "update": {
                               "best_phone_number": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/best_phone_number",
                                 "update_mode": "always"
                               },
                               "comments": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/comments",
                                 "update_mode": "always"
                               }
@@ -750,32 +741,26 @@
                             },
                             "update": {
                               "call_back": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/call_back",
                                 "update_mode": "always"
                               },
                               "issue_resolved": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/if_connected/technical_problems_group/resolved_issues",
                                 "update_mode": "always"
                               },
                               "new_technical_issue": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/if_connected/new_technical_issue",
                                 "update_mode": "always"
                               },
                               "outcome": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/outcome",
                                 "update_mode": "always"
                               },
                               "reason_low_performance": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/if_connected/performance_feedback/question89",
                                 "update_mode": "always"
                               },
                               "top_of_tech_support_list": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/top_of_tech_support_list",
                                 "update_mode": "always"
                               }

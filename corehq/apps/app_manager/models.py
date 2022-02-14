@@ -331,7 +331,7 @@ class FormAction(DocumentSchema):
             yield 'name', action.name_path
         if 'case_name' in action_properties:
             yield 'name', action.case_name
-        if 'name_update' in action_properties and action.name_update:
+        if getattr(action_properties, 'name_update', None) and action.name_update.question_path:
             yield 'name', action.name_update.question_path
         if 'external_id' in action_properties and action.external_id:
             yield 'external_id', action.external_id
@@ -490,7 +490,7 @@ class CaseIndex(DocumentSchema):
 class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
-    # TODO: migrate this from dict(property_name: question_path) to dict(property_name: ConditionalCaseUpdate)
+
     case_properties = SchemaDictProperty(ConditionalCaseUpdate)
 
     # case_indices = NotImplemented
@@ -3183,10 +3183,7 @@ class AdvancedModule(ModuleBase):
                 base_action = AdvancedOpenCaseAction(
                     case_type=case_type,
                     case_tag='open_{0}_0'.format(case_type),
-                    name_update=ConditionalCaseUpdate(
-                        question_path=open.name_update.question_path,
-                        update_mode=open.name_update.update_mode,
-                    ),
+                    name_update=open.name_update,
                     open_condition=open.condition,
                     case_properties=update.update if update else {},
                     )
@@ -3222,7 +3219,7 @@ class AdvancedModule(ModuleBase):
                     open_subcase_action = AdvancedOpenCaseAction(
                         case_type=subcase.case_type,
                         case_tag='open_{0}_{1}'.format(subcase.case_type, i+1),
-                        name_update=ConditionalCaseUpdate(question_path=subcase.name_update.question_path),
+                        name_update=subcase.name_update,
                         open_condition=subcase.condition,
                         case_properties=subcase.case_properties,
                         repeat_context=subcase.repeat_context,

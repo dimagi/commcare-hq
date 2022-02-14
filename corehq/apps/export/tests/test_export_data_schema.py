@@ -896,8 +896,8 @@ class TestCaseDelayedSchema(TestCase, TestXmlMixin):
         factory = AppFactory(domain=cls.domain)
         module1, form1 = factory.new_basic_module('update_case', cls.case_type)
         factory.form_requires_case(form1, cls.case_type, update={
-            'age': ConditionalCaseUpdate(question_path='/data/age'),
-            'height': ConditionalCaseUpdate(question_path='/data/height'),
+            'age': '/data/age',
+            'height': '/data/height',
         })
         cls.current_app = factory.app
         cls.current_app._id = '1234'
@@ -905,9 +905,9 @@ class TestCaseDelayedSchema(TestCase, TestXmlMixin):
         factory = AppFactory(domain=cls.domain)
         module1, form1 = factory.new_basic_module('update_case', cls.case_type)
         factory.form_requires_case(form1, cls.case_type, update={
-            'age': ConditionalCaseUpdate(question_path='/data/age'),
-            'height': ConditionalCaseUpdate(question_path='/data/height'),
-            'weight': ConditionalCaseUpdate(question_path='/data/weight'),
+            'age': '/data/age',
+            'height': '/data/height',
+            'weight': '/data/weight',
         })
         cls.build = factory.app
         cls.build.copy_of = cls.current_app._id

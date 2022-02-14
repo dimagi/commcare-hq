@@ -133,7 +133,7 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         m1f0.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
         self.factory.form_requires_case(m1f0, 'gold-fish',
                                         update={
-                                              'question1': ConditionalCaseUpdate(question_path='/data/question1')
+                                              'question1': '/data/question1'
                                         })
         self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish')
 
@@ -153,7 +153,7 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
 
         m1, m1f0 = factory.new_advanced_module('child', 'guppy', parent_module=m0)
         factory.form_requires_case(m1f0, 'gold-fish',
-                                   update={'question1': ConditionalCaseUpdate(question_path='/data/question1')})
+                                   update={'question1': '/data/question1'})
         factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish')
 
         # making this case tag the same as the one in the parent module should mean that it will also get changed
@@ -255,8 +255,8 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         m1f0 = self.module_1.get_form(0)
         m1f0.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
         self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish', update={
-            'question1': ConditionalCaseUpdate(question_path='/data/question1'),
-            'parent/question1': ConditionalCaseUpdate(question_path='/data/question1'),
+            'question1': '/data/question1',
+            'parent/question1': '/data/question1',
         })
 
         self.assertXmlEqual(self.get_xml('basic_submodule_xform'), m1f0.render_xform())
@@ -272,8 +272,8 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
 
         m1f0 = self.module_1.get_form(0)
         self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish', update={
-            'question1': ConditionalCaseUpdate(question_path='/data/question1'),
-            'parent/question1': ConditionalCaseUpdate(question_path='/data/question1'),
+            'question1': '/data/question1',
+            'parent/question1': '/data/question1',
         })
 
         m1f0.form_filter = "#case/age > 33"
@@ -396,12 +396,12 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
         )
         upd_guppy_form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
         factory.form_requires_case(upd_guppy_form, 'gold-fish',
-                                   update={'question1': ConditionalCaseUpdate(question_path='/data/question1')})
+                                   update={'question1': '/data/question1'})
         factory.form_requires_case(
             upd_guppy_form,
             'guppy',
             parent_case_type='gold-fish',
-            update={'question1': ConditionalCaseUpdate(question_path='/data/question1')}
+            update={'question1': '/data/question1'}
         )
         # making this case tag the same as the one in the parent module should mean that it will also get changed
         # to avoid conflicts
@@ -423,7 +423,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
 
         lab_update_module, lab_update_form = factory.new_advanced_module('lab_update', 'lab_test', parent_module=lab_test_module)
         factory.form_requires_case(lab_update_form, 'episode',
-                                   update={'episode_type': ConditionalCaseUpdate(question_path='/data/question1')})
+                                   update={'episode_type': '/data/question1'})
         factory.form_requires_case(lab_update_form, 'lab_test', parent_case_type='episode')
         lab_update_form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
 

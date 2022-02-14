@@ -273,7 +273,6 @@
                             },
                             "update": {
                                 "birthdate": {
-                                  "doc_type": "SmartCaseUpdate",
                                   "question_path": "/data/birthdate",
                                   "update_mode": "always"
                                 }
@@ -370,7 +369,6 @@
                             },
                             "update": {
                                 "favorite_food": {
-                                  "doc_type": "SmartCaseUpdate",
                                   "question_path": "/data/favorite_food",
                                   "update_mode": "always"
                                 }
