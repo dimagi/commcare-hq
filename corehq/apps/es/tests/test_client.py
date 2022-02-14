@@ -325,6 +325,22 @@ class TestElasticManageAdapter(BaseAdapterTestWithIndex):
         docs = [h["_source"] for h in get_search_hits()]
         self.assertEqual([{"_id": "1", "entropy": 3, "value": "test"}], docs)
 
+    def test_index_flush(self):
+        with patch.object(self.adapter._es.indices, "flush") as patched:
+            self.adapter.index_flush(self.index)
+            patched.assert_called_once_with(self.index, expand_wildcards="none")
+
+    def test_index_close(self):
+        doc_adapter = TestDocumentAdapter()
+        doc_adapter.index = self.index  # use our index so it gets cleaned up
+        self.adapter.index_create(self.index)
+        doc_adapter.upsert(TestDoc("1", "test"))  # does not raise
+        self.adapter.index_close(self.index)
+        with self.assertRaises(TransportError) as test:
+            doc_adapter.upsert(TestDoc("2", "test"))
+        self.assertEqual(test.exception.status_code, 403)
+        self.assertEqual(test.exception.error, "index_closed_exception")
+
     def test_index_put_alias(self):
         alias = "test_alias"
         aliases = self.adapter.get_aliases()

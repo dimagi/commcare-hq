@@ -288,6 +288,20 @@ class ElasticManageAdapter(ElasticClientAdapter):
         """Convenience method for refreshing a single index."""
         self.indices_refresh([index])
 
+    def index_flush(self, index):
+        """Flush an index.
+
+        :param index: ``str`` index name"""
+        self._validate_single_index(index)
+        self._es.indices.flush(index, expand_wildcards="none")
+
+    def index_close(self, index):
+        """Close an index.
+
+        :param index: ``str`` index name"""
+        self._validate_single_index(index)
+        self._es.indices.close(index, expand_wildcards="none")
+
     def index_put_alias(self, index, name):
         """Assign an alias to an existing index. This uses the
         ``Elasticsearch.update_aliases()`` method to perform both 'remove' and
