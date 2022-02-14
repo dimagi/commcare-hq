@@ -82,4 +82,6 @@ branches:
     - smh/data-registry-reports-permissions # Steph Feb 8
     - gh/mrm/base # Graham Feb 8
     - smh/data-registry-reports-permissions-viewing-reports # Steph Feb 13
+    - ce/attempt-number # Cal Feb 14
+    - ce/case-rate-limit # Cal Feb 14
 submodules: { }
