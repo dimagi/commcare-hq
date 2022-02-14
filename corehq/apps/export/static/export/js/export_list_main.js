@@ -37,7 +37,6 @@ hqDefine("export/js/export_list_main", [
                 const modelType = utils.capitalize(initialPageData.get('model_type', 'unknown'));
                 const metricsMessage = `${modelType} Export - Clicked Add Export Button`;
                 kissmetricsAnalytics.track.event(metricsMessage, {
-                    username: initialPageData.get('user'),
                     domain: initialPageData.get('domain'),
                 });
 

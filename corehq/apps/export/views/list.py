@@ -527,7 +527,6 @@ class BaseExportListView(BaseProjectDataView):
                 ) if self.include_saved_filters else None
             ),
             'create_url': '#createExportOptionsModal',
-            'user': self.request.user.username
         }
 
 
