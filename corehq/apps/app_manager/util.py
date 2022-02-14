@@ -157,7 +157,7 @@ def save_xform(app, form, xml):
         return xform.render()
 
     try:
-        xform = XForm(xml)
+        xform = XForm(xml, domain=app.domain)
     except XFormException:
         pass
     else:
