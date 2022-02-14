@@ -111,7 +111,6 @@ Code Documentation
 """
 import json
 import logging
-from collections import defaultdict
 
 from django.conf import settings
 from django.utils.decorators import classproperty
@@ -184,10 +183,10 @@ class ElasticManageAdapter(ElasticClientAdapter):
         """Return the cluster aliases information.
 
         :returns: ``dict``"""
-        aliases = defaultdict(set)
+        aliases = {}
         for index, alias_info in self._es.indices.get_aliases().items():
             for alias in alias_info.get("aliases", {}):
-                aliases[alias].add(index)
+                aliases.setdefault(alias, []).append(index)
         return aliases
 
     def cluster_health(self, index=None):

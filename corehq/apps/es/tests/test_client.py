@@ -365,7 +365,7 @@ class TestElasticManageAdapter(BaseAdapterTestWithIndex):
     def _assert_alias_on_single_index(self, alias, index):
         aliases = self.adapter.get_aliases()
         self.assertIn(alias, aliases)
-        self.assertEqual(aliases[alias], {index})
+        self.assertEqual(aliases[alias], [index])
 
     def test_index_set_replicas(self):
         self.adapter.index_create(self.index)
