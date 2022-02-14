@@ -584,7 +584,7 @@ class TestDomainSharedConfigs(TestCase):
     OWNER_ID = '5'
 
     def test_domain_does_not_have_shared_configs(self):
-        self.assertEqual(ReportConfig.shared_on_domain(self.DOMAIN), [])
+        self.assertEqual(len(ReportConfig.shared_on_domain(self.DOMAIN)), 0)
 
     def test_domain_has_shared_configs(self):
         config = ReportConfig(domain=self.DOMAIN, owner_id=self.OWNER_ID)
@@ -596,7 +596,7 @@ class TestDomainSharedConfigs(TestCase):
             owner_id=self.OWNER_ID,
             config_ids=[config._id],
         )
-        configs = ReportConfig.shared_on_domain(self.DOMAIN, stale=False)
+        configs = list(ReportConfig.shared_on_domain(self.DOMAIN, stale=False))
 
         self.assertEqual(len(configs), 1)
         self.assertEqual(configs[0]._id, config._id)
@@ -617,7 +617,7 @@ class TestDomainSharedConfigs(TestCase):
             config_ids=[config._id],
         )
 
-        configs = ReportConfig.shared_on_domain(self.DOMAIN, stale=False)
+        configs = list(ReportConfig.shared_on_domain(self.DOMAIN, stale=False))
         self.assertEqual(len(configs), 1)
         self.assertEqual(configs[0]._id, config._id)
 

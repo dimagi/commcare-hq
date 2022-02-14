@@ -165,9 +165,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             for id_ in rn.config_ids
         }
         if only_id:
-            return list(shared_config_ids)
+            return shared_config_ids
         else:
-            return [ReportConfig.get(config_id) for config_id in shared_config_ids]
+            return {ReportConfig.get(config_id) for config_id in shared_config_ids}
 
     @classmethod
     def default(self):
