@@ -31,7 +31,8 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
 )
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
+from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser, Permissions
+from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.util import normalize_username
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
@@ -553,6 +554,13 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         choices.sort(key=lambda choice: choice.display)
         cls.choice_provider = DomainChoiceProvider(cls.report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
+        role = UserRole.create(
+            domain=cls.domain_a,
+            name='Can View Registry Data',
+            permissions=Permissions(view_data_registry_contents=True),
+        )
+        cls.web_user.set_role(cls.domain_a, role.get_qualified_id())
+        cls.web_user.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -565,12 +573,26 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     def test_query_search(self):
         self._test_query(ChoiceQueryContext("A", limit=1, page=0))
 
-    def test_query(self):
+    def test_query_full_registry_access(self):
         self.assertEqual([Choice(value='A', display='A')],
                          self.choice_provider.query(ChoiceQueryContext(query='A', offset=0)))
         self.assertEqual([Choice(value='A', display='A'),
                           Choice(value='B', display='B'),
                           Choice(value='C', display='C')],
+                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
+        self.assertEqual([], self.choice_provider.query(ChoiceQueryContext(query='D', offset=0)))
+
+    def test_query_no_registry_access(self):
+        role = UserRole.create(
+            domain=self.domain_a,
+            name='Cannot View Registry Data',
+            permissions=Permissions(view_data_registry_contents=False),
+        )
+        self.web_user.set_role(self.domain_a, role.get_qualified_id())
+        self.web_user.save()
+        self.assertEqual([Choice(value='A', display='A')],
+                         self.choice_provider.query(ChoiceQueryContext(query='A', offset=0)))
+        self.assertEqual([Choice(value='A', display='A')],
                          self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
         self.assertEqual([], self.choice_provider.query(ChoiceQueryContext(query='D', offset=0)))
 
