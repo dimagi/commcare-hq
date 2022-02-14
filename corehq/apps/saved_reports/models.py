@@ -159,15 +159,15 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         return result
 
     @classmethod
-    def shared_on_domain(cls, domain, only_id=False, **kwargs):
-        shared_config_ids = []
-        for rn in ReportNotification.by_domain(domain, **kwargs):
-            shared_config_ids.extend(rn.config_ids)
-
+    def shared_on_domain(cls, domain, only_id=False, stale=False):
+        shared_config_ids = {
+            id_ for rn in ReportNotification.by_domain(domain, stale=stale)
+            for id_ in rn.config_ids
+        }
         if only_id:
-            return list(set(shared_config_ids))
+            return list(shared_config_ids)
         else:
-            return [ReportConfig.get(config_id) for config_id in set(shared_config_ids)]
+            return [ReportConfig.get(config_id) for config_id in shared_config_ids]
 
     @classmethod
     def default(self):
@@ -542,14 +542,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             }] + localized_datespan_filters
 
     def is_shared_on_domain(self):
-        # Is there a better way of checking this?
-        domain_scheduled_reports = ReportNotification.by_domain(self.domain, stale=False)
-        config_id = self._id
-
-        for report in domain_scheduled_reports:
-            if config_id in report.config_ids:
-                return True
-        return False
+        config_ids = self.shared_on_domain(self.domain, only_id=True)
+        return self._id in config_ids
 
 
 class ReportNotification(CachedCouchDocumentMixin, Document):
