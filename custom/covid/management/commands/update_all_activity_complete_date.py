@@ -122,7 +122,7 @@ def _get_new_contact_date_value(case):
 
 def _get_new_date_value(case, plain_date_props, adjust_date_props):
     def _is_date(value):
-        return value and re_date.match(value)
+        return value and (isinstance(value, datetime.date) or re_date.match(value))
 
     found_prop, found_value = None, None
     for prop in plain_date_props + adjust_date_props:
