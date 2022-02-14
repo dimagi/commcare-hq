@@ -5,6 +5,12 @@ from .client import ElasticDocumentAdapter
 from .registry import get_registry
 
 
+def get_mapping(index, type_):
+    """Temporary function for fetching the Elastic mapping (still defined in
+    pillowtop module)"""
+    return _DOC_MAPPINGS_BY_INDEX[(index, type_)]
+
+
 def transform_dict_with_possible_id(doc):
     """Temporary "common transform" function for adapters who don't yet own
     their document transform logic."""
@@ -55,9 +61,11 @@ def _populate_doc_adapter_map(is_test):
         assert DocAdapter.index not in _DOC_ADAPTERS_BY_INDEX, \
             (DocAdapter.index, _DOC_ADAPTERS_BY_INDEX)
         _DOC_ADAPTERS_BY_INDEX[DocAdapter.index] = DocAdapter
-    # by alias
+    # aliases and mappings
     for index_info in get_registry().values():
         _DOC_ADAPTERS_BY_ALIAS[index_info.alias] = _DOC_ADAPTERS_BY_INDEX[index_info.index]
+        mapping_key = (index_info.index, index_info.type)
+        _DOC_MAPPINGS_BY_INDEX[mapping_key] = index_info.mapping
 
     if is_test:
         # for pillowtop tests
@@ -77,3 +85,4 @@ def _add_ptop_test_adapter():
 
 _DOC_ADAPTERS_BY_INDEX = {}
 _DOC_ADAPTERS_BY_ALIAS = {}
+_DOC_MAPPINGS_BY_INDEX = {}

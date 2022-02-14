@@ -18,7 +18,7 @@ will give you JSON for the first 10 groups in `domain` with names matching `q`.
 from . import filters
 from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
-from .transient_util import transform_dict_with_possible_id
+from .transient_util import get_mapping, transform_dict_with_possible_id
 
 
 class GroupES(HQESQuery):
@@ -38,6 +38,10 @@ class ElasticGroup(ElasticDocumentAdapter):
 
     index_key = "group"
     type = "group"
+
+    @property
+    def mapping(self):
+        return get_mapping(self.index, self.type)
 
     @classmethod
     def transform(cls, doc):

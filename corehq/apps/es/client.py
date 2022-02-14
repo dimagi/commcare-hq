@@ -59,6 +59,8 @@ must define the following:
   Elastic index used by the adapter.
 - A ``type`` attribute whose value is the name is the Elastic ``_type`` for
   documents used by the adapter.
+- A ``mapping`` which defines the structure and properties for documents managed
+  by the adapter.
 - a ``transform()`` classmethod which can convert a Python model object into the
   JSON-serializable format for writing into the adapter's index.
 
@@ -394,6 +396,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
     index_key = None  # set by subclass
     type = None  # set by subclass
+    mapping = None  # set by subclass
 
     @classproperty
     @memoized
