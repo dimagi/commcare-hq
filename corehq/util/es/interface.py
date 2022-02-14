@@ -31,9 +31,11 @@ class ElasticsearchInterface:
         from corehq.apps.es.registry import verify_alias
         verify_alias(alias)
 
-    def update_index_settings(self, index, settings_dict):
-        assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()
-        return self.es.indices.put_settings(settings_dict, index=index)
+    def update_index_settings_reindex(self, index):
+        self.manager.index_configure_for_reindex(index)
+
+    def update_index_settings_standard(self, index):
+        self.manager.index_configure_for_standard_ops(index)
 
     def _get_source(self, index_alias, doc_type, doc_id, source_includes=None):
         kwargs = {"_source_include": source_includes} if source_includes else {}
