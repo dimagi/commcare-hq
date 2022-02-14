@@ -1,17 +1,24 @@
-import abc
+from functools import cached_property
 
+from corehq.apps.es.client import ElasticManageAdapter
+from corehq.apps.es.const import SCROLL_KEEPALIVE, SCROLL_SIZE
 from corehq.util.es.elasticsearch import bulk
 
 
-class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
+class ElasticsearchInterface:
 
-    # Default scroll parameters (same values hard-coded in elasticsearch-py's
-    # `scan()` helper).
-    SCROLL_KEEPALIVE = '5m'
-    SCROLL_SIZE = 1000
+    SCROLL_KEEPALIVE = SCROLL_KEEPALIVE
+    SCROLL_SIZE = SCROLL_SIZE
 
     def __init__(self, es):
+        # TODO: verify that the `es` arg came from the client module and is not
+        #       a real client (would indicate the caller is not compliant).
         self.es = es
+
+    @cached_property
+    def manager(self):
+        # lazy-load the manage adapter only if needed
+        return ElasticManageAdapter()
 
     def get_aliases(self):
         return self.es.indices.get_aliases()
@@ -186,10 +193,3 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         # In ES7 total is a dict
         if isinstance(total, dict):
             results['hits']['total'] = total.get('value', 0)
-
-
-class ElasticsearchInterfaceDefault(AbstractElasticsearchInterface):
-    pass
-
-
-ElasticsearchInterface = ElasticsearchInterfaceDefault
