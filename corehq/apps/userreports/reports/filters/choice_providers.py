@@ -12,6 +12,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.registry.exceptions import RegistryNotFound
+from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, NONE_CHOICE
@@ -402,11 +403,13 @@ class GroupChoiceProvider(ChainableChoiceProvider):
 class DomainChoiceProvider(ChainableChoiceProvider):
 
     @memoized
-    def _query_domains(self, domain, query_text, user=None):
+    def _query_domains(self, domain, query_text, user):
         domains = {domain}
-        if user:
-            if not user.can_view_registry_data(self.report.registry_helper.registry_slug):
-                return domains
+        if user is None:
+            return domains
+        if not RegistryPermissionCheck(domain, user).can_view_registry_data(
+                self.report.registry_helper.registry_slug):
+            return domains
         try:
             domains.update(self.report.registry_helper.visible_domains)
         except RegistryNotFound:
@@ -426,7 +429,7 @@ class DomainChoiceProvider(ChainableChoiceProvider):
         return len(self._query_domains(self.domain, query, user))
 
     def get_choices_for_known_values(self, values, user):
-        domains = self._query_domains(self.domain, None, user=user)
+        domains = self._query_domains(self.domain, None, user)
         domain_options = [domain for domain in domains if domain in values]
         return self._domains_to_choices(domain_options)
 
