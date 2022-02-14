@@ -127,7 +127,12 @@ from corehq.util.es.elasticsearch import (
 )
 from corehq.util.metrics import metrics_counter
 
-from .const import SCROLL_KEEPALIVE, SCROLL_SIZE
+from .const import (
+    INDEX_CONF_REINDEX,
+    INDEX_CONF_STANDARD,
+    SCROLL_KEEPALIVE,
+    SCROLL_SIZE,
+)
 from .exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 from .utils import ElasticJSONSerializer
 
@@ -326,7 +331,27 @@ class ElasticManageAdapter(ElasticClientAdapter):
         :param replicas: ``int`` number of replicas"""
         self._validate_single_index(index)
         settings = {"index.number_of_replicas": replicas}
-        self._es.indices.put_settings(settings, index)
+        self._index_put_settings(index, settings)
+
+    def index_configure_for_reindex(self, index):
+        """Update an index with settings optimized for reindexing.
+
+        :param index: ``str`` index for which to change the settings"""
+        self._validate_single_index(index)
+        return self._index_put_settings(index, INDEX_CONF_REINDEX)
+
+    def index_configure_for_standard_ops(self, index):
+        """Update an index with settings optimized standard HQ performance.
+
+        :param index: ``str`` index for which to change the settings"""
+        return self._index_put_settings(index, INDEX_CONF_STANDARD)
+
+    def _index_put_settings(self, index, settings):
+        self._validate_single_index(index)
+        if not (list(settings) == ["index"]
+                or all(key.startswith("index.") for key in settings)):
+            raise ValueError(f"Invalid index settings: {settings}")
+        return self._es.indices.put_settings(settings, index)
 
     def index_put_mapping(self, index, type_, mapping):
         """Update the mapping for a doc type on an index.

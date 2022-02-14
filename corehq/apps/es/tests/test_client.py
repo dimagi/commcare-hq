@@ -25,6 +25,7 @@ from ..client import (
     _client_default,
     _client_for_export,
 )
+from ..const import INDEX_CONF_REINDEX, INDEX_CONF_STANDARD
 from ..exceptions import ESShardFailure, TaskError, TaskMissing
 
 
@@ -369,18 +370,66 @@ class TestElasticManageAdapter(BaseAdapterTestWithIndex):
 
     def test_index_set_replicas(self):
         self.adapter.index_create(self.index)
-
-        def get_replicas(index):
-            info = self.adapter._es.indices.get_settings(
-                self.index,
-                "index.number_of_replicas",
-                flat_settings=True,
-            )
-            return int(info[index]["settings"]["index.number_of_replicas"])
-
-        self.assertEqual(get_replicas(self.index), 1)  # initial value is 1
+        # initial value is 1
+        self._verify_index_settings(self.index, {"index.number_of_replicas": 1})
         self.adapter.index_set_replicas(self.index, 0)
-        self.assertEqual(get_replicas(self.index), 0)
+        self._verify_index_settings(self.index, {"index.number_of_replicas": 0})
+
+    def test_index_configure_for_reindex(self):
+        self.adapter.index_create(self.index)
+        # change values to something else first
+        self.adapter.index_configure_for_standard_ops(self.index)
+        self._verify_index_settings(self.index, INDEX_CONF_STANDARD)
+        # now change to the settings we want to test
+        self.adapter.index_configure_for_reindex(self.index)
+        self._verify_index_settings(self.index, INDEX_CONF_REINDEX)
+
+    def test_index_configure_for_standard_ops(self):
+        self.adapter.index_create(self.index)
+        # change values to something else first
+        self.adapter.index_configure_for_reindex(self.index)
+        self._verify_index_settings(self.index, INDEX_CONF_REINDEX)
+        # now change to the settings we want to test
+        self.adapter.index_configure_for_standard_ops(self.index)
+        self._verify_index_settings(self.index, INDEX_CONF_STANDARD)
+
+    def test__index_put_settings(self):
+        self.adapter.index_create(self.index)
+        value = {"index.max_result_window": 100}
+        self.adapter._index_put_settings(self.index, value)
+        self._verify_index_settings(self.index, value)
+        # update to a new value to verify we're actually changing it
+        value["index.max_result_window"] = 13
+        self.adapter._index_put_settings(self.index, value)
+        self._verify_index_settings(self.index, value)
+
+    def test__index_put_settings_nested(self):
+        def get_flattened(mrw):
+            return {"index.max_result_window": mrw}
+        self.adapter.index_create(self.index)
+        mrw = 100
+        self.adapter._index_put_settings(self.index,
+                                         {"index": {"max_result_window": mrw}})
+        self._verify_index_settings(self.index, get_flattened(mrw))
+        # update to a new value to verify we're actually changing it
+        mrw = 13
+        self.adapter._index_put_settings(self.index,
+                                         {"index": {"max_result_window": mrw}})
+        self._verify_index_settings(self.index, get_flattened(mrw))
+
+    def _get_index_settings(self, index, setting_name=None):
+        info = self.adapter._es.indices.get_settings(
+            index,
+            setting_name,
+            flat_settings=True,
+            # include_defaults=True,  # not supported in Elastic 2.4
+        )[index]["settings"]
+        return info if setting_name is None else info[setting_name]
+
+    def _verify_index_settings(self, index, settings_flattened):
+        fetched = self._get_index_settings(index)
+        for key, value in settings_flattened.items():
+            self.assertEqual(value, type(value)(fetched[key]))
 
     def test_index_put_mapping(self):
         type_ = "test_doc"
