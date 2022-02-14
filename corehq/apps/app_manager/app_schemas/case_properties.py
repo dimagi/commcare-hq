@@ -180,7 +180,8 @@ def _flatten_case_properties(case_properties_by_case_type):
     """Turn nested case_type => set of properties mapping into set of `_CasePropertyRef`s"""
     result = set()
     for case_type, properties in case_properties_by_case_type.items():
-        for case_property in properties:
+        cleaned_properties = [p for p in properties if not (p in ['update_mode', 'question_path', 'doc_type'])]
+        for case_property in cleaned_properties:
             case_property_parts = tuple(case_property.split('/'))
             result.add(_PropertyRef(
                 case_type_ref=_CaseTypeRef(case_type, relationship_path=case_property_parts[:-1]),
