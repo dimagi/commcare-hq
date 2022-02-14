@@ -2,6 +2,7 @@ from functools import cached_property
 
 from corehq.apps.es.client import ElasticManageAdapter
 from corehq.apps.es.const import SCROLL_KEEPALIVE, SCROLL_SIZE
+from corehq.apps.es.transient_util import doc_adapter_from_alias
 from corehq.util.es.elasticsearch import bulk
 
 
@@ -42,7 +43,8 @@ class ElasticsearchInterface:
         return self.es.get_source(index_alias, doc_type, doc_id, **kwargs)
 
     def doc_exists(self, index_alias, doc_id, doc_type):
-        return self.es.exists(index_alias, doc_type, doc_id)
+        doc_adapter = self._get_doc_adapter(index_alias, doc_type)
+        return doc_adapter.exists(doc_id)
 
     def _mget(self, index_alias, body, doc_type):
         return self.es.mget(
@@ -177,6 +179,12 @@ class ElasticsearchInterface:
         finally:
             if scroll_id:
                 self.es.clear_scroll(body={'scroll_id': [scroll_id]}, ignore=(404,))
+
+    def _get_doc_adapter(self, index_alias, doc_type):
+        doc_adapter = doc_adapter_from_alias(index_alias)
+        if doc_adapter.type != doc_type:
+            raise ValueError(f"wrong type ({doc_type}) for adapter: {doc_adapter}")
+        return doc_adapter
 
     @staticmethod
     def _fix_hit(hit):
