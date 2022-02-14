@@ -287,27 +287,22 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                   "play_count": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/play_count",
                     "update_mode": "always"
                   },
                   "rating": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/ratings/rating",
                     "update_mode": "always"
                   },
                   "energy": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/ratings/energy",
                     "update_mode": "always"
                   },
                   "mood": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/ratings/mood",
                     "update_mode": "always"
                   },
                   "artist": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/basics/artist",
                     "update_mode": "always"
                   }
@@ -761,7 +756,6 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                 "play_count": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "/data/play_count",
                   "update_mode": "always"
                 }
@@ -1536,7 +1530,6 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                 "when_is_the_show": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "/data/when_is_the_show",
                   "update_mode": "always"
                 }

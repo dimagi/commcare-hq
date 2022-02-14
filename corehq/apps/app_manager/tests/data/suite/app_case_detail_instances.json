@@ -359,7 +359,6 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                 "name": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "\/data\/something",
                   "update_mode": "always"
                 }
@@ -1089,7 +1088,6 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                 "name": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "\/data\/something",
                   "update_mode": "always"
                 }

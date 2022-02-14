@@ -239,22 +239,18 @@
                             },
                             "update": {
                               "dob": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/dob",
                                 "update_mode": "always"
                               },
                               "last_beer": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/last_beer",
                                 "update_mode": "always"
                               },
                               "last_checkup": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/last_checkup",
                                 "update_mode": "always"
                               },
                               "last_party": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/last_party",
                                 "update_mode": "always"
                               }

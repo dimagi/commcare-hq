@@ -490,7 +490,7 @@ class CaseIndex(DocumentSchema):
 class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
-    # TODO: migrate this from dict(property_name: question_path) to dict(property_name: ConditionalCaseUpdate)
+
     case_properties = SchemaDictProperty(ConditionalCaseUpdate)
 
     # case_indices = NotImplemented

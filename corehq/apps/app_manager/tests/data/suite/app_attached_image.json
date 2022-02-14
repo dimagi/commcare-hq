@@ -67,7 +67,6 @@
               "doc_type": "UpdateCaseAction", 
               "update": {
                 "imgcap": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "/data/imgcap",
                   "update_mode": "always"
                 }
