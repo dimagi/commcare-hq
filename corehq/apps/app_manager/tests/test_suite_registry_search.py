@@ -60,8 +60,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Favorite Color'}, itemset=Itemset(
-                    instance_id='colors', instance_uri='jr://fixture/item-list:colors',
-                    nodeset="instance('colors')/colors_list/colors", label='name', sort='name', value='value'),
+                    instance_id='item-list:colors', instance_uri='jr://fixture/item-list:colors',
+                    nodeset="instance('item-list:colors')/colors_list/colors",
+                    label='name', sort='name', value='value'),
                 )
             ],
             data_registry="myregistry",
@@ -109,7 +110,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     <locale id="search_property.m0.favorite_color"/>
                   </text>
                 </display>
-                <itemset nodeset="instance('colors')/colors_list/colors">
+                <itemset nodeset="instance('item-list:colors')/colors_list/colors">
                   <label ref="name"/>
                   <value ref="value"/>
                   <sort ref="name"/>
