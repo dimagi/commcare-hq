@@ -38,10 +38,6 @@ class ElasticsearchInterface:
     def update_index_settings_standard(self, index):
         self.manager.index_configure_for_standard_ops(index)
 
-    def _get_source(self, index_alias, doc_type, doc_id, source_includes=None):
-        kwargs = {"_source_include": source_includes} if source_includes else {}
-        return self.es.get_source(index_alias, doc_type, doc_id, **kwargs)
-
     def doc_exists(self, index_alias, doc_id, doc_type):
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
         return doc_adapter.exists(doc_id)
@@ -52,9 +48,10 @@ class ElasticsearchInterface:
 
     def get_doc(self, index_alias, doc_type, doc_id, source_includes=None):
         self._verify_is_alias(index_alias)
-        doc = self._get_source(index_alias, doc_type, doc_id, source_includes=source_includes)
-        doc['_id'] = doc_id
-        return doc
+        doc_adapter = self._get_doc_adapter(index_alias, doc_type)
+        if source_includes is None:
+            source_includes = []
+        return doc_adapter.fetch(doc_id, source_includes=source_includes)
 
     def get_bulk_docs(self, index_alias, doc_type, doc_ids):
         from corehq.elastic import ESError
