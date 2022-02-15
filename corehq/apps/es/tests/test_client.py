@@ -18,6 +18,7 @@ from .utils import (
     es_test,
 )
 from ..client import (
+    BulkActionItem,
     ElasticClientAdapter,
     ElasticManageAdapter,
     get_client,
@@ -878,6 +879,80 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
             "_id": missing_id,
         })
 
+    def test_bulk(self):
+        def tform_to_dict(docs):
+            return docs_to_dict(self.adapter.transform_full(doc) for doc in docs)
+        self.assertEqual({}, self._search_hits_dict({}))
+        docs = [self._make_doc() for x in range(2)]
+        self.adapter.bulk([BulkActionItem.index(doc) for doc in docs], refresh=True)
+        self.assertEqual(tform_to_dict(docs), self._search_hits_dict({}))
+        self.adapter.bulk([BulkActionItem.delete(doc) for doc in docs], refresh=True)
+        self.assertEqual({}, self._search_hits_dict({}))
+
+    def test_bulk_index_and_delete(self):
+        def tform_to_dict(docs):
+            return docs_to_dict(self.adapter.transform_full(doc) for doc in docs)
+        docs = [self._make_doc() for x in range(2)]
+        self.adapter.bulk_index(docs, refresh=True)
+        self.assertEqual(tform_to_dict(docs), self._search_hits_dict({}))
+        docs.append(self._make_doc())
+        actions = [
+            BulkActionItem.delete(docs.pop(0)),  # delete first
+            BulkActionItem.index(docs[-1]),  # index new
+        ]
+        self.adapter.bulk(actions, refresh=True)
+        self.assertEqual(tform_to_dict(docs), self._search_hits_dict({}))
+
+    def test__render_bulk_action_index(self):
+        doc = self._make_doc()
+        action = BulkActionItem.index(doc)
+        doc_id, source = self.adapter.transform(doc)
+        expected = {
+            "_index": self.adapter.index,
+            "_type": self.adapter.type,
+            "_op_type": "index",
+            "_id": doc_id,
+            "_source": source,
+        }
+        self.assertEqual(expected, self.adapter._render_bulk_action(action))
+
+    def test__render_bulk_action_delete(self):
+        doc = self._make_doc()
+        action = BulkActionItem.delete(doc)
+        expected = {
+            "_index": self.adapter.index,
+            "_type": self.adapter.type,
+            "_op_type": "delete",
+            "_id": doc.id,
+        }
+        self.assertEqual(expected, self.adapter._render_bulk_action(action))
+
+    def test__render_bulk_action_delete_id(self):
+        doc = self._make_doc()
+        action = BulkActionItem.delete_id(doc.id)
+        expected = {
+            "_index": self.adapter.index,
+            "_type": self.adapter.type,
+            "_op_type": "delete",
+            "_id": doc.id,
+        }
+        self.assertEqual(expected, self.adapter._render_bulk_action(action))
+
+    def test__render_bulk_action_fails_malformed_action(self):
+        action = BulkActionItem.delete_id("1")
+        action.op_type = "backflip"
+        with self.assertRaises(ValueError):
+            self.adapter._render_bulk_action(action)
+
+    def test__render_bulk_action_fails_invalid_ids(self):
+        bad = TestDoc(id="")
+        with self.assertRaises(ValueError):
+            self.adapter._render_bulk_action(BulkActionItem.delete(bad))
+        with self.assertRaises(ValueError):
+            self.adapter._render_bulk_action(BulkActionItem.delete_id(bad.id))
+        with self.assertRaises(ValueError):
+            self.adapter._render_bulk_action(BulkActionItem.index(bad))
+
     def test_bulk_index(self):
         docs = []
         serialized = []
@@ -896,56 +971,25 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
             self.adapter.bulk_index(docs, refresh=True)
         self.assertEqual({}, self._search_hits_dict({}))
 
+    def test_bulk_index_fails_with_invalid_source(self):
+        doc = self._make_doc()
+        bad_source = self.adapter.transform_full(doc)
+        invalid = (doc.id, bad_source)
+        with patch.object(self.adapter, "transform", return_value=invalid):
+            with self.assertRaises(ValueError):
+                self.adapter.bulk_index([doc], refresh=True)
+        self.assertEqual({}, self._search_hits_dict({}))
+
     def test_bulk_delete(self):
         docs = self._index_many_new_docs(3)
         self.assertEqual(docs_to_dict(docs), self._search_hits_dict({}))
         self.adapter.bulk_delete([d["_id"] for d in docs], refresh=True)
         self.assertEqual({}, self._search_hits_dict({}))
 
-    def test_bulk(self):
-        docs = self._index_many_new_docs(2)
-        self.assertEqual(docs_to_dict(docs), self._search_hits_dict({}))
-        action_template = {
-            "_op_type": "delete",
-            "_index": self.adapter.index,
-            "_type": self.adapter.type,
-        }
-        actions = [{"_id": doc["_id"], **action_template} for doc in docs]
-        self.adapter.bulk(actions, refresh=True)
+    def test_bulk_delete_fails_with_invalid_id(self):
+        with self.assertRaises(ValueError):
+            self.adapter.bulk_delete(["1", ""], refresh=True)
         self.assertEqual({}, self._search_hits_dict({}))
-
-    def test_bulk_with_id_in_source(self):
-        action_template = {
-            "_op_type": "index",
-            "_index": self.adapter.index,
-            "_type": self.adapter.type,
-        }
-        docs = []
-        actions = []
-        for x in range(3):
-            doc = self.adapter.transform_full(self._make_doc())
-            docs.append(doc)
-            actions.append({"_id": doc["_id"], "_source": doc, **action_template})
-        self.assertEqual({}, self._search_hits_dict({}))
-        self.adapter.bulk(actions, refresh=True)
-        self.assertEqual(docs_to_dict(docs), self._search_hits_dict({}))
-
-    def test__bulk(self):
-        docs = self._index_many_new_docs(2)
-        self.assertEqual(docs_to_dict(docs), self._search_hits_dict({}))
-        action_template = {
-            "_op_type": "delete",
-            "_index": self.adapter.index,
-            "_type": self.adapter.type,
-        }
-        actions = [{"_id": doc["_id"], **action_template} for doc in docs]
-        self.adapter._bulk(actions, refresh=True)
-        self.assertEqual({}, self._search_hits_dict({}))
-
-    def test__iter_id_stripped_actions(self):
-        actions = [{"_source": {"_id": 1, "test": True}}]
-        self.assertEqual([{"_source": {"test": True}}],
-                         list(self.adapter._iter_id_stripped_actions(actions)))
 
     def test__verify_doc_id(self):
         self.adapter._verify_doc_id("abc")  # should not raise
@@ -958,12 +1002,6 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
         for invalid in [None, True, False, 123, 1.23]:
             with self.assertRaises(ValueError):
                 self.adapter._verify_doc_id(invalid)
-
-    def test__iter_id_stripped_actions_does_not_mutate_actions(self):
-        actions = [{"_source": {"_id": 1}}]
-        expected = deepcopy(actions)
-        list(self.adapter._iter_id_stripped_actions(actions))
-        self.assertEqual(expected, actions)
 
     def test__verify_doc_source(self):
         # does not raise
@@ -1050,3 +1088,54 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
             return result
         exc_args = (f"_shards: {json.dumps(shards_obj)}",)
         return exc_args, wrapper
+
+
+@es_test
+class TestBulkActionItem(SimpleTestCase):
+
+    def test_delete(self):
+        doc = TestDoc("1", "test")
+        action = BulkActionItem.delete(doc)
+        self.assertIs(action.op_type, BulkActionItem.DELETE)
+        self.assertIs(action.doc, doc)
+        self.assertIsNone(action.doc_id)
+        self.assertTrue(action.is_delete)
+        self.assertFalse(action.is_index)
+
+    def test_delete_id(self):
+        doc = TestDoc("1", "test")
+        action = BulkActionItem.delete_id(doc.id)
+        self.assertIs(action.op_type, BulkActionItem.DELETE)
+        self.assertIsNone(action.doc)
+        self.assertEqual(action.doc_id, doc.id)
+        self.assertTrue(action.is_delete)
+        self.assertFalse(action.is_index)
+
+    def test_index(self):
+        doc = TestDoc("1", "test")
+        action = BulkActionItem.index(doc)
+        self.assertIs(action.op_type, BulkActionItem.INDEX)
+        self.assertIs(action.doc, doc)
+        self.assertIsNone(action.doc_id)
+        self.assertFalse(action.is_delete)
+        self.assertTrue(action.is_index)
+
+    def test_create_fails_with_invalid_action(self):
+        doc = TestDoc("1", "test")
+        with self.assertRaises(ValueError):
+            BulkActionItem("index", doc=doc)
+
+    def test_create_fails_without_doc_params(self):
+        with self.assertRaises(ValueError):
+            BulkActionItem(BulkActionItem.DELETE)
+        with self.assertRaises(ValueError):
+            BulkActionItem(BulkActionItem.INDEX)
+
+    def test_create_fails_with_multiple_doc_params(self):
+        doc = TestDoc("1", "test")
+        with self.assertRaises(ValueError):
+            BulkActionItem(BulkActionItem.DELETE, doc=doc, doc_id=doc.id)
+
+    def test_create_fails_with_doc_id_for_index(self):
+        with self.assertRaises(ValueError):
+            BulkActionItem(BulkActionItem.INDEX, doc_id="1")

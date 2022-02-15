@@ -681,74 +681,68 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
             raise ValueError(f"Invalid 'refresh' value, expected bool, got {refresh!r}")
         return "true" if refresh else "false"
 
-    def bulk_index(self, docs, refresh=False, **kw):
-        """Use the Elasticsearch library's ``bulk`` helper function to index
+    def bulk(self, actions, refresh=False, **kw):
+        """Use the Elasticsearch library's ``bulk`` helper function to process
         documents en masse.
+
+        :param actions: iterable of ``BulkActionItem`` instances
+        :param refresh: ``bool`` refresh the effected shards to make this
+                        operation visible to search
+        :param **kw: extra parameters passed directly to the underlying
+                     ``elasticsearch.helpers.bulk()`` function."""
+        payload = [self._render_bulk_action(action) for action in actions]
+        return bulk(self._es, payload, refresh=self._refresh_value(refresh), **kw)
+
+    def bulk_index(self, docs, refresh=False, **kw):
+        """Convenience method for bulk indexing many documents without the
+        BulkActionItem boilerplate.
 
         :param docs: iterable of (Python model) documents to index
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
         :param **kw: extra parameters passed directly to the underlying
                      ``elasticsearch.helpers.bulk()`` function."""
-        action_template = {
-            "_op_type": "index",
-            "_index": self.index,
-            "_type": self.type,
-        }
-        actions = []
-        for doc in docs:
-            doc_id, source = self.transform(doc)
-            self._verify_doc_id(doc_id)
-            actions.append({
-                "_id": doc_id,
-                "_source": source,
-                **action_template,
-            })
-        return self._bulk(actions, refresh, **kw)
+        action_gen = (BulkActionItem.index(doc) for doc in docs)
+        return self.bulk(action_gen, refresh, **kw)
 
     def bulk_delete(self, doc_ids, refresh=False, **kw):
-        """Use the Elasticsearch library's ``bulk`` helper function to delete
-        documents en masse.
+        """Convenience method for bulk deleting many documents by ID without the
+        BulkActionItem boilerplate.
 
         :param doc_ids: iterable of document IDs to be deleted
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
         :param **kw: extra parameters passed directly to the underlying
                      ``elasticsearch.helpers.bulk()`` function."""
-        action_template = {
-            "_op_type": "delete",
+        action_gen = (BulkActionItem.delete_id(doc_id) for doc_id in doc_ids)
+        return self.bulk(action_gen, refresh, **kw)
+
+    def _render_bulk_action(self, action):
+        """Return a "raw" action object in the format required by the
+        Elasticsearch ``bulk()`` helper function.
+
+        :param action: a ``BulkActionItem`` instance
+        :returns: ``dict``"""
+        for_elastic = {
             "_index": self.index,
             "_type": self.type,
         }
-        actions = []
-        for doc_id in doc_ids:
-            actions.append({"_id": doc_id, **action_template})
-        return self._bulk(actions, refresh, **kw)
-
-    def bulk(self, actions, refresh=False, **kw):
-        """Use the Elasticsearch library's ``bulk`` helper function to execute
-        bulk operations.
-
-        **DEPRECATED**: ``ElasticDocumentAdapter.bulk()`` is deprecated.
-                        Use ``bulk_index`` and ``bulk_delete`` instead.
-
-        :param actions: iterable containing the actions to be executed
-        :param refresh: ``bool`` refresh the effected shards to make this
-                        operation visible to search
-        :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.helpers.bulk()`` function."""
-        return self._bulk(self._iter_id_stripped_actions(actions), refresh, **kw)
-
-    def _bulk(self, actions, refresh, **kw):
-        """Use the Elasticsearch library's ``bulk`` helper function to execute
-        bulk operations.
-
-        :param actions: iterable containing the actions to be executed
-        :param refresh: ``str`` refresh the effected shards to make this
-                        operation visible to search
-        :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.helpers.bulk()`` function."""
-        return bulk(self._es, actions, refresh=self._refresh_value(refresh), **kw)
+        if action.is_delete:
+            for_elastic["_op_type"] = "delete"
+            if action.doc is None:
+                doc_id = action.doc_id
+            else:
+                doc_id = self.transform(action.doc)[0]
+        elif action.is_index:
+            for_elastic["_op_type"] = "index"
+            doc_id, source = self.transform(action.doc)
+            self._verify_doc_source(source)
+            for_elastic["_source"] = source
+        else:
+            raise ValueError(f"unsupported action type: {action!r}")
+        self._verify_doc_id(doc_id)
+        for_elastic["_id"] = doc_id
+        return for_elastic
 
     @staticmethod
     def _verify_doc_id(doc_id):
@@ -769,20 +763,6 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         :raises: ``ValueError``"""
         if not isinstance(source, dict) or "_id" in source:
             raise ValueError(f"invalid Elastic _source value: {source}")
-
-    @staticmethod
-    def _iter_id_stripped_actions(actions):
-        """Iterate over bulk ``actions`` iterable, yielding actions where the
-        the ``action["_source"]["_id"]`` item (if present) is removed without
-        mutating the original dicts.
-
-        :param actions: iterable of ``dict`` objects"""
-        for action in actions:
-            src = action.get("_source", {})
-            if "_id" in src:
-                action = {k: action[k] for k in action if k != "_source"}
-                action["_source"] = {k: src[k] for k in src if k != "_id"}
-            yield action
 
     @staticmethod
     def _fix_hit(hit):
@@ -827,6 +807,70 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
     def __repr__(self):
         return f"<{self.__class__.__name__} index={self.index!r}, type={self.type!r}>"
+
+
+class BulkActionItem:
+    """A "wrapper" for documents to be processed via Elasticsearch's Bulk API.
+    Collections of these objects can be passed to an ElasticDocumentAdapter's
+    bulk() method for processing.
+
+    Instances of this class are meant to be acquired via one of the factory
+    methods rather than instantiating directly (via ``__init__()``)."""
+
+    DELETE = object()
+    INDEX = object()
+
+    OP_TYPES = {
+        # <object>: <name>
+        DELETE: "delete",
+        INDEX: "index",
+    }
+
+    def __init__(self, op_type, doc=None, doc_id=None):
+        if op_type not in self.OP_TYPES:
+            raise ValueError(f"invalid operations type: {op_type!r}")
+        if doc is None and doc_id is None:
+            raise ValueError("at least one of 'doc' or 'doc_id' are required")
+        elif not (doc is None or doc_id is None):
+            raise ValueError("'doc' and 'doc_id' are mutually exclusive")
+        elif doc is None and op_type is not self.DELETE:
+            raise ValueError("'doc_id' can only be used for delete operations")
+        self.doc = doc
+        self.doc_id = doc_id
+        self.op_type = op_type
+
+    @classmethod
+    def delete(cls, doc):
+        """Factory method for a document delete action"""
+        return cls(cls.DELETE, doc=doc)
+
+    @classmethod
+    def delete_id(cls, doc_id):
+        """Factory method for a document delete action providing only the ID"""
+        return cls(cls.DELETE, doc_id=doc_id)
+
+    @classmethod
+    def index(cls, doc):
+        """Factory method for a document index action"""
+        return cls(cls.INDEX, doc=doc)
+
+    @property
+    def is_delete(self):
+        """Return ``True`` if this action is for a document delete operation."""
+        return self.op_type is self.DELETE
+
+    @property
+    def is_index(self):
+        """Return ``True`` if this action is for a document index operation."""
+        return self.op_type is self.INDEX
+
+    def __repr__(self):
+        human_op = self.OP_TYPES.get(self.op_type, "???")  # to avoid KeyError
+        if self.doc_id is not None:
+            doc_info = f"_id={self.doc_id!r}"
+        else:
+            doc_info = f"doc={self.doc!r}"
+        return f"<{self.__class__.__name__} op_type={human_op}, {doc_info}>"
 
 
 def get_client(for_export=False):
