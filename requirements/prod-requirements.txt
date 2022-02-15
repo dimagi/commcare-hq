@@ -499,6 +499,8 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==6.5.1
     # via -r base-requirements.in
+typing-extensions==4.1.1
+    # via black
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
