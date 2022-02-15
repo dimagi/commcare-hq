@@ -302,9 +302,7 @@ pycryptodome==3.10.1
 pygithub==1.54.1
     # via -r base-requirements.in
 pygments==2.11.2
-    # via
-    #   -r base-requirements.in
-    #   sphinx
+    # via sphinx
 pygooglechart==0.4.0
     # via -r base-requirements.in
 pyjwt==1.7.1
