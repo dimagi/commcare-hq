@@ -146,13 +146,13 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         return hasattr(node, 'left') and hasattr(node.left, 'op') and node.left.op == '/'
 
     def _subcase_filter(node):
-        index_identifier, subcase_predicate, case_count_gt, invert_condition = _parse_normalize_subcase_query(node)
-        ids = _get_parent_case_ids_matching_subcase_query(index_identifier, subcase_predicate, case_count_gt)
+        index_identifier, subcase_predicate, count_op, case_count, invert_condition = _parse_normalize_subcase_query(node)
+        ids = _get_parent_case_ids_matching_subcase_query(index_identifier, subcase_predicate, count_op, case_count)
         if invert_condition:
             return filters.NOT(filters.doc_id(ids))
         return filters.doc_id(ids)
 
-    def _get_parent_case_ids_matching_subcase_query(index_identifier, subcase_predicates, case_count_gt):
+    def _get_parent_case_ids_matching_subcase_query(index_identifier, subcase_predicates, count_op, case_count):
         """Get a list of case IDs for cases that have a subcase with the given index identifier
         and matching the subcase predicate filter.
 
@@ -190,11 +190,12 @@ def build_filter_from_ast(domain, node, fuzzy=False):
             if indices:
                 parent_case_id_counter.update([indices[0]['referenced_id']])
 
-        if case_count_gt <= 0:
+        # TODO: support '=' as well as '>' for the comparison operator: 'count_op'
+        if case_count <= 0:
             return list(parent_case_id_counter)
 
         return [
-            case_id for case_id, count in parent_case_id_counter.items() if count > case_count_gt
+            case_id for case_id, count in parent_case_id_counter.items() if count > case_count
         ]
 
     def _is_subcase_lookup(node):
