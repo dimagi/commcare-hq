@@ -49,19 +49,6 @@ def _get_peer_rating_cases(session_case):
 
 
 def _get_case_updates(peer_rating_cases):
-    """
-    feedback_num = number of child peer_rating cases
-    total_session_rating = sum of session_rating of all peer_rating child cases
-
-    agg_rating = sum of session_rating of all peer_rating child cases / num of peer_rating child cases
-    agg_mean_treatment_specific_score = sum of mean_treatment_specific_score of all peer_rating child cases /
-                                        num of peer _rating child cases
-    agg_mean_general_skills_score = sum of mean_general_skills_score of all peer_rating child cases /
-                                    num of peer _rating child cases
-
-    date_of peer_review = max(date_of_peer_review) set on peer_rating child case
-    share_score_check = 'yes'
-    """
     number_of_peer_ratings = len(peer_rating_cases)
     sum_of_session_rating = _get_sum(SESSION_RATING_CASE_PROP, peer_rating_cases)
 
