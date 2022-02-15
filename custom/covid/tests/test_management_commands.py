@@ -1,10 +1,10 @@
+import logging
 import uuid
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.core.management import call_command
 from django.test import TestCase
-
-from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
@@ -422,6 +422,7 @@ class TestUpdateAllActivityCompleteDate(TestCase):
 
     @patch('corehq.apps.hqcase.bulk.username_to_user_id', new=lambda _: 'my_username')
     def test(self):
+        logging.getLogger('custom.covid.management.commands.update_all_activity_complete_date').disabled = True
         call_command('update_all_activity_complete_date', self.domain, 'patient', username='test@example.com')
         call_command('update_all_activity_complete_date', self.domain, 'contact', username='test@example.com')
 

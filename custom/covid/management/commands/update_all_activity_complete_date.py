@@ -1,4 +1,5 @@
 import datetime
+import logging
 import textwrap
 
 from django.core.management.base import BaseCommand
@@ -18,7 +19,10 @@ from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.util.dates import iso_string_to_date
 from corehq.util.log import with_progress_bar
 
-DEVICE_ID = __name__
+# logger.debug will record something to a file but not print it
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.FileHandler('all_activity_complete_date.txt'))
+logger.setLevel(logging.DEBUG)
 
 
 class Command(BaseCommand):
@@ -36,14 +40,14 @@ class Command(BaseCommand):
         parser.add_argument('case_type', choices=['patient', 'contact'])
         parser.add_argument('--username', type=str, required=True)
         parser.add_argument('--and-linked', action='store_true', default=False)
-        parser.add_argument('--output-file', type=str, default=None)
         parser.add_argument('--throttle-secs', type=float, default=0)
 
     def handle(self, domain, **options):
+        logger.debug(f"{datetime.datetime.utcnow()} Starting run: {options}")
+
         domains = {domain}
         if options["and_linked"]:
             domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
-            print(f"Running against {len(domains)} total domains")
 
         for i, domain in enumerate(sorted(domains), start=1):
             bad_case_ids = _get_bad_case_ids(domain, options['case_type'])
@@ -85,6 +89,7 @@ def _correct_bad_property(case):
     ):
         return None
 
+    logger.debug(f"_correct_bad_case_property {case.domain} {case.case_id}")
     date_func = _get_new_contact_date_value if case.type == 'contact' else _get_new_patient_date_value
     new_value = date_func(case)
     return CaseBlock(
