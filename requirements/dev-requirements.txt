@@ -390,7 +390,7 @@ pyflakes==2.3.1
     # via flake8
 pygithub==1.54.1
     # via -r base-requirements.in
-pygments==2.8.1
+pygments==2.11.2
     # via
     #   -r base-requirements.in
     #   ipython
@@ -606,8 +606,6 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==6.5.1
     # via -r base-requirements.in
-typing-extensions==4.0.1
-    # via black
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
