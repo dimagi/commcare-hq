@@ -76,6 +76,7 @@ class CaseAccessors(object):
             self.domain, case_ids, exclude_for_case_type=exclude_for_case_type)
 
     def get_last_modified_dates(self, case_ids):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.get_last_modified_dates(self.domain, case_ids)
 
     def get_all_reverse_indices_info(self, case_ids):
@@ -99,9 +100,11 @@ class CaseAccessors(object):
         return self.db_accessor.get_cases_by_external_id(self.domain, external_id, case_type)
 
     def soft_delete_cases(self, case_ids, deletion_date=None, deletion_id=None):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.soft_delete_cases(self.domain, case_ids, deletion_date, deletion_id)
 
     def soft_undelete_cases(self, case_ids):
+        warn("DEPRECATED use CommCareCase.objects", DeprecationWarning)
         return self.db_accessor.soft_undelete_cases(self.domain, case_ids)
 
     def get_deleted_case_ids_by_owner(self, owner_id):
@@ -112,9 +115,6 @@ class CaseAccessors(object):
         warn("DEPRECATED use CommCareCaseIndex.objects", DeprecationWarning)
         return CommCareCaseIndex.objects.get_extension_chain(
             self.domain, case_ids, include_closed, exclude_for_case_type)
-
-    def get_case_owner_ids(self):
-        return self.db_accessor.get_case_owner_ids(self.domain)
 
 
 class AbstractLedgerAccessor(metaclass=ABCMeta):

@@ -17,8 +17,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseIndex
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -788,7 +787,7 @@ class SyncDeletedCasesTest(BaseSyncTest):
     def test_deleted_case_doesnt_sync(self):
         case_id = uuid.uuid4().hex
         self.device.post_changes(case_id=case_id, create=True)
-        CaseAccessors(self.project.name).soft_delete_cases([case_id])
+        CommCareCase.objects.soft_delete_cases(self.project.name, [case_id])
         self.assertNotIn(case_id, self.device.sync().cases)
 
     def test_deleted_parent_doesnt_sync(self):
@@ -806,7 +805,7 @@ class SyncDeletedCasesTest(BaseSyncTest):
                 )],
             )
         )
-        CaseAccessors(self.project.name).soft_delete_cases([parent_id])
+        CommCareCase.objects.soft_delete_cases(self.project.name, [parent_id])
         self.assertEqual(set(self.device.sync().cases), {child_id})
         # todo: in the future we may also want to purge the child
 

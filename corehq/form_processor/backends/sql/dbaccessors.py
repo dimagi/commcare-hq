@@ -1,11 +1,9 @@
 import functools
 import itertools
-import logging
 import operator
 import struct
 from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import namedtuple
-from datetime import datetime
 from uuid import UUID
 from warnings import warn
 
@@ -17,7 +15,6 @@ from django.db.models.functions import Concat
 
 import csiphash
 
-from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.chunked import chunked
 
 from corehq.form_processor.exceptions import (
@@ -44,8 +41,6 @@ from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
 )
-from corehq.util.metrics.load_counters import form_load_counter
-from corehq.util.queries import fast_distinct_in_domain
 
 doc_type_to_state = XFormInstance.DOC_TYPE_TO_STATE
 
@@ -554,19 +549,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):
-        """
-        Given a list of case IDs, return a dict where the ids are keys and the
-        values are the last server modified date of that case.
-        """
-        if not case_ids:
-            return []
-        with CommCareCase.get_plproxy_cursor(readonly=True) as cursor:
-            cursor.execute(
-                'SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)',
-                [domain, case_ids]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return {result.case_id: result.server_modified_on for result in results}
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.get_last_modified_dates(domain, case_ids)
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
@@ -581,24 +565,8 @@ class CaseAccessorSQL:
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):
-        from corehq.form_processor.change_publishers import publish_case_saved
-
-        assert isinstance(case_ids, list)
-
-        with CommCareCase.get_plproxy_cursor() as cursor:
-            cursor.execute(
-                'SELECT soft_undelete_cases(%s, %s) as affected_count',
-                [domain, case_ids]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return_value = sum([result.affected_count for result in results])
-
-        for case_ids_chunk in chunked(case_ids, 500):
-            cases = CaseAccessorSQL.get_cases(list(case_ids_chunk))
-            for case in cases:
-                publish_case_saved(case)
-
-        return return_value
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.soft_undelete_cases(domain, case_ids)
 
     @staticmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
@@ -607,110 +575,19 @@ class CaseAccessorSQL:
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
-        from corehq.form_processor.change_publishers import publish_case_deleted
-
-        assert isinstance(case_ids, list)
-        utcnow = datetime.utcnow()
-        deletion_date = deletion_date or utcnow
-        with CommCareCase.get_plproxy_cursor() as cursor:
-            cursor.execute(
-                'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as affected_count',
-                [domain, case_ids, utcnow, deletion_date, deletion_id]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            affected_count = sum([result.affected_count for result in results])
-
-        for case_id in case_ids:
-            publish_case_deleted(domain, case_id)
-
-        return affected_count
-
-    @staticmethod
-    def get_case_owner_ids(domain):
-        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-        db_aliases = get_db_aliases_for_partitioned_query()
-        owner_ids = set()
-        for db_alias in db_aliases:
-            owner_ids.update(fast_distinct_in_domain(CommCareCase, 'owner_id', domain, using=db_alias))
-
-        return owner_ids
+        warn("DEPRECATED", DeprecationWarning)
+        return CommCareCase.objects.soft_delete_cases(domain, case_ids, deletion_date, deletion_id)
 
     @staticmethod
     def form_has_case_transactions(form_id):
-        for db_name in get_db_aliases_for_partitioned_query():
-            if CaseTransaction.objects.using(db_name).filter(form_id=form_id).exists():
-                return True
-        return False
+        warn("DEPRECATED", DeprecationWarning)
+        return CaseTransaction.objects.exists_for_form(form_id)
 
     @staticmethod
     def get_case_transactions_by_case_id(case, updated_xforms=None):
-        """
-        This fetches all the transactions required to rebuild the case along
-        with all the forms for those transactions.
-
-        For any forms that have been updated it replaces the old form
-        with the new one.
-
-        :param case_id: ID of case to rebuild
-        :param updated_xforms: list of forms that have been changed.
-        :return: list of ``CaseTransaction`` objects with their associated forms attached.
-        """
-
-        transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case.case_id)
-        CaseAccessorSQL.fetch_case_transaction_forms(case, transactions, updated_xforms)
-        return transactions
-
-    @staticmethod
-    def fetch_case_transaction_forms(case, transactions, updated_xforms=None):
-        """
-        Fetches the forms for a list of transactions, caching them onto each transaction
-
-        :param transactions: list of ``CaseTransaction`` objects:
-        :param updated_xforms: list of forms that have been changed.
-        """
-
-        form_ids = {tx.form_id for tx in transactions if tx.form_id}
-        updated_xforms_map = {
-            xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
-        } if updated_xforms else {}
-
-        updated_xform_ids = set(updated_xforms_map)
-        form_ids_to_fetch = list(form_ids - updated_xform_ids)
-        form_load_counter("rebuild_case", case.domain)(len(form_ids_to_fetch))
-        xform_map = {
-            form.form_id: form
-            for form in XFormInstance.objects.get_forms_with_attachments_meta(form_ids_to_fetch)
-        }
-
-        forms_missing_transactions = list(updated_xform_ids - form_ids)
-        for form_id in forms_missing_transactions:
-            # Add in any transactions that aren't already present
-            form = updated_xforms_map[form_id]
-            case_updates = [update for update in get_case_updates(form) if update.id == case.case_id]
-            types = [
-                CaseTransaction.type_from_action_type_slug(a.action_type_slug)
-                for case_update in case_updates
-                for a in case_update.actions
-            ]
-            modified_on = case_updates[0].guess_modified_on()
-            new_transaction = CaseTransaction.form_transaction(case, form, modified_on, types)
-            transactions.append(new_transaction)
-
-        def get_form(form_id):
-            if form_id in updated_xforms_map:
-                return updated_xforms_map[form_id]
-
-            try:
-                return xform_map[form_id]
-            except KeyError:
-                raise XFormNotFound(form_id)
-
-        for case_transaction in transactions:
-            if case_transaction.form_id:
-                try:
-                    case_transaction.cached_form = get_form(case_transaction.form_id)
-                except XFormNotFound:
-                    logging.error('Form not found during rebuild: %s', case_transaction.form_id)
+        warn("DEPRECATED", DeprecationWarning)
+        from .update_strategy import SqlCaseUpdateStrategy
+        return SqlCaseUpdateStrategy(case).get_transactions_for_rebuild(updated_xforms)
 
 
 class LedgerReindexAccessor(ReindexAccessor):
