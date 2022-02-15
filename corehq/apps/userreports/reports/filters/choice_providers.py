@@ -406,14 +406,14 @@ class DomainChoiceProvider(ChainableChoiceProvider):
     def _query_domains(self, domain, query_text, user):
         domains = {domain}
         if user is None:
-            return domains
+            return list(domains)
         if not RegistryPermissionCheck(domain, user).can_view_registry_data(
                 self.report.registry_helper.registry_slug):
-            return domains
+            return list(domains)
         try:
             domains.update(self.report.registry_helper.visible_domains)
         except RegistryNotFound:
-            return domains
+            return list(domains)
         if query_text:
             domains = {domain for domain in domains if re.search(query_text, domain)}
         return list(domains)
