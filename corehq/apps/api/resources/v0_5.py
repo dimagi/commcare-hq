@@ -1,3 +1,4 @@
+import json
 from collections import namedtuple
 from itertools import chain
 
@@ -6,7 +7,7 @@ from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext as _
 
 from memoized import memoized_property
 from tastypie import fields, http
@@ -20,7 +21,7 @@ from tastypie.utils import dict_strip_unicode_keys
 from dimagi.utils.couch.bulk import get_docs
 from phonelog.models import DeviceReportEntry
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.odata.serializers import (
     ODataCaseSerializer,
@@ -89,7 +90,7 @@ from corehq.apps.users.models import (
 from corehq.apps.users.util import raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
-from corehq.util.couch import DocumentNotFound, get_document_or_not_found
+from corehq.util.couch import DocumentNotFound
 from corehq.util.timer import TimingContext
 
 from . import (
@@ -101,7 +102,6 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
-
 
 MOCK_BULK_USER_ES = None
 
@@ -756,7 +756,16 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
     configured_filter = fields.DictField(attribute="configured_filter", use_in='detail')
     configured_indicators = fields.ListField(attribute="configured_indicators", use_in='detail')
 
+    def _ensure_toggle_enabled(self, request):
+        if not toggles.USER_CONFIGURABLE_REPORTS.enabled_for_request(request):
+            raise ImmediateHttpResponse(HttpResponse(
+                json.dumps({"error": _("You don't have permission to access this API")}),
+                content_type="application/json",
+                status=401)
+            )
+
     def obj_get(self, bundle, **kwargs):
+        self._ensure_toggle_enabled(bundle.request)
         domain = kwargs['domain']
         pk = kwargs['pk']
         try:
@@ -766,10 +775,12 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
         return data_source
 
     def obj_get_list(self, bundle, **kwargs):
+        self._ensure_toggle_enabled(bundle.request)
         domain = kwargs['domain']
         return get_datasources_for_domain(domain)
 
     def obj_update(self, bundle, **kwargs):
+        self._ensure_toggle_enabled(bundle.request)
         domain = kwargs['domain']
         pk = kwargs['pk']
         try:
