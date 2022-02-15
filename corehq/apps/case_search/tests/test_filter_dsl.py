@@ -526,6 +526,14 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
         self.assertEqual([self.parent_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
+    def test_subase_exists_inverted(self):
+        parsed = parse_xpath("not(subcase_exists[identifier='father'][name='Margaery'])")
+
+        expected_filter = {"bool": {"must_not": {"terms": {"_id": [self.parent_case_id]}}}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.assertEqual([self.parent_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+
     def test_subase_count_gt(self):
         parsed = parse_xpath("subcase_count[identifier='father'][house='Tyrell'] > 1")
 
@@ -544,6 +552,15 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             {self.grandparent_case_id, self.child_case1_id, self.child_case2_id},
             set(CaseSearchES().filter(built_filter).values_list('_id', flat=True))
         )
+
+    def test_subase_count_lt_no_match(self):
+        """Subcase filter matches no cases and since it's an 'inverted' filter (lt)
+        we don't need to apply any filtering to the parent query"""
+        parsed = parse_xpath("subcase_count[identifier='father'][house='Reyne'] < 1")
+
+        expected_filter = None
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
 
     def test_subase_count_no_match(self):
         # TODO: can we 'exit early' if there are no matching subcases? Seems silly to continue

@@ -198,13 +198,32 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         ]
 
     def _parse_subcase_query(node):
-        """Parse the subcase query and normalize it to the form 'subcase_count > N'
+        """Parse the subcase query and normalize it to the form 'subcase_count > N' or 'subcase_count = N'
 
-        :returns: tuple(index_identifier, subcase search predicate, case_count_gt, invert_condition)"""
-        return "", None, 0  # TODO
+        Supports the following syntax:
+        - subcase_exists[identifier='X'][ {subcase filter} ]
+        - subcase_count[identifier='X'][ {subcase_filter} ] {one of =, >, <, >=, <= } {integer value}
+
+        :returns: tuple(index_identifier, subcase search predicates, count_op, case_count, invert_condition)
+         - index_identifier: the name of the index identifier to match on
+         - subcase search predicates: list of predicates used to filter the subcase query
+         - count_op: One of ['>', '=']
+         - case_count: Integer value used in conjunction with count_op to filter parent cases
+         - invert_condition: True if the initial expression is one of ['<', '<=']
+        """
+
+        # NOTES:
+        #  - it would be useful to have this accessible in tests so that we can test it
+        #    independently of the rest
+        #  - instead of returning a tuple we could create a dataclass to make it easier to work with and
+        #    could encapsulate some functionality:
+        #       subcase_query.include_parent(subcase_count)
+        #       subcase_query.create_parent_filter(matching_parent_ids)
+
+        return "", [], "", 0, False  # TODO
 
     def _is_subcase_lookup(node):
-        """Returns whether a particular AST node is a subcase lookup"""
+        """Returns whether a particular AST node is a subcase lookup."""
         return False  # TODO
 
     def _raise_step_RHS(node):
