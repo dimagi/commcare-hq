@@ -2106,6 +2106,19 @@ class Itemset(DocumentSchema):
     value = StringProperty(exclude_if_none=True)
     sort = StringProperty(exclude_if_none=True)
 
+    @classmethod
+    def wrap(cls, data):
+        self = super().wrap(data)
+        from corehq.apps.fixtures.fixturegenerators import ItemListsProvider
+        if data.get('instance_uri', '').startswith(f'jr://fixture/{ItemListsProvider.id}:'):
+            instance_id = data.get('instance_id')
+            if instance_id and ItemListsProvider.id not in instance_id:
+                data['instance_id'] = f'{ItemListsProvider.id}:{instance_id}'
+                data['nodeset'] = re.sub(r"instance\((.)" + instance_id,
+                                         r"instance(\1" + ItemListsProvider.id + r":" + instance_id,
+                                         data.get('nodeset', ''))
+        return self
+
 
 class CaseSearchProperty(DocumentSchema):
     """
