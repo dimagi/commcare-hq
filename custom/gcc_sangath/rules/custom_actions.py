@@ -10,6 +10,7 @@ from custom.gcc_sangath.const import (
     MEAN_TREATMENT_SPECIFIC_SCORE_CASE_PROP,
     NEEDS_AGGREGATION_CASE_PROP,
     NEEDS_AGGREGATION_NO_VALUE,
+    PEER_RATING_CASE_TYPE,
     SESSION_CASE_TYPE,
     SESSION_RATING_CASE_PROP,
 )
@@ -45,7 +46,9 @@ def sanitize_session_peer_rating(session_case, rule):
 
 def _get_peer_rating_cases(session_case):
     case_ids = CommCareCaseIndex.objects.get_extension_case_ids(session_case.domain, [session_case.case_id])
-    return CommCareCase.objects.get_cases(case_ids, session_case.domain)
+    extension_cases = CommCareCase.objects.get_cases(case_ids, session_case.domain)
+    peer_rating_cases = [case for case in extension_cases if case.type == PEER_RATING_CASE_TYPE]
+    return peer_rating_cases
 
 
 def _get_case_updates(peer_rating_cases):

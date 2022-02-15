@@ -135,11 +135,11 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
                     "name": "Session 1",
                 },
             })
-        peer_rating_cases = []
+        extension_cases = []
         for peer_rating_case_json in peer_ratings_case_json:
             case_json = {'name': "Peer Rating"}
             case_json.update(peer_rating_case_json)
-            peer_rating_cases.append(CaseStructure(
+            extension_cases.append(CaseStructure(
                 attrs={
                     'create': True,
                     'case_type': PEER_RATING_CASE_TYPE,
@@ -151,5 +151,19 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
                     relationship='extension',
                 )],
             ))
-        cases = self.case_factory.create_or_update_cases(peer_rating_cases)
+
+        # also set up an unknown case type to test only peer_rating cases are used
+        extension_cases.append(CaseStructure(
+            attrs={
+                'create': True,
+                'case_type': 'unknown',
+            },
+            indices=[CaseIndex(
+                session_case,
+                identifier='parent',
+                relationship='extension',
+            )],
+        ))
+
+        cases = self.case_factory.create_or_update_cases(extension_cases)
         self.session_case = cases[-1]
