@@ -3,6 +3,7 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleActionResult,
 )
 from corehq.apps.hqcase.utils import update_case
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from custom.gcc_sangath.const import (
     DATE_OF_PEER_REVIEW_CASE_PROP,
     MEAN_GENERAL_SKILLS_SCORE_CASE_PROP,
@@ -41,8 +42,8 @@ def sanitize_session_peer_rating(session_case, rule):
 
 
 def _get_peer_rating_cases(session_case):
-    # ToDo: fetch peer rating cases
-    return []
+    case_ids = CommCareCaseIndex.objects.get_extension_case_ids(session_case.domain, [session_case.case_id])
+    return CommCareCase.objects.get_cases(case_ids, session_case.domain)
 
 
 def _get_case_updates(peer_rating_cases):
