@@ -8,9 +8,6 @@ from corehq.apps.data_interfaces.tests.test_auto_case_updates import (
     BaseCaseRuleTest,
 )
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import normalize_username
 from corehq.form_processor.models import CommCareCase
 from custom.gcc_sangath.const import (
     DATE_OF_PEER_REVIEW_CASE_PROP,
@@ -30,27 +27,13 @@ from custom.gcc_sangath.rules.custom_actions import (
 class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
     domain = 'gcc-sangath'
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
-        cls.project = create_domain(cls.domain)
-        cls.addClassCleanup(cls.project.delete)
-
-        username = normalize_username("mobile_worker_1", cls.domain)
-        cls.mobile_worker = CommCareUser.create(cls.domain, username, "123", created_by=None, created_via=None)
-        cls.addClassCleanup(cls.mobile_worker.delete, cls.domain, deleted_by=None, deleted_via=None)
-
-        cls.case_factory = CaseFactory(cls.domain)
-
     @patch('custom.gcc_sangath.rules.custom_actions.update_case')
     def test_with_no_peer_rating_cases(self, update_case_mock):
         rule = create_empty_rule(
             self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type=SESSION_CASE_TYPE,
         )
-        session_case = self.case_factory.create_case(
+        session_case = CaseFactory(self.domain).create_case(
             case_type=SESSION_CASE_TYPE,
-            owner_id=self.mobile_worker.get_id,
         )
 
         result = sanitize_session_peer_rating(session_case, rule)
@@ -165,5 +148,5 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
             )],
         ))
 
-        cases = self.case_factory.create_or_update_cases(extension_cases)
+        cases = CaseFactory(self.domain).create_or_update_cases(extension_cases)
         self.session_case = cases[-1]
