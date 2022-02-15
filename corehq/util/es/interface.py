@@ -89,11 +89,12 @@ class ElasticsearchInterface:
         ret = bulk(self.es, actions, stats_only=stats_only, **kwargs)
         return ret
 
-    def search(self, index_alias=None, doc_type=None, body=None, params=None, **kwargs):
+    def search(self, index_alias, doc_type, body=None, params=None, **kwargs):
         self._verify_is_alias(index_alias)
-        results = self.es.search(index=index_alias, doc_type=doc_type, body=body, params=params or {}, **kwargs)
-        self._fix_hits_in_results(results)
-        return results
+        doc_adapter = self._get_doc_adapter(index_alias, doc_type)
+        query = {} if body is None else body
+        params = params if params else {}
+        return doc_adapter.search(query, params=params or {}, **kwargs)
 
     def scroll(self, scroll_id=None, body=None, params=None, **kwargs):
         results = self.es.scroll(scroll_id, body, params=params or {}, **kwargs)
