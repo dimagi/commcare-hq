@@ -634,6 +634,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         """
         doc_id, source = self.transform(doc)
         self._verify_doc_id(doc_id)
+        self._verify_doc_source(source)
         self._es.index(self.index, self.type, source, doc_id,
                        refresh=self._refresh_value(refresh), **kw)
 
@@ -649,7 +650,10 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
                      ``elasticsearch.Elasticsearch.update()`` method.
         """
         if "_id" in fields:
+            if doc_id != fields["_id"]:
+                raise ValueError(f"ambiguous doc_id: ({doc_id!r} != {fields['_id']!r})")
             fields = {key: fields[key] for key in fields if key != "_id"}
+        self._verify_doc_source(fields)
         # NOTE: future implementations may wish to get a return value here (e.g.
         # when using the `fields` kwarg), but the current implementation never
         # uses this functionality, so this method does not return anything.
@@ -755,6 +759,16 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         :raises: ``ValueError``"""
         if not (isinstance(doc_id, str) and doc_id):
             raise ValueError(f"invalid Elastic _id value: {doc_id!r}")
+
+    @staticmethod
+    def _verify_doc_source(source):
+        """Checks whether or the not the provided ``source`` is valid for
+        passing to Elasticseach (does not contain any illegal meta properties).
+
+        :param source: ``dict`` of document properties to check
+        :raises: ``ValueError``"""
+        if not isinstance(source, dict) or "_id" in source:
+            raise ValueError(f"invalid Elastic _source value: {source}")
 
     @staticmethod
     def _iter_id_stripped_actions(actions):

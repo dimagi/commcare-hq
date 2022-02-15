@@ -799,6 +799,15 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
             self.adapter.upsert(doc, refresh=True)
         self.assertEqual({}, self._search_hits_dict({}))
 
+    def test_upsert_fails_with_invalid_source(self):
+        doc = self._make_doc()
+        bad_source = self.adapter.transform_full(doc)
+        invalid = (doc.id, bad_source)
+        with patch.object(self.adapter, "transform", return_value=invalid):
+            with self.assertRaises(ValueError):
+                self.adapter.upsert(doc, refresh=True)
+        self.assertEqual({}, self._search_hits_dict({}))
+
     def test_upsert_succeeds_if_exists(self):
         doc = self._make_doc()
         self.adapter.upsert(doc, refresh=True)
@@ -825,19 +834,27 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
         self.adapter.update(doc["_id"], {"value": doc["value"]}, refresh=True)
         self.assertEqual([doc], docs_from_result(self.adapter.search({})))
 
-    def test_update_is_tolerant_of_id_field(self):
+    def test_update_tolerates_id_in_fields(self):
         doc = self._index_new_doc()
         doc["value"] = self._make_doc().value  # modify the doc
         self.adapter.update(doc["_id"], doc, refresh=True)  # does not raise
         self.assertEqual([doc], docs_from_result(self.adapter.search({})))
 
+    def test_update_fails_ambiguous_id_values(self):
+        doc = self._make_doc()
+        with self.assertRaises(ValueError):
+            self.adapter.update(doc.id, {"_id": f"{doc.id}x", "value": "test"},
+                                refresh=True)
+        self.assertEqual([], docs_from_result(self.adapter.search({})))
+
     def test_update_fails_if_missing(self):
         self.assertEqual([], docs_from_result(self.adapter.search({})))
         doc = self._make_doc()
         with self.assertRaises(TransportError) as test:
-            self.adapter.update(doc.id, {"value": "test"})
+            self.adapter.update(doc.id, {"value": "test"}, refresh=True)
         self.assertEqual(test.exception.status_code, 404)
         self.assertEqual(test.exception.error, "document_missing_exception")
+        self.assertEqual([], docs_from_result(self.adapter.search({})))
 
     def test_delete(self):
         doc = self._index_new_doc()
@@ -947,6 +964,18 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
         expected = deepcopy(actions)
         list(self.adapter._iter_id_stripped_actions(actions))
         self.assertEqual(expected, actions)
+
+    def test__verify_doc_source(self):
+        # does not raise
+        self.adapter._verify_doc_source({"value": "test", "entropy": 3})
+
+    def test__verify_doc_source_fails_if_not_dict(self):
+        with self.assertRaises(ValueError):
+            self.adapter._verify_doc_source(["1"])
+
+    def test__verify_doc_source_fails_if_id_present(self):
+        with self.assertRaises(ValueError):
+            self.adapter._verify_doc_source({"_id": "1", "value": "test"})
 
     def test__fix_hit(self):
         doc_id = "abc"
