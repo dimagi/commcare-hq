@@ -780,7 +780,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def charts(self):
-        if toggles.SUPPORT_EXPANDED_COLUMN_IN_REPORTS.enabled(self.domain):
+        if self.config_id and toggles.SUPPORT_EXPANDED_COLUMN_IN_REPORTS.enabled(self.domain):
             configured_charts = deepcopy(self.configured_charts)
             for chart in configured_charts:
                 if chart['type'] == 'multibar':
