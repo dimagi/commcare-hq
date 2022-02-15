@@ -63,8 +63,6 @@ colorama==0.4.3
     #   sniffer
 commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
-concurrent-log-handler==0.9.12
-    # via -r base-requirements.in
 contextlib2==0.6.0.post1
     # via
     #   git-build-branch
