@@ -186,7 +186,7 @@ class ESView(View):
         return es_results
 
     def count_query(self, es_query):
-        return self.es_interface.count(self.es_alias, None, es_query)
+        return self.es_interface.count(self.es_alias, self.es_type, es_query)
 
 
 class CaseESView(ESView):

@@ -68,16 +68,9 @@ class ElasticsearchInterface:
         kw = {} if params is None else params
         doc_adapter.update(doc_id, fields, **kw)
 
-    def _prepare_count_query(self, query):
-        # pagination params are not required and not supported in ES count API
-        query = query.copy()
-        for extra in ['size', 'sort', 'from', 'to', '_source']:
-            query.pop(extra, None)
-        return query
-
     def count(self, index_alias, doc_type, query):
-        query = self._prepare_count_query(query)
-        return self.es.count(index=index_alias, doc_type=doc_type, body=query).get('count')
+        doc_adapter = self._get_doc_adapter(index_alias, doc_type)
+        return doc_adapter.count(query)
 
     @staticmethod
     def _without_id_field(doc):
