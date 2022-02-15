@@ -4911,6 +4911,9 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                     my_hash = _hash(self.fetch_xform(form))
                     if previous_hash != my_hash:
                         form.version = None
+                        # fetch_xform calls render_xform which is memoized
+                        # clear cache since fetch_xform was called with a mutated form set to the previous version
+                        form.render_xform.reset_cache(form)
             else:
                 form.version = None
 
