@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from google.oauth2.credentials import Credentials
 
 from corehq.apps.oauth_integrations.models import GoogleApiToken
-from corehq.apps.oauth_integrations.utils import get_token, chunkify_data, load_credentials, stringify_credentials
+from corehq.apps.oauth_integrations.utils import get_token, load_credentials, stringify_credentials
 
 
 class TestUtils(TestCase):
@@ -87,12 +87,3 @@ class TestCredentialsUtils(SimpleTestCase):
         loaded_credentials = load_credentials(stringified_credentials)
 
         self.assertEqual(loaded_credentials.token, desired_credentials.token)
-
-    def test_chunkify_data(self):
-        desired_list = ['This is a string of ', 'data that I want to ', 'break up in four chu', 'nks']
-        chunk_length = 20
-        data = "This is a string of data that I want to break up in four chunks"
-
-        chunkified_data = chunkify_data(data, chunk_length)
-
-        self.assertListEqual(chunkified_data, desired_list)

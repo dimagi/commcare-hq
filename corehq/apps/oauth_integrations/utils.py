@@ -90,7 +90,3 @@ def listify_data(query_results):
         data.append(list(row_values.values()))
 
     return data
-
-
-def chunkify_data(data, chunk_size):
-    return [data[x: x + chunk_size] for x in range(0, len(data), chunk_size)]
