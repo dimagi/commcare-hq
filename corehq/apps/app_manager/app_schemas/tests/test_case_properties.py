@@ -15,7 +15,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     FormSchedule,
     Module,
-    ScheduleVisit, ConditionalCaseUpdate,
+    ScheduleVisit,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin

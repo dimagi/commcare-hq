@@ -22,7 +22,6 @@ from corehq.apps.aggregate_ucrs.ingestion import (
 )
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
 from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
-from corehq.apps.app_manager.models import ConditionalCaseUpdate
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.app_manager.xform_builder import XFormBuilder

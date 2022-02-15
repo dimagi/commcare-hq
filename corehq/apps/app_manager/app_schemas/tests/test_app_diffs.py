@@ -8,7 +8,6 @@ from corehq.apps.app_manager.app_schemas.form_metadata import (
     REMOVED,
     get_app_diff,
 )
-from corehq.apps.app_manager.models import ConditionalCaseUpdate
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.app_manager.xform_builder import XFormBuilder

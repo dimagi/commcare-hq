@@ -3,7 +3,6 @@ from django.test.testcases import SimpleTestCase, TestCase
 
 from tastypie.resources import Resource
 
-from corehq.apps.app_manager.models import ConditionalCaseUpdate
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.zapier.api.v0_5 import ZapierCustomFieldCaseResource
 from corehq.apps.zapier.util import remove_advanced_fields
