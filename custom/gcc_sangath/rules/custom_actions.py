@@ -8,6 +8,8 @@ from custom.gcc_sangath.const import (
     DATE_OF_PEER_REVIEW_CASE_PROP,
     MEAN_GENERAL_SKILLS_SCORE_CASE_PROP,
     MEAN_TREATMENT_SPECIFIC_SCORE_CASE_PROP,
+    NEEDS_AGGREGATION_CASE_PROP,
+    NEEDS_AGGREGATION_NO_VALUE,
     SESSION_CASE_TYPE,
     SESSION_RATING_CASE_PROP,
 )
@@ -78,6 +80,7 @@ def _get_case_updates(peer_rating_cases):
         'date_of_peer_review': latest_peer_review,
         'share_score_check': 'yes',
     }
+    case_updates[NEEDS_AGGREGATION_CASE_PROP] = NEEDS_AGGREGATION_NO_VALUE
     return case_updates
 
 

@@ -16,6 +16,8 @@ from custom.gcc_sangath.const import (
     DATE_OF_PEER_REVIEW_CASE_PROP,
     MEAN_GENERAL_SKILLS_SCORE_CASE_PROP,
     MEAN_TREATMENT_SPECIFIC_SCORE_CASE_PROP,
+    NEEDS_AGGREGATION_CASE_PROP,
+    NEEDS_AGGREGATION_NO_VALUE,
     PEER_RATING_CASE_TYPE,
     SESSION_CASE_TYPE,
     SESSION_RATING_CASE_PROP,
@@ -75,7 +77,8 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
                 'date_of_peer_review': '',
                 'feedback_num': '1',
                 'share_score_check': 'yes',
-                'total_session_rating': '0'
+                'total_session_rating': '0',
+                NEEDS_AGGREGATION_CASE_PROP: NEEDS_AGGREGATION_NO_VALUE,
             }
         )
 
@@ -117,7 +120,8 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
                 'date_of_peer_review': '2020-08-10',
                 'feedback_num': '3',
                 'share_score_check': 'yes',
-                'total_session_rating': '12'
+                'total_session_rating': '12',
+                NEEDS_AGGREGATION_CASE_PROP: NEEDS_AGGREGATION_NO_VALUE,
             }
         )
 
