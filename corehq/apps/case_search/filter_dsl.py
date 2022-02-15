@@ -1,4 +1,5 @@
 import re
+from collections import Counter
 
 from django.utils.translation import ugettext as _
 
@@ -9,7 +10,7 @@ from corehq.apps.case_search.xpath_functions import (
     XPATH_FUNCTIONS,
     XPathFunctionException,
 )
-from corehq.apps.es import filters
+from corehq.apps.es import filters, queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_query,
@@ -157,7 +158,44 @@ def build_filter_from_ast(domain, node, fuzzy=False):
 
         Only cases with `> case_count_gt` subcases will be returned.
         """
-        return []  # TODO
+        # TODO: validate that the subcase filter doesn't contain any ancestor filtering
+        subcase_filter = build_filter_from_ast(domain, subcase_predicates, fuzzy=fuzzy)
+
+        index_query = queries.nested(
+            'indices',
+            queries.filtered(
+                queries.match_all(),
+                filters.AND(
+                    filters.term('indices.identifier', index_identifier),
+                    filters.NOT(filters.term('indices.referenced_id', ''))  # exclude deleted indices
+                )
+            )
+        )
+        subcase_query = (
+            CaseSearchES().domain(domain)
+                .filter(index_query)
+                .filter(subcase_filter)
+                .source('indices')
+        )
+
+        if subcase_query.count() > MAX_RELATED_CASES:
+            raise TooManyRelatedCasesError(
+                _("The related case lookup you are trying to perform would return too many cases"),
+                ' and '.join([serialize(predicate) for predicate in subcase_predicates])
+            )
+
+        parent_case_id_counter = Counter()
+        for subcase in subcase_query.run().hits:
+            indices = [index for index in subcase['indices'] if index['identifier'] == index_identifier]
+            if indices:
+                parent_case_id_counter.update([indices[0]['referenced_id']])
+
+        if case_count_gt <= 0:
+            return list(parent_case_id_counter)
+
+        return [
+            case_id for case_id, count in parent_case_id_counter.items() if count > case_count_gt
+        ]
 
     def _parse_subcase_query(node):
         """Parse the subcase query and normalize it to the form 'subcase_count > N'
