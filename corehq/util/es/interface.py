@@ -1,7 +1,7 @@
 from functools import cached_property
 
 from corehq.apps.es.client import ElasticManageAdapter
-from corehq.apps.es.const import SCROLL_KEEPALIVE, SCROLL_SIZE
+from corehq.apps.es.const import SCROLL_KEEPALIVE
 from corehq.apps.es.transient_util import doc_adapter_from_alias
 from corehq.util.es.elasticsearch import bulk
 
@@ -9,7 +9,6 @@ from corehq.util.es.elasticsearch import bulk
 class ElasticsearchInterface:
 
     SCROLL_KEEPALIVE = SCROLL_KEEPALIVE
-    SCROLL_SIZE = SCROLL_SIZE
 
     def __init__(self, es):
         # TODO: verify that the `es` arg came from the client module and is not
@@ -96,94 +95,15 @@ class ElasticsearchInterface:
         params = params if params else {}
         return doc_adapter.search(query, params=params or {}, **kwargs)
 
-    def scroll(self, scroll_id=None, body=None, params=None, **kwargs):
-        results = self.es.scroll(scroll_id, body, params=params or {}, **kwargs)
-        self._fix_hits_in_results(results)
-        return results
-
-    def iter_scroll(self, index_alias=None, doc_type=None, body=None,
+    def iter_scroll(self, index_alias, doc_type, body=None,
                     scroll=SCROLL_KEEPALIVE, **kwargs):
-        """Perform one or more scroll requests to completely exhaust a scrolling
-        search context.
-
-        Providing a query with `size` specified as well as the `size` keyword
-        argument is ambiguous, and Elastic docs do not say what happens when
-        `size` is provided both as a GET parameter _as well as_ part of the
-        query body. Real-world observations show that the GET parameter wins,
-        but to avoid ambiguity, specifying both in this function will raise a
-        ValueError.
-
-        Read before using:
-        - Scroll queries are not designed for real-time user requests.
-        - Using aggregations with scroll queries may yield non-aggregated
-          results.
-        - The most efficient way to perform a scroll request is to sort by
-          `_doc`.
-        - Scroll request results reflect the state of the index at the time the
-          initial `search` is requested. Changes to the index after that time
-          will not be reflected for the duration of the search context.
-        - Open scroll search contexts can keep old index segments alive longer,
-          which may require more disk space and file descriptor limits.
-        - An Elasticsearch cluster has a limited number of allowed concurrent
-          search contexts. Versions 2.4 and 5.6 do not specify what the default
-          maximum limit is, or how to configure it. Version 7.14 specifies the
-          default is 500 concurrent search contexts.
-        - See: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-scroll.html
-        """
-        body = body.copy() if body else {}
-        body.setdefault("sort", "_doc")  # configure for efficiency if able
-        # validate size
-        size_qy = body.get("size")
-        size_kw = kwargs.get("size")
-        if size_kw is None and size_qy is None:
-            # Set a large scroll size if one is not already configured.
-            # Observations on Elastic v2.4 show default (when not specified)
-            # scroll size of 10.
-            kwargs["size"] = self.SCROLL_SIZE
-        elif not (size_kw is None or size_qy is None):
-            raise ValueError(f"size cannot be specified in both query and keyword "
-                             f"arguments (query: {size_qy}, kw: {size_kw})")
-        results = self.search(index_alias, doc_type, body, scroll=scroll, **kwargs)
-        scroll_id = results.get('_scroll_id')
-        if scroll_id is None:
-            return
-        try:
-            yield results
-            while True:
-                # Failure to add the `scroll` parameter here will cause the
-                # scroll context to terminate immediately after this request,
-                # resulting in this method fetching a maximum `size * 2`
-                # documents.
-                # see: https://stackoverflow.com/a/63911571
-                results = self.scroll(scroll_id, params={"scroll": scroll})
-                scroll_id = results.get('_scroll_id')
-                yield results
-                if scroll_id is None or not results['hits']['hits']:
-                    break
-        finally:
-            if scroll_id:
-                self.es.clear_scroll(body={'scroll_id': [scroll_id]}, ignore=(404,))
+        self._verify_is_alias(index_alias)
+        doc_adapter = self._get_doc_adapter(index_alias, doc_type)
+        query = {} if body is None else body
+        yield from doc_adapter.scroll(query, scroll=scroll, **kwargs)
 
     def _get_doc_adapter(self, index_alias, doc_type):
         doc_adapter = doc_adapter_from_alias(index_alias)
         if doc_adapter.type != doc_type:
             raise ValueError(f"wrong type ({doc_type}) for adapter: {doc_adapter}")
         return doc_adapter
-
-    @staticmethod
-    def _fix_hit(hit):
-        if '_source' in hit:
-            hit['_source']['_id'] = hit['_id']
-
-    def _fix_hits_in_results(self, results):
-        try:
-            hits = results['hits']['hits']
-        except KeyError:
-            return results
-        for hit in hits:
-            self._fix_hit(hit)
-
-        total = results['hits']['total']
-        # In ES7 total is a dict
-        if isinstance(total, dict):
-            results['hits']['total'] = total.get('value', 0)
