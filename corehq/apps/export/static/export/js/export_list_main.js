@@ -34,11 +34,14 @@ hqDefine("export/js/export_list_main", [
             $('#createExportOptionsModal').on('show.bs.modal', function () {
                 kissmetricsAnalytics.track.event("Clicked New Export");
 
-                const modelType = utils.capitalize(initialPageData.get('model_type', 'unknown'));
-                const metricsMessage = `${modelType} Export - Clicked Add Export Button`;
-                kissmetricsAnalytics.track.event(metricsMessage, {
-                    domain: initialPageData.get('domain'),
-                });
+                let modelType = initialPageData.get('model_type', true);
+                if (modelType) {
+                    modelType = utils.capitalize(modelType);
+                    const metricsMessage = `${modelType} Export - Clicked Add Export Button`;
+                    kissmetricsAnalytics.track.event(metricsMessage, {
+                        domain: initialPageData.get('domain'),
+                    });
+                }
 
                 if (isOData) {
                     kissmetricsAnalytics.track.event("[BI Integration] Clicked + Add Odata Feed button");
