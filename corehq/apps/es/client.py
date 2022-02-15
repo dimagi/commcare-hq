@@ -637,20 +637,23 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         self._es.index(self.index, self.type, source, doc_id,
                        refresh=self._refresh_value(refresh), **kw)
 
-    def update(self, doc, refresh=False, **kw):
+    def update(self, doc_id, fields, refresh=False, **kw):
         """Update an existing document in Elasticsearch
 
-        :param doc: the (Python model) document to be updated
+        :param doc_id: ID of the document to delete
+        :param fields: ``dict`` of fields/values to update on the existing
+                       Elastic doc
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
         :param **kw: extra parameters passed directly to the underlying
                      ``elasticsearch.Elasticsearch.update()`` method.
         """
-        doc_id, source = self.transform(doc)
+        if "_id" in fields:
+            fields = {key: fields[key] for key in fields if key != "_id"}
         # NOTE: future implementations may wish to get a return value here (e.g.
         # when using the `fields` kwarg), but the current implementation never
         # uses this functionality, so this method does not return anything.
-        self._es.update(self.index, self.type, doc_id, {"doc": source},
+        self._es.update(self.index, self.type, doc_id, {"doc": fields},
                         refresh=self._refresh_value(refresh), **kw)
 
     def delete(self, doc_id, refresh=False):

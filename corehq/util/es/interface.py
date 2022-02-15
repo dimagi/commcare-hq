@@ -64,8 +64,9 @@ class ElasticsearchInterface:
 
     def update_doc_fields(self, index_alias, doc_type, doc_id, fields, params=None):
         self._verify_is_alias(index_alias)
-        self.es.update(index_alias, doc_type, doc_id, body={"doc": self._without_id_field(fields)},
-                       params=params or {})
+        doc_adapter = self._get_doc_adapter(index_alias, doc_type)
+        kw = {} if params is None else params
+        doc_adapter.update(doc_id, fields, **kw)
 
     def _prepare_count_query(self, query):
         # pagination params are not required and not supported in ES count API
