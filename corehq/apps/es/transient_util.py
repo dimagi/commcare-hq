@@ -68,19 +68,31 @@ def _populate_doc_adapter_map(is_test):
         _DOC_MAPPINGS_BY_INDEX[mapping_key] = index_info.mapping
 
     if is_test:
-        # for pillowtop tests
-        _add_ptop_test_adapter()
+        from pillowtop.tests.utils import TEST_INDEX_INFO
+        _add_test_adapter("PillowTop", TEST_INDEX_INFO.index,
+                        TEST_INDEX_INFO.type, TEST_INDEX_INFO.mapping,
+                        TEST_INDEX_INFO.alias)
+
+        from corehq.apps.es.tests.utils import TEST_ES_INFO, TEST_ES_MAPPING
+        _add_test_adapter("UtilES", TEST_ES_INFO.alias, TEST_ES_INFO.type,
+                        TEST_ES_MAPPING, TEST_ES_INFO.alias)
 
 
-def _add_ptop_test_adapter():
-    from pillowtop.tests.utils import TEST_ES_ALIAS, TEST_ES_INDEX, TEST_ES_TYPE
+def _add_test_adapter(descriptor, index_, type_, mapping_, alias):
 
-    class PillowTopTest(ElasticDocumentAdapter):
-        index = TEST_ES_INDEX
-        type = TEST_ES_TYPE
+    class Adapter(ElasticDocumentAdapter):
+        index = index_
+        type = type_
+        mapping = mapping_
 
-    _DOC_ADAPTERS_BY_INDEX[PillowTopTest.index] = PillowTopTest
-    _DOC_ADAPTERS_BY_ALIAS[TEST_ES_ALIAS] = PillowTopTest
+        @classmethod
+        def transform(cls, doc):
+            return transform_dict_with_possible_id(doc)
+
+    Adapter.__name__ = f"{descriptor}Test"
+    _DOC_ADAPTERS_BY_INDEX[index_] = Adapter
+    _DOC_ADAPTERS_BY_ALIAS[alias] = Adapter
+    _DOC_MAPPINGS_BY_INDEX[index_] = mapping_
 
 
 _DOC_ADAPTERS_BY_INDEX = {}

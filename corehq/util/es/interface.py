@@ -56,8 +56,11 @@ class ElasticsearchInterface:
 
     def index_doc(self, index_alias, doc_type, doc_id, doc, params=None):
         self._verify_is_alias(index_alias)
-        self.es.index(index_alias, doc_type, body=self._without_id_field(doc), id=doc_id,
-                      params=params or {})
+        doc_adapter = self._get_doc_adapter(index_alias, doc_type)
+        if doc.get("_id", object()) != doc_id:
+            doc["_id"] = doc_id
+        kw = {} if params is None else params
+        doc_adapter.upsert(doc, **kw)
 
     def update_doc_fields(self, index_alias, doc_type, doc_id, fields, params=None):
         self._verify_is_alias(index_alias)

@@ -64,16 +64,6 @@ class ElasticPillowTest(SimpleTestCase):
             mapping['properties']['doc_type']
         )
 
-    def test_refresh_index(self):
-        initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
-        doc_id = uuid.uuid4().hex
-        doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        self.assertEqual(0, get_doc_count(self.es, self.es_alias))
-        self.es_interface.index_doc(self.es_alias, 'case', doc_id, doc)
-        self.assertEqual(0, get_doc_count(self.es, self.es_alias, refresh_first=False))
-        self.es.indices.refresh(self.index)
-        self.assertEqual(1, get_doc_count(self.es, self.es_alias, refresh_first=False))
-
     def test_index_operations(self):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         self.assertTrue(self.es.indices.exists(self.index))
@@ -90,13 +80,12 @@ class ElasticPillowTest(SimpleTestCase):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        with mock.patch.object(ElasticsearchInterface, "_verify_is_alias", return_value=None):
-            ElasticsearchInterface(get_es_new()).index_doc(
-                self.index,
-                TEST_INDEX_INFO.type,
-                doc_id,
-                {'doc_type': 'CommCareCase', 'type': 'mother'},
-            )
+        ElasticsearchInterface(get_es_new()).index_doc(
+            TEST_INDEX_INFO.alias,
+            TEST_INDEX_INFO.type,
+            doc_id,
+            {'doc_type': 'CommCareCase', 'type': 'mother'},
+        )
         self.assertEqual(1, get_doc_count(self.es, self.index))
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
         es_doc = self.es_interface.get_doc(TEST_INDEX_INFO.alias, TEST_INDEX_INFO.type, doc_id)
@@ -230,22 +219,6 @@ class TestSendToElasticsearch(SimpleTestCase):
             es_merge_update=True,
         )
         self.assertEqual(0, get_doc_count(self.es, self.index))
-
-    def test_connection_failure(self):
-        def _bad_es_getter():
-            from corehq.util.es.elasticsearch import Elasticsearch
-            return Elasticsearch(
-                [{
-                    'host': 'localhost',
-                    'port': 65536,  # bad port
-                }],
-                timeout=0.1,
-            )
-
-        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
-
-        with self.assertRaises(PillowtopIndexingError):
-            self._send_to_es_and_check(doc, esgetter=_bad_es_getter)
 
     def test_connection_failure_no_error(self):
         logs = self._send_to_es_mock_errors(ConnectionError("test", "test", "test"), 2)
