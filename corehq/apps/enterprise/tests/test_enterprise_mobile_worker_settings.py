@@ -171,7 +171,7 @@ class TestEnterpriseMobileWorkerSettings(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        EnterpriseMobileWorkerSettings.objects.all.delete()
+        EnterpriseMobileWorkerSettings.objects.all().delete()
         ensure_index_deleted(USER_INDEX_INFO.alias)
         ensure_index_deleted(XFORM_INDEX_INFO.alias)
         for user in cls.users:
