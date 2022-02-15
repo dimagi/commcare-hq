@@ -303,7 +303,7 @@ pycryptodome==3.10.1
     # via -r base-requirements.in
 pygithub==1.54.1
     # via -r base-requirements.in
-pygments==2.8.1
+pygments==2.11.2
     # via
     #   -r base-requirements.in
     #   sphinx
