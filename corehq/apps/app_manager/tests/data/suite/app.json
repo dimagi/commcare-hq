@@ -475,47 +475,38 @@
                             },
                             "update": {
                               "address": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/address",
                                 "update_mode": "always"
                               },
                               "enum": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/enum",
                                 "update_mode": "always"
                               },
                               "filter": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/filter",
                                 "update_mode": "always"
                               },
                               "invisible": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/invisible",
                                 "update_mode": "always"
                               },
                               "late-flag": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/late-flag",
                                 "update_mode": "always"
                               },
                               "my_date": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/date",
                                 "update_mode": "always"
                               },
                               "phone": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/phone",
                                 "update_mode": "always"
                               },
                               "plain": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/plain",
                                 "update_mode": "always"
                               },
                               "time-ago": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/time-ago",
                                 "update_mode": "always"
                               }
@@ -612,7 +603,6 @@
                             },
                             "update": {
                                 "name": {
-                                    "doc_type": "SmartCaseUpdate",
                                     "question_path": "/data/rename",
                                     "update_mode": "always"
                                   }

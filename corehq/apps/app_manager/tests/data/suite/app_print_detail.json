@@ -268,12 +268,10 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                   "sample_number_question": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "\/data\/sample_number_question",
                     "update_mode": "always"
                   },
                   "sample_choice_question": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "\/data\/sample_choice_question",
                     "update_mode": "always"
                   }
@@ -780,12 +778,10 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                 "sample_number_question": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "\/data\/sample_number_question",
                   "update_mode": "always"
                 },
                 "sample_choice_question": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "\/data\/sample_choice_question",
                   "update_mode": "always"
                 }
@@ -967,12 +963,10 @@
               "doc_type": "UpdateCaseAction",
               "update": {
                 "close_confirmation": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "\/data\/close_confirmation",
                   "update_mode": "always"
                 },
                 "close_reason": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "\/data\/close_reason",
                   "update_mode": "always"
                 }

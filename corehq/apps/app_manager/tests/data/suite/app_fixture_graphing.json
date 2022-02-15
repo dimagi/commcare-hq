@@ -287,7 +287,6 @@
                      "doc_type":"UpdateCaseAction",
                      "update":{
                         "name": {
-                          "doc_type": "SmartCaseUpdate",
                           "question_path": "/data/question1",
                           "update_mode": "always"
                         }

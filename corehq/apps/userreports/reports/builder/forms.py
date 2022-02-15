@@ -606,7 +606,7 @@ class ApplicationFormDataSourceHelper(ManagedReportBuilderDataSourceHelper):
         self.app = app
         super().__init__(domain, source_type, source_id)
         self.source_form = self.app.get_form(source_id)
-        self.source_xform = XForm(self.source_form.source)
+        self.source_xform = XForm(self.source_form.source, domain=app.domain)
 
     def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
         """

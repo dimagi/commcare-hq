@@ -669,7 +669,6 @@
                 },
                 "case_properties": {
                   "amount": {
-                    "doc_type": "SmartCaseUpdate",
                     "question_path": "/data/amount",
                     "update_mode": "always"
                   }
