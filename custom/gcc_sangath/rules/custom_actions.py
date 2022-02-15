@@ -58,7 +58,7 @@ def _get_case_updates(peer_rating_cases):
 
     latest_peer_review = _get_latest_peer_review_date(peer_rating_cases)
 
-    case_updates = {
+    case_updates = dict({
         'feedback_num': number_of_peer_ratings,
         'total_session_rating': sum_of_session_rating,
         'agg_rating': round(sum_of_session_rating / number_of_peer_ratings, 1),
@@ -66,7 +66,7 @@ def _get_case_updates(peer_rating_cases):
         'agg_mean_general_skills_score': agg_of_mean_general_skills_score,
         'date_of_peer_review': latest_peer_review,
         'share_score_check': 'yes',
-    }
+    })
     case_updates[NEEDS_AGGREGATION_CASE_PROP] = NEEDS_AGGREGATION_NO_VALUE
     return case_updates
 
