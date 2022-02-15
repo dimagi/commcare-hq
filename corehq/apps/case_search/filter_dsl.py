@@ -146,7 +146,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         return hasattr(node, 'left') and hasattr(node.left, 'op') and node.left.op == '/'
 
     def _subcase_filter(node):
-        index_identifier, subcase_predicate, case_count_gt, invert_condition = _parse_subcase_query(node)
+        index_identifier, subcase_predicate, case_count_gt, invert_condition = _parse_normalize_subcase_query(node)
         ids = _get_parent_case_ids_matching_subcase_query(index_identifier, subcase_predicate, case_count_gt)
         if invert_condition:
             return filters.NOT(filters.doc_id(ids))
@@ -196,31 +196,6 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         return [
             case_id for case_id, count in parent_case_id_counter.items() if count > case_count_gt
         ]
-
-    def _parse_subcase_query(node):
-        """Parse the subcase query and normalize it to the form 'subcase_count > N' or 'subcase_count = N'
-
-        Supports the following syntax:
-        - subcase_exists[identifier='X'][ {subcase filter} ]
-        - subcase_count[identifier='X'][ {subcase_filter} ] {one of =, >, <, >=, <= } {integer value}
-
-        :returns: tuple(index_identifier, subcase search predicates, count_op, case_count, invert_condition)
-         - index_identifier: the name of the index identifier to match on
-         - subcase search predicates: list of predicates used to filter the subcase query
-         - count_op: One of ['>', '=']
-         - case_count: Integer value used in conjunction with count_op to filter parent cases
-         - invert_condition: True if the initial expression is one of ['<', '<=']
-        """
-
-        # NOTES:
-        #  - it would be useful to have this accessible in tests so that we can test it
-        #    independently of the rest
-        #  - instead of returning a tuple we could create a dataclass to make it easier to work with and
-        #    could encapsulate some functionality:
-        #       subcase_query.include_parent(subcase_count)
-        #       subcase_query.create_parent_filter(matching_parent_ids)
-
-        return "", [], "", 0, False  # TODO
 
     def _is_subcase_lookup(node):
         """Returns whether a particular AST node is a subcase lookup."""
@@ -329,6 +304,31 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         )
 
     return visit(node)
+
+
+def _parse_normalize_subcase_query(node):
+    """Parse the subcase query and normalize it to the form 'subcase_count > N' or 'subcase_count = N'
+
+    Supports the following syntax:
+    - subcase_exists[identifier='X'][ {subcase filter} ]
+    - subcase_count[identifier='X'][ {subcase_filter} ] {one of =, !=, >, <, >=, <= } {integer value}
+    - not( subcase query )
+
+    :returns: tuple(index_identifier, subcase search predicates, count_op, case_count, invert_condition)
+     - index_identifier: the name of the index identifier to match on
+     - subcase search predicates: list of predicates used to filter the subcase query
+     - count_op: One of ['>', '=']
+     - case_count: Integer value used in conjunction with count_op to filter parent cases
+     - invert_condition: True if the initial expression is one of ['<', '<=']
+    """
+
+    # NOTES:
+    #  - instead of returning a tuple we could create a dataclass to make it easier to work with and
+    #    could encapsulate some functionality:
+    #       subcase_query.include_parent(subcase_count)
+    #       subcase_query.create_parent_filter(matching_parent_ids)
+
+    return "", [], "", 0, False  # TODO
 
 
 def build_filter_from_xpath(domain, xpath, fuzzy=False):

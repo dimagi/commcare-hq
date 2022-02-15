@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase, TestCase
+from testil import eq
 
 from corehq.util.es.elasticsearch import ConnectionError
 from eulxml.xpath import parse as parse_xpath
@@ -8,7 +9,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.filter_dsl import (
     CaseFilterError,
-    build_filter_from_ast,
+    build_filter_from_ast, _parse_normalize_subcase_query,
 )
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
@@ -573,3 +574,72 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
         self.assertEqual([], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+
+
+def test_subcase_query_parsing():
+    def _check(query, expected):
+        result = _parse_normalize_subcase_query(query)
+        eq(result, expected)
+
+    yield from [
+        (
+            _check,
+            "subcase_exists[identifier='parent'][@case_type='bob']",
+            ("parent", ["@case_type='bob'"], ">", 0, False)
+        ),
+        (
+            _check,
+            "subcase_exists[identifier='p'][@case_type='bob'][prop=value]",
+            ("p", ["@case_type='bob'", "prop=value"], ">", 0, False)
+        ),
+        (
+            _check,
+            "NOT(subcase_exists[identifier='p'][prop=1]",
+            ("p", ["prop=1"], ">", 0, True)
+        ),
+        (
+            _check,
+            "subcase_count[identifier='p'][prop=1'] > 3",
+            ("p", ["prop=1"], ">", 3, False)
+        ),
+        (
+            _check,
+            "subcase_count[identifier='p'][prop=1'] >= 3",
+            ("p", ["prop=1"], ">", 2, False)
+        ),
+        (
+            _check,
+            "subcase_count[identifier='p'][prop=1'] < 3",
+            ("p", ["prop=1"], ">", 2, True)
+        ),
+        (
+            _check,
+            "subcase_count[identifier='p'][prop=1'] <= 3",
+            ("p", ["prop=1"], ">", 3, True)
+        ),
+        (
+            _check,
+            "subcase_count[identifier='p'][prop=1'] = 3",
+            ("p", ["prop=1"], "=", 3, False)
+        ),
+        (
+            _check,
+            "subcase_count[identifier='p'][prop=1'] = 0",
+            ("p", ["prop=1"], ">", 0, True)
+        ),
+        (
+            _check,
+            "subcase_count[identifier='p'][prop=1'] != 2",
+            ("p", ["prop=1"], "=", 2, True)
+        ),
+        (
+            _check,
+            "not(subcase_count[identifier='p'][prop=1'] = 2",
+            ("p", ["prop=1"], "=", 2, True)
+        ),
+        (  # double inversion: not, <
+            _check,
+            "not(subcase_count[identifier='p'][prop=1'] < 3)",
+            ("p", ["prop=1"], ">", 2, False)
+        ),
+    ]
