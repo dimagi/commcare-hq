@@ -79,7 +79,8 @@ class ElasticsearchInterface:
         return {key: value for key, value in doc.items() if key != '_id'}
 
     def delete_doc(self, index_alias, doc_type, doc_id):
-        self.es.delete(index_alias, doc_type, doc_id)
+        doc_adapter = self._get_doc_adapter(index_alias, doc_type)
+        doc_adapter.delete(doc_id)
 
     def bulk_ops(self, actions, stats_only=False, **kwargs):
         for action in actions:
