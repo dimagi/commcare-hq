@@ -1,3 +1,17 @@
+"""
+All the tests in this file are testing the behavior of a session that has had
+the make_session_public_only function applied to it.
+
+Such a session differs from the default requests session in that it will reject any requests to an endpoint
+that resolves to a non public IP address (private, loopback, or other special IP range),
+and that this check also applies to a redirect Location.
+
+Where patching is used in these tests (_patch_session_with_hard_coded_response)
+the patching is done deep enough in the code that the logic added by make_session_public_only
+is still executed and thus tested.
+
+"""
+
 from contextlib import contextmanager
 from functools import wraps
 
@@ -95,6 +109,10 @@ def _patch_session_with_hard_coded_response(session, url, response):
         ...
         session.get(url)  # return hard-coded `response`
         ...
+
+    However, the patching happens deep enough that the functionality of `make_session_public_only` is retained,
+    which would not happen if the `session.get`, `session.post`, etc. methods were patched directly.
+
     """
     def _make_send(original_send):
         @wraps(original_send)
