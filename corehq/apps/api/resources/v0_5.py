@@ -801,6 +801,7 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
         detail_allowed_methods = ['get', 'put']
         always_return_data = True
         paginator_class = DoesNothingPaginator
+        authentication = RequirePermissionAuthentication(Permissions.edit_ucrs)
 
 
 UserDomain = namedtuple('UserDomain', 'domain_name project_name')
