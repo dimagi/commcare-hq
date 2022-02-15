@@ -21,8 +21,8 @@ def clean_exception(exception):
 
     # couchdbkit doesn't provide a better way for us to catch this exception
     if (
-        isinstance(exception, AssertionError) and
-        str(exception).startswith('received an invalid response of type')
+        isinstance(exception, AssertionError)
+        and str(exception).startswith('received an invalid response of type')
     ):
         message = ("It looks like couch returned an invalid response to "
                    "couchdbkit.  This could contain sensitive information, "
@@ -177,8 +177,9 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
         draw(i, done=True)
     if oneline != "concise":
         end = datetime.now()
-        print("{}Finished at {:%Y-%m-%d %H:%M:%S}".format(info_prefix, end), file=stream)
-        print("{}Elapsed time: {}".format(info_prefix, display_seconds((end - start).total_seconds())), file=stream)
+        elapsed_seconds = (end - start).total_seconds()
+        print(f"{info_prefix}Finished at {end:%Y-%m-%d %H:%M:%S}", file=stream)
+        print(f"{info_prefix}Elapsed time: {display_seconds(elapsed_seconds)}", file=stream)
 
 
 def step_calculator(length, granularity):
