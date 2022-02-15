@@ -366,7 +366,8 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             cls.es = get_es_new()
             initialize_index_and_mapping(cls.es, CASE_SEARCH_INDEX_INFO)
 
-        cls.child_case_id = 'margaery'
+        cls.child_case1_id = 'margaery'
+        cls.child_case2_id = 'loras'
         cls.parent_case_id = 'mace'
         cls.grandparent_case_id = 'olenna'
         cls.domain = "Tyrell"
@@ -399,8 +400,8 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
                 relationship='child',
             )])
 
-        child_case = CaseStructure(
-            case_id=cls.child_case_id,
+        child_case1 = CaseStructure(
+            case_id=cls.child_case1_id,
             attrs={
                 'create': True,
                 'case_type': 'child',
@@ -415,7 +416,24 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
                 relationship='extension',
             )],
         )
-        for case in factory.create_or_update_cases([child_case]):
+        child_case2 = CaseStructure(
+            case_id=cls.child_case2_id,
+            attrs={
+                'create': True,
+                'case_type': 'child',
+                'update': {
+                    "name": "Loras",
+                    "house": "Tyrell",
+                },
+            },
+            indices=[CaseIndex(
+                parent_case,
+                identifier='father',
+                relationship='extension',
+            )],
+            walk_related=False,
+        )
+        for case in factory.create_or_update_cases([child_case1, child_case2]):
             send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
         cls.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
 
@@ -461,7 +479,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         }
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
-        self.assertEqual([self.child_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+        self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
     def test_nested_parent_lookups(self):
         parsed = parse_xpath("father/mother/house = 'Tyrell'")
@@ -498,4 +516,43 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         }
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
-        self.assertEqual([self.child_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+        self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+
+    def test_subase_exists(self):
+        parsed = parse_xpath("subcase_exists[identifier='father'][name='Margaery']")
+
+        expected_filter = {"terms": {"_id": [self.parent_case_id]}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.assertEqual([self.parent_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+
+    def test_subase_count_gt(self):
+        parsed = parse_xpath("subcase_count[identifier='father'][house='Tyrell'] > 1")
+
+        expected_filter = {"terms": {"_id": [self.parent_case_id]}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.assertEqual([self.parent_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+
+    def test_subase_count_lt(self):
+        parsed = parse_xpath("subcase_count[identifier='father'][house='Tyrell'] < 1")
+
+        expected_filter = {"bool": {"must_not": {"terms": {"_id": [self.parent_case_id]}}}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.assertEqual(
+            {self.grandparent_case_id, self.child_case1_id, self.child_case2_id},
+            set(CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+        )
+
+    def test_subase_count_no_match(self):
+        # TODO: can we 'exit early' if there are no matching subcases? Seems silly to continue
+        # with the parent query if we know there aren't going to be any results. We probably have
+        # to raise an exception and handle it in the calling code.
+
+        parsed = parse_xpath("subcase_count[identifier='father'][house='Tyrell'] > 2")
+
+        expected_filter = {"terms": {"_id": []}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.assertEqual([], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
