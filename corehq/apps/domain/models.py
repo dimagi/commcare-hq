@@ -7,8 +7,8 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
 from django.db.models import F
+from django.contrib.postgres.fields import ArrayField
 from django.db.transaction import atomic
-from django.forms import CharField, IntegerField
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
@@ -79,6 +79,18 @@ BUSINESS_UNITS = [
     "DWA",
     "INC",
 ]
+
+# These are the DTE Expressions (UCR expressions) that are not currently
+# supported by SaaS. If any domain wants to use them them it can be
+# enabled from  Project Settings > Project Information Internal
+RESTRICTED_DTE_EXPRESSIONS = [
+    ('base_item', 'Base Item Expressions'),
+    ('related_document', 'Related Document Expressions')
+]
+
+
+def get_default_dte_expressions():
+    return [exp[0] for exp in RESTRICTED_DTE_EXPRESSIONS]
 
 
 for lang in all_langs:
@@ -1045,6 +1057,23 @@ class DomainAuditRecordEntry(models.Model):
         # update_fields prevents the possibility of a race condition
         # https://stackoverflow.com/a/1599090
         obj.save(update_fields=[property_to_update])
+
+
+class AllowedDTEExpressionSettings(models.Model):
+    """
+    Model contains DTE(aka UCR) expressions settings for a domain.
+    The expressions defined in RESTRICTED_DTE_EXPRESSIONS are not generally available yet.
+    But these expressions are enabled by default on every domain so that current flow does not change.
+    If any expression's usage is to be restricted on any domain
+    then the  Expressions should be explicitly removed from
+    Domain settings page on HQ.
+    """
+
+    domain = models.CharField(unique=True, max_length=256)
+    active_dte_expressions = ArrayField(
+        models.CharField(max_length=32, choices=RESTRICTED_DTE_EXPRESSIONS),
+        default=get_default_dte_expressions
+    )
 
 
 class ProjectLimitType():
