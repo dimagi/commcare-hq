@@ -2108,16 +2108,9 @@ class Itemset(DocumentSchema):
 
     @classmethod
     def wrap(cls, data):
-        self = super().wrap(data)
-        from corehq.apps.fixtures.fixturegenerators import ItemListsProvider
-        if data.get('instance_uri', '').startswith(f'jr://fixture/{ItemListsProvider.id}:'):
-            instance_id = data.get('instance_id')
-            if instance_id and ItemListsProvider.id not in instance_id:
-                data['instance_id'] = f'{ItemListsProvider.id}:{instance_id}'
-                data['nodeset'] = re.sub(r"instance\((.)" + instance_id,
-                                         r"instance(\1" + ItemListsProvider.id + r":" + instance_id,
-                                         data.get('nodeset', ''))
-        return self
+        from corehq.apps.app_manager.management.commands.migrate_case_search_prompt_itemset_ids import wrap_itemset
+        (data, dirty) = wrap_itemset(data)
+        return super().wrap(data)
 
 
 class CaseSearchProperty(DocumentSchema):

@@ -19,14 +19,21 @@ class Command(AppMigrationCommandBase):
         for module in app_doc.get('modules', []):
             if module.get('search_config'):
                 for prop in module.get('search_config').get('properties'):
-                    itemset = prop.get('itemset')
-                    if itemset.get('instance_uri', '').startswith(f'jr://fixture/{ItemListsProvider.id}:'):
-                        instance_id = itemset.get('instance_id')
-                        if instance_id and ItemListsProvider.id not in instance_id:
-                            should_save = True
-                            itemset['instance_id'] = f'{ItemListsProvider.id}:{instance_id}'
-                            itemset['nodeset'] = re.sub(r"instance\((.)" + instance_id,
-                                                     r"instance(\1" + ItemListsProvider.id + r":" + instance_id,
-                                                     itemset.get('nodeset', ''))
+                    (new_itemset, should_save) = wrap_itemset(prop.get('itemset'))
+                    prop['itemset'] = new_itemset
 
         return get_correct_app_class(app_doc).wrap(app_doc) if should_save else None
+
+
+def wrap_itemset(data):
+    should_save = False
+    if data.get('instance_uri', '').startswith(f'jr://fixture/{ItemListsProvider.id}:'):
+        instance_id = data.get('instance_id')
+        if instance_id and ItemListsProvider.id not in instance_id:
+            should_save = True
+            data['instance_id'] = f'{ItemListsProvider.id}:{instance_id}'
+            data['nodeset'] = re.sub(r"instance\((.)" + instance_id,
+                                     r"instance(\1" + ItemListsProvider.id + r":" + instance_id,
+                                     data.get('nodeset', ''))
+
+    return data, should_save
