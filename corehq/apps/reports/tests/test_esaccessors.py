@@ -360,6 +360,12 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(result, 20)
 
+    def test_get_days_since_last_form_submission_for_user_id_no_submissions(self):
+        result = get_days_since_last_form_submission_for_user_id(
+            'test-domain', 'user-no-submissions'
+        )
+        self.assertEqual(result, -1)
+
     def test_get_form_counts_for_domains(self):
         self._send_form_to_es()
         self._send_form_to_es()
