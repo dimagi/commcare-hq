@@ -227,8 +227,12 @@ class ODataFeedMixin(object):
             """),
         }
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        instance = super(ODataFeedMixin, self).create_new_export_instance(schema, export_settings=export_settings)
+    def create_new_export_instance(self, schema, username, domain, export_settings=None):
+        instance = super(ODataFeedMixin, self).create_new_export_instance(
+            schema,
+            username,
+            domain,
+            export_settings=export_settings)
         instance.is_odata_config = True
         instance.transform_dates = False
         return instance
