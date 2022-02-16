@@ -12,6 +12,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.registry.exceptions import RegistryNotFound
+from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, NONE_CHOICE
@@ -402,28 +403,33 @@ class GroupChoiceProvider(ChainableChoiceProvider):
 class DomainChoiceProvider(ChainableChoiceProvider):
 
     @memoized
-    def _query_domains(self, domain, query_text):
+    def _query_domains(self, domain, query_text, user):
         domains = {domain}
+        if user is None:
+            return list(domains)
+        if not RegistryPermissionCheck(domain, user).can_view_registry_data(
+                self.report.registry_helper.registry_slug):
+            return list(domains)
         try:
             domains.update(self.report.registry_helper.visible_domains)
         except RegistryNotFound:
-            return domains
+            return list(domains)
         if query_text:
             domains = {domain for domain in domains if re.search(query_text, domain)}
         return list(domains)
 
     def query(self, query_context):
-        domains = self._query_domains(self.domain, query_context.query)
+        domains = self._query_domains(self.domain, query_context.query, query_context.user)
         domains.sort()
         return self._domains_to_choices(
             domains[query_context.offset:query_context.offset + query_context.limit]
         )
 
-    def query_count(self, query):
-        return len(self._query_domains(self.domain, query))
+    def query_count(self, query, user=None):
+        return len(self._query_domains(self.domain, query, user))
 
     def get_choices_for_known_values(self, values, user):
-        domains = self._query_domains(self.domain, None)
+        domains = self._query_domains(self.domain, None, user)
         domain_options = [domain for domain in domains if domain in values]
         return self._domains_to_choices(domain_options)
 
